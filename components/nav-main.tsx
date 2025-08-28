@@ -76,7 +76,7 @@ export function NavMain({
                           </Link>
                         </SidebarMenuButton>
                         <CollapsibleTrigger asChild>
-                          <button className="p-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md">
+                          <button className="p-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md cursor-pointer">
                             <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                           </button>
                         </CollapsibleTrigger>
