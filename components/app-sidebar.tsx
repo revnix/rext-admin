@@ -2,22 +2,25 @@
 
 import * as React from "react"
 import {
+  Bell,
   Bot,
+  Brain,
   Building2,
   Crown,
   Database,
   FileText,
   GalleryVerticalEnd,
-  GitBranch,
   LayoutDashboard,
   Library,
   Lightbulb,
   MessageSquare,
   Puzzle,
   Settings2,
+  Share2,
   Shield,
   Type,
   Users,
+  Workflow,
   Zap,
 } from "lucide-react"
 
@@ -92,18 +95,8 @@ const data = {
         },
         {
           title: "Flows",
-          url: "#",
-          icon: GitBranch,
-          items: [
-            {
-              title: "All Flows",
-              url: "#",
-            },
-            {
-              title: "Create New Flow",
-              url: "#",
-            },
-          ],
+          url: "/flows",
+          icon: Workflow,
         },
       ],
     },
@@ -126,39 +119,60 @@ const data = {
       groupLabel: "Configuration",
       items: [
         {
-          title: "Social Accounts",
-          url: "/social-accounts",
-          icon: Users,
+          title: "AI & Prompts",
+          url: "/ai-prompts",
+          icon: Bot,
+          items: [
+            {
+              title: "Models",
+              url: "/models",
+              icon: Bot,
+            },
+            {
+              title: "Prompt Templates",
+              url: "/prompt-templates",
+              icon: MessageSquare,
+            },
+          ],
+        },
+        {
+          title: "Knowledge",
+          url: "/knowledge",
+          icon: Brain,
+          items: [
+            {
+              title: "Rules",
+              url: "/rules",
+              icon: Zap,
+            },
+            {
+              title: "Memories",
+              url: "/memories",
+              icon: Database,
+            },
+          ],
         },
         {
           title: "Integrations",
           url: "/integrations",
           icon: Puzzle,
+          items: [
+            {
+              title: "Social Accounts",
+              url: "/social-accounts",
+              icon: Share2,
+            },
+            {
+              title: "Notifications",
+              url: "/notifications",
+              icon: Bell,
+            },
+          ],
         },
         {
-          title: "Models",
-          url: "/models",
-          icon: Bot,
-        },
-        {
-          title: "Prompt Templates",
-          url: "/prompt-templates",
-          icon: MessageSquare,
-        },
-      ],
-    },
-    {
-      groupLabel: "Knowledge",
-      items: [
-        {
-          title: "Memories",
-          url: "/memories",
-          icon: Database,
-        },
-        {
-          title: "Rules",
-          url: "/rules",
-          icon: Zap,
+          title: "Users",
+          url: "/users",
+          icon: Users,
         },
       ],
     },
