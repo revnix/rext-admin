@@ -110,7 +110,7 @@ const data = {
         },
         {
           title: "Content",
-          url: "#",
+          url: "/content",
           icon: FileText,
         },
       ],
