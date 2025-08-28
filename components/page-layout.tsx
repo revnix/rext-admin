@@ -1,6 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { QuickAddDropdown } from "@/components/quick-add-dropdown";
+import { NotificationsDrawer } from "@/components/notifications-drawer";
 import { Bell, Search } from "lucide-react";
 import {
   Breadcrumb,
@@ -40,6 +44,7 @@ export function PageLayout({
   children,
   className = "",
 }: PageLayoutProps) {
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -81,7 +86,11 @@ export function PageLayout({
             </Button>
           </div>
           <div className="px-4 flex items-center gap-2">
-            <Button variant="secondary" className="gap-2">
+            <Button 
+              variant="secondary" 
+              className="gap-2"
+              onClick={() => setNotificationsOpen(true)}
+            >
               <div className="relative">
                 <Bell className="h-4 w-4" />
                 <div className="absolute -top-0.5 -right-0 h-2 w-2 rounded-full bg-red-500"></div>
@@ -110,6 +119,11 @@ export function PageLayout({
           <div className="flex-1">{children}</div>
         </div>
       </SidebarInset>
+      
+      <NotificationsDrawer 
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </SidebarProvider>
   );
 }
