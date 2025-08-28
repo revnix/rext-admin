@@ -2,27 +2,34 @@
 
 import * as React from "react"
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Command,
+  Building2,
+  Crown,
   Frame,
   GalleryVerticalEnd,
+  LayoutDashboard,
   Map,
   PieChart,
   Settings2,
+  Shield,
   SquareTerminal,
+  Type,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { ProjectSwitcher } from "@/components/project-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
 
@@ -33,23 +40,43 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
+  projectsDropdown: [
     {
-      name: "Acme Inc",
+      name: "All Projects",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      description: "View all projects",
+      bgColor: "bg-slate-500",
     },
     {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
+      name: "Revnix",
+      logo: Building2,
+      description: "Software & AI Solutions",
+      bgColor: "bg-blue-500",
     },
     {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
+      name: "Ficonz",
+      logo: Type,
+      description: "Font Icons Library",
+      bgColor: "bg-purple-500",
+    },
+    {
+      name: "WPAegis",
+      logo: Shield,
+      description: "WP Maintenance Services",
+      bgColor: "bg-green-500",
+    },
+    {
+      name: "WPGrit",
+      logo: Crown,
+      description: "Enterprise WP Development",
+      bgColor: "bg-orange-500",
     },
   ],
+  dashboard: {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
   navMain: [
     {
       title: "Playground",
@@ -160,9 +187,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <ProjectSwitcher projects={data.projectsDropdown} />
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a href={data.dashboard.url}>
+                  <data.dashboard.icon />
+                  <span>{data.dashboard.title}</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
