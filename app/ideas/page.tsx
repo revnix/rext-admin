@@ -406,8 +406,6 @@ export default function IdeasPage() {
 
       {/* Data Table */}
       <DataTable
-        title="All Ideas"
-        description="Manage your ideas, track progress, and transform concepts into actionable plans."
         columns={columns}
         data={ideasData}
         emptyTitle="No ideas yet"

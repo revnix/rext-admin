@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -51,8 +49,6 @@ interface RowAction {
 }
 
 interface DataTableProps {
-  title?: string;
-  description?: string;
   columns: Column[];
   data?: Record<string, any>[];
   emptyTitle?: string;
@@ -69,8 +65,6 @@ interface DataTableProps {
 }
 
 export function DataTable({
-  title,
-  description,
   columns,
   data = [],
   emptyTitle,
@@ -151,13 +145,9 @@ export function DataTable({
 
   return (
     <Card>
-      {(title || description || actions || showSearch) && (
+      {(actions || showSearch) && (
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              {title && <CardTitle>{title}</CardTitle>}
-              {description && <CardDescription>{description}</CardDescription>}
-            </div>
             <div className="flex items-center gap-2">
               {showSearch && (
                 <div className="relative">
@@ -171,6 +161,8 @@ export function DataTable({
                   />
                 </div>
               )}
+            </div>
+            <div className="flex items-center gap-2">
               {actions}
             </div>
           </div>
