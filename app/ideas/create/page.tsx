@@ -10,15 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,12 +30,6 @@ import {
   SelectWithCustom,
   type SelectWithCustomOption,
 } from "@/components/ui/select-with-custom";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 
 interface FormData {
   // Step 1: Idea Basics
@@ -264,6 +250,11 @@ const steps = [
 export default function IdeaBuilderPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  const breadcrumbs = [
+    { label: "Ideas", href: "/ideas" },
+    { label: "Create" }
+  ];
 
   const updateFormData = (field: keyof FormData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -576,130 +567,100 @@ export default function IdeaBuilderPage() {
   const currentStepData = steps[currentStep - 1];
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Create</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Idea Builder</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {/* Progress Header */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Idea Builder
-                </h1>
-                <p className="text-muted-foreground">
-                  Turn your concept into a structured, actionable idea
-                </p>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Step {currentStep} of {steps.length}
-              </div>
-            </div>
-
-            <Progress value={progress} className="w-full" />
-
-            {/* Step Indicators */}
-            <div className="flex items-center justify-between">
-              {steps.map((step, _index) => {
-                const StepIcon = step.icon;
-                const isActive = step.id === currentStep;
-                const isCompleted = step.id < currentStep;
-
-                return (
-                  <div
-                    key={step.id}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : isCompleted
-                            ? "bg-green-500 text-white"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      <StepIcon className="h-4 w-4" />
-                    </div>
-                    <div className="text-center">
-                      <div
-                        className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}
-                      >
-                        {step.title}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <currentStepData.icon className="h-5 w-5" />
-                {currentStepData.title}
-              </CardTitle>
-              <CardDescription>{currentStepData.description}</CardDescription>
-            </CardHeader>
-            <CardContent>{renderStepContent()}</CardContent>
-          </Card>
-
-          {/* Navigation Footer */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Previous
-            </Button>
-
-            <div className="text-sm text-muted-foreground">
-              {currentStep} of {steps.length} steps completed
-            </div>
-
-            {currentStep === steps.length ? (
-              <Button
-                onClick={handleSubmit}
-                className="flex items-center gap-2"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Submit Idea
-              </Button>
-            ) : (
-              <Button onClick={nextStep} className="flex items-center gap-2">
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            )}
+    <PageLayout 
+      title="Idea Builder"
+      description="Turn your concept into a structured, actionable idea"
+      breadcrumbs={breadcrumbs}
+    >
+      {/* Progress Header */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Step {currentStep} of {steps.length}
           </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+
+        <Progress value={progress} className="w-full" />
+
+        {/* Step Indicators */}
+        <div className="flex items-center justify-between">
+          {steps.map((step, _index) => {
+            const StepIcon = step.icon;
+            const isActive = step.id === currentStep;
+            const isCompleted = step.id < currentStep;
+
+            return (
+              <div
+                key={step.id}
+                className="flex flex-col items-center gap-2"
+              >
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : isCompleted
+                        ? "bg-green-500 text-white"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <StepIcon className="h-4 w-4" />
+                </div>
+                <div className="text-center">
+                  <div
+                    className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}
+                  >
+                    {step.title}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <Card className="flex-1">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <currentStepData.icon className="h-5 w-5" />
+            {currentStepData.title}
+          </CardTitle>
+          <CardDescription>{currentStepData.description}</CardDescription>
+        </CardHeader>
+        <CardContent>{renderStepContent()}</CardContent>
+      </Card>
+
+      {/* Navigation Footer */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={prevStep}
+          disabled={currentStep === 1}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Previous
+        </Button>
+
+        <div className="text-sm text-muted-foreground">
+          {currentStep} of {steps.length} steps completed
+        </div>
+
+        {currentStep === steps.length ? (
+          <Button
+            onClick={handleSubmit}
+            className="flex items-center gap-2"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Submit Idea
+          </Button>
+        ) : (
+          <Button onClick={nextStep} className="flex items-center gap-2">
+            Next
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </PageLayout>
   );
 }

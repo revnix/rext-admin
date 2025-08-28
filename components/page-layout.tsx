@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { QuickAddDropdown } from "@/components/quick-add-dropdown";
+import { Bell, Search } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -70,6 +73,22 @@ export function PageLayout({
                 </BreadcrumbList>
               </Breadcrumb>
             )}
+          </div>
+          <div className="flex-1 flex justify-center px-4">
+            <Button variant="outline" className="justify-between w-64 text-muted-foreground">
+              <span>Search</span>
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="px-4 flex items-center gap-2">
+            <Button variant="secondary" className="gap-2">
+              <div className="relative">
+                <Bell className="h-4 w-4" />
+                <div className="absolute -top-0.5 -right-0 h-2 w-2 rounded-full bg-red-500"></div>
+              </div>
+              3 Notifications
+            </Button>
+            <QuickAddDropdown />
           </div>
         </header>
 
