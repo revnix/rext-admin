@@ -1,10 +1,7 @@
 import {
-  Clock,
   Plus,
-  UserCheck,
   UserPlus,
   Users,
-  UserX,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
@@ -17,12 +14,6 @@ export default function UsersPage() {
     { label: "Users" },
   ];
 
-  const stats = [
-    { title: "Total Users", value: "--", icon: Users },
-    { title: "Active", value: "--", icon: UserCheck },
-    { title: "Pending", value: "--", icon: Clock },
-    { title: "Inactive", value: "--", icon: UserX },
-  ];
 
   const columns = [
     { key: "name", header: "Name", width: "200px" },
@@ -44,12 +35,20 @@ export default function UsersPage() {
   ];
 
   const tableActions = (
-    <Button asChild>
-      <Link href="/users/add">
-        <UserPlus className="h-4 w-4 mr-2" />
-        Add User
-      </Link>
-    </Button>
+    <>
+      <Button variant="outline" asChild>
+        <Link href="/users/invite">
+          <Plus className="h-4 w-4 mr-2" />
+          Invite Users
+        </Link>
+      </Button>
+      <Button asChild>
+        <Link href="/users/add">
+          <UserPlus className="h-4 w-4 mr-2" />
+          Add User
+        </Link>
+      </Button>
+    </>
   );
 
   return (
@@ -59,7 +58,6 @@ export default function UsersPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No users found"
         emptyDescription="Start by adding your first user or inviting team members to join your organization."

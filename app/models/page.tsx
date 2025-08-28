@@ -1,8 +1,5 @@
 import {
-  AlertCircle,
   Bot,
-  CheckCircle,
-  Clock,
   Plus,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
@@ -15,13 +12,6 @@ export default function ModelsPage() {
     { label: "Configuration", href: "#" },
     { label: "AI & Prompts", href: "/ai-prompts" },
     { label: "Models" },
-  ];
-
-  const stats = [
-    { title: "Total Models", value: "--", icon: Bot },
-    { title: "Active", value: "--", icon: CheckCircle },
-    { title: "Testing", value: "--", icon: Clock },
-    { title: "Issues", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
@@ -54,7 +44,6 @@ export default function ModelsPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         data={[]}
         emptyTitle="No models configured"

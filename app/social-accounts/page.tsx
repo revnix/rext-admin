@@ -1,8 +1,5 @@
 import {
-  AlertCircle,
-  CheckCircle,
   Link,
-  RefreshCw,
   Share2,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
@@ -16,12 +13,6 @@ export default function SocialAccountsPage() {
     { label: "Social Accounts" },
   ];
 
-  const stats = [
-    { title: "Connected Accounts", value: "--", icon: Share2 },
-    { title: "Active", value: "--", icon: CheckCircle },
-    { title: "Syncing", value: "--", icon: RefreshCw },
-    { title: "Issues", value: "--", icon: AlertCircle },
-  ];
 
   const columns = [
     { key: "platform", header: "Platform", width: "150px" },
@@ -50,7 +41,6 @@ export default function SocialAccountsPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No social accounts connected"
         emptyDescription="Start by connecting your first social media account to begin publishing and managing content."

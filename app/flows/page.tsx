@@ -1,7 +1,4 @@
 import {
-  Clock,
-  Pause,
-  Play,
   Plus,
   Workflow,
 } from "lucide-react";
@@ -13,12 +10,6 @@ import Link from "next/link";
 export default function FlowsPage() {
   const breadcrumbs = [{ label: "Create", href: "#" }, { label: "Flows" }];
 
-  const stats = [
-    { title: "Total Flows", value: "--", icon: Workflow },
-    { title: "Active", value: "--", icon: Play },
-    { title: "Paused", value: "--", icon: Pause },
-    { title: "Scheduled", value: "--", icon: Clock },
-  ];
 
   const columns = [
     { key: "name", header: "Flow Name", width: "300px" },
@@ -48,7 +39,6 @@ export default function FlowsPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No flows created yet"
         emptyDescription="Get started by creating your first automated workflow or importing a template."

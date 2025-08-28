@@ -1,7 +1,4 @@
 import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
   MessageSquare,
   Plus,
 } from "lucide-react";
@@ -14,13 +11,6 @@ export default function PromptTemplatesPage() {
     { label: "Configuration", href: "#" },
     { label: "AI & Prompts", href: "/ai-prompts" },
     { label: "Prompt Templates" },
-  ];
-
-  const stats = [
-    { title: "Total Templates", value: "--", icon: MessageSquare },
-    { title: "Active", value: "--", icon: CheckCircle },
-    { title: "Draft", value: "--", icon: Clock },
-    { title: "Deprecated", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
@@ -50,7 +40,6 @@ export default function PromptTemplatesPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No prompt templates created"
         emptyDescription="Build your first prompt template to improve AI interaction consistency and effectiveness."

@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, Pause, Plus, Zap } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,6 @@ export default function RulesPage() {
     { label: "Rules" },
   ];
 
-  const stats = [
-    { title: "Total Rules", value: "--", icon: Zap },
-    { title: "Active", value: "--", icon: CheckCircle },
-    { title: "Paused", value: "--", icon: Pause },
-    { title: "Failed", value: "--", icon: AlertCircle },
-  ];
 
   const columns = [
     { key: "name", header: "Rule Name", width: "250px" },
@@ -44,7 +38,6 @@ export default function RulesPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No rules created yet"
         emptyDescription="Start by creating your first business rule to automate workflows and processes."

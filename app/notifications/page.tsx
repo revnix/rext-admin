@@ -1,8 +1,5 @@
 import {
-  AlertCircle,
   Bell,
-  CheckCircle,
-  Clock,
   Plus,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
@@ -16,12 +13,6 @@ export default function NotificationsPage() {
     { label: "Notifications" },
   ];
 
-  const stats = [
-    { title: "Total Channels", value: "--", icon: Bell },
-    { title: "Active", value: "--", icon: CheckCircle },
-    { title: "Pending", value: "--", icon: Clock },
-    { title: "Failed", value: "--", icon: AlertCircle },
-  ];
 
   const columns = [
     { key: "name", header: "Channel Name", width: "200px" },
@@ -49,7 +40,6 @@ export default function NotificationsPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No notification channels configured"
         emptyDescription="Set up notification channels to receive alerts when flows require human intervention or approval."

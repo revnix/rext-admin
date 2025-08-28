@@ -1,61 +1,16 @@
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Download,
-  RotateCcw,
-  Save,
-  Settings2,
-} from "lucide-react";
+"use client";
+
+import { Save } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
-import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function GeneralSettingsPage() {
   const breadcrumbs = [{ label: "Settings", href: "#" }, { label: "General" }];
-
-  const stats = [
-    { title: "Total Settings", value: "24", icon: Settings2 },
-    { title: "Configured", value: "20", icon: CheckCircle },
-    { title: "Pending", value: "3", icon: Clock },
-    { title: "Needs Attention", value: "1", icon: AlertCircle },
-  ];
-
-  const columns = [
-    { key: "setting", header: "Setting", width: "250px" },
-    { key: "category", header: "Category", width: "150px" },
-    { key: "value", header: "Value", width: "200px" },
-    { key: "status", header: "Status", width: "120px" },
-    { key: "lastModified", header: "Last Modified", width: "150px" },
-    { key: "modifiedBy", header: "Modified By", width: "120px" },
-  ];
-
-  const emptyActions = [
-    { label: "Configure Settings", icon: <Settings2 className="h-4 w-4" /> },
-    {
-      label: "Import Config",
-      variant: "outline" as const,
-      icon: <Download className="h-4 w-4" />,
-    },
-    {
-      label: "Reset to Default",
-      variant: "outline" as const,
-      icon: <RotateCcw className="h-4 w-4" />,
-    },
-  ];
-
-  const tableActions = (
-    <>
-      <Button variant="outline">
-        <RotateCcw className="h-4 w-4 mr-2" />
-        Reset
-      </Button>
-      <Button>
-        <Save className="h-4 w-4 mr-2" />
-        Save Changes
-      </Button>
-    </>
-  );
 
   return (
     <PageLayout
@@ -63,15 +18,94 @@ export default function GeneralSettingsPage() {
       description="Configure global application settings, preferences, and system-wide options."
       breadcrumbs={breadcrumbs}
     >
-      <PlaceholderPage
-        stats={stats}
-        columns={columns}
-        emptyTitle="No settings configured"
-        emptyDescription="Start configuring your application settings to customize the system behavior."
-        emptyActions={emptyActions}
-        searchPlaceholder="Search settings..."
-        tableActions={tableActions}
-      />
+      <div className="space-y-8">
+        {/* Organization Section */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold">Organization</h3>
+            <p className="text-sm text-muted-foreground">
+              Basic information about your organization.
+            </p>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-6 max-w-2xl">
+                <div className="grid grid-cols-3 gap-6 items-center">
+                  <Label htmlFor="org-name">Organization Name</Label>
+                  <Input
+                    id="org-name"
+                    placeholder="Enter organization name"
+                    defaultValue="WREXT Inc."
+                    className="col-span-2"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-6 items-start">
+                  <Label htmlFor="org-description" className="pt-2">Description</Label>
+                  <Textarea
+                    id="org-description"
+                    placeholder="Brief description of your organization"
+                    defaultValue="AI-powered content creation and workflow automation platform"
+                    rows={3}
+                    className="col-span-2"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* System Preferences Section */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold">System Preferences</h3>
+            <p className="text-sm text-muted-foreground">
+              Configure global system behavior and default settings.
+            </p>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-6 max-w-2xl">
+                <div className="grid grid-cols-3 gap-6 items-center">
+                  <Label htmlFor="timezone">Default Timezone</Label>
+                  <Select defaultValue="utc">
+                    <SelectTrigger className="col-span-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="utc">UTC (Coordinated Universal Time)</SelectItem>
+                      <SelectItem value="est">EST (Eastern Standard Time)</SelectItem>
+                      <SelectItem value="pst">PST (Pacific Standard Time)</SelectItem>
+                      <SelectItem value="cet">CET (Central European Time)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-3 gap-6 items-center">
+                  <Label htmlFor="date-format">Date Format</Label>
+                  <Select defaultValue="iso">
+                    <SelectTrigger className="col-span-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="iso">YYYY-MM-DD (ISO 8601)</SelectItem>
+                      <SelectItem value="us">MM/DD/YYYY (US Format)</SelectItem>
+                      <SelectItem value="eu">DD/MM/YYYY (European Format)</SelectItem>
+                      <SelectItem value="relative">Relative (2 days ago)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end pt-4">
+          <Button size="lg">
+            <Save className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
+        </div>
+      </div>
     </PageLayout>
   );
 }

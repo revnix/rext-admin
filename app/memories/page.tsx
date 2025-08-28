@@ -1,7 +1,5 @@
 import {
-  AlertTriangle,
   Archive,
-  CheckCircle,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
@@ -11,13 +9,6 @@ export default function MemoriesPage() {
     { label: "Configuration", href: "#" },
     { label: "Knowledge", href: "/knowledge" },
     { label: "Memories" },
-  ];
-
-  const stats = [
-    { title: "Total Memories", value: "--", icon: Archive },
-    { title: "Active", value: "--", icon: CheckCircle },
-    { title: "Archived", value: "--", icon: Archive },
-    { title: "Expiring Soon", value: "--", icon: AlertTriangle },
   ];
 
   const columns = [
@@ -45,7 +36,6 @@ export default function MemoriesPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         data={[]}
         emptyTitle="No memories generated yet"

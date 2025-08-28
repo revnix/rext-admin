@@ -1,7 +1,4 @@
 import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
   FileText,
   Plus,
 } from "lucide-react";
@@ -13,12 +10,6 @@ import Link from "next/link";
 export default function ContentPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Content" }];
 
-  const stats = [
-    { title: "Total Content", value: "--", icon: FileText },
-    { title: "Published", value: "--", icon: CheckCircle },
-    { title: "Draft", value: "--", icon: Clock },
-    { title: "Archived", value: "--", icon: AlertCircle },
-  ];
 
   const columns = [
     { key: "title", header: "Title", width: "300px" },
@@ -51,7 +42,6 @@ export default function ContentPage() {
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
-        stats={stats}
         columns={columns}
         emptyTitle="No content available"
         emptyDescription="Content will be automatically generated and managed through your configured flows."

@@ -322,12 +322,6 @@ export default function IdeasPage() {
     },
   ];
 
-  const stats = [
-    { title: "Total Ideas", value: "20", icon: Lightbulb },
-    { title: "In Progress", value: "4", icon: Clock },
-    { title: "Completed", value: "2", icon: CheckCircle },
-    { title: "On Hold", value: "0", icon: AlertCircle },
-  ];
 
   const columns = [
     { key: "name", header: "Idea Name", width: "300px" },
@@ -389,21 +383,6 @@ export default function IdeasPage() {
       description="Browse, organize, and manage your collection of ideas. Transform concepts into actionable plans."
       breadcrumbs={breadcrumbs}
     >
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        {stats.map((stat) => (
-          <div key={stat.title} className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2">
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </span>
-            </div>
-            <div className="text-2xl font-bold">{stat.value}</div>
-          </div>
-        ))}
-      </div>
-
       {/* Data Table */}
       <DataTable
         columns={columns}
