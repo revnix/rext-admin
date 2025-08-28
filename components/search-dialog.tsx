@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Archive,
   Bell,
@@ -298,20 +298,19 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         />
         
         {/* Category Filter */}
-        <div className="flex gap-1 p-2 pb-3 border-t bg-muted/30 flex-wrap">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-3 py-1.5 text-xs rounded-full transition-colors whitespace-nowrap ${
-                selectedCategory === category
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+        <div className="p-3 border-t bg-muted/30">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full h-8">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -332,12 +331,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                   {item.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{item.title}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {item.category}
-                    </Badge>
-                  </div>
+                  <span className="font-medium text-xs">{item.title}</span>
                 </div>
               </CommandItem>
             ))}
