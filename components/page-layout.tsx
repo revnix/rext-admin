@@ -47,6 +47,7 @@ export function PageLayout({
 }: PageLayoutProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Add keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -59,6 +60,11 @@ export function PageLayout({
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  // Track client-side mounting to avoid hydration issues
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
   return (
     <SidebarProvider>
@@ -102,7 +108,7 @@ export function PageLayout({
             >
               <span>Search everything...</span>
               <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                <span className="text-xs">{typeof window !== 'undefined' && navigator.userAgent.toLowerCase().includes('mac') ? '⌘' : 'Ctrl+'}</span>K
+                <span className="text-xs">{isMounted && navigator.userAgent.toLowerCase().includes('mac') ? '⌘' : 'Ctrl+'}</span>K
               </kbd>
             </Button>
           </div>
