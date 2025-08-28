@@ -2,34 +2,33 @@
 
 import * as React from "react"
 import {
-  BookOpen,
   Bot,
   Building2,
   Crown,
-  Frame,
+  Database,
+  FileText,
   GalleryVerticalEnd,
+  GitBranch,
   LayoutDashboard,
-  Map,
-  PieChart,
+  Library,
+  Lightbulb,
+  MessageSquare,
+  Puzzle,
   Settings2,
   Shield,
-  SquareTerminal,
   Type,
+  Users,
+  Zap,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { ProjectSwitcher } from "@/components/project-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
 
@@ -72,113 +71,106 @@ const data = {
       bgColor: "bg-orange-500",
     },
   ],
-  dashboard: {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
+      groupLabel: "",
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: LayoutDashboard,
+        }
+      ],
+    },
+    {
+      groupLabel: "Create",
+      items: [
+        {
+          title: "Idea Builder",
+          url: "/idea-builder",
+          icon: Lightbulb,
         },
         {
-          title: "Starred",
+          title: "Flows",
           url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
+          icon: GitBranch,
+          items: [
+            {
+              title: "All Flows",
+              url: "#",
+            },
+            {
+              title: "Create New Flow",
+              url: "#",
+            },
+          ],
         },
       ],
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
+      groupLabel: "Library",
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: "Ideas",
+          url: "/ideas",
+          icon: Library,
         },
         {
-          title: "Explorer",
+          title: "Content",
           url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
+          icon: FileText,
         },
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
+      groupLabel: "Configuration",
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "Social Accounts",
+          url: "/social-accounts",
+          icon: Users,
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: "Integrations",
+          url: "/integrations",
+          icon: Puzzle,
         },
         {
-          title: "Tutorials",
-          url: "#",
+          title: "Models",
+          url: "/models",
+          icon: Bot,
         },
         {
-          title: "Changelog",
-          url: "#",
+          title: "Prompt Templates",
+          url: "/prompt-templates",
+          icon: MessageSquare,
         },
       ],
     },
     {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
+      groupLabel: "Knowledge",
+      items: [
+        {
+          title: "Memories",
+          url: "/memories",
+          icon: Database,
+        },
+        {
+          title: "Rules",
+          url: "/rules",
+          icon: Zap,
+        },
+      ],
+    },
+    {
+      groupLabel: "Settings",
       items: [
         {
           title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          url: "/settings/general",
+          icon: Settings2,
         },
       ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 }
@@ -190,20 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <ProjectSwitcher projects={data.projectsDropdown} />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href={data.dashboard.url}>
-                  <data.dashboard.icon />
-                  <span>{data.dashboard.title}</span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain groups={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
