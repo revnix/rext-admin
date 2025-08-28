@@ -1,20 +1,20 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatCard {
-  title: string
-  value: string | number
-  icon?: LucideIcon
-  description?: string
+  title: string;
+  value: string | number;
+  icon?: LucideIcon;
+  description?: string;
   trend?: {
-    value: string
-    isPositive?: boolean
-  }
+    value: string;
+    isPositive?: boolean;
+  };
 }
 
 interface StatsCardsProps {
-  stats: StatCard[]
-  className?: string
+  stats: StatCard[];
+  className?: string;
 }
 
 export function StatsCards({ stats, className = "" }: StatsCardsProps) {
@@ -38,9 +38,11 @@ export function StatsCards({ stats, className = "" }: StatsCardsProps) {
               </p>
             )}
             {stat.trend && (
-              <p className={`text-xs mt-1 ${
-                stat.trend.isPositive ? 'text-green-600' : 'text-red-600'
-              }`}>
+              <p
+                className={`text-xs mt-1 ${
+                  stat.trend.isPositive ? "text-green-600" : "text-red-600"
+                }`}
+              >
                 {stat.trend.value}
               </p>
             )}
@@ -48,5 +50,5 @@ export function StatsCards({ stats, className = "" }: StatsCardsProps) {
         </Card>
       ))}
     </div>
-  )
+  );
 }

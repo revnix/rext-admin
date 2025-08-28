@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
+import { ChevronsUpDown, Plus } from "lucide-react";
+import * as React from "react";
 
 import {
   DropdownMenu,
@@ -10,29 +10,29 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function ProjectSwitcher({
   projects,
 }: {
   projects: {
-    name: string
-    logo: React.ElementType
-    description: string
-    bgColor: string
-  }[]
+    name: string;
+    logo: React.ElementType;
+    description: string;
+    bgColor: string;
+  }[];
 }) {
-  const { isMobile } = useSidebar()
-  const [activeProject, setActiveProject] = React.useState(projects[0])
+  const { isMobile } = useSidebar();
+  const [activeProject, setActiveProject] = React.useState(projects[0]);
 
   if (!activeProject) {
-    return null
+    return null;
   }
 
   return (
@@ -44,12 +44,18 @@ export function ProjectSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className={`${activeProject.bgColor} text-white flex aspect-square size-8 items-center justify-center rounded-lg`}>
+              <div
+                className={`${activeProject.bgColor} text-white flex aspect-square size-8 items-center justify-center rounded-lg`}
+              >
                 <activeProject.logo className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeProject.name}</span>
-                <span className="truncate text-xs">{activeProject.description}</span>
+                <span className="truncate font-medium">
+                  {activeProject.name}
+                </span>
+                <span className="truncate text-xs">
+                  {activeProject.description}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -80,11 +86,13 @@ export function ProjectSwitcher({
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
-              <div className="text-muted-foreground font-medium">Add project</div>
+              <div className="text-muted-foreground font-medium">
+                Add project
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

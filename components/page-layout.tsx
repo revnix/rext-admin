@@ -1,5 +1,5 @@
-import { ReactNode } from "react"
-import { AppSidebar } from "@/components/app-sidebar"
+import type { ReactNode } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,26 +7,26 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-interface BreadcrumbItem {
-  label: string
-  href?: string
+interface BreadcrumbItemData {
+  label: string;
+  href?: string;
 }
 
 interface PageLayoutProps {
-  title: string
-  description?: string
-  breadcrumbs?: BreadcrumbItem[]
-  actions?: ReactNode
-  children: ReactNode
-  className?: string
+  title: string;
+  description?: string;
+  breadcrumbs?: BreadcrumbItemData[];
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
 }
 
 export function PageLayout({
@@ -53,7 +53,9 @@ export function PageLayout({
                 <BreadcrumbList>
                   {breadcrumbs.map((breadcrumb, index) => (
                     <div key={index} className="flex items-center">
-                      {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                      {index > 0 && (
+                        <BreadcrumbSeparator className="hidden md:block" />
+                      )}
                       <BreadcrumbItem className="hidden md:block">
                         {breadcrumb.href ? (
                           <BreadcrumbLink href={breadcrumb.href}>
@@ -77,24 +79,18 @@ export function PageLayout({
             <div className="space-y-1">
               <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
               {description && (
-                <p className="text-muted-foreground max-w-2xl">
-                  {description}
-                </p>
+                <p className="text-muted-foreground max-w-2xl">{description}</p>
               )}
             </div>
             {actions && (
-              <div className="flex items-center gap-2">
-                {actions}
-              </div>
+              <div className="flex items-center gap-2">{actions}</div>
             )}
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

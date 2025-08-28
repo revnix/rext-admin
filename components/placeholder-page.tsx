@@ -1,37 +1,37 @@
-import { ReactNode } from "react"
-import { StatsCards } from "@/components/stats-cards"
-import { DataTable } from "@/components/data-table"
-import { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { DataTable } from "@/components/data-table";
+import { StatsCards } from "@/components/stats-cards";
 
 interface StatCard {
-  title: string
-  value: string | number
-  icon?: LucideIcon
+  title: string;
+  value: string | number;
+  icon?: LucideIcon;
 }
 
 interface Column {
-  key: string
-  header: string
-  width?: string
+  key: string;
+  header: string;
+  width?: string;
 }
 
 interface EmptyStateAction {
-  label: string
-  icon?: ReactNode
-  variant?: "default" | "outline" | "secondary"
+  label: string;
+  icon?: ReactNode;
+  variant?: "default" | "outline" | "secondary";
 }
 
 interface PlaceholderPageProps {
-  title?: string
-  description?: string
-  stats: StatCard[]
-  columns: Column[]
-  data?: any[]
-  emptyTitle?: string
-  emptyDescription?: string
-  emptyActions?: EmptyStateAction[]
-  searchPlaceholder?: string
-  tableActions?: ReactNode
+  title?: string;
+  description?: string;
+  stats: StatCard[];
+  columns: Column[];
+  data?: unknown[];
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyActions?: EmptyStateAction[];
+  searchPlaceholder?: string;
+  tableActions?: ReactNode;
 }
 
 export function PlaceholderPage({
@@ -44,13 +44,13 @@ export function PlaceholderPage({
   emptyDescription,
   emptyActions,
   searchPlaceholder,
-  tableActions
+  tableActions,
 }: PlaceholderPageProps) {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <StatsCards stats={stats} />
-      
+
       {/* Data Table */}
       <DataTable
         title={title}
@@ -64,5 +64,5 @@ export function PlaceholderPage({
         actions={tableActions}
       />
     </div>
-  )
+  );
 }

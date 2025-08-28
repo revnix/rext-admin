@@ -1,21 +1,28 @@
-import { PageLayout } from "@/components/page-layout"
-import { PlaceholderPage } from "@/components/placeholder-page"
-import { Button } from "@/components/ui/button"
-import { Share2, Plus, Link, RefreshCw, CheckCircle, AlertCircle } from "lucide-react"
+import {
+  AlertCircle,
+  CheckCircle,
+  Link,
+  Plus,
+  RefreshCw,
+  Share2,
+} from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
+import { PlaceholderPage } from "@/components/placeholder-page";
+import { Button } from "@/components/ui/button";
 
 export default function SocialAccountsPage() {
   const breadcrumbs = [
     { label: "Configuration", href: "#" },
     { label: "Integrations", href: "/integrations" },
     { label: "Social Accounts" },
-  ]
+  ];
 
   const stats = [
     { title: "Connected Accounts", value: "7", icon: Share2 },
     { title: "Active", value: "6", icon: CheckCircle },
     { title: "Syncing", value: "1", icon: RefreshCw },
     { title: "Issues", value: "0", icon: AlertCircle },
-  ]
+  ];
 
   const columns = [
     { key: "platform", header: "Platform", width: "150px" },
@@ -24,13 +31,21 @@ export default function SocialAccountsPage() {
     { key: "followers", header: "Followers", width: "120px" },
     { key: "lastSync", header: "Last Sync", width: "150px" },
     { key: "connected", header: "Connected", width: "120px" },
-  ]
+  ];
 
   const emptyActions = [
     { label: "Connect Account", icon: <Link className="h-4 w-4" /> },
-    { label: "Import Accounts", variant: "outline" as const, icon: <Plus className="h-4 w-4" /> },
-    { label: "Sync All", variant: "outline" as const, icon: <RefreshCw className="h-4 w-4" /> },
-  ]
+    {
+      label: "Import Accounts",
+      variant: "outline" as const,
+      icon: <Plus className="h-4 w-4" />,
+    },
+    {
+      label: "Sync All",
+      variant: "outline" as const,
+      icon: <RefreshCw className="h-4 w-4" />,
+    },
+  ];
 
   const tableActions = (
     <>
@@ -43,7 +58,7 @@ export default function SocialAccountsPage() {
         Connect Account
       </Button>
     </>
-  )
+  );
 
   return (
     <PageLayout
@@ -61,5 +76,5 @@ export default function SocialAccountsPage() {
         tableActions={tableActions}
       />
     </PageLayout>
-  )
+  );
 }

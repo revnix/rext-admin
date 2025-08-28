@@ -1,15 +1,15 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export function SignupForm({
   className,
@@ -47,26 +47,26 @@ export function SignupForm({
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
+                <Input
+                  id="password"
+                  type="password"
                   placeholder="Create a strong password"
-                  required 
+                  required
                 />
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
+                <Input
+                  id="confirmPassword"
+                  type="password"
                   placeholder="Confirm your password"
-                  required 
+                  required
                 />
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
                   Create Account
-                </Button>                
+                </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
@@ -79,5 +79,5 @@ export function SignupForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,12 +1,24 @@
-import { PageLayout } from "@/components/page-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { BarChart, TrendingUp, Users, Zap, Plus, Settings, ArrowUpRight } from "lucide-react"
+import {
+  ArrowUpRight,
+  BarChart,
+  Plus,
+  Settings,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function DashboardPage() {
-  const breadcrumbs = [
-    { label: "Dashboard" },
-  ]
+  const breadcrumbs = [{ label: "Dashboard" }];
 
   return (
     <PageLayout
@@ -30,10 +42,34 @@ export default function DashboardPage() {
         {/* Key Metrics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { title: "Total Ideas", value: "--", change: "+12%", icon: BarChart, trend: "up" },
-            { title: "Active Flows", value: "--", change: "+8%", icon: Zap, trend: "up" },
-            { title: "Content Items", value: "--", change: "-2%", icon: TrendingUp, trend: "down" },
-            { title: "Team Members", value: "--", change: "+3", icon: Users, trend: "up" },
+            {
+              title: "Total Ideas",
+              value: "--",
+              change: "+12%",
+              icon: BarChart,
+              trend: "up",
+            },
+            {
+              title: "Active Flows",
+              value: "--",
+              change: "+8%",
+              icon: Zap,
+              trend: "up",
+            },
+            {
+              title: "Content Items",
+              value: "--",
+              change: "-2%",
+              icon: TrendingUp,
+              trend: "down",
+            },
+            {
+              title: "Team Members",
+              value: "--",
+              change: "+3",
+              icon: Users,
+              trend: "up",
+            },
           ].map((metric) => (
             <Card key={metric.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -44,12 +80,16 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{metric.value}</div>
-                <p className={`text-xs flex items-center gap-1 ${
-                  metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  <ArrowUpRight className={`h-3 w-3 ${
-                    metric.trend === 'down' ? 'rotate-90' : ''
-                  }`} />
+                <p
+                  className={`text-xs flex items-center gap-1 ${
+                    metric.trend === "up" ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  <ArrowUpRight
+                    className={`h-3 w-3 ${
+                      metric.trend === "down" ? "rotate-90" : ""
+                    }`}
+                  />
                   {metric.change} from last month
                 </p>
               </CardContent>
@@ -67,7 +107,10 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 {[1, 2, 3, 4].map((item) => (
-                  <div key={item} className="flex items-center gap-4 p-3 rounded-lg border border-dashed">
+                  <div
+                    key={item}
+                    className="flex items-center gap-4 p-3 rounded-lg border border-dashed"
+                  >
                     <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
                     <div className="flex-1 space-y-2">
                       <div className="h-3 bg-muted rounded animate-pulse" />
@@ -89,12 +132,17 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 {[
                   "Create New Idea",
-                  "Build a Flow", 
+                  "Build a Flow",
                   "Add Content",
                   "Invite Team Member",
-                  "Configure Settings"
+                  "Configure Settings",
                 ].map((action) => (
-                  <Button key={action} variant="ghost" className="w-full justify-start" disabled>
+                  <Button
+                    key={action}
+                    variant="ghost"
+                    className="w-full justify-start"
+                    disabled
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     {action}
                   </Button>
@@ -118,7 +166,9 @@ export default function DashboardPage() {
                     <div className="h-4 bg-muted rounded animate-pulse" />
                     <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
                     <div className="flex justify-between items-center">
-                      <div className="text-xs text-muted-foreground">Updated --d ago</div>
+                      <div className="text-xs text-muted-foreground">
+                        Updated --d ago
+                      </div>
                       <div className="w-6 h-6 rounded bg-muted animate-pulse" />
                     </div>
                   </div>
@@ -129,5 +179,5 @@ export default function DashboardPage() {
         </Card>
       </div>
     </PageLayout>
-  )
+  );
 }

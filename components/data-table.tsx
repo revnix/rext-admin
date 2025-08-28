@@ -1,42 +1,48 @@
-import { ReactNode } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table"
-import { Search, Filter, MoreHorizontal, Plus } from "lucide-react"
+import { Filter, MoreHorizontal, Plus, Search } from "lucide-react";
+import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Column {
-  key: string
-  header: string
-  width?: string
+  key: string;
+  header: string;
+  width?: string;
 }
 
 interface EmptyStateAction {
-  label: string
-  icon?: ReactNode
-  variant?: "default" | "outline" | "secondary"
-  onClick?: () => void
+  label: string;
+  icon?: ReactNode;
+  variant?: "default" | "outline" | "secondary";
+  onClick?: () => void;
 }
 
 interface DataTableProps {
-  title?: string
-  description?: string
-  columns: Column[]
-  data?: any[]
-  emptyTitle?: string
-  emptyDescription?: string
-  emptyActions?: EmptyStateAction[]
-  searchPlaceholder?: string
-  showSearch?: boolean
-  showFilter?: boolean
-  actions?: ReactNode
+  title?: string;
+  description?: string;
+  columns: Column[];
+  data?: unknown[];
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyActions?: EmptyStateAction[];
+  searchPlaceholder?: string;
+  showSearch?: boolean;
+  showFilter?: boolean;
+  actions?: ReactNode;
 }
 
 export function DataTable({
@@ -50,28 +56,29 @@ export function DataTable({
   searchPlaceholder = "Search...",
   showSearch = true,
   showFilter = true,
-  actions
+  actions,
 }: DataTableProps) {
-  const hasData = data.length > 0
+  const hasData = data.length > 0;
 
   // Default empty actions if none provided
   const defaultEmptyActions: EmptyStateAction[] = [
-    { 
-      label: "Add New", 
+    {
+      label: "Add New",
       icon: <Plus className="h-4 w-4" />,
-      variant: "default"
+      variant: "default",
     },
-    { 
-      label: "Import", 
-      variant: "outline"
+    {
+      label: "Import",
+      variant: "outline",
     },
-    { 
-      label: "Settings", 
-      variant: "outline"
-    }
-  ]
+    {
+      label: "Settings",
+      variant: "outline",
+    },
+  ];
 
-  const displayEmptyActions = emptyActions.length > 0 ? emptyActions : defaultEmptyActions
+  const displayEmptyActions =
+    emptyActions.length > 0 ? emptyActions : defaultEmptyActions;
 
   return (
     <Card>
@@ -83,12 +90,10 @@ export function DataTable({
               {description && <CardDescription>{description}</CardDescription>}
             </div>
             {actions && (
-              <div className="flex items-center gap-2">
-                {actions}
-              </div>
+              <div className="flex items-center gap-2">{actions}</div>
             )}
           </div>
-          
+
           {(showSearch || showFilter) && (
             <div className="flex items-center gap-2">
               {showSearch && (
@@ -111,7 +116,7 @@ export function DataTable({
           )}
         </CardHeader>
       )}
-      
+
       <CardContent>
         {hasData ? (
           <Table>
@@ -172,5 +177,5 @@ export function DataTable({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,6 +1,5 @@
-"use client"
+"use client";
 
-import * as React from "react"
 import {
   Bell,
   Bot,
@@ -22,18 +21,19 @@ import {
   Users,
   Workflow,
   Zap,
-} from "lucide-react"
+} from "lucide-react";
+import type * as React from "react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { ProjectSwitcher } from "@/components/project-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { ProjectSwitcher } from "@/components/project-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
@@ -82,7 +82,7 @@ const data = {
           title: "Dashboard",
           url: "/dashboard",
           icon: LayoutDashboard,
-        }
+        },
       ],
     },
     {
@@ -187,7 +187,7 @@ const data = {
       ],
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -203,5 +203,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

@@ -1,33 +1,41 @@
-import { PageLayout } from "@/components/page-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Bot, MessageSquare, ArrowRight, Plus, Settings } from "lucide-react"
-import Link from "next/link"
+import { ArrowRight, Bot, MessageSquare, Plus, Settings } from "lucide-react";
+import Link from "next/link";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function AIPromptsPage() {
   const breadcrumbs = [
     { label: "Configuration", href: "#" },
     { label: "AI & Prompts" },
-  ]
+  ];
 
   const sections = [
     {
       title: "Models",
-      description: "Configure and manage AI models, monitor performance, and optimize usage.",
+      description:
+        "Configure and manage AI models, monitor performance, and optimize usage.",
       icon: Bot,
       href: "/models",
       stats: { total: "--", active: "--" },
-      actions: ["Configure Models", "Monitor Performance", "Manage API Keys"]
+      actions: ["Configure Models", "Monitor Performance", "Manage API Keys"],
     },
     {
-      title: "Prompt Templates", 
-      description: "Create and manage reusable prompt templates for consistent AI interactions.",
+      title: "Prompt Templates",
+      description:
+        "Create and manage reusable prompt templates for consistent AI interactions.",
       icon: MessageSquare,
-      href: "/prompt-templates", 
+      href: "/prompt-templates",
       stats: { total: "--", templates: "--" },
-      actions: ["Create Templates", "Import Prompts", "Test Prompts"]
-    }
-  ]
+      actions: ["Create Templates", "Import Prompts", "Test Prompts"],
+    },
+  ];
 
   return (
     <PageLayout
@@ -36,15 +44,24 @@ export default function AIPromptsPage() {
       breadcrumbs={breadcrumbs}
       actions={
         <>
-          <Button variant="outline"><Settings className="h-4 w-4 mr-2" />AI Settings</Button>
-          <Button><Plus className="h-4 w-4 mr-2" />Quick Setup</Button>
+          <Button variant="outline">
+            <Settings className="h-4 w-4 mr-2" />
+            AI Settings
+          </Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Quick Setup
+          </Button>
         </>
       }
     >
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
           {sections.map((section) => (
-            <Card key={section.title} className="hover:shadow-md transition-shadow">
+            <Card
+              key={section.title}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -68,14 +85,21 @@ export default function AIPromptsPage() {
                   <div className="flex gap-4">
                     {Object.entries(section.stats).map(([key, value]) => (
                       <div key={key} className="text-center">
-                        <div className="text-2xl font-bold text-muted-foreground">{value}</div>
-                        <div className="text-sm text-muted-foreground capitalize">{key}</div>
+                        <div className="text-2xl font-bold text-muted-foreground">
+                          {value}
+                        </div>
+                        <div className="text-sm text-muted-foreground capitalize">
+                          {key}
+                        </div>
                       </div>
                     ))}
                   </div>
                   <div className="space-y-2">
                     {section.actions.map((action, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-sm text-muted-foreground"
+                      >
                         <div className="w-1 h-1 rounded-full bg-muted-foreground" />
                         {action}
                       </div>
@@ -97,7 +121,9 @@ export default function AIPromptsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common AI and prompt management tasks</CardDescription>
+            <CardDescription>
+              Common AI and prompt management tasks
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 md:grid-cols-4">
@@ -122,5 +148,5 @@ export default function AIPromptsPage() {
         </Card>
       </div>
     </PageLayout>
-  )
+  );
 }

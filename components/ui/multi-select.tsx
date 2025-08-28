@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Check, ChevronDown, X } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Check, ChevronDown, X } from "lucide-react";
+import * as React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -11,27 +11,27 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export interface MultiSelectOption {
-  label: string
-  value: string
+  label: string;
+  value: string;
 }
 
 interface MultiSelectProps {
-  options: MultiSelectOption[]
-  selected: string[]
-  onChange: (selected: string[]) => void
-  placeholder?: string
-  className?: string
-  allowCustom?: boolean
-  onCustomAdd?: (value: string) => void
+  options: MultiSelectOption[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  placeholder?: string;
+  className?: string;
+  allowCustom?: boolean;
+  onCustomAdd?: (value: string) => void;
 }
 
 export function MultiSelect({
@@ -43,37 +43,37 @@ export function MultiSelect({
   allowCustom = false,
   onCustomAdd,
 }: MultiSelectProps) {
-  const [open, setOpen] = React.useState(false)
-  const [customValue, setCustomValue] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [customValue, setCustomValue] = React.useState("");
 
   const handleUnselect = (item: string) => {
-    onChange(selected.filter((i) => i !== item))
-  }
+    onChange(selected.filter((i) => i !== item));
+  };
 
   const handleSelect = (item: string) => {
     if (selected.includes(item)) {
-      handleUnselect(item)
+      handleUnselect(item);
     } else {
-      onChange([...selected, item])
+      onChange([...selected, item]);
     }
-  }
+  };
 
   const handleCustomAdd = () => {
     if (customValue.trim() && !selected.includes(customValue.trim())) {
-      onChange([...selected, customValue.trim()])
+      onChange([...selected, customValue.trim()]);
       if (onCustomAdd) {
-        onCustomAdd(customValue.trim())
+        onCustomAdd(customValue.trim());
       }
-      setCustomValue("")
+      setCustomValue("");
     }
-  }
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Enter" && customValue.trim()) {
-      event.preventDefault()
-      handleCustomAdd()
+      event.preventDefault();
+      handleCustomAdd();
     }
-  }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -82,29 +82,26 @@ export function MultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn(
-            "w-full justify-between min-h-9 h-auto",
-            className
-          )}
+          className={cn("w-full justify-between min-h-9 h-auto", className)}
         >
           <div className="flex flex-wrap gap-1">
             {selected.length > 0 ? (
               selected.map((item) => {
-                const option = options.find((opt) => opt.value === item)
+                const option = options.find((opt) => opt.value === item);
                 return (
                   <Badge
                     variant="secondary"
                     key={item}
                     className="mr-1 mb-1"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      handleUnselect(item)
+                      e.stopPropagation();
+                      handleUnselect(item);
                     }}
                   >
                     {option?.label || item}
                     <X className="ml-1 h-3 w-3 cursor-pointer" />
                   </Badge>
-                )
+                );
               })
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
@@ -146,7 +143,9 @@ export function MultiSelect({
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      selected.includes(option.value) ? "opacity-100" : "opacity-0"
+                      selected.includes(option.value)
+                        ? "opacity-100"
+                        : "opacity-0",
                     )}
                   />
                   {option.label}
@@ -157,5 +156,5 @@ export function MultiSelect({
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

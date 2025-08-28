@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
-import Link from "next/link"
+import { ChevronRight, type LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -17,30 +17,32 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function NavMain({
   groups,
 }: {
   groups: {
-    groupLabel: string
+    groupLabel: string;
     items: {
-      title: string
-      url: string
-      icon?: LucideIcon
-      isActive?: boolean
+      title: string;
+      url: string;
+      icon?: LucideIcon;
+      isActive?: boolean;
       items?: {
-        title: string
-        url: string
-      }[]
-    }[]
-  }[]
+        title: string;
+        url: string;
+      }[];
+    }[];
+  }[];
 }) {
   return (
     <>
       {groups.map((group, groupIndex) => (
         <SidebarGroup key={groupIndex}>
-          {group.groupLabel && <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>}
+          {group.groupLabel && (
+            <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
+          )}
           <SidebarMenu>
             {group.items.map((item) => {
               if (item.items) {
@@ -75,7 +77,7 @@ export function NavMain({
                       </CollapsibleContent>
                     </SidebarMenuItem>
                   </Collapsible>
-                )
+                );
               } else {
                 // Render simple menu item without sub-items
                 return (
@@ -87,12 +89,12 @@ export function NavMain({
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )
+                );
               }
             })}
           </SidebarMenu>
         </SidebarGroup>
       ))}
     </>
-  )
+  );
 }

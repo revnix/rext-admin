@@ -1,21 +1,28 @@
-import { PageLayout } from "@/components/page-layout"
-import { PlaceholderPage } from "@/components/placeholder-page"
-import { Button } from "@/components/ui/button"
-import { Database, Plus, Search, Archive, CheckCircle, AlertTriangle } from "lucide-react"
+import {
+  AlertTriangle,
+  Archive,
+  CheckCircle,
+  Database,
+  Plus,
+  Search,
+} from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
+import { PlaceholderPage } from "@/components/placeholder-page";
+import { Button } from "@/components/ui/button";
 
 export default function MemoriesPage() {
   const breadcrumbs = [
     { label: "Configuration", href: "#" },
     { label: "Knowledge", href: "/knowledge" },
     { label: "Memories" },
-  ]
+  ];
 
   const stats = [
     { title: "Total Memories", value: "24", icon: Database },
     { title: "Active", value: "18", icon: CheckCircle },
     { title: "Archived", value: "6", icon: Archive },
     { title: "Expiring Soon", value: "3", icon: AlertTriangle },
-  ]
+  ];
 
   const columns = [
     { key: "title", header: "Memory Title", width: "300px" },
@@ -24,7 +31,7 @@ export default function MemoriesPage() {
     { key: "status", header: "Status", width: "100px" },
     { key: "expires", header: "Expires", width: "120px" },
     { key: "created", header: "Created", width: "120px" },
-  ]
+  ];
 
   const dummyData = [
     {
@@ -33,7 +40,7 @@ export default function MemoriesPage() {
       type: "Knowledge",
       status: "Active",
       expires: "Never",
-      created: "Dec 10, 2024"
+      created: "Dec 10, 2024",
     },
     {
       title: "API Rate Limiting Rules",
@@ -41,7 +48,7 @@ export default function MemoriesPage() {
       type: "Context",
       status: "Active",
       expires: "Mar 15, 2025",
-      created: "Dec 8, 2024"
+      created: "Dec 8, 2024",
     },
     {
       title: "Brand Guidelines and Tone",
@@ -49,7 +56,7 @@ export default function MemoriesPage() {
       type: "Reference",
       status: "Active",
       expires: "Never",
-      created: "Nov 25, 2024"
+      created: "Nov 25, 2024",
     },
     {
       title: "Security Protocol Updates",
@@ -57,7 +64,7 @@ export default function MemoriesPage() {
       type: "Knowledge",
       status: "Active",
       expires: "Feb 1, 2025",
-      created: "Dec 15, 2024"
+      created: "Dec 15, 2024",
     },
     {
       title: "User Onboarding Flow",
@@ -65,7 +72,7 @@ export default function MemoriesPage() {
       type: "Context",
       status: "Active",
       expires: "Never",
-      created: "Dec 5, 2024"
+      created: "Dec 5, 2024",
     },
     {
       title: "Legacy System Documentation",
@@ -73,15 +80,23 @@ export default function MemoriesPage() {
       type: "Reference",
       status: "Archived",
       expires: "Expired",
-      created: "Oct 12, 2024"
-    }
-  ]
+      created: "Oct 12, 2024",
+    },
+  ];
 
   const emptyActions = [
     { label: "Add Memory", icon: <Plus className="h-4 w-4" /> },
-    { label: "Import Knowledge", variant: "outline" as const, icon: <Database className="h-4 w-4" /> },
-    { label: "Browse Archives", variant: "outline" as const, icon: <Archive className="h-4 w-4" /> },
-  ]
+    {
+      label: "Import Knowledge",
+      variant: "outline" as const,
+      icon: <Database className="h-4 w-4" />,
+    },
+    {
+      label: "Browse Archives",
+      variant: "outline" as const,
+      icon: <Archive className="h-4 w-4" />,
+    },
+  ];
 
   const tableActions = (
     <>
@@ -94,7 +109,7 @@ export default function MemoriesPage() {
         Add Memory
       </Button>
     </>
-  )
+  );
 
   return (
     <PageLayout
@@ -113,5 +128,5 @@ export default function MemoriesPage() {
         tableActions={tableActions}
       />
     </PageLayout>
-  )
+  );
 }

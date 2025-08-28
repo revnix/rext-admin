@@ -1,21 +1,29 @@
-import { PageLayout } from "@/components/page-layout"
-import { PlaceholderPage } from "@/components/placeholder-page"
-import { Button } from "@/components/ui/button"
-import { Bot, Plus, Download, Zap, CheckCircle, AlertCircle, Clock } from "lucide-react"
+import {
+  AlertCircle,
+  Bot,
+  CheckCircle,
+  Clock,
+  Download,
+  Plus,
+  Zap,
+} from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
+import { PlaceholderPage } from "@/components/placeholder-page";
+import { Button } from "@/components/ui/button";
 
 export default function ModelsPage() {
   const breadcrumbs = [
     { label: "Configuration", href: "#" },
     { label: "AI & Prompts", href: "/ai-prompts" },
     { label: "Models" },
-  ]
+  ];
 
   const stats = [
     { title: "Total Models", value: "8", icon: Bot },
     { title: "Active", value: "6", icon: CheckCircle },
     { title: "Testing", value: "1", icon: Clock },
     { title: "Issues", value: "1", icon: AlertCircle },
-  ]
+  ];
 
   const dummyData = [
     {
@@ -25,7 +33,7 @@ export default function ModelsPage() {
       status: "Active",
       usage: "2.3K",
       cost: "$142.50",
-      updated: "Dec 21, 2024"
+      updated: "Dec 21, 2024",
     },
     {
       name: "Claude 3.5 Sonnet",
@@ -34,7 +42,7 @@ export default function ModelsPage() {
       status: "Active",
       usage: "1.8K",
       cost: "$89.20",
-      updated: "Dec 20, 2024"
+      updated: "Dec 20, 2024",
     },
     {
       name: "GPT-3.5 Turbo",
@@ -43,7 +51,7 @@ export default function ModelsPage() {
       status: "Active",
       usage: "5.2K",
       cost: "$45.80",
-      updated: "Dec 19, 2024"
+      updated: "Dec 19, 2024",
     },
     {
       name: "DALL-E 3",
@@ -52,7 +60,7 @@ export default function ModelsPage() {
       status: "Active",
       usage: "342",
       cost: "$68.40",
-      updated: "Dec 18, 2024"
+      updated: "Dec 18, 2024",
     },
     {
       name: "Gemini Pro",
@@ -61,7 +69,7 @@ export default function ModelsPage() {
       status: "Testing",
       usage: "45",
       cost: "$2.30",
-      updated: "Dec 17, 2024"
+      updated: "Dec 17, 2024",
     },
     {
       name: "Claude 3 Haiku",
@@ -70,7 +78,7 @@ export default function ModelsPage() {
       status: "Active",
       usage: "892",
       cost: "$12.45",
-      updated: "Dec 16, 2024"
+      updated: "Dec 16, 2024",
     },
     {
       name: "Mistral Large",
@@ -79,7 +87,7 @@ export default function ModelsPage() {
       status: "Issue",
       usage: "0",
       cost: "$0.00",
-      updated: "Dec 12, 2024"
+      updated: "Dec 12, 2024",
     },
     {
       name: "CodeLlama 70B",
@@ -88,9 +96,9 @@ export default function ModelsPage() {
       status: "Active",
       usage: "156",
       cost: "$8.90",
-      updated: "Dec 15, 2024"
-    }
-  ]
+      updated: "Dec 15, 2024",
+    },
+  ];
 
   const columns = [
     { key: "name", header: "Model Name", width: "200px" },
@@ -100,13 +108,21 @@ export default function ModelsPage() {
     { key: "usage", header: "Usage", width: "100px" },
     { key: "cost", header: "Cost", width: "100px" },
     { key: "updated", header: "Updated", width: "120px" },
-  ]
+  ];
 
   const emptyActions = [
     { label: "Add Model", icon: <Plus className="h-4 w-4" /> },
-    { label: "Import Config", variant: "outline" as const, icon: <Download className="h-4 w-4" /> },
-    { label: "Test Models", variant: "outline" as const, icon: <Zap className="h-4 w-4" /> },
-  ]
+    {
+      label: "Import Config",
+      variant: "outline" as const,
+      icon: <Download className="h-4 w-4" />,
+    },
+    {
+      label: "Test Models",
+      variant: "outline" as const,
+      icon: <Zap className="h-4 w-4" />,
+    },
+  ];
 
   const tableActions = (
     <>
@@ -119,7 +135,7 @@ export default function ModelsPage() {
         Add Model
       </Button>
     </>
-  )
+  );
 
   return (
     <PageLayout
@@ -138,5 +154,5 @@ export default function ModelsPage() {
         tableActions={tableActions}
       />
     </PageLayout>
-  )
+  );
 }

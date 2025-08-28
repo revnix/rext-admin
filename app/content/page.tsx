@@ -1,20 +1,25 @@
-import { PageLayout } from "@/components/page-layout"
-import { PlaceholderPage } from "@/components/placeholder-page"
-import { Button } from "@/components/ui/button"
-import { FileText, Plus, Upload, FolderOpen, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  FileText,
+  FolderOpen,
+  Plus,
+  Upload,
+} from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
+import { PlaceholderPage } from "@/components/placeholder-page";
+import { Button } from "@/components/ui/button";
 
 export default function ContentPage() {
-  const breadcrumbs = [
-    { label: "Library", href: "#" },
-    { label: "Content" },
-  ]
+  const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Content" }];
 
   const stats = [
     { title: "Total Content", value: "156", icon: FileText },
     { title: "Published", value: "142", icon: CheckCircle },
     { title: "Draft", value: "11", icon: Clock },
     { title: "Archived", value: "3", icon: AlertCircle },
-  ]
+  ];
 
   const columns = [
     { key: "title", header: "Title", width: "300px" },
@@ -23,13 +28,21 @@ export default function ContentPage() {
     { key: "author", header: "Author", width: "150px" },
     { key: "lastModified", header: "Last Modified", width: "150px" },
     { key: "created", header: "Created", width: "120px" },
-  ]
+  ];
 
   const emptyActions = [
     { label: "Create Content", icon: <Plus className="h-4 w-4" /> },
-    { label: "Upload Media", variant: "outline" as const, icon: <Upload className="h-4 w-4" /> },
-    { label: "Browse Library", variant: "outline" as const, icon: <FolderOpen className="h-4 w-4" /> },
-  ]
+    {
+      label: "Upload Media",
+      variant: "outline" as const,
+      icon: <Upload className="h-4 w-4" />,
+    },
+    {
+      label: "Browse Library",
+      variant: "outline" as const,
+      icon: <FolderOpen className="h-4 w-4" />,
+    },
+  ];
 
   const tableActions = (
     <>
@@ -42,7 +55,7 @@ export default function ContentPage() {
         Create Content
       </Button>
     </>
-  )
+  );
 
   return (
     <PageLayout
@@ -60,5 +73,5 @@ export default function ContentPage() {
         tableActions={tableActions}
       />
     </PageLayout>
-  )
+  );
 }

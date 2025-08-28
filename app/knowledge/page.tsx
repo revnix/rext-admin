@@ -1,33 +1,41 @@
-import { PageLayout } from "@/components/page-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Brain, Zap, Database, ArrowRight, Plus, Search } from "lucide-react"
-import Link from "next/link"
+import { ArrowRight, Database, Plus, Search, Zap } from "lucide-react";
+import Link from "next/link";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function KnowledgePage() {
   const breadcrumbs = [
     { label: "Configuration", href: "#" },
     { label: "Knowledge" },
-  ]
+  ];
 
   const sections = [
     {
       title: "Rules",
-      description: "Define business rules, automation triggers, and conditional logic for workflows.",
+      description:
+        "Define business rules, automation triggers, and conditional logic for workflows.",
       icon: Zap,
       href: "/rules",
       stats: { active: "--", total: "--" },
-      actions: ["Create Rules", "Test Logic", "Monitor Execution"]
+      actions: ["Create Rules", "Test Logic", "Monitor Execution"],
     },
     {
       title: "Memories",
-      description: "Store and retrieve contextual information and learned insights for AI interactions.",
+      description:
+        "Store and retrieve contextual information and learned insights for AI interactions.",
       icon: Database,
-      href: "/memories", 
+      href: "/memories",
       stats: { stored: "--", recent: "--" },
-      actions: ["Add Memories", "Search Context", "Manage Storage"]
-    }
-  ]
+      actions: ["Add Memories", "Search Context", "Manage Storage"],
+    },
+  ];
 
   return (
     <PageLayout
@@ -36,15 +44,24 @@ export default function KnowledgePage() {
       breadcrumbs={breadcrumbs}
       actions={
         <>
-          <Button variant="outline"><Search className="h-4 w-4 mr-2" />Search Knowledge</Button>
-          <Button><Plus className="h-4 w-4 mr-2" />Add Knowledge</Button>
+          <Button variant="outline">
+            <Search className="h-4 w-4 mr-2" />
+            Search Knowledge
+          </Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Knowledge
+          </Button>
         </>
       }
     >
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
           {sections.map((section) => (
-            <Card key={section.title} className="hover:shadow-md transition-shadow">
+            <Card
+              key={section.title}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -68,14 +85,21 @@ export default function KnowledgePage() {
                   <div className="flex gap-4">
                     {Object.entries(section.stats).map(([key, value]) => (
                       <div key={key} className="text-center">
-                        <div className="text-2xl font-bold text-muted-foreground">{value}</div>
-                        <div className="text-sm text-muted-foreground capitalize">{key}</div>
+                        <div className="text-2xl font-bold text-muted-foreground">
+                          {value}
+                        </div>
+                        <div className="text-sm text-muted-foreground capitalize">
+                          {key}
+                        </div>
                       </div>
                     ))}
                   </div>
                   <div className="space-y-2">
                     {section.actions.map((action, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-sm text-muted-foreground"
+                      >
                         <div className="w-1 h-1 rounded-full bg-muted-foreground" />
                         {action}
                       </div>
@@ -97,14 +121,28 @@ export default function KnowledgePage() {
         <Card>
           <CardHeader>
             <CardTitle>Knowledge Overview</CardTitle>
-            <CardDescription>Summary of your knowledge base and recent activity</CardDescription>
+            <CardDescription>
+              Summary of your knowledge base and recent activity
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
-              {["Total Rules", "Active Memories", "Recent Updates", "Knowledge Score"].map((stat) => (
-                <div key={stat} className="text-center p-4 rounded-lg border border-dashed">
-                  <div className="text-2xl font-bold text-muted-foreground">--</div>
-                  <div className="text-sm text-muted-foreground mt-1">{stat}</div>
+              {[
+                "Total Rules",
+                "Active Memories",
+                "Recent Updates",
+                "Knowledge Score",
+              ].map((stat) => (
+                <div
+                  key={stat}
+                  className="text-center p-4 rounded-lg border border-dashed"
+                >
+                  <div className="text-2xl font-bold text-muted-foreground">
+                    --
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {stat}
+                  </div>
                 </div>
               ))}
             </div>
@@ -112,5 +150,5 @@ export default function KnowledgePage() {
         </Card>
       </div>
     </PageLayout>
-  )
+  );
 }
