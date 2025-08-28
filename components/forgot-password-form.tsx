@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import Link from "next/link"
 
 export function ForgotPasswordForm({
   className,
@@ -43,9 +44,9 @@ export function ForgotPasswordForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Remember your password?{" "}
-              <a href="/login" className="underline underline-offset-4">
+              <Link href="/login" className="underline underline-offset-4">
                 Back to login
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
