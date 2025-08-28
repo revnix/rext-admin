@@ -1,15 +1,14 @@
 import {
   Clock,
-  Download,
   Pause,
   Play,
   Plus,
-  Settings,
   Workflow,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function FlowsPage() {
   const breadcrumbs = [{ label: "Create", href: "#" }, { label: "Flows" }];
@@ -30,30 +29,16 @@ export default function FlowsPage() {
   ];
 
   const emptyActions = [
-    { label: "Create Flow", icon: <Plus className="h-4 w-4" /> },
-    {
-      label: "Import Template",
-      variant: "outline" as const,
-      icon: <Download className="h-4 w-4" />,
-    },
-    {
-      label: "Settings",
-      variant: "outline" as const,
-      icon: <Settings className="h-4 w-4" />,
-    },
+    { label: "Create Flow", icon: <Plus className="h-4 w-4" />, href: "/flows/create" },
   ];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <Download className="h-4 w-4 mr-2" />
-        Import
-      </Button>
-      <Button>
+    <Button asChild>
+      <Link href="/flows/create">
         <Plus className="h-4 w-4 mr-2" />
         Create Flow
-      </Button>
-    </>
+      </Link>
+    </Button>
   );
 
   return (
@@ -68,6 +53,7 @@ export default function FlowsPage() {
         emptyTitle="No flows created yet"
         emptyDescription="Get started by creating your first automated workflow or importing a template."
         emptyActions={emptyActions}
+        emptyIcon={<Workflow className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search flows..."
         tableActions={tableActions}
       />

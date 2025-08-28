@@ -3,9 +3,7 @@ import {
   Bell,
   CheckCircle,
   Clock,
-  Mail,
   Plus,
-  Settings,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
@@ -19,61 +17,45 @@ export default function NotificationsPage() {
   ];
 
   const stats = [
-    { title: "Total Rules", value: "14", icon: Bell },
-    { title: "Active", value: "12", icon: CheckCircle },
-    { title: "Pending", value: "1", icon: Clock },
-    { title: "Failed", value: "1", icon: AlertCircle },
+    { title: "Total Channels", value: "--", icon: Bell },
+    { title: "Active", value: "--", icon: CheckCircle },
+    { title: "Pending", value: "--", icon: Clock },
+    { title: "Failed", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
-    { key: "name", header: "Rule Name", width: "200px" },
-    { key: "channel", header: "Channel", width: "150px" },
-    { key: "trigger", header: "Trigger", width: "200px" },
+    { key: "name", header: "Channel Name", width: "200px" },
+    { key: "type", header: "Type", width: "150px" },
     { key: "status", header: "Status", width: "100px" },
-    { key: "lastSent", header: "Last Sent", width: "150px" },
+    { key: "lastUsed", header: "Last Used", width: "150px" },
     { key: "created", header: "Created", width: "120px" },
   ];
 
   const emptyActions = [
-    { label: "Create Rule", icon: <Plus className="h-4 w-4" /> },
-    {
-      label: "Email Setup",
-      variant: "outline" as const,
-      icon: <Mail className="h-4 w-4" />,
-    },
-    {
-      label: "Settings",
-      variant: "outline" as const,
-      icon: <Settings className="h-4 w-4" />,
-    },
+    { label: "Configure Channels", icon: <Plus className="h-4 w-4" /> },
   ];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <Settings className="h-4 w-4 mr-2" />
-        Settings
-      </Button>
-      <Button>
-        <Plus className="h-4 w-4 mr-2" />
-        Create Rule
-      </Button>
-    </>
+    <Button>
+      <Plus className="h-4 w-4 mr-2" />
+      Configure Channels
+    </Button>
   );
 
   return (
     <PageLayout
       title="Notifications"
-      description="Configure notification preferences, channels, and automation rules for timely updates."
+      description="Configure notification channels for Human-in-the-Loop workflow interactions and alerts."
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
         stats={stats}
         columns={columns}
-        emptyTitle="No notification rules configured"
-        emptyDescription="Set up your first notification rule to stay informed about important events and updates."
+        emptyTitle="No notification channels configured"
+        emptyDescription="Set up notification channels to receive alerts when flows require human intervention or approval."
         emptyActions={emptyActions}
-        searchPlaceholder="Search notification rules..."
+        emptyIcon={<Bell className="h-8 w-8 text-muted-foreground" />}
+        searchPlaceholder="Search channels..."
         tableActions={tableActions}
       />
     </PageLayout>

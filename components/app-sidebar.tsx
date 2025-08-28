@@ -86,27 +86,17 @@ const data = {
       ],
     },
     {
-      groupLabel: "Create",
-      items: [
-        {
-          title: "Idea Builder",
-          url: "/idea-builder",
-          icon: Lightbulb,
-        },
-        {
-          title: "Flows",
-          url: "/flows",
-          icon: Workflow,
-        },
-      ],
-    },
-    {
-      groupLabel: "Library",
+      groupLabel: "Manage",
       items: [
         {
           title: "Ideas",
           url: "/ideas",
           icon: Library,
+        },
+        {
+          title: "Flows",
+          url: "/flows",
+          icon: Workflow,
         },
         {
           title: "Content",

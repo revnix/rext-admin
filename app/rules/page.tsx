@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, Pause, Play, Plus, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle, Pause, Plus, Zap } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,10 @@ export default function RulesPage() {
   ];
 
   const stats = [
-    { title: "Total Rules", value: "18", icon: Zap },
-    { title: "Active", value: "15", icon: CheckCircle },
-    { title: "Paused", value: "2", icon: Pause },
-    { title: "Failed", value: "1", icon: AlertCircle },
+    { title: "Total Rules", value: "--", icon: Zap },
+    { title: "Active", value: "--", icon: CheckCircle },
+    { title: "Paused", value: "--", icon: Pause },
+    { title: "Failed", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
@@ -28,29 +28,13 @@ export default function RulesPage() {
 
   const emptyActions = [
     { label: "Create Rule", icon: <Plus className="h-4 w-4" /> },
-    {
-      label: "Import Rules",
-      variant: "outline" as const,
-      icon: <Play className="h-4 w-4" />,
-    },
-    {
-      label: "Test Rules",
-      variant: "outline" as const,
-      icon: <Zap className="h-4 w-4" />,
-    },
   ];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <Play className="h-4 w-4 mr-2" />
-        Test Rules
-      </Button>
-      <Button>
-        <Plus className="h-4 w-4 mr-2" />
-        Create Rule
-      </Button>
-    </>
+    <Button>
+      <Plus className="h-4 w-4 mr-2" />
+      Create Rule
+    </Button>
   );
 
   return (
@@ -65,6 +49,7 @@ export default function RulesPage() {
         emptyTitle="No rules created yet"
         emptyDescription="Start by creating your first business rule to automate workflows and processes."
         emptyActions={emptyActions}
+        emptyIcon={<Zap className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search rules..."
         tableActions={tableActions}
       />

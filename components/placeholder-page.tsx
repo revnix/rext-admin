@@ -26,10 +26,11 @@ interface PlaceholderPageProps {
   description?: string;
   stats: StatCard[];
   columns: Column[];
-  data?: unknown[];
+  data?: Record<string, any>[];
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActions?: EmptyStateAction[];
+  emptyIcon?: ReactNode;
   searchPlaceholder?: string;
   tableActions?: ReactNode;
 }
@@ -43,6 +44,7 @@ export function PlaceholderPage({
   emptyTitle,
   emptyDescription,
   emptyActions,
+  emptyIcon,
   searchPlaceholder,
   tableActions,
 }: PlaceholderPageProps) {
@@ -60,6 +62,7 @@ export function PlaceholderPage({
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
         emptyActions={emptyActions}
+        emptyIcon={emptyIcon}
         searchPlaceholder={searchPlaceholder}
         actions={tableActions}
       />

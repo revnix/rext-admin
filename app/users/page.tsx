@@ -1,7 +1,6 @@
 import {
   Clock,
   Plus,
-  Shield,
   UserCheck,
   UserPlus,
   Users,
@@ -10,6 +9,7 @@ import {
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function UsersPage() {
   const breadcrumbs = [
@@ -34,30 +34,22 @@ export default function UsersPage() {
   ];
 
   const emptyActions = [
-    { label: "Add User", icon: <UserPlus className="h-4 w-4" /> },
+    { label: "Add User", icon: <UserPlus className="h-4 w-4" />, href: "/users/add" },
     {
       label: "Invite Users",
       variant: "outline" as const,
       icon: <Plus className="h-4 w-4" />,
-    },
-    {
-      label: "Manage Roles",
-      variant: "outline" as const,
-      icon: <Shield className="h-4 w-4" />,
+      href: "/users/invite",
     },
   ];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <Shield className="h-4 w-4 mr-2" />
-        Manage Roles
-      </Button>
-      <Button>
+    <Button asChild>
+      <Link href="/users/add">
         <UserPlus className="h-4 w-4 mr-2" />
         Add User
-      </Button>
-    </>
+      </Link>
+    </Button>
   );
 
   return (
@@ -72,6 +64,7 @@ export default function UsersPage() {
         emptyTitle="No users found"
         emptyDescription="Start by adding your first user or inviting team members to join your organization."
         emptyActions={emptyActions}
+        emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search users..."
         tableActions={tableActions}
       />

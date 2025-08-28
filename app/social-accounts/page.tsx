@@ -2,7 +2,6 @@ import {
   AlertCircle,
   CheckCircle,
   Link,
-  Plus,
   RefreshCw,
   Share2,
 } from "lucide-react";
@@ -18,10 +17,10 @@ export default function SocialAccountsPage() {
   ];
 
   const stats = [
-    { title: "Connected Accounts", value: "7", icon: Share2 },
-    { title: "Active", value: "6", icon: CheckCircle },
-    { title: "Syncing", value: "1", icon: RefreshCw },
-    { title: "Issues", value: "0", icon: AlertCircle },
+    { title: "Connected Accounts", value: "--", icon: Share2 },
+    { title: "Active", value: "--", icon: CheckCircle },
+    { title: "Syncing", value: "--", icon: RefreshCw },
+    { title: "Issues", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
@@ -35,29 +34,13 @@ export default function SocialAccountsPage() {
 
   const emptyActions = [
     { label: "Connect Account", icon: <Link className="h-4 w-4" /> },
-    {
-      label: "Import Accounts",
-      variant: "outline" as const,
-      icon: <Plus className="h-4 w-4" />,
-    },
-    {
-      label: "Sync All",
-      variant: "outline" as const,
-      icon: <RefreshCw className="h-4 w-4" />,
-    },
   ];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <RefreshCw className="h-4 w-4 mr-2" />
-        Sync All
-      </Button>
-      <Button>
-        <Link className="h-4 w-4 mr-2" />
-        Connect Account
-      </Button>
-    </>
+    <Button>
+      <Link className="h-4 w-4 mr-2" />
+      Connect Account
+    </Button>
   );
 
   return (
@@ -72,6 +55,7 @@ export default function SocialAccountsPage() {
         emptyTitle="No social accounts connected"
         emptyDescription="Start by connecting your first social media account to begin publishing and managing content."
         emptyActions={emptyActions}
+        emptyIcon={<Share2 className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search accounts..."
         tableActions={tableActions}
       />

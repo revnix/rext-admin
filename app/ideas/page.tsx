@@ -2,82 +2,22 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Filter,
-  Library,
   Lightbulb,
   Plus,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function IdeasPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Ideas" }];
 
   const stats = [
-    { title: "Total Ideas", value: "12", icon: Lightbulb },
-    { title: "In Progress", value: "5", icon: Clock },
-    { title: "Completed", value: "4", icon: CheckCircle },
-    { title: "On Hold", value: "3", icon: AlertCircle },
-  ];
-
-  const dummyData = [
-    {
-      name: "AI-powered Content Generator",
-      category: "Product Feature",
-      status: "In Progress",
-      priority: "High",
-      created: "Dec 15, 2024",
-      updated: "Dec 20, 2024",
-    },
-    {
-      name: "Customer Feedback Analysis Tool",
-      category: "Analytics",
-      status: "Completed",
-      priority: "Medium",
-      created: "Nov 28, 2024",
-      updated: "Dec 18, 2024",
-    },
-    {
-      name: "Mobile App Dark Mode",
-      category: "UI/UX",
-      status: "In Progress",
-      priority: "Low",
-      created: "Dec 10, 2024",
-      updated: "Dec 19, 2024",
-    },
-    {
-      name: "Real-time Collaboration Feature",
-      category: "Product Feature",
-      status: "On Hold",
-      priority: "High",
-      created: "Dec 5, 2024",
-      updated: "Dec 12, 2024",
-    },
-    {
-      name: "Advanced Search Filters",
-      category: "Search",
-      status: "In Progress",
-      priority: "Medium",
-      created: "Dec 8, 2024",
-      updated: "Dec 21, 2024",
-    },
-    {
-      name: "Email Newsletter Automation",
-      category: "Marketing",
-      status: "Completed",
-      priority: "Low",
-      created: "Nov 15, 2024",
-      updated: "Dec 1, 2024",
-    },
-    {
-      name: "Multi-language Support",
-      category: "Internationalization",
-      status: "On Hold",
-      priority: "Medium",
-      created: "Oct 20, 2024",
-      updated: "Nov 30, 2024",
-    },
+    { title: "Total Ideas", value: "--", icon: Lightbulb },
+    { title: "In Progress", value: "--", icon: Clock },
+    { title: "Completed", value: "--", icon: CheckCircle },
+    { title: "On Hold", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
@@ -90,30 +30,20 @@ export default function IdeasPage() {
   ];
 
   const emptyActions = [
-    { label: "Add Idea", icon: <Plus className="h-4 w-4" /> },
-    {
-      label: "Import Ideas",
-      variant: "outline" as const,
-      icon: <Filter className="h-4 w-4" />,
-    },
-    {
-      label: "Browse Templates",
-      variant: "outline" as const,
-      icon: <Library className="h-4 w-4" />,
+    { 
+      label: "Create Idea", 
+      icon: <Plus className="h-4 w-4" />,
+      href: "/ideas/create"
     },
   ];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <Filter className="h-4 w-4 mr-2" />
-        Filter
-      </Button>
-      <Button>
+    <Button asChild>
+      <Link href="/ideas/create">
         <Plus className="h-4 w-4 mr-2" />
-        Add Idea
-      </Button>
-    </>
+        Create Idea
+      </Link>
+    </Button>
   );
 
   return (
@@ -125,10 +55,11 @@ export default function IdeasPage() {
       <PlaceholderPage
         stats={stats}
         columns={columns}
-        data={dummyData}
+        data={[]}
         emptyTitle="No ideas yet"
         emptyDescription="Start building your idea collection. Add your first idea or import existing concepts."
         emptyActions={emptyActions}
+        emptyIcon={<Lightbulb className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search ideas..."
         tableActions={tableActions}
       />

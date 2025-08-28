@@ -1,5 +1,6 @@
-import { Filter, MoreHorizontal, Plus, Search } from "lucide-react";
+import { MoreHorizontal, Search } from "lucide-react";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,19 +30,20 @@ interface EmptyStateAction {
   icon?: ReactNode;
   variant?: "default" | "outline" | "secondary";
   onClick?: () => void;
+  href?: string;
 }
 
 interface DataTableProps {
   title?: string;
   description?: string;
   columns: Column[];
-  data?: unknown[];
+  data?: Record<string, any>[];
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActions?: EmptyStateAction[];
+  emptyIcon?: ReactNode;
   searchPlaceholder?: string;
   showSearch?: boolean;
-  showFilter?: boolean;
   actions?: ReactNode;
 }
 
@@ -53,67 +55,42 @@ export function DataTable({
   emptyTitle,
   emptyDescription,
   emptyActions = [],
+  emptyIcon,
   searchPlaceholder = "Search...",
   showSearch = true,
-  showFilter = true,
   actions,
 }: DataTableProps) {
   const hasData = data.length > 0;
 
   // Default empty actions if none provided
-  const defaultEmptyActions: EmptyStateAction[] = [
-    {
-      label: "Add New",
-      icon: <Plus className="h-4 w-4" />,
-      variant: "default",
-    },
-    {
-      label: "Import",
-      variant: "outline",
-    },
-    {
-      label: "Settings",
-      variant: "outline",
-    },
-  ];
+  const defaultEmptyActions: EmptyStateAction[] = [];
 
   const displayEmptyActions =
     emptyActions.length > 0 ? emptyActions : defaultEmptyActions;
 
   return (
     <Card>
-      {(title || description || actions || showSearch || showFilter) && (
+      {(title || description || actions || showSearch) && (
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between">
             <div>
               {title && <CardTitle>{title}</CardTitle>}
               {description && <CardDescription>{description}</CardDescription>}
             </div>
-            {actions && (
-              <div className="flex items-center gap-2">{actions}</div>
-            )}
-          </div>
-
-          {(showSearch || showFilter) && (
             <div className="flex items-center gap-2">
               {showSearch && (
-                <div className="relative max-w-sm">
+                <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={searchPlaceholder}
-                    className="pl-8"
+                    className="pl-8 w-80"
                     disabled={!hasData}
                   />
                 </div>
               )}
-              {showFilter && (
-                <Button variant="outline" size="sm" disabled={!hasData}>
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              )}
+              {actions}
             </div>
-          )}
+          </div>
         </CardHeader>
       )}
 
@@ -132,10 +109,10 @@ export function DataTable({
             </TableHeader>
             <TableBody>
               {data.map((row, index) => (
-                <TableRow key={index}>
+                <TableRow key={(row as any).id || `row-${index}`}>
                   {columns.map((column) => (
                     <TableCell key={column.key}>
-                      {row[column.key] || "--"}
+                      {(row as any)[column.key] || "--"}
                     </TableCell>
                   ))}
                   <TableCell>
@@ -151,7 +128,7 @@ export function DataTable({
           // Empty State
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <div className="h-8 w-8 rounded bg-muted-foreground/20" />
+              {emptyIcon || <div className="h-8 w-8 rounded bg-muted-foreground/20" />}
             </div>
             <h3 className="text-lg font-semibold">
               {emptyTitle || "No data available"}
@@ -160,17 +137,30 @@ export function DataTable({
               {emptyDescription || "Get started by adding your first item."}
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {displayEmptyActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant={action.variant || "default"}
-                  onClick={action.onClick}
-                  disabled
-                  className="flex items-center gap-2"
-                >
-                  {action.icon}
-                  {action.label}
-                </Button>
+              {displayEmptyActions.map((action) => (
+                action.href ? (
+                  <Button
+                    key={action.label}
+                    variant={action.variant || "default"}
+                    asChild
+                    className="flex items-center gap-2"
+                  >
+                    <Link href={action.href}>
+                      {action.icon}
+                      {action.label}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    key={action.label}
+                    variant={action.variant || "default"}
+                    onClick={action.onClick}
+                    className="flex items-center gap-2"
+                  >
+                    {action.icon}
+                    {action.label}
+                  </Button>
+                )
               ))}
             </div>
           </div>

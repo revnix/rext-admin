@@ -3,22 +3,21 @@ import {
   CheckCircle,
   Clock,
   FileText,
-  FolderOpen,
   Plus,
-  Upload,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function ContentPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Content" }];
 
   const stats = [
-    { title: "Total Content", value: "156", icon: FileText },
-    { title: "Published", value: "142", icon: CheckCircle },
-    { title: "Draft", value: "11", icon: Clock },
-    { title: "Archived", value: "3", icon: AlertCircle },
+    { title: "Total Content", value: "--", icon: FileText },
+    { title: "Published", value: "--", icon: CheckCircle },
+    { title: "Draft", value: "--", icon: Clock },
+    { title: "Archived", value: "--", icon: AlertCircle },
   ];
 
   const columns = [
@@ -30,45 +29,34 @@ export default function ContentPage() {
     { key: "created", header: "Created", width: "120px" },
   ];
 
-  const emptyActions = [
-    { label: "Create Content", icon: <Plus className="h-4 w-4" /> },
-    {
-      label: "Upload Media",
-      variant: "outline" as const,
-      icon: <Upload className="h-4 w-4" />,
-    },
-    {
-      label: "Browse Library",
-      variant: "outline" as const,
-      icon: <FolderOpen className="h-4 w-4" />,
-    },
-  ];
+  const emptyActions: Array<{
+    label: string;
+    icon?: React.ReactNode;
+    variant?: "default" | "outline" | "secondary";
+  }> = [];
 
   const tableActions = (
-    <>
-      <Button variant="outline">
-        <Upload className="h-4 w-4 mr-2" />
-        Upload
-      </Button>
-      <Button>
+    <Button asChild>
+      <Link href="/flows/create">
         <Plus className="h-4 w-4 mr-2" />
-        Create Content
-      </Button>
-    </>
+        Generate Content (via Flow)
+      </Link>
+    </Button>
   );
 
   return (
     <PageLayout
       title="Content"
-      description="Create, manage, and organize all your content assets in one centralized location."
+      description="View and manage all content generated through your automated flows and processes."
       breadcrumbs={breadcrumbs}
     >
       <PlaceholderPage
         stats={stats}
         columns={columns}
-        emptyTitle="No content created yet"
-        emptyDescription="Start building your content library by creating your first piece of content or uploading media assets."
+        emptyTitle="No content available"
+        emptyDescription="Content will be automatically generated and managed through your configured flows."
         emptyActions={emptyActions}
+        emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search content..."
         tableActions={tableActions}
       />
