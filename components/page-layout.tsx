@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { QuickAddDropdown } from "@/components/quick-add-dropdown";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
-import { Bell, Search } from "lucide-react";
+import { SearchDialog } from "@/components/search-dialog";
+import { Bell } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -45,6 +46,20 @@ export function PageLayout({
   className = "",
 }: PageLayoutProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Add keyboard shortcut for search (Cmd/Ctrl + K)
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -80,9 +95,15 @@ export function PageLayout({
             )}
           </div>
           <div className="flex-1 flex justify-center px-4">
-            <Button variant="outline" className="justify-between w-64 text-muted-foreground">
-              <span>Search</span>
-              <Search className="h-4 w-4" />
+            <Button 
+              variant="outline" 
+              className="justify-between w-64 text-muted-foreground"
+              onClick={() => setSearchOpen(true)}
+            >
+              <span>Search everything...</span>
+              <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                <span className="text-xs">{typeof window !== 'undefined' && navigator.userAgent.toLowerCase().includes('mac') ? '⌘' : 'Ctrl+'}</span>K
+              </kbd>
             </Button>
           </div>
           <div className="px-4 flex items-center gap-2">
@@ -123,6 +144,11 @@ export function PageLayout({
       <NotificationsDrawer 
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
+      />
+      
+      <SearchDialog 
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
       />
     </SidebarProvider>
   );
