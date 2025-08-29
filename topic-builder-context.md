@@ -1,6 +1,4 @@
-# Topic Builder
-
-Based on below information, make a todo list for revamping the topic builder page.
+# Topic Builder Context
 
 Steps
 1) Wizard steps (in order)

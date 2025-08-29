@@ -1,0 +1,424 @@
+// JSON Representation of the Wizard Structure
+
+// Below are JSON representations for both variations of the wizard, capturing all questions, options, and dependencies. This format could be used to programmatically generate the form steps. Each question object includes an id, the question text, type of input, whether it’s required, possible options (for choice-based inputs), and any dependsOn logic for conditional questions. Optional/advanced questions are marked with "advanced": true for clarity.
+
+// Variation A – Subject-First Flow (User provides a specific topic):
+
+[
+    {
+      "id": "subject",
+      "text": "What is the main topic or subject you want content ideas for?",
+      "type": "text",
+      "required": true,
+      "sampleAnswers": [
+        "Artificial Intelligence in healthcare",
+        "Budget travel tips for students",
+        "Sustainable fashion trends"
+      ]
+    },
+    {
+      "id": "industry",
+      "text": "Select the industry or domain related to this topic",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Technology",
+        "Healthcare",
+        "Finance",
+        "Education",
+        "Travel",
+        "Food",
+        "Fashion",
+        "Business",
+        "Marketing",
+        "Science",
+        "Sports",
+        "Lifestyle",
+        "Government",
+        "Other"
+      ]
+    },
+    {
+      "id": "industry_other",
+      "text": "Please specify the industry",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "industry", "value": "Other" }
+    },
+    {
+      "id": "content_type",
+      "text": "Select the content type/format",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Blog Post / Article",
+        "Social Media Post",
+        "Video Content",
+        "Podcast Episode",
+        "Infographic",
+        "E-book / Guide",
+        "Case Study",
+        "Whitepaper / Report",
+        "Email Newsletter",
+        "Presentation / Webinar",
+        "Press Release",
+        "Other"
+      ]
+    },
+    {
+      "id": "content_type_other",
+      "text": "Please specify the content format/type",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "content_type", "value": "Other" }
+    },
+    {
+      "id": "platform",
+      "text": "Which platform or channel will this content be published on?",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Facebook",
+        "Instagram",
+        "Twitter (X)",
+        "LinkedIn",
+        "TikTok",
+        "YouTube",
+        "Other"
+      ],
+      "dependsOn": { 
+        "id": "content_type", 
+        "valueIn": ["Social Media Post", "Video Content"] 
+      }
+    },
+    {
+      "id": "platform_other",
+      "text": "Please specify the platform/channel",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "platform", "value": "Other" }
+    },
+    {
+      "id": "audience",
+      "text": "Who is the target audience? (Describe the intended readers/viewers)",
+      "type": "text",
+      "required": false,
+      "advanced": true,
+      "sampleAnswers": [
+        "Tech-savvy millennials interested in personal finance",
+        "CFOs and finance executives at large companies",
+        "High school students learning chemistry"
+      ]
+    },
+    {
+      "id": "purpose",
+      "text": "What is the primary goal or purpose of this content?",
+      "type": "dropdown",
+      "required": false,
+      "advanced": true,
+      "options": [
+        "Educate/Inform",
+        "Entertain/Engage",
+        "Inspire/Motivate",
+        "Persuade/Convince",
+        "Promote a Product/Service",
+        "Drive SEO Traffic",
+        "Establish Thought Leadership",
+        "Other"
+      ]
+    },
+    {
+      "id": "purpose_other",
+      "text": "Please specify the content goal",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "purpose", "value": "Other" }
+    },
+    {
+      "id": "tone",
+      "text": "Select the desired tone/voice for the content",
+      "type": "multiselect",
+      "required": false,
+      "advanced": true,
+      "options": [
+        "Professional/Formal",
+        "Casual/Conversational",
+        "Friendly/Warm",
+        "Humorous/Playful",
+        "Serious/Academic",
+        "Technical/Analytical",
+        "Simple/Accessible",
+        "Inspirational/Uplifting",
+        "Other"
+      ],
+      "sampleAnswers": [
+        "Professional and informative",
+        "Casual, conversational"
+      ]
+    },
+    {
+      "id": "tone_other",
+      "text": "Specify any other tone or style",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "tone", "value": "Other" }
+    },
+    {
+      "id": "keywords",
+      "text": "List any specific keywords or key phrases to include (optional)",
+      "type": "text",
+      "required": false,
+      "advanced": true,
+      "allowMultiple": true,
+      "description": "Separate multiple keywords with commas",
+      "sampleAnswers": [
+        "AI, machine learning, patient data",
+        "budget travel, backpacking, cheap flights"
+      ]
+    },
+    {
+      "id": "exclude",
+      "text": "Any topics or angles to exclude? (optional)",
+      "type": "text",
+      "required": false,
+      "advanced": true,
+      "sampleAnswers": [
+        "Politics or controversial issues",
+        "Competitor product mentions",
+        "Basic how-to tutorials"
+      ]
+    },
+    {
+      "id": "num_ideas",
+      "text": "How many topic ideas do you need?",
+      "type": "number",
+      "required": false,
+      "min": 1,
+      "max": 10,
+      "default": 5
+    },
+    {
+      "id": "notes",
+      "text": "Any additional notes or context? (optional)",
+      "type": "textarea",
+      "required": false,
+      "advanced": true,
+      "sampleAnswers": [
+        "Our brand voice is playful, focus on advanced angles since basics are covered.",
+        "Audience is global, prefer topics with international examples."
+      ]
+    },
+  
+
+    // Variation A - End
+
+
+    // Variation B – Industry-First Flow (No specific subject provided):
+
+  
+    {
+      "id": "industry",
+      "text": "Select the industry or domain for the content ideas",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Technology",
+        "Healthcare",
+        "Finance",
+        "Education",
+        "Travel",
+        "Food",
+        "Fashion",
+        "Business",
+        "Marketing",
+        "Science",
+        "Sports",
+        "Lifestyle",
+        "Government",
+        "Other"
+      ]
+    },
+    {
+      "id": "industry_other",
+      "text": "Please specify the industry",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "industry", "value": "Other" }
+    },
+    {
+      "id": "focus",
+      "text": "Optionally, specify a particular topic or focus within this industry",
+      "type": "text",
+      "required": false,
+      "sampleAnswers": [
+        "AI applications for diagnostics",
+        "Mental health awareness in workplaces"
+      ]
+    },
+    {
+      "id": "content_type",
+      "text": "Select the content type/format",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Blog Post / Article",
+        "Social Media Post",
+        "Video Content",
+        "Podcast Episode",
+        "Infographic",
+        "E-book / Guide",
+        "Case Study",
+        "Whitepaper / Report",
+        "Email Newsletter",
+        "Presentation / Webinar",
+        "Press Release",
+        "Other"
+      ]
+    },
+    {
+      "id": "content_type_other",
+      "text": "Please specify the content format/type",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "content_type", "value": "Other" }
+    },
+    {
+      "id": "platform",
+      "text": "Which platform or channel will this content be published on?",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Facebook",
+        "Instagram",
+        "Twitter (X)",
+        "LinkedIn",
+        "TikTok",
+        "YouTube",
+        "Other"
+      ],
+      "dependsOn": { 
+        "id": "content_type", 
+        "valueIn": ["Social Media Post", "Video Content"] 
+      }
+    },
+    {
+      "id": "platform_other",
+      "text": "Please specify the platform/channel",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "platform", "value": "Other" }
+    },
+    {
+      "id": "audience",
+      "text": "Describe the target audience for this content (who will view/read it)",
+      "type": "text",
+      "required": false,
+      "advanced": true,
+      "sampleAnswers": [
+        "Small business owners in the retail sector",
+        "College students studying computer science",
+        "New parents researching baby care products"
+      ]
+    },
+    {
+      "id": "purpose",
+      "text": "What is the primary goal of this content?",
+      "type": "dropdown",
+      "required": false,
+      "advanced": true,
+      "options": [
+        "Educate/Inform",
+        "Entertain/Engage",
+        "Inspire/Motivate",
+        "Persuade/Convince",
+        "Promote a Product/Service",
+        "Drive SEO Traffic",
+        "Establish Thought Leadership",
+        "Other"
+      ]
+    },
+    {
+      "id": "purpose_other",
+      "text": "Please specify the content goal",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "purpose", "value": "Other" }
+    },
+    {
+      "id": "tone",
+      "text": "Choose the desired tone/voice for the content",
+      "type": "multiselect",
+      "required": false,
+      "advanced": true,
+      "options": [
+        "Professional/Formal",
+        "Casual/Conversational",
+        "Friendly/Warm",
+        "Humorous/Playful",
+        "Serious/Academic",
+        "Technical/Analytical",
+        "Simple/Accessible",
+        "Inspirational/Uplifting",
+        "Other"
+      ],
+      "sampleAnswers": [
+        "Formal and authoritative",
+        "Light-hearted and casual"
+      ]
+    },
+    {
+      "id": "tone_other",
+      "text": "Specify any other tone or style",
+      "type": "text",
+      "required": true,
+      "dependsOn": { "id": "tone", "value": "Other" }
+    },
+    {
+      "id": "keywords",
+      "text": "Any specific keywords to include? (optional)",
+      "type": "text",
+      "required": false,
+      "advanced": true,
+      "allowMultiple": true,
+      "description": "Separate multiple keywords with commas",
+      "sampleAnswers": [
+        "cybersecurity, data breach, encryption",
+        "vegan, plant-based, nutrition"
+      ]
+    },
+    {
+      "id": "exclude",
+      "text": "Topics or angles to avoid? (optional)",
+      "type": "text",
+      "required": false,
+      "advanced": true,
+      "sampleAnswers": [
+        "Last year's product line (legacy info)",
+        "Political or highly technical discussions"
+      ]
+    },
+    {
+      "id": "num_ideas",
+      "text": "How many content ideas would you like to generate?",
+      "type": "number",
+      "required": false,
+      "min": 1,
+      "max": 10,
+      "default": 5
+    },
+    {
+      "id": "notes",
+      "text": "Any additional notes or context? (optional)",
+      "type": "textarea",
+      "required": false,
+      "advanced": true,
+      "sampleAnswers": [
+        "Audience is global, so ensure topics have international appeal.",
+        "Prefer topics with a positive tone and recent trends."
+      ]
+    }
+
+    // Variation B - End
+  ]
+  
+  
