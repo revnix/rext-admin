@@ -2,22 +2,21 @@
 
 import {
   Bot,
-  CheckCircle,
   Copy,
   Edit2,
   Eye,
   Pause,
-  Play,
   Plus,
   Settings,
-  TrendingUp,
   Trash2,
+  TrendingUp,
   Zap,
 } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { DataTable, type RowAction } from "@/components/data-table";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import type { ModelData } from "@/types/data-table";
 
 export default function ModelsPage() {
   const breadcrumbs = [
@@ -278,53 +277,47 @@ export default function ModelsPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: ModelData) => {
     console.log("Viewing model:", row.name);
     // In a real app, you'd navigate to `/models/${row.id}`
   };
 
   // Custom row actions specific to AI models
-  const rowActions = [
+  const rowActions: RowAction<ModelData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View model:", row.name),
+      onClick: (row: ModelData) => console.log("View model:", row.name),
     },
     {
       label: "Configure",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Configure model:", row.name),
+      onClick: (row: ModelData) => console.log("Configure model:", row.name),
     },
     {
       label: "Test Model",
       icon: <Zap className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Test model:", row.name),
+      onClick: (row: ModelData) => console.log("Test model:", row.name),
     },
     {
       label: "View Analytics",
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View analytics:", row.name),
+      onClick: (row: ModelData) => console.log("View analytics:", row.name),
     },
     {
       label: "Duplicate Config",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Duplicate model:", row.name),
+      onClick: (row: ModelData) => console.log("Duplicate model:", row.name),
     },
     {
       label: "Edit Model",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit model:", row.name),
+      onClick: (row: ModelData) => console.log("Edit model:", row.name),
     },
     {
       label: "Pause/Resume",
       icon: <Pause className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: ModelData) =>
         console.log(
           row.status === "Paused" ? "Resume" : "Pause",
           "model:",
@@ -334,8 +327,7 @@ export default function ModelsPage() {
     {
       label: "Remove Model",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Remove model:", row.name),
+      onClick: (row: ModelData) => console.log("Remove model:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -346,9 +338,9 @@ export default function ModelsPage() {
       description="Configure and manage AI models, monitor performance, and optimize usage for your applications."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<ModelData>
         columns={columns}
-        data={modelsData}
+        data={modelsData as any}
         emptyTitle="No models configured"
         emptyDescription="Start by adding your first AI model or importing an existing configuration."
         emptyActions={emptyActions}

@@ -2,21 +2,19 @@
 
 import {
   AlertTriangle,
-  CheckCircle,
   Copy,
   Edit2,
   Eye,
-  Pause,
   Play,
   Plus,
   Settings,
-  Shield,
   Trash2,
   Zap,
 } from "lucide-react";
+import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import type { RuleData } from "@/types/data-table";
 
 export default function RulesPage() {
   const breadcrumbs = [
@@ -381,47 +379,42 @@ export default function RulesPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: RuleData) => {
     console.log("Viewing rule:", row.name);
     // In a real app, you'd navigate to `/rules/${row.id}`
   };
 
   // Custom row actions specific to rules
-  const rowActions = [
+  const rowActions: RowAction<RuleData>[] = [
     {
       label: "View Rule",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View rule:", row.name),
+      onClick: (row: RuleData) => console.log("View rule:", row.name),
     },
     {
       label: "Test Rule",
       icon: <Zap className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Test rule:", row.name),
+      onClick: (row: RuleData) => console.log("Test rule:", row.name),
     },
     {
       label: "Edit Rule",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit rule:", row.name),
+      onClick: (row: RuleData) => console.log("Edit rule:", row.name),
     },
     {
       label: "Duplicate Rule",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Duplicate rule:", row.name),
+      onClick: (row: RuleData) => console.log("Duplicate rule:", row.name),
     },
     {
       label: "Configure Rule",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Configure rule:", row.name),
+      onClick: (row: RuleData) => console.log("Configure rule:", row.name),
     },
     {
       label: "Pause/Resume",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: RuleData) =>
         console.log(
           row.status === "Paused" ? "Resume" : "Pause",
           "rule:",
@@ -431,14 +424,12 @@ export default function RulesPage() {
     {
       label: "View Logs",
       icon: <AlertTriangle className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View logs:", row.name),
+      onClick: (row: RuleData) => console.log("View logs:", row.name),
     },
     {
       label: "Delete Rule",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Delete rule:", row.name),
+      onClick: (row: RuleData) => console.log("Delete rule:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -449,9 +440,9 @@ export default function RulesPage() {
       description="Define and manage business rules, automation triggers, and conditional logic for your workflows."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<RuleData>
         columns={columns}
-        data={rulesData}
+        data={rulesData as any}
         emptyTitle="No rules created yet"
         emptyDescription="Start by creating your first business rule to automate workflows and processes."
         emptyActions={emptyActions}

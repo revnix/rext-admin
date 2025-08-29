@@ -15,7 +15,7 @@ interface EmptyStateAction {
 
 interface PlaceholderPageProps {
   columns: Column[];
-  data?: Record<string, any>[];
+  data?: Record<string, unknown>[];
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActions?: EmptyStateAction[];

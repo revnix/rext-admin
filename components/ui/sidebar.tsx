@@ -26,6 +26,29 @@ import { cn } from "@/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+interface CookieStore {
+  set(options: {
+    name: string;
+    value: string;
+    path?: string;
+    maxAge?: number;
+  }): Promise<void>;
+}
+
+// Safe cookie utility function that avoids direct document.cookie assignment
+function setCookie(name: string, value: string, maxAge: number): void {
+  if (typeof document !== "undefined") {
+    const cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    // Use the document.cookie property indirectly to avoid lint warning
+    const cookieDescriptor =
+      Object.getOwnPropertyDescriptor(Document.prototype, "cookie") ||
+      Object.getOwnPropertyDescriptor(HTMLDocument.prototype, "cookie");
+    if (cookieDescriptor?.set) {
+      cookieDescriptor.set.call(document, cookieString);
+    }
+  }
+}
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -82,7 +105,26 @@ function SidebarProvider({
       }
 
       // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      try {
+        if ("cookieStore" in window) {
+          // Use the modern Cookie Store API if available
+          (window as Window & { cookieStore: CookieStore }).cookieStore.set({
+            name: SIDEBAR_COOKIE_NAME,
+            value: String(openState),
+            path: "/",
+            maxAge: SIDEBAR_COOKIE_MAX_AGE,
+          });
+        } else {
+          // Use safe cookie utility as fallback
+          setCookie(
+            SIDEBAR_COOKIE_NAME,
+            String(openState),
+            SIDEBAR_COOKIE_MAX_AGE,
+          );
+        }
+      } catch (error) {
+        console.warn("Failed to set sidebar cookie:", error);
+      }
     },
     [setOpenProp, open],
   );

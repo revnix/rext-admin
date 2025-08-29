@@ -1,19 +1,11 @@
 "use client";
 
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Edit2,
-  Eye,
-  Lightbulb,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
+import { Edit2, Eye, Lightbulb, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { DataTable, type RowAction } from "@/components/data-table";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import type { IdeaData } from "@/types/data-table";
 
 export default function IdeasPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Ideas" }];
@@ -371,30 +363,27 @@ export default function IdeasPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: IdeaData) => {
     console.log("Navigating to idea:", row.name);
     // In a real app, you'd navigate to `/ideas/${row.id}`
   };
 
   // Custom row actions specific to ideas
-  const rowActions = [
+  const rowActions: RowAction<IdeaData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View idea:", row.name),
+      onClick: (row: IdeaData) => console.log("View idea:", row.name),
     },
     {
       label: "Edit Idea",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit idea:", row.name),
+      onClick: (row: IdeaData) => console.log("Edit idea:", row.name),
     },
     {
       label: "Delete Idea",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Delete idea:", row.name),
+      onClick: (row: IdeaData) => console.log("Delete idea:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -406,9 +395,9 @@ export default function IdeasPage() {
       breadcrumbs={breadcrumbs}
     >
       {/* Data Table */}
-      <DataTable
+      <DataTable<IdeaData>
         columns={columns}
-        data={ideasData}
+        data={ideasData as any}
         emptyTitle="No ideas yet"
         emptyDescription="Start building your idea collection. Add your first idea or import existing concepts."
         emptyActions={emptyActions}

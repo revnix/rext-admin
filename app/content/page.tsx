@@ -2,28 +2,20 @@
 
 import {
   Calendar,
-  CheckCircle,
-  Clock,
   Copy,
   Edit2,
-  Eye,
   ExternalLink,
+  Eye,
   FileText,
-  Hash,
-  Image,
-  MessageSquare,
-  Play,
   Plus,
-  Send,
   Share2,
   Trash2,
-  Video,
-  Zap,
 } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { DataTable, type RowAction } from "@/components/data-table";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import type { ContentData } from "@/types/data-table";
 
 export default function ContentPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Content" }];
@@ -399,54 +391,49 @@ export default function ContentPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: ContentData) => {
     console.log("Viewing content:", row.title);
     // In a real app, you'd navigate to `/content/${row.id}`
   };
 
   // Custom row actions specific to content
-  const rowActions = [
+  const rowActions: RowAction<ContentData>[] = [
     {
       label: "View Content",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View content:", row.title),
+      onClick: (row: ContentData) => console.log("View content:", row.title),
     },
     {
       label: "Edit Content",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit content:", row.title),
+      onClick: (row: ContentData) => console.log("Edit content:", row.title),
     },
     {
       label: "Duplicate Content",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: ContentData) =>
         console.log("Duplicate content:", row.title),
     },
     {
       label: "Schedule/Publish",
       icon: <Calendar className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: ContentData) =>
         console.log("Schedule content:", row.title),
     },
     {
       label: "Share Content",
       icon: <Share2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Share content:", row.title),
+      onClick: (row: ContentData) => console.log("Share content:", row.title),
     },
     {
       label: "View Analytics",
       icon: <ExternalLink className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View analytics:", row.title),
+      onClick: (row: ContentData) => console.log("View analytics:", row.title),
     },
     {
       label: "Delete Content",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Delete content:", row.title),
+      onClick: (row: ContentData) => console.log("Delete content:", row.title),
       variant: "destructive" as const,
     },
   ];
@@ -457,9 +444,9 @@ export default function ContentPage() {
       description="View and manage all content generated through your automated flows and processes."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<ContentData>
         columns={columns}
-        data={contentData}
+        data={contentData as any}
         emptyTitle="No content available"
         emptyDescription="Content will be automatically generated and managed through your configured flows."
         emptyActions={emptyActions}

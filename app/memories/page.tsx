@@ -4,24 +4,19 @@ import {
   Archive,
   Brain,
   CheckCircle,
-  Clock,
   Copy,
   Edit2,
   Eye,
-  FileText,
-  Hash,
-  Plus,
   RefreshCw,
   Search,
   Star,
-  Tag,
   Trash2,
   XCircle,
-  Zap,
 } from "lucide-react";
+import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import type { MemoryData } from "@/types/data-table";
 
 export default function MemoriesPage() {
   const breadcrumbs = [
@@ -369,61 +364,53 @@ export default function MemoriesPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: MemoryData) => {
     console.log("Viewing memory:", row.title);
     // In a real app, you'd navigate to `/memories/${row.id}`
   };
 
   // Custom row actions specific to memories
-  const rowActions = [
+  const rowActions: RowAction<MemoryData>[] = [
     {
       label: "View Memory",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View memory:", row.title),
+      onClick: (row: MemoryData) => console.log("View memory:", row.title),
     },
     {
       label: "Approve Memory",
       icon: <CheckCircle className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Approve memory:", row.title),
+      onClick: (row: MemoryData) => console.log("Approve memory:", row.title),
     },
     {
       label: "Reject Memory",
       icon: <XCircle className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Reject memory:", row.title),
+      onClick: (row: MemoryData) => console.log("Reject memory:", row.title),
       variant: "destructive" as const,
     },
     {
       label: "Edit Memory",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit memory:", row.title),
+      onClick: (row: MemoryData) => console.log("Edit memory:", row.title),
     },
     {
       label: "Duplicate Memory",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Duplicate memory:", row.title),
+      onClick: (row: MemoryData) => console.log("Duplicate memory:", row.title),
     },
     {
       label: "Add to Favorites",
       icon: <Star className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Favorite memory:", row.title),
+      onClick: (row: MemoryData) => console.log("Favorite memory:", row.title),
     },
     {
       label: "View Source",
       icon: <Search className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View source:", row.title),
+      onClick: (row: MemoryData) => console.log("View source:", row.title),
     },
     {
       label: "Delete Memory",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Delete memory:", row.title),
+      onClick: (row: MemoryData) => console.log("Delete memory:", row.title),
       variant: "destructive" as const,
     },
   ];
@@ -434,9 +421,9 @@ export default function MemoriesPage() {
       description="View and manage auto-generated memories from your flow executions and AI interactions. Approve or reject memories to control AI learning."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<MemoryData>
         columns={columns}
-        data={memoriesData}
+        data={memoriesData as any}
         emptyTitle="No memories generated yet"
         emptyDescription="Memories will be automatically generated and stored when you run flows that process information and create contextual insights."
         emptyActions={emptyActions}

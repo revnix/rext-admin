@@ -1,24 +1,20 @@
 "use client";
 
 import {
-  AlertTriangle,
-  CheckCircle,
-  Clock,
   Edit2,
   Eye,
+  Pause,
   Play,
   Plus,
-  Pause,
   RotateCcw,
   Trash2,
-  User,
   Workflow,
-  Zap,
 } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { DataTable, type RowAction } from "@/components/data-table";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import type { FlowData } from "@/types/data-table";
 
 export default function FlowsPage() {
   const breadcrumbs = [{ label: "Create", href: "#" }, { label: "Flows" }];
@@ -347,35 +343,32 @@ export default function FlowsPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: FlowData) => {
     console.log("Navigating to flow:", row.name);
     // In a real app, you'd navigate to `/flows/${row.id}`
   };
 
   // Custom row actions specific to flows
-  const rowActions = [
+  const rowActions: RowAction<FlowData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View flow:", row.name),
+      onClick: (row: FlowData) => console.log("View flow:", row.name),
     },
     {
       label: "Run Flow",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Running flow:", row.name),
+      onClick: (row: FlowData) => console.log("Running flow:", row.name),
     },
     {
       label: "Edit Flow",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit flow:", row.name),
+      onClick: (row: FlowData) => console.log("Edit flow:", row.name),
     },
     {
       label: "Pause/Resume",
       icon: <Pause className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: FlowData) =>
         console.log(
           row.status === "Paused" ? "Resuming" : "Pausing",
           "flow:",
@@ -385,14 +378,12 @@ export default function FlowsPage() {
     {
       label: "Duplicate Flow",
       icon: <RotateCcw className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Duplicate flow:", row.name),
+      onClick: (row: FlowData) => console.log("Duplicate flow:", row.name),
     },
     {
       label: "Delete Flow",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Delete flow:", row.name),
+      onClick: (row: FlowData) => console.log("Delete flow:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -403,9 +394,9 @@ export default function FlowsPage() {
       description="Create and manage automated workflows to streamline your processes and boost productivity."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<FlowData>
         columns={columns}
-        data={flowsData}
+        data={flowsData as any}
         emptyTitle="No flows created yet"
         emptyDescription="Get started by creating your first automated workflow or importing a template."
         emptyActions={emptyActions}

@@ -1,23 +1,21 @@
 "use client";
 
 import {
-  BookOpen,
   Copy,
   Edit2,
   Eye,
   FileText,
-  Hash,
   MessageSquare,
   Play,
   Plus,
   Star,
-  Tag,
   Trash2,
   TrendingUp,
 } from "lucide-react";
+import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import type { PromptTemplateData } from "@/types/data-table";
 
 export default function PromptTemplatesPage() {
   const breadcrumbs = [
@@ -601,59 +599,59 @@ Compliance:
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: PromptTemplateData) => {
     console.log("Viewing template:", row.name);
     // In a real app, you'd navigate to `/prompt-templates/${row.id}`
   };
 
   // Custom row actions specific to prompt templates
-  const rowActions = [
+  const rowActions: RowAction<PromptTemplateData>[] = [
     {
       label: "View Template",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("View template:", row.name),
     },
     {
       label: "Test Template",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("Test template:", row.name),
     },
     {
       label: "Duplicate Template",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("Duplicate template:", row.name),
     },
     {
       label: "View Analytics",
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("View analytics:", row.name),
     },
     {
       label: "Add to Favorites",
       icon: <Star className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("Favorite template:", row.name),
     },
     {
       label: "Edit Template",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("Edit template:", row.name),
     },
     {
       label: "Export Template",
       icon: <FileText className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("Export template:", row.name),
     },
     {
       label: "Delete Template",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: PromptTemplateData) =>
         console.log("Delete template:", row.name),
       variant: "destructive" as const,
     },
@@ -665,9 +663,9 @@ Compliance:
       description="Create, manage, and optimize AI prompt templates for consistent and effective interactions."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<PromptTemplateData>
         columns={columns}
-        data={promptTemplatesData}
+        data={promptTemplatesData as any}
         emptyTitle="No prompt templates created"
         emptyDescription="Build your first prompt template to improve AI interaction consistency and effectiveness."
         emptyActions={emptyActions}

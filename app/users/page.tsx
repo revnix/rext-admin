@@ -2,28 +2,22 @@
 
 import {
   Calendar,
-  CheckCircle,
   Copy,
-  Crown,
   Edit2,
   Eye,
   Lock,
   Mail,
   Plus,
-  Settings,
   Shield,
-  Trash2,
-  User,
-  UserCheck,
   UserMinus,
   UserPlus,
   Users,
-  XCircle,
 } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { DataTable, type RowAction } from "@/components/data-table";
+import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import type { UserData } from "@/types/data-table";
 
 export default function UsersPage() {
   const breadcrumbs = [
@@ -466,59 +460,52 @@ export default function UsersPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: UserData) => {
     console.log("Viewing user:", row.name);
     // In a real app, you'd navigate to `/users/${row.id}`
   };
 
   // Custom row actions specific to users
-  const rowActions = [
+  const rowActions: RowAction<UserData>[] = [
     {
       label: "View Profile",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View user:", row.name),
+      onClick: (row: UserData) => console.log("View user:", row.name),
     },
     {
       label: "Edit User",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Edit user:", row.name),
+      onClick: (row: UserData) => console.log("Edit user:", row.name),
     },
     {
       label: "View Activity",
       icon: <Calendar className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View activity:", row.name),
+      onClick: (row: UserData) => console.log("View activity:", row.name),
     },
     {
       label: "Permissions",
       icon: <Shield className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Manage permissions:", row.name),
+      onClick: (row: UserData) => console.log("Manage permissions:", row.name),
     },
     {
       label: "Reset Password",
       icon: <Lock className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Reset password:", row.name),
+      onClick: (row: UserData) => console.log("Reset password:", row.name),
     },
     {
       label: "Send Message",
       icon: <Mail className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Send message:", row.name),
+      onClick: (row: UserData) => console.log("Send message:", row.name),
     },
     {
       label: "Duplicate User",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("Duplicate user:", row.name),
+      onClick: (row: UserData) => console.log("Duplicate user:", row.name),
     },
     {
       label: "Suspend/Unsuspend",
       icon: <UserMinus className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: UserData) =>
         console.log(
           row.status === "Suspended" ? "Unsuspend" : "Suspend",
           "user:",
@@ -534,9 +521,9 @@ export default function UsersPage() {
       description="Manage user accounts, roles, permissions, and access control for your organization."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<UserData>
         columns={columns}
-        data={usersData}
+        data={usersData as any}
         emptyTitle="No users found"
         emptyDescription="Start by adding your first user or inviting team members to join your organization."
         emptyActions={emptyActions}

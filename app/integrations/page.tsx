@@ -97,7 +97,7 @@ export default function IntegrationsPage() {
                   <div className="space-y-2">
                     {section.actions.map((action, index) => (
                       <div
-                        key={index}
+                        key={`${section.title}-${action}-${index}`}
                         className="flex items-center gap-2 text-sm text-muted-foreground"
                       >
                         <div className="w-1 h-1 rounded-full bg-muted-foreground" />

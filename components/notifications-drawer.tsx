@@ -2,15 +2,17 @@
 
 import {
   AlertTriangle,
+  Check,
   CheckCircle,
   Info,
   Mail,
   Settings,
   User,
-  Check,
 } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -18,8 +20,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 
 interface NotificationAction {
   label: string;
@@ -349,7 +349,7 @@ export function NotificationsDrawer({
                         <div className="flex flex-wrap gap-2 mb-2">
                           {notification.actions.map((action, index) => (
                             <Button
-                              key={index}
+                              key={`${action.label}-${index}`}
                               variant={action.variant || "outline"}
                               size="sm"
                               onClick={action.onClick}

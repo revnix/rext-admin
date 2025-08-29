@@ -1,25 +1,21 @@
 "use client";
 
 import {
-  AlertTriangle,
-  CheckCircle,
   Copy,
-  Edit2,
   ExternalLink,
   Eye,
   Link as LinkIcon,
   Play,
-  Plus,
   RefreshCw,
   Settings,
   Share2,
-  Trash2,
   TrendingUp,
   Unlink,
 } from "lucide-react";
+import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import type { SocialAccountData } from "@/types/data-table";
 
 export default function SocialAccountsPage() {
   const breadcrumbs = [
@@ -391,53 +387,53 @@ export default function SocialAccountsPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: SocialAccountData) => {
     console.log("Viewing account:", row.platform, row.account);
     // In a real app, you'd navigate to `/social-accounts/${row.id}`
   };
 
   // Custom row actions specific to social accounts
-  const rowActions = [
+  const rowActions: RowAction<SocialAccountData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("View account:", row.platform, row.account),
     },
     {
       label: "View Analytics",
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("View analytics:", row.platform),
     },
     {
       label: "Test Connection",
       icon: <RefreshCw className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("Test connection:", row.platform),
     },
     {
       label: "Edit Settings",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("Edit settings:", row.platform),
     },
     {
       label: "View Posts",
       icon: <ExternalLink className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("View posts:", row.platform),
     },
     {
       label: "Duplicate Config",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("Duplicate config:", row.platform),
     },
     {
       label: "Pause/Resume",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log(
           row.status === "Paused" ? "Resume" : "Pause",
           "account:",
@@ -447,7 +443,7 @@ export default function SocialAccountsPage() {
     {
       label: "Disconnect",
       icon: <Unlink className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: SocialAccountData) =>
         console.log("Disconnect account:", row.platform),
       variant: "destructive" as const,
     },
@@ -459,9 +455,9 @@ export default function SocialAccountsPage() {
       description="Connect and manage your social media accounts for seamless content publishing and engagement."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<SocialAccountData>
         columns={columns}
-        data={socialAccountsData}
+        data={socialAccountsData as any}
         emptyTitle="No social accounts connected"
         emptyDescription="Start by connecting your first social media account to begin publishing and managing content."
         emptyActions={emptyActions}

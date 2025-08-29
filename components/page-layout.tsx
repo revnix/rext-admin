@@ -1,12 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useState, useEffect } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { QuickAddDropdown } from "@/components/quick-add-dropdown";
-import { NotificationsDrawer } from "@/components/notifications-drawer";
-import { SearchDialog } from "@/components/search-dialog";
 import { Bell } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { NotificationsDrawer } from "@/components/notifications-drawer";
+import { QuickAddDropdown } from "@/components/quick-add-dropdown";
+import { SearchDialog } from "@/components/search-dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -81,7 +81,10 @@ export function PageLayout({
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((breadcrumb, index) => (
-                    <div key={index} className="flex items-center">
+                    <div
+                      key={`${breadcrumb.label}-${index}`}
+                      className="flex items-center"
+                    >
                       {index > 0 && (
                         <BreadcrumbSeparator className="hidden md:block" />
                       )}

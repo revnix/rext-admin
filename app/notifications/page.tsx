@@ -3,24 +3,18 @@
 import {
   AlertCircle,
   Bell,
-  CheckCircle,
   Copy,
   Edit2,
   Eye,
-  Mail,
   MessageSquare,
-  Phone,
   Plus,
   Settings,
-  Slack,
-  Smartphone,
-  Trash2,
   Volume2,
-  Webhook,
 } from "lucide-react";
+import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import type { NotificationData } from "@/types/data-table";
 
 export default function NotificationsPage() {
   const breadcrumbs = [
@@ -403,53 +397,52 @@ export default function NotificationsPage() {
   );
 
   // Row click handler
-  const handleRowClick = (row: Record<string, any>) => {
+  const handleRowClick = (row: NotificationData) => {
     console.log("Viewing channel:", row.name);
     // In a real app, you'd navigate to `/notifications/${row.id}`
   };
 
   // Custom row actions specific to notification channels
-  const rowActions = [
+  const rowActions: RowAction<NotificationData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: NotificationData) =>
         console.log("View channel:", row.name),
     },
     {
       label: "Test Channel",
       icon: <Volume2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: NotificationData) =>
         console.log("Test channel:", row.name),
     },
     {
       label: "Configure",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: NotificationData) =>
         console.log("Configure channel:", row.name),
     },
     {
       label: "View Logs",
       icon: <MessageSquare className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
-        console.log("View logs:", row.name),
+      onClick: (row: NotificationData) => console.log("View logs:", row.name),
     },
     {
       label: "Duplicate Channel",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: NotificationData) =>
         console.log("Duplicate channel:", row.name),
     },
     {
       label: "Edit Channel",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: NotificationData) =>
         console.log("Edit channel:", row.name),
     },
     {
       label: "Disable Channel",
       icon: <AlertCircle className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) =>
+      onClick: (row: NotificationData) =>
         console.log("Disable channel:", row.name),
       variant: "destructive" as const,
     },
@@ -461,9 +454,9 @@ export default function NotificationsPage() {
       description="Configure notification channels for Human-in-the-Loop workflow interactions and alerts."
       breadcrumbs={breadcrumbs}
     >
-      <DataTable
+      <DataTable<NotificationData>
         columns={columns}
-        data={notificationsData}
+        data={notificationsData as any}
         emptyTitle="No notification channels configured"
         emptyDescription="Set up notification channels to receive alerts when flows require human intervention or approval."
         emptyActions={emptyActions}

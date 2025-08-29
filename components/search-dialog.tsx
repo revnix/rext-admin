@@ -1,6 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  Archive,
+  Bell,
+  Bot,
+  FileText,
+  Lightbulb,
+  Link,
+  MessageSquare,
+  Settings,
+  Share2,
+  Users,
+  Workflow,
+  Zap,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -16,20 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Archive,
-  Bell,
-  Bot,
-  FileText,
-  Lightbulb,
-  Link,
-  MessageSquare,
-  Settings,
-  Share2,
-  Users,
-  Workflow,
-  Zap,
-} from "lucide-react";
 
 interface SearchResult {
   id: string;
