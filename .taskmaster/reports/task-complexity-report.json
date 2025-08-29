@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2025-08-29T17:37:29.362Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Setup TypeScript Foundation and Core Types",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the TypeScript foundation task into subtasks covering: 1) Core data interfaces (TopicBuilderFormData, GeneratedTopic), 2) Enum type definitions, 3) API request/response type interfaces, and 4) Component prop type definitions. For each subtask, specify implementation details and test criteria.",
+			"reasoning": "This task requires creating comprehensive TypeScript interfaces that will be used throughout the application. While not algorithmically complex, it requires careful planning to ensure the type system properly represents all data structures and relationships. The interfaces need to account for form state, API interactions, and UI components, making it moderately complex."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Create Utility Functions and Data Layer",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide the utility functions and data layer task into subtasks: 1) YMYL detection implementation, 2) Industry-audience mapping functions, 3) Form validation utilities, 4) Data structure creation for options/selections, and 5) Integration tests for utility functions. For each subtask, include implementation details and test cases.",
+			"reasoning": "This task involves creating multiple utility functions with business logic and comprehensive data structures. The complexity comes from implementing domain-specific logic (YMYL detection, audience mapping) and ensuring the data structures are complete and accurate. The form validation function needs to handle multiple steps with different validation rules, adding to the complexity."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement Wizard Component Architecture",
+			"complexityScore": 8,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break down the wizard component architecture into subtasks: 1) Main wizard container and navigation, 2) Flow selection and industry steps, 3) Audience and content format steps, 4) Goals and advanced option steps, 5) Review and generation steps, and 6) Form state management hook. For each subtask, detail the component structure, state management, and interaction patterns.",
+			"reasoning": "This task involves building a complex multi-step wizard with state management across 8 different steps. It requires implementing progressive disclosure patterns, conditional rendering based on previous selections, and maintaining form state throughout the flow. The interdependencies between steps and the need for a cohesive user experience make this a highly complex task."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Develop AI Service Integration Layer",
+			"complexityScore": 9,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Divide the AI service integration task into subtasks: 1) OpenAI API client implementation, 2) Groq API fallback integration, 3) Prompt template generation from form data, 4) Response parsing and error handling, 5) API route implementation, and 6) Rate limiting and retry logic. For each subtask, include implementation details and error handling strategies.",
+			"reasoning": "This task involves complex API integrations with multiple AI services, sophisticated prompt engineering, error handling, and fallback mechanisms. It requires building structured prompts from form data, parsing AI responses, implementing retry logic, and handling rate limiting. The complexity is high due to the need to handle various edge cases and ensure reliable AI service communication."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Build Topic Display and Management Components",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down the topic display and management components into subtasks: 1) TopicCard component for individual topics, 2) TopicList container with layout management, 3) Topic filtering and sorting controls, 4) Topic action buttons and handlers, and 5) Local storage integration for saved topics. For each subtask, detail the component structure, props, and state management.",
+			"reasoning": "This task involves creating multiple UI components for displaying and managing generated topics. It requires implementing card layouts, list containers, filtering controls, and local storage integration. The complexity comes from the need to handle various user interactions, implement sorting and filtering logic, and manage topic state across components."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement Form Dependencies and Dynamic Behavior",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide the form dependencies task into subtasks: 1) Industry-dependent audience options implementation, 2) Conditional field rendering based on flow type, 3) Content format and platform dependencies, 4) YMYL detection and special handling, and 5) Form state update optimizations. For each subtask, detail the implementation approach and test scenarios.",
+			"reasoning": "This task involves implementing complex form dependencies and dynamic behavior. It requires creating relationships between different form fields, conditional rendering based on user selections, and special handling for certain industries. The complexity comes from managing these interdependencies while maintaining a smooth user experience and ensuring form state remains consistent."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Create Advanced Topic Scoring and Filtering",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the topic scoring and filtering system into subtasks: 1) Score visualization components, 2) Sorting implementation by different metrics, 3) Tag and audience filtering functionality, and 4) Combined filtering with multiple criteria. For each subtask, detail the component structure, filtering logic, and user interaction patterns.",
+			"reasoning": "This task involves implementing advanced filtering and sorting capabilities for generated topics. It requires creating score visualizations, implementing multiple sorting options, and building a flexible filtering system. The complexity comes from handling combined filters, maintaining performance with large topic lists, and creating an intuitive user interface for these features."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Topic Export and Management System",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Divide the topic export and management system into subtasks: 1) JSON and CSV export functionality, 2) Topic saving and organization features, 3) Bulk selection and action implementation, and 4) Topic editing capabilities. For each subtask, detail the implementation approach, user interactions, and data handling.",
+			"reasoning": "This task involves creating functionality for exporting and managing generated topics. It requires implementing file export in multiple formats, topic organization features, bulk actions, and editing capabilities. The complexity is moderate, focusing on data transformation for exports and implementing a clean user interface for topic management."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Implement Error Handling and Loading States",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the error handling and loading states task into subtasks: 1) Loading state components and animations, 2) Error boundary implementation, 3) API error handling and retry logic, and 4) User-friendly error messages and recovery options. For each subtask, detail the implementation approach and user experience considerations.",
+			"reasoning": "This task involves creating comprehensive error handling and loading states throughout the application. It requires implementing loading indicators, error boundaries, retry logic, and user-friendly error messages. The complexity is moderate, focusing on creating a robust error handling system that provides good user feedback and recovery options."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Implement Accessibility and Performance Optimizations",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide the accessibility and performance optimizations task into subtasks: 1) Keyboard navigation implementation, 2) ARIA attributes and roles, 3) Component rendering optimizations, 4) Responsive design for mobile devices, and 5) Accessibility testing and fixes. For each subtask, detail the implementation approach and success criteria.",
+			"reasoning": "This task involves enhancing the application with accessibility features and performance optimizations. It requires implementing keyboard navigation, proper ARIA attributes, component optimizations, and responsive design. The complexity is high due to the need to ensure accessibility across all components while maintaining performance, requiring deep knowledge of both accessibility standards and React optimization techniques."
+		}
+	]
+}
