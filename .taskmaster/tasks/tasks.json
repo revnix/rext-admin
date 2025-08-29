@@ -10,7 +10,44 @@
         "priority": "high",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Core Data Interfaces",
+            "description": "Implement the primary data structure interfaces for the Topic Builder application",
+            "dependencies": [],
+            "details": "Create `/types/topic-builder.ts` with the following interfaces:\n\n1. `TopicBuilderFormData` interface with all form fields including flowType, industry, subject, content_type, platform, audience, purpose, tone, keywords, exclude, num_ideas, region, language, and is_ymyl\n2. `GeneratedTopic` interface with fields for id, title, angle, channel_fit, audience_fit, why_it_works, scores (relevance, freshness, novelty), and tags\n3. Add proper JSDoc comments for each interface\n4. Ensure all optional fields are properly marked with the `?` operator\n\nExample implementation for the core interfaces should match the provided example in the parent task.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Define Enum Type Definitions",
+            "description": "Create TypeScript type definitions for all enums used in the Topic Builder",
+            "dependencies": [],
+            "details": "In the same `/types/topic-builder.ts` file:\n\n1. Define all enum types as TypeScript union types:\n   - `ContentType` (blog-post, social-media, video-content, etc.)\n   - `Platform` (website, linkedin, twitter, etc.)\n   - `ReaderLevel` (beginner, intermediate, expert)\n   - `FlowType` (subject-first, industry-first)\n   - `ToneType` (professional, casual, authoritative, etc.)\n   - `PurposeType` (inform, persuade, entertain, etc.)\n2. Create constant arrays of all possible values for each enum type for use in form options\n3. Add type guards for runtime type checking where needed\n4. Ensure all enum types are exported for use throughout the application",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement API Request/Response Type Interfaces",
+            "description": "Create TypeScript interfaces for all API interactions in the Topic Builder",
+            "dependencies": [],
+            "details": "Create `/types/api.ts` with the following interfaces:\n\n1. `TopicGenerationRequest` interface extending TopicBuilderFormData with any additional API-specific fields\n2. `TopicGenerationResponse` interface containing an array of GeneratedTopic objects and metadata\n3. `TopicRegenerationRequest` interface for requesting regeneration of specific topics\n4. `ErrorResponse` interface for standardized API error handling\n5. `ApiStatus` type for tracking API request states (idle, loading, success, error)\n\nExample implementation:\n```typescript\nexport interface TopicGenerationRequest extends TopicBuilderFormData {\n  session_id?: string;\n}\n\nexport interface TopicGenerationResponse {\n  topics: GeneratedTopic[];\n  metadata: {\n    total_generated: number;\n    generation_time: number;\n  };\n}\n```",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Define Component Prop Type Definitions",
+            "description": "Create TypeScript interfaces for React component props in the Topic Builder",
+            "dependencies": [],
+            "details": "Create `/types/components.ts` with the following interfaces:\n\n1. Form component props:\n   - `TopicBuilderFormProps` for the main form component\n   - `FormStepProps` for individual wizard steps\n   - `FormNavigationProps` for navigation controls\n\n2. Results component props:\n   - `TopicResultsProps` for the results container\n   - `TopicCardProps` for individual topic cards\n   - `TopicFilterProps` for filtering controls\n   - `TopicSortProps` for sorting controls\n\n3. Common component props:\n   - `ButtonProps` extending HTML button props with custom properties\n   - `InputProps` for custom form inputs\n   - `SelectProps` for dropdown selects\n\nEnsure all component props include proper event handler typings and references to the core data interfaces where appropriate.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 2,
@@ -23,7 +60,53 @@
           1
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement YMYL Detection Functionality",
+            "description": "Create the detectYMYL function that identifies if an industry falls under Your Money Your Life category",
+            "dependencies": [],
+            "details": "1. Create the `/lib/topic-builder-utils.ts` file\n2. Implement the `detectYMYL(industry: string): boolean` function\n3. Define a comprehensive list of YMYL industries in `/data/topic-builder-options.ts`\n4. Include industries like healthcare, finance, legal, insurance, etc.\n5. Add unit tests to verify detection works correctly for both YMYL and non-YMYL industries\n6. Handle edge cases like case sensitivity and partial matches",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Develop Industry-Audience Mapping System",
+            "description": "Create the getAudienceForIndustry function and supporting data structures for mapping industries to relevant audience personas",
+            "dependencies": [],
+            "details": "1. Implement `getAudienceForIndustry(industry: string): string[]` in `/lib/topic-builder-utils.ts`\n2. Create comprehensive `industryAudienceMap` object in `/data/topic-builder-options.ts`\n3. Map at least 15-20 industries to their relevant audience personas\n4. Include fallback handling for unknown industries\n5. Add unit tests to verify correct audience mapping\n6. Ensure the function handles case sensitivity and returns empty array for invalid inputs",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Build Form Validation Utilities",
+            "description": "Implement the validateFormStep function to handle validation logic for each step of the Topic Builder form",
+            "dependencies": [],
+            "details": "1. Create `validateFormStep(step: number, data: Partial<TopicBuilderFormData>): boolean` in `/lib/topic-builder-utils.ts`\n2. Implement validation logic for each form step (flow selection, industry/subject, audience, content type, etc.)\n3. Handle different validation rules based on the selected flow type\n4. Add comprehensive error checking for required fields\n5. Write unit tests with valid and invalid data for each step\n6. Include validation for interdependent fields (e.g., subject relevance to industry)",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Comprehensive Data Structures",
+            "description": "Develop the data option sets in topic-builder-options.ts with all necessary selection options for the form",
+            "dependencies": [],
+            "details": "1. Create `/data/topic-builder-options.ts` file\n2. Implement the following data structures:\n   - Industry options with categories\n   - Content types (blog post, white paper, etc.)\n   - Platform options (WordPress, Medium, etc.)\n   - Tone options (professional, casual, etc.)\n   - Purpose options (educate, persuade, etc.)\n   - Reader level options (beginner, intermediate, expert)\n3. Structure data as typed arrays or objects with value/label pairs\n4. Add appropriate TypeScript types for all data structures\n5. Ensure comprehensive coverage of options as specified in the PRD",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Develop Integration Tests for Utility Functions",
+            "description": "Create comprehensive tests to verify the integration between utility functions and data structures",
+            "dependencies": [],
+            "details": "1. Create a test file for integration testing of utility functions\n2. Test the integration between `detectYMYL` and the YMYL industries list\n3. Verify `getAudienceForIndustry` correctly uses the industry-audience mapping\n4. Test `validateFormStep` with complete form data objects\n5. Create test cases that simulate real user flows through the form\n6. Test edge cases like partial form completion and invalid data combinations\n7. Verify that utility functions handle all data options correctly\n8. Document any discovered issues or edge cases",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 3,
@@ -37,7 +120,62 @@
           2
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Main Wizard Container and Navigation",
+            "description": "Create the main wizard container component and implement step navigation with progress tracking",
+            "dependencies": [],
+            "details": "1. Create the main wizard container in `/app/ideas/create/page.tsx`\n2. Implement the wizard header with progress indicator\n3. Create the navigation controls (previous/next buttons)\n4. Add step validation before navigation\n5. Implement progress tracking visualization\n6. Create a responsive container layout for all steps",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Flow Selection and Industry Steps",
+            "description": "Create the first two step components of the wizard: flow selection and industry selection",
+            "dependencies": [],
+            "details": "1. Create `FlowSelectionStep.tsx` with options for subject-first and industry-first flows\n2. Implement `IndustryStep.tsx` with industry dropdown selection\n3. Add conditional subject input field based on flow type\n4. Implement validation for both steps\n5. Create industry data structure in `/data/topic-builder-options.ts`\n6. Add smooth transitions between these initial steps",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Audience and Content Format Steps",
+            "description": "Create the audience selection and content format selection step components",
+            "dependencies": [],
+            "details": "1. Create `AudienceStep.tsx` with audience selection options\n2. Implement `ContentFormatStep.tsx` with content type and platform selection\n3. Add conditional rendering of audience options based on selected industry\n4. Implement platform-specific content format suggestions\n5. Add validation for both steps\n6. Ensure proper state updates when selections change",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Goals and Advanced Options Steps",
+            "description": "Create the goals setting and advanced options step components",
+            "dependencies": [],
+            "details": "1. Create `GoalsStep.tsx` with content purpose and tone selection\n2. Implement `AdvancedStep.tsx` with keywords, exclusions, and preferences\n3. Add tone selection with preview examples\n4. Implement keyword input with tags or chips UI\n5. Create exclusion patterns input with validation\n6. Add advanced preference toggles with explanations",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Review and Generation Steps",
+            "description": "Create the final review summary and generation result step components",
+            "dependencies": [],
+            "details": "1. Create `ReviewStep.tsx` with summary of all user selections\n2. Implement `GenerationStep.tsx` with loading state and results display\n3. Add edit capabilities from the review step to jump back to specific steps\n4. Create a visually appealing summary layout with sections for each step\n5. Implement loading animations for the generation step\n6. Add result display with options to regenerate or export",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Implement Form State Management Hook",
+            "description": "Create a custom hook to manage the wizard's form state across all steps",
+            "dependencies": [],
+            "details": "1. Create `/hooks/use-topic-builder.ts` custom hook\n2. Implement form state management with TypeScript interfaces\n3. Add validation functions for each step\n4. Create step navigation logic with validation checks\n5. Implement conditional field logic based on previous selections\n6. Add state persistence (optional: using localStorage) to prevent data loss on refresh",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 4,
@@ -51,7 +189,76 @@
           2
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement OpenAI API Client",
+            "description": "Create the OpenAI API client implementation for generating topics",
+            "dependencies": [],
+            "details": "1. Install the `openai` npm package\n2. Create `/lib/ai-service.ts` file with OpenAI client initialization\n3. Implement the `generateTopicsWithAI` function using OpenAI's chat completions API\n4. Configure the model, temperature, and response format settings\n5. Parse and validate the API response\n6. Add proper error handling with informative error messages\n7. Implement environment variable configuration for API keys",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Develop Groq API Fallback Integration",
+            "description": "Implement Groq API as a fallback option when OpenAI fails",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "1. Install the Groq API client library\n2. Create the `generateTopicsWithGroq` function in `/lib/ai-service.ts`\n3. Configure Groq API with appropriate models and parameters\n4. Ensure response format matches OpenAI's structure for consistency\n5. Implement proper error handling specific to Groq API\n6. Add environment variable configuration for Groq API keys\n7. Create a seamless fallback mechanism from OpenAI to Groq",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Create Prompt Template Generator",
+            "description": "Implement the prompt template generation from form data",
+            "dependencies": [],
+            "details": "1. Create the `buildPromptFromFormData` function in `/lib/ai-service.ts`\n2. Implement different prompt structures based on flow type (subject-first vs. industry-first)\n3. Include all relevant form fields in the prompt (industry, content type, audience, purpose, tone)\n4. Add optional fields handling (keywords, exclusions)\n5. Structure the prompt to guide the AI to return properly formatted JSON\n6. Optimize prompts for different AI models (OpenAI vs Groq)\n7. Add prompt validation to ensure quality",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Response Parsing and Error Handling",
+            "description": "Create robust response parsing and error handling for AI services",
+            "dependencies": [
+              "4.1",
+              "4.2"
+            ],
+            "details": "1. Implement JSON parsing with error handling for malformed responses\n2. Create a standardized response format for both AI services\n3. Add validation for the parsed response structure\n4. Implement detailed error logging with request IDs\n5. Create error classification (network, API limit, malformed response)\n6. Add telemetry for tracking API usage and errors\n7. Implement graceful degradation when both services fail",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create Next.js API Route for Topic Generation",
+            "description": "Implement the Next.js API route for handling topic generation requests",
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.3",
+              "4.4"
+            ],
+            "details": "1. Create `/app/api/generate-topics/route.ts` file\n2. Implement the POST handler for receiving form data\n3. Add request validation to ensure required fields are present\n4. Integrate with the AI service functions\n5. Implement proper HTTP status codes and error responses\n6. Add request logging for debugging\n7. Create a standardized API response format\n8. Implement request timeout handling",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Implement Rate Limiting and Retry Logic",
+            "description": "Add rate limiting and retry mechanisms for reliable AI service integration",
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.4"
+            ],
+            "details": "1. Implement exponential backoff retry logic for transient errors\n2. Add configurable retry attempts and timeout settings\n3. Implement client-side rate limiting to prevent API quota exhaustion\n4. Create a request queue system for high-traffic scenarios\n5. Add circuit breaker pattern to prevent cascading failures\n6. Implement request caching for identical prompts\n7. Add monitoring for API usage and rate limit tracking\n8. Create fallback strategies when rate limits are reached",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 5,
@@ -65,7 +272,59 @@
           3
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement TopicCard Component",
+            "description": "Create the TopicCard component for displaying individual topic information with metadata and action buttons",
+            "dependencies": [],
+            "details": "Create `/components/topic-builder/results/TopicCard.tsx` that displays a single topic with:\n- Title and angle display\n- Score visualization (relevance, freshness, novelty)\n- Audience fit section\n- 'Why It Works' explanation\n- Tags display\n- Action buttons (save, discard)\n- Responsive design for different screen sizes\n\nEnsure proper TypeScript typing with the GeneratedTopic interface and implement event handlers for user interactions.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Build TopicList Container Component",
+            "description": "Implement the TopicList component that serves as a container for all generated topics",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Create `/components/topic-builder/results/TopicList.tsx` that:\n- Renders a collection of TopicCard components\n- Manages the layout of topic cards (grid or list view)\n- Handles empty states when no topics are available\n- Implements pagination or infinite scroll if needed\n- Provides a header with summary information\n- Integrates with the filtering and sorting system\n- Passes appropriate props to child components\n\nImplement state management for the current view and pagination if applicable.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Create TopicFilters Component",
+            "description": "Implement filtering and sorting controls for the topic list",
+            "dependencies": [
+              "5.2"
+            ],
+            "details": "Create `/components/topic-builder/results/TopicFilters.tsx` that includes:\n- Dropdown for sorting by relevance, freshness, or novelty\n- Tag-based filtering with multi-select capability\n- Audience filtering options\n- Clear filters button\n- Visual indicators for active filters\n- Mobile-friendly filter UI\n\nImplement the state management for filter selections and the logic to apply filters to the topic list.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement TopicActions Component",
+            "description": "Create action buttons and handlers for topic management operations",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Create `/components/topic-builder/results/TopicActions.tsx` with:\n- Save topic button and handler\n- Edit topic functionality\n- Regenerate topic button and handler\n- Export topics button (single or multiple)\n- Confirmation dialogs for destructive actions\n- Visual feedback for action states (loading, success, error)\n\nEnsure proper event handling and integration with parent components.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Local Storage Integration",
+            "description": "Create a hook for managing topic storage in localStorage",
+            "dependencies": [],
+            "details": "Create `/hooks/use-topic-storage.ts` that provides:\n- Loading saved topics from localStorage on component mount\n- Saving topics to localStorage when they change\n- Functions for adding, removing, and updating topics\n- Export functionality for JSON and CSV formats\n- Error handling for storage operations\n- Type safety with TypeScript\n\nImplement proper serialization/deserialization and handle storage limits gracefully.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 6,
@@ -79,7 +338,66 @@
           3
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Industry-Dependent Audience Options",
+            "description": "Create a system that dynamically updates audience options based on the selected industry",
+            "dependencies": [],
+            "details": "1. Create a utility function `getAudienceForIndustry` in `/lib/topic-builder-utils.ts` that returns audience options based on industry\n2. Implement industry-audience mapping data structure\n3. Update the AudienceStep component to use this utility\n4. Add default audience selection logic when industry changes\n5. Implement UI for displaying industry-specific audience options\n6. Add tests to verify audience options update correctly when industry changes",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Conditional Fields Based on Flow Type",
+            "description": "Create a system that shows or hides form fields based on the selected flow type (subject-first or industry-first)",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "1. Create a utility function to determine which fields should be shown based on flow type\n2. Implement conditional rendering in the wizard step components\n3. Add logic to reset invalid field values when flow type changes\n4. Create smooth transitions for appearing/disappearing fields\n5. Ensure form validation rules adapt to the active flow type\n6. Test different flow paths to verify correct field visibility",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Add Platform-Specific Content Format Suggestions",
+            "description": "Implement a system that suggests appropriate content formats based on the selected platform",
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
+            "details": "1. Create a data structure mapping platforms to recommended content formats\n2. Implement the ContentFormatStep component with dynamic options\n3. Add logic to update content type options when platform changes\n4. Create UI for displaying platform-specific recommendations\n5. Implement auto-selection of default content format when platform changes\n6. Add tests to verify content format suggestions update correctly",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement YMYL Detection and Special Handling",
+            "description": "Create a system to detect Your Money Your Life (YMYL) topics and implement special handling for these sensitive topics",
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
+            "details": "1. Create a utility function to detect YMYL topics based on industry and subject\n2. Implement warning UI components for YMYL topics\n3. Add special validation rules for YMYL content\n4. Create documentation guidelines that appear for YMYL topics\n5. Implement special API parameters for YMYL content generation\n6. Test YMYL detection with various industry/subject combinations",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Optimize Form State Updates and Performance",
+            "description": "Implement performance optimizations for form state updates to ensure smooth user experience with complex dependencies",
+            "dependencies": [
+              "6.1",
+              "6.2",
+              "6.3",
+              "6.4"
+            ],
+            "details": "1. Implement debounced form updates for frequently changing fields\n2. Add memoization for expensive computations in form dependencies\n3. Optimize re-renders using React.memo and useMemo for form components\n4. Implement batched state updates for related form fields\n5. Add performance monitoring for form interactions\n6. Test form responsiveness under various update scenarios",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 7,
@@ -92,7 +410,53 @@
           5
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Score Visualization Components",
+            "description": "Create reusable components for visualizing topic scores with different display options",
+            "dependencies": [],
+            "details": "Create the ScoreVisualization component that displays relevance, freshness, and novelty scores with visual bars:\n\n1. Implement color coding based on score values (high/medium/low)\n2. Support different size variants (small/medium/large)\n3. Add percentage display next to visual bars\n4. Ensure the component is responsive and accessible\n5. Add appropriate styling with CSS variables for theming\n\nThe component should accept props for the three score types and render appropriate visual representations that help users quickly understand topic quality.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Build Topic Sorting Functionality",
+            "description": "Implement the sorting logic for topics based on different metrics",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "Create the sorting functionality that allows users to order topics by different metrics:\n\n1. Implement sort controls UI in the TopicFilters component\n2. Add state management for the current sort selection\n3. Create sort functions for each metric (relevance, freshness, novelty)\n4. Ensure sorting is performant with useMemo for large topic lists\n5. Add visual indicators for the active sort option\n\nThe sorting should immediately update the topic list display when a user changes the sort option, with smooth transitions between different sort orders.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Develop Tag and Audience Filtering System",
+            "description": "Create the filtering system for tags and audience segments",
+            "dependencies": [
+              "7.1",
+              "7.2"
+            ],
+            "details": "Implement the tag and audience-based filtering system:\n\n1. Extract available tags and audiences from the topic data\n2. Create toggle UI for selecting/deselecting filter options\n3. Implement filter logic that supports multiple selected tags/audiences\n4. Add expandable/collapsible filter sections for better UI organization\n5. Ensure filters can be combined (e.g., filter by both tags AND audiences)\n6. Add \"Clear filters\" functionality\n\nThe filtering system should dynamically update as users select different combinations of tags and audiences, with clear visual feedback on active filters.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Advanced Combined Filtering",
+            "description": "Create the minimum score filtering and integrate all filtering systems",
+            "dependencies": [
+              "7.1",
+              "7.2",
+              "7.3"
+            ],
+            "details": "Implement the advanced filtering capabilities and integrate all filtering systems:\n\n1. Add minimum score slider for filtering by score threshold\n2. Create the \"no results\" state with option to clear filters\n3. Implement combined filtering logic that applies all active filters\n4. Optimize performance for filtering large topic lists\n5. Add filter count indicators to show how many topics match current filters\n6. Ensure filter state persistence during the user session\n\nThe combined filtering system should allow users to narrow down topics using any combination of sorting, tag filtering, audience filtering, and minimum score requirements.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 8,
@@ -106,7 +470,51 @@
           7
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement JSON and CSV Export Functionality",
+            "description": "Create utility functions for exporting generated topics in JSON and CSV formats with proper file naming and data formatting.",
+            "dependencies": [],
+            "details": "Implement the export-utils.ts file with the following features:\n- Create exportTopicsAsJSON function that properly formats and downloads topic data as JSON\n- Implement exportTopicsAsCSV function that converts topic data to CSV format with appropriate headers\n- Add proper date formatting for filenames\n- Handle special characters and escaping in CSV export\n- Ensure all topic properties are correctly exported in both formats\n- Test with various topic data structures to ensure compatibility",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Topic Saving and Organization",
+            "description": "Create functionality for saving, organizing, and managing topics with proper state management.",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Implement the topic saving and organization system with these features:\n- Create state management for saved topics (using React context or Redux)\n- Implement persistent storage using localStorage or IndexedDB\n- Add functionality to save individual topics\n- Create UI components for viewing saved topics\n- Implement topic categorization or tagging system\n- Add functionality to remove topics from saved collection\n- Ensure saved topics are accessible across sessions",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Bulk Selection and Actions",
+            "description": "Create functionality for selecting multiple topics and performing bulk actions like export and save.",
+            "dependencies": [
+              "8.1",
+              "8.2"
+            ],
+            "details": "Implement bulk selection and actions with these features:\n- Create UI for selecting individual and multiple topics\n- Implement 'Select All' and 'Deselect All' functionality\n- Add state management for tracking selected topics\n- Create bulk action buttons (Save Selected, Export Selected)\n- Implement dropdown for export format selection\n- Ensure proper UI feedback when bulk actions are performed\n- Add accessibility support for selection mechanisms\n- Implement responsive design for bulk action controls",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Topic Editing Capabilities",
+            "description": "Create functionality for editing topic properties with form validation and state updates.",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "Implement topic editing capabilities with these features:\n- Create edit mode toggle for individual topics\n- Implement form components for editing topic properties (title, angle, tags)\n- Add validation for edited content\n- Create save and cancel functionality for edits\n- Implement state updates when edits are saved\n- Add UI feedback for successful edits\n- Ensure edited topics are properly saved to persistent storage\n- Implement topic regeneration functionality for specific topics",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 9,
@@ -120,7 +528,50 @@
           4
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Loading State Components and Animations",
+            "description": "Create reusable loading state components with animations for different parts of the application",
+            "dependencies": [],
+            "details": "Create a comprehensive loading state system:\n1. Implement the LoadingState component with customizable size and message props\n2. Design and implement loading animations (spinner, pulse, skeleton)\n3. Create context-specific loading indicators for different operations\n4. Add loading state transitions with fade effects\n5. Ensure loading states are accessible with proper ARIA attributes\n6. Implement skeleton loaders for content-heavy sections\n7. Create a global loading state manager for coordinating multiple loading states",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Error Boundary System",
+            "description": "Create error boundary components to catch and handle React component errors gracefully",
+            "dependencies": [],
+            "details": "Develop a robust error boundary system:\n1. Implement the ErrorBoundary component as shown in the example\n2. Create customizable fallback UI components for different error scenarios\n3. Add error logging and reporting functionality\n4. Implement reset mechanisms to recover from errors\n5. Create specialized error boundaries for critical application sections\n6. Add error boundary testing utilities\n7. Document error boundary usage patterns for the development team",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement API Error Handling and Retry Logic",
+            "description": "Create a system for handling API errors with automatic and manual retry capabilities",
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
+            "details": "Build a comprehensive API error handling system:\n1. Create a centralized API error handling utility\n2. Implement automatic retry logic with exponential backoff\n3. Add request deduplication to prevent duplicate API calls\n4. Create request timeout handling\n5. Implement error categorization (network, server, validation)\n6. Add detailed error logging with request context\n7. Create recovery strategies for different error types\n8. Implement offline detection and recovery",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Design User-Friendly Error Messages and Recovery Options",
+            "description": "Create a system of user-friendly error messages with clear recovery options",
+            "dependencies": [
+              "9.2",
+              "9.3"
+            ],
+            "details": "Develop an intuitive error messaging system:\n1. Implement the ErrorMessage component as shown in the example\n2. Create a library of user-friendly error messages for different scenarios\n3. Design contextual help content for common errors\n4. Implement inline error recovery options\n5. Add progressive disclosure for technical error details\n6. Create toast notifications for non-blocking errors\n7. Implement error state persistence for page refreshes\n8. Design error messages with clear next steps for users",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 10,
@@ -134,7 +585,59 @@
           5
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Keyboard Navigation for Wizard",
+            "description": "Add keyboard navigation support to allow users to navigate through the wizard using arrow keys and other keyboard shortcuts.",
+            "dependencies": [],
+            "details": "1. Implement keyboard event listeners in WizardNavigation component\n2. Add support for arrow keys (right/left) to navigate between steps\n3. Ensure focus management works correctly when steps change\n4. Add keyboard shortcuts for common actions (e.g., Esc to cancel)\n5. Implement focus trapping within modal dialogs\n6. Add skip links for accessibility\n7. Test with keyboard-only navigation",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement ARIA Attributes and Roles",
+            "description": "Add proper ARIA attributes and roles to all components to ensure screen reader compatibility and accessibility.",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "1. Audit existing components for missing ARIA attributes\n2. Add appropriate roles to all interactive elements\n3. Implement aria-live regions for dynamic content\n4. Add descriptive aria-labels to buttons and controls\n5. Ensure form fields have proper labels and descriptions\n6. Implement status announcements for loading states\n7. Add appropriate landmark roles (navigation, main, etc.)\n8. Ensure proper heading hierarchy throughout the application",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Optimize Component Rendering",
+            "description": "Implement performance optimizations using React.memo, useMemo, and useCallback to reduce unnecessary re-renders.",
+            "dependencies": [],
+            "details": "1. Profile component render performance to identify bottlenecks\n2. Wrap appropriate components with React.memo\n3. Implement useMemo for expensive calculations\n4. Use useCallback for event handlers passed as props\n5. Add key props to all list items for efficient reconciliation\n6. Implement virtualization for long lists of topics\n7. Optimize context providers to prevent unnecessary re-renders\n8. Add performance monitoring to track improvements",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Responsive Design for Mobile",
+            "description": "Optimize the application layout and components for mobile devices and various screen sizes.",
+            "dependencies": [],
+            "details": "1. Create useMediaQuery and useResponsiveLayout hooks\n2. Implement responsive layouts for all major components\n3. Create mobile-specific component variants where needed\n4. Optimize touch targets for mobile users\n5. Implement responsive typography and spacing\n6. Add mobile-friendly navigation patterns\n7. Test on various device sizes and orientations\n8. Ensure all interactive elements work well with touch input",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Conduct Accessibility Testing and Fixes",
+            "description": "Test the application with accessibility tools and screen readers, then implement necessary fixes.",
+            "dependencies": [
+              "10.1",
+              "10.2",
+              "10.4"
+            ],
+            "details": "1. Run automated accessibility tests using tools like Axe or Lighthouse\n2. Test with screen readers (NVDA, VoiceOver, JAWS)\n3. Verify color contrast meets WCAG standards\n4. Test keyboard focus visibility and navigation flow\n5. Implement fixes for identified accessibility issues\n6. Add skip navigation links\n7. Test with various assistive technologies\n8. Document accessibility features and known limitations",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       }
     ],
     "metadata": {
