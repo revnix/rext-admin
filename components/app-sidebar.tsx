@@ -3,12 +3,12 @@
 import {
   Bell,
   Bot,
+  BotMessageSquare,
   Brain,
   Building2,
   Crown,
   Database,
   FileText,
-  GalleryVerticalEnd,
   LayoutDashboard,
   Library,
   Lightbulb,
@@ -26,13 +26,15 @@ import type * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import { ProjectSwitcher } from "@/components/project-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
 // This is sample data.
@@ -42,38 +44,6 @@ const data = {
     email: "mobeen@wrext.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  projectsDropdown: [
-    {
-      name: "All Projects",
-      logo: GalleryVerticalEnd,
-      description: "View all projects",
-      bgColor: "bg-slate-500",
-    },
-    {
-      name: "Revnix",
-      logo: Building2,
-      description: "Software & AI Solutions",
-      bgColor: "bg-blue-500",
-    },
-    {
-      name: "Ficonz",
-      logo: Type,
-      description: "Font Icons Library",
-      bgColor: "bg-purple-500",
-    },
-    {
-      name: "WPAegis",
-      logo: Shield,
-      description: "WP Maintenance Services",
-      bgColor: "bg-green-500",
-    },
-    {
-      name: "WPGrit",
-      logo: Crown,
-      description: "Enterprise WP Development",
-      bgColor: "bg-orange-500",
-    },
-  ],
   navMain: [
     {
       groupLabel: "",
@@ -183,7 +153,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <ProjectSwitcher projects={data.projectsDropdown} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg">
+              <div className="bg-blue-500 text-white flex aspect-square size-8 items-center justify-center rounded-lg">
+                <BotMessageSquare className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">WREXT</span>
+                <span className="truncate text-xs">AI Content Studio</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain groups={data.navMain} />
