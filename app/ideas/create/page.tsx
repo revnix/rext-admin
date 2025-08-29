@@ -251,10 +251,7 @@ export default function IdeaBuilderPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
-  const breadcrumbs = [
-    { label: "Ideas", href: "/ideas" },
-    { label: "Create" }
-  ];
+  const breadcrumbs = [{ label: "Ideas", href: "/ideas" }, { label: "Create" }];
 
   const updateFormData = (field: keyof FormData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -567,7 +564,7 @@ export default function IdeaBuilderPage() {
   const currentStepData = steps[currentStep - 1];
 
   return (
-    <PageLayout 
+    <PageLayout
       title="Idea Builder"
       description="Turn your concept into a structured, actionable idea"
       breadcrumbs={breadcrumbs}
@@ -590,10 +587,7 @@ export default function IdeaBuilderPage() {
             const isCompleted = step.id < currentStep;
 
             return (
-              <div
-                key={step.id}
-                className="flex flex-col items-center gap-2"
-              >
+              <div key={step.id} className="flex flex-col items-center gap-2">
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                     isActive
@@ -647,10 +641,7 @@ export default function IdeaBuilderPage() {
         </div>
 
         {currentStep === steps.length ? (
-          <Button
-            onClick={handleSubmit}
-            className="flex items-center gap-2"
-          >
+          <Button onClick={handleSubmit} className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
             Submit Idea
           </Button>

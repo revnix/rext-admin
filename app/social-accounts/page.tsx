@@ -58,7 +58,7 @@ export default function SocialAccountsPage() {
         views: 2847,
         likes: 156,
         comments: 23,
-        shares: 42
+        shares: 42,
       },
       flows: ["Social Media Content Pipeline", "LinkedIn Marketing"],
       tags: ["b2b", "professional", "company"],
@@ -91,7 +91,7 @@ export default function SocialAccountsPage() {
         views: 1234,
         likes: 89,
         retweets: 23,
-        replies: 12
+        replies: 12,
       },
       flows: ["Twitter Thread Storyteller", "Social Media Content Pipeline"],
       tags: ["tech", "ai", "twitter"],
@@ -124,7 +124,7 @@ export default function SocialAccountsPage() {
         views: 892,
         likes: 167,
         comments: 34,
-        saves: 45
+        saves: 45,
       },
       flows: ["Visual Content Creator", "Instagram Stories"],
       tags: ["visual", "design", "creative"],
@@ -157,7 +157,7 @@ export default function SocialAccountsPage() {
         views: 567,
         likes: 45,
         comments: 8,
-        shares: 12
+        shares: 12,
       },
       flows: ["Facebook Marketing", "Social Media Content Pipeline"],
       tags: ["community", "business", "facebook"],
@@ -190,7 +190,7 @@ export default function SocialAccountsPage() {
         views: 4523,
         likes: 234,
         comments: 67,
-        subscribers: 45
+        subscribers: 45,
       },
       flows: ["YouTube Script Writer", "Video Content Creator"],
       tags: ["video", "education", "tech"],
@@ -223,7 +223,7 @@ export default function SocialAccountsPage() {
         views: 1567,
         likes: 134,
         comments: 45,
-        shares: 23
+        shares: 23,
       },
       flows: ["Short-form Video Creator", "TikTok Marketing"],
       tags: ["short-form", "viral", "tips"],
@@ -257,7 +257,7 @@ export default function SocialAccountsPage() {
         views: 892,
         saves: 67,
         comments: 12,
-        clicks: 34
+        clicks: 34,
       },
       flows: ["Visual Content Creator", "Pinterest Marketing"],
       tags: ["visual", "inspiration", "design"],
@@ -290,7 +290,7 @@ export default function SocialAccountsPage() {
         upvotes: 87,
         comments: 23,
         awards: 2,
-        crossposts: 4
+        crossposts: 4,
       },
       flows: ["Community Content Generator", "Reddit Marketing"],
       tags: ["community", "discussion", "tech"],
@@ -323,7 +323,7 @@ export default function SocialAccountsPage() {
         views: 2341,
         claps: 156,
         responses: 34,
-        highlights: 67
+        highlights: 67,
       },
       flows: ["AI Blog Post Generator", "Long-form Content"],
       tags: ["blogging", "thought leadership", "articles"],
@@ -356,11 +356,11 @@ export default function SocialAccountsPage() {
         reactions: 45,
         replies: 23,
         mentions: 12,
-        pins: 2
+        pins: 2,
       },
       flows: ["Community Announcements", "Discord Bot"],
       tags: ["community", "discord", "real-time"],
-    }
+    },
   ];
 
   const columns = [
@@ -376,7 +376,11 @@ export default function SocialAccountsPage() {
   ];
 
   const emptyActions = [
-    { label: "Connect Account", icon: <LinkIcon className="h-4 w-4" />, href: "/social-accounts/connect" },
+    {
+      label: "Connect Account",
+      icon: <LinkIcon className="h-4 w-4" />,
+      href: "/social-accounts/connect",
+    },
   ];
 
   const tableActions = (
@@ -397,42 +401,54 @@ export default function SocialAccountsPage() {
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View account:", row.platform, row.account),
+      onClick: (row: Record<string, any>) =>
+        console.log("View account:", row.platform, row.account),
     },
     {
       label: "View Analytics",
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View analytics:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log("View analytics:", row.platform),
     },
     {
       label: "Test Connection",
       icon: <RefreshCw className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Test connection:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log("Test connection:", row.platform),
     },
     {
       label: "Edit Settings",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit settings:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit settings:", row.platform),
     },
     {
       label: "View Posts",
       icon: <ExternalLink className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View posts:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log("View posts:", row.platform),
     },
     {
       label: "Duplicate Config",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate config:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate config:", row.platform),
     },
     {
       label: "Pause/Resume",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log(row.status === "Paused" ? "Resume" : "Pause", "account:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log(
+          row.status === "Paused" ? "Resume" : "Pause",
+          "account:",
+          row.platform,
+        ),
     },
     {
       label: "Disconnect",
       icon: <Unlink className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Disconnect account:", row.platform),
+      onClick: (row: Record<string, any>) =>
+        console.log("Disconnect account:", row.platform),
       variant: "destructive" as const,
     },
   ];
@@ -455,7 +471,14 @@ export default function SocialAccountsPage() {
         onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={["platform", "account", "accountName", "status", "connectionHealth", "tags"]}
+        searchFields={[
+          "platform",
+          "account",
+          "accountName",
+          "status",
+          "connectionHealth",
+          "tags",
+        ]}
       />
     </PageLayout>
   );

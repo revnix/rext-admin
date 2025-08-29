@@ -59,9 +59,17 @@ SEO Guidelines:
 - Include 3-5 related keywords: {related_keywords}
 - Optimize for featured snippets
 - Meta description under 160 characters`,
-      variables: ["topic", "primary_keyword", "word_count", "tone", "target_audience", "related_keywords"],
+      variables: [
+        "topic",
+        "primary_keyword",
+        "word_count",
+        "tone",
+        "target_audience",
+        "related_keywords",
+      ],
       tags: ["SEO", "Blog", "Content Marketing", "Long-form"],
-      description: "Generates SEO-optimized blog posts with proper structure and keyword optimization",
+      description:
+        "Generates SEO-optimized blog posts with proper structure and keyword optimization",
       createdBy: "Sarah Johnson",
       lastModified: "2024-01-20 14:20",
       created: "2024-01-01 09:00",
@@ -74,7 +82,7 @@ SEO Guidelines:
       name: "Social Media Carousel Creator",
       category: "Social Media",
       subcategory: "LinkedIn",
-      status: "Active", 
+      status: "Active",
       visibility: "Public",
       usage: 156,
       successRate: "91%",
@@ -107,7 +115,8 @@ Style Guidelines:
 - Optimize for mobile viewing`,
       variables: ["topic", "target_audience", "main_title", "hashtags"],
       tags: ["LinkedIn", "Carousel", "B2B", "Visual Content"],
-      description: "Creates structured LinkedIn carousel posts with engaging copy and clear CTAs",
+      description:
+        "Creates structured LinkedIn carousel posts with engaging copy and clear CTAs",
       createdBy: "Mike Chen",
       lastModified: "2024-01-18 11:30",
       created: "2023-12-10 16:45",
@@ -152,9 +161,18 @@ Writing Guidelines:
 - Keep paragraphs short (2-3 sentences max)
 - Use bullet points for features
 - Maintain {brand_voice} brand voice`,
-      variables: ["product_name", "product_category", "key_features", "target_customer", "price_range", "seo_keywords", "brand_voice"],
+      variables: [
+        "product_name",
+        "product_category",
+        "key_features",
+        "target_customer",
+        "price_range",
+        "seo_keywords",
+        "brand_voice",
+      ],
       tags: ["E-commerce", "Product Copy", "Conversion", "Sales"],
-      description: "Generates high-converting product descriptions optimized for sales and SEO",
+      description:
+        "Generates high-converting product descriptions optimized for sales and SEO",
       createdBy: "Emma Davis",
       lastModified: "2024-01-22 10:15",
       created: "2023-10-15 13:20",
@@ -216,9 +234,19 @@ Section 3: {feature_section}
 
 Tone: {newsletter_tone}
 Length: {target_length} words`,
-      variables: ["audience_type", "topic_focus", "primary_focus", "main_story_type", "feature_section", "main_cta", "newsletter_tone", "target_length"],
+      variables: [
+        "audience_type",
+        "topic_focus",
+        "primary_focus",
+        "main_story_type",
+        "feature_section",
+        "main_cta",
+        "newsletter_tone",
+        "target_length",
+      ],
       tags: ["Email", "Newsletter", "Content Curation", "Marketing"],
-      description: "Creates structured weekly newsletters with curated content and clear CTAs",
+      description:
+        "Creates structured weekly newsletters with curated content and clear CTAs",
       createdBy: "Alex Rivera",
       lastModified: "2024-01-21 07:30",
       created: "2023-11-20 09:45",
@@ -274,9 +302,18 @@ Writing Guidelines:
 - Thread should be {thread_length} tweets total
 - Maintain {voice_tone} voice throughout
 - Include one compelling statistic/fact per 3-4 tweets`,
-      variables: ["thread_topic", "target_audience", "hook_statement", "audience_segment", "hashtags", "thread_length", "voice_tone"],
+      variables: [
+        "thread_topic",
+        "target_audience",
+        "hook_statement",
+        "audience_segment",
+        "hashtags",
+        "thread_length",
+        "voice_tone",
+      ],
       tags: ["Twitter", "Thread", "Storytelling", "Engagement"],
-      description: "Creates structured Twitter threads with strong hooks and clear narrative flow",
+      description:
+        "Creates structured Twitter threads with strong hooks and clear narrative flow",
       createdBy: "David Park",
       lastModified: "2024-01-19 16:20",
       created: "2023-12-05 12:30",
@@ -333,9 +370,24 @@ Production Notes:
 - Include B-roll cues: [SHOW: example screenshot]
 - Music cues: [MUSIC: upbeat/calm]
 - Text overlays: [TEXT: Key Point]`,
-      variables: ["video_length", "video_topic", "target_viewers", "main_problem", "main_content_end", "problem_section_length", "solution_section_length", "guide_section_length", "step_1_focus", "step_2_focus", "step_3_focus", "main_cta", "video_tone"],
+      variables: [
+        "video_length",
+        "video_topic",
+        "target_viewers",
+        "main_problem",
+        "main_content_end",
+        "problem_section_length",
+        "solution_section_length",
+        "guide_section_length",
+        "step_1_focus",
+        "step_2_focus",
+        "step_3_focus",
+        "main_cta",
+        "video_tone",
+      ],
       tags: ["YouTube", "Video Script", "Education", "Tutorial"],
-      description: "Creates structured YouTube video scripts with clear segments and production notes",
+      description:
+        "Creates structured YouTube video scripts with clear segments and production notes",
       createdBy: "Lisa Wong",
       lastModified: "2024-01-20 14:15",
       created: "2024-01-15 11:00",
@@ -407,9 +459,36 @@ Writing Guidelines:
 - Include key stats/numbers: {key_statistics}
 - Optimize for keywords: {pr_keywords}
 - Keep paragraphs 2-3 sentences max`,
-      variables: ["announcement_type", "company_name", "contact_name", "contact_email", "contact_phone", "main_announcement", "additional_context", "city", "company_description", "key_announcement", "significance_statement", "impact_statement", "target_beneficiaries", "executive_quote", "executive_name", "executive_title", "additional_executive_insight", "industry_expert_quote", "expert_name", "expert_title", "expert_organization", "company_boilerplate_description", "media_contact_info", "key_statistics", "pr_keywords"],
+      variables: [
+        "announcement_type",
+        "company_name",
+        "contact_name",
+        "contact_email",
+        "contact_phone",
+        "main_announcement",
+        "additional_context",
+        "city",
+        "company_description",
+        "key_announcement",
+        "significance_statement",
+        "impact_statement",
+        "target_beneficiaries",
+        "executive_quote",
+        "executive_name",
+        "executive_title",
+        "additional_executive_insight",
+        "industry_expert_quote",
+        "expert_name",
+        "expert_title",
+        "expert_organization",
+        "company_boilerplate_description",
+        "media_contact_info",
+        "key_statistics",
+        "pr_keywords",
+      ],
       tags: ["Press Release", "PR", "Corporate Communications", "Media"],
-      description: "Generates AP Style press releases with proper formatting and industry standards",
+      description:
+        "Generates AP Style press releases with proper formatting and industry standards",
       createdBy: "Marcus Johnson",
       lastModified: "2024-01-18 15:45",
       created: "2024-01-05 09:20",
@@ -473,16 +552,27 @@ Compliance:
 - Follow company policy: {policy_guidelines}
 - Include required disclaimers if applicable
 - Maintain data privacy standards`,
-      variables: ["customer_name", "issue_category", "priority_level", "interaction_history", "customer_inquiry", "help_resources", "support_tone", "company_values", "policy_guidelines"],
+      variables: [
+        "customer_name",
+        "issue_category",
+        "priority_level",
+        "interaction_history",
+        "customer_inquiry",
+        "help_resources",
+        "support_tone",
+        "company_values",
+        "policy_guidelines",
+      ],
       tags: ["Customer Support", "Service", "Communication", "Problem Solving"],
-      description: "Creates empathetic and helpful customer support responses following company guidelines",
+      description:
+        "Creates empathetic and helpful customer support responses following company guidelines",
       createdBy: "Jennifer Taylor",
       lastModified: "2024-01-21 13:20",
       created: "2023-07-15 10:30",
       flows: ["Customer Support Automation", "Service Desk"],
       modelCompatibility: ["GPT-4", "Claude-3", "GPT-3.5"],
       estimatedTokens: "400-700",
-    }
+    },
   ];
 
   const columns = [
@@ -496,7 +586,11 @@ Compliance:
   ];
 
   const emptyActions = [
-    { label: "Create Template", icon: <Plus className="h-4 w-4" />, href: "/prompt-templates/create" },
+    {
+      label: "Create Template",
+      icon: <Plus className="h-4 w-4" />,
+      href: "/prompt-templates/create",
+    },
   ];
 
   const tableActions = (
@@ -517,42 +611,50 @@ Compliance:
     {
       label: "View Template",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View template:", row.name),
     },
     {
       label: "Test Template",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Test template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Test template:", row.name),
     },
     {
       label: "Duplicate Template",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate template:", row.name),
     },
     {
       label: "View Analytics",
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View analytics:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View analytics:", row.name),
     },
     {
       label: "Add to Favorites",
       icon: <Star className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Favorite template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Favorite template:", row.name),
     },
     {
       label: "Edit Template",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit template:", row.name),
     },
     {
       label: "Export Template",
       icon: <FileText className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Export template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Export template:", row.name),
     },
     {
       label: "Delete Template",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Delete template:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Delete template:", row.name),
       variant: "destructive" as const,
     },
   ];

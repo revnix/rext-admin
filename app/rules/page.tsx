@@ -1,6 +1,6 @@
 "use client";
 
-import { 
+import {
   AlertTriangle,
   CheckCircle,
   Copy,
@@ -8,11 +8,11 @@ import {
   Eye,
   Pause,
   Play,
-  Plus, 
+  Plus,
   Settings,
   Shield,
   Trash2,
-  Zap 
+  Zap,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { DataTable } from "@/components/data-table";
@@ -30,7 +30,8 @@ export default function RulesPage() {
     {
       id: "1",
       name: "Content Quality Gate",
-      description: "Ensures all generated content meets minimum quality standards before publishing",
+      description:
+        "Ensures all generated content meets minimum quality standards before publishing",
       category: "Quality Control",
       type: "Validation Rule",
       status: "Active",
@@ -40,12 +41,12 @@ export default function RulesPage() {
         "Word count >= 300 words",
         "Readability score >= 60",
         "No grammar errors detected",
-        "SEO score >= 70"
+        "SEO score >= 70",
       ],
       actions: [
         "Block publishing if criteria not met",
         "Send notification to reviewer",
-        "Log quality metrics"
+        "Log quality metrics",
       ],
       executions: 1247,
       successRate: "94%",
@@ -60,22 +61,23 @@ export default function RulesPage() {
     {
       id: "2",
       name: "Brand Voice Compliance",
-      description: "Validates content adheres to established brand voice and tone guidelines",
+      description:
+        "Validates content adheres to established brand voice and tone guidelines",
       category: "Brand Compliance",
       type: "Content Rule",
-      status: "Active", 
+      status: "Active",
       priority: "High",
       trigger: "After Content Generation",
       conditions: [
         "Tone analysis matches brand voice (85%+ match)",
         "Forbidden words not used: ['synergy', 'leverage', 'disrupt']",
         "Professional but approachable tone maintained",
-        "Technical jargon explained within 20 words"
+        "Technical jargon explained within 20 words",
       ],
       actions: [
         "Flag content for human review",
         "Suggest tone adjustments",
-        "Update brand voice memory"
+        "Update brand voice memory",
       ],
       executions: 892,
       successRate: "91%",
@@ -90,7 +92,8 @@ export default function RulesPage() {
     {
       id: "3",
       name: "SEO Optimization Enforcer",
-      description: "Ensures all content meets SEO requirements and optimization standards",
+      description:
+        "Ensures all content meets SEO requirements and optimization standards",
       category: "SEO Compliance",
       type: "Optimization Rule",
       status: "Active",
@@ -101,12 +104,12 @@ export default function RulesPage() {
         "Meta description 120-160 characters",
         "Headers properly structured (H1, H2, H3)",
         "Alt text for images provided",
-        "Internal links >= 2 per 1000 words"
+        "Internal links >= 2 per 1000 words",
       ],
       actions: [
         "Auto-optimize content structure",
         "Generate SEO suggestions",
-        "Update SEO performance metrics"
+        "Update SEO performance metrics",
       ],
       executions: 634,
       successRate: "87%",
@@ -121,7 +124,8 @@ export default function RulesPage() {
     {
       id: "4",
       name: "Customer Data Privacy Guard",
-      description: "Prevents exposure of sensitive customer information in generated content",
+      description:
+        "Prevents exposure of sensitive customer information in generated content",
       category: "Privacy & Security",
       type: "Security Rule",
       status: "Active",
@@ -132,13 +136,13 @@ export default function RulesPage() {
         "No phone numbers revealed",
         "No customer names without consent",
         "No internal company data leaked",
-        "GDPR compliance maintained"
+        "GDPR compliance maintained",
       ],
       actions: [
         "Redact sensitive information",
         "Block content generation",
         "Alert security team",
-        "Log privacy violation attempt"
+        "Log privacy violation attempt",
       ],
       executions: 2341,
       successRate: "99.7%",
@@ -153,7 +157,8 @@ export default function RulesPage() {
     {
       id: "5",
       name: "Social Media Character Limits",
-      description: "Enforces platform-specific character and content limits for social media posts",
+      description:
+        "Enforces platform-specific character and content limits for social media posts",
       category: "Platform Compliance",
       type: "Format Rule",
       status: "Active",
@@ -164,13 +169,13 @@ export default function RulesPage() {
         "LinkedIn: <= 3000 characters for posts",
         "Instagram: <= 2200 characters for captions",
         "Facebook: <= 63,206 characters (practical limit: 500)",
-        "Thread count <= 15 for Twitter threads"
+        "Thread count <= 15 for Twitter threads",
       ],
       actions: [
         "Auto-trim content to fit limits",
         "Split long content into multiple posts",
         "Suggest content restructuring",
-        "Warn about character overflow"
+        "Warn about character overflow",
       ],
       executions: 445,
       successRate: "96%",
@@ -185,7 +190,8 @@ export default function RulesPage() {
     {
       id: "6",
       name: "Email Deliverability Optimizer",
-      description: "Prevents email content from triggering spam filters and improves deliverability",
+      description:
+        "Prevents email content from triggering spam filters and improves deliverability",
       category: "Email Compliance",
       type: "Deliverability Rule",
       status: "Active",
@@ -196,13 +202,13 @@ export default function RulesPage() {
         "Subject line avoids spam triggers",
         "Text-to-image ratio balanced",
         "Unsubscribe link present",
-        "Authentication headers valid"
+        "Authentication headers valid",
       ],
       actions: [
         "Rewrite spammy content",
         "Adjust subject line",
         "Add missing compliance elements",
-        "Test deliverability score"
+        "Test deliverability score",
       ],
       executions: 312,
       successRate: "89%",
@@ -217,7 +223,8 @@ export default function RulesPage() {
     {
       id: "7",
       name: "Competitor Content Similarity Check",
-      description: "Detects potential copyright issues and ensures content originality",
+      description:
+        "Detects potential copyright issues and ensures content originality",
       category: "Legal Compliance",
       type: "Plagiarism Rule",
       status: "Active",
@@ -228,13 +235,13 @@ export default function RulesPage() {
         "No direct quotes without attribution",
         "Original research and insights included",
         "Unique value proposition clear",
-        "Copyright-free images only"
+        "Copyright-free images only",
       ],
       actions: [
         "Flag high similarity content",
         "Suggest rewrites for originality",
         "Check image licensing",
-        "Generate uniqueness report"
+        "Generate uniqueness report",
       ],
       executions: 178,
       successRate: "82%",
@@ -249,7 +256,8 @@ export default function RulesPage() {
     {
       id: "8",
       name: "Customer Sentiment Monitor",
-      description: "Analyzes and responds to customer sentiment in support interactions",
+      description:
+        "Analyzes and responds to customer sentiment in support interactions",
       category: "Customer Experience",
       type: "Sentiment Rule",
       status: "Active",
@@ -260,13 +268,13 @@ export default function RulesPage() {
         "Frustration keywords identified",
         "Escalation triggers present",
         "Response time > 24 hours",
-        "Previous interaction context available"
+        "Previous interaction context available",
       ],
       actions: [
         "Escalate to human agent",
         "Apply empathetic response template",
         "Offer additional compensation",
-        "Flag for manager review"
+        "Flag for manager review",
       ],
       executions: 567,
       successRate: "93%",
@@ -281,7 +289,8 @@ export default function RulesPage() {
     {
       id: "9",
       name: "Seasonal Content Scheduler",
-      description: "Automatically schedules content based on seasonal trends and optimal timing",
+      description:
+        "Automatically schedules content based on seasonal trends and optimal timing",
       category: "Content Strategy",
       type: "Scheduling Rule",
       status: "Paused",
@@ -292,13 +301,13 @@ export default function RulesPage() {
         "Peak engagement times considered",
         "Competitor posting patterns analyzed",
         "Audience timezone preferences factored",
-        "Content calendar conflicts avoided"
+        "Content calendar conflicts avoided",
       ],
       actions: [
         "Optimize posting schedule",
         "Delay inappropriate seasonal content",
         "Suggest timing improvements",
-        "Update content calendar"
+        "Update content calendar",
       ],
       executions: 89,
       successRate: "76%",
@@ -313,7 +322,8 @@ export default function RulesPage() {
     {
       id: "10",
       name: "Budget Threshold Monitor",
-      description: "Monitors and controls AI model usage costs to stay within budget limits",
+      description:
+        "Monitors and controls AI model usage costs to stay within budget limits",
       category: "Cost Control",
       type: "Budget Rule",
       status: "Active",
@@ -324,13 +334,13 @@ export default function RulesPage() {
         "Daily spending < $500",
         "Cost per content piece < $5",
         "High-cost model usage justified",
-        "Budget approval for overages"
+        "Budget approval for overages",
       ],
       actions: [
         "Block expensive model usage",
         "Switch to cheaper alternatives",
         "Alert budget managers",
-        "Generate cost reports"
+        "Generate cost reports",
       ],
       executions: 3456,
       successRate: "97%",
@@ -341,7 +351,7 @@ export default function RulesPage() {
       lastModified: "2024-01-20 08:45",
       flows: ["All Content Flows", "Model Management"],
       tags: ["budget", "cost control", "spending limits"],
-    }
+    },
   ];
 
   const columns = [
@@ -356,7 +366,11 @@ export default function RulesPage() {
   ];
 
   const emptyActions = [
-    { label: "Create Rule", icon: <Plus className="h-4 w-4" />, href: "/rules/create" },
+    {
+      label: "Create Rule",
+      icon: <Plus className="h-4 w-4" />,
+      href: "/rules/create",
+    },
   ];
 
   const tableActions = (
@@ -377,42 +391,54 @@ export default function RulesPage() {
     {
       label: "View Rule",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View rule:", row.name),
     },
     {
       label: "Test Rule",
       icon: <Zap className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Test rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Test rule:", row.name),
     },
     {
       label: "Edit Rule",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit rule:", row.name),
     },
     {
       label: "Duplicate Rule",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate rule:", row.name),
     },
     {
       label: "Configure Rule",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Configure rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Configure rule:", row.name),
     },
     {
       label: "Pause/Resume",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log(row.status === "Paused" ? "Resume" : "Pause", "rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log(
+          row.status === "Paused" ? "Resume" : "Pause",
+          "rule:",
+          row.name,
+        ),
     },
     {
       label: "View Logs",
       icon: <AlertTriangle className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View logs:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View logs:", row.name),
     },
     {
       label: "Delete Rule",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Delete rule:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Delete rule:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -435,7 +461,14 @@ export default function RulesPage() {
         onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={["name", "category", "trigger", "status", "priority", "tags"]}
+        searchFields={[
+          "name",
+          "category",
+          "trigger",
+          "status",
+          "priority",
+          "tags",
+        ]}
       />
     </PageLayout>
   );

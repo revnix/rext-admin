@@ -101,20 +101,26 @@ export function PageLayout({
             )}
           </div>
           <div className="flex-1 flex justify-center px-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="justify-between w-64 text-muted-foreground"
               onClick={() => setSearchOpen(true)}
             >
               <span>Search everything...</span>
               <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                <span className="text-xs">{isMounted && navigator.userAgent.toLowerCase().includes('mac') ? '⌘' : 'Ctrl+'}</span>K
+                <span className="text-xs">
+                  {isMounted &&
+                  navigator.userAgent.toLowerCase().includes("mac")
+                    ? "⌘"
+                    : "Ctrl+"}
+                </span>
+                K
               </kbd>
             </Button>
           </div>
           <div className="px-4 flex items-center gap-2">
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               className="gap-2"
               onClick={() => setNotificationsOpen(true)}
             >
@@ -146,16 +152,13 @@ export function PageLayout({
           <div className="flex-1">{children}</div>
         </div>
       </SidebarInset>
-      
-      <NotificationsDrawer 
+
+      <NotificationsDrawer
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
       />
-      
-      <SearchDialog 
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-      />
+
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </SidebarProvider>
   );
 }

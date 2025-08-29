@@ -9,7 +9,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Archive,
   Bell,
@@ -234,7 +240,7 @@ const categories = [
   "All",
   "Ideas",
   "Flows",
-  "Content", 
+  "Content",
   "Models",
   "Templates",
   "Memories",
@@ -253,20 +259,22 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   useEffect(() => {
     if (searchQuery.trim() === "") {
       // Show all results when no search query
-      const results = selectedCategory === "All" 
-        ? searchData 
-        : searchData.filter(item => item.category === selectedCategory);
+      const results =
+        selectedCategory === "All"
+          ? searchData
+          : searchData.filter((item) => item.category === selectedCategory);
       setFilteredResults(results);
     } else {
       // Filter based on search query and category
       const results = searchData.filter((item) => {
-        const matchesSearch = 
+        const matchesSearch =
           item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.category.toLowerCase().includes(searchQuery.toLowerCase());
-        
-        const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-        
+
+        const matchesCategory =
+          selectedCategory === "All" || item.category === selectedCategory;
+
         return matchesSearch && matchesCategory;
       });
       setFilteredResults(results);
@@ -278,14 +286,17 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     window.location.href = url;
   };
 
-  const groupedResults = filteredResults.reduce((groups, item) => {
-    const category = item.category;
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(item);
-    return groups;
-  }, {} as Record<string, SearchResult[]>);
+  const groupedResults = filteredResults.reduce(
+    (groups, item) => {
+      const category = item.category;
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(item);
+      return groups;
+    },
+    {} as Record<string, SearchResult[]>,
+  );
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
@@ -296,7 +307,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           onValueChange={setSearchQuery}
           className="border-0 focus:ring-0"
         />
-        
+
         {/* Category Filter */}
         <div className="p-3 border-t bg-muted/30">
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -316,7 +327,8 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
       <CommandList className="max-h-[400px]">
         <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-          No results found for "{searchQuery}"{selectedCategory !== "All" && ` in ${selectedCategory}`}.
+          No results found for "{searchQuery}"
+          {selectedCategory !== "All" && ` in ${selectedCategory}`}.
         </CommandEmpty>
 
         {Object.entries(groupedResults).map(([category, items]) => (
@@ -327,9 +339,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                 onSelect={() => handleItemSelect(item.url)}
                 className="flex items-center gap-3 px-4 py-2 cursor-pointer"
               >
-                <div className="flex-shrink-0">
-                  {item.icon}
-                </div>
+                <div className="flex-shrink-0">{item.icon}</div>
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-xs">{item.title}</span>
                 </div>
@@ -338,7 +348,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           </CommandGroup>
         ))}
       </CommandList>
-      
+
       <div className="border-t p-2 text-xs text-muted-foreground bg-muted/30">
         <div className="flex items-center justify-between">
           <span>Press ↵ to select • ↑↓ to navigate</span>

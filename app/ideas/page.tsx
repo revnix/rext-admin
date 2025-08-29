@@ -23,7 +23,8 @@ export default function IdeasPage() {
     {
       id: "1",
       name: "AI-Powered Content Calendar",
-      description: "Automated social media content planning using AI to suggest optimal posting times and content types",
+      description:
+        "Automated social media content planning using AI to suggest optimal posting times and content types",
       category: "Social Media",
       status: "In Progress",
       priority: "High",
@@ -36,9 +37,10 @@ export default function IdeasPage() {
       contentType: "Social Media Campaign",
     },
     {
-      id: "2", 
+      id: "2",
       name: "Sustainable Living Blog Series",
-      description: "10-part blog series covering eco-friendly lifestyle tips, sustainable products, and green technology",
+      description:
+        "10-part blog series covering eco-friendly lifestyle tips, sustainable products, and green technology",
       category: "Blog",
       status: "Draft",
       priority: "Medium",
@@ -53,7 +55,8 @@ export default function IdeasPage() {
     {
       id: "3",
       name: "Weekly Tech Newsletter",
-      description: "Curated newsletter featuring latest tech trends, startup news, and product launches for developers",
+      description:
+        "Curated newsletter featuring latest tech trends, startup news, and product launches for developers",
       category: "Newsletter",
       status: "Published",
       priority: "High",
@@ -68,7 +71,8 @@ export default function IdeasPage() {
     {
       id: "4",
       name: "Holiday Season Ad Campaign",
-      description: "Multi-platform advertising campaign for Q4 holiday shopping with festive themes and gift guides",
+      description:
+        "Multi-platform advertising campaign for Q4 holiday shopping with festive themes and gift guides",
       category: "Advertising",
       status: "Completed",
       priority: "High",
@@ -83,7 +87,8 @@ export default function IdeasPage() {
     {
       id: "5",
       name: "Remote Work Productivity Tips",
-      description: "LinkedIn article series about maintaining productivity while working from home",
+      description:
+        "LinkedIn article series about maintaining productivity while working from home",
       category: "Social Media",
       status: "In Review",
       priority: "Medium",
@@ -98,7 +103,8 @@ export default function IdeasPage() {
     {
       id: "6",
       name: "Fitness App Launch Campaign",
-      description: "Comprehensive marketing strategy for new fitness mobile app including influencer partnerships",
+      description:
+        "Comprehensive marketing strategy for new fitness mobile app including influencer partnerships",
       category: "Advertising",
       status: "Planning",
       priority: "High",
@@ -113,7 +119,8 @@ export default function IdeasPage() {
     {
       id: "7",
       name: "Food Photography Blog",
-      description: "Visual blog featuring restaurant reviews, recipes, and food photography techniques",
+      description:
+        "Visual blog featuring restaurant reviews, recipes, and food photography techniques",
       category: "Blog",
       status: "Active",
       priority: "Medium",
@@ -128,7 +135,8 @@ export default function IdeasPage() {
     {
       id: "8",
       name: "Cybersecurity Awareness Newsletter",
-      description: "Monthly newsletter educating employees about cybersecurity threats and best practices",
+      description:
+        "Monthly newsletter educating employees about cybersecurity threats and best practices",
       category: "Newsletter",
       status: "Scheduled",
       priority: "High",
@@ -143,7 +151,8 @@ export default function IdeasPage() {
     {
       id: "9",
       name: "Instagram Reels Strategy",
-      description: "30-day Instagram Reels content plan focusing on behind-the-scenes and trending audio",
+      description:
+        "30-day Instagram Reels content plan focusing on behind-the-scenes and trending audio",
       category: "Social Media",
       status: "In Progress",
       priority: "Medium",
@@ -158,7 +167,8 @@ export default function IdeasPage() {
     {
       id: "10",
       name: "B2B Sales Email Sequence",
-      description: "5-part email nurture sequence for B2B software leads with case studies and demos",
+      description:
+        "5-part email nurture sequence for B2B software leads with case studies and demos",
       category: "Email",
       status: "Testing",
       priority: "High",
@@ -173,7 +183,8 @@ export default function IdeasPage() {
     {
       id: "11",
       name: "Travel Destination Guide",
-      description: "Comprehensive blog post about hidden gems in Southeast Asia for budget travelers",
+      description:
+        "Comprehensive blog post about hidden gems in Southeast Asia for budget travelers",
       category: "Blog",
       status: "Published",
       priority: "Low",
@@ -188,7 +199,8 @@ export default function IdeasPage() {
     {
       id: "12",
       name: "Black Friday Ad Blitz",
-      description: "48-hour intensive advertising campaign across Google Ads, Facebook, and Instagram for Black Friday sales",
+      description:
+        "48-hour intensive advertising campaign across Google Ads, Facebook, and Instagram for Black Friday sales",
       category: "Advertising",
       status: "Completed",
       priority: "High",
@@ -203,7 +215,8 @@ export default function IdeasPage() {
     {
       id: "13",
       name: "Wellness Wednesday Newsletter",
-      description: "Weekly wellness tips newsletter covering mental health, nutrition, and exercise for corporate employees",
+      description:
+        "Weekly wellness tips newsletter covering mental health, nutrition, and exercise for corporate employees",
       category: "Newsletter",
       status: "Active",
       priority: "Medium",
@@ -218,7 +231,8 @@ export default function IdeasPage() {
     {
       id: "14",
       name: "TikTok Challenge Campaign",
-      description: "Viral TikTok challenge promoting eco-friendly products with user-generated content",
+      description:
+        "Viral TikTok challenge promoting eco-friendly products with user-generated content",
       category: "Social Media",
       status: "Viral",
       priority: "High",
@@ -233,7 +247,8 @@ export default function IdeasPage() {
     {
       id: "15",
       name: "Cryptocurrency Education Blog",
-      description: "Beginner-friendly blog series explaining cryptocurrency, blockchain, and DeFi concepts",
+      description:
+        "Beginner-friendly blog series explaining cryptocurrency, blockchain, and DeFi concepts",
       category: "Blog",
       status: "Draft",
       priority: "Medium",
@@ -248,7 +263,8 @@ export default function IdeasPage() {
     {
       id: "16",
       name: "Mother's Day Gift Guide",
-      description: "Curated email campaign featuring personalized gift recommendations for Mother's Day",
+      description:
+        "Curated email campaign featuring personalized gift recommendations for Mother's Day",
       category: "Email",
       status: "Scheduled",
       priority: "Medium",
@@ -263,7 +279,8 @@ export default function IdeasPage() {
     {
       id: "17",
       name: "LinkedIn Company Updates",
-      description: "Weekly LinkedIn posts showcasing company culture, employee spotlights, and industry insights",
+      description:
+        "Weekly LinkedIn posts showcasing company culture, employee spotlights, and industry insights",
       category: "Social Media",
       status: "Active",
       priority: "Low",
@@ -278,7 +295,8 @@ export default function IdeasPage() {
     {
       id: "18",
       name: "Product Launch Teaser Campaign",
-      description: "Multi-channel teaser campaign building anticipation for upcoming product launch with countdown elements",
+      description:
+        "Multi-channel teaser campaign building anticipation for upcoming product launch with countdown elements",
       category: "Advertising",
       status: "Planning",
       priority: "High",
@@ -293,7 +311,8 @@ export default function IdeasPage() {
     {
       id: "19",
       name: "DIY Home Improvement Newsletter",
-      description: "Monthly newsletter with DIY tutorials, tool reviews, and home improvement project ideas",
+      description:
+        "Monthly newsletter with DIY tutorials, tool reviews, and home improvement project ideas",
       category: "Newsletter",
       status: "Active",
       priority: "Medium",
@@ -308,7 +327,8 @@ export default function IdeasPage() {
     {
       id: "20",
       name: "Customer Success Stories Blog",
-      description: "Case study blog series highlighting customer transformations and success stories",
+      description:
+        "Case study blog series highlighting customer transformations and success stories",
       category: "Blog",
       status: "In Progress",
       priority: "High",
@@ -322,7 +342,6 @@ export default function IdeasPage() {
     },
   ];
 
-
   const columns = [
     { key: "name", header: "Idea Name", width: "300px" },
     { key: "category", header: "Category", width: "120px" },
@@ -335,10 +354,10 @@ export default function IdeasPage() {
   ];
 
   const emptyActions = [
-    { 
-      label: "Create Idea", 
+    {
+      label: "Create Idea",
       icon: <Plus className="h-4 w-4" />,
-      href: "/ideas/create"
+      href: "/ideas/create",
     },
   ];
 
@@ -362,17 +381,20 @@ export default function IdeasPage() {
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View idea:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View idea:", row.name),
     },
     {
       label: "Edit Idea",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit idea:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit idea:", row.name),
     },
     {
       label: "Delete Idea",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Delete idea:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Delete idea:", row.name),
       variant: "destructive" as const,
     },
   ];

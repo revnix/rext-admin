@@ -28,13 +28,20 @@ export default function FlowsPage() {
     {
       id: "1",
       name: "AI Blog Post Generator",
-      description: "Automated content creation for tech blog posts with SEO optimization",
+      description:
+        "Automated content creation for tech blog posts with SEO optimization",
       status: "Active",
       topic: "Technology & AI",
       aiModel: "GPT-4",
       contentPillar: "Thought Leadership",
-      instructions: "Create engaging 1500-word blog posts about emerging AI technologies, include practical examples, and optimize for SEO",
-      keywords: ["artificial intelligence", "machine learning", "automation", "tech trends"],
+      instructions:
+        "Create engaging 1500-word blog posts about emerging AI technologies, include practical examples, and optimize for SEO",
+      keywords: [
+        "artificial intelligence",
+        "machine learning",
+        "automation",
+        "tech trends",
+      ],
       humanInLoop: true,
       triggers: "Weekly Schedule",
       lastRun: "2024-01-22 14:30",
@@ -48,12 +55,14 @@ export default function FlowsPage() {
     {
       id: "2",
       name: "Social Media Content Pipeline",
-      description: "Multi-platform social media content generation with brand consistency",
+      description:
+        "Multi-platform social media content generation with brand consistency",
       status: "Running",
       topic: "Social Media Marketing",
       aiModel: "Claude-3",
       contentPillar: "Brand Awareness",
-      instructions: "Generate daily social media posts for LinkedIn, Twitter, and Instagram with consistent brand voice and trending hashtags",
+      instructions:
+        "Generate daily social media posts for LinkedIn, Twitter, and Instagram with consistent brand voice and trending hashtags",
       keywords: ["social media", "branding", "engagement", "marketing"],
       humanInLoop: true,
       triggers: "Daily 9:00 AM",
@@ -68,13 +77,20 @@ export default function FlowsPage() {
     {
       id: "3",
       name: "Newsletter Content Creator",
-      description: "Weekly newsletter generation with curated industry news and insights",
+      description:
+        "Weekly newsletter generation with curated industry news and insights",
       status: "Failed",
       topic: "Industry News",
       aiModel: "GPT-3.5-turbo",
       contentPillar: "Industry Updates",
-      instructions: "Compile and summarize top 10 industry news stories, add expert commentary, format for email newsletter",
-      keywords: ["newsletter", "industry news", "weekly digest", "expert analysis"],
+      instructions:
+        "Compile and summarize top 10 industry news stories, add expert commentary, format for email newsletter",
+      keywords: [
+        "newsletter",
+        "industry news",
+        "weekly digest",
+        "expert analysis",
+      ],
       humanInLoop: true,
       triggers: "Weekly Friday",
       lastRun: "2024-01-19 08:00",
@@ -88,12 +104,14 @@ export default function FlowsPage() {
     {
       id: "4",
       name: "Product Description Generator",
-      description: "E-commerce product descriptions with persuasive copywriting",
+      description:
+        "E-commerce product descriptions with persuasive copywriting",
       status: "Active",
       topic: "E-commerce",
       aiModel: "GPT-4",
       contentPillar: "Product Marketing",
-      instructions: "Create compelling product descriptions highlighting features, benefits, and emotional appeal for online store items",
+      instructions:
+        "Create compelling product descriptions highlighting features, benefits, and emotional appeal for online store items",
       keywords: ["e-commerce", "product descriptions", "copywriting", "sales"],
       humanInLoop: false,
       triggers: "On Product Upload",
@@ -113,7 +131,8 @@ export default function FlowsPage() {
       topic: "Educational Content",
       aiModel: "Claude-3",
       contentPillar: "Education",
-      instructions: "Write engaging 10-minute video scripts for educational content with hooks, clear structure, and call-to-actions",
+      instructions:
+        "Write engaging 10-minute video scripts for educational content with hooks, clear structure, and call-to-actions",
       keywords: ["youtube", "video scripts", "education", "engagement"],
       humanInLoop: true,
       triggers: "Bi-weekly Tuesday",
@@ -128,12 +147,14 @@ export default function FlowsPage() {
     {
       id: "6",
       name: "Press Release Automation",
-      description: "Automated press release generation for company announcements",
+      description:
+        "Automated press release generation for company announcements",
       status: "Active",
       topic: "Corporate Communications",
       aiModel: "GPT-4",
       contentPillar: "Corporate News",
-      instructions: "Generate professional press releases following AP style guidelines, include quotes and company boilerplate",
+      instructions:
+        "Generate professional press releases following AP style guidelines, include quotes and company boilerplate",
       keywords: ["press release", "corporate", "announcements", "media"],
       humanInLoop: true,
       triggers: "Manual Trigger",
@@ -153,8 +174,14 @@ export default function FlowsPage() {
       topic: "Email Marketing",
       aiModel: "GPT-3.5-turbo",
       contentPillar: "Customer Engagement",
-      instructions: "Create personalized email campaigns with subject line variations, segment-specific content, and clear CTAs",
-      keywords: ["email marketing", "personalization", "campaigns", "conversion"],
+      instructions:
+        "Create personalized email campaigns with subject line variations, segment-specific content, and clear CTAs",
+      keywords: [
+        "email marketing",
+        "personalization",
+        "campaigns",
+        "conversion",
+      ],
       humanInLoop: false,
       triggers: "Customer Action",
       lastRun: "2024-01-22 13:15",
@@ -168,13 +195,20 @@ export default function FlowsPage() {
     {
       id: "8",
       name: "SEO Content Optimizer",
-      description: "Content optimization for search engine rankings and readability",
+      description:
+        "Content optimization for search engine rankings and readability",
       status: "Active",
       topic: "SEO Optimization",
       aiModel: "Claude-3",
       contentPillar: "SEO Strategy",
-      instructions: "Analyze and optimize content for target keywords, improve readability scores, and enhance meta descriptions",
-      keywords: ["SEO", "content optimization", "search rankings", "readability"],
+      instructions:
+        "Analyze and optimize content for target keywords, improve readability scores, and enhance meta descriptions",
+      keywords: [
+        "SEO",
+        "content optimization",
+        "search rankings",
+        "readability",
+      ],
       humanInLoop: true,
       triggers: "Content Publish",
       lastRun: "2024-01-22 10:30",
@@ -188,12 +222,14 @@ export default function FlowsPage() {
     {
       id: "9",
       name: "Customer Support Responses",
-      description: "AI-powered customer support response generation with tone matching",
+      description:
+        "AI-powered customer support response generation with tone matching",
       status: "Failed",
       topic: "Customer Support",
       aiModel: "GPT-4",
       contentPillar: "Customer Service",
-      instructions: "Generate empathetic and helpful customer support responses matching company tone, include relevant solutions",
+      instructions:
+        "Generate empathetic and helpful customer support responses matching company tone, include relevant solutions",
       keywords: ["customer support", "responses", "empathy", "solutions"],
       humanInLoop: true,
       triggers: "Support Ticket",
@@ -208,12 +244,14 @@ export default function FlowsPage() {
     {
       id: "10",
       name: "Podcast Show Notes Generator",
-      description: "Automated show notes and transcript summaries for podcast episodes",
+      description:
+        "Automated show notes and transcript summaries for podcast episodes",
       status: "Active",
       topic: "Podcast Content",
       aiModel: "GPT-4",
       contentPillar: "Content Repurposing",
-      instructions: "Create detailed show notes from podcast transcripts, include timestamps, key points, and guest information",
+      instructions:
+        "Create detailed show notes from podcast transcripts, include timestamps, key points, and guest information",
       keywords: ["podcast", "show notes", "transcripts", "summaries"],
       humanInLoop: false,
       triggers: "Episode Upload",
@@ -228,13 +266,20 @@ export default function FlowsPage() {
     {
       id: "11",
       name: "Content Translation Pipeline",
-      description: "Multi-language content translation with cultural adaptation",
+      description:
+        "Multi-language content translation with cultural adaptation",
       status: "Paused",
       topic: "Localization",
       aiModel: "Claude-3",
       contentPillar: "Global Content",
-      instructions: "Translate content to Spanish, French, and German while adapting cultural references and maintaining brand voice",
-      keywords: ["translation", "localization", "multilingual", "cultural adaptation"],
+      instructions:
+        "Translate content to Spanish, French, and German while adapting cultural references and maintaining brand voice",
+      keywords: [
+        "translation",
+        "localization",
+        "multilingual",
+        "cultural adaptation",
+      ],
       humanInLoop: true,
       triggers: "Content Approval",
       lastRun: "2024-01-18 14:20",
@@ -253,8 +298,14 @@ export default function FlowsPage() {
       topic: "Social Proof",
       aiModel: "GPT-4",
       contentPillar: "Trust Building",
-      instructions: "Transform customer feedback into compelling testimonials and detailed case studies with measurable results",
-      keywords: ["testimonials", "case studies", "social proof", "customer success"],
+      instructions:
+        "Transform customer feedback into compelling testimonials and detailed case studies with measurable results",
+      keywords: [
+        "testimonials",
+        "case studies",
+        "social proof",
+        "customer success",
+      ],
       humanInLoop: true,
       triggers: "Customer Milestone",
       lastRun: "2024-01-21 11:00",
@@ -264,7 +315,7 @@ export default function FlowsPage() {
       created: "2023-12-10",
       author: "Marcus Johnson",
       tags: ["Testimonials", "Case Studies", "Success"],
-    }
+    },
   ];
 
   const columns = [
@@ -279,7 +330,11 @@ export default function FlowsPage() {
   ];
 
   const emptyActions = [
-    { label: "Create Flow", icon: <Plus className="h-4 w-4" />, href: "/flows/create" },
+    {
+      label: "Create Flow",
+      icon: <Plus className="h-4 w-4" />,
+      href: "/flows/create",
+    },
   ];
 
   const tableActions = (
@@ -302,32 +357,42 @@ export default function FlowsPage() {
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View flow:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View flow:", row.name),
     },
     {
       label: "Run Flow",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Running flow:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Running flow:", row.name),
     },
     {
       label: "Edit Flow",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit flow:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit flow:", row.name),
     },
     {
       label: "Pause/Resume",
       icon: <Pause className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log(row.status === "Paused" ? "Resuming" : "Pausing", "flow:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log(
+          row.status === "Paused" ? "Resuming" : "Pausing",
+          "flow:",
+          row.name,
+        ),
     },
     {
       label: "Duplicate Flow",
       icon: <RotateCcw className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate flow:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate flow:", row.name),
     },
     {
       label: "Delete Flow",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Delete flow:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Delete flow:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -350,7 +415,14 @@ export default function FlowsPage() {
         onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={["name", "aiModel", "author", "status", "topic", "triggers"]}
+        searchFields={[
+          "name",
+          "aiModel",
+          "author",
+          "status",
+          "topic",
+          "triggers",
+        ]}
       />
     </PageLayout>
   );

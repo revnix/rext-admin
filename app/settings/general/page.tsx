@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function GeneralSettingsPage() {
@@ -40,7 +46,9 @@ export default function GeneralSettingsPage() {
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-6 items-start">
-                  <Label htmlFor="org-description" className="pt-2">Description</Label>
+                  <Label htmlFor="org-description" className="pt-2">
+                    Description
+                  </Label>
                   <Textarea
                     id="org-description"
                     placeholder="Brief description of your organization"
@@ -72,10 +80,18 @@ export default function GeneralSettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="utc">UTC (Coordinated Universal Time)</SelectItem>
-                      <SelectItem value="est">EST (Eastern Standard Time)</SelectItem>
-                      <SelectItem value="pst">PST (Pacific Standard Time)</SelectItem>
-                      <SelectItem value="cet">CET (Central European Time)</SelectItem>
+                      <SelectItem value="utc">
+                        UTC (Coordinated Universal Time)
+                      </SelectItem>
+                      <SelectItem value="est">
+                        EST (Eastern Standard Time)
+                      </SelectItem>
+                      <SelectItem value="pst">
+                        PST (Pacific Standard Time)
+                      </SelectItem>
+                      <SelectItem value="cet">
+                        CET (Central European Time)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -88,8 +104,12 @@ export default function GeneralSettingsPage() {
                     <SelectContent>
                       <SelectItem value="iso">YYYY-MM-DD (ISO 8601)</SelectItem>
                       <SelectItem value="us">MM/DD/YYYY (US Format)</SelectItem>
-                      <SelectItem value="eu">DD/MM/YYYY (European Format)</SelectItem>
-                      <SelectItem value="relative">Relative (2 days ago)</SelectItem>
+                      <SelectItem value="eu">
+                        DD/MM/YYYY (European Format)
+                      </SelectItem>
+                      <SelectItem value="relative">
+                        Relative (2 days ago)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -22,13 +22,19 @@ export function QuickAddDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
-          <Link href="/ideas/create" className="flex items-center gap-2 cursor-pointer">
+          <Link
+            href="/ideas/create"
+            className="flex items-center gap-2 cursor-pointer"
+          >
             <Lightbulb className="h-4 w-4" />
             Create Idea
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/flows/create" className="flex items-center gap-2 cursor-pointer">
+          <Link
+            href="/flows/create"
+            className="flex items-center gap-2 cursor-pointer"
+          >
             <Workflow className="h-4 w-4" />
             Create Flow
           </Link>

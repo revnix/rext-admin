@@ -32,7 +32,8 @@ export default function ContentPage() {
   const contentData = [
     {
       id: "1",
-      title: "The Future of AI in Software Development: 10 Game-Changing Trends",
+      title:
+        "The Future of AI in Software Development: 10 Game-Changing Trends",
       type: "Blog Post",
       contentType: "article",
       status: "Published",
@@ -47,11 +48,16 @@ export default function ContentPage() {
       seoScore: 94,
       author: "AI Assistant",
       humanReviewer: "Sarah Johnson",
-      keywords: ["artificial intelligence", "software development", "automation"],
+      keywords: [
+        "artificial intelligence",
+        "software development",
+        "automation",
+      ],
       platforms: ["WordPress", "Medium"],
       lastModified: "2024-01-22 08:45",
       created: "2024-01-22 08:30",
-      content: "As we stand on the precipice of a technological revolution, artificial intelligence continues to reshape the landscape of software development...",
+      content:
+        "As we stand on the precipice of a technological revolution, artificial intelligence continues to reshape the landscape of software development...",
     },
     {
       id: "2",
@@ -72,7 +78,8 @@ export default function ContentPage() {
       platforms: ["LinkedIn"],
       lastModified: "2024-01-22 14:20",
       created: "2024-01-22 14:15",
-      content: "Slide 1: 🏠 Remote Work Reality Check\nSlide 2: 📊 Time Tracking Tools That Actually Work\nSlide 3: 🤝 Communication Protocols...",
+      content:
+        "Slide 1: 🏠 Remote Work Reality Check\nSlide 2: 📊 Time Tracking Tools That Actually Work\nSlide 3: 🤝 Communication Protocols...",
     },
     {
       id: "3",
@@ -94,7 +101,8 @@ export default function ContentPage() {
       platforms: ["Twitter"],
       lastModified: "2024-01-22 13:30",
       created: "2024-01-22 13:25",
-      content: "🧵 Thread: Why AI Ethics Matter More Than Ever (1/15)\n\n1/ As AI becomes ubiquitous, we need frameworks for responsible development...",
+      content:
+        "🧵 Thread: Why AI Ethics Matter More Than Ever (1/15)\n\n1/ As AI becomes ubiquitous, we need frameworks for responsible development...",
     },
     {
       id: "4",
@@ -116,7 +124,8 @@ export default function ContentPage() {
       platforms: ["MailChimp", "Substack"],
       lastModified: "2024-01-21 07:45",
       created: "2024-01-21 07:00",
-      content: "🚀 This Week in Tech\n\nHi there,\n\nAnother exciting week in the tech world! Here are the top stories that caught our attention...",
+      content:
+        "🚀 This Week in Tech\n\nHi there,\n\nAnother exciting week in the tech world! Here are the top stories that caught our attention...",
     },
     {
       id: "5",
@@ -137,11 +146,13 @@ export default function ContentPage() {
       platforms: ["Reddit"],
       lastModified: "2024-01-22 16:25",
       created: "2024-01-22 16:20",
-      content: "What are your go-to practices for effective code reviews?\n\nI've been leading a team for 6 months now, and I'm looking to improve our code review process...",
+      content:
+        "What are your go-to practices for effective code reviews?\n\nI've been leading a team for 6 months now, and I'm looking to improve our code review process...",
     },
     {
       id: "6",
-      title: "YouTube Script: Machine Learning Fundamentals Explained in 10 Minutes",
+      title:
+        "YouTube Script: Machine Learning Fundamentals Explained in 10 Minutes",
       type: "Video Script",
       contentType: "script",
       status: "Approved",
@@ -158,7 +169,8 @@ export default function ContentPage() {
       platforms: ["YouTube"],
       lastModified: "2024-01-22 11:10",
       created: "2024-01-22 10:30",
-      content: "[INTRO]\nHook: Did you know that machine learning algorithms are behind 90% of the apps you use daily?\n[SEGMENT 1 - What is Machine Learning?]...",
+      content:
+        "[INTRO]\nHook: Did you know that machine learning algorithms are behind 90% of the apps you use daily?\n[SEGMENT 1 - What is Machine Learning?]...",
     },
     {
       id: "7",
@@ -180,7 +192,8 @@ export default function ContentPage() {
       platforms: ["Facebook", "Instagram"],
       lastModified: "2024-01-21 15:30",
       created: "2024-01-20 09:00",
-      content: "🎄 Holiday Magic Awaits!\n\nDiscover gifts that spark joy this season. Up to 50% off selected items.\n\n[CTA: Shop Now]\n[Image: Holiday collection]",
+      content:
+        "🎄 Holiday Magic Awaits!\n\nDiscover gifts that spark joy this season. Up to 50% off selected items.\n\n[CTA: Shop Now]\n[Image: Holiday collection]",
     },
     {
       id: "8",
@@ -201,7 +214,8 @@ export default function ContentPage() {
       platforms: ["Shopify", "Amazon"],
       lastModified: "2024-01-22 11:50",
       created: "2024-01-22 11:45",
-      content: "Transform your home security with the Smart Home Security Camera X1 - the ultimate guardian for modern living...",
+      content:
+        "Transform your home security with the Smart Home Security Camera X1 - the ultimate guardian for modern living...",
     },
     {
       id: "9",
@@ -221,7 +235,8 @@ export default function ContentPage() {
       platforms: ["LinkedIn"],
       lastModified: "2024-01-22 17:20",
       created: "2024-01-22 16:45",
-      content: "The democratization of software development is here, and it's changing everything we know about building digital solutions...",
+      content:
+        "The democratization of software development is here, and it's changing everything we know about building digital solutions...",
     },
     {
       id: "10",
@@ -242,7 +257,8 @@ export default function ContentPage() {
       platforms: ["Instagram"],
       lastModified: "2024-01-21 08:55",
       created: "2024-01-21 08:30",
-      content: "Story 1: ☕ 6 AM - The early bird catches the product launch\nStory 2: 💡 Brainstorming session with the team...",
+      content:
+        "Story 1: ☕ 6 AM - The early bird catches the product launch\nStory 2: 💡 Brainstorming session with the team...",
     },
     {
       id: "11",
@@ -263,7 +279,8 @@ export default function ContentPage() {
       platforms: ["PRNewswire", "Business Wire"],
       lastModified: "2024-01-22 09:45",
       created: "2024-01-22 09:20",
-      content: "FOR IMMEDIATE RELEASE\n\nTechCorp Unveils Game-Changing AI Platform Set to Transform Enterprise Operations...",
+      content:
+        "FOR IMMEDIATE RELEASE\n\nTechCorp Unveils Game-Changing AI Platform Set to Transform Enterprise Operations...",
     },
     {
       id: "12",
@@ -284,7 +301,8 @@ export default function ContentPage() {
       platforms: ["ConvertKit"],
       lastModified: "2024-01-22 15:15",
       created: "2024-01-22 15:00",
-      content: "Subject: Here's what our top customers do differently\n\nHi [First Name],\n\nYou've been with us for a few days now, and I wanted to share something interesting...",
+      content:
+        "Subject: Here's what our top customers do differently\n\nHi [First Name],\n\nYou've been with us for a few days now, and I wanted to share something interesting...",
     },
     {
       id: "13",
@@ -304,7 +322,8 @@ export default function ContentPage() {
       platforms: ["TikTok", "Instagram Reels"],
       lastModified: "2024-01-22 12:30",
       created: "2024-01-22 12:15",
-      content: "[Scene 1 - 0-3s]: Quick hook - 'This 25-minute trick changed my productivity forever'\n[Scene 2 - 4-10s]: Show timer setup...",
+      content:
+        "[Scene 1 - 0-3s]: Quick hook - 'This 25-minute trick changed my productivity forever'\n[Scene 2 - 4-10s]: Show timer setup...",
       failureReason: "Content policy violation - promotional content",
     },
     {
@@ -326,7 +345,8 @@ export default function ContentPage() {
       platforms: ["Podcast Website", "Spotify"],
       lastModified: "2024-01-21 19:55",
       created: "2024-01-21 19:30",
-      content: "🎧 Episode 47: The Future of Remote Work\n\nIn this episode, we dive deep into the evolving landscape of remote work...",
+      content:
+        "🎧 Episode 47: The Future of Remote Work\n\nIn this episode, we dive deep into the evolving landscape of remote work...",
     },
     {
       id: "15",
@@ -346,8 +366,9 @@ export default function ContentPage() {
       platforms: ["Company Website", "LinkedIn"],
       lastModified: "2024-01-22 16:40",
       created: "2024-01-22 16:10",
-      content: "Challenge: AutoTech was struggling with manual processes that were eating into their profit margins...",
-    }
+      content:
+        "Challenge: AutoTech was struggling with manual processes that were eating into their profit margins...",
+    },
   ];
 
   const columns = [
@@ -361,10 +382,10 @@ export default function ContentPage() {
   ];
 
   const emptyActions = [
-    { 
-      label: "Create Flow", 
+    {
+      label: "Create Flow",
       icon: <Plus className="h-4 w-4" />,
-      href: "/flows/create"
+      href: "/flows/create",
     },
   ];
 
@@ -388,37 +409,44 @@ export default function ContentPage() {
     {
       label: "View Content",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View content:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("View content:", row.title),
     },
     {
       label: "Edit Content",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit content:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit content:", row.title),
     },
     {
       label: "Duplicate Content",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate content:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate content:", row.title),
     },
     {
       label: "Schedule/Publish",
       icon: <Calendar className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Schedule content:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("Schedule content:", row.title),
     },
     {
       label: "Share Content",
       icon: <Share2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Share content:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("Share content:", row.title),
     },
     {
       label: "View Analytics",
       icon: <ExternalLink className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View analytics:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("View analytics:", row.title),
     },
     {
       label: "Delete Content",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Delete content:", row.title),
+      onClick: (row: Record<string, any>) =>
+        console.log("Delete content:", row.title),
       variant: "destructive" as const,
     },
   ];
@@ -441,7 +469,14 @@ export default function ContentPage() {
         onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={12}
-        searchFields={["title", "type", "status", "flowName", "publishedTo", "humanReviewer"]}
+        searchFields={[
+          "title",
+          "type",
+          "status",
+          "flowName",
+          "publishedTo",
+          "humanReviewer",
+        ]}
       />
     </PageLayout>
   );

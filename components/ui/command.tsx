@@ -133,7 +133,12 @@ interface CommandDialogProps {
   children: React.ReactNode;
 }
 
-const CommandDialog = ({ open, onOpenChange, children, ...props }: CommandDialogProps) => {
+const CommandDialog = ({
+  open,
+  onOpenChange,
+  children,
+  ...props
+}: CommandDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange} {...props}>
       <DialogContent className="overflow-hidden p-0 shadow-lg">

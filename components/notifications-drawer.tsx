@@ -42,7 +42,8 @@ const sampleNotifications: Notification[] = [
     id: "1",
     type: "success",
     title: "Idea Created Successfully",
-    message: "Your new idea 'AI-Powered Marketing Tool' has been created and is ready for review.",
+    message:
+      "Your new idea 'AI-Powered Marketing Tool' has been created and is ready for review.",
     time: "2 minutes ago",
     read: false,
   },
@@ -50,7 +51,8 @@ const sampleNotifications: Notification[] = [
     id: "2",
     type: "warning",
     title: "Flow Execution Warning",
-    message: "Your automation flow 'Email Campaign' completed with warnings. Check the logs for details.",
+    message:
+      "Your automation flow 'Email Campaign' completed with warnings. Check the logs for details.",
     time: "15 minutes ago",
     read: false,
     actions: [
@@ -70,7 +72,8 @@ const sampleNotifications: Notification[] = [
     id: "3",
     type: "error",
     title: "Integration Failed",
-    message: "Failed to connect to Slack workspace. Please check your credentials and try again.",
+    message:
+      "Failed to connect to Slack workspace. Please check your credentials and try again.",
     time: "1 hour ago",
     read: false,
     actions: [
@@ -90,7 +93,8 @@ const sampleNotifications: Notification[] = [
     id: "4",
     type: "info",
     title: "New Feature Available",
-    message: "We've added new AI model options to help improve your content generation.",
+    message:
+      "We've added new AI model options to help improve your content generation.",
     time: "2 hours ago",
     read: true,
   },
@@ -98,7 +102,8 @@ const sampleNotifications: Notification[] = [
     id: "5",
     type: "user",
     title: "Team Member Added",
-    message: "John Doe has been added to your workspace and can now access shared projects.",
+    message:
+      "John Doe has been added to your workspace and can now access shared projects.",
     time: "3 hours ago",
     read: true,
   },
@@ -106,7 +111,8 @@ const sampleNotifications: Notification[] = [
     id: "6",
     type: "system",
     title: "System Maintenance",
-    message: "Scheduled maintenance will occur tonight from 2:00 AM to 4:00 AM EST.",
+    message:
+      "Scheduled maintenance will occur tonight from 2:00 AM to 4:00 AM EST.",
     time: "4 hours ago",
     read: true,
   },
@@ -114,7 +120,8 @@ const sampleNotifications: Notification[] = [
     id: "7",
     type: "success",
     title: "Export Complete",
-    message: "Your ideas export has been completed successfully. Download link expires in 24 hours.",
+    message:
+      "Your ideas export has been completed successfully. Download link expires in 24 hours.",
     time: "5 hours ago",
     read: true,
     actions: [
@@ -129,7 +136,8 @@ const sampleNotifications: Notification[] = [
     id: "8",
     type: "warning",
     title: "Storage Limit Warning",
-    message: "You're approaching 80% of your storage limit. Consider upgrading your plan.",
+    message:
+      "You're approaching 80% of your storage limit. Consider upgrading your plan.",
     time: "6 hours ago",
     read: true,
     actions: [
@@ -149,7 +157,8 @@ const sampleNotifications: Notification[] = [
     id: "9",
     type: "info",
     title: "Weekly Report Ready",
-    message: "Your weekly productivity report is ready for review. Check out your progress!",
+    message:
+      "Your weekly productivity report is ready for review. Check out your progress!",
     time: "1 day ago",
     read: true,
   },
@@ -157,7 +166,8 @@ const sampleNotifications: Notification[] = [
     id: "10",
     type: "error",
     title: "API Rate Limit",
-    message: "You've exceeded the API rate limit for OpenAI integration. Resets in 1 hour.",
+    message:
+      "You've exceeded the API rate limit for OpenAI integration. Resets in 1 hour.",
     time: "1 day ago",
     read: true,
   },
@@ -173,7 +183,8 @@ const sampleNotifications: Notification[] = [
     id: "12",
     type: "system",
     title: "Security Alert",
-    message: "New login detected from Chrome on Windows. If this wasn't you, please secure your account.",
+    message:
+      "New login detected from Chrome on Windows. If this wasn't you, please secure your account.",
     time: "2 days ago",
     read: true,
   },
@@ -181,7 +192,8 @@ const sampleNotifications: Notification[] = [
     id: "13",
     type: "success",
     title: "Payment Processed",
-    message: "Your subscription payment has been processed successfully. Receipt sent via email.",
+    message:
+      "Your subscription payment has been processed successfully. Receipt sent via email.",
     time: "3 days ago",
     read: true,
   },
@@ -189,7 +201,8 @@ const sampleNotifications: Notification[] = [
     id: "14",
     type: "info",
     title: "Feature Update",
-    message: "New collaboration features are now available in your workspace settings.",
+    message:
+      "New collaboration features are now available in your workspace settings.",
     time: "3 days ago",
     read: true,
   },
@@ -197,7 +210,8 @@ const sampleNotifications: Notification[] = [
     id: "15",
     type: "warning",
     title: "Inactive Project",
-    message: "Project 'Q4 Campaign Ideas' hasn't been updated in 30 days. Archive or continue?",
+    message:
+      "Project 'Q4 Campaign Ideas' hasn't been updated in 30 days. Archive or continue?",
     time: "4 days ago",
     read: true,
     actions: [
@@ -258,18 +272,22 @@ const getNotificationBadgeColor = (type: Notification["type"]) => {
   }
 };
 
-export function NotificationsDrawer({ open, onClose }: NotificationsDrawerProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(sampleNotifications);
-  const unreadCount = notifications.filter(n => !n.read).length;
+export function NotificationsDrawer({
+  open,
+  onClose,
+}: NotificationsDrawerProps) {
+  const [notifications, setNotifications] =
+    useState<Notification[]>(sampleNotifications);
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   return (
@@ -295,8 +313,8 @@ export function NotificationsDrawer({ open, onClose }: NotificationsDrawerProps)
               <div
                 key={notification.id}
                 className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${
-                  !notification.read 
-                    ? "bg-blue-50 border-blue-200" 
+                  !notification.read
+                    ? "bg-blue-50 border-blue-200"
                     : "bg-background border-border"
                 }`}
               >
@@ -306,13 +324,17 @@ export function NotificationsDrawer({ open, onClose }: NotificationsDrawerProps)
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className={`text-sm font-medium ${
-                        !notification.read ? "text-foreground" : "text-muted-foreground"
-                      }`}>
+                      <h4
+                        className={`text-sm font-medium ${
+                          !notification.read
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
                         {notification.title}
                       </h4>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={`text-xs ${getNotificationBadgeColor(notification.type)}`}
                       >
                         {notification.type}
@@ -321,23 +343,24 @@ export function NotificationsDrawer({ open, onClose }: NotificationsDrawerProps)
                     <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
                       {notification.message}
                     </p>
-                    
-                    {notification.actions && notification.actions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {notification.actions.map((action, index) => (
-                          <Button
-                            key={index}
-                            variant={action.variant || "outline"}
-                            size="sm"
-                            onClick={action.onClick}
-                            className="h-7 text-xs px-3"
-                          >
-                            {action.label}
-                          </Button>
-                        ))}
-                      </div>
-                    )}
-                    
+
+                    {notification.actions &&
+                      notification.actions.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {notification.actions.map((action, index) => (
+                            <Button
+                              key={index}
+                              variant={action.variant || "outline"}
+                              size="sm"
+                              onClick={action.onClick}
+                              className="h-7 text-xs px-3"
+                            >
+                              {action.label}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         {notification.time}
@@ -369,9 +392,9 @@ export function NotificationsDrawer({ open, onClose }: NotificationsDrawerProps)
         </ScrollArea>
 
         <div className="border-t p-6 pt-4">
-          <Button 
-            variant="outline" 
-            className="w-full" 
+          <Button
+            variant="outline"
+            className="w-full"
             onClick={markAllAsRead}
             disabled={unreadCount === 0}
           >

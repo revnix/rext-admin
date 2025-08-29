@@ -49,14 +49,15 @@ export default function ModelsPage() {
       avgLatency: "1.2s",
       successRate: "98.5%",
       capabilities: ["Text Generation", "Code", "Analysis", "Reasoning"],
-      description: "Most capable model for complex tasks requiring advanced reasoning",
+      description:
+        "Most capable model for complex tasks requiring advanced reasoning",
       configuredBy: "Sarah Johnson",
       lastUsed: "2024-01-22 16:45",
       updated: "2024-01-20 10:30",
       created: "2024-01-01 09:00",
     },
     {
-      id: "2", 
+      id: "2",
       name: "Claude 3 Sonnet",
       displayName: "claude-3-sonnet-20240229",
       provider: "Anthropic",
@@ -76,7 +77,8 @@ export default function ModelsPage() {
       avgLatency: "0.9s",
       successRate: "99.2%",
       capabilities: ["Text Generation", "Analysis", "Writing", "Coding"],
-      description: "Balanced model for high-quality content generation and analysis",
+      description:
+        "Balanced model for high-quality content generation and analysis",
       configuredBy: "Mike Chen",
       lastUsed: "2024-01-22 16:30",
       updated: "2024-01-18 14:20",
@@ -103,7 +105,8 @@ export default function ModelsPage() {
       avgLatency: "0.7s",
       successRate: "97.8%",
       capabilities: ["Text Generation", "Conversation", "Basic Coding"],
-      description: "Fast and cost-effective model for everyday content generation",
+      description:
+        "Fast and cost-effective model for everyday content generation",
       configuredBy: "Alex Rivera",
       lastUsed: "2024-01-22 16:50",
       updated: "2024-01-15 09:45",
@@ -243,7 +246,7 @@ export default function ModelsPage() {
       lastUsed: "Never",
       updated: "2024-01-21 16:45",
       created: "2024-01-21 16:45",
-    }
+    },
   ];
 
   const columns = [
@@ -258,7 +261,11 @@ export default function ModelsPage() {
   ];
 
   const emptyActions = [
-    { label: "Add Model", icon: <Plus className="h-4 w-4" />, href: "/models/add" },
+    {
+      label: "Add Model",
+      icon: <Plus className="h-4 w-4" />,
+      href: "/models/add",
+    },
   ];
 
   const tableActions = (
@@ -281,42 +288,54 @@ export default function ModelsPage() {
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View model:", row.name),
     },
     {
       label: "Configure",
       icon: <Settings className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Configure model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Configure model:", row.name),
     },
     {
       label: "Test Model",
       icon: <Zap className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Test model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Test model:", row.name),
     },
     {
       label: "View Analytics",
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View analytics:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View analytics:", row.name),
     },
     {
       label: "Duplicate Config",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate model:", row.name),
     },
     {
       label: "Edit Model",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit model:", row.name),
     },
     {
       label: "Pause/Resume",
       icon: <Pause className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log(row.status === "Paused" ? "Resume" : "Pause", "model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log(
+          row.status === "Paused" ? "Resume" : "Pause",
+          "model:",
+          row.name,
+        ),
     },
     {
       label: "Remove Model",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Remove model:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Remove model:", row.name),
       variant: "destructive" as const,
     },
   ];

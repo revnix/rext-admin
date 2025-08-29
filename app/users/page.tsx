@@ -46,16 +46,16 @@ export default function UsersPage() {
       avatar: "https://i.pravatar.cc/32?img=1",
       permissions: [
         "Create Flows",
-        "Manage Users", 
+        "Manage Users",
         "Configure Models",
         "Access Analytics",
         "Billing Management",
-        "System Settings"
+        "System Settings",
       ],
       flows: [
         "AI Blog Post Generator",
         "Newsletter Content Creator",
-        "Social Media Content Pipeline"
+        "Social Media Content Pipeline",
       ],
       flowsCreated: 15,
       contentGenerated: 3421,
@@ -71,7 +71,7 @@ export default function UsersPage() {
       monthlyUsage: "$234.56",
       invitedBy: "System",
       onboardingCompleted: true,
-      tags: ["admin", "cto", "leadership"]
+      tags: ["admin", "cto", "leadership"],
     },
     {
       id: "2",
@@ -89,12 +89,12 @@ export default function UsersPage() {
         "Manage Content",
         "Social Media Publishing",
         "View Analytics",
-        "Approve Content"
+        "Approve Content",
       ],
       flows: [
         "Social Media Content Pipeline",
         "Brand Voice Compliance",
-        "Twitter Thread Storyteller"
+        "Twitter Thread Storyteller",
       ],
       flowsCreated: 23,
       contentGenerated: 2847,
@@ -110,7 +110,7 @@ export default function UsersPage() {
       monthlyUsage: "$89.34",
       invitedBy: "Sarah Johnson",
       onboardingCompleted: true,
-      tags: ["content", "marketing", "social-media"]
+      tags: ["content", "marketing", "social-media"],
     },
     {
       id: "3",
@@ -128,12 +128,12 @@ export default function UsersPage() {
         "Manage Integrations",
         "API Access",
         "Debug Flows",
-        "System Monitoring"
+        "System Monitoring",
       ],
       flows: [
         "SEO Content Optimizer",
         "Technical Documentation Generator",
-        "Code Comment Generator"
+        "Code Comment Generator",
       ],
       flowsCreated: 8,
       contentGenerated: 567,
@@ -149,7 +149,7 @@ export default function UsersPage() {
       monthlyUsage: "$45.67",
       invitedBy: "Sarah Johnson",
       onboardingCompleted: true,
-      tags: ["developer", "engineering", "api"]
+      tags: ["developer", "engineering", "api"],
     },
     {
       id: "4",
@@ -167,12 +167,12 @@ export default function UsersPage() {
         "Approve Drafts",
         "Edit Generated Content",
         "View Content Analytics",
-        "Manage Quality Rules"
+        "Manage Quality Rules",
       ],
       flows: [
         "Content Quality Gate",
         "Editorial Review Process",
-        "Brand Voice Compliance"
+        "Brand Voice Compliance",
       ],
       flowsCreated: 12,
       contentGenerated: 1234,
@@ -188,7 +188,7 @@ export default function UsersPage() {
       monthlyUsage: "$23.45",
       invitedBy: "Mike Chen",
       onboardingCompleted: true,
-      tags: ["editor", "content", "quality"]
+      tags: ["editor", "content", "quality"],
     },
     {
       id: "5",
@@ -206,13 +206,13 @@ export default function UsersPage() {
         "Manage Brand Assets",
         "Design Templates",
         "Social Media Design",
-        "Image Generation"
+        "Image Generation",
       ],
       flows: [
         "Visual Content Creator",
         "Instagram Stories",
         "Pinterest Marketing",
-        "DALL-E Image Generator"
+        "DALL-E Image Generator",
       ],
       flowsCreated: 18,
       contentGenerated: 892,
@@ -228,7 +228,7 @@ export default function UsersPage() {
       monthlyUsage: "$67.89",
       invitedBy: "Sarah Johnson",
       onboardingCompleted: true,
-      tags: ["designer", "visual", "creative"]
+      tags: ["designer", "visual", "creative"],
     },
     {
       id: "6",
@@ -246,12 +246,12 @@ export default function UsersPage() {
         "Generate Reports",
         "Performance Tracking",
         "Data Export",
-        "Insights Analysis"
+        "Insights Analysis",
       ],
       flows: [
         "Performance Analytics",
         "Content ROI Calculator",
-        "Engagement Optimizer"
+        "Engagement Optimizer",
       ],
       flowsCreated: 6,
       contentGenerated: 234,
@@ -267,7 +267,7 @@ export default function UsersPage() {
       monthlyUsage: "$12.34",
       invitedBy: "Jennifer Taylor",
       onboardingCompleted: true,
-      tags: ["analyst", "analytics", "reporting"]
+      tags: ["analyst", "analytics", "reporting"],
     },
     {
       id: "7",
@@ -285,7 +285,7 @@ export default function UsersPage() {
         "Manage Social Accounts",
         "Email Marketing",
         "Campaign Analytics",
-        "Budget Management"
+        "Budget Management",
       ],
       flows: [],
       flowsCreated: 0,
@@ -302,7 +302,7 @@ export default function UsersPage() {
       monthlyUsage: "$0.00",
       invitedBy: "Mike Chen",
       onboardingCompleted: false,
-      tags: ["marketing", "pending", "campaigns"]
+      tags: ["marketing", "pending", "campaigns"],
     },
     {
       id: "8",
@@ -319,12 +319,12 @@ export default function UsersPage() {
         "Create Content",
         "Edit Drafts",
         "Research Topics",
-        "SEO Optimization"
+        "SEO Optimization",
       ],
       flows: [
         "AI Blog Post Generator",
         "Long-form Content Creator",
-        "Email Newsletter Writer"
+        "Email Newsletter Writer",
       ],
       flowsCreated: 9,
       contentGenerated: 445,
@@ -340,7 +340,7 @@ export default function UsersPage() {
       monthlyUsage: "$0.00",
       invitedBy: "Jennifer Taylor",
       onboardingCompleted: true,
-      tags: ["writer", "suspended", "content"]
+      tags: ["writer", "suspended", "content"],
     },
     {
       id: "9",
@@ -358,12 +358,12 @@ export default function UsersPage() {
         "Content Review",
         "Rule Management",
         "Compliance Checking",
-        "Error Reporting"
+        "Error Reporting",
       ],
       flows: [
         "Content Quality Gate",
         "Brand Compliance Checker",
-        "Plagiarism Detection"
+        "Plagiarism Detection",
       ],
       flowsCreated: 14,
       contentGenerated: 678,
@@ -379,7 +379,7 @@ export default function UsersPage() {
       monthlyUsage: "$34.56",
       invitedBy: "Sarah Johnson",
       onboardingCompleted: true,
-      tags: ["qa", "quality", "compliance"]
+      tags: ["qa", "quality", "compliance"],
     },
     {
       id: "10",
@@ -397,13 +397,13 @@ export default function UsersPage() {
         "Community Management",
         "Engagement Analytics",
         "Content Scheduling",
-        "Hashtag Research"
+        "Hashtag Research",
       ],
       flows: [
         "Social Media Content Pipeline",
         "Twitter Thread Storyteller",
         "TikTok Marketing",
-        "Short-form Video Creator"
+        "Short-form Video Creator",
       ],
       flowsCreated: 21,
       contentGenerated: 1567,
@@ -419,10 +419,9 @@ export default function UsersPage() {
       monthlyUsage: "$78.90",
       invitedBy: "Mike Chen",
       onboardingCompleted: true,
-      tags: ["social-media", "community", "engagement"]
-    }
+      tags: ["social-media", "community", "engagement"],
+    },
   ];
-
 
   const columns = [
     { key: "name", header: "Name", width: "180px" },
@@ -436,7 +435,11 @@ export default function UsersPage() {
   ];
 
   const emptyActions = [
-    { label: "Add User", icon: <UserPlus className="h-4 w-4" />, href: "/users/add" },
+    {
+      label: "Add User",
+      icon: <UserPlus className="h-4 w-4" />,
+      href: "/users/add",
+    },
     {
       label: "Invite Users",
       variant: "outline" as const,
@@ -473,42 +476,54 @@ export default function UsersPage() {
     {
       label: "View Profile",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View user:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View user:", row.name),
     },
     {
       label: "Edit User",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Edit user:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Edit user:", row.name),
     },
     {
       label: "View Activity",
       icon: <Calendar className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("View activity:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("View activity:", row.name),
     },
     {
       label: "Permissions",
       icon: <Shield className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Manage permissions:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Manage permissions:", row.name),
     },
     {
       label: "Reset Password",
       icon: <Lock className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Reset password:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Reset password:", row.name),
     },
     {
       label: "Send Message",
       icon: <Mail className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Send message:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Send message:", row.name),
     },
     {
       label: "Duplicate User",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log("Duplicate user:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log("Duplicate user:", row.name),
     },
     {
       label: "Suspend/Unsuspend",
       icon: <UserMinus className="h-4 w-4" />,
-      onClick: (row: Record<string, any>) => console.log(row.status === "Suspended" ? "Unsuspend" : "Suspend", "user:", row.name),
+      onClick: (row: Record<string, any>) =>
+        console.log(
+          row.status === "Suspended" ? "Unsuspend" : "Suspend",
+          "user:",
+          row.name,
+        ),
       variant: "destructive" as const,
     },
   ];
