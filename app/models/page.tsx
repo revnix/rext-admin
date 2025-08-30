@@ -1,17 +1,7 @@
 "use client";
 
-import {
-  Bot,
-  Copy,
-  Edit2,
-  Eye,
-  Pause,
-  Plus,
-  Settings,
-  Trash2,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
+import { Bot, Eye, Play, Plus, Settings, Trash2 } from "lucide-react";
+
 import Link from "next/link";
 import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
@@ -26,225 +16,121 @@ export default function ModelsPage() {
   ];
 
   // Comprehensive AI models data
-  const modelsData = [
+  const modelsData: ModelData[] = [
     {
       id: "1",
       name: "GPT-4 Turbo",
-      displayName: "gpt-4-1106-preview",
       provider: "OpenAI",
       type: "Chat",
       status: "Active",
-      apiKey: "sk-...ABC123",
-      maxTokens: 128000,
-      contextWindow: "128K tokens",
-      temperature: 0.7,
-      topP: 1.0,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
-      usage: "2.3M tokens",
-      monthlyCost: "$156.78",
-      costPerToken: "$0.01/1K",
-      requestsToday: 1247,
-      avgLatency: "1.2s",
-      successRate: "98.5%",
+      version: "gpt-4-1106-preview",
+      lastUsed: "2024-01-22 16:45",
+      totalUsage: 2300000,
+      avgResponseTime: "1.2s",
+      costPerUse: "$0.01/1K",
       capabilities: ["Text Generation", "Code", "Analysis", "Reasoning"],
       description:
         "Most capable model for complex tasks requiring advanced reasoning",
-      configuredBy: "Sarah Johnson",
-      lastUsed: "2024-01-22 16:45",
-      updated: "2024-01-20 10:30",
-      created: "2024-01-01 09:00",
     },
     {
       id: "2",
       name: "Claude 3 Sonnet",
-      displayName: "claude-3-sonnet-20240229",
       provider: "Anthropic",
       type: "Chat",
       status: "Active",
-      apiKey: "sk-ant-...XYZ789",
-      maxTokens: 200000,
-      contextWindow: "200K tokens",
-      temperature: 0.7,
-      topP: 0.9,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
-      usage: "1.8M tokens",
-      monthlyCost: "$124.45",
-      costPerToken: "$0.003/1K",
-      requestsToday: 892,
-      avgLatency: "0.9s",
-      successRate: "99.2%",
-      capabilities: ["Text Generation", "Analysis", "Writing", "Coding"],
-      description:
-        "Balanced model for high-quality content generation and analysis",
-      configuredBy: "Mike Chen",
-      lastUsed: "2024-01-22 16:30",
-      updated: "2024-01-18 14:20",
-      created: "2023-12-15 11:15",
+      version: "claude-3-sonnet-20240229",
+      lastUsed: "2024-01-22 14:20",
+      totalUsage: 1800000,
+      avgResponseTime: "0.9s",
+      costPerUse: "$0.03/1K",
+      capabilities: ["Text Generation", "Analysis", "Creative Writing"],
+      description: "Balanced model for creative and analytical tasks",
     },
     {
       id: "3",
       name: "GPT-3.5 Turbo",
-      displayName: "gpt-3.5-turbo-0125",
       provider: "OpenAI",
       type: "Chat",
       status: "Active",
-      apiKey: "sk-...DEF456",
-      maxTokens: 16385,
-      contextWindow: "16K tokens",
-      temperature: 0.8,
-      topP: 1.0,
-      frequencyPenalty: 0.1,
-      presencePenalty: 0,
-      usage: "5.7M tokens",
-      monthlyCost: "$45.23",
-      costPerToken: "$0.0005/1K",
-      requestsToday: 3421,
-      avgLatency: "0.7s",
-      successRate: "97.8%",
-      capabilities: ["Text Generation", "Conversation", "Basic Coding"],
-      description:
-        "Fast and cost-effective model for everyday content generation",
-      configuredBy: "Alex Rivera",
-      lastUsed: "2024-01-22 16:50",
-      updated: "2024-01-15 09:45",
-      created: "2023-11-10 08:30",
+      version: "gpt-3.5-turbo-0125",
+      lastUsed: "2024-01-22 15:30",
+      totalUsage: 5600000,
+      avgResponseTime: "0.8s",
+      costPerUse: "$0.002/1K",
+      capabilities: ["Text Generation", "Conversation"],
+      description: "Fast and efficient model for general conversations",
     },
     {
       id: "4",
-      name: "Claude 3 Haiku",
-      displayName: "claude-3-haiku-20240307",
-      provider: "Anthropic",
-      type: "Chat",
-      status: "Active",
-      apiKey: "sk-ant-...PQR321",
-      maxTokens: 200000,
-      contextWindow: "200K tokens",
-      temperature: 0.6,
-      topP: 0.9,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
-      usage: "4.2M tokens",
-      monthlyCost: "$31.67",
-      costPerToken: "$0.00025/1K",
-      requestsToday: 2156,
-      avgLatency: "0.4s",
-      successRate: "99.1%",
-      capabilities: ["Fast Generation", "Summarization", "Simple Tasks"],
-      description: "Fastest model optimized for speed and efficiency",
-      configuredBy: "Emma Davis",
-      lastUsed: "2024-01-22 16:55",
-      updated: "2024-01-22 12:00",
-      created: "2024-01-05 14:20",
-    },
-    {
-      id: "5",
       name: "DALL-E 3",
-      displayName: "dall-e-3",
       provider: "OpenAI",
       type: "Image",
       status: "Active",
-      apiKey: "sk-...GHI789",
-      maxTokens: null,
-      contextWindow: "N/A",
-      temperature: null,
-      topP: null,
-      frequencyPenalty: null,
-      presencePenalty: null,
-      usage: "342 images",
-      monthlyCost: "$68.40",
-      costPerToken: "$0.04/image",
-      requestsToday: 23,
-      avgLatency: "8.5s",
-      successRate: "96.7%",
-      capabilities: ["Image Generation", "Visual Content", "Creative Design"],
-      description: "Advanced image generation for visual content creation",
-      configuredBy: "David Park",
-      lastUsed: "2024-01-22 15:20",
-      updated: "2024-01-10 16:30",
-      created: "2023-12-20 10:45",
+      version: "dall-e-3",
+      lastUsed: "2024-01-22 11:15",
+      totalUsage: 450,
+      avgResponseTime: "8.5s",
+      costPerUse: "$0.04/image",
+      capabilities: ["Image Generation", "Art Creation"],
+      description: "Advanced image generation model for creative content",
+    },
+    {
+      id: "5",
+      name: "Whisper",
+      provider: "OpenAI",
+      type: "Audio",
+      status: "Inactive",
+      version: "whisper-1",
+      lastUsed: "2024-01-20 09:45",
+      totalUsage: 120,
+      avgResponseTime: "3.2s",
+      costPerUse: "$0.006/minute",
+      capabilities: ["Speech Recognition", "Audio Transcription"],
+      description: "Speech-to-text model for audio processing",
     },
     {
       id: "6",
-      name: "GPT-4 Vision",
-      displayName: "gpt-4-vision-preview",
-      provider: "OpenAI",
-      type: "Multimodal",
-      status: "Paused",
-      apiKey: "sk-...JKL012",
-      maxTokens: 4096,
-      contextWindow: "128K tokens",
-      temperature: 0.7,
-      topP: 1.0,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
-      usage: "456K tokens",
-      monthlyCost: "$67.89",
-      costPerToken: "$0.01/1K",
-      requestsToday: 0,
-      avgLatency: "2.1s",
-      successRate: "94.3%",
-      capabilities: ["Vision Analysis", "Image Description", "Visual QA"],
-      description: "Multimodal model for image understanding and analysis",
-      configuredBy: "Lisa Wong",
-      lastUsed: "2024-01-20 11:30",
-      updated: "2024-01-19 08:15",
-      created: "2024-01-08 13:45",
+      name: "Gemini Pro",
+      provider: "Google",
+      type: "Chat",
+      status: "Active",
+      version: "gemini-pro",
+      lastUsed: "2024-01-22 12:00",
+      totalUsage: 890000,
+      avgResponseTime: "1.1s",
+      costPerUse: "$0.0005/1K",
+      capabilities: ["Text Generation", "Reasoning", "Code"],
+      description:
+        "Google's advanced language model with strong reasoning capabilities",
     },
     {
       id: "7",
-      name: "Gemini Pro",
-      displayName: "gemini-pro",
-      provider: "Google",
+      name: "Claude 3 Haiku",
+      provider: "Anthropic",
       type: "Chat",
-      status: "Testing",
-      apiKey: "AIza...MNO345",
-      maxTokens: 30720,
-      contextWindow: "30K tokens",
-      temperature: 0.9,
-      topP: 0.8,
-      frequencyPenalty: null,
-      presencePenalty: null,
-      usage: "127K tokens",
-      monthlyCost: "$12.45",
-      costPerToken: "$0.0005/1K",
-      requestsToday: 45,
-      avgLatency: "1.1s",
-      successRate: "92.1%",
-      capabilities: ["Text Generation", "Code", "Multimodal"],
-      description: "Google's multimodal AI model for diverse content tasks",
-      configuredBy: "Carlos Mendez",
-      lastUsed: "2024-01-22 14:10",
-      updated: "2024-01-22 09:30",
-      created: "2024-01-18 15:00",
+      status: "Active",
+      version: "claude-3-haiku-20240307",
+      lastUsed: "2024-01-22 13:45",
+      totalUsage: 3200000,
+      avgResponseTime: "0.6s",
+      costPerUse: "$0.00025/1K",
+      capabilities: ["Text Generation", "Fast Processing"],
+      description: "Fast and efficient model for quick tasks",
     },
     {
       id: "8",
       name: "Mistral Large",
-      displayName: "mistral-large-latest",
       provider: "Mistral AI",
       type: "Chat",
-      status: "Inactive",
-      apiKey: "mk-...STU678",
-      maxTokens: 32000,
-      contextWindow: "32K tokens",
-      temperature: 0.7,
-      topP: 1.0,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
-      usage: "0 tokens",
-      monthlyCost: "$0.00",
-      costPerToken: "$0.008/1K",
-      requestsToday: 0,
-      avgLatency: "N/A",
-      successRate: "N/A",
-      capabilities: ["Text Generation", "Code", "Reasoning", "Multilingual"],
-      description: "High-performance European AI model for advanced tasks",
-      configuredBy: "Jennifer Taylor",
-      lastUsed: "Never",
-      updated: "2024-01-21 16:45",
-      created: "2024-01-21 16:45",
+      status: "Testing",
+      version: "mistral-large-latest",
+      lastUsed: "2024-01-21 16:30",
+      totalUsage: 150000,
+      avgResponseTime: "1.0s",
+      costPerUse: "$0.008/1K",
+      capabilities: ["Text Generation", "Multilingual", "Code"],
+      description:
+        "European language model with strong multilingual capabilities",
     },
   ];
 
@@ -253,10 +139,11 @@ export default function ModelsPage() {
     { key: "provider", header: "Provider", width: "120px" },
     { key: "type", header: "Type", width: "100px" },
     { key: "status", header: "Status", width: "100px" },
-    { key: "usage", header: "Monthly Usage", width: "130px" },
-    { key: "monthlyCost", header: "Cost", width: "100px" },
-    { key: "successRate", header: "Success Rate", width: "110px" },
-    { key: "updated", header: "Updated", width: "120px" },
+    { key: "version", header: "Version", width: "180px" },
+    { key: "lastUsed", header: "Last Used", width: "130px" },
+    { key: "totalUsage", header: "Total Usage", width: "120px" },
+    { key: "avgResponseTime", header: "Avg Response", width: "120px" },
+    { key: "costPerUse", header: "Cost Per Use", width: "120px" },
   ];
 
   const emptyActions = [
@@ -268,21 +155,26 @@ export default function ModelsPage() {
   ];
 
   const tableActions = (
-    <Button asChild>
-      <Link href="/models/add">
-        <Plus className="h-4 w-4 mr-2" />
-        Add Model
-      </Link>
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button asChild variant="default">
+        <Link href="/models/add">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Model
+        </Link>
+      </Button>
+      <Button asChild variant="outline">
+        <Link href="/models/settings">
+          <Settings className="h-4 w-4 mr-2" />
+          Settings
+        </Link>
+      </Button>
+    </div>
   );
 
-  // Row click handler
   const handleRowClick = (row: ModelData) => {
-    console.log("Viewing model:", row.name);
-    // In a real app, you'd navigate to `/models/${row.id}`
+    console.log("Clicked model:", row);
   };
 
-  // Custom row actions specific to AI models
   const rowActions: RowAction<ModelData>[] = [
     {
       label: "View Details",
@@ -295,39 +187,19 @@ export default function ModelsPage() {
       onClick: (row: ModelData) => console.log("Configure model:", row.name),
     },
     {
-      label: "Test Model",
-      icon: <Zap className="h-4 w-4" />,
-      onClick: (row: ModelData) => console.log("Test model:", row.name),
-    },
-    {
-      label: "View Analytics",
-      icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: ModelData) => console.log("View analytics:", row.name),
-    },
-    {
-      label: "Duplicate Config",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: (row: ModelData) => console.log("Duplicate model:", row.name),
-    },
-    {
-      label: "Edit Model",
-      icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: ModelData) => console.log("Edit model:", row.name),
-    },
-    {
-      label: "Pause/Resume",
-      icon: <Pause className="h-4 w-4" />,
+      label: "Toggle Status",
+      icon: <Play className="h-4 w-4" />,
       onClick: (row: ModelData) =>
         console.log(
-          row.status === "Paused" ? "Resume" : "Pause",
+          row.status === "Active" ? "Pause" : "Activate",
           "model:",
           row.name,
         ),
     },
     {
-      label: "Remove Model",
+      label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: ModelData) => console.log("Remove model:", row.name),
+      onClick: (row: ModelData) => console.log("Delete model:", row.name),
       variant: "destructive" as const,
     },
   ];
@@ -335,13 +207,12 @@ export default function ModelsPage() {
   return (
     <PageLayout
       title="AI Models"
-      description="Configure and manage AI models, monitor performance, and optimize usage for your applications."
+      description="Configure and manage your AI models for content generation, analysis, and automation."
       breadcrumbs={breadcrumbs}
     >
       <DataTable<ModelData>
         columns={columns}
-        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
-        data={modelsData as any}
+        data={modelsData}
         emptyTitle="No models configured"
         emptyDescription="Start by adding your first AI model or importing an existing configuration."
         emptyActions={emptyActions}
@@ -351,7 +222,7 @@ export default function ModelsPage() {
         onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={["name", "provider", "type", "status", "configuredBy"]}
+        searchFields={["name", "provider", "type", "status"]}
       />
     </PageLayout>
   );

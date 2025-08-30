@@ -293,17 +293,14 @@ export interface TopicGenerationResponse {
   generated_at: string;
 }
 
+// Import shared types for consistency
+import type { SelectOption } from "./shared";
+
 /**
- * Option interface for multi-select components
- *
- * Used by MultiSelect and SelectWithCustom UI components
+ * @deprecated Use SelectOption from "./shared" instead
+ * Kept for backwards compatibility
  */
-export interface MultiSelectOption {
-  /** Display label for the option */
-  label: string;
-  /** Internal value for the option */
-  value: string;
-}
+export interface MultiSelectOption extends SelectOption {}
 
 /**
  * Configuration for wizard step
@@ -363,7 +360,7 @@ export interface TopicBuilderDraft {
 /**
  * Flow type options for the initial wizard step
  */
-export const FLOW_TYPE_OPTIONS: MultiSelectOption[] = [
+export const FLOW_TYPE_OPTIONS: SelectOption[] = [
   {
     label: "Subject-First - I have a specific topic in mind",
     value: "subject-first",
@@ -377,7 +374,7 @@ export const FLOW_TYPE_OPTIONS: MultiSelectOption[] = [
 /**
  * Content type/format options
  */
-export const CONTENT_TYPE_OPTIONS: MultiSelectOption[] = [
+export const CONTENT_TYPE_OPTIONS: SelectOption[] = [
   { label: "Blog Post / Article", value: "blog-post" },
   { label: "Social Media Post", value: "social-media" },
   { label: "Video Content", value: "video-content" },
@@ -395,7 +392,7 @@ export const CONTENT_TYPE_OPTIONS: MultiSelectOption[] = [
 /**
  * Platform/channel options (shown conditionally for social media and video content)
  */
-export const PLATFORM_OPTIONS: MultiSelectOption[] = [
+export const PLATFORM_OPTIONS: SelectOption[] = [
   { label: "Facebook", value: "facebook" },
   { label: "Instagram", value: "instagram" },
   { label: "Twitter (X)", value: "twitter" },
@@ -410,7 +407,7 @@ export const PLATFORM_OPTIONS: MultiSelectOption[] = [
 /**
  * Industry/domain options
  */
-export const INDUSTRY_OPTIONS: MultiSelectOption[] = [
+export const INDUSTRY_OPTIONS: SelectOption[] = [
   { label: "Technology / IT", value: "technology" },
   { label: "Healthcare / Medical", value: "healthcare" },
   { label: "Finance / Banking", value: "finance" },
@@ -435,7 +432,7 @@ export const INDUSTRY_OPTIONS: MultiSelectOption[] = [
 /**
  * Reader experience level options
  */
-export const READER_LEVEL_OPTIONS: MultiSelectOption[] = [
+export const READER_LEVEL_OPTIONS: SelectOption[] = [
   { label: "Beginner", value: "beginner" },
   { label: "Intermediate", value: "intermediate" },
   { label: "Expert", value: "expert" },
@@ -444,7 +441,7 @@ export const READER_LEVEL_OPTIONS: MultiSelectOption[] = [
 /**
  * Content purpose/goal options
  */
-export const PURPOSE_OPTIONS: MultiSelectOption[] = [
+export const PURPOSE_OPTIONS: SelectOption[] = [
   { label: "Educate / Inform", value: "educate-inform" },
   { label: "Entertain / Engage", value: "entertain-engage" },
   { label: "Inspire / Motivate", value: "inspire-motivate" },
@@ -458,7 +455,7 @@ export const PURPOSE_OPTIONS: MultiSelectOption[] = [
 /**
  * Content goal type options
  */
-export const CONTENT_GOAL_OPTIONS: MultiSelectOption[] = [
+export const CONTENT_GOAL_OPTIONS: SelectOption[] = [
   { label: "Tutorial / How-to", value: "tutorial" },
   { label: "Explainer / Beginner Guide", value: "explainer" },
   { label: "News / Update / Trend", value: "news-trend" },
@@ -473,7 +470,7 @@ export const CONTENT_GOAL_OPTIONS: MultiSelectOption[] = [
 /**
  * Tone and voice options
  */
-export const TONE_OPTIONS: MultiSelectOption[] = [
+export const TONE_OPTIONS: SelectOption[] = [
   { label: "Professional / Formal", value: "professional-formal" },
   { label: "Casual / Conversational", value: "casual-conversational" },
   { label: "Friendly / Warm", value: "friendly-warm" },
@@ -488,7 +485,7 @@ export const TONE_OPTIONS: MultiSelectOption[] = [
 /**
  * Audience size options
  */
-export const AUDIENCE_SIZE_OPTIONS: MultiSelectOption[] = [
+export const AUDIENCE_SIZE_OPTIONS: SelectOption[] = [
   { label: "Small (< 1,000 people)", value: "small" },
   { label: "Medium (1K - 10K people)", value: "medium" },
   { label: "Large (10K - 100K people)", value: "large" },
@@ -498,7 +495,7 @@ export const AUDIENCE_SIZE_OPTIONS: MultiSelectOption[] = [
 /**
  * Geographic region options
  */
-export const REGION_OPTIONS: MultiSelectOption[] = [
+export const REGION_OPTIONS: SelectOption[] = [
   { label: "United States", value: "us" },
   { label: "United Kingdom", value: "uk" },
   { label: "Canada", value: "canada" },
@@ -513,7 +510,7 @@ export const REGION_OPTIONS: MultiSelectOption[] = [
 /**
  * Language options
  */
-export const LANGUAGE_OPTIONS: MultiSelectOption[] = [
+export const LANGUAGE_OPTIONS: SelectOption[] = [
   { label: "English", value: "english" },
   { label: "Urdu", value: "urdu" },
   { label: "Spanish", value: "spanish" },
@@ -528,7 +525,7 @@ export const LANGUAGE_OPTIONS: MultiSelectOption[] = [
 /**
  * Content preference toggle options
  */
-export const PREFERENCE_TOGGLE_OPTIONS: MultiSelectOption[] = [
+export const PREFERENCE_TOGGLE_OPTIONS: SelectOption[] = [
   { label: "Fresh & Trending", value: "fresh" },
   { label: "Evergreen", value: "evergreen" },
   { label: "Balanced", value: "balanced" },
@@ -537,7 +534,7 @@ export const PREFERENCE_TOGGLE_OPTIONS: MultiSelectOption[] = [
 /**
  * Originality toggle options
  */
-export const ORIGINALITY_TOGGLE_OPTIONS: MultiSelectOption[] = [
+export const ORIGINALITY_TOGGLE_OPTIONS: SelectOption[] = [
   { label: "Safe / Conventional", value: "safe" },
   { label: "Original / Contrarian", value: "original" },
   { label: "Balanced", value: "balanced" },

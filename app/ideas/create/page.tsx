@@ -21,198 +21,52 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  MultiSelect,
-  type MultiSelectOption,
-} from "@/components/ui/multi-select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Progress } from "@/components/ui/progress";
+import { SelectWithCustom } from "@/components/ui/select-with-custom";
+import type { IdeaBuilderFormData } from "@/types/idea-builder";
 import {
-  SelectWithCustom,
-  type SelectWithCustomOption,
-} from "@/components/ui/select-with-custom";
+  AUDIENCE_SIZE_OPTIONS,
+  BUDGET_OPTIONS,
+  COMPETITION_ANALYSIS_OPTIONS,
+  DEMOGRAPHIC_AGE_OPTIONS,
+  DEMOGRAPHIC_LOCATION_OPTIONS,
+  IDEA_CATEGORY_OPTIONS,
+  IDEA_PRIORITY_OPTIONS,
+  PRIMARY_GOAL_OPTIONS,
+  RESOURCES_OPTIONS,
+  RISK_ASSESSMENT_OPTIONS,
+  SKILLS_REQUIRED_OPTIONS,
+  SOLUTION_APPROACH_OPTIONS,
+  SUCCESS_METRICS_OPTIONS,
+  TARGET_AUDIENCE_OPTIONS,
+  TIMEFRAME_OPTIONS,
+} from "@/types/idea-builder";
 
-interface FormData {
-  // Step 1: Idea Basics
-  ideaName: string;
-  ideaDescription: string;
-  category: string[]; // Multi-select
-  priority: string;
-
-  // Step 2: Target Audience
-  targetAudience: string[]; // Multi-select
-  audienceSize: string;
-  demographicAge: string[]; // Multi-select
-  demographicLocation: string[]; // Multi-select
-
-  // Step 3: Problem & Solution
-  problemStatement: string;
-  solutionApproach: string[]; // Multi-select
-  competitorAnalysis: string;
-  uniqueValueProp: string;
-
-  // Step 4: Implementation
-  timeframe: string;
-  budget: string;
-  resources: string[]; // Multi-select
-  skillsRequired: string[]; // Multi-select
-
-  // Step 5: Goals & Metrics
-  primaryGoal: string[]; // Multi-select
-  successMetrics: string[]; // Multi-select
-  expectedOutcome: string;
-  riskAssessment: string;
-}
-
-const initialFormData: FormData = {
+const initialFormData: IdeaBuilderFormData = {
   ideaName: "",
   ideaDescription: "",
   category: [],
-  priority: "",
+  priority: "medium",
   targetAudience: [],
-  audienceSize: "",
+  audienceSize: "medium",
   demographicAge: [],
   demographicLocation: [],
   problemStatement: "",
   solutionApproach: [],
-  competitorAnalysis: "",
+  competitorAnalysis: "some",
   uniqueValueProp: "",
-  timeframe: "",
-  budget: "",
+  timeframe: "1-3-months",
+  budget: "medium",
   resources: [],
   skillsRequired: [],
   primaryGoal: [],
   successMetrics: [],
   expectedOutcome: "",
-  riskAssessment: "",
+  riskAssessment: "medium",
 };
 
-// Option definitions
-const categoryOptions: MultiSelectOption[] = [
-  { label: "Technology", value: "technology" },
-  { label: "Business", value: "business" },
-  { label: "Marketing", value: "marketing" },
-  { label: "Product", value: "product" },
-  { label: "Service", value: "service" },
-  { label: "Process Improvement", value: "process" },
-  { label: "Innovation", value: "innovation" },
-];
-
-const targetAudienceOptions: MultiSelectOption[] = [
-  { label: "General Consumers", value: "consumers" },
-  { label: "Small Businesses", value: "businesses" },
-  { label: "Enterprise/Large Corporations", value: "enterprise" },
-  { label: "Students/Education", value: "students" },
-  { label: "Working Professionals", value: "professionals" },
-  { label: "Senior Citizens", value: "seniors" },
-  { label: "Teenagers", value: "teens" },
-  { label: "Parents/Families", value: "parents" },
-];
-
-const demographicAgeOptions: MultiSelectOption[] = [
-  { label: "Gen Z (18-27)", value: "gen-z" },
-  { label: "Millennial (28-43)", value: "millennial" },
-  { label: "Gen X (44-59)", value: "gen-x" },
-  { label: "Baby Boomer (60+)", value: "boomer" },
-  { label: "All Age Groups", value: "all-ages" },
-];
-
-const demographicLocationOptions: MultiSelectOption[] = [
-  { label: "Local/City", value: "local" },
-  { label: "Regional/State", value: "regional" },
-  { label: "National", value: "national" },
-  { label: "Global/International", value: "global" },
-];
-
-const solutionApproachOptions: MultiSelectOption[] = [
-  { label: "Software/App Solution", value: "software" },
-  { label: "Service-based Solution", value: "service" },
-  { label: "Physical Product", value: "product" },
-  { label: "Process Improvement", value: "process" },
-  { label: "Platform/Marketplace", value: "platform" },
-  { label: "Automation/AI", value: "automation" },
-];
-
-const resourcesOptions: MultiSelectOption[] = [
-  { label: "Just myself", value: "self" },
-  { label: "Small team (2-3 people)", value: "small-team" },
-  { label: "Team (4-10 people)", value: "team" },
-  { label: "Large team (10+ people)", value: "large-team" },
-  { label: "External partners/vendors", value: "external" },
-];
-
-const skillsRequiredOptions: MultiSelectOption[] = [
-  { label: "Technical/Development", value: "technical" },
-  { label: "Design/UX", value: "design" },
-  { label: "Marketing/Sales", value: "marketing" },
-  { label: "Business Strategy", value: "business" },
-  { label: "Operations/Management", value: "operations" },
-];
-
-const primaryGoalOptions: MultiSelectOption[] = [
-  { label: "Generate Revenue", value: "revenue" },
-  { label: "Acquire Users/Customers", value: "users" },
-  { label: "Improve Efficiency", value: "efficiency" },
-  { label: "Build Brand Awareness", value: "brand" },
-  { label: "Solve a Problem", value: "problem-solving" },
-  { label: "Learning/Experience", value: "learning" },
-  { label: "Social Impact", value: "impact" },
-];
-
-const successMetricsOptions: MultiSelectOption[] = [
-  { label: "Monthly/Annual Revenue", value: "revenue" },
-  { label: "User/Customer Count", value: "users" },
-  { label: "User Engagement Metrics", value: "engagement" },
-  { label: "Customer Satisfaction", value: "satisfaction" },
-  { label: "Efficiency Improvements", value: "efficiency" },
-  { label: "Market Share", value: "market-share" },
-  { label: "Return on Investment", value: "roi" },
-];
-
-const priorityOptions: SelectWithCustomOption[] = [
-  { label: "Low - Nice to have", value: "low" },
-  { label: "Medium - Important", value: "medium" },
-  { label: "High - Critical", value: "high" },
-  { label: "Urgent - Must do now", value: "urgent" },
-];
-
-const audienceSizeOptions: SelectWithCustomOption[] = [
-  { label: "Small (< 1,000 people)", value: "small" },
-  { label: "Medium (1K - 10K people)", value: "medium" },
-  { label: "Large (10K - 100K people)", value: "large" },
-  { label: "Massive (100K+ people)", value: "massive" },
-];
-
-const competitorAnalysisOptions: SelectWithCustomOption[] = [
-  { label: "No direct competitors", value: "none" },
-  { label: "Few competitors (1-3)", value: "few" },
-  { label: "Some competitors (4-10)", value: "some" },
-  { label: "Many competitors (10+)", value: "many" },
-  { label: "Market is saturated", value: "saturated" },
-];
-
-const timeframeOptions: SelectWithCustomOption[] = [
-  { label: "1 Week or less", value: "1-week" },
-  { label: "2-4 Weeks", value: "2-4-weeks" },
-  { label: "1-3 Months", value: "1-3-months" },
-  { label: "3-6 Months", value: "3-6-months" },
-  { label: "6-12 Months", value: "6-12-months" },
-  { label: "1+ Years", value: "1-year-plus" },
-];
-
-const budgetOptions: SelectWithCustomOption[] = [
-  { label: "Minimal ($0 - $1K)", value: "minimal" },
-  { label: "Low ($1K - $5K)", value: "low" },
-  { label: "Medium ($5K - $25K)", value: "medium" },
-  { label: "High ($25K - $100K)", value: "high" },
-  { label: "Enterprise ($100K+)", value: "enterprise" },
-];
-
-const riskAssessmentOptions: SelectWithCustomOption[] = [
-  { label: "Low Risk - Safe bet", value: "low" },
-  { label: "Medium Risk - Calculated risk", value: "medium" },
-  { label: "High Risk - Big potential payoff", value: "high" },
-  { label: "Experimental - Learning opportunity", value: "experimental" },
-];
+// Using imported option constants from types
 
 const steps = [
   {
@@ -249,11 +103,15 @@ const steps = [
 
 export default function IdeaBuilderPage() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [formData, setFormData] =
+    useState<IdeaBuilderFormData>(initialFormData);
 
   const breadcrumbs = [{ label: "Ideas", href: "/ideas" }, { label: "Create" }];
 
-  const updateFormData = (field: keyof FormData, value: string | string[]) => {
+  const updateFormData = (
+    field: keyof IdeaBuilderFormData,
+    value: string | string[],
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -307,7 +165,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="category">Categories *</Label>
                 <MultiSelect
-                  options={categoryOptions}
+                  options={IDEA_CATEGORY_OPTIONS}
                   selected={formData.category}
                   onChange={(selected) => updateFormData("category", selected)}
                   placeholder="Select categories (you can select multiple)"
@@ -318,7 +176,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="priority">Priority Level *</Label>
                 <SelectWithCustom
-                  options={priorityOptions}
+                  options={IDEA_PRIORITY_OPTIONS}
                   value={formData.priority}
                   onChange={(value) => updateFormData("priority", value)}
                   placeholder="How important is this idea?"
@@ -336,7 +194,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="targetAudience">Target Audiences *</Label>
                 <MultiSelect
-                  options={targetAudienceOptions}
+                  options={TARGET_AUDIENCE_OPTIONS}
                   selected={formData.targetAudience}
                   onChange={(selected) =>
                     updateFormData("targetAudience", selected)
@@ -349,7 +207,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="audienceSize">Estimated Audience Size *</Label>
                 <SelectWithCustom
-                  options={audienceSizeOptions}
+                  options={AUDIENCE_SIZE_OPTIONS}
                   value={formData.audienceSize}
                   onChange={(value) => updateFormData("audienceSize", value)}
                   placeholder="How large is your target market?"
@@ -360,7 +218,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="demographicAge">Age Groups *</Label>
                 <MultiSelect
-                  options={demographicAgeOptions}
+                  options={DEMOGRAPHIC_AGE_OPTIONS}
                   selected={formData.demographicAge}
                   onChange={(selected) =>
                     updateFormData("demographicAge", selected)
@@ -373,7 +231,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="demographicLocation">Geographic Focus *</Label>
                 <MultiSelect
-                  options={demographicLocationOptions}
+                  options={DEMOGRAPHIC_LOCATION_OPTIONS}
                   selected={formData.demographicLocation}
                   onChange={(selected) =>
                     updateFormData("demographicLocation", selected)
@@ -405,7 +263,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="solutionApproach">Solution Approaches *</Label>
                 <MultiSelect
-                  options={solutionApproachOptions}
+                  options={SOLUTION_APPROACH_OPTIONS}
                   selected={formData.solutionApproach}
                   onChange={(selected) =>
                     updateFormData("solutionApproach", selected)
@@ -420,7 +278,7 @@ export default function IdeaBuilderPage() {
                   Existing Competitors *
                 </Label>
                 <SelectWithCustom
-                  options={competitorAnalysisOptions}
+                  options={COMPETITION_ANALYSIS_OPTIONS}
                   value={formData.competitorAnalysis}
                   onChange={(value) =>
                     updateFormData("competitorAnalysis", value)
@@ -454,7 +312,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="timeframe">Implementation Timeframe *</Label>
                 <SelectWithCustom
-                  options={timeframeOptions}
+                  options={TIMEFRAME_OPTIONS}
                   value={formData.timeframe}
                   onChange={(value) => updateFormData("timeframe", value)}
                   placeholder="How long will this take to implement?"
@@ -465,7 +323,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="budget">Budget Range *</Label>
                 <SelectWithCustom
-                  options={budgetOptions}
+                  options={BUDGET_OPTIONS}
                   value={formData.budget}
                   onChange={(value) => updateFormData("budget", value)}
                   placeholder="What's your budget for this idea?"
@@ -476,7 +334,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="resources">Required Resources *</Label>
                 <MultiSelect
-                  options={resourcesOptions}
+                  options={RESOURCES_OPTIONS}
                   selected={formData.resources}
                   onChange={(selected) => updateFormData("resources", selected)}
                   placeholder="What resources do you need? (select multiple)"
@@ -487,7 +345,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="skillsRequired">Key Skills Required *</Label>
                 <MultiSelect
-                  options={skillsRequiredOptions}
+                  options={SKILLS_REQUIRED_OPTIONS}
                   selected={formData.skillsRequired}
                   onChange={(selected) =>
                     updateFormData("skillsRequired", selected)
@@ -507,7 +365,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="primaryGoal">Primary Goals *</Label>
                 <MultiSelect
-                  options={primaryGoalOptions}
+                  options={PRIMARY_GOAL_OPTIONS}
                   selected={formData.primaryGoal}
                   onChange={(selected) =>
                     updateFormData("primaryGoal", selected)
@@ -520,7 +378,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="successMetrics">Success Metrics *</Label>
                 <MultiSelect
-                  options={successMetricsOptions}
+                  options={SUCCESS_METRICS_OPTIONS}
                   selected={formData.successMetrics}
                   onChange={(selected) =>
                     updateFormData("successMetrics", selected)
@@ -545,7 +403,7 @@ export default function IdeaBuilderPage() {
               <div className="grid gap-2">
                 <Label htmlFor="riskAssessment">Risk Assessment *</Label>
                 <SelectWithCustom
-                  options={riskAssessmentOptions}
+                  options={RISK_ASSESSMENT_OPTIONS}
                   value={formData.riskAssessment}
                   onChange={(value) => updateFormData("riskAssessment", value)}
                   placeholder="What's the risk level?"

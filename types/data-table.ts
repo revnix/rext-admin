@@ -57,6 +57,12 @@ export interface IdeaData extends BaseTableRow {
   lastModified: string;
   assignee: string;
   estimatedEffort: string;
+  // Additional fields for enhanced idea tracking
+  score?: number;
+  ranking?: string;
+  updated?: string;
+  author?: string;
+  contentType?: string;
 }
 
 export interface ModelData extends BaseTableRow {

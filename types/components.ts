@@ -18,13 +18,13 @@ import type {
 } from "react-hook-form";
 import type { z } from "zod";
 import type { ApiStatus, ErrorResponse } from "./api";
+// Import shared types
+import type { SelectOption, ValidationResult } from "./shared";
 // Import core types
 import type {
   FlowType,
   GeneratedTopic,
-  MultiSelectOption,
   TopicBuilderFormData,
-  ValidationResult,
 } from "./topic-builder";
 
 // ============================================================================
@@ -602,7 +602,7 @@ export interface FlowSelectionProps {
  */
 export interface IndustrySelectionProps {
   /** Available industry options */
-  industries: MultiSelectOption[];
+  industries: SelectOption[];
   /** Selected industry */
   selectedIndustry?: string;
   /** Custom industry value (when "other" is selected) */
@@ -626,7 +626,7 @@ export interface IndustrySelectionProps {
  */
 export interface AudienceSelectionProps {
   /** Available audience options (can be dynamic based on industry) */
-  audienceOptions: MultiSelectOption[];
+  audienceOptions: SelectOption[];
   /** Selected audiences */
   selectedAudiences: string[];
   /** Reader level selection */

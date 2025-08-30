@@ -1,15 +1,16 @@
 "use client";
 
 import {
-  Edit2,
+  Copy,
   Eye,
   Pause,
   Play,
   Plus,
-  RotateCcw,
+  Settings,
   Trash2,
   Workflow,
 } from "lucide-react";
+
 import Link from "next/link";
 import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
@@ -17,312 +18,127 @@ import { Button } from "@/components/ui/button";
 import type { FlowData } from "@/types/data-table";
 
 export default function FlowsPage() {
-  const breadcrumbs = [{ label: "Create", href: "#" }, { label: "Flows" }];
+  const breadcrumbs = [{ label: "Automation", href: "#" }, { label: "Flows" }];
 
-  // Comprehensive flows data with realistic scenarios
-  const flowsData = [
+  // Flow data matching FlowData interface
+  const flowsData: FlowData[] = [
     {
       id: "1",
       name: "AI Blog Post Generator",
       description:
-        "Automated content creation for tech blog posts with SEO optimization",
+        "Generates comprehensive blog posts from topics using GPT-4 and Claude",
       status: "Active",
-      topic: "Technology & AI",
-      aiModel: "GPT-4",
-      contentPillar: "Thought Leadership",
-      instructions:
-        "Create engaging 1500-word blog posts about emerging AI technologies, include practical examples, and optimize for SEO",
-      keywords: [
-        "artificial intelligence",
-        "machine learning",
-        "automation",
-        "tech trends",
-      ],
-      humanInLoop: true,
-      triggers: "Weekly Schedule",
-      lastRun: "2024-01-22 14:30",
-      lastRunStatus: "Success",
-      successRate: "95%",
-      totalRuns: 47,
-      created: "2024-01-01",
-      author: "Sarah Johnson",
-      tags: ["AI", "Blog", "SEO", "Weekly"],
+      trigger: "Manual",
+      lastRun: "2024-01-22 15:30",
+      totalRuns: 247,
+      successRate: "98.8%",
+      avgRunTime: "2.3 minutes",
+      category: "Content Creation",
+      created: "2024-01-01 09:00",
+      lastModified: "2024-01-20 14:30",
     },
     {
       id: "2",
       name: "Social Media Content Pipeline",
       description:
-        "Multi-platform social media content generation with brand consistency",
-      status: "Running",
-      topic: "Social Media Marketing",
-      aiModel: "Claude-3",
-      contentPillar: "Brand Awareness",
-      instructions:
-        "Generate daily social media posts for LinkedIn, Twitter, and Instagram with consistent brand voice and trending hashtags",
-      keywords: ["social media", "branding", "engagement", "marketing"],
-      humanInLoop: true,
-      triggers: "Daily 9:00 AM",
-      lastRun: "2024-01-22 09:00",
-      lastRunStatus: "Success",
-      successRate: "88%",
+        "Creates and schedules social media content across LinkedIn, Twitter, and Facebook",
+      status: "Active",
+      trigger: "Scheduled",
+      lastRun: "2024-01-22 12:00",
       totalRuns: 156,
-      created: "2023-12-15",
-      author: "Mike Chen",
-      tags: ["Social", "Daily", "Multi-platform"],
+      successRate: "96.2%",
+      avgRunTime: "1.8 minutes",
+      category: "Social Media",
+      created: "2023-12-15 10:30",
+      lastModified: "2024-01-18 11:45",
     },
     {
       id: "3",
-      name: "Newsletter Content Creator",
+      name: "Customer Feedback Analyzer",
       description:
-        "Weekly newsletter generation with curated industry news and insights",
-      status: "Failed",
-      topic: "Industry News",
-      aiModel: "GPT-3.5-turbo",
-      contentPillar: "Industry Updates",
-      instructions:
-        "Compile and summarize top 10 industry news stories, add expert commentary, format for email newsletter",
-      keywords: [
-        "newsletter",
-        "industry news",
-        "weekly digest",
-        "expert analysis",
-      ],
-      humanInLoop: true,
-      triggers: "Weekly Friday",
-      lastRun: "2024-01-19 08:00",
-      lastRunStatus: "Failed",
-      successRate: "82%",
-      totalRuns: 32,
-      created: "2023-11-20",
-      author: "Alex Rivera",
-      tags: ["Newsletter", "Weekly", "Curated"],
+        "Analyzes customer feedback and extracts actionable insights using sentiment analysis",
+      status: "Active",
+      trigger: "Webhook",
+      lastRun: "2024-01-22 16:45",
+      totalRuns: 89,
+      successRate: "100%",
+      avgRunTime: "45 seconds",
+      category: "Analytics",
+      created: "2024-01-10 13:20",
+      lastModified: "2024-01-22 09:15",
     },
     {
       id: "4",
-      name: "Product Description Generator",
+      name: "Email Newsletter Generator",
       description:
-        "E-commerce product descriptions with persuasive copywriting",
-      status: "Active",
-      topic: "E-commerce",
-      aiModel: "GPT-4",
-      contentPillar: "Product Marketing",
-      instructions:
-        "Create compelling product descriptions highlighting features, benefits, and emotional appeal for online store items",
-      keywords: ["e-commerce", "product descriptions", "copywriting", "sales"],
-      humanInLoop: false,
-      triggers: "On Product Upload",
-      lastRun: "2024-01-22 11:45",
-      lastRunStatus: "Success",
-      successRate: "92%",
-      totalRuns: 284,
-      created: "2023-10-10",
-      author: "Emma Davis",
-      tags: ["E-commerce", "Automated", "Sales"],
+        "Compiles weekly newsletter from trending topics and company updates",
+      status: "Paused",
+      trigger: "Scheduled",
+      lastRun: "2024-01-15 10:00",
+      totalRuns: 12,
+      successRate: "91.7%",
+      avgRunTime: "3.1 minutes",
+      category: "Email Marketing",
+      created: "2024-01-08 16:00",
+      lastModified: "2024-01-15 10:30",
     },
     {
       id: "5",
-      name: "YouTube Script Writer",
-      description: "Video script creation for educational YouTube content",
-      status: "Paused",
-      topic: "Educational Content",
-      aiModel: "Claude-3",
-      contentPillar: "Education",
-      instructions:
-        "Write engaging 10-minute video scripts for educational content with hooks, clear structure, and call-to-actions",
-      keywords: ["youtube", "video scripts", "education", "engagement"],
-      humanInLoop: true,
-      triggers: "Bi-weekly Tuesday",
-      lastRun: "2024-01-16 15:20",
-      lastRunStatus: "Pending Review",
-      successRate: "76%",
-      totalRuns: 18,
-      created: "2023-12-01",
-      author: "David Park",
-      tags: ["YouTube", "Video", "Educational"],
+      name: "Competitive Research Flow",
+      description:
+        "Monitors competitor websites and analyzes pricing, features, and marketing strategies",
+      status: "Active",
+      trigger: "Scheduled",
+      lastRun: "2024-01-22 08:00",
+      totalRuns: 43,
+      successRate: "95.3%",
+      avgRunTime: "4.2 minutes",
+      category: "Market Research",
+      created: "2024-01-12 11:30",
+      lastModified: "2024-01-21 14:20",
     },
     {
       id: "6",
-      name: "Press Release Automation",
+      name: "SEO Content Optimizer",
       description:
-        "Automated press release generation for company announcements",
-      status: "Active",
-      topic: "Corporate Communications",
-      aiModel: "GPT-4",
-      contentPillar: "Corporate News",
-      instructions:
-        "Generate professional press releases following AP style guidelines, include quotes and company boilerplate",
-      keywords: ["press release", "corporate", "announcements", "media"],
-      humanInLoop: true,
-      triggers: "Manual Trigger",
-      lastRun: "2024-01-20 16:00",
-      lastRunStatus: "Success",
-      successRate: "89%",
-      totalRuns: 12,
-      created: "2024-01-05",
-      author: "Lisa Wong",
-      tags: ["PR", "Corporate", "Manual"],
+        "Optimizes existing content for search engines and suggests improvements",
+      status: "Testing",
+      trigger: "Manual",
+      lastRun: "2024-01-21 14:30",
+      totalRuns: 8,
+      successRate: "87.5%",
+      avgRunTime: "1.9 minutes",
+      category: "SEO",
+      created: "2024-01-20 09:45",
+      lastModified: "2024-01-21 15:00",
     },
     {
       id: "7",
-      name: "Email Marketing Campaigns",
-      description: "Personalized email campaigns with A/B testing optimization",
-      status: "Running",
-      topic: "Email Marketing",
-      aiModel: "GPT-3.5-turbo",
-      contentPillar: "Customer Engagement",
-      instructions:
-        "Create personalized email campaigns with subject line variations, segment-specific content, and clear CTAs",
-      keywords: [
-        "email marketing",
-        "personalization",
-        "campaigns",
-        "conversion",
-      ],
-      humanInLoop: false,
-      triggers: "Customer Action",
-      lastRun: "2024-01-22 13:15",
-      lastRunStatus: "Success",
-      successRate: "84%",
-      totalRuns: 567,
-      created: "2023-09-15",
-      author: "Carlos Mendez",
-      tags: ["Email", "Automated", "Personalized"],
-    },
-    {
-      id: "8",
-      name: "SEO Content Optimizer",
+      name: "Press Release Writer",
       description:
-        "Content optimization for search engine rankings and readability",
+        "Creates professional press releases from product announcements and company news",
       status: "Active",
-      topic: "SEO Optimization",
-      aiModel: "Claude-3",
-      contentPillar: "SEO Strategy",
-      instructions:
-        "Analyze and optimize content for target keywords, improve readability scores, and enhance meta descriptions",
-      keywords: [
-        "SEO",
-        "content optimization",
-        "search rankings",
-        "readability",
-      ],
-      humanInLoop: true,
-      triggers: "Content Publish",
-      lastRun: "2024-01-22 10:30",
-      lastRunStatus: "Success",
-      successRate: "91%",
-      totalRuns: 203,
-      created: "2023-08-20",
-      author: "Jennifer Taylor",
-      tags: ["SEO", "Optimization", "Automated"],
-    },
-    {
-      id: "9",
-      name: "Customer Support Responses",
-      description:
-        "AI-powered customer support response generation with tone matching",
-      status: "Failed",
-      topic: "Customer Support",
-      aiModel: "GPT-4",
-      contentPillar: "Customer Service",
-      instructions:
-        "Generate empathetic and helpful customer support responses matching company tone, include relevant solutions",
-      keywords: ["customer support", "responses", "empathy", "solutions"],
-      humanInLoop: true,
-      triggers: "Support Ticket",
-      lastRun: "2024-01-22 07:45",
-      lastRunStatus: "Failed",
-      successRate: "73%",
-      totalRuns: 432,
-      created: "2023-07-10",
-      author: "Zoe Martinez",
-      tags: ["Support", "Customer Service", "AI"],
-    },
-    {
-      id: "10",
-      name: "Podcast Show Notes Generator",
-      description:
-        "Automated show notes and transcript summaries for podcast episodes",
-      status: "Active",
-      topic: "Podcast Content",
-      aiModel: "GPT-4",
-      contentPillar: "Content Repurposing",
-      instructions:
-        "Create detailed show notes from podcast transcripts, include timestamps, key points, and guest information",
-      keywords: ["podcast", "show notes", "transcripts", "summaries"],
-      humanInLoop: false,
-      triggers: "Episode Upload",
-      lastRun: "2024-01-21 20:15",
-      lastRunStatus: "Success",
-      successRate: "96%",
-      totalRuns: 89,
-      created: "2023-11-05",
-      author: "Robert Kim",
-      tags: ["Podcast", "Automated", "Transcription"],
-    },
-    {
-      id: "11",
-      name: "Content Translation Pipeline",
-      description:
-        "Multi-language content translation with cultural adaptation",
-      status: "Paused",
-      topic: "Localization",
-      aiModel: "Claude-3",
-      contentPillar: "Global Content",
-      instructions:
-        "Translate content to Spanish, French, and German while adapting cultural references and maintaining brand voice",
-      keywords: [
-        "translation",
-        "localization",
-        "multilingual",
-        "cultural adaptation",
-      ],
-      humanInLoop: true,
-      triggers: "Content Approval",
-      lastRun: "2024-01-18 14:20",
-      lastRunStatus: "Pending Review",
-      successRate: "87%",
-      totalRuns: 45,
-      created: "2023-10-25",
-      author: "Amanda Foster",
-      tags: ["Translation", "Global", "Multi-language"],
-    },
-    {
-      id: "12",
-      name: "Social Proof Content Creator",
-      description: "Customer testimonial and case study content generation",
-      status: "Active",
-      topic: "Social Proof",
-      aiModel: "GPT-4",
-      contentPillar: "Trust Building",
-      instructions:
-        "Transform customer feedback into compelling testimonials and detailed case studies with measurable results",
-      keywords: [
-        "testimonials",
-        "case studies",
-        "social proof",
-        "customer success",
-      ],
-      humanInLoop: true,
-      triggers: "Customer Milestone",
-      lastRun: "2024-01-21 11:00",
-      lastRunStatus: "Success",
-      successRate: "94%",
-      totalRuns: 67,
-      created: "2023-12-10",
-      author: "Marcus Johnson",
-      tags: ["Testimonials", "Case Studies", "Success"],
+      trigger: "Manual",
+      lastRun: "2024-01-19 11:15",
+      totalRuns: 5,
+      successRate: "100%",
+      avgRunTime: "2.7 minutes",
+      category: "Public Relations",
+      created: "2024-01-15 13:45",
+      lastModified: "2024-01-19 11:30",
     },
   ];
 
   const columns = [
-    { key: "name", header: "Flow Name", width: "300px" },
-    { key: "status", header: "Status", width: "120px" },
-    { key: "aiModel", header: "AI Model", width: "120px" },
-    { key: "triggers", header: "Triggers", width: "150px" },
-    { key: "successRate", header: "Success Rate", width: "120px" },
-    { key: "lastRun", header: "Last Run", width: "150px" },
-    { key: "author", header: "Author", width: "150px" },
-    { key: "created", header: "Created", width: "120px" },
+    { key: "name", header: "Flow Name", width: "250px" },
+    { key: "status", header: "Status", width: "100px" },
+    { key: "category", header: "Category", width: "150px" },
+    { key: "trigger", header: "Trigger", width: "100px" },
+    { key: "totalRuns", header: "Runs", width: "80px" },
+    { key: "successRate", header: "Success Rate", width: "110px" },
+    { key: "avgRunTime", header: "Avg Runtime", width: "120px" },
+    { key: "lastRun", header: "Last Run", width: "130px" },
+    { key: "lastModified", header: "Modified", width: "130px" },
   ];
 
   const emptyActions = [
@@ -334,21 +150,26 @@ export default function FlowsPage() {
   ];
 
   const tableActions = (
-    <Button asChild>
-      <Link href="/flows/create">
-        <Plus className="h-4 w-4 mr-2" />
-        Create Flow
-      </Link>
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button asChild variant="default">
+        <Link href="/flows/create">
+          <Plus className="h-4 w-4 mr-2" />
+          Create Flow
+        </Link>
+      </Button>
+      <Button asChild variant="outline">
+        <Link href="/flows/settings">
+          <Settings className="h-4 w-4 mr-2" />
+          Settings
+        </Link>
+      </Button>
+    </div>
   );
 
-  // Row click handler
   const handleRowClick = (row: FlowData) => {
-    console.log("Navigating to flow:", row.name);
-    // In a real app, you'd navigate to `/flows/${row.id}`
+    console.log("Clicked flow:", row);
   };
 
-  // Custom row actions specific to flows
   const rowActions: RowAction<FlowData>[] = [
     {
       label: "View Details",
@@ -358,30 +179,25 @@ export default function FlowsPage() {
     {
       label: "Run Flow",
       icon: <Play className="h-4 w-4" />,
-      onClick: (row: FlowData) => console.log("Running flow:", row.name),
+      onClick: (row: FlowData) => console.log("Run flow:", row.name),
     },
     {
-      label: "Edit Flow",
-      icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: FlowData) => console.log("Edit flow:", row.name),
+      label: "Copy Flow",
+      icon: <Copy className="h-4 w-4" />,
+      onClick: (row: FlowData) => console.log("Copy flow:", row.name),
     },
     {
-      label: "Pause/Resume",
+      label: "Toggle Status",
       icon: <Pause className="h-4 w-4" />,
       onClick: (row: FlowData) =>
         console.log(
-          row.status === "Paused" ? "Resuming" : "Pausing",
+          row.status === "Active" ? "Pause" : "Activate",
           "flow:",
           row.name,
         ),
     },
     {
-      label: "Duplicate Flow",
-      icon: <RotateCcw className="h-4 w-4" />,
-      onClick: (row: FlowData) => console.log("Duplicate flow:", row.name),
-    },
-    {
-      label: "Delete Flow",
+      label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
       onClick: (row: FlowData) => console.log("Delete flow:", row.name),
       variant: "destructive" as const,
@@ -391,30 +207,22 @@ export default function FlowsPage() {
   return (
     <PageLayout
       title="Flows"
-      description="Create and manage automated workflows to streamline your processes and boost productivity."
+      description="Create, manage, and monitor your automated workflows for content generation, analysis, and business processes."
       breadcrumbs={breadcrumbs}
     >
       <DataTable<FlowData>
         columns={columns}
-        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
-        data={flowsData as any}
-        emptyTitle="No flows created yet"
-        emptyDescription="Get started by creating your first automated workflow or importing a template."
+        data={flowsData}
+        emptyTitle="No flows configured"
+        emptyDescription="Create your first automated flow to streamline content creation and business processes."
         emptyActions={emptyActions}
         emptyIcon={<Workflow className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search flows by name, AI model, author, status..."
+        searchPlaceholder="Search flows by name, category, status, trigger..."
         actions={tableActions}
         onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={[
-          "name",
-          "aiModel",
-          "author",
-          "status",
-          "topic",
-          "triggers",
-        ]}
+        searchFields={["name", "category", "status", "trigger"]}
       />
     </PageLayout>
   );
