@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { DataTable } from "@/components/data-table";
+import type { BaseTableRow } from "@/types/shared";
 
 interface Column {
   key: string;
@@ -13,9 +14,9 @@ interface EmptyStateAction {
   variant?: "default" | "outline" | "secondary";
 }
 
-interface PlaceholderPageProps {
+interface PlaceholderPageProps<T extends BaseTableRow = BaseTableRow> {
   columns: Column[];
-  data?: Record<string, unknown>[];
+  data?: T[];
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActions?: EmptyStateAction[];
@@ -24,7 +25,7 @@ interface PlaceholderPageProps {
   tableActions?: ReactNode;
 }
 
-export function PlaceholderPage({
+export function PlaceholderPage<T extends BaseTableRow = BaseTableRow>({
   columns,
   data = [],
   emptyTitle,
@@ -33,7 +34,7 @@ export function PlaceholderPage({
   emptyIcon,
   searchPlaceholder,
   tableActions,
-}: PlaceholderPageProps) {
+}: PlaceholderPageProps<T>) {
   return (
     <DataTable
       columns={columns}

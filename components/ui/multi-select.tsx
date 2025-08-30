@@ -18,14 +18,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
-export interface MultiSelectOption {
-  label: string;
-  value: string;
-}
+import type { SelectOption } from "@/types/shared";
 
 interface MultiSelectProps {
-  options: MultiSelectOption[];
+  options: SelectOption[];
   selected: string[];
   onChange: (selected: string[]) => void;
   placeholder?: string;

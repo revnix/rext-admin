@@ -1,8 +1,6 @@
 // Common data table types for the application
 
-export interface BaseTableRow extends Record<string, unknown> {
-  id: string;
-}
+import type { BaseTableRow } from "./shared";
 
 export interface ContentData extends BaseTableRow {
   title: string;
@@ -103,6 +101,46 @@ export interface UserData extends BaseTableRow {
   permissions: string[];
 }
 
+/**
+ * Notification configuration based on platform type
+ */
+export interface NotificationConfiguration {
+  // Email configuration
+  email?: {
+    recipients: string[];
+    subject?: string;
+    template?: string;
+  };
+  // Slack configuration
+  slack?: {
+    channel: string;
+    webhook?: string;
+    mentions?: string[];
+  };
+  // SMS configuration
+  sms?: {
+    phoneNumbers: string[];
+    provider?: string;
+  };
+  // Webhook configuration
+  webhook?: {
+    url: string;
+    method: "GET" | "POST" | "PUT";
+    headers?: Record<string, string>;
+    payload?: Record<string, unknown>;
+  };
+  // Discord configuration
+  discord?: {
+    webhookUrl: string;
+    username?: string;
+    avatarUrl?: string;
+  };
+  // Common settings
+  retryCount?: number;
+  timeout?: number;
+  enabled?: boolean;
+}
+
 export interface NotificationData extends BaseTableRow {
   name: string;
   type: string;
@@ -112,7 +150,7 @@ export interface NotificationData extends BaseTableRow {
   successRate: string;
   description: string;
   platform: string;
-  configuration: Record<string, unknown>;
+  configuration: NotificationConfiguration;
 }
 
 export interface PromptTemplateData extends BaseTableRow {
@@ -155,16 +193,14 @@ export interface RuleData extends BaseTableRow {
   author: string;
 }
 
-// Action types for data table
-export interface TableAction<T extends Record<string, unknown> = BaseTableRow> {
+// Row action types for data table
+export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
   label: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   onClick: (row: T) => void;
-  variant?:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
+  variant?: "default" | "destructive";
 }
+
+// Legacy alias for backwards compatibility
+export interface TableAction<T extends Record<string, unknown> = BaseTableRow>
+  extends RowAction<T> {}

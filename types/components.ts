@@ -13,13 +13,17 @@ import type {
   Control,
   FieldErrors,
   Path,
-  PathValue,
   UseFormReturn,
 } from "react-hook-form";
 import type { z } from "zod";
 import type { ApiStatus, ErrorResponse } from "./api";
 // Import shared types
-import type { SelectOption, ValidationResult } from "./shared";
+import type {
+  FieldValue,
+  IconComponent,
+  SelectOption,
+  ValidationResult,
+} from "./shared";
 // Import core types
 import type {
   FlowType,
@@ -92,9 +96,9 @@ export interface FormStepProps<TFieldName extends Path<TopicBuilderFormData>> {
   /** Callback when step validation completes */
   onValidation?: (result: ValidationResult) => void;
   /** Callback when field value changes */
-  onFieldChange?: <K extends TFieldName>(
+  onFieldChange?: <K extends keyof TopicBuilderFormData>(
     field: K,
-    value: PathValue<TopicBuilderFormData, K>,
+    value: FieldValue<TopicBuilderFormData, K>,
   ) => void;
   /** Whether to show validation errors immediately */
   showErrors?: boolean;
@@ -257,6 +261,19 @@ export interface TopicCardProps {
 }
 
 /**
+ * Topic filter configuration
+ */
+export interface TopicFilters {
+  tags?: string[];
+  channels?: string[];
+  audiences?: string[];
+  minRelevance?: number;
+  minFreshness?: number;
+  minNovelty?: number;
+  searchQuery?: string;
+}
+
+/**
  * Props for topic filtering controls
  */
 export interface TopicFilterProps {
@@ -267,17 +284,9 @@ export interface TopicFilterProps {
     audiences: string[];
   };
   /** Current filter values */
-  filters: {
-    tags?: string[];
-    channels?: string[];
-    audiences?: string[];
-    minRelevance?: number;
-    minFreshness?: number;
-    minNovelty?: number;
-    searchQuery?: string;
-  };
+  filters: TopicFilters;
   /** Callback when filters change */
-  onFiltersChange: (filters: TopicFilterProps["filters"]) => void;
+  onFiltersChange: (filters: TopicFilters) => void;
   /** Callback when filters are cleared */
   onClearFilters: () => void;
   /** Whether to show advanced filters */
@@ -329,7 +338,7 @@ export interface BulkActionProps {
   actions: Array<{
     id: string;
     label: string;
-    icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+    icon?: IconComponent;
     variant?: "default" | "destructive";
     disabled?: boolean;
   }>;
@@ -360,7 +369,7 @@ export interface ButtonProps
   /** Loading text to show */
   loadingText?: string;
   /** Icon to display (React component) */
-  icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+  icon?: IconComponent;
   /** Icon position */
   iconPosition?: "left" | "right";
   /** Whether button should render as child component */
@@ -387,9 +396,9 @@ export interface InputProps
   /** Input validation state */
   state?: "default" | "error" | "success" | "warning";
   /** Left icon component */
-  leftIcon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+  leftIcon?: IconComponent;
   /** Right icon component */
-  rightIcon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+  rightIcon?: IconComponent;
   /** Helper text below input */
   helperText?: string;
   /** Error message */
@@ -416,7 +425,7 @@ export interface SelectProps<T = string> {
     value: T;
     disabled?: boolean;
     description?: string;
-    icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+    icon?: IconComponent;
   }>;
   /** Current selected value */
   value: T | undefined;
@@ -504,7 +513,7 @@ export interface CollapsibleSectionProps {
   /** Section content */
   children: React.ReactNode;
   /** Icon for the section */
-  icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+  icon?: IconComponent;
   /** Whether section is disabled */
   disabled?: boolean;
   /** Custom CSS classes */
@@ -526,7 +535,7 @@ export interface StepIndicatorProps {
     id: number;
     title: string;
     description?: string;
-    icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+    icon?: IconComponent;
     optional?: boolean;
   }>;
   /** Callback when step is clicked */
@@ -566,7 +575,7 @@ export interface EmptyStateProps {
   /** Empty state description */
   description?: string;
   /** Icon to display */
-  icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
+  icon?: IconComponent;
   /** Action button configuration */
   action?: {
     label: string;
@@ -673,7 +682,10 @@ export interface PreferenceToggleProps {
 export type FormEventHandlers = {
   onSubmit: (data: TopicBuilderFormData) => void | Promise<void>;
   onStepChange: (step: number) => void;
-  onFieldChange: (field: keyof TopicBuilderFormData, value: unknown) => void; // TODO: Replace with proper typed field values when available
+  onFieldChange: <K extends keyof TopicBuilderFormData>(
+    field: K,
+    value: FieldValue<TopicBuilderFormData, K>,
+  ) => void;
   onValidation: (result: ValidationResult) => void;
   onError: (error: Error | ErrorResponse) => void;
   onReset: () => void;
@@ -688,7 +700,7 @@ export type ResultsEventHandlers = {
   onTopicRegenerate: (topicId: string) => Promise<void>;
   onTopicsExport: (topicIds: string[], format: string) => Promise<void>;
   onBulkAction: (action: string, topicIds: string[]) => Promise<void>;
-  onFilterChange: (filters: Record<string, unknown>) => void; // TODO: Replace with proper filter type when available
+  onFilterChange: (filters: TopicFilters) => void;
   onSortChange: (sortBy: string, direction: "asc" | "desc") => void;
 };
 

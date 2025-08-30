@@ -171,6 +171,24 @@ if (response.success) {
 }
 ```
 
+## Event Handler Types
+
+The type system includes comprehensive event handler types for consistent callback patterns:
+
+### Common Event Handlers (from `shared.ts`)
+- **ClickHandler**: Simple click callbacks `() => void`
+- **ChangeHandler<T>**: Value change callbacks with generic type support `(value: T) => void`
+- **SelectHandler<T>**: Selection callbacks with generic type support `(value: T) => void`
+- **SubmitHandler**: Form submission callbacks (sync/async) `() => void | Promise<void>`
+- **FormEventHandlers<T>**: Complete form interaction callbacks interface
+- **DataTableEventHandlers<T>**: Data table interaction callbacks interface
+- **DialogEventHandlers**: Modal/dialog interaction callbacks interface
+
+### Component-specific Handlers (from `components.ts`)
+- **FormEventHandlers**: Topic Builder form interaction callbacks (different from shared)
+- **ResultsEventHandlers**: Topic results and interaction callbacks
+- **Component-specific handlers**: Specialized callbacks for specific components
+
 ## Contributing
 
 When adding new types:

@@ -35,10 +35,14 @@ export default function NotificationsPage() {
       description: "Email notifications for flow completions and errors",
       platform: "SMTP",
       configuration: {
-        server: "smtp.gmail.com",
-        port: 587,
-        encryption: "TLS",
-        recipients: ["admin@revnix.com", "alerts@revnix.com"],
+        email: {
+          recipients: ["admin@revnix.com", "alerts@revnix.com"],
+          subject: "Flow Notification",
+          template: "default",
+        },
+        enabled: true,
+        retryCount: 3,
+        timeout: 30000,
       },
     },
     {
@@ -52,9 +56,13 @@ export default function NotificationsPage() {
       description: "Slack channel notifications for important events",
       platform: "Slack",
       configuration: {
-        webhookUrl: "https://hooks.slack.com/services/...",
-        channel: "#alerts",
-        username: "Wrext Bot",
+        slack: {
+          channel: "#alerts",
+          webhook: "https://hooks.slack.com/services/...",
+          mentions: ["@channel"],
+        },
+        enabled: true,
+        retryCount: 2,
       },
     },
     {
@@ -68,8 +76,13 @@ export default function NotificationsPage() {
       description: "Discord server notifications for team updates",
       platform: "Discord",
       configuration: {
-        webhookUrl: "https://discord.com/api/webhooks/...",
-        username: "Wrext Notifications",
+        discord: {
+          webhookUrl: "https://discord.com/api/webhooks/...",
+          username: "Wrext Notifications",
+          avatarUrl: "https://example.com/avatar.png",
+        },
+        enabled: false,
+        retryCount: 1,
       },
     },
     {
@@ -83,9 +96,13 @@ export default function NotificationsPage() {
       description: "Critical error SMS notifications",
       platform: "Twilio",
       configuration: {
-        accountSid: "ACxxxxx",
-        fromNumber: "+1234567890",
-        recipients: ["+1987654321"],
+        sms: {
+          phoneNumbers: ["+1987654321"],
+          provider: "Twilio",
+        },
+        enabled: true,
+        retryCount: 1,
+        timeout: 10000,
       },
     },
     {
@@ -99,8 +116,12 @@ export default function NotificationsPage() {
       description: "Teams channel for project notifications",
       platform: "Microsoft Teams",
       configuration: {
-        webhookUrl: "https://outlook.office.com/webhook/...",
-        title: "Wrext Notifications",
+        webhook: {
+          url: "https://outlook.office.com/webhook/...",
+          method: "POST",
+        },
+        enabled: true,
+        retryCount: 2,
       },
     },
   ];
