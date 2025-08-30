@@ -456,6 +456,7 @@ export default function NotificationsPage() {
     >
       <DataTable<NotificationData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={notificationsData as any}
         emptyTitle="No notification channels configured"
         emptyDescription="Set up notification channels to receive alerts when flows require human intervention or approval."

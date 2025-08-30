@@ -6,7 +6,7 @@
  * comprehensive request/response structures for topic generation operations.
  */
 
-import { TopicBuilderFormData, GeneratedTopic } from "./topic-builder";
+import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
 // ============================================================================
 // API STATUS AND STATE MANAGEMENT

@@ -446,6 +446,7 @@ export default function ContentPage() {
     >
       <DataTable<ContentData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={contentData as any}
         emptyTitle="No content available"
         emptyDescription="Content will be automatically generated and managed through your configured flows."

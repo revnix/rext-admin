@@ -6,32 +6,26 @@
  * results components, and common UI components.
  */
 
-import * as React from "react";
-import {
-  UseFormReturn,
-  FieldErrors,
+// TODO: Re-import VariantProps when proper CVA config is available
+// import type { VariantProps } from "class-variance-authority";
+import type * as React from "react";
+import type {
   Control,
-  FieldValues,
+  FieldErrors,
   Path,
   PathValue,
+  UseFormReturn,
 } from "react-hook-form";
-import { z } from "zod";
-import { VariantProps } from "class-variance-authority";
-
+import type { z } from "zod";
+import type { ApiStatus, ErrorResponse } from "./api";
 // Import core types
-import {
-  TopicBuilderFormData,
+import type {
+  FlowType,
   GeneratedTopic,
   MultiSelectOption,
+  TopicBuilderFormData,
   ValidationResult,
-  FlowType,
-  ApiStatus,
 } from "./topic-builder";
-import {
-  TopicGenerationRequest,
-  TopicGenerationResponse,
-  ErrorResponse,
-} from "./api";
 
 // ============================================================================
 // FORM COMPONENT PROPS
@@ -335,7 +329,7 @@ export interface BulkActionProps {
   actions: Array<{
     id: string;
     label: string;
-    icon?: React.ComponentType<any>;
+    icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
     variant?: "default" | "destructive";
     disabled?: boolean;
   }>;
@@ -359,14 +353,14 @@ export interface BulkActionProps {
  * Enhanced button props extending HTML button with custom variants
  */
 export interface ButtonProps
-  extends React.ComponentProps<"button">,
-    VariantProps<any> {
+  extends Omit<React.ComponentProps<"button">, "size"> {
+  // TODO: Replace VariantProps with proper variant config when CVA config is available
   /** Whether button is in loading state */
   loading?: boolean;
   /** Loading text to show */
   loadingText?: string;
   /** Icon to display (React component) */
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
   /** Icon position */
   iconPosition?: "left" | "right";
   /** Whether button should render as child component */
@@ -388,13 +382,14 @@ export interface ButtonProps
 /**
  * Enhanced input props extending HTML input
  */
-export interface InputProps extends React.ComponentProps<"input"> {
+export interface InputProps
+  extends Omit<React.ComponentProps<"input">, "size"> {
   /** Input validation state */
   state?: "default" | "error" | "success" | "warning";
   /** Left icon component */
-  leftIcon?: React.ComponentType<any>;
+  leftIcon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
   /** Right icon component */
-  rightIcon?: React.ComponentType<any>;
+  rightIcon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
   /** Helper text below input */
   helperText?: string;
   /** Error message */
@@ -421,7 +416,7 @@ export interface SelectProps<T = string> {
     value: T;
     disabled?: boolean;
     description?: string;
-    icon?: React.ComponentType<any>;
+    icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
   }>;
   /** Current selected value */
   value: T | undefined;
@@ -509,7 +504,7 @@ export interface CollapsibleSectionProps {
   /** Section content */
   children: React.ReactNode;
   /** Icon for the section */
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
   /** Whether section is disabled */
   disabled?: boolean;
   /** Custom CSS classes */
@@ -531,7 +526,7 @@ export interface StepIndicatorProps {
     id: number;
     title: string;
     description?: string;
-    icon?: React.ComponentType<any>;
+    icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
     optional?: boolean;
   }>;
   /** Callback when step is clicked */
@@ -571,7 +566,7 @@ export interface EmptyStateProps {
   /** Empty state description */
   description?: string;
   /** Icon to display */
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<Record<string, unknown>>; // TODO: Replace with proper icon props interface when available
   /** Action button configuration */
   action?: {
     label: string;
@@ -678,7 +673,7 @@ export interface PreferenceToggleProps {
 export type FormEventHandlers = {
   onSubmit: (data: TopicBuilderFormData) => void | Promise<void>;
   onStepChange: (step: number) => void;
-  onFieldChange: (field: keyof TopicBuilderFormData, value: any) => void;
+  onFieldChange: (field: keyof TopicBuilderFormData, value: unknown) => void; // TODO: Replace with proper typed field values when available
   onValidation: (result: ValidationResult) => void;
   onError: (error: Error | ErrorResponse) => void;
   onReset: () => void;
@@ -693,7 +688,7 @@ export type ResultsEventHandlers = {
   onTopicRegenerate: (topicId: string) => Promise<void>;
   onTopicsExport: (topicIds: string[], format: string) => Promise<void>;
   onBulkAction: (action: string, topicIds: string[]) => Promise<void>;
-  onFilterChange: (filters: any) => void;
+  onFilterChange: (filters: Record<string, unknown>) => void; // TODO: Replace with proper filter type when available
   onSortChange: (sortBy: string, direction: "asc" | "desc") => void;
 };
 

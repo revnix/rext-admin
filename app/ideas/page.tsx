@@ -397,6 +397,7 @@ export default function IdeasPage() {
       {/* Data Table */}
       <DataTable<IdeaData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={ideasData as any}
         emptyTitle="No ideas yet"
         emptyDescription="Start building your idea collection. Add your first idea or import existing concepts."

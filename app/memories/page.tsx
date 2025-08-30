@@ -423,6 +423,7 @@ export default function MemoriesPage() {
     >
       <DataTable<MemoryData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={memoriesData as any}
         emptyTitle="No memories generated yet"
         emptyDescription="Memories will be automatically generated and stored when you run flows that process information and create contextual insights."

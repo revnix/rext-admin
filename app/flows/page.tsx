@@ -396,6 +396,7 @@ export default function FlowsPage() {
     >
       <DataTable<FlowData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={flowsData as any}
         emptyTitle="No flows created yet"
         emptyDescription="Get started by creating your first automated workflow or importing a template."

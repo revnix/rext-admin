@@ -442,6 +442,7 @@ export default function RulesPage() {
     >
       <DataTable<RuleData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={rulesData as any}
         emptyTitle="No rules created yet"
         emptyDescription="Start by creating your first business rule to automate workflows and processes."

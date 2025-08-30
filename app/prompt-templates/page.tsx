@@ -665,6 +665,7 @@ Compliance:
     >
       <DataTable<PromptTemplateData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={promptTemplatesData as any}
         emptyTitle="No prompt templates created"
         emptyDescription="Build your first prompt template to improve AI interaction consistency and effectiveness."

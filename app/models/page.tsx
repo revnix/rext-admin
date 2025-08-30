@@ -340,6 +340,7 @@ export default function ModelsPage() {
     >
       <DataTable<ModelData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={modelsData as any}
         emptyTitle="No models configured"
         emptyDescription="Start by adding your first AI model or importing an existing configuration."

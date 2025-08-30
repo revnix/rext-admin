@@ -457,6 +457,7 @@ export default function SocialAccountsPage() {
     >
       <DataTable<SocialAccountData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={socialAccountsData as any}
         emptyTitle="No social accounts connected"
         emptyDescription="Start by connecting your first social media account to begin publishing and managing content."

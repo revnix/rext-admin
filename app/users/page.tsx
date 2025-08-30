@@ -523,6 +523,7 @@ export default function UsersPage() {
     >
       <DataTable<UserData>
         columns={columns}
+        // biome-ignore lint/suspicious/noExplicitAny: Sample data with flexible structure
         data={usersData as any}
         emptyTitle="No users found"
         emptyDescription="Start by adding your first user or inviting team members to join your organization."
