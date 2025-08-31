@@ -54,7 +54,7 @@
       "taskTitle": "Implement Form Dependencies and Dynamic Behavior",
       "complexityScore": 8,
       "recommendedSubtasks": 5,
-      "expansionPrompt": "Divide the form dependencies task into subtasks: 1) Industry-dependent audience options implementation, 2) Conditional field rendering based on flow type, 3) Content format and platform dependencies, 4) YMYL detection and special handling, and 5) Form state update optimizations. For each subtask, detail the implementation approach and test scenarios.",
+      "expansionPrompt": "Divide the form dependencies task into subtasks: 1) Industry-dependent audience options implementation, 2) Conditional field rendering based on wizard mode, 3) Content format and platform dependencies, 4) YMYL detection and special handling, and 5) Form state update optimizations. For each subtask, detail the implementation approach and test scenarios.",
       "reasoning": "This task involves implementing complex form dependencies and dynamic behavior. It requires creating relationships between different form fields, conditional rendering based on user selections, and special handling for certain industries. The complexity comes from managing these interdependencies while maintaining a smooth user experience and ensuring form state remains consistent."
     },
     {

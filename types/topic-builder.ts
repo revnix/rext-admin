@@ -10,9 +10,9 @@
 // ============================================================================
 
 /**
- * Flow type variations for the Topic Builder wizard
+ * Wizard mode variations for the Topic Builder wizard
  */
-export type FlowType = "subject-first" | "industry-first";
+export type WizardMode = "subject-first" | "industry-first";
 
 /**
  * Content type/format options
@@ -163,8 +163,8 @@ export type OriginalityToggle = "safe" | "original" | "balanced";
  * - Industry-first: User starts with industry selection, optionally adds focus
  */
 export interface TopicBuilderFormData {
-  /** Flow type selection - determines which wizard variation to use */
-  flowType: FlowType;
+  /** Wizard mode selection - determines which wizard variation to use */
+  wizardMode: WizardMode;
 
   /** Subject-first flow: specific topic or subject (required for subject-first flow) */
   subject?: string;
@@ -358,9 +358,9 @@ export interface TopicBuilderDraft {
 // ============================================================================
 
 /**
- * Flow type options for the initial wizard step
+ * Wizard mode options for the initial wizard step
  */
-export const FLOW_TYPE_OPTIONS: SelectOption[] = [
+export const WIZARD_MODE_OPTIONS: SelectOption[] = [
   {
     label: "Subject-First - I have a specific topic in mind",
     value: "subject-first",
@@ -545,9 +545,9 @@ export const ORIGINALITY_TOGGLE_OPTIONS: SelectOption[] = [
 // ============================================================================
 
 /**
- * Type guard to check if a value is a valid FlowType
+ * Type guard to check if a value is a valid WizardMode
  */
-export const isValidFlowType = (value: string): value is FlowType => {
+export const isValidWizardMode = (value: string): value is WizardMode => {
   return value === "subject-first" || value === "industry-first";
 };
 

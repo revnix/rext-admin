@@ -26,9 +26,9 @@ import type {
 } from "./shared";
 // Import core types
 import type {
-  FlowType,
   GeneratedTopic,
   TopicBuilderFormData,
+  WizardMode,
 } from "./topic-builder";
 
 // ============================================================================
@@ -596,10 +596,10 @@ export interface EmptyStateProps {
  * Props for flow selection component (first step)
  */
 export interface FlowSelectionProps {
-  /** Currently selected flow type */
-  selectedFlow?: FlowType;
-  /** Callback when flow is selected */
-  onFlowSelect: (flow: FlowType) => void;
+  /** Currently selected wizard mode */
+  selectedWizardMode?: WizardMode;
+  /** Callback when wizard mode is selected */
+  onWizardModeSelect: (wizardMode: WizardMode) => void;
   /** Whether selection is disabled */
   disabled?: boolean;
   /** Custom CSS classes */

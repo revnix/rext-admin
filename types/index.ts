@@ -183,7 +183,6 @@ export type {
   AudienceSize,
   ContentGoalType,
   ContentType,
-  FlowType,
   GeneratedTopic,
   Industry,
   Language,
@@ -198,6 +197,7 @@ export type {
   TopicBuilderFormData,
   TopicGenerationRequest,
   TopicGenerationResponse,
+  WizardMode,
   WizardStep,
 } from "./topic-builder";
 // Export option constants for Topic Builder
@@ -209,12 +209,10 @@ export {
   CONTENT_GOAL_OPTIONS,
   CONTENT_TYPE_OPTIONS,
   detectYMYL,
-  FLOW_TYPE_OPTIONS,
   INDUSTRY_OPTIONS,
   isValidAudienceSize,
   isValidContentGoalType,
   isValidContentType,
-  isValidFlowType,
   isValidIndustry,
   isValidLanguage,
   isValidOriginalityToggle,
@@ -224,6 +222,7 @@ export {
   isValidReaderLevel,
   isValidRegion,
   isValidToneType,
+  isValidWizardMode,
   LANGUAGE_OPTIONS,
   ORIGINALITY_TOGGLE_OPTIONS,
   PLATFORM_OPTIONS,
@@ -233,6 +232,7 @@ export {
   REGION_OPTIONS,
   TONE_OPTIONS,
   validateEnumArray,
+  WIZARD_MODE_OPTIONS,
 } from "./topic-builder";
 
 // ============================================================================

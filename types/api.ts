@@ -473,7 +473,7 @@ export const isValidTopicGenerationRequest = (
   return (
     typeof request === "object" &&
     request !== null &&
-    "flowType" in request &&
+    "wizardMode" in request &&
     "industry" in request &&
     "content_type" in request
   );

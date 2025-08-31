@@ -150,7 +150,7 @@ The Topic Builder is a comprehensive AI-powered content topic generation tool th
 **Data Models:**
 ```typescript
 interface TopicBuilderFormData {
-  flowType: 'subject-first' | 'industry-first'
+  wizardMode: 'subject-first' | 'industry-first'
   industry: string
   subject?: string
   content_type: string
@@ -917,7 +917,7 @@ Rate Limiting:
 // Extended from basic types with full production requirements
 interface TopicBuilderFormData {
   // Flow Control
-  flowType: 'subject-first' | 'industry-first'
+  wizardMode: 'subject-first' | 'industry-first'
   currentStep: number
   completedSteps: number[]
   

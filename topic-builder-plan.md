@@ -27,8 +27,8 @@ This plan outlines the complete replacement of the existing general idea builder
 ```typescript
 // Core interfaces for the topic builder
 export interface TopicBuilderFormData {
-  // Flow type
-  flowType: 'subject-first' | 'industry-first'
+  // Wizard Mode
+  wizardMode: 'subject-first' | 'industry-first'
   
   // Subject-first specific fields
   subject?: string
@@ -138,7 +138,7 @@ export const validateFormStep = (step: number, formData: TopicBuilderFormData): 
 **Features:**
 - 8-step wizard with progress indicator
 - Hybrid flow selection at start
-- Dynamic step content based on flow type
+- Dynamic step content based on wizard mode
 - Form validation and error handling
 - Advanced options in collapsible sections
 - Responsive design
@@ -394,7 +394,7 @@ export const exportTopics = (topics: GeneratedTopic[], format: 'json' | 'csv') =
 ### Form Validation Strategy
 ```typescript
 const validationRules = {
-  step1: (data) => data.flowType && (data.industry || data.subject),
+  step1: (data) => data.wizardMode && (data.industry || data.subject),
   step2: (data) => data.industry && data.audience?.length > 0,
   step3: (data) => data.content_type && data.purpose.length > 0,
   // ... validation for each step
