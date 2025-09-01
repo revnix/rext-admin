@@ -86,9 +86,9 @@ export function MultiSelect({
                 const option = options.find((opt) => opt.value === item);
                 return (
                   <Badge
-                    variant="secondary"
+                    variant="default"
                     key={item}
-                    className="mr-1 mb-1"
+                    className="mr-1 mb-1 bg-primary text-primary-foreground hover:bg-primary/90"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleUnselect(item);
@@ -135,12 +135,17 @@ export function MultiSelect({
                 <CommandItem
                   key={option.value}
                   onSelect={() => handleSelect(option.value)}
+                  className={cn(
+                    selected.includes(option.value)
+                      ? "bg-primary/10 text-primary"
+                      : "",
+                  )}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
                       selected.includes(option.value)
-                        ? "opacity-100"
+                        ? "opacity-100 text-primary"
                         : "opacity-0",
                     )}
                   />

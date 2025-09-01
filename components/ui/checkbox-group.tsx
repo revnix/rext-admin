@@ -138,10 +138,10 @@ const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(
                   htmlFor={option.value}
                   className={cn(
                     "flex items-start gap-3 rounded-lg border-2 p-4 cursor-pointer transition-all duration-200",
-                    "hover:bg-accent hover:text-accent-foreground",
+                    "hover:bg-accent hover:text-accent-foreground hover:border-accent",
                     isSelected
-                      ? "bg-primary/5 border-primary ring-2 ring-primary/20 text-primary"
-                      : "border-border bg-background",
+                      ? "bg-primary/10 border-primary ring-2 ring-primary/30 text-primary shadow-sm"
+                      : "border-border bg-background hover:shadow-sm",
                     isDisabled && "opacity-50 cursor-not-allowed",
                     "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
                   )}
