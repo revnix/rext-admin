@@ -14,7 +14,11 @@ import {
   sanitizeInput,
   updateFormDataForContentTypeChange,
   updateFormDataForIndustryChange,
+  validateExcludePatternsFormat,
   validateFormStep,
+  validateFormStepDetailed,
+  validateKeywordsFormat,
+  validateSubjectIndustryRelevance,
 } from "@/lib/topic-builder-utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 
@@ -199,8 +203,8 @@ describe("getAudienceOptions", () => {
 // FORM VALIDATION TESTS
 // ============================================================================
 
-describe("validateFormStep", () => {
-  const baseFormData: TopicBuilderFormData = {
+describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
+  const baseFormData: Partial<TopicBuilderFormData> = {
     wizardMode: "industry-first",
     industry: "technology",
     content_type: "blog-post",
@@ -215,9 +219,77 @@ describe("validateFormStep", () => {
   test("step 1 validation - requires wizard mode", () => {
     const invalidData = {
       ...baseFormData,
-      wizardMode: undefined as unknown as TopicBuilderFormData["wizardMode"],
+      wizardMode: undefined,
     };
     const result = validateFormStep(1, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("step 2 validation - requires industry", () => {
+    const invalidData = {
+      ...baseFormData,
+      industry: undefined,
+    };
+    const result = validateFormStep(2, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("step 2 validation - subject-first requires subject", () => {
+    const invalidData = {
+      ...baseFormData,
+      wizardMode: "subject-first" as const,
+      subject: undefined,
+    };
+    const result = validateFormStep(2, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("step 4 validation - requires content type", () => {
+    const invalidData = {
+      ...baseFormData,
+      content_type: undefined,
+    };
+    const result = validateFormStep(4, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("step 5 validation - requires purpose and content goal", () => {
+    const invalidData = { ...baseFormData, purpose: [], content_goal: [] };
+    const result = validateFormStep(5, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("step 8 validation - final generation step", () => {
+    const invalidData = { ...baseFormData, num_ideas: 0 };
+    const result = validateFormStep(8, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("valid form data passes validation", () => {
+    const result = validateFormStep(5, baseFormData);
+    expect(result).toBe(true);
+  });
+});
+
+describe("validateFormStepDetailed (detailed validation results)", () => {
+  const baseFormData: Partial<TopicBuilderFormData> = {
+    wizardMode: "industry-first",
+    industry: "technology",
+    content_type: "blog-post",
+    demographic_age: [],
+    demographic_location: [],
+    purpose: ["educate-inform"],
+    content_goal: ["tutorial"],
+    tone: [],
+    num_ideas: 5,
+  };
+
+  test("step 1 validation - requires wizard mode", () => {
+    const invalidData = {
+      ...baseFormData,
+      wizardMode: undefined,
+    };
+    const result = validateFormStepDetailed(1, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain("Please select a wizard mode to continue");
   });
@@ -225,9 +297,9 @@ describe("validateFormStep", () => {
   test("step 2 validation - requires industry", () => {
     const invalidData = {
       ...baseFormData,
-      industry: undefined as unknown as TopicBuilderFormData["industry"],
+      industry: undefined,
     };
-    const result = validateFormStep(2, invalidData);
+    const result = validateFormStepDetailed(2, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain("Please select an industry or domain");
   });
@@ -238,7 +310,7 @@ describe("validateFormStep", () => {
       wizardMode: "subject-first" as const,
       subject: undefined,
     };
-    const result = validateFormStep(2, invalidData);
+    const result = validateFormStepDetailed(2, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
       "Please provide a subject for subject-first mode",
@@ -248,10 +320,9 @@ describe("validateFormStep", () => {
   test("step 4 validation - requires content type", () => {
     const invalidData = {
       ...baseFormData,
-      content_type:
-        undefined as unknown as TopicBuilderFormData["content_type"],
+      content_type: undefined,
     };
-    const result = validateFormStep(4, invalidData);
+    const result = validateFormStepDetailed(4, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain("Please select a content type");
   });
@@ -262,7 +333,7 @@ describe("validateFormStep", () => {
       content_type: "social-media" as const,
       platform: undefined,
     };
-    const result = validateFormStep(4, invalidData);
+    const result = validateFormStepDetailed(4, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
       "Please select a platform for this content type",
@@ -271,7 +342,7 @@ describe("validateFormStep", () => {
 
   test("step 5 validation - requires purpose and content goal", () => {
     const invalidData = { ...baseFormData, purpose: [], content_goal: [] };
-    const result = validateFormStep(5, invalidData);
+    const result = validateFormStepDetailed(5, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
       "Please select at least one content purpose",
@@ -281,10 +352,107 @@ describe("validateFormStep", () => {
     );
   });
 
+  test("step 8 validation - final generation step", () => {
+    const invalidData = { ...baseFormData, num_ideas: 0 };
+    const result = validateFormStepDetailed(8, invalidData);
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Please specify how many topic ideas you want to generate",
+    );
+  });
+
   test("valid form data passes validation", () => {
-    const result = validateFormStep(5, baseFormData);
+    const result = validateFormStepDetailed(5, baseFormData);
     expect(result.isValid).toBe(true);
     expect(result.errors).toHaveLength(0);
+  });
+});
+
+// ============================================================================
+// INTERDEPENDENT FIELD VALIDATION TESTS
+// ============================================================================
+
+describe("validateSubjectIndustryRelevance", () => {
+  test("returns true for relevant subject-industry combinations", () => {
+    expect(
+      validateSubjectIndustryRelevance("AI and machine learning", "technology"),
+    ).toBe(true);
+    expect(validateSubjectIndustryRelevance("patient care", "healthcare")).toBe(
+      true,
+    );
+    expect(
+      validateSubjectIndustryRelevance("investment strategies", "finance"),
+    ).toBe(true);
+    expect(
+      validateSubjectIndustryRelevance("online learning", "education"),
+    ).toBe(true);
+  });
+
+  test("returns false for irrelevant subject-industry combinations", () => {
+    expect(
+      validateSubjectIndustryRelevance("cooking recipes", "technology"),
+    ).toBe(false);
+    expect(validateSubjectIndustryRelevance("sports training", "finance")).toBe(
+      false,
+    );
+    expect(
+      validateSubjectIndustryRelevance("fashion trends", "healthcare"),
+    ).toBe(false);
+  });
+
+  test("returns true for edge cases", () => {
+    expect(validateSubjectIndustryRelevance("", "technology")).toBe(true);
+    expect(validateSubjectIndustryRelevance("test subject", "")).toBe(true);
+    expect(validateSubjectIndustryRelevance("any subject", "other")).toBe(true);
+  });
+
+  test("handles case insensitive matching", () => {
+    expect(
+      validateSubjectIndustryRelevance("SOFTWARE development", "technology"),
+    ).toBe(true);
+    expect(
+      validateSubjectIndustryRelevance("MEDICAL research", "healthcare"),
+    ).toBe(true);
+  });
+});
+
+describe("validateKeywordsFormat", () => {
+  test("returns true for valid keyword formats", () => {
+    expect(validateKeywordsFormat("tech, software, AI")).toBe(true);
+    expect(validateKeywordsFormat("single")).toBe(true);
+    expect(validateKeywordsFormat("")).toBe(true);
+  });
+
+  test("returns false for invalid keyword formats", () => {
+    expect(validateKeywordsFormat("a".repeat(51))).toBe(false); // Too long keyword
+    expect(validateKeywordsFormat("k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11")).toBe(
+      false,
+    ); // Too many keywords
+  });
+
+  test("handles edge cases", () => {
+    expect(validateKeywordsFormat(undefined as unknown as string)).toBe(true);
+    expect(validateKeywordsFormat(null as unknown as string)).toBe(true);
+  });
+});
+
+describe("validateExcludePatternsFormat", () => {
+  test("returns true for valid exclude patterns", () => {
+    expect(
+      validateExcludePatternsFormat("avoid politics, no controversy"),
+    ).toBe(true);
+    expect(validateExcludePatternsFormat("")).toBe(true);
+  });
+
+  test("returns false for invalid exclude patterns", () => {
+    expect(validateExcludePatternsFormat("x".repeat(201))).toBe(false); // Too long
+  });
+
+  test("handles edge cases", () => {
+    expect(validateExcludePatternsFormat(undefined as unknown as string)).toBe(
+      true,
+    );
+    expect(validateExcludePatternsFormat(null as unknown as string)).toBe(true);
   });
 });
 
@@ -639,7 +807,7 @@ describe("Industry change integration", () => {
     expect(updatedData.demographic_age).toEqual([]);
 
     // Validation should pass for step 2
-    const validation = validateFormStep(2, updatedData);
+    const validation = validateFormStepDetailed(2, updatedData);
     expect(validation.isValid).toBe(true);
   });
 
@@ -666,7 +834,7 @@ describe("Content type change integration", () => {
     expect(updatedData.content_type).toBe("social-media");
 
     // Should require platform selection
-    const validation = validateFormStep(4, updatedData);
+    const validation = validateFormStepDetailed(4, updatedData);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toContain(
       "Please select a platform for this content type",
@@ -689,7 +857,7 @@ describe("Content type change integration", () => {
     expect(updatedData.platform).toBeUndefined();
 
     // Should pass validation without platform
-    const validation = validateFormStep(4, updatedData);
+    const validation = validateFormStepDetailed(4, updatedData);
     expect(validation.isValid).toBe(true);
   });
 });

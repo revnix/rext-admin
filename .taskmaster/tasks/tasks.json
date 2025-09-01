@@ -83,7 +83,7 @@
             "description": "Implement the validateFormStep function to handle validation logic for each step of the Topic Builder form",
             "dependencies": [],
             "details": "1. Create `validateFormStep(step: number, data: Partial<TopicBuilderFormData>): boolean` in `/lib/topic-builder-utils.ts`\n2. Implement validation logic for each form step (wizard mode selection, industry/subject, audience, content type, etc.)\n3. Handle different validation rules based on the selected wizard mode\n4. Add comprehensive error checking for required fields\n5. Write unit tests with valid and invalid data for each step\n6. Include validation for interdependent fields (e.g., subject relevance to industry)",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -556,7 +556,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-01T03:16:31.520Z",
+      "updated": "2025-09-01T05:21:45.120Z",
       "description": "Tasks for master context"
     }
   }

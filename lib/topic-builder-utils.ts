@@ -97,19 +97,260 @@ export const getAudienceForIndustry = (industry: string): string[] => {
 };
 
 // ============================================================================
+// INTERDEPENDENT FIELD VALIDATION HELPERS
+// ============================================================================
+
+/**
+ * Validates if a subject is relevant to the selected industry
+ *
+ * @param subject - The user's subject input
+ * @param industry - The selected industry
+ * @returns true if subject is relevant to industry, false otherwise
+ */
+export const validateSubjectIndustryRelevance = (
+  subject: string,
+  industry: string,
+): boolean => {
+  if (
+    !subject ||
+    !industry ||
+    typeof subject !== "string" ||
+    typeof industry !== "string"
+  ) {
+    return true; // Allow if either is missing - let other validation handle required fields
+  }
+
+  const subjectLower = subject.toLowerCase().trim();
+  const industryLower = industry.toLowerCase().trim();
+
+  // If industry is "other", we can't validate relevance
+  if (industryLower === "other") {
+    return true;
+  }
+
+  // Industry-specific keyword mapping for relevance checking
+  const industryKeywords: Record<string, string[]> = {
+    technology: [
+      "tech",
+      "software",
+      "ai",
+      "machine learning",
+      "app",
+      "web",
+      "mobile",
+      "cloud",
+      "data",
+      "digital",
+      "programming",
+      "development",
+      "computer",
+      "internet",
+      "automation",
+    ],
+    healthcare: [
+      "health",
+      "medical",
+      "medicine",
+      "patient",
+      "doctor",
+      "nurse",
+      "hospital",
+      "clinic",
+      "therapy",
+      "treatment",
+      "diagnosis",
+      "wellness",
+      "fitness",
+      "nutrition",
+    ],
+    finance: [
+      "money",
+      "investment",
+      "banking",
+      "loan",
+      "credit",
+      "financial",
+      "budget",
+      "savings",
+      "insurance",
+      "tax",
+      "accounting",
+      "trading",
+      "stock",
+      "crypto",
+    ],
+    education: [
+      "learn",
+      "teach",
+      "student",
+      "school",
+      "university",
+      "course",
+      "training",
+      "skill",
+      "knowledge",
+      "academic",
+      "curriculum",
+      "lesson",
+    ],
+    travel: [
+      "travel",
+      "trip",
+      "vacation",
+      "hotel",
+      "flight",
+      "tourism",
+      "destination",
+      "adventure",
+      "journey",
+      "explore",
+    ],
+    food: [
+      "food",
+      "recipe",
+      "cooking",
+      "restaurant",
+      "cuisine",
+      "culinary",
+      "meal",
+      "nutrition",
+      "diet",
+      "chef",
+    ],
+    fashion: [
+      "fashion",
+      "style",
+      "clothing",
+      "apparel",
+      "design",
+      "trend",
+      "beauty",
+      "makeup",
+      "wardrobe",
+    ],
+    business: [
+      "business",
+      "entrepreneur",
+      "startup",
+      "company",
+      "management",
+      "strategy",
+      "leadership",
+      "growth",
+      "productivity",
+    ],
+    marketing: [
+      "marketing",
+      "advertising",
+      "brand",
+      "campaign",
+      "social media",
+      "promotion",
+      "seo",
+      "content",
+      "audience",
+    ],
+    legal: [
+      "legal",
+      "law",
+      "attorney",
+      "lawyer",
+      "court",
+      "rights",
+      "contract",
+      "regulation",
+      "compliance",
+    ],
+    sports: [
+      "sport",
+      "fitness",
+      "exercise",
+      "training",
+      "athlete",
+      "competition",
+      "game",
+      "workout",
+      "physical",
+    ],
+  };
+
+  const relevantKeywords = industryKeywords[industryLower] || [];
+
+  // Check if subject contains any industry-relevant keywords
+  const hasRelevantKeywords = relevantKeywords.some((keyword) =>
+    subjectLower.includes(keyword),
+  );
+
+  // Also check if industry name appears in subject
+  const hasIndustryMention = subjectLower.includes(industryLower);
+
+  return hasRelevantKeywords || hasIndustryMention;
+};
+
+/**
+ * Validates keyword format and patterns
+ *
+ * @param keywords - Comma-separated keywords string
+ * @returns true if keywords are properly formatted
+ */
+export const validateKeywordsFormat = (keywords: string): boolean => {
+  if (!keywords || typeof keywords !== "string") {
+    return true; // Allow empty keywords
+  }
+
+  const trimmed = keywords.trim();
+  if (trimmed === "") {
+    return true;
+  }
+
+  // Check for reasonable keyword length and format
+  const keywordArray = trimmed.split(",").map((k) => k.trim());
+
+  // Each keyword should be 1-50 characters
+  const validLength = keywordArray.every(
+    (keyword) => keyword.length > 0 && keyword.length <= 50,
+  );
+
+  // Should not have too many keywords (max 10)
+  const reasonableCount = keywordArray.length <= 10;
+
+  return validLength && reasonableCount;
+};
+
+/**
+ * Validates exclude patterns format
+ *
+ * @param exclude - Exclusion patterns string
+ * @returns true if exclude patterns are properly formatted
+ */
+export const validateExcludePatternsFormat = (exclude: string): boolean => {
+  if (!exclude || typeof exclude !== "string") {
+    return true; // Allow empty exclude
+  }
+
+  const trimmed = exclude.trim();
+  if (trimmed === "") {
+    return true;
+  }
+
+  // Should be reasonable length (max 200 characters)
+  return trimmed.length <= 200;
+};
+
+// ============================================================================
 // FORM VALIDATION FUNCTIONS
 // ============================================================================
 
 /**
- * Validates form data for a specific wizard step
+ * Validates form data for a specific wizard step with detailed results
  *
  * @param step - The current wizard step number (1-based)
  * @param formData - The current form data to validate
  * @returns ValidationResult with validity status and any error messages
  */
-export const validateFormStep = (
+export const validateFormStepDetailed = (
   step: number,
-  formData: TopicBuilderFormData,
+  formData: Partial<TopicBuilderFormData>,
 ): ValidationResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -131,16 +372,53 @@ export const validateFormStep = (
       if (formData.wizardMode === "subject-first" && !formData.subject) {
         errors.push("Please provide a subject for subject-first mode");
       }
+      // Interdependent validation: subject relevance to industry
+      if (
+        formData.wizardMode === "subject-first" &&
+        formData.subject &&
+        formData.industry
+      ) {
+        const actualIndustry =
+          formData.industry === "other"
+            ? formData.industry_other
+            : formData.industry;
+        if (
+          actualIndustry &&
+          !validateSubjectIndustryRelevance(formData.subject, actualIndustry)
+        ) {
+          warnings.push(
+            "The subject might not be closely related to the selected industry. Consider adjusting either the subject or industry for better topic generation.",
+          );
+        }
+      }
       break;
 
     case 3: // Audience & Targeting
-      if (!formData.audience && formData.demographic_age.length === 0) {
+      if (
+        !formData.audience &&
+        (!formData.demographic_age || formData.demographic_age.length === 0)
+      ) {
         errors.push("Please specify target audience or select age groups");
       }
-      if (formData.demographic_location.length === 0) {
+      if (
+        !formData.demographic_location ||
+        formData.demographic_location.length === 0
+      ) {
         warnings.push(
           "Consider specifying geographic targeting for better results",
         );
+      }
+      // Enhanced validation: ensure audience makes sense for industry
+      if (formData.audience && formData.industry) {
+        const audienceOptions = getAudienceForIndustry(formData.industry);
+        if (
+          audienceOptions.length > 0 &&
+          !audienceOptions.includes(formData.audience)
+        ) {
+          warnings.push(
+            "Consider selecting an audience that's more specific to your industry for better results",
+          );
+        }
       }
       break;
 
@@ -153,6 +431,7 @@ export const validateFormStep = (
       }
       // Platform required for social media and video content
       if (
+        formData.content_type &&
         ["social-media", "video-content"].includes(formData.content_type) &&
         !formData.platform
       ) {
@@ -164,36 +443,94 @@ export const validateFormStep = (
       break;
 
     case 5: // Content Goals & Style
-      if (formData.purpose.length === 0) {
+      if (!formData.purpose || formData.purpose.length === 0) {
         errors.push("Please select at least one content purpose");
       }
-      if (formData.content_goal.length === 0) {
+      if (!formData.content_goal || formData.content_goal.length === 0) {
         errors.push("Please select at least one content goal type");
       }
-      if (formData.tone.length === 0) {
+      if (!formData.tone || formData.tone.length === 0) {
         warnings.push("Consider selecting a tone to guide content style");
       }
       break;
 
     case 6: // Advanced Options (all optional)
       // No required validations for advanced options
-      if (formData.num_ideas < 1 || formData.num_ideas > 20) {
+      if (
+        formData.num_ideas &&
+        (formData.num_ideas < 1 || formData.num_ideas > 20)
+      ) {
         errors.push("Number of ideas must be between 1 and 20");
+      }
+      // Enhanced validation for advanced options
+      if (formData.keywords && !validateKeywordsFormat(formData.keywords)) {
+        errors.push(
+          "Keywords should be comma-separated, with each keyword 1-50 characters long (max 10 keywords)",
+        );
+      }
+      if (
+        formData.exclude &&
+        !validateExcludePatternsFormat(formData.exclude)
+      ) {
+        errors.push("Exclusion patterns should be 200 characters or less");
+      }
+      // Validate focus field for industry-first mode
+      if (
+        formData.wizardMode === "industry-first" &&
+        formData.focus &&
+        formData.industry
+      ) {
+        const actualIndustry =
+          formData.industry === "other"
+            ? formData.industry_other
+            : formData.industry;
+        if (
+          actualIndustry &&
+          !validateSubjectIndustryRelevance(formData.focus, actualIndustry)
+        ) {
+          warnings.push(
+            "The focus area might not be closely related to the selected industry",
+          );
+        }
       }
       break;
 
     case 7: {
       // Review & Preferences
       // Final validation - check all required fields
-      const finalValidation = validateFormStep(2, formData);
-      const contentValidation = validateFormStep(4, formData);
-      const goalValidation = validateFormStep(5, formData);
+      const finalValidation = validateFormStepDetailed(2, formData);
+      const contentValidation = validateFormStepDetailed(4, formData);
+      const goalValidation = validateFormStepDetailed(5, formData);
 
       errors.push(
         ...finalValidation.errors,
         ...contentValidation.errors,
         ...goalValidation.errors,
       );
+      break;
+    }
+
+    case 8: {
+      // Generate Topics (final step)
+      // Comprehensive final validation before generation
+      const step2Validation = validateFormStepDetailed(2, formData);
+      const step3Validation = validateFormStepDetailed(3, formData);
+      const step4Validation = validateFormStepDetailed(4, formData);
+      const step5Validation = validateFormStepDetailed(5, formData);
+      const step6Validation = validateFormStepDetailed(6, formData);
+
+      errors.push(
+        ...step2Validation.errors,
+        ...step3Validation.errors,
+        ...step4Validation.errors,
+        ...step5Validation.errors,
+        ...step6Validation.errors,
+      );
+
+      // Additional generation-specific validation
+      if (!formData.num_ideas || formData.num_ideas < 1) {
+        errors.push("Please specify how many topic ideas you want to generate");
+      }
       break;
     }
 
@@ -206,6 +543,21 @@ export const validateFormStep = (
     errors,
     warnings: warnings.length > 0 ? warnings : undefined,
   };
+};
+
+/**
+ * Validates form data for a specific wizard step (Task 2.3 requirement)
+ *
+ * @param step - The current wizard step number (1-based)
+ * @param data - Partial form data to validate
+ * @returns boolean indicating if the step data is valid
+ */
+export const validateFormStep = (
+  step: number,
+  data: Partial<TopicBuilderFormData>,
+): boolean => {
+  const result = validateFormStepDetailed(step, data);
+  return result.isValid;
 };
 
 // ============================================================================
