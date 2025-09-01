@@ -12,7 +12,6 @@ import {
   Target,
   Users,
 } from "lucide-react";
-import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
@@ -31,20 +30,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { detectYMYL, validateFormStep } from "@/lib/topic-builder-utils";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
-
-const initialFormData: TopicBuilderFormData = {
-  wizardMode: "subject-first",
-  industry: "technology",
-  content_type: "blog-post",
-  demographic_age: [],
-  demographic_location: [],
-  purpose: [],
-  content_goal: [],
-  tone: [],
-  num_ideas: 5,
-};
+import { useTopicBuilder } from "@/hooks/use-topic-builder";
 
 const steps = [
   {
@@ -106,51 +92,38 @@ const steps = [
 ];
 
 export default function TopicBuilderPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] =
-    useState<TopicBuilderFormData>(initialFormData);
-  const [errors, _setErrors] = useState<Record<string, string>>({});
+  const {
+    formData,
+    currentStep,
+    errors,
+    isGenerating,
+    updateFormData,
+    nextStep,
+    prevStep,
+    goToStep,
+    generateTopics,
+  } = useTopicBuilder();
 
   const breadcrumbs = [
     { label: "Ideas", href: "/ideas" },
     { label: "Topic Builder" },
   ];
 
-  const updateFormData = (
-    field: keyof TopicBuilderFormData,
-    value: string | string[] | number,
-  ) => {
-    setFormData((prev) => {
-      const updated = { ...prev, [field]: value };
-
-      // Auto-detect YMYL when industry changes
-      if (field === "industry" && typeof value === "string") {
-        updated.is_ymyl = detectYMYL(value);
-      }
-
-      return updated;
-    });
-  };
-
   const progress = (currentStep / steps.length) * 100;
 
-  const nextStep = () => {
-    if (validateFormStep(currentStep, formData) && currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
-    } else {
+  const handleNext = () => {
+    const success = nextStep();
+    if (!success) {
       console.warn("Validation failed for step", currentStep);
     }
   };
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  const handlePrev = () => {
+    prevStep();
   };
 
-  const handleGenerate = () => {
-    console.log("Generating topics with data:", formData);
-    // TODO: Implement topic generation API call
+  const handleGenerate = async () => {
+    await generateTopics();
   };
 
   const renderStepContent = () => {
@@ -210,9 +183,7 @@ export default function TopicBuilderPage() {
         );
 
       case 7:
-        return (
-          <ReviewStep formData={formData} setCurrentStep={setCurrentStep} />
-        );
+        return <ReviewStep formData={formData} setCurrentStep={goToStep} />;
 
       case 8:
         return (
@@ -291,7 +262,7 @@ export default function TopicBuilderPage() {
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
-          onClick={prevStep}
+          onClick={handlePrev}
           disabled={currentStep === 1}
           className="flex items-center gap-2"
         >
@@ -304,12 +275,16 @@ export default function TopicBuilderPage() {
         </div>
 
         {currentStep === steps.length ? (
-          <Button onClick={handleGenerate} className="flex items-center gap-2">
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="flex items-center gap-2"
+          >
             <Sparkles className="h-4 w-4" />
-            Generate Topics
+            {isGenerating ? "Generating..." : "Generate Topics"}
           </Button>
         ) : (
-          <Button onClick={nextStep} className="flex items-center gap-2">
+          <Button onClick={handleNext} className="flex items-center gap-2">
             Next
             <ArrowRight className="h-4 w-4" />
           </Button>
