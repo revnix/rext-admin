@@ -30,68 +30,82 @@ export function ContentFormatStep({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6">
-        <div className="grid gap-3">
-          <Label>Content Type *</Label>
-          <RadioGroup
-            options={contentTypeOptions}
-            value={formData.content_type}
-            onValueChange={(value) => updateFormData("content_type", value)}
-            columns={2}
-          />
-          {errors?.content_type && (
-            <p className="text-sm text-red-500">{errors.content_type}</p>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Content Type - Full width */}
+        <div className="md:col-span-2">
+          <div className="grid gap-3">
+            <Label>Content Type *</Label>
+            <RadioGroup
+              options={contentTypeOptions}
+              value={formData.content_type}
+              onValueChange={(value) => updateFormData("content_type", value)}
+              columns={2}
+            />
+            {errors?.content_type && (
+              <p className="text-sm text-red-500">{errors.content_type}</p>
+            )}
+          </div>
         </div>
 
+        {/* Content Type Other - Full width when visible */}
         {formData.content_type === "other" && (
-          <div className="grid gap-2">
-            <Label htmlFor="content_type_other">Specify Content Type</Label>
-            <Input
-              id="content_type_other"
-              placeholder="Please specify your content type"
-              value={formData.content_type_other || ""}
-              onChange={(e) =>
-                updateFormData("content_type_other", e.target.value)
-              }
-            />
-            {errors?.content_type_other && (
-              <p className="text-sm text-red-500">
-                {errors.content_type_other}
-              </p>
-            )}
+          <div className="md:col-span-2">
+            <div className="grid gap-2">
+              <Label htmlFor="content_type_other">Specify Content Type</Label>
+              <Input
+                id="content_type_other"
+                placeholder="Please specify your content type"
+                value={formData.content_type_other || ""}
+                onChange={(e) =>
+                  updateFormData("content_type_other", e.target.value)
+                }
+              />
+              {errors?.content_type_other && (
+                <p className="text-sm text-red-500">
+                  {errors.content_type_other}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
+        {/* Platform/Channel */}
         {(formData.content_type === "social-media" ||
           formData.content_type === "video-content") && (
-          <div className="grid gap-2">
-            <Label htmlFor="platform">Platform/Channel</Label>
-            <SelectWithCustom
-              options={PLATFORM_OPTIONS}
-              value={formData.platform || ""}
-              onChange={(value) => updateFormData("platform", value)}
-              placeholder="Where will you publish this?"
-              allowCustom={true}
-            />
-            {errors?.platform && (
-              <p className="text-sm text-red-500">{errors.platform}</p>
-            )}
+          <div className="md:col-span-1">
+            <div className="grid gap-2">
+              <Label htmlFor="platform">Platform/Channel</Label>
+              <SelectWithCustom
+                options={PLATFORM_OPTIONS}
+                value={formData.platform || ""}
+                onChange={(value) => updateFormData("platform", value)}
+                placeholder="Where will you publish this?"
+                allowCustom={true}
+              />
+              {errors?.platform && (
+                <p className="text-sm text-red-500">{errors.platform}</p>
+              )}
+            </div>
           </div>
         )}
 
+        {/* Platform Other */}
         {formData.platform === "other" && (
-          <div className="grid gap-2">
-            <Label htmlFor="platform_other">Specify Platform</Label>
-            <Input
-              id="platform_other"
-              placeholder="Please specify your platform"
-              value={formData.platform_other || ""}
-              onChange={(e) => updateFormData("platform_other", e.target.value)}
-            />
-            {errors?.platform_other && (
-              <p className="text-sm text-red-500">{errors.platform_other}</p>
-            )}
+          <div className="md:col-span-1">
+            <div className="grid gap-2">
+              <Label htmlFor="platform_other">Specify Platform</Label>
+              <Input
+                id="platform_other"
+                placeholder="Please specify your platform"
+                value={formData.platform_other || ""}
+                onChange={(e) =>
+                  updateFormData("platform_other", e.target.value)
+                }
+              />
+              {errors?.platform_other && (
+                <p className="text-sm text-red-500">{errors.platform_other}</p>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -66,67 +66,82 @@ export function AudienceStep({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6">
-        <div className="grid gap-3">
-          <Label htmlFor="audience">Target Audience *</Label>
-          <MultiSelect
-            options={audienceOptions}
-            selected={formData.audience ? [formData.audience] : []}
-            onChange={(selected) =>
-              updateFormData("audience", selected[0] || "")
-            }
-            placeholder="Who are you writing for?"
-            allowCustom={true}
-          />
-          {errors?.audience && (
-            <p className="text-sm text-red-500">{errors.audience}</p>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Target Audience - Full width */}
+        <div className="md:col-span-2">
+          <div className="grid gap-3">
+            <Label htmlFor="audience">Target Audience *</Label>
+            <MultiSelect
+              options={audienceOptions}
+              selected={formData.audience ? [formData.audience] : []}
+              onChange={(selected) =>
+                updateFormData("audience", selected[0] || "")
+              }
+              placeholder="Who are you writing for?"
+              allowCustom={true}
+            />
+            {errors?.audience && (
+              <p className="text-sm text-red-500">{errors.audience}</p>
+            )}
+          </div>
         </div>
 
-        <div className="grid gap-3">
-          <Label>Reader Experience Level</Label>
-          <RadioGroup
-            options={readerLevelOptions}
-            value={formData.reader_level || ""}
-            onValueChange={(value) => updateFormData("reader_level", value)}
-            columns={3}
-          />
+        {/* Reader Experience Level */}
+        <div className="md:col-span-1">
+          <div className="grid gap-3">
+            <Label>Reader Experience Level</Label>
+            <RadioGroup
+              options={readerLevelOptions}
+              value={formData.reader_level || ""}
+              onValueChange={(value) => updateFormData("reader_level", value)}
+              columns={1}
+            />
+          </div>
         </div>
 
-        <div className="grid gap-3">
-          <Label>Audience Size</Label>
-          <RadioGroup
-            options={audienceSizeOptions}
-            value={formData.audience_size || ""}
-            onValueChange={(value) => updateFormData("audience_size", value)}
-            columns={2}
-          />
+        {/* Audience Size */}
+        <div className="md:col-span-1">
+          <div className="grid gap-3">
+            <Label>Audience Size</Label>
+            <RadioGroup
+              options={audienceSizeOptions}
+              value={formData.audience_size || ""}
+              onValueChange={(value) => updateFormData("audience_size", value)}
+              columns={1}
+            />
+          </div>
         </div>
 
-        <div className="grid gap-3">
-          <Label>Age Groups (Optional)</Label>
-          <CheckboxGroup
-            options={ageGroupOptions}
-            value={formData.demographic_age}
-            onValueChange={(selected) =>
-              updateFormData("demographic_age", selected)
-            }
-            columns={3}
-            maxSelections={4}
-          />
+        {/* Age Groups */}
+        <div className="md:col-span-1">
+          <div className="grid gap-3">
+            <Label>Age Groups (Optional)</Label>
+            <CheckboxGroup
+              options={ageGroupOptions}
+              value={formData.demographic_age}
+              onValueChange={(selected) =>
+                updateFormData("demographic_age", selected)
+              }
+              columns={2}
+              maxSelections={4}
+            />
+          </div>
         </div>
 
-        <div className="grid gap-3">
-          <Label>Geographic Focus (Optional)</Label>
-          <CheckboxGroup
-            options={locationOptions}
-            value={formData.demographic_location}
-            onValueChange={(selected) =>
-              updateFormData("demographic_location", selected)
-            }
-            columns={2}
-            maxSelections={3}
-          />
+        {/* Geographic Focus */}
+        <div className="md:col-span-1">
+          <div className="grid gap-3">
+            <Label>Geographic Focus (Optional)</Label>
+            <CheckboxGroup
+              options={locationOptions}
+              value={formData.demographic_location}
+              onValueChange={(selected) =>
+                updateFormData("demographic_location", selected)
+              }
+              columns={1}
+              maxSelections={3}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -48,78 +48,95 @@ export function GoalsStep({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6">
-        <div className="grid gap-3">
-          <Label>Content Purpose *</Label>
-          <CheckboxGroup
-            options={purposeOptions}
-            value={formData.purpose}
-            onValueChange={(selected) => updateFormData("purpose", selected)}
-            columns={2}
-            maxSelections={3}
-          />
-          {errors?.purpose && (
-            <p className="text-sm text-red-500">{errors.purpose}</p>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Content Purpose - Full width */}
+        <div className="md:col-span-2">
+          <div className="grid gap-3">
+            <Label>Content Purpose *</Label>
+            <CheckboxGroup
+              options={purposeOptions}
+              value={formData.purpose}
+              onValueChange={(selected) => updateFormData("purpose", selected)}
+              columns={2}
+              maxSelections={3}
+            />
+            {errors?.purpose && (
+              <p className="text-sm text-red-500">{errors.purpose}</p>
+            )}
+          </div>
         </div>
 
+        {/* Purpose Other */}
         {formData.purpose.includes("other") && (
-          <div className="grid gap-2">
-            <Label htmlFor="purpose_other">Specify Purpose</Label>
-            <Input
-              id="purpose_other"
-              placeholder="Please specify your purpose"
-              value={formData.purpose_other || ""}
-              onChange={(e) => updateFormData("purpose_other", e.target.value)}
-            />
-            {errors?.purpose_other && (
-              <p className="text-sm text-red-500">{errors.purpose_other}</p>
-            )}
+          <div className="md:col-span-1">
+            <div className="grid gap-2">
+              <Label htmlFor="purpose_other">Specify Purpose</Label>
+              <Input
+                id="purpose_other"
+                placeholder="Please specify your purpose"
+                value={formData.purpose_other || ""}
+                onChange={(e) =>
+                  updateFormData("purpose_other", e.target.value)
+                }
+              />
+              {errors?.purpose_other && (
+                <p className="text-sm text-red-500">{errors.purpose_other}</p>
+              )}
+            </div>
           </div>
         )}
 
-        <div className="grid gap-3">
-          <Label>Content Goals *</Label>
-          <CheckboxGroup
-            options={contentGoalOptions}
-            value={formData.content_goal}
-            onValueChange={(selected) =>
-              updateFormData("content_goal", selected)
-            }
-            columns={2}
-            maxSelections={3}
-          />
-          {errors?.content_goal && (
-            <p className="text-sm text-red-500">{errors.content_goal}</p>
-          )}
-        </div>
-
-        <div className="grid gap-3">
-          <Label>Tone & Style *</Label>
-          <CheckboxGroup
-            options={toneOptions}
-            value={formData.tone}
-            onValueChange={(selected) => updateFormData("tone", selected)}
-            columns={2}
-            maxSelections={3}
-          />
-          {errors?.tone && (
-            <p className="text-sm text-red-500">{errors.tone}</p>
-          )}
-        </div>
-
-        {formData.tone.includes("other") && (
-          <div className="grid gap-2">
-            <Label htmlFor="tone_other">Specify Tone</Label>
-            <Input
-              id="tone_other"
-              placeholder="Please specify your preferred tone"
-              value={formData.tone_other || ""}
-              onChange={(e) => updateFormData("tone_other", e.target.value)}
+        {/* Content Goals */}
+        <div className="md:col-span-1">
+          <div className="grid gap-3">
+            <Label>Content Goals *</Label>
+            <CheckboxGroup
+              options={contentGoalOptions}
+              value={formData.content_goal}
+              onValueChange={(selected) =>
+                updateFormData("content_goal", selected)
+              }
+              columns={1}
+              maxSelections={3}
             />
-            {errors?.tone_other && (
-              <p className="text-sm text-red-500">{errors.tone_other}</p>
+            {errors?.content_goal && (
+              <p className="text-sm text-red-500">{errors.content_goal}</p>
             )}
+          </div>
+        </div>
+
+        {/* Tone & Style */}
+        <div className="md:col-span-1">
+          <div className="grid gap-3">
+            <Label>Tone & Style *</Label>
+            <CheckboxGroup
+              options={toneOptions}
+              value={formData.tone}
+              onValueChange={(selected) => updateFormData("tone", selected)}
+              columns={1}
+              maxSelections={3}
+            />
+            {errors?.tone && (
+              <p className="text-sm text-red-500">{errors.tone}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Tone Other */}
+        {formData.tone.includes("other") && (
+          <div className="md:col-span-1">
+            <div className="grid gap-2">
+              <Label htmlFor="tone_other">Specify Tone</Label>
+              <Input
+                id="tone_other"
+                placeholder="Please specify your preferred tone"
+                value={formData.tone_other || ""}
+                onChange={(e) => updateFormData("tone_other", e.target.value)}
+              />
+              {errors?.tone_other && (
+                <p className="text-sm text-red-500">{errors.tone_other}</p>
+              )}
+            </div>
           </div>
         )}
       </div>
