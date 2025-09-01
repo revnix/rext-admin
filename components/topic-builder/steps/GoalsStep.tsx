@@ -2,9 +2,11 @@ import {
   CheckboxGroup,
   type CheckboxOption,
 } from "@/components/ui/checkbox-group";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
+import { FormField, ValidationInput } from "@/components/ui/form-field";
+import type {
+  TopicBuilderFormData,
+  ValidationResult,
+} from "@/types/topic-builder";
 import {
   CONTENT_GOAL_OPTIONS,
   PURPOSE_OPTIONS,
@@ -17,12 +19,16 @@ interface GoalsStepProps {
     field: keyof TopicBuilderFormData,
     value: string | string[] | number,
   ) => void;
+  validateField?: (field: keyof TopicBuilderFormData) => ValidationResult;
+  getFieldError?: (field: keyof TopicBuilderFormData) => string | undefined;
   errors?: Record<string, string>;
 }
 
 export function GoalsStep({
   formData,
   updateFormData,
+  validateField: _validateField,
+  getFieldError,
   errors,
 }: GoalsStepProps) {
   // Convert SelectOption to CheckboxOption format with descriptions
@@ -51,8 +57,12 @@ export function GoalsStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Content Purpose - Full width */}
         <div className="md:col-span-2">
-          <div className="grid gap-3">
-            <Label>Content Purpose *</Label>
+          <FormField
+            label="Content Purpose"
+            error={getFieldError?.("purpose") || errors?.purpose}
+            isValid={formData.purpose.length > 0 && !getFieldError?.("purpose")}
+            required
+          >
             <CheckboxGroup
               options={purposeOptions}
               value={formData.purpose}
@@ -60,36 +70,52 @@ export function GoalsStep({
               columns={2}
               maxSelections={3}
             />
-            {errors?.purpose && (
-              <p className="text-sm text-red-500">{errors.purpose}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Purpose Other */}
         {formData.purpose.includes("other") && (
           <div className="md:col-span-1">
-            <div className="grid gap-2">
-              <Label htmlFor="purpose_other">Specify Purpose</Label>
-              <Input
+            <FormField
+              label="Specify Purpose"
+              error={getFieldError?.("purpose_other") || errors?.purpose_other}
+              isValid={
+                !!formData.purpose_other?.trim() &&
+                !getFieldError?.("purpose_other")
+              }
+              required
+              htmlFor="purpose_other"
+            >
+              <ValidationInput
                 id="purpose_other"
                 placeholder="Please specify your purpose"
                 value={formData.purpose_other || ""}
                 onChange={(e) =>
                   updateFormData("purpose_other", e.target.value)
                 }
+                error={
+                  getFieldError?.("purpose_other") || errors?.purpose_other
+                }
+                isValid={
+                  !!formData.purpose_other?.trim() &&
+                  !getFieldError?.("purpose_other")
+                }
               />
-              {errors?.purpose_other && (
-                <p className="text-sm text-red-500">{errors.purpose_other}</p>
-              )}
-            </div>
+            </FormField>
           </div>
         )}
 
         {/* Content Goals */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Content Goals *</Label>
+          <FormField
+            label="Content Goals"
+            error={getFieldError?.("content_goal") || errors?.content_goal}
+            isValid={
+              formData.content_goal.length > 0 &&
+              !getFieldError?.("content_goal")
+            }
+            required
+          >
             <CheckboxGroup
               options={contentGoalOptions}
               value={formData.content_goal}
@@ -99,16 +125,17 @@ export function GoalsStep({
               columns={1}
               maxSelections={3}
             />
-            {errors?.content_goal && (
-              <p className="text-sm text-red-500">{errors.content_goal}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Tone & Style */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Tone & Style *</Label>
+          <FormField
+            label="Tone & Style"
+            error={getFieldError?.("tone") || errors?.tone}
+            isValid={formData.tone.length > 0 && !getFieldError?.("tone")}
+            required
+          >
             <CheckboxGroup
               options={toneOptions}
               value={formData.tone}
@@ -116,27 +143,33 @@ export function GoalsStep({
               columns={1}
               maxSelections={3}
             />
-            {errors?.tone && (
-              <p className="text-sm text-red-500">{errors.tone}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Tone Other */}
         {formData.tone.includes("other") && (
           <div className="md:col-span-1">
-            <div className="grid gap-2">
-              <Label htmlFor="tone_other">Specify Tone</Label>
-              <Input
+            <FormField
+              label="Specify Tone"
+              error={getFieldError?.("tone_other") || errors?.tone_other}
+              isValid={
+                !!formData.tone_other?.trim() && !getFieldError?.("tone_other")
+              }
+              required
+              htmlFor="tone_other"
+            >
+              <ValidationInput
                 id="tone_other"
                 placeholder="Please specify your preferred tone"
                 value={formData.tone_other || ""}
                 onChange={(e) => updateFormData("tone_other", e.target.value)}
+                error={getFieldError?.("tone_other") || errors?.tone_other}
+                isValid={
+                  !!formData.tone_other?.trim() &&
+                  !getFieldError?.("tone_other")
+                }
               />
-              {errors?.tone_other && (
-                <p className="text-sm text-red-500">{errors.tone_other}</p>
-              )}
-            </div>
+            </FormField>
           </div>
         )}
       </div>

@@ -83,6 +83,8 @@ export default function TopicBuilderPage() {
     prevStep,
     goToStep,
     isStepCompleted,
+    validateField,
+    getFieldError,
     generateTopics,
   } = useTopicBuilder();
 
@@ -113,6 +115,8 @@ export default function TopicBuilderPage() {
           <IndustryStep
             formData={formData}
             updateFormData={updateFormData}
+            validateField={validateField}
+            getFieldError={getFieldError}
             errors={errors}
           />
         );
@@ -122,6 +126,8 @@ export default function TopicBuilderPage() {
           <AudienceStep
             formData={formData}
             updateFormData={updateFormData}
+            validateField={validateField}
+            getFieldError={getFieldError}
             errors={errors}
           />
         );
@@ -131,6 +137,8 @@ export default function TopicBuilderPage() {
           <ContentFormatStep
             formData={formData}
             updateFormData={updateFormData}
+            validateField={validateField}
+            getFieldError={getFieldError}
             errors={errors}
           />
         );
@@ -140,6 +148,8 @@ export default function TopicBuilderPage() {
           <GoalsStep
             formData={formData}
             updateFormData={updateFormData}
+            validateField={validateField}
+            getFieldError={getFieldError}
             errors={errors}
           />
         );
@@ -149,6 +159,8 @@ export default function TopicBuilderPage() {
           <AdvancedStep
             formData={formData}
             updateFormData={updateFormData}
+            validateField={validateField}
+            getFieldError={getFieldError}
             errors={errors}
           />
         );

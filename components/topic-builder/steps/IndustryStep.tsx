@@ -1,8 +1,12 @@
+import { FormField, ValidationInput } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectWithCustom } from "@/components/ui/select-with-custom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
+import type {
+  TopicBuilderFormData,
+  ValidationResult,
+} from "@/types/topic-builder";
 import { INDUSTRY_OPTIONS } from "@/types/topic-builder";
 
 interface IndustryStepProps {
@@ -11,12 +15,16 @@ interface IndustryStepProps {
     field: keyof TopicBuilderFormData,
     value: string | string[] | number,
   ) => void;
+  validateField?: (field: keyof TopicBuilderFormData) => ValidationResult;
+  getFieldError?: (field: keyof TopicBuilderFormData) => string | undefined;
   errors?: Record<string, string>;
 }
 
 export function IndustryStep({
   formData,
   updateFormData,
+  validateField: _validateField,
+  getFieldError,
   errors,
 }: IndustryStepProps) {
   return (
@@ -24,8 +32,11 @@ export function IndustryStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Approach Selection - Full width */}
         <div className="md:col-span-2">
-          <div className="grid gap-2">
-            <Label>How would you like to start?</Label>
+          <FormField
+            label="How would you like to start?"
+            error={getFieldError?.("wizardMode") || errors?.wizardMode}
+            required
+          >
             <ToggleGroup
               type="single"
               value={formData.wizardMode}
@@ -41,26 +52,31 @@ export function IndustryStep({
                 I want ideas for my industry
               </ToggleGroupItem>
             </ToggleGroup>
-            {errors?.wizardMode && (
-              <p className="text-sm text-red-500">{errors.wizardMode}</p>
-            )}
-          </div>
+          </FormField>
         </div>
         {/* Subject/Topic - Full width when visible */}
         {formData.wizardMode === "subject-first" && (
           <div className="md:col-span-2">
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Your Subject/Topic *</Label>
-              <Input
+            <FormField
+              label="Your Subject/Topic"
+              error={getFieldError?.("subject") || errors?.subject}
+              isValid={
+                !!formData.subject?.trim() && !getFieldError?.("subject")
+              }
+              required
+              htmlFor="subject"
+            >
+              <ValidationInput
                 id="subject"
                 placeholder="What specific subject do you want to write about?"
                 value={formData.subject || ""}
                 onChange={(e) => updateFormData("subject", e.target.value)}
+                error={getFieldError?.("subject") || errors?.subject}
+                isValid={
+                  !!formData.subject?.trim() && !getFieldError?.("subject")
+                }
               />
-              {errors?.subject && (
-                <p className="text-sm text-red-500">{errors.subject}</p>
-              )}
-            </div>
+            </FormField>
           </div>
         )}
 

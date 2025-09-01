@@ -1,9 +1,11 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField, ValidationInput } from "@/components/ui/form-field";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
 import { SelectWithCustom } from "@/components/ui/select-with-custom";
 import { Textarea } from "@/components/ui/textarea";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
+import type {
+  TopicBuilderFormData,
+  ValidationResult,
+} from "@/types/topic-builder";
 import {
   LANGUAGE_OPTIONS,
   ORIGINALITY_TOGGLE_OPTIONS,
@@ -17,12 +19,16 @@ interface AdvancedStepProps {
     field: keyof TopicBuilderFormData,
     value: string | string[] | number,
   ) => void;
+  validateField?: (field: keyof TopicBuilderFormData) => ValidationResult;
+  getFieldError?: (field: keyof TopicBuilderFormData) => string | undefined;
   errors?: Record<string, string>;
 }
 
 export function AdvancedStep({
   formData,
   updateFormData,
+  validateField: _validateField,
+  getFieldError,
   errors,
 }: AdvancedStepProps) {
   // Convert toggle options to RadioOption format with descriptions
@@ -50,40 +56,45 @@ export function AdvancedStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Keywords/Focus Areas */}
         <div className="md:col-span-1">
-          <div className="grid gap-2">
-            <Label htmlFor="keywords">Keywords/Focus Areas</Label>
-            <Input
+          <FormField
+            label="Keywords/Focus Areas"
+            error={getFieldError?.("keywords") || errors?.keywords}
+            htmlFor="keywords"
+          >
+            <ValidationInput
               id="keywords"
               placeholder="Enter keywords or key phrases (comma-separated)"
               value={formData.keywords || ""}
               onChange={(e) => updateFormData("keywords", e.target.value)}
+              error={getFieldError?.("keywords") || errors?.keywords}
             />
-            {errors?.keywords && (
-              <p className="text-sm text-red-500">{errors.keywords}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Exclude/Avoid */}
         <div className="md:col-span-1">
-          <div className="grid gap-2">
-            <Label htmlFor="exclude">Exclude/Avoid</Label>
-            <Input
+          <FormField
+            label="Exclude/Avoid"
+            error={getFieldError?.("exclude") || errors?.exclude}
+            htmlFor="exclude"
+          >
+            <ValidationInput
               id="exclude"
               placeholder="Topics or angles to avoid (comma-separated)"
               value={formData.exclude || ""}
               onChange={(e) => updateFormData("exclude", e.target.value)}
+              error={getFieldError?.("exclude") || errors?.exclude}
             />
-            {errors?.exclude && (
-              <p className="text-sm text-red-500">{errors.exclude}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Number of Ideas */}
         <div className="md:col-span-1">
-          <div className="grid gap-2">
-            <Label htmlFor="num_ideas">Number of Ideas</Label>
+          <FormField
+            label="Number of Ideas"
+            error={getFieldError?.("num_ideas") || errors?.num_ideas}
+            htmlFor="num_ideas"
+          >
             <SelectWithCustom
               options={[
                 { label: "3 ideas", value: "3" },
@@ -97,48 +108,50 @@ export function AdvancedStep({
               }
               placeholder="How many topic ideas?"
             />
-            {errors?.num_ideas && (
-              <p className="text-sm text-red-500">{errors.num_ideas}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Target Region */}
         <div className="md:col-span-1">
-          <div className="grid gap-2">
-            <Label htmlFor="region">Target Region</Label>
+          <FormField
+            label="Target Region"
+            error={getFieldError?.("region") || errors?.region}
+            htmlFor="region"
+          >
             <SelectWithCustom
               options={REGION_OPTIONS}
               value={formData.region || ""}
               onChange={(value) => updateFormData("region", value)}
               placeholder="Geographic focus (optional)"
             />
-            {errors?.region && (
-              <p className="text-sm text-red-500">{errors.region}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Content Language */}
         <div className="md:col-span-1">
-          <div className="grid gap-2">
-            <Label htmlFor="language">Content Language</Label>
+          <FormField
+            label="Content Language"
+            error={getFieldError?.("language") || errors?.language}
+            htmlFor="language"
+          >
             <SelectWithCustom
               options={LANGUAGE_OPTIONS}
               value={formData.language || ""}
               onChange={(value) => updateFormData("language", value)}
               placeholder="What language? (optional)"
             />
-            {errors?.language && (
-              <p className="text-sm text-red-500">{errors.language}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Content Timing Preference */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Content Timing Preference</Label>
+          <FormField
+            label="Content Timing Preference"
+            error={
+              getFieldError?.("fresh_vs_evergreen") ||
+              errors?.fresh_vs_evergreen
+            }
+          >
             <RadioGroup
               options={timingPreferenceOptions}
               value={formData.fresh_vs_evergreen || ""}
@@ -147,18 +160,17 @@ export function AdvancedStep({
               }
               columns={1}
             />
-            {errors?.fresh_vs_evergreen && (
-              <p className="text-sm text-red-500">
-                {errors.fresh_vs_evergreen}
-              </p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Originality Preference */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Originality Preference</Label>
+          <FormField
+            label="Originality Preference"
+            error={
+              getFieldError?.("safe_vs_original") || errors?.safe_vs_original
+            }
+          >
             <RadioGroup
               options={originalityPreferenceOptions}
               value={formData.safe_vs_original || ""}
@@ -167,16 +179,16 @@ export function AdvancedStep({
               }
               columns={1}
             />
-            {errors?.safe_vs_original && (
-              <p className="text-sm text-red-500">{errors.safe_vs_original}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Additional Notes - Full width */}
         <div className="md:col-span-2">
-          <div className="grid gap-2">
-            <Label htmlFor="notes">Additional Notes</Label>
+          <FormField
+            label="Additional Notes"
+            error={getFieldError?.("notes") || errors?.notes}
+            htmlFor="notes"
+          >
             <Textarea
               id="notes"
               placeholder="Any special instructions or context?"
@@ -184,10 +196,7 @@ export function AdvancedStep({
               onChange={(e) => updateFormData("notes", e.target.value)}
               rows={3}
             />
-            {errors?.notes && (
-              <p className="text-sm text-red-500">{errors.notes}</p>
-            )}
-          </div>
+          </FormField>
         </div>
       </div>
     </div>

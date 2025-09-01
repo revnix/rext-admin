@@ -2,6 +2,7 @@ import {
   CheckboxGroup,
   type CheckboxOption,
 } from "@/components/ui/checkbox-group";
+import { FormField } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
@@ -10,7 +11,10 @@ import {
   DEMOGRAPHIC_LOCATION_OPTIONS,
 } from "@/data/topic-builder-options";
 import { getAudienceOptions } from "@/lib/topic-builder-utils";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
+import type {
+  TopicBuilderFormData,
+  ValidationResult,
+} from "@/types/topic-builder";
 import {
   AUDIENCE_SIZE_OPTIONS,
   READER_LEVEL_OPTIONS,
@@ -22,12 +26,16 @@ interface AudienceStepProps {
     field: keyof TopicBuilderFormData,
     value: string | string[] | number,
   ) => void;
+  validateField?: (field: keyof TopicBuilderFormData) => ValidationResult;
+  getFieldError?: (field: keyof TopicBuilderFormData) => string | undefined;
   errors?: Record<string, string>;
 }
 
 export function AudienceStep({
   formData,
   updateFormData,
+  validateField: _validateField,
+  getFieldError,
   errors,
 }: AudienceStepProps) {
   const audienceOptions = getAudienceOptions(formData.industry);
@@ -69,8 +77,15 @@ export function AudienceStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Target Audience - Full width */}
         <div className="md:col-span-2">
-          <div className="grid gap-3">
-            <Label htmlFor="audience">Target Audience *</Label>
+          <FormField
+            label="Target Audience"
+            error={getFieldError?.("audience") || errors?.audience}
+            isValid={
+              !!formData.audience?.trim() && !getFieldError?.("audience")
+            }
+            required
+            htmlFor="audience"
+          >
             <MultiSelect
               options={audienceOptions}
               selected={formData.audience ? [formData.audience] : []}
@@ -80,36 +95,43 @@ export function AudienceStep({
               placeholder="Who are you writing for?"
               allowCustom={true}
             />
-            {errors?.audience && (
-              <p className="text-sm text-red-500">{errors.audience}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         {/* Reader Experience Level */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Reader Experience Level</Label>
+          <FormField
+            label="Reader Experience Level"
+            error={getFieldError?.("reader_level") || errors?.reader_level}
+            isValid={
+              !!formData.reader_level && !getFieldError?.("reader_level")
+            }
+          >
             <RadioGroup
               options={readerLevelOptions}
               value={formData.reader_level || ""}
               onValueChange={(value) => updateFormData("reader_level", value)}
               columns={1}
             />
-          </div>
+          </FormField>
         </div>
 
         {/* Audience Size */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Audience Size</Label>
+          <FormField
+            label="Audience Size"
+            error={getFieldError?.("audience_size") || errors?.audience_size}
+            isValid={
+              !!formData.audience_size && !getFieldError?.("audience_size")
+            }
+          >
             <RadioGroup
               options={audienceSizeOptions}
               value={formData.audience_size || ""}
               onValueChange={(value) => updateFormData("audience_size", value)}
               columns={1}
             />
-          </div>
+          </FormField>
         </div>
 
         {/* Age Groups */}

@@ -363,11 +363,14 @@ export const validateFormStepDetailed = (
       if (!formData.industry) {
         errors.push("Please select an industry or domain");
       }
-      if (formData.industry === "other" && !formData.industry_other) {
-        errors.push("Please specify the custom industry");
+      if (formData.industry === "other" && !formData.industry_other?.trim()) {
+        errors.push("Please specify your custom industry");
       }
-      if (formData.wizardMode === "subject-first" && !formData.subject) {
-        errors.push("Please provide a subject for subject-first mode");
+      if (
+        formData.wizardMode === "subject-first" &&
+        !formData.subject?.trim()
+      ) {
+        errors.push("Please enter your specific topic or subject");
       }
       // Interdependent validation: subject relevance to industry
       if (
@@ -423,8 +426,11 @@ export const validateFormStepDetailed = (
       if (!formData.content_type) {
         errors.push("Please select a content type");
       }
-      if (formData.content_type === "other" && !formData.content_type_other) {
-        errors.push("Please specify the custom content type");
+      if (
+        formData.content_type === "other" &&
+        !formData.content_type_other?.trim()
+      ) {
+        errors.push("Please specify your custom content type");
       }
       // Platform required for social media and video content
       if (
@@ -434,8 +440,8 @@ export const validateFormStepDetailed = (
       ) {
         errors.push("Please select a platform for this content type");
       }
-      if (formData.platform === "other" && !formData.platform_other) {
-        errors.push("Please specify the custom platform");
+      if (formData.platform === "other" && !formData.platform_other?.trim()) {
+        errors.push("Please specify your custom platform");
       }
       break;
 
@@ -493,22 +499,7 @@ export const validateFormStepDetailed = (
       break;
 
     case 6: {
-      // Review & Preferences
-      // Final validation - check all required fields
-      const finalValidation = validateFormStepDetailed(1, formData);
-      const contentValidation = validateFormStepDetailed(3, formData);
-      const goalValidation = validateFormStepDetailed(4, formData);
-
-      errors.push(
-        ...finalValidation.errors,
-        ...contentValidation.errors,
-        ...goalValidation.errors,
-      );
-      break;
-    }
-
-    case 7: {
-      // Generate Topics (final step)
+      // Review & Generate (final step)
       // Comprehensive final validation before generation
       const step1Validation = validateFormStepDetailed(1, formData);
       const step2Validation = validateFormStepDetailed(2, formData);

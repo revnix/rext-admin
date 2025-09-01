@@ -45,6 +45,8 @@ interface UseTopicBuilderReturn {
   // Validation
   validateCurrentStep: () => ValidationResult;
   validateStep: (step: number) => ValidationResult;
+  validateField: (field: keyof TopicBuilderFormData) => ValidationResult;
+  getFieldError: (field: keyof TopicBuilderFormData) => string | undefined;
 
   // Topic generation
   generateTopics: () => Promise<void>;
@@ -211,6 +213,59 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     [validateStep],
   );
 
+  // Real-time field validation for immediate feedback
+  const validateField = useCallback(
+    (field: keyof TopicBuilderFormData): ValidationResult => {
+      const validation = validateStep(currentStep);
+
+      // Create a mapping of field names to validation keywords
+      const fieldKeywords: Record<string, string[]> = {
+        wizardMode: ["select how", "start"],
+        industry: ["industry", "domain"],
+        industry_other: ["custom industry", "specify"],
+        subject: ["subject", "topic"],
+        focus: ["focus"],
+        audience: ["audience"],
+        content_type: ["content type"],
+        content_type_other: ["custom content type"],
+        platform: ["platform"],
+        platform_other: ["custom platform"],
+        purpose: ["purpose"],
+        content_goal: ["content goal"],
+        tone: ["tone"],
+        num_ideas: ["number of ideas"],
+        keywords: ["keywords"],
+        exclude: ["exclude"],
+        region: ["region"],
+        language: ["language"],
+        notes: ["notes"],
+      };
+
+      const keywords = fieldKeywords[field] || [field];
+      const fieldErrors = validation.errors.filter((error) =>
+        keywords.some((keyword) =>
+          error.toLowerCase().includes(keyword.toLowerCase()),
+        ),
+      );
+
+      return {
+        isValid: fieldErrors.length === 0,
+        errors: fieldErrors,
+        warnings: validation.warnings || [],
+      };
+    },
+    [currentStep, validateStep],
+  );
+
+  // Get specific field error for UI display
+  const getFieldError = useCallback(
+    (field: keyof TopicBuilderFormData): string | undefined => {
+      const validation = validateField(field);
+      return validation.errors[0];
+    },
+    [validateField],
+  );
+
   // Step navigation with validation
   const nextStep = useCallback((): boolean => {
     const validation = validateCurrentStep();
@@ -366,6 +421,8 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     // Validation
     validateCurrentStep,
     validateStep,
+    validateField,
+    getFieldError,
 
     // Topic generation
     generateTopics,
