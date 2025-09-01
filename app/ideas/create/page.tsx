@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { IndustryStep } from "@/components/topic-builder/steps/IndustryStep";
+import { WizardModeSelectionStep } from "@/components/topic-builder/steps/WizardModeSelectionStep";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,7 +49,6 @@ import {
   READER_LEVEL_OPTIONS,
   REGION_OPTIONS,
   TONE_OPTIONS,
-  WIZARD_MODE_OPTIONS,
 } from "@/types/topic-builder";
 
 const initialFormData: TopicBuilderFormData = {
@@ -172,85 +173,15 @@ export default function TopicBuilderPage() {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="wizardMode">Choose Your Approach *</Label>
-                <SelectWithCustom
-                  options={WIZARD_MODE_OPTIONS}
-                  value={formData.wizardMode}
-                  onChange={(value) => updateFormData("wizardMode", value)}
-                  placeholder="How would you like to start?"
-                />
-              </div>
-            </div>
-          </div>
+          <WizardModeSelectionStep
+            formData={formData}
+            updateFormData={updateFormData}
+          />
         );
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4">
-              {formData.wizardMode === "subject-first" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="subject">Your Subject/Topic *</Label>
-                  <Input
-                    id="subject"
-                    placeholder="What specific subject do you want to write about?"
-                    value={formData.subject || ""}
-                    onChange={(e) => updateFormData("subject", e.target.value)}
-                  />
-                </div>
-              )}
-
-              <div className="grid gap-2">
-                <Label htmlFor="industry">Industry/Domain *</Label>
-                <SelectWithCustom
-                  options={INDUSTRY_OPTIONS}
-                  value={formData.industry}
-                  onChange={(value) => updateFormData("industry", value)}
-                  placeholder="Which industry or domain?"
-                  allowCustom={true}
-                />
-              </div>
-
-              {formData.industry === "other" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="industry_other">Specify Industry</Label>
-                  <Input
-                    id="industry_other"
-                    placeholder="Please specify your industry"
-                    value={formData.industry_other || ""}
-                    onChange={(e) =>
-                      updateFormData("industry_other", e.target.value)
-                    }
-                  />
-                </div>
-              )}
-
-              {formData.wizardMode === "industry-first" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="focus">Specific Focus (Optional)</Label>
-                  <Input
-                    id="focus"
-                    placeholder="Any specific area within this industry?"
-                    value={formData.focus || ""}
-                    onChange={(e) => updateFormData("focus", e.target.value)}
-                  />
-                </div>
-              )}
-
-              {formData.is_ymyl && (
-                <div className="rounded-lg bg-yellow-50 p-4 border border-yellow-200">
-                  <p className="text-sm text-yellow-800">
-                    <strong>YMYL Content Detected:</strong> This industry
-                    involves health, finance, or legal topics. We'll keep
-                    suggestions factual and non-advisory.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <IndustryStep formData={formData} updateFormData={updateFormData} />
         );
 
       case 3:

@@ -131,7 +131,7 @@
             "description": "Create the first two step components of the wizard: mode selection and industry selection",
             "dependencies": [],
             "details": "1. Create `WizardModeSelectionStep.tsx` with options for subject-first and industry-first modes\n2. Implement `IndustryStep.tsx` with industry dropdown selection\n3. Add conditional subject input field based on wizard mode\n4. Implement validation for both steps\n5. Create industry data structure in `/data/topic-builder-options.ts`\n6. Add smooth transitions between these initial steps",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -556,7 +556,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-01T11:37:15.586Z",
+      "updated": "2025-09-01T11:45:39.187Z",
       "description": "Tasks for master context"
     }
   }
