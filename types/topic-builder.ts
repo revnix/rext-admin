@@ -653,3 +653,23 @@ export const validateEnumArray = <T extends string>(
 ): values is T[] => {
   return values.every(validationFn);
 };
+
+// Import new demographic options for type guards
+import {
+  DEMOGRAPHIC_AGE_OPTIONS,
+  DEMOGRAPHIC_LOCATION_OPTIONS,
+} from "@/data/topic-builder-options";
+
+/**
+ * Type guard to check if a value is a valid demographic age group
+ */
+export const isValidDemographicAge = (value: string): boolean => {
+  return DEMOGRAPHIC_AGE_OPTIONS.some((option) => option.value === value);
+};
+
+/**
+ * Type guard to check if a value is a valid demographic location
+ */
+export const isValidDemographicLocation = (value: string): boolean => {
+  return DEMOGRAPHIC_LOCATION_OPTIONS.some((option) => option.value === value);
+};

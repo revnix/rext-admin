@@ -554,3 +554,253 @@ export const DEFAULT_AUDIENCE_OPTIONS: SelectOption[] = [
   { label: "Experts", value: "experts" },
   { label: "Beginners", value: "beginners" },
 ];
+
+// ============================================================================
+// DEMOGRAPHIC OPTIONS
+// ============================================================================
+
+/**
+ * Age group options for demographic targeting
+ *
+ * Covers major generational segments with marketing-relevant age ranges
+ */
+export const DEMOGRAPHIC_AGE_OPTIONS: SelectOption[] = [
+  { label: "13-17 (Gen Z - Young)", value: "13-17" },
+  { label: "18-24 (Gen Z - Adult)", value: "18-24" },
+  { label: "25-34 (Millennials - Young)", value: "25-34" },
+  { label: "35-44 (Millennials - Older)", value: "35-44" },
+  { label: "45-54 (Gen X)", value: "45-54" },
+  { label: "55-64 (Baby Boomers - Young)", value: "55-64" },
+  { label: "65+ (Baby Boomers - Senior)", value: "65+" },
+];
+
+/**
+ * Geographic location options for demographic targeting
+ *
+ * Includes major markets, regions, and countries for content localization
+ */
+export const DEMOGRAPHIC_LOCATION_OPTIONS: SelectOption[] = [
+  // North America
+  { label: "United States", value: "united-states" },
+  { label: "Canada", value: "canada" },
+  { label: "Mexico", value: "mexico" },
+
+  // Europe
+  { label: "United Kingdom", value: "united-kingdom" },
+  { label: "Germany", value: "germany" },
+  { label: "France", value: "france" },
+  { label: "Spain", value: "spain" },
+  { label: "Italy", value: "italy" },
+  { label: "Netherlands", value: "netherlands" },
+  { label: "Switzerland", value: "switzerland" },
+  { label: "Sweden", value: "sweden" },
+  { label: "Norway", value: "norway" },
+  { label: "Denmark", value: "denmark" },
+
+  // Asia Pacific
+  { label: "Pakistan", value: "pakistan" },
+  { label: "India", value: "india" },
+  { label: "China", value: "china" },
+  { label: "Japan", value: "japan" },
+  { label: "South Korea", value: "south-korea" },
+  { label: "Singapore", value: "singapore" },
+  { label: "Hong Kong", value: "hong-kong" },
+  { label: "Australia", value: "australia" },
+  { label: "New Zealand", value: "new-zealand" },
+  { label: "Thailand", value: "thailand" },
+  { label: "Malaysia", value: "malaysia" },
+  { label: "Indonesia", value: "indonesia" },
+  { label: "Philippines", value: "philippines" },
+  { label: "Vietnam", value: "vietnam" },
+
+  // Middle East & Africa
+  { label: "United Arab Emirates", value: "uae" },
+  { label: "Saudi Arabia", value: "saudi-arabia" },
+  { label: "Israel", value: "israel" },
+  { label: "Turkey", value: "turkey" },
+  { label: "South Africa", value: "south-africa" },
+  { label: "Nigeria", value: "nigeria" },
+  { label: "Egypt", value: "egypt" },
+
+  // Latin America
+  { label: "Brazil", value: "brazil" },
+  { label: "Argentina", value: "argentina" },
+  { label: "Chile", value: "chile" },
+  { label: "Colombia", value: "colombia" },
+
+  // Regional Groupings
+  { label: "Europe (General)", value: "europe" },
+  { label: "Asia Pacific (General)", value: "asia-pacific" },
+  { label: "Middle East", value: "middle-east" },
+  { label: "Latin America", value: "latin-america" },
+  { label: "Global / International", value: "global" },
+  { label: "Other", value: "other" },
+];
+
+// ============================================================================
+// INDUSTRY CATEGORIZATION
+// ============================================================================
+
+/**
+ * Organized industry categories for better UX and navigation
+ *
+ * Groups related industries together for improved wizard flow
+ */
+export const INDUSTRY_CATEGORIES: Record<string, SelectOption[]> = {
+  "Technology & Digital": [
+    { label: "Technology / IT", value: "technology" },
+    { label: "E-commerce / Retail", value: "ecommerce" },
+    { label: "Marketing / Advertising", value: "marketing" },
+  ],
+
+  "Health & Wellness": [
+    { label: "Healthcare / Medical", value: "healthcare" },
+    { label: "Fitness / Health", value: "fitness" },
+    { label: "Sports / Recreation", value: "sports" },
+  ],
+
+  "Business & Finance": [
+    { label: "Finance / Banking", value: "finance" },
+    { label: "Business / Entrepreneurship", value: "business" },
+    { label: "HR / Human Resources", value: "hr" },
+    { label: "Legal / Law", value: "legal" },
+    { label: "Real Estate", value: "real-estate" },
+  ],
+
+  "Education & Lifestyle": [
+    { label: "Education / E-Learning", value: "education" },
+    { label: "Lifestyle / Personal Development", value: "lifestyle" },
+    { label: "Science / Research", value: "science" },
+  ],
+
+  "Consumer & Entertainment": [
+    { label: "Travel / Hospitality", value: "travel" },
+    { label: "Food / Culinary", value: "food" },
+    { label: "Fashion / Beauty", value: "fashion" },
+  ],
+
+  "Government & Public": [
+    { label: "Government / Public Policy", value: "government" },
+  ],
+
+  Other: [{ label: "Other", value: "other" }],
+};
+
+// ============================================================================
+// UTILITY FUNCTIONS FOR DATA STRUCTURES
+// ============================================================================
+
+/**
+ * Get all industry options as a flat array (for combobox/select usage)
+ */
+export const getAllIndustryOptions = (): SelectOption[] => {
+  return Object.values(INDUSTRY_CATEGORIES).flat();
+};
+
+/**
+ * Get industry category for a specific industry value
+ */
+export const getIndustryCategoryName = (
+  industryValue: string,
+): string | null => {
+  for (const [categoryName, industries] of Object.entries(
+    INDUSTRY_CATEGORIES,
+  )) {
+    if (industries.some((industry) => industry.value === industryValue)) {
+      return categoryName;
+    }
+  }
+  return null;
+};
+
+/**
+ * Get all platform options that are relevant for a specific content type
+ */
+export const getPlatformOptionsForContentType = (
+  contentType: string,
+): SelectOption[] => {
+  // Social media content types should show social platforms
+  if (contentType === "social-media") {
+    return [
+      { label: "Facebook", value: "facebook" },
+      { label: "Instagram", value: "instagram" },
+      { label: "Twitter (X)", value: "twitter" },
+      { label: "LinkedIn", value: "linkedin" },
+      { label: "TikTok", value: "tiktok" },
+      { label: "Other", value: "other" },
+    ];
+  }
+
+  // Video content should show video platforms
+  if (contentType === "video-content") {
+    return [
+      { label: "YouTube", value: "youtube" },
+      { label: "TikTok", value: "tiktok" },
+      { label: "Instagram", value: "instagram" },
+      { label: "Vimeo", value: "vimeo" },
+      { label: "Other", value: "other" },
+    ];
+  }
+
+  // For other content types, return empty array (no platform needed)
+  return [];
+};
+
+/**
+ * Check if a content type requires platform selection
+ */
+export const doesContentTypeRequirePlatform = (
+  contentType: string,
+): boolean => {
+  return ["social-media", "video-content"].includes(contentType);
+};
+
+/**
+ * Get demographic age groups that are most relevant for an industry
+ */
+export const getRelevantAgeGroupsForIndustry = (
+  industry: string,
+): SelectOption[] => {
+  const industryLower = industry.toLowerCase();
+
+  // Education - focus on younger demographics and parents
+  if (industryLower.includes("education")) {
+    return [
+      { label: "13-17 (Gen Z - Young)", value: "13-17" },
+      { label: "18-24 (Gen Z - Adult)", value: "18-24" },
+      { label: "25-34 (Millennials - Young)", value: "25-34" },
+      { label: "35-44 (Millennials - Older)", value: "35-44" },
+    ];
+  }
+
+  // Technology - focus on working age demographics
+  if (industryLower.includes("technology")) {
+    return [
+      { label: "18-24 (Gen Z - Adult)", value: "18-24" },
+      { label: "25-34 (Millennials - Young)", value: "25-34" },
+      { label: "35-44 (Millennials - Older)", value: "35-44" },
+      { label: "45-54 (Gen X)", value: "45-54" },
+    ];
+  }
+
+  // Finance - focus on earning age demographics
+  if (industryLower.includes("finance")) {
+    return [
+      { label: "25-34 (Millennials - Young)", value: "25-34" },
+      { label: "35-44 (Millennials - Older)", value: "35-44" },
+      { label: "45-54 (Gen X)", value: "45-54" },
+      { label: "55-64 (Baby Boomers - Young)", value: "55-64" },
+    ];
+  }
+
+  // Healthcare - all ages relevant
+  if (
+    industryLower.includes("healthcare") ||
+    industryLower.includes("health")
+  ) {
+    return DEMOGRAPHIC_AGE_OPTIONS;
+  }
+
+  // Default: return all options
+  return DEMOGRAPHIC_AGE_OPTIONS;
+};
