@@ -40,6 +40,7 @@ interface UseTopicBuilderReturn {
   prevStep: () => boolean;
   goToStep: (step: number) => boolean;
   canProceedToNextStep: () => boolean;
+  isStepCompleted: (step: number) => boolean;
 
   // Validation
   validateCurrentStep: () => ValidationResult;
@@ -201,6 +202,15 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     return validation.isValid;
   }, [validateCurrentStep]);
 
+  // Step completion check
+  const isStepCompleted = useCallback(
+    (step: number): boolean => {
+      const validation = validateStep(step);
+      return validation.isValid;
+    },
+    [validateStep],
+  );
+
   // Step navigation with validation
   const nextStep = useCallback((): boolean => {
     const validation = validateCurrentStep();
@@ -218,7 +228,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     // Clear errors and proceed
     setErrors({});
 
-    if (currentStep < 7) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
       return true;
     }
@@ -237,11 +247,19 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
   const goToStep = useCallback(
     (step: number): boolean => {
-      if (step < 1 || step > 7) {
+      if (step < 1 || step > 6) {
         return false;
       }
 
-      // Validate all steps up to the target step
+      // Allow navigation to any completed step or the next uncompleted step
+      if (step <= currentStep) {
+        // Can always go back to previous or current step
+        setCurrentStep(step);
+        setErrors({});
+        return true;
+      }
+
+      // For forward navigation, validate all steps up to the target step
       for (let i = 1; i < step; i++) {
         const validation = validateStep(i);
         if (!validation.isValid) {
@@ -257,13 +275,13 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       setErrors({});
       return true;
     },
-    [validateStep],
+    [currentStep, validateStep],
   );
 
   // Topic generation
   const generateTopics = useCallback(async (): Promise<void> => {
     // Final validation before generation
-    const validation = validateStep(7);
+    const validation = validateStep(6);
     if (!validation.isValid) {
       const stepErrors: Record<string, string> = {};
       validation.errors.forEach((error, index) => {
@@ -343,6 +361,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     prevStep,
     goToStep,
     canProceedToNextStep,
+    isStepCompleted,
 
     // Validation
     validateCurrentStep,

@@ -18,6 +18,7 @@ interface WizardSidebarProps {
   steps: WizardStep[];
   currentStep: number;
   onStepClick: (step: number) => void;
+  isStepCompleted: (step: number) => boolean;
   errors?: Record<string, string>;
   className?: string;
 }
@@ -26,12 +27,13 @@ export function WizardSidebar({
   steps,
   currentStep,
   onStepClick,
+  isStepCompleted,
   errors,
   className,
 }: WizardSidebarProps) {
   const getStepStatus = (step: WizardStep) => {
     const isActive = step.id === currentStep;
-    const isCompleted = step.id < currentStep;
+    const isCompleted = step.id < currentStep || isStepCompleted(step.id);
     const hasError =
       errors && Object.keys(errors).length > 0 && step.id === currentStep;
 
@@ -55,8 +57,15 @@ export function WizardSidebar({
   };
 
   const isStepClickable = (step: WizardStep) => {
-    // Allow clicking on current step, completed steps, and next step
-    return step.id <= currentStep + 1;
+    // Allow clicking on completed steps and current step
+    if (step.id <= currentStep) return true;
+
+    // For forward navigation, check if all previous steps are completed
+    for (let i = 1; i < step.id; i++) {
+      if (!isStepCompleted(i)) return false;
+    }
+
+    return true;
   };
 
   return (

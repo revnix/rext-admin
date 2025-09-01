@@ -1,4 +1,8 @@
+import { ArrowLeft, Sparkles } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
   CONTENT_GOAL_OPTIONS,
@@ -13,284 +17,251 @@ import {
 
 interface ReviewStepProps {
   formData: TopicBuilderFormData;
-  setCurrentStep: (step: number) => void;
+  onGenerate: () => Promise<void>;
+  onGoBack: () => void;
+  isGenerating: boolean;
 }
 
-export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
+export function ReviewStep({
+  formData,
+  onGenerate,
+  onGoBack,
+  isGenerating,
+}: ReviewStepProps) {
+  const getDisplayValue = (
+    options: { label: string; value: string }[],
+    value: string,
+  ) => {
+    return options.find((opt) => opt.value === value)?.label || value;
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-sm text-muted-foreground mb-4">
-        Review your selections before generating topic ideas.
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-semibold mb-2">Review & Generate</h3>
+        <p className="text-muted-foreground">
+          Review your selections and generate {formData.num_ideas} topic ideas.
+          Use the sidebar to edit any step.
+        </p>
       </div>
 
-      <div className="grid gap-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <strong>Mode:</strong>{" "}
-              {formData.wizardMode === "subject-first"
-                ? "Subject-First"
-                : "Industry-First"}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentStep(1)}
-            >
-              Edit
-            </Button>
-          </div>
-
-          {formData.subject && (
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Core Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Core Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <div>
-                <strong>Subject:</strong> {formData.subject}
+              <span className="text-sm font-medium">Mode</span>
+              <Badge variant="secondary">
+                {formData.wizardMode === "subject-first"
+                  ? "Subject-First"
+                  : "Industry-First"}
+              </Badge>
+            </div>
+
+            {formData.subject && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Subject</span>
+                <span className="text-sm text-right max-w-48 truncate">
+                  {formData.subject}
+                </span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(1)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
+            )}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <strong>Industry:</strong>{" "}
-              {INDUSTRY_OPTIONS.find((opt) => opt.value === formData.industry)
-                ?.label || formData.industry}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentStep(1)}
-            >
-              Edit
-            </Button>
-          </div>
-
-          {formData.focus && (
             <div className="flex items-center justify-between">
-              <div>
-                <strong>Focus:</strong> {formData.focus}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(1)}
-              >
-                Edit
-              </Button>
+              <span className="text-sm font-medium">Industry</span>
+              <Badge variant="outline">
+                {getDisplayValue(INDUSTRY_OPTIONS, formData.industry)}
+              </Badge>
             </div>
-          )}
 
-          {formData.audience && (
+            {formData.focus && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Focus</span>
+                <span className="text-sm text-right max-w-48 truncate">
+                  {formData.focus}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
-              <div>
-                <strong>Audience:</strong> {formData.audience}
+              <span className="text-sm font-medium">Content Type</span>
+              <Badge variant="outline">
+                {getDisplayValue(CONTENT_TYPE_OPTIONS, formData.content_type)}
+              </Badge>
+            </div>
+
+            {formData.platform && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Platform</span>
+                <Badge variant="outline">
+                  {getDisplayValue(PLATFORM_OPTIONS, formData.platform)}
+                </Badge>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(2)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
+            )}
+          </CardContent>
+        </Card>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <strong>Content Type:</strong>{" "}
-              {CONTENT_TYPE_OPTIONS.find(
-                (opt) => opt.value === formData.content_type,
-              )?.label || formData.content_type}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentStep(3)}
-            >
-              Edit
-            </Button>
-          </div>
+        {/* Audience & Goals */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Audience & Goals</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {formData.audience && (
+              <div>
+                <span className="text-sm font-medium">Audience</span>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formData.audience}
+                </p>
+              </div>
+            )}
 
-          {formData.platform && (
+            {formData.purpose.length > 0 && (
+              <div>
+                <span className="text-sm font-medium">Purpose</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {formData.purpose.map((p) => (
+                    <Badge key={p} variant="secondary" className="text-xs">
+                      {getDisplayValue(PURPOSE_OPTIONS, p)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {formData.content_goal.length > 0 && (
+              <div>
+                <span className="text-sm font-medium">Content Goals</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {formData.content_goal.map((g) => (
+                    <Badge key={g} variant="secondary" className="text-xs">
+                      {getDisplayValue(CONTENT_GOAL_OPTIONS, g)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {formData.tone.length > 0 && (
+              <div>
+                <span className="text-sm font-medium">Tone</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {formData.tone.map((t) => (
+                    <Badge key={t} variant="secondary" className="text-xs">
+                      {getDisplayValue(TONE_OPTIONS, t)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Advanced Options */}
+        {(formData.keywords ||
+          formData.exclude ||
+          formData.region ||
+          formData.language ||
+          formData.notes) && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Advanced Options</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {formData.keywords && (
+                  <div>
+                    <span className="text-sm font-medium">Keywords</span>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {formData.keywords}
+                    </p>
+                  </div>
+                )}
+
+                {formData.exclude && (
+                  <div>
+                    <span className="text-sm font-medium">Exclude</span>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {formData.exclude}
+                    </p>
+                  </div>
+                )}
+
+                {formData.region && (
+                  <div>
+                    <span className="text-sm font-medium">Region</span>
+                    <Badge variant="outline">
+                      {getDisplayValue(REGION_OPTIONS, formData.region)}
+                    </Badge>
+                  </div>
+                )}
+
+                {formData.language && (
+                  <div>
+                    <span className="text-sm font-medium">Language</span>
+                    <Badge variant="outline">
+                      {getDisplayValue(LANGUAGE_OPTIONS, formData.language)}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {formData.notes && (
+                <div>
+                  <span className="text-sm font-medium">Notes</span>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {formData.notes}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Generation Settings */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Generation Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <strong>Platform:</strong>{" "}
-                {PLATFORM_OPTIONS.find((opt) => opt.value === formData.platform)
-                  ?.label || formData.platform}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(3)}
-              >
-                Edit
-              </Button>
+              <span className="text-sm font-medium">Number of Ideas</span>
+              <Badge variant="default">{formData.num_ideas}</Badge>
             </div>
-          )}
+          </CardContent>
+        </Card>
+      </div>
 
-          {formData.purpose.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Purpose:</strong>{" "}
-                {formData.purpose
-                  .map(
-                    (p) =>
-                      PURPOSE_OPTIONS.find((opt) => opt.value === p)?.label ||
-                      p,
-                  )
-                  .join(", ")}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(4)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
+      {/* Action Buttons */}
+      <div className="flex items-center justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onGoBack}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Go Back
+        </Button>
 
-          {formData.content_goal.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Content Goals:</strong>{" "}
-                {formData.content_goal
-                  .map(
-                    (g) =>
-                      CONTENT_GOAL_OPTIONS.find((opt) => opt.value === g)
-                        ?.label || g,
-                  )
-                  .join(", ")}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(4)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-
-          {formData.tone.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Tone:</strong>{" "}
-                {formData.tone
-                  .map(
-                    (t) =>
-                      TONE_OPTIONS.find((opt) => opt.value === t)?.label || t,
-                  )
-                  .join(", ")}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(4)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <div>
-              <strong>Number of Ideas:</strong> {formData.num_ideas}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentStep(5)}
-            >
-              Edit
-            </Button>
-          </div>
-
-          {formData.keywords && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Keywords:</strong> {formData.keywords}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(5)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-
-          {formData.exclude && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Exclude:</strong> {formData.exclude}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(5)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-
-          {formData.region && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Region:</strong>{" "}
-                {REGION_OPTIONS.find((opt) => opt.value === formData.region)
-                  ?.label || formData.region}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(5)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-
-          {formData.language && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Language:</strong>{" "}
-                {LANGUAGE_OPTIONS.find((opt) => opt.value === formData.language)
-                  ?.label || formData.language}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(5)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-
-          {formData.notes && (
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Notes:</strong> {formData.notes}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(5)}
-              >
-                Edit
-              </Button>
-            </div>
-          )}
+        <div className="text-center">
+          <Button
+            onClick={onGenerate}
+            disabled={isGenerating}
+            size="lg"
+            className="flex items-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isGenerating ? "Generating..." : "Generate Topic Ideas"}
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            This will create {formData.num_ideas} targeted topic ideas
+          </p>
         </div>
+
+        <div className="w-24" />
       </div>
     </div>
   );

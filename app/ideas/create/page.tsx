@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Building,
-  Eye,
   FileText,
   Settings,
   Sparkles,
@@ -15,7 +14,6 @@ import { PageLayout } from "@/components/page-layout";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
-import { GenerationStep } from "@/components/topic-builder/steps/GenerationStep";
 import { GoalsStep } from "@/components/topic-builder/steps/GoalsStep";
 import { IndustryStep } from "@/components/topic-builder/steps/IndustryStep";
 import { ReviewStep } from "@/components/topic-builder/steps/ReviewStep";
@@ -67,15 +65,8 @@ const steps = [
   },
   {
     id: 6,
-    title: "Review",
-    description: "Review your selections",
-    icon: Eye,
-    required: true,
-  },
-  {
-    id: 7,
-    title: "Generate",
-    description: "Create topic ideas",
+    title: "Review & Generate",
+    description: "Review and create topic ideas",
     icon: Sparkles,
     required: true,
   },
@@ -91,6 +82,7 @@ export default function TopicBuilderPage() {
     nextStep,
     prevStep,
     goToStep,
+    isStepCompleted,
     generateTopics,
   } = useTopicBuilder();
 
@@ -162,11 +154,13 @@ export default function TopicBuilderPage() {
         );
 
       case 6:
-        return <ReviewStep formData={formData} setCurrentStep={goToStep} />;
-
-      case 7:
         return (
-          <GenerationStep formData={formData} onGenerate={handleGenerate} />
+          <ReviewStep
+            formData={formData}
+            onGenerate={handleGenerate}
+            onGoBack={handlePrev}
+            isGenerating={isGenerating}
+          />
         );
 
       default:
@@ -189,6 +183,7 @@ export default function TopicBuilderPage() {
           steps={steps}
           currentStep={currentStep}
           onStepClick={goToStep}
+          isStepCompleted={isStepCompleted}
           errors={errors}
           className="hidden lg:block"
         />
@@ -199,6 +194,7 @@ export default function TopicBuilderPage() {
             steps={steps}
             currentStep={currentStep}
             onStepClick={goToStep}
+            isStepCompleted={isStepCompleted}
             errors={errors}
             className="absolute inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out bg-background border-r"
           />
@@ -218,32 +214,23 @@ export default function TopicBuilderPage() {
           </div>
 
           {/* Navigation Footer */}
-          <div className="p-6 pt-0">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={handlePrev}
-                disabled={currentStep === 1}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
-              <div className="text-sm text-muted-foreground">
-                Step {currentStep} of {steps.length}
-              </div>
-
-              {currentStep === steps.length ? (
+          {currentStep < 6 && (
+            <div className="p-6 pt-0">
+              <div className="flex items-center justify-between">
                 <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
+                  variant="outline"
+                  onClick={handlePrev}
+                  disabled={currentStep === 1}
                   className="flex items-center gap-2"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  {isGenerating ? "Generating..." : "Generate Topics"}
+                  <ArrowLeft className="h-4 w-4" />
+                  Previous
                 </Button>
-              ) : (
+
+                <div className="text-sm text-muted-foreground">
+                  Step {currentStep} of {steps.length}
+                </div>
+
                 <Button
                   onClick={handleNext}
                   className="flex items-center gap-2"
@@ -251,9 +238,9 @@ export default function TopicBuilderPage() {
                   Next
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </PageLayout>
