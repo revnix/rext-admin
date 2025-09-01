@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
+import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
 import { IndustryStep } from "@/components/topic-builder/steps/IndustryStep";
 import { WizardModeSelectionStep } from "@/components/topic-builder/steps/WizardModeSelectionStep";
 import { Button } from "@/components/ui/button";
@@ -30,14 +32,9 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { Progress } from "@/components/ui/progress";
 import { SelectWithCustom } from "@/components/ui/select-with-custom";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  DEMOGRAPHIC_AGE_OPTIONS,
-  DEMOGRAPHIC_LOCATION_OPTIONS,
-} from "@/data/topic-builder-options";
 import { detectYMYL, validateFormStep } from "@/lib/topic-builder-utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
-  AUDIENCE_SIZE_OPTIONS,
   CONTENT_GOAL_OPTIONS,
   CONTENT_TYPE_OPTIONS,
   INDUSTRY_OPTIONS,
@@ -46,7 +43,6 @@ import {
   PLATFORM_OPTIONS,
   PREFERENCE_TOGGLE_OPTIONS,
   PURPOSE_OPTIONS,
-  READER_LEVEL_OPTIONS,
   REGION_OPTIONS,
   TONE_OPTIONS,
 } from "@/types/topic-builder";
@@ -126,6 +122,7 @@ export default function TopicBuilderPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] =
     useState<TopicBuilderFormData>(initialFormData);
+  const [errors, _setErrors] = useState<Record<string, string>>({});
 
   const breadcrumbs = [
     { label: "Ideas", href: "/ideas" },
@@ -176,137 +173,35 @@ export default function TopicBuilderPage() {
           <WizardModeSelectionStep
             formData={formData}
             updateFormData={updateFormData}
+            errors={errors}
           />
         );
 
       case 2:
         return (
-          <IndustryStep formData={formData} updateFormData={updateFormData} />
+          <IndustryStep
+            formData={formData}
+            updateFormData={updateFormData}
+            errors={errors}
+          />
         );
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="audience">Target Audience</Label>
-                <Input
-                  id="audience"
-                  placeholder="Who are you writing for? (e.g., teachers, students, managers)"
-                  value={formData.audience || ""}
-                  onChange={(e) => updateFormData("audience", e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="reader_level">Reader Experience Level</Label>
-                <SelectWithCustom
-                  options={READER_LEVEL_OPTIONS}
-                  value={formData.reader_level || ""}
-                  onChange={(value) => updateFormData("reader_level", value)}
-                  placeholder="What's their expertise level?"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="audience_size">Audience Size</Label>
-                <SelectWithCustom
-                  options={AUDIENCE_SIZE_OPTIONS}
-                  value={formData.audience_size || ""}
-                  onChange={(value) => updateFormData("audience_size", value)}
-                  placeholder="How large is your target audience?"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="demographicAge">Age Groups</Label>
-                <MultiSelect
-                  options={DEMOGRAPHIC_AGE_OPTIONS}
-                  selected={formData.demographic_age}
-                  onChange={(selected) =>
-                    updateFormData("demographic_age", selected)
-                  }
-                  placeholder="What age groups? (optional)"
-                  allowCustom={true}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="demographicLocation">Geographic Focus</Label>
-                <MultiSelect
-                  options={DEMOGRAPHIC_LOCATION_OPTIONS}
-                  selected={formData.demographic_location}
-                  onChange={(selected) =>
-                    updateFormData("demographic_location", selected)
-                  }
-                  placeholder="Where is your audience? (optional)"
-                  allowCustom={true}
-                />
-              </div>
-            </div>
-          </div>
+          <AudienceStep
+            formData={formData}
+            updateFormData={updateFormData}
+            errors={errors}
+          />
         );
 
       case 4:
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="content_type">Content Type *</Label>
-                <SelectWithCustom
-                  options={CONTENT_TYPE_OPTIONS}
-                  value={formData.content_type}
-                  onChange={(value) => updateFormData("content_type", value)}
-                  placeholder="What type of content are you creating?"
-                  allowCustom={true}
-                />
-              </div>
-
-              {formData.content_type === "other" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="content_type_other">
-                    Specify Content Type
-                  </Label>
-                  <Input
-                    id="content_type_other"
-                    placeholder="Please specify your content type"
-                    value={formData.content_type_other || ""}
-                    onChange={(e) =>
-                      updateFormData("content_type_other", e.target.value)
-                    }
-                  />
-                </div>
-              )}
-
-              {(formData.content_type === "social-media" ||
-                formData.content_type === "video-content") && (
-                <div className="grid gap-2">
-                  <Label htmlFor="platform">Platform/Channel</Label>
-                  <SelectWithCustom
-                    options={PLATFORM_OPTIONS}
-                    value={formData.platform || ""}
-                    onChange={(value) => updateFormData("platform", value)}
-                    placeholder="Where will you publish this?"
-                    allowCustom={true}
-                  />
-                </div>
-              )}
-
-              {formData.platform === "other" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="platform_other">Specify Platform</Label>
-                  <Input
-                    id="platform_other"
-                    placeholder="Please specify your platform"
-                    value={formData.platform_other || ""}
-                    onChange={(e) =>
-                      updateFormData("platform_other", e.target.value)
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <ContentFormatStep
+            formData={formData}
+            updateFormData={updateFormData}
+            errors={errors}
+          />
         );
 
       case 5:
