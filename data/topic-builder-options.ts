@@ -331,6 +331,204 @@ export const getAudienceOptionsForIndustry = (
     ];
   }
 
+  // Travel & Hospitality industry audiences
+  if (
+    industryLower.includes("travel") ||
+    industryLower.includes("hospitality") ||
+    industryLower.includes("tourism")
+  ) {
+    return [
+      { label: "Leisure Travelers", value: "leisure-travelers" },
+      { label: "Business Travelers", value: "business-travelers" },
+      { label: "Travel Agents", value: "travel-agents" },
+      { label: "Hotel Managers", value: "hotel-managers" },
+      { label: "Tour Operators", value: "tour-operators" },
+      { label: "Travel Bloggers", value: "travel-bloggers" },
+      { label: "Event Planners", value: "event-planners" },
+      { label: "Backpackers", value: "backpackers" },
+    ];
+  }
+
+  // Food & Culinary industry audiences
+  if (
+    industryLower.includes("food") ||
+    industryLower.includes("culinary") ||
+    industryLower.includes("restaurant")
+  ) {
+    return [
+      { label: "Home Cooks", value: "home-cooks" },
+      { label: "Professional Chefs", value: "chefs" },
+      { label: "Restaurant Owners", value: "restaurant-owners" },
+      { label: "Food Bloggers", value: "food-bloggers" },
+      { label: "Nutritionists", value: "nutritionists" },
+      { label: "Food Critics", value: "food-critics" },
+      { label: "Culinary Students", value: "culinary-students" },
+      { label: "Food Enthusiasts", value: "food-enthusiasts" },
+    ];
+  }
+
+  // Fashion & Beauty industry audiences
+  if (
+    industryLower.includes("fashion") ||
+    industryLower.includes("beauty") ||
+    industryLower.includes("cosmetics")
+  ) {
+    return [
+      { label: "Fashion Enthusiasts", value: "fashion-enthusiasts" },
+      { label: "Fashion Designers", value: "fashion-designers" },
+      { label: "Beauty Consumers", value: "beauty-consumers" },
+      { label: "Makeup Artists", value: "makeup-artists" },
+      { label: "Style Influencers", value: "style-influencers" },
+      { label: "Retail Buyers", value: "retail-buyers" },
+      { label: "Personal Stylists", value: "personal-stylists" },
+      { label: "Fashion Students", value: "fashion-students" },
+    ];
+  }
+
+  // Sports & Fitness industry audiences
+  if (
+    industryLower.includes("sports") ||
+    industryLower.includes("fitness") ||
+    industryLower.includes("exercise")
+  ) {
+    return [
+      { label: "Athletes", value: "athletes" },
+      { label: "Fitness Enthusiasts", value: "fitness-enthusiasts" },
+      { label: "Personal Trainers", value: "personal-trainers" },
+      { label: "Gym Owners", value: "gym-owners" },
+      { label: "Coaches", value: "coaches" },
+      { label: "Sports Fans", value: "sports-fans" },
+      { label: "Beginners", value: "fitness-beginners" },
+      { label: "Competitive Athletes", value: "competitive-athletes" },
+    ];
+  }
+
+  // Real Estate industry audiences
+  if (
+    industryLower.includes("real estate") ||
+    industryLower.includes("property") ||
+    industryLower.includes("realty")
+  ) {
+    return [
+      { label: "Home Buyers", value: "home-buyers" },
+      { label: "Home Sellers", value: "home-sellers" },
+      { label: "Real Estate Agents", value: "real-estate-agents" },
+      { label: "Property Investors", value: "property-investors" },
+      { label: "Property Managers", value: "property-managers" },
+      { label: "First-Time Buyers", value: "first-time-buyers" },
+      { label: "Real Estate Brokers", value: "real-estate-brokers" },
+      { label: "Commercial Investors", value: "commercial-investors" },
+    ];
+  }
+
+  // Retail & E-commerce industry audiences
+  if (
+    industryLower.includes("retail") ||
+    industryLower.includes("ecommerce") ||
+    industryLower.includes("e-commerce")
+  ) {
+    return [
+      { label: "Online Shoppers", value: "online-shoppers" },
+      { label: "Store Owners", value: "store-owners" },
+      { label: "Retail Managers", value: "retail-managers" },
+      { label: "E-commerce Entrepreneurs", value: "ecommerce-entrepreneurs" },
+      { label: "Customer Service", value: "customer-service" },
+      { label: "Digital Marketers", value: "digital-marketers" },
+      { label: "Product Managers", value: "product-managers" },
+      { label: "Supply Chain Managers", value: "supply-chain-managers" },
+    ];
+  }
+
+  // Manufacturing industry audiences
+  if (
+    industryLower.includes("manufacturing") ||
+    industryLower.includes("production") ||
+    industryLower.includes("industrial")
+  ) {
+    return [
+      { label: "Manufacturing Engineers", value: "manufacturing-engineers" },
+      { label: "Plant Managers", value: "plant-managers" },
+      { label: "Quality Control", value: "quality-control" },
+      { label: "Supply Chain Professionals", value: "supply-chain" },
+      { label: "Operations Managers", value: "operations-managers" },
+      { label: "Safety Officers", value: "safety-officers" },
+      { label: "Maintenance Technicians", value: "maintenance-techs" },
+      { label: "Production Workers", value: "production-workers" },
+    ];
+  }
+
+  // Automotive industry audiences
+  if (
+    industryLower.includes("automotive") ||
+    industryLower.includes("auto") ||
+    industryLower.includes("vehicle")
+  ) {
+    return [
+      { label: "Car Buyers", value: "car-buyers" },
+      { label: "Car Dealers", value: "car-dealers" },
+      { label: "Mechanics", value: "mechanics" },
+      { label: "Automotive Engineers", value: "automotive-engineers" },
+      { label: "Car Enthusiasts", value: "car-enthusiasts" },
+      { label: "Fleet Managers", value: "fleet-managers" },
+      { label: "Auto Insurance Agents", value: "auto-insurance-agents" },
+      { label: "Parts Suppliers", value: "parts-suppliers" },
+    ];
+  }
+
+  // Entertainment & Media industry audiences
+  if (
+    industryLower.includes("entertainment") ||
+    industryLower.includes("media") ||
+    industryLower.includes("gaming")
+  ) {
+    return [
+      { label: "Content Consumers", value: "content-consumers" },
+      { label: "Content Creators", value: "content-creators" },
+      { label: "Gamers", value: "gamers" },
+      { label: "Streamers", value: "streamers" },
+      { label: "Media Professionals", value: "media-professionals" },
+      { label: "Artists", value: "artists" },
+      { label: "Entertainment Executives", value: "entertainment-executives" },
+      { label: "Fans", value: "fans" },
+    ];
+  }
+
+  // Agriculture industry audiences
+  if (
+    industryLower.includes("agriculture") ||
+    industryLower.includes("farming") ||
+    industryLower.includes("agricultural")
+  ) {
+    return [
+      { label: "Farmers", value: "farmers" },
+      { label: "Agricultural Scientists", value: "agricultural-scientists" },
+      { label: "Farm Equipment Dealers", value: "farm-equipment-dealers" },
+      { label: "Agricultural Investors", value: "agricultural-investors" },
+      { label: "Crop Consultants", value: "crop-consultants" },
+      { label: "Livestock Producers", value: "livestock-producers" },
+      { label: "Agricultural Students", value: "agricultural-students" },
+      { label: "Farm Managers", value: "farm-managers" },
+    ];
+  }
+
+  // Transportation & Logistics industry audiences
+  if (
+    industryLower.includes("transportation") ||
+    industryLower.includes("logistics") ||
+    industryLower.includes("shipping")
+  ) {
+    return [
+      { label: "Logistics Managers", value: "logistics-managers" },
+      { label: "Truck Drivers", value: "truck-drivers" },
+      { label: "Freight Brokers", value: "freight-brokers" },
+      { label: "Supply Chain Analysts", value: "supply-chain-analysts" },
+      { label: "Warehouse Managers", value: "warehouse-managers" },
+      { label: "Delivery Drivers", value: "delivery-drivers" },
+      { label: "Fleet Operators", value: "fleet-operators" },
+      { label: "Shipping Companies", value: "shipping-companies" },
+    ];
+  }
+
   // Default general audiences for other industries
   return [
     { label: "General Public", value: "general-public" },

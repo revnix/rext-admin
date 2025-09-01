@@ -77,6 +77,25 @@ export const getAudienceOptions = (industry: string): SelectOption[] => {
   return getAudienceOptionsForIndustry(industry);
 };
 
+/**
+ * Get audience strings for a specific industry (as required by Task 2.2)
+ *
+ * @param industry - The selected industry
+ * @returns Array of relevant audience strings for the industry
+ */
+export const getAudienceForIndustry = (industry: string): string[] => {
+  if (!industry || typeof industry !== "string") {
+    console.warn(
+      "getAudienceForIndustry: Invalid industry input provided:",
+      industry,
+    );
+    return [];
+  }
+
+  const audienceOptions = getAudienceOptionsForIndustry(industry);
+  return audienceOptions.map((option) => option.value);
+};
+
 // ============================================================================
 // FORM VALIDATION FUNCTIONS
 // ============================================================================

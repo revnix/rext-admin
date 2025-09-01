@@ -74,7 +74,7 @@
             "description": "Create the getAudienceForIndustry function and supporting data structures for mapping industries to relevant audience personas",
             "dependencies": [],
             "details": "1. Implement `getAudienceForIndustry(industry: string): string[]` in `/lib/topic-builder-utils.ts`\n2. Create comprehensive `industryAudienceMap` object in `/data/topic-builder-options.ts`\n3. Map at least 15-20 industries to their relevant audience personas\n4. Include fallback handling for unknown industries\n5. Add unit tests to verify correct audience mapping\n6. Ensure the function handles case sensitivity and returns empty array for invalid inputs",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -556,7 +556,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-01T02:45:36.916Z",
+      "updated": "2025-09-01T03:16:31.520Z",
       "description": "Tasks for master context"
     }
   }

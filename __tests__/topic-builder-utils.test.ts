@@ -9,6 +9,7 @@ import {
   createInitialFormData,
   detectYMYL,
   formatValidationErrors,
+  getAudienceForIndustry,
   getAudienceOptions,
   sanitizeInput,
   updateFormDataForContentTypeChange,
@@ -496,6 +497,127 @@ describe("buildPromptFromFormData", () => {
     expect(prompt).toContain("TARGET REGION: us");
     expect(prompt).toContain("LANGUAGE: english");
     expect(prompt).toContain("ADDITIONAL CONTEXT: Focus on practical examples");
+  });
+});
+
+// ============================================================================
+// AUDIENCE MAPPING TESTS
+// ============================================================================
+
+describe("getAudienceForIndustry", () => {
+  test("returns correct string array for technology industry", () => {
+    const audiences = getAudienceForIndustry("technology");
+
+    expect(Array.isArray(audiences)).toBe(true);
+    expect(audiences).toContain("developers");
+    expect(audiences).toContain("ctos");
+    expect(audiences).toContain("it-managers");
+    expect(audiences.length).toBeGreaterThan(0);
+  });
+
+  test("returns correct string array for healthcare industry", () => {
+    const audiences = getAudienceForIndustry("healthcare");
+
+    expect(audiences).toContain("patients");
+    expect(audiences).toContain("doctors");
+    expect(audiences).toContain("nurses");
+    expect(audiences.length).toBeGreaterThan(0);
+  });
+
+  test("returns correct string array for finance industry", () => {
+    const audiences = getAudienceForIndustry("finance");
+
+    expect(audiences).toContain("retail-investors");
+    expect(audiences).toContain("financial-advisors");
+    expect(audiences).toContain("accountants");
+  });
+
+  test("handles case insensitivity", () => {
+    const lowerCase = getAudienceForIndustry("healthcare");
+    const upperCase = getAudienceForIndustry("HEALTHCARE");
+    const mixedCase = getAudienceForIndustry("HealthCare");
+
+    expect(lowerCase).toEqual(upperCase);
+    expect(lowerCase).toEqual(mixedCase);
+  });
+
+  test("handles partial matching", () => {
+    const audiences = getAudienceForIndustry("health");
+    expect(audiences).toContain("patients");
+    expect(audiences).toContain("doctors");
+  });
+
+  test("returns empty array for invalid inputs", () => {
+    expect(getAudienceForIndustry("")).toEqual([]);
+    expect(getAudienceForIndustry(null as unknown as string)).toEqual([]);
+    expect(getAudienceForIndustry(undefined as unknown as string)).toEqual([]);
+    expect(getAudienceForIndustry(123 as unknown as string)).toEqual([]);
+  });
+
+  test("returns default audiences for unknown industry", () => {
+    const audiences = getAudienceForIndustry("unknown-industry");
+
+    expect(audiences).toContain("general-public");
+    expect(audiences).toContain("professionals");
+    expect(audiences).toContain("students");
+  });
+
+  test("covers all newly added industries", () => {
+    const industries = [
+      "travel",
+      "hospitality",
+      "tourism",
+      "food",
+      "culinary",
+      "restaurant",
+      "fashion",
+      "beauty",
+      "cosmetics",
+      "sports",
+      "fitness",
+      "exercise",
+      "real estate",
+      "property",
+      "realty",
+      "retail",
+      "ecommerce",
+      "e-commerce",
+      "manufacturing",
+      "production",
+      "industrial",
+      "automotive",
+      "auto",
+      "vehicle",
+      "entertainment",
+      "media",
+      "gaming",
+      "agriculture",
+      "farming",
+      "agricultural",
+      "construction",
+      "building",
+      "contractor",
+      "energy",
+      "renewable",
+    ];
+
+    industries.forEach((industry) => {
+      const audiences = getAudienceForIndustry(industry);
+      expect(audiences.length).toBeGreaterThan(0);
+      expect(Array.isArray(audiences)).toBe(true);
+      expect(audiences.every((a: string) => typeof a === "string")).toBe(true);
+    });
+  });
+
+  test("returns consistent results with getAudienceOptions", () => {
+    const industry = "technology";
+    const stringArray = getAudienceForIndustry(industry);
+    const optionsArray = getAudienceOptions(industry);
+
+    expect(stringArray.length).toBe(optionsArray.length);
+    expect(stringArray).toEqual(
+      optionsArray.map((opt: { value: string }) => opt.value),
+    );
   });
 });
 
