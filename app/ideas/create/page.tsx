@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
+import { GoalsStep } from "@/components/topic-builder/steps/GoalsStep";
 import { IndustryStep } from "@/components/topic-builder/steps/IndustryStep";
 import { WizardModeSelectionStep } from "@/components/topic-builder/steps/WizardModeSelectionStep";
 import { Button } from "@/components/ui/button";
@@ -26,12 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { Progress } from "@/components/ui/progress";
-import { SelectWithCustom } from "@/components/ui/select-with-custom";
-import { Textarea } from "@/components/ui/textarea";
 import { detectYMYL, validateFormStep } from "@/lib/topic-builder-utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
@@ -39,9 +36,7 @@ import {
   CONTENT_TYPE_OPTIONS,
   INDUSTRY_OPTIONS,
   LANGUAGE_OPTIONS,
-  ORIGINALITY_TOGGLE_OPTIONS,
   PLATFORM_OPTIONS,
-  PREFERENCE_TOGGLE_OPTIONS,
   PURPOSE_OPTIONS,
   REGION_OPTIONS,
   TONE_OPTIONS,
@@ -206,178 +201,20 @@ export default function TopicBuilderPage() {
 
       case 5:
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="purpose">Content Purpose *</Label>
-                <MultiSelect
-                  options={PURPOSE_OPTIONS}
-                  selected={formData.purpose}
-                  onChange={(selected) => updateFormData("purpose", selected)}
-                  placeholder="What's the main purpose? (select multiple)"
-                  allowCustom={true}
-                />
-              </div>
-
-              {formData.purpose.includes("other") && (
-                <div className="grid gap-2">
-                  <Label htmlFor="purpose_other">Specify Purpose</Label>
-                  <Input
-                    id="purpose_other"
-                    placeholder="Please specify your purpose"
-                    value={formData.purpose_other || ""}
-                    onChange={(e) =>
-                      updateFormData("purpose_other", e.target.value)
-                    }
-                  />
-                </div>
-              )}
-
-              <div className="grid gap-2">
-                <Label htmlFor="content_goal">Content Goals *</Label>
-                <MultiSelect
-                  options={CONTENT_GOAL_OPTIONS}
-                  selected={formData.content_goal}
-                  onChange={(selected) =>
-                    updateFormData("content_goal", selected)
-                  }
-                  placeholder="What type of content? (select multiple)"
-                  allowCustom={true}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="tone">Tone & Style *</Label>
-                <MultiSelect
-                  options={TONE_OPTIONS}
-                  selected={formData.tone}
-                  onChange={(selected) => updateFormData("tone", selected)}
-                  placeholder="What tone should the content have? (select multiple)"
-                  allowCustom={true}
-                />
-              </div>
-
-              {formData.tone.includes("other") && (
-                <div className="grid gap-2">
-                  <Label htmlFor="tone_other">Specify Tone</Label>
-                  <Input
-                    id="tone_other"
-                    placeholder="Please specify your preferred tone"
-                    value={formData.tone_other || ""}
-                    onChange={(e) =>
-                      updateFormData("tone_other", e.target.value)
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <GoalsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            errors={errors}
+          />
         );
 
       case 6:
         return (
-          <div className="space-y-6">
-            <div className="text-sm text-muted-foreground mb-4">
-              These options are optional but can help generate more targeted
-              ideas.
-            </div>
-
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="keywords">Keywords/Focus Areas</Label>
-                <Input
-                  id="keywords"
-                  placeholder="Enter keywords or key phrases (comma-separated)"
-                  value={formData.keywords || ""}
-                  onChange={(e) => updateFormData("keywords", e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="exclude">Exclude/Avoid</Label>
-                <Input
-                  id="exclude"
-                  placeholder="Topics or angles to avoid (comma-separated)"
-                  value={formData.exclude || ""}
-                  onChange={(e) => updateFormData("exclude", e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="num_ideas">Number of Ideas</Label>
-                <SelectWithCustom
-                  options={[
-                    { label: "3 ideas", value: "3" },
-                    { label: "5 ideas", value: "5" },
-                    { label: "10 ideas", value: "10" },
-                    { label: "15 ideas", value: "15" },
-                  ]}
-                  value={formData.num_ideas.toString()}
-                  onChange={(value) =>
-                    updateFormData("num_ideas", parseInt(value, 10))
-                  }
-                  placeholder="How many topic ideas?"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="region">Target Region</Label>
-                <SelectWithCustom
-                  options={REGION_OPTIONS}
-                  value={formData.region || ""}
-                  onChange={(value) => updateFormData("region", value)}
-                  placeholder="Geographic focus (optional)"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="language">Content Language</Label>
-                <SelectWithCustom
-                  options={LANGUAGE_OPTIONS}
-                  value={formData.language || ""}
-                  onChange={(value) => updateFormData("language", value)}
-                  placeholder="What language? (optional)"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="fresh_vs_evergreen">
-                  Content Timing Preference
-                </Label>
-                <SelectWithCustom
-                  options={PREFERENCE_TOGGLE_OPTIONS}
-                  value={formData.fresh_vs_evergreen || ""}
-                  onChange={(value) =>
-                    updateFormData("fresh_vs_evergreen", value)
-                  }
-                  placeholder="Fresh & trending vs evergreen?"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="safe_vs_original">Originality Preference</Label>
-                <SelectWithCustom
-                  options={ORIGINALITY_TOGGLE_OPTIONS}
-                  value={formData.safe_vs_original || ""}
-                  onChange={(value) =>
-                    updateFormData("safe_vs_original", value)
-                  }
-                  placeholder="Safe & conventional vs original?"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Any special instructions or context?"
-                  value={formData.notes || ""}
-                  onChange={(e) => updateFormData("notes", e.target.value)}
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
+          <AdvancedStep
+            formData={formData}
+            updateFormData={updateFormData}
+            errors={errors}
+          />
         );
 
       case 7:

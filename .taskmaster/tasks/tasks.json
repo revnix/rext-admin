@@ -148,8 +148,8 @@
             "title": "Implement Goals and Advanced Options Steps",
             "description": "Create the goals setting and advanced options step components",
             "dependencies": [],
-            "details": "1. Create `GoalsStep.tsx` with content purpose and tone selection\n2. Implement `AdvancedStep.tsx` with keywords, exclusions, and preferences\n3. Add tone selection with preview examples\n4. Implement keyword input with tags or chips UI\n5. Create exclusion patterns input with validation\n6. Add advanced preference toggles with explanations",
-            "status": "pending",
+            "details": "1. Create `GoalsStep.tsx` with content purpose and tone selection\n2. Implement `AdvancedStep.tsx` with keywords, exclusions, and preferences\n3. Add tone selection with preview examples\n4. Implement keyword input with tags or chips UI\n5. Create exclusion patterns input with validation\n6. Add advanced preference toggles with explanations\n<info added on 2025-09-01T12:21:51.216Z>\nCOMPLETED: Successfully implemented Goals and Advanced Options Steps.\n\nImplementation details:\n- Created GoalsStep.tsx component with content purpose, goals, and tone selection\n- Created AdvancedStep.tsx component with keywords, exclude patterns, preferences, and settings\n- Updated main wizard component to use separated step components  \n- Maintained existing functionality and validation patterns\n- All TypeScript compilation and linting checks pass\n\nFiles changed:\n- /components/topic-builder/steps/GoalsStep.tsx (new file)\n- /components/topic-builder/steps/AdvancedStep.tsx (new file)\n- /app/ideas/create/page.tsx (refactored to use step components)\n\nKey features implemented:\n✅ Content purpose multi-select with custom option support\n✅ Content goals and tone selection with validation\n✅ Keywords and exclusion patterns input fields\n✅ Number of ideas, region, and language selectors\n✅ Content timing and originality preference toggles\n✅ Additional notes textarea for special instructions\n✅ Consistent error handling integration across all fields\n✅ Clean component separation following established patterns\n</info added on 2025-09-01T12:21:51.216Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -556,7 +556,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-01T12:05:19.368Z",
+      "updated": "2025-09-01T12:21:59.188Z",
       "description": "Tasks for master context"
     }
   }
