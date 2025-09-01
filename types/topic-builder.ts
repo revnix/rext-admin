@@ -641,14 +641,8 @@ export const isValidOriginalityToggle = (
   return ORIGINALITY_TOGGLE_OPTIONS.some((option) => option.value === value);
 };
 
-/**
- * Helper function to detect YMYL (Your Money or Your Life) industries
- * YMYL content affects a person's future happiness, health, financial stability, or safety
- */
-export const detectYMYL = (industry: string): boolean => {
-  const ymylIndustries: Industry[] = ["healthcare", "finance", "legal"];
-  return ymylIndustries.includes(industry as Industry);
-};
+// YMYL detection function moved to /lib/topic-builder-utils.ts
+// Import from there: import { detectYMYL } from "@/lib/topic-builder-utils"
 
 /**
  * Helper function to validate an array of enum values

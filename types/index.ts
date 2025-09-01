@@ -208,7 +208,6 @@ export {
   AUDIENCE_SIZE_OPTIONS,
   CONTENT_GOAL_OPTIONS,
   CONTENT_TYPE_OPTIONS,
-  detectYMYL,
   INDUSTRY_OPTIONS,
   isValidAudienceSize,
   isValidContentGoalType,
