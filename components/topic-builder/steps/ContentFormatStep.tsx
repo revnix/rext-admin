@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
 import { SelectWithCustom } from "@/components/ui/select-with-custom";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import { CONTENT_TYPE_OPTIONS, PLATFORM_OPTIONS } from "@/types/topic-builder";
@@ -18,17 +19,25 @@ export function ContentFormatStep({
   updateFormData,
   errors,
 }: ContentFormatStepProps) {
+  // Convert SelectOption to RadioOption format with descriptions
+  const contentTypeOptions: RadioOption[] = CONTENT_TYPE_OPTIONS.map(
+    (option) => ({
+      label: option.label,
+      value: option.value,
+      description: getContentTypeDescription(option.value),
+    }),
+  );
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="content_type">Content Type *</Label>
-          <SelectWithCustom
-            options={CONTENT_TYPE_OPTIONS}
+      <div className="grid gap-6">
+        <div className="grid gap-3">
+          <Label>Content Type *</Label>
+          <RadioGroup
+            options={contentTypeOptions}
             value={formData.content_type}
-            onChange={(value) => updateFormData("content_type", value)}
-            placeholder="What type of content are you creating?"
-            allowCustom={true}
+            onValueChange={(value) => updateFormData("content_type", value)}
+            columns={2}
           />
           {errors?.content_type && (
             <p className="text-sm text-red-500">{errors.content_type}</p>
@@ -88,4 +97,34 @@ export function ContentFormatStep({
       </div>
     </div>
   );
+}
+
+// Helper function for content type descriptions
+function getContentTypeDescription(value: string): string {
+  switch (value) {
+    case "blog-post":
+      return "Long-form articles and blog content";
+    case "social-media":
+      return "Short posts for social platforms";
+    case "video-content":
+      return "Video scripts and video topics";
+    case "podcast":
+      return "Audio content and episode ideas";
+    case "infographic":
+      return "Visual data and concept graphics";
+    case "ebook-guide":
+      return "In-depth guides and resources";
+    case "case-study":
+      return "Success stories and analysis";
+    case "whitepaper":
+      return "Research reports and technical docs";
+    case "newsletter":
+      return "Email content and updates";
+    case "presentation":
+      return "Slide decks and presentations";
+    case "press-release":
+      return "News announcements and PR";
+    default:
+      return "";
+  }
 }
