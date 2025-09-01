@@ -17,8 +17,10 @@ import { PageLayout } from "@/components/page-layout";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
+import { GenerationStep } from "@/components/topic-builder/steps/GenerationStep";
 import { GoalsStep } from "@/components/topic-builder/steps/GoalsStep";
 import { IndustryStep } from "@/components/topic-builder/steps/IndustryStep";
+import { ReviewStep } from "@/components/topic-builder/steps/ReviewStep";
 import { WizardModeSelectionStep } from "@/components/topic-builder/steps/WizardModeSelectionStep";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,16 +33,6 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { detectYMYL, validateFormStep } from "@/lib/topic-builder-utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
-import {
-  CONTENT_GOAL_OPTIONS,
-  CONTENT_TYPE_OPTIONS,
-  INDUSTRY_OPTIONS,
-  LANGUAGE_OPTIONS,
-  PLATFORM_OPTIONS,
-  PURPOSE_OPTIONS,
-  REGION_OPTIONS,
-  TONE_OPTIONS,
-} from "@/types/topic-builder";
 
 const initialFormData: TopicBuilderFormData = {
   wizardMode: "subject-first",
@@ -219,144 +211,12 @@ export default function TopicBuilderPage() {
 
       case 7:
         return (
-          <div className="space-y-6">
-            <div className="text-sm text-muted-foreground mb-4">
-              Review your selections before generating topic ideas.
-            </div>
-
-            <div className="grid gap-4">
-              <div className="space-y-3">
-                <div>
-                  <strong>Mode:</strong>{" "}
-                  {formData.wizardMode === "subject-first"
-                    ? "Subject-First"
-                    : "Industry-First"}
-                </div>
-                {formData.subject && (
-                  <div>
-                    <strong>Subject:</strong> {formData.subject}
-                  </div>
-                )}
-                <div>
-                  <strong>Industry:</strong>{" "}
-                  {INDUSTRY_OPTIONS.find(
-                    (opt) => opt.value === formData.industry,
-                  )?.label || formData.industry}
-                </div>
-                {formData.focus && (
-                  <div>
-                    <strong>Focus:</strong> {formData.focus}
-                  </div>
-                )}
-                {formData.audience && (
-                  <div>
-                    <strong>Audience:</strong> {formData.audience}
-                  </div>
-                )}
-                <div>
-                  <strong>Content Type:</strong>{" "}
-                  {CONTENT_TYPE_OPTIONS.find(
-                    (opt) => opt.value === formData.content_type,
-                  )?.label || formData.content_type}
-                </div>
-                {formData.platform && (
-                  <div>
-                    <strong>Platform:</strong>{" "}
-                    {PLATFORM_OPTIONS.find(
-                      (opt) => opt.value === formData.platform,
-                    )?.label || formData.platform}
-                  </div>
-                )}
-                {formData.purpose.length > 0 && (
-                  <div>
-                    <strong>Purpose:</strong>{" "}
-                    {formData.purpose
-                      .map(
-                        (p) =>
-                          PURPOSE_OPTIONS.find((opt) => opt.value === p)
-                            ?.label || p,
-                      )
-                      .join(", ")}
-                  </div>
-                )}
-                {formData.content_goal.length > 0 && (
-                  <div>
-                    <strong>Content Goals:</strong>{" "}
-                    {formData.content_goal
-                      .map(
-                        (g) =>
-                          CONTENT_GOAL_OPTIONS.find((opt) => opt.value === g)
-                            ?.label || g,
-                      )
-                      .join(", ")}
-                  </div>
-                )}
-                {formData.tone.length > 0 && (
-                  <div>
-                    <strong>Tone:</strong>{" "}
-                    {formData.tone
-                      .map(
-                        (t) =>
-                          TONE_OPTIONS.find((opt) => opt.value === t)?.label ||
-                          t,
-                      )
-                      .join(", ")}
-                  </div>
-                )}
-                <div>
-                  <strong>Number of Ideas:</strong> {formData.num_ideas}
-                </div>
-                {formData.keywords && (
-                  <div>
-                    <strong>Keywords:</strong> {formData.keywords}
-                  </div>
-                )}
-                {formData.exclude && (
-                  <div>
-                    <strong>Exclude:</strong> {formData.exclude}
-                  </div>
-                )}
-                {formData.region && (
-                  <div>
-                    <strong>Region:</strong>{" "}
-                    {REGION_OPTIONS.find((opt) => opt.value === formData.region)
-                      ?.label || formData.region}
-                  </div>
-                )}
-                {formData.language && (
-                  <div>
-                    <strong>Language:</strong>{" "}
-                    {LANGUAGE_OPTIONS.find(
-                      (opt) => opt.value === formData.language,
-                    )?.label || formData.language}
-                  </div>
-                )}
-                {formData.notes && (
-                  <div>
-                    <strong>Notes:</strong> {formData.notes}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <ReviewStep formData={formData} setCurrentStep={setCurrentStep} />
         );
 
       case 8:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="text-lg font-semibold mb-2">Ready to Generate!</h3>
-              <p className="text-muted-foreground mb-4">
-                We'll create {formData.num_ideas} targeted topic ideas based on
-                your selections.
-              </p>
-              <Button onClick={handleGenerate} size="lg" className="w-full">
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate Topic Ideas
-              </Button>
-            </div>
-          </div>
+          <GenerationStep formData={formData} onGenerate={handleGenerate} />
         );
 
       default:
