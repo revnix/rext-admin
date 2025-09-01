@@ -356,13 +356,10 @@ export const validateFormStepDetailed = (
   const warnings: string[] = [];
 
   switch (step) {
-    case 1: // Wizard Mode Selection
+    case 1: // Industry/Domain + Approach Selection (merged step)
       if (!formData.wizardMode) {
-        errors.push("Please select a wizard mode to continue");
+        errors.push("Please select how you'd like to start");
       }
-      break;
-
-    case 2: // Industry/Domain + Subject (if subject-first)
       if (!formData.industry) {
         errors.push("Please select an industry or domain");
       }
@@ -393,7 +390,7 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 3: // Audience & Targeting
+    case 2: // Audience & Targeting
       if (
         !formData.audience &&
         (!formData.demographic_age || formData.demographic_age.length === 0)
@@ -422,7 +419,7 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 4: // Content Format & Platform
+    case 3: // Content Format & Platform
       if (!formData.content_type) {
         errors.push("Please select a content type");
       }
@@ -442,7 +439,7 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 5: // Content Goals & Style
+    case 4: // Content Goals & Style
       if (!formData.purpose || formData.purpose.length === 0) {
         errors.push("Please select at least one content purpose");
       }
@@ -454,7 +451,7 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 6: // Advanced Options (all optional)
+    case 5: // Advanced Options (all optional)
       // No required validations for advanced options
       if (
         formData.num_ideas &&
@@ -495,12 +492,12 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 7: {
+    case 6: {
       // Review & Preferences
       // Final validation - check all required fields
-      const finalValidation = validateFormStepDetailed(2, formData);
-      const contentValidation = validateFormStepDetailed(4, formData);
-      const goalValidation = validateFormStepDetailed(5, formData);
+      const finalValidation = validateFormStepDetailed(1, formData);
+      const contentValidation = validateFormStepDetailed(3, formData);
+      const goalValidation = validateFormStepDetailed(4, formData);
 
       errors.push(
         ...finalValidation.errors,
@@ -510,21 +507,21 @@ export const validateFormStepDetailed = (
       break;
     }
 
-    case 8: {
+    case 7: {
       // Generate Topics (final step)
       // Comprehensive final validation before generation
+      const step1Validation = validateFormStepDetailed(1, formData);
       const step2Validation = validateFormStepDetailed(2, formData);
       const step3Validation = validateFormStepDetailed(3, formData);
       const step4Validation = validateFormStepDetailed(4, formData);
       const step5Validation = validateFormStepDetailed(5, formData);
-      const step6Validation = validateFormStepDetailed(6, formData);
 
       errors.push(
+        ...step1Validation.errors,
         ...step2Validation.errors,
         ...step3Validation.errors,
         ...step4Validation.errors,
         ...step5Validation.errors,
-        ...step6Validation.errors,
       );
 
       // Additional generation-specific validation

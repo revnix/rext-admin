@@ -6,7 +6,6 @@ import {
   Building,
   Eye,
   FileText,
-  Route,
   Settings,
   Sparkles,
   Target,
@@ -20,70 +19,61 @@ import { GenerationStep } from "@/components/topic-builder/steps/GenerationStep"
 import { GoalsStep } from "@/components/topic-builder/steps/GoalsStep";
 import { IndustryStep } from "@/components/topic-builder/steps/IndustryStep";
 import { ReviewStep } from "@/components/topic-builder/steps/ReviewStep";
-import { WizardModeSelectionStep } from "@/components/topic-builder/steps/WizardModeSelectionStep";
+import { WizardSidebar } from "@/components/topic-builder/WizardSidebar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 
 const steps = [
   {
     id: 1,
-    title: "Wizard Mode",
-    description: "Choose your approach",
-    icon: Route,
-    required: true,
-  },
-  {
-    id: 2,
-    title: "Industry/Subject",
-    description: "Select domain or enter topic",
+    title: "Industry & Topic",
+    description: "Select your approach and domain",
     icon: Building,
     required: true,
   },
   {
-    id: 3,
+    id: 2,
     title: "Audience",
     description: "Define your target audience",
     icon: Users,
     required: true,
   },
   {
-    id: 4,
+    id: 3,
     title: "Content Format",
     description: "Choose content type & platform",
     icon: FileText,
     required: true,
   },
   {
-    id: 5,
+    id: 4,
     title: "Goals & Style",
     description: "Set purpose and tone",
     icon: Target,
     required: true,
   },
   {
-    id: 6,
+    id: 5,
     title: "Advanced Options",
     description: "Keywords & preferences",
     icon: Settings,
     advanced: true,
   },
   {
-    id: 7,
+    id: 6,
     title: "Review",
     description: "Review your selections",
     icon: Eye,
     required: true,
   },
   {
-    id: 8,
+    id: 7,
     title: "Generate",
     description: "Create topic ideas",
     icon: Sparkles,
@@ -109,8 +99,6 @@ export default function TopicBuilderPage() {
     { label: "Topic Builder" },
   ];
 
-  const progress = (currentStep / steps.length) * 100;
-
   const handleNext = () => {
     const success = nextStep();
     if (!success) {
@@ -130,7 +118,7 @@ export default function TopicBuilderPage() {
     switch (currentStep) {
       case 1:
         return (
-          <WizardModeSelectionStep
+          <IndustryStep
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
@@ -139,7 +127,7 @@ export default function TopicBuilderPage() {
 
       case 2:
         return (
-          <IndustryStep
+          <AudienceStep
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
@@ -148,7 +136,7 @@ export default function TopicBuilderPage() {
 
       case 3:
         return (
-          <AudienceStep
+          <ContentFormatStep
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
@@ -157,7 +145,7 @@ export default function TopicBuilderPage() {
 
       case 4:
         return (
-          <ContentFormatStep
+          <GoalsStep
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
@@ -166,15 +154,6 @@ export default function TopicBuilderPage() {
 
       case 5:
         return (
-          <GoalsStep
-            formData={formData}
-            updateFormData={updateFormData}
-            errors={errors}
-          />
-        );
-
-      case 6:
-        return (
           <AdvancedStep
             formData={formData}
             updateFormData={updateFormData}
@@ -182,10 +161,10 @@ export default function TopicBuilderPage() {
           />
         );
 
-      case 7:
+      case 6:
         return <ReviewStep formData={formData} setCurrentStep={goToStep} />;
 
-      case 8:
+      case 7:
         return (
           <GenerationStep formData={formData} onGenerate={handleGenerate} />
         );
@@ -202,93 +181,80 @@ export default function TopicBuilderPage() {
       title="Topic Builder"
       description="Generate AI-powered content topic ideas for your industry"
       breadcrumbs={breadcrumbs}
+      className="p-0"
     >
-      {/* Progress Header */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Step {currentStep} of {steps.length}
+      <div className="flex h-full">
+        {/* Sidebar */}
+        <WizardSidebar
+          steps={steps}
+          currentStep={currentStep}
+          onStepClick={goToStep}
+          errors={errors}
+          className="hidden lg:block"
+        />
+
+        {/* Mobile Sidebar - Collapsible */}
+        <div className="lg:hidden">
+          <WizardSidebar
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={goToStep}
+            errors={errors}
+            className="absolute inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out bg-background border-r"
+          />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-h-full lg:ml-0">
+          <div className="flex-1 p-6">
+            <Card className="h-full">
+              <CardHeader>
+                <CardDescription>{currentStepData.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1">
+                {renderStepContent()}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Navigation Footer */}
+          <div className="p-6 pt-0">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={handlePrev}
+                disabled={currentStep === 1}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Previous
+              </Button>
+
+              <div className="text-sm text-muted-foreground">
+                Step {currentStep} of {steps.length}
+              </div>
+
+              {currentStep === steps.length ? (
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {isGenerating ? "Generating..." : "Generate Topics"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  className="flex items-center gap-2"
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-
-        <Progress value={progress} className="w-full" />
-
-        {/* Step Indicators */}
-        <div className="flex items-center justify-between">
-          {steps.map((step, _index) => {
-            const StepIcon = step.icon;
-            const isActive = step.id === currentStep;
-            const isCompleted = step.id < currentStep;
-
-            return (
-              <div key={step.id} className="flex flex-col items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : isCompleted
-                        ? "bg-green-500 text-white"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  <StepIcon className="h-4 w-4" />
-                </div>
-                <div className="text-center">
-                  <div
-                    className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}
-                  >
-                    {step.title}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <Card className="flex-1">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <currentStepData.icon className="h-5 w-5" />
-            {currentStepData.title}
-          </CardTitle>
-          <CardDescription>{currentStepData.description}</CardDescription>
-        </CardHeader>
-        <CardContent>{renderStepContent()}</CardContent>
-      </Card>
-
-      {/* Navigation Footer */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrev}
-          disabled={currentStep === 1}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Previous
-        </Button>
-
-        <div className="text-sm text-muted-foreground">
-          {currentStep} of {steps.length} steps completed
-        </div>
-
-        {currentStep === steps.length ? (
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="flex items-center gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            {isGenerating ? "Generating..." : "Generate Topics"}
-          </Button>
-        ) : (
-          <Button onClick={handleNext} className="flex items-center gap-2">
-            Next
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </PageLayout>
   );

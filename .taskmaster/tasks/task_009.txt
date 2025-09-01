@@ -1,0 +1,285 @@
+# Task ID: 9
+# Title: Implement Error Handling and Loading States
+# Status: pending
+# Dependencies: 3, 4
+# Priority: medium
+# Description: Create comprehensive error handling and loading states throughout the application
+# Details:
+Implement error handling and loading states for a better user experience:
+
+1. Create loading states for AI generation
+2. Implement error boundaries for component failures
+3. Add retry logic for API failures
+4. Create user-friendly error messages
+
+Example implementation:
+```typescript
+// /components/ui/LoadingState.tsx
+interface LoadingStateProps {
+  message?: string;
+  size?: 'small' | 'medium' | 'large';
+}
+
+export function LoadingState({ message = 'Loading...', size = 'medium' }: LoadingStateProps) {
+  const sizeClass = `loading-${size}`;
+  
+  return (
+    <div className={`loading-container ${sizeClass}`} aria-live="polite" aria-busy="true">
+      <div className="loading-spinner">
+        <div className="spinner-circle"></div>
+      </div>
+      <p className="loading-message">{message}</p>
+    </div>
+  );
+}
+
+// /components/ui/ErrorMessage.tsx
+interface ErrorMessageProps {
+  error: string;
+  onRetry?: () => void;
+}
+
+export function ErrorMessage({ error, onRetry }: ErrorMessageProps) {
+  return (
+    <div className="error-container" role="alert">
+      <div className="error-icon">⚠️</div>
+      <p className="error-message">{error}</p>
+      {onRetry && (
+        <button onClick={onRetry} className="retry-button">
+          Try Again
+        </button>
+      )}
+    </div>
+  );
+}
+
+// /components/ErrorBoundary.tsx
+import { Component, ErrorInfo, ReactNode } from 'react';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('Error caught by boundary:', error, errorInfo);
+    // Could send to error reporting service here
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong</h2>
+          <p>We're sorry, but there was an error loading this component.</p>
+          <p className="error-details">{this.state.error?.message}</p>
+          <button onClick={() => this.setState({ hasError: false })}>
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Enhanced version of topic generation with loading and error states
+import { useState } from 'react';
+import { TopicBuilderFormData, GeneratedTopic } from '@/types/topic-builder';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+
+export function GenerationStep({ formData }: { formData: TopicBuilderFormData }) {
+  const [topics, setTopics] = useState<GeneratedTopic[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  
+  const generateTopics = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/generate-topics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData,
+          timestamp: new Date().toISOString(),
+          requestId: `req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate topics');
+      }
+      
+      const data = await response.json();
+      setTopics(data.topics);
+    } catch (err) {
+      console.error('Topic generation error:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    generateTopics();
+  };
+  
+  // Auto-generate on first render
+  useEffect(() => {
+    generateTopics();
+  }, []);
+  
+  if (isLoading) {
+    return (
+      <div className="generation-step">
+        <LoadingState 
+          message={`Generating ${formData.num_ideas} content topics for you...`} 
+          size="large" 
+        />
+        <div className="generation-info">
+          <p>This may take up to 15 seconds.</p>
+          <p>We're analyzing your inputs and creating tailored content topics.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="generation-step error">
+        <ErrorMessage 
+          error={`Failed to generate topics: ${error}`} 
+          onRetry={handleRetry} 
+        />
+        <div className="error-help">
+          <p>This could be due to:</p>
+          <ul>
+            <li>Temporary service disruption</li>
+            <li>Network connectivity issues</li>
+            <li>High server load</li>
+          </ul>
+          <p>You've tried {retryCount} time(s). Please try again or come back later.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="generation-step success">
+      <div className="generation-header">
+        <h2>Generated Topics</h2>
+        <button onClick={generateTopics} className="regenerate-button">
+          Regenerate All
+        </button>
+      </div>
+      
+      {topics.length > 0 ? (
+        <TopicList 
+          topics={topics} 
+          onSaveTopic={(id) => console.log('Save topic:', id)} 
+          onDiscardTopic={(id) => console.log('Discard topic:', id)} 
+        />
+      ) : (
+        <div className="no-topics">
+          <p>No topics were generated. Please try again with different inputs.</p>
+          <button onClick={generateTopics}>Generate Topics</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+# Test Strategy:
+1. Test loading states with simulated API delays
+2. Verify error messages display correctly for different error types
+3. Test retry functionality for failed API calls
+4. Verify error boundary catches component errors
+5. Test accessibility of loading and error states
+6. Verify that loading indicators provide appropriate feedback
+7. Test edge cases like network disconnection during API calls
+8. Ensure all error messages are user-friendly and actionable
+
+# Subtasks:
+## 1. Implement Loading State Components and Animations [pending]
+### Dependencies: None
+### Description: Create reusable loading state components with animations for different parts of the application
+### Details:
+Create a comprehensive loading state system:
+1. Implement the LoadingState component with customizable size and message props
+2. Design and implement loading animations (spinner, pulse, skeleton)
+3. Create context-specific loading indicators for different operations
+4. Add loading state transitions with fade effects
+5. Ensure loading states are accessible with proper ARIA attributes
+6. Implement skeleton loaders for content-heavy sections
+7. Create a global loading state manager for coordinating multiple loading states
+
+## 2. Implement Error Boundary System [pending]
+### Dependencies: None
+### Description: Create error boundary components to catch and handle React component errors gracefully
+### Details:
+Develop a robust error boundary system:
+1. Implement the ErrorBoundary component as shown in the example
+2. Create customizable fallback UI components for different error scenarios
+3. Add error logging and reporting functionality
+4. Implement reset mechanisms to recover from errors
+5. Create specialized error boundaries for critical application sections
+6. Add error boundary testing utilities
+7. Document error boundary usage patterns for the development team
+
+## 3. Implement API Error Handling and Retry Logic [pending]
+### Dependencies: 9.1, 9.2
+### Description: Create a system for handling API errors with automatic and manual retry capabilities
+### Details:
+Build a comprehensive API error handling system:
+1. Create a centralized API error handling utility
+2. Implement automatic retry logic with exponential backoff
+3. Add request deduplication to prevent duplicate API calls
+4. Create request timeout handling
+5. Implement error categorization (network, server, validation)
+6. Add detailed error logging with request context
+7. Create recovery strategies for different error types
+8. Implement offline detection and recovery
+
+## 4. Design User-Friendly Error Messages and Recovery Options [pending]
+### Dependencies: 9.2, 9.3
+### Description: Create a system of user-friendly error messages with clear recovery options
+### Details:
+Develop an intuitive error messaging system:
+1. Implement the ErrorMessage component as shown in the example
+2. Create a library of user-friendly error messages for different scenarios
+3. Design contextual help content for common errors
+4. Implement inline error recovery options
+5. Add progressive disclosure for technical error details
+6. Create toast notifications for non-blocking errors
+7. Implement error state persistence for page refreshes
+8. Design error messages with clear next steps for users
+

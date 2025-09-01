@@ -1,0 +1,319 @@
+# Task ID: 8
+# Title: Implement Topic Export and Management System
+# Status: pending
+# Dependencies: 5, 7
+# Priority: medium
+# Description: Create functionality for exporting and managing generated topics
+# Details:
+Implement the topic export and management system:
+
+1. Create export functionality for JSON and CSV formats
+2. Implement topic saving and organization
+3. Add bulk selection and actions
+4. Create topic editing capabilities
+
+Example implementation:
+```typescript
+// /lib/export-utils.ts
+import { GeneratedTopic } from '@/types/topic-builder';
+
+export function exportTopicsAsJSON(topics: GeneratedTopic[]): void {
+  const dataStr = JSON.stringify(topics, null, 2);
+  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+  
+  const exportFileDefaultName = `content-topics-${new Date().toISOString().slice(0, 10)}.json`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+}
+
+export function exportTopicsAsCSV(topics: GeneratedTopic[]): void {
+  // Define CSV headers
+  const headers = [
+    'Title',
+    'Angle',
+    'Relevance Score',
+    'Freshness Score',
+    'Novelty Score',
+    'Audience Fit',
+    'Why It Works',
+    'Tags'
+  ];
+  
+  // Convert topics to CSV rows
+  const rows = topics.map(topic => [
+    `"${topic.title.replace(/"/g, '""')}"`,
+    `"${topic.angle.replace(/"/g, '""')}"`,
+    topic.scores.relevance.toFixed(2),
+    topic.scores.freshness.toFixed(2),
+    topic.scores.novelty.toFixed(2),
+    `"${topic.audience_fit.join(', ')}"`,
+    `"${topic.why_it_works.replace(/"/g, '""')}"`,
+    `"${topic.tags.join(', ')}"`
+  ]);
+  
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.join(','))
+  ].join('\n');
+  
+  const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
+  const exportFileDefaultName = `content-topics-${new Date().toISOString().slice(0, 10)}.csv`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+}
+
+// /components/topic-builder/results/TopicManagement.tsx
+import { useState } from 'react';
+import { GeneratedTopic } from '@/types/topic-builder';
+import { exportTopicsAsJSON, exportTopicsAsCSV } from '@/lib/export-utils';
+
+interface TopicManagementProps {
+  topics: GeneratedTopic[];
+  savedTopics: GeneratedTopic[];
+  onSaveTopic: (topic: GeneratedTopic) => void;
+  onRemoveTopic: (id: string) => void;
+  onRegenerateTopic: (id: string) => void;
+  onEditTopic: (id: string, updates: Partial<GeneratedTopic>) => void;
+}
+
+export function TopicManagement({ 
+  topics, 
+  savedTopics, 
+  onSaveTopic, 
+  onRemoveTopic,
+  onRegenerateTopic,
+  onEditTopic
+}: TopicManagementProps) {
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [editingTopic, setEditingTopic] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<GeneratedTopic>>({});
+  
+  const handleSelectAll = () => {
+    if (selectedTopics.length === topics.length) {
+      setSelectedTopics([]);
+    } else {
+      setSelectedTopics(topics.map(topic => topic.id));
+    }
+  };
+  
+  const handleSelectTopic = (id: string) => {
+    if (selectedTopics.includes(id)) {
+      setSelectedTopics(selectedTopics.filter(topicId => topicId !== id));
+    } else {
+      setSelectedTopics([...selectedTopics, id]);
+    }
+  };
+  
+  const handleBulkSave = () => {
+    const topicsToSave = topics.filter(topic => selectedTopics.includes(topic.id));
+    topicsToSave.forEach(topic => onSaveTopic(topic));
+    setSelectedTopics([]);
+  };
+  
+  const handleBulkExport = (format: 'json' | 'csv') => {
+    const topicsToExport = topics.filter(topic => selectedTopics.includes(topic.id));
+    if (format === 'json') {
+      exportTopicsAsJSON(topicsToExport);
+    } else {
+      exportTopicsAsCSV(topicsToExport);
+    }
+  };
+  
+  const startEditing = (topic: GeneratedTopic) => {
+    setEditingTopic(topic.id);
+    setEditForm({
+      title: topic.title,
+      angle: topic.angle,
+      tags: [...topic.tags]
+    });
+  };
+  
+  const saveEdit = () => {
+    if (editingTopic && editForm) {
+      onEditTopic(editingTopic, editForm);
+      setEditingTopic(null);
+      setEditForm({});
+    }
+  };
+  
+  const cancelEdit = () => {
+    setEditingTopic(null);
+    setEditForm({});
+  };
+  
+  return (
+    <div className="topic-management">
+      <div className="bulk-actions">
+        <label className="select-all">
+          <input
+            type="checkbox"
+            checked={selectedTopics.length === topics.length && topics.length > 0}
+            onChange={handleSelectAll}
+          />
+          Select All
+        </label>
+        
+        <div className="action-buttons">
+          <button 
+            onClick={handleBulkSave}
+            disabled={selectedTopics.length === 0}
+          >
+            Save Selected
+          </button>
+          
+          <div className="export-dropdown">
+            <button 
+              className="export-button"
+              disabled={selectedTopics.length === 0}
+            >
+              Export Selected
+            </button>
+            <div className="export-options">
+              <button onClick={() => handleBulkExport('json')}>JSON</button>
+              <button onClick={() => handleBulkExport('csv')}>CSV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="topic-list">
+        {topics.map(topic => (
+          <div key={topic.id} className="topic-item">
+            <div className="topic-select">
+              <input
+                type="checkbox"
+                checked={selectedTopics.includes(topic.id)}
+                onChange={() => handleSelectTopic(topic.id)}
+              />
+            </div>
+            
+            {editingTopic === topic.id ? (
+              <div className="topic-edit-form">
+                <div className="form-field">
+                  <label>Title</label>
+                  <input
+                    type="text"
+                    value={editForm.title || ''}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  />
+                </div>
+                
+                <div className="form-field">
+                  <label>Angle</label>
+                  <textarea
+                    value={editForm.angle || ''}
+                    onChange={(e) => setEditForm({ ...editForm, angle: e.target.value })}
+                  />
+                </div>
+                
+                <div className="form-field">
+                  <label>Tags (comma separated)</label>
+                  <input
+                    type="text"
+                    value={(editForm.tags || []).join(', ')}
+                    onChange={(e) => {
+                      const tagsString = e.target.value;
+                      const tags = tagsString.split(',').map(tag => tag.trim()).filter(Boolean);
+                      setEditForm({ ...editForm, tags });
+                    }}
+                  />
+                </div>
+                
+                <div className="edit-actions">
+                  <button onClick={saveEdit}>Save</button>
+                  <button onClick={cancelEdit}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="topic-content">
+                <h3>{topic.title}</h3>
+                <p>{topic.angle}</p>
+                
+                <div className="topic-actions">
+                  <button onClick={() => onSaveTopic(topic)}>
+                    {savedTopics.some(t => t.id === topic.id) ? 'Saved' : 'Save'}
+                  </button>
+                  <button onClick={() => startEditing(topic)}>Edit</button>
+                  <button onClick={() => onRegenerateTopic(topic.id)}>Regenerate</button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+# Test Strategy:
+1. Test JSON export functionality with various topic data
+2. Verify CSV export produces correctly formatted files
+3. Test bulk selection and actions (select all, deselect all)
+4. Verify topic editing functionality updates topics correctly
+5. Test topic regeneration API integration
+6. Verify saved topics are correctly stored in localStorage
+7. Test edge cases like exporting empty selections
+8. Ensure all interactive elements are accessible
+
+# Subtasks:
+## 1. Implement JSON and CSV Export Functionality [pending]
+### Dependencies: None
+### Description: Create utility functions for exporting generated topics in JSON and CSV formats with proper file naming and data formatting.
+### Details:
+Implement the export-utils.ts file with the following features:
+- Create exportTopicsAsJSON function that properly formats and downloads topic data as JSON
+- Implement exportTopicsAsCSV function that converts topic data to CSV format with appropriate headers
+- Add proper date formatting for filenames
+- Handle special characters and escaping in CSV export
+- Ensure all topic properties are correctly exported in both formats
+- Test with various topic data structures to ensure compatibility
+
+## 2. Implement Topic Saving and Organization [pending]
+### Dependencies: 8.1
+### Description: Create functionality for saving, organizing, and managing topics with proper state management.
+### Details:
+Implement the topic saving and organization system with these features:
+- Create state management for saved topics (using React context or Redux)
+- Implement persistent storage using localStorage or IndexedDB
+- Add functionality to save individual topics
+- Create UI components for viewing saved topics
+- Implement topic categorization or tagging system
+- Add functionality to remove topics from saved collection
+- Ensure saved topics are accessible across sessions
+
+## 3. Implement Bulk Selection and Actions [pending]
+### Dependencies: 8.1, 8.2
+### Description: Create functionality for selecting multiple topics and performing bulk actions like export and save.
+### Details:
+Implement bulk selection and actions with these features:
+- Create UI for selecting individual and multiple topics
+- Implement 'Select All' and 'Deselect All' functionality
+- Add state management for tracking selected topics
+- Create bulk action buttons (Save Selected, Export Selected)
+- Implement dropdown for export format selection
+- Ensure proper UI feedback when bulk actions are performed
+- Add accessibility support for selection mechanisms
+- Implement responsive design for bulk action controls
+
+## 4. Implement Topic Editing Capabilities [pending]
+### Dependencies: 8.2
+### Description: Create functionality for editing topic properties with form validation and state updates.
+### Details:
+Implement topic editing capabilities with these features:
+- Create edit mode toggle for individual topics
+- Implement form components for editing topic properties (title, angle, tags)
+- Add validation for edited content
+- Create save and cancel functionality for edits
+- Implement state updates when edits are saved
+- Add UI feedback for successful edits
+- Ensure edited topics are properly saved to persistent storage
+- Implement topic regeneration functionality for specific topics
+

@@ -1,0 +1,288 @@
+# Task ID: 5
+# Title: Build Topic Display and Management Components
+# Status: pending
+# Dependencies: 1, 3
+# Priority: medium
+# Description: Create components for displaying and managing generated topics
+# Details:
+Implement the UI components for displaying and managing generated topics:
+
+1. Create `/components/topic-builder/results/` directory with the following components:
+   - `TopicCard.tsx` - Display individual topic with metadata
+   - `TopicList.tsx` - Container for all generated topics
+   - `TopicFilters.tsx` - Filtering and sorting controls
+   - `TopicActions.tsx` - Buttons for save, edit, regenerate, export
+
+2. Implement local storage integration for saving topics
+
+Example implementation:
+```typescript
+// /components/topic-builder/results/TopicCard.tsx
+import { GeneratedTopic } from '@/types/topic-builder';
+
+interface TopicCardProps {
+  topic: GeneratedTopic;
+  onSave: (id: string) => void;
+  onDiscard: (id: string) => void;
+}
+
+export function TopicCard({ topic, onSave, onDiscard }: TopicCardProps) {
+  const { id, title, angle, scores, audience_fit, why_it_works, tags } = topic;
+  
+  return (
+    <div className="topic-card">
+      <h3 className="topic-title">{title}</h3>
+      <p className="topic-angle">{angle}</p>
+      
+      <div className="topic-metadata">
+        <div className="topic-scores">
+          <div className="score-item">
+            <span>Relevance</span>
+            <div className="score-bar" style={{ width: `${scores.relevance * 100}%` }} />
+            <span>{(scores.relevance * 100).toFixed(0)}%</span>
+          </div>
+          <div className="score-item">
+            <span>Freshness</span>
+            <div className="score-bar" style={{ width: `${scores.freshness * 100}%` }} />
+            <span>{(scores.freshness * 100).toFixed(0)}%</span>
+          </div>
+          <div className="score-item">
+            <span>Novelty</span>
+            <div className="score-bar" style={{ width: `${scores.novelty * 100}%` }} />
+            <span>{(scores.novelty * 100).toFixed(0)}%</span>
+          </div>
+        </div>
+        
+        <div className="topic-audience">
+          <h4>Audience Fit</h4>
+          <div className="audience-tags">
+            {audience_fit.map(audience => (
+              <span key={audience} className="audience-tag">{audience}</span>
+            ))}
+          </div>
+        </div>
+        
+        <div className="topic-explanation">
+          <h4>Why It Works</h4>
+          <p>{why_it_works}</p>
+        </div>
+        
+        <div className="topic-tags">
+          {tags.map(tag => (
+            <span key={tag} className="topic-tag">{tag}</span>
+          ))}
+        </div>
+      </div>
+      
+      <div className="topic-actions">
+        <button onClick={() => onSave(id)} className="save-button">
+          Save Topic
+        </button>
+        <button onClick={() => onDiscard(id)} className="discard-button">
+          Discard
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// /components/topic-builder/results/TopicList.tsx
+import { useState } from 'react';
+import { TopicCard } from './TopicCard';
+import { TopicFilters } from './TopicFilters';
+import { GeneratedTopic } from '@/types/topic-builder';
+
+interface TopicListProps {
+  topics: GeneratedTopic[];
+  onSaveTopic: (id: string) => void;
+  onDiscardTopic: (id: string) => void;
+  onExportTopics: () => void;
+  onRegenerateTopic: (id: string) => void;
+}
+
+export function TopicList({ topics, onSaveTopic, onDiscardTopic, onExportTopics, onRegenerateTopic }: TopicListProps) {
+  const [sortBy, setSortBy] = useState<'relevance' | 'freshness' | 'novelty'>('relevance');
+  const [filterTags, setFilterTags] = useState<string[]>([]);
+  
+  // Sort and filter topics
+  const filteredTopics = topics
+    .filter(topic => {
+      if (filterTags.length === 0) return true;
+      return filterTags.some(tag => topic.tags.includes(tag));
+    })
+    .sort((a, b) => b.scores[sortBy] - a.scores[sortBy]);
+  
+  return (
+    <div className="topic-list-container">
+      <div className="topic-list-header">
+        <h2>Generated Topics</h2>
+        <TopicFilters
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          availableTags={Array.from(new Set(topics.flatMap(t => t.tags)))}
+          selectedTags={filterTags}
+          onTagsChange={setFilterTags}
+        />
+        <button onClick={onExportTopics} className="export-button">
+          Export Topics
+        </button>
+      </div>
+      
+      <div className="topic-list">
+        {filteredTopics.map(topic => (
+          <TopicCard
+            key={topic.id}
+            topic={topic}
+            onSave={onSaveTopic}
+            onDiscard={onDiscardTopic}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// /hooks/use-topic-storage.ts
+import { useState, useEffect } from 'react';
+import { GeneratedTopic } from '@/types/topic-builder';
+
+export function useTopicStorage() {
+  const [savedTopics, setSavedTopics] = useState<GeneratedTopic[]>([]);
+  
+  // Load saved topics from localStorage on mount
+  useEffect(() => {
+    const storedTopics = localStorage.getItem('savedTopics');
+    if (storedTopics) {
+      try {
+        setSavedTopics(JSON.parse(storedTopics));
+      } catch (error) {
+        console.error('Failed to parse saved topics:', error);
+      }
+    }
+  }, []);
+  
+  // Save topics to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('savedTopics', JSON.stringify(savedTopics));
+  }, [savedTopics]);
+  
+  const saveTopic = (topic: GeneratedTopic) => {
+    setSavedTopics(prev => {
+      // Don't add duplicates
+      if (prev.some(t => t.id === topic.id)) return prev;
+      return [...prev, topic];
+    });
+  };
+  
+  const removeTopic = (id: string) => {
+    setSavedTopics(prev => prev.filter(topic => topic.id !== id));
+  };
+  
+  const exportTopics = (format: 'json' | 'csv' = 'json') => {
+    if (format === 'json') {
+      const dataStr = JSON.stringify(savedTopics, null, 2);
+      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+      
+      const exportFileDefaultName = `topic-ideas-${new Date().toISOString().slice(0, 10)}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    } else if (format === 'csv') {
+      // CSV export implementation
+    }
+  };
+  
+  return {
+    savedTopics,
+    saveTopic,
+    removeTopic,
+    exportTopics,
+  };
+}
+```
+
+# Test Strategy:
+1. Test TopicCard component rendering with various topic data
+2. Verify sorting and filtering functionality in TopicList
+3. Test localStorage saving and loading with mock data
+4. Verify export functionality generates correct file formats
+5. Test responsive design for different screen sizes
+6. Ensure accessibility for all interactive elements
+7. Test edge cases like empty topic lists or missing data
+8. Verify that topic scores display correctly
+
+# Subtasks:
+## 1. Implement TopicCard Component [pending]
+### Dependencies: None
+### Description: Create the TopicCard component for displaying individual topic information with metadata and action buttons
+### Details:
+Create `/components/topic-builder/results/TopicCard.tsx` that displays a single topic with:
+- Title and angle display
+- Score visualization (relevance, freshness, novelty)
+- Audience fit section
+- 'Why It Works' explanation
+- Tags display
+- Action buttons (save, discard)
+- Responsive design for different screen sizes
+
+Ensure proper TypeScript typing with the GeneratedTopic interface and implement event handlers for user interactions.
+
+## 2. Build TopicList Container Component [pending]
+### Dependencies: 5.1
+### Description: Implement the TopicList component that serves as a container for all generated topics
+### Details:
+Create `/components/topic-builder/results/TopicList.tsx` that:
+- Renders a collection of TopicCard components
+- Manages the layout of topic cards (grid or list view)
+- Handles empty states when no topics are available
+- Implements pagination or infinite scroll if needed
+- Provides a header with summary information
+- Integrates with the filtering and sorting system
+- Passes appropriate props to child components
+
+Implement state management for the current view and pagination if applicable.
+
+## 3. Create TopicFilters Component [pending]
+### Dependencies: 5.2
+### Description: Implement filtering and sorting controls for the topic list
+### Details:
+Create `/components/topic-builder/results/TopicFilters.tsx` that includes:
+- Dropdown for sorting by relevance, freshness, or novelty
+- Tag-based filtering with multi-select capability
+- Audience filtering options
+- Clear filters button
+- Visual indicators for active filters
+- Mobile-friendly filter UI
+
+Implement the state management for filter selections and the logic to apply filters to the topic list.
+
+## 4. Implement TopicActions Component [pending]
+### Dependencies: 5.1
+### Description: Create action buttons and handlers for topic management operations
+### Details:
+Create `/components/topic-builder/results/TopicActions.tsx` with:
+- Save topic button and handler
+- Edit topic functionality
+- Regenerate topic button and handler
+- Export topics button (single or multiple)
+- Confirmation dialogs for destructive actions
+- Visual feedback for action states (loading, success, error)
+
+Ensure proper event handling and integration with parent components.
+
+## 5. Implement Local Storage Integration [pending]
+### Dependencies: None
+### Description: Create a hook for managing topic storage in localStorage
+### Details:
+Create `/hooks/use-topic-storage.ts` that provides:
+- Loading saved topics from localStorage on component mount
+- Saving topics to localStorage when they change
+- Functions for adding, removing, and updating topics
+- Export functionality for JSON and CSV formats
+- Error handling for storage operations
+- Type safety with TypeScript
+
+Implement proper serialization/deserialization and handle storage limits gracefully.
+

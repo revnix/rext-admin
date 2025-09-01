@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectWithCustom } from "@/components/ui/select-with-custom";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import { INDUSTRY_OPTIONS } from "@/types/topic-builder";
 
@@ -20,6 +21,31 @@ export function IndustryStep({
 }: IndustryStepProps) {
   return (
     <div className="space-y-6">
+      {/* Approach Selection - Integrated from WizardModeSelectionStep */}
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label>How would you like to start?</Label>
+          <ToggleGroup
+            type="single"
+            value={formData.wizardMode}
+            onValueChange={(value: string) =>
+              value && updateFormData("wizardMode", value)
+            }
+            className="justify-start"
+          >
+            <ToggleGroupItem value="subject-first">
+              I have a specific topic
+            </ToggleGroupItem>
+            <ToggleGroupItem value="industry-first">
+              I want ideas for my industry
+            </ToggleGroupItem>
+          </ToggleGroup>
+          {errors?.wizardMode && (
+            <p className="text-sm text-red-500">{errors.wizardMode}</p>
+          )}
+        </div>
+      </div>
+
       <div className="grid gap-4">
         {formData.wizardMode === "subject-first" && (
           <div className="grid gap-2">

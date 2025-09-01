@@ -218,7 +218,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     // Clear errors and proceed
     setErrors({});
 
-    if (currentStep < 8) {
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
       return true;
     }
@@ -237,7 +237,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
   const goToStep = useCallback(
     (step: number): boolean => {
-      if (step < 1 || step > 8) {
+      if (step < 1 || step > 7) {
         return false;
       }
 
@@ -263,7 +263,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   // Topic generation
   const generateTopics = useCallback(async (): Promise<void> => {
     // Final validation before generation
-    const validation = validateStep(8);
+    const validation = validateStep(7);
     if (!validation.isValid) {
       const stepErrors: Record<string, string> = {};
       validation.errors.forEach((error, index) => {

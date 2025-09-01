@@ -1,0 +1,227 @@
+# Task ID: 4
+# Title: Develop AI Service Integration Layer
+# Status: pending
+# Dependencies: 1, 2
+# Priority: high
+# Description: Create the API integration for OpenAI and Groq services
+# Details:
+Implement the AI service integration layer for topic generation:
+
+1. Create `/app/api/generate-topics/route.ts` Next.js API route
+2. Implement OpenAI API integration with the `openai` npm package
+3. Add Groq API as a fallback option
+4. Implement error handling, retry logic, and rate limiting
+5. Create structured prompt templates based on form data
+
+Example implementation:
+```typescript
+// /lib/ai-service.ts
+import OpenAI from 'openai';
+import { TopicBuilderFormData } from '../types/topic-builder';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function generateTopicsWithAI(formData: TopicBuilderFormData) {
+  try {
+    const prompt = buildPromptFromFormData(formData);
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-turbo',
+      messages: [
+        { role: 'system', content: 'You are a specialized content topic generator.' },
+        { role: 'user', content: prompt }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+    });
+    
+    const result = JSON.parse(response.choices[0].message.content);
+    return {
+      topics: result.topics,
+      request_id: response.id,
+      model_used: 'gpt-4-turbo',
+      generation_time_ms: response.usage.completion_tokens * 10, // Approximation
+    };
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    // Try fallback to Groq if OpenAI fails
+    return generateTopicsWithGroq(formData);
+  }
+}
+
+// Fallback to Groq API
+async function generateTopicsWithGroq(formData: TopicBuilderFormData) {
+  // Similar implementation using Groq API
+}
+
+function buildPromptFromFormData(formData: TopicBuilderFormData): string {
+  const { wizardMode, industry, subject, content_type, audience, purpose, tone } = formData;
+  
+  let prompt = '';
+  
+  if (wizardMode === 'subject-first') {
+    prompt = `Generate ${formData.num_ideas} content topics about ${subject} for the ${industry} industry.`;
+  } else {
+    prompt = `Generate ${formData.num_ideas} content topics for the ${industry} industry.`;
+  }
+  
+  prompt += `\n\nContent type: ${content_type}`;
+  if (formData.platform) prompt += `\nPlatform: ${formData.platform}`;
+  prompt += `\nTarget audience: ${audience.join(', ')}`;
+  prompt += `\nContent purpose: ${purpose.join(', ')}`;
+  prompt += `\nTone: ${tone.join(', ')}`;
+  
+  if (formData.keywords) prompt += `\nInclude these keywords: ${formData.keywords}`;
+  if (formData.exclude) prompt += `\nAvoid these topics: ${formData.exclude}`;
+  
+  prompt += `\n\nReturn the results as a JSON object with this structure:
+{
+  "topics": [
+    {
+      "id": "unique-id",
+      "title": "Topic title",
+      "angle": "Brief description of the angle",
+      "channel_fit": ["platforms this works well for"],
+      "audience_fit": ["audiences this appeals to"],
+      "why_it_works": "Explanation of why this topic works",
+      "scores": {
+        "relevance": 0.95,
+        "freshness": 0.85,
+        "novelty": 0.75
+      },
+      "tags": ["relevant", "tags"]
+    }
+  ]
+}`;
+  
+  return prompt;
+}
+
+// /app/api/generate-topics/route.ts
+import { NextResponse } from 'next/server';
+import { generateTopicsWithAI } from '@/lib/ai-service';
+import { TopicBuilderFormData } from '@/types/topic-builder';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const formData = body.formData as TopicBuilderFormData;
+    
+    // Validate the request data
+    if (!formData || !formData.industry) {
+      return NextResponse.json(
+        { error: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
+    
+    const result = await generateTopicsWithAI(formData);
+    
+    return NextResponse.json({
+      topics: result.topics,
+      request_id: result.request_id,
+      generated_at: new Date().toISOString(),
+      model_used: result.model_used,
+      generation_time_ms: result.generation_time_ms
+    });
+  } catch (error) {
+    console.error('Topic generation error:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to generate topics',
+        error_code: 'generation_failed',
+        fallback_available: true
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+# Test Strategy:
+1. Create unit tests for prompt generation with different form data
+2. Mock OpenAI API responses for testing without actual API calls
+3. Test error handling and fallback to Groq API
+4. Verify rate limiting and retry logic
+5. Test with various industry/audience combinations
+6. Ensure proper parsing of AI-generated JSON responses
+7. Test API route with valid and invalid requests
+8. Measure response times and optimize if needed
+
+# Subtasks:
+## 1. Implement OpenAI API Client [pending]
+### Dependencies: None
+### Description: Create the OpenAI API client implementation for generating topics
+### Details:
+1. Install the `openai` npm package
+2. Create `/lib/ai-service.ts` file with OpenAI client initialization
+3. Implement the `generateTopicsWithAI` function using OpenAI's chat completions API
+4. Configure the model, temperature, and response format settings
+5. Parse and validate the API response
+6. Add proper error handling with informative error messages
+7. Implement environment variable configuration for API keys
+
+## 2. Develop Groq API Fallback Integration [pending]
+### Dependencies: 4.1
+### Description: Implement Groq API as a fallback option when OpenAI fails
+### Details:
+1. Install the Groq API client library
+2. Create the `generateTopicsWithGroq` function in `/lib/ai-service.ts`
+3. Configure Groq API with appropriate models and parameters
+4. Ensure response format matches OpenAI's structure for consistency
+5. Implement proper error handling specific to Groq API
+6. Add environment variable configuration for Groq API keys
+7. Create a seamless fallback mechanism from OpenAI to Groq
+
+## 3. Create Prompt Template Generator [pending]
+### Dependencies: None
+### Description: Implement the prompt template generation from form data
+### Details:
+1. Create the `buildPromptFromFormData` function in `/lib/ai-service.ts`
+2. Implement different prompt structures based on wizard mode (subject-first vs. industry-first)
+3. Include all relevant form fields in the prompt (industry, content type, audience, purpose, tone)
+4. Add optional fields handling (keywords, exclusions)
+5. Structure the prompt to guide the AI to return properly formatted JSON
+6. Optimize prompts for different AI models (OpenAI vs Groq)
+7. Add prompt validation to ensure quality
+
+## 4. Implement Response Parsing and Error Handling [pending]
+### Dependencies: 4.1, 4.2
+### Description: Create robust response parsing and error handling for AI services
+### Details:
+1. Implement JSON parsing with error handling for malformed responses
+2. Create a standardized response format for both AI services
+3. Add validation for the parsed response structure
+4. Implement detailed error logging with request IDs
+5. Create error classification (network, API limit, malformed response)
+6. Add telemetry for tracking API usage and errors
+7. Implement graceful degradation when both services fail
+
+## 5. Create Next.js API Route for Topic Generation [pending]
+### Dependencies: 4.1, 4.2, 4.3, 4.4
+### Description: Implement the Next.js API route for handling topic generation requests
+### Details:
+1. Create `/app/api/generate-topics/route.ts` file
+2. Implement the POST handler for receiving form data
+3. Add request validation to ensure required fields are present
+4. Integrate with the AI service functions
+5. Implement proper HTTP status codes and error responses
+6. Add request logging for debugging
+7. Create a standardized API response format
+8. Implement request timeout handling
+
+## 6. Implement Rate Limiting and Retry Logic [pending]
+### Dependencies: 4.1, 4.2, 4.4
+### Description: Add rate limiting and retry mechanisms for reliable AI service integration
+### Details:
+1. Implement exponential backoff retry logic for transient errors
+2. Add configurable retry attempts and timeout settings
+3. Implement client-side rate limiting to prevent API quota exhaustion
+4. Create a request queue system for high-traffic scenarios
+5. Add circuit breaker pattern to prevent cascading failures
+6. Implement request caching for identical prompts
+7. Add monitoring for API usage and rate limit tracking
+8. Create fallback strategies when rate limits are reached
+

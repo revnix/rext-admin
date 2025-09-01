@@ -1,0 +1,895 @@
+# Task ID: 3
+# Title: Implement Wizard Component Architecture
+# Status: pending
+# Dependencies: 1, 2
+# Priority: high
+# Description: Build the 8-step wizard with progressive disclosure pattern
+# Details:
+Create the core wizard component architecture for the Topic Builder:
+
+1. Create main wizard container in `/app/ideas/create/page.tsx`
+2. Implement step navigation and progress tracking
+3. Create individual step components in `/components/topic-builder/steps/`:
+   - `WizardModeSelectionStep.tsx` - Choose between subject-first and industry-first modes
+   - `IndustryStep.tsx` - Select industry and subject (conditional)
+   - `AudienceStep.tsx` - Select target audience
+   - `ContentFormatStep.tsx` - Choose content type and platform
+   - `GoalsStep.tsx` - Set content purpose and tone
+   - `AdvancedStep.tsx` - Add keywords, exclusions, and preferences
+   - `ReviewStep.tsx` - Summary of all selections
+   - `GenerationStep.tsx` - Display loading state and results
+
+4. Implement form state management with custom hook in `/hooks/use-topic-builder.ts`
+
+Example implementation:
+```typescript
+// /hooks/use-topic-builder.ts
+import { useState } from 'react';
+import { TopicBuilderFormData } from '../types/topic-builder';
+import { validateFormStep } from '../lib/topic-builder-utils';
+
+export function useTopicBuilder() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<Partial<TopicBuilderFormData>>({
+    wizardMode: 'subject-first',
+    num_ideas: 5,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const updateFormData = (newData: Partial<TopicBuilderFormData>) => {
+    setFormData(prev => ({ ...prev, ...newData }));
+  };
+
+  const goToNextStep = () => {
+    if (validateFormStep(currentStep, formData)) {
+      setCurrentStep(prev => prev + 1);
+      setErrors({});
+    } else {
+      // Set validation errors
+    }
+  };
+
+  const goToPrevStep = () => {
+    setCurrentStep(prev => Math.max(1, prev - 1));
+  };
+
+  return {
+    currentStep,
+    formData,
+    errors,
+    updateFormData,
+    goToNextStep,
+    goToPrevStep,
+  };
+}
+
+// /components/topic-builder/steps/IndustryStep.tsx
+import { industries } from '../../../data/topic-builder-options';
+
+export function IndustryStep({ formData, updateFormData }) {
+  return (
+    <div className="step-container">
+      <h2>Select Your Industry</h2>
+      <select
+        value={formData.industry || ''}
+        onChange={(e) => updateFormData({ industry: e.target.value })}
+      >
+        <option value="">Select an industry...</option>
+        {industries.map(industry => (
+          <option key={industry.value} value={industry.value}>
+            {industry.label}
+          </option>
+        ))}
+      </select>
+      
+      {formData.wizardMode === 'subject-first' && (
+        <div>
+          <h3>What's your specific subject?</h3>
+          <input
+            type="text"
+            value={formData.subject || ''}
+            onChange={(e) => updateFormData({ subject: e.target.value })}
+            placeholder="Enter your subject or keyword"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+# Test Strategy:
+1. Test each wizard step component in isolation
+2. Verify form state updates correctly when inputs change
+3. Test step navigation (next/previous) with valid and invalid data
+4. Ensure conditional rendering works based on wizard mode
+5. Test that the wizard maintains state between steps
+6. Verify accessibility features (keyboard navigation, ARIA attributes)
+7. Test responsive design on different screen sizes
+
+# Subtasks:
+## 1. Implement Main Wizard Container and Navigation [done]
+### Dependencies: None
+### Description: Create the main wizard container component and implement step navigation with progress tracking
+### Details:
+1. Create the main wizard container in `/app/ideas/create/page.tsx`
+2. Implement the wizard header with progress indicator
+3. Create the navigation controls (previous/next buttons)
+4. Add step validation before navigation
+5. Implement progress tracking visualization
+6. Create a responsive container layout for all steps
+<info added on 2025-09-01T11:37:41.514Z>
+7. Implementation completed with the following key components:
+   - 8-step wizard flow with subject-first and industry-first modes
+   - TopicBuilderFormData type system for form state management
+   - Step validation system with validateFormStep utility
+   - YMYL auto-detection for sensitive industries
+   - Conditional rendering based on wizard mode selection
+   - Progress tracking with visual indicators
+   - Responsive layout maintaining design patterns
+   - Form validation with step transition blocking
+   - All core navigation controls and progress visualization
+8. Technical validation results:
+   - Build and TypeScript validation successful
+   - Form validation tests passing (15/15)
+   - Linting issues resolved
+   - Navigation logic verified
+   - YMYL detection confirmed working
+   - Responsive design patterns maintained
+</info added on 2025-09-01T11:37:41.514Z>
+
+## 2. Implement Wizard Mode Selection and Industry Steps [done]
+### Dependencies: None
+### Description: Create the first two step components of the wizard: mode selection and industry selection
+### Details:
+1. Create `WizardModeSelectionStep.tsx` with options for subject-first and industry-first modes
+2. Implement `IndustryStep.tsx` with industry dropdown selection
+3. Add conditional subject input field based on wizard mode
+4. Implement validation for both steps
+5. Create industry data structure in `/data/topic-builder-options.ts`
+6. Add smooth transitions between these initial steps
+
+## 3. Implement Audience and Content Format Steps [done]
+### Dependencies: None
+### Description: Create the audience selection and content format selection step components
+### Details:
+1. Create `AudienceStep.tsx` with audience selection options
+2. Implement `ContentFormatStep.tsx` with content type and platform selection
+3. Add conditional rendering of audience options based on selected industry
+4. Implement platform-specific content format suggestions
+5. Add validation for both steps
+6. Ensure proper state updates when selections change
+<info added on 2025-09-01T12:04:57.122Z>
+COMPLETED: Successfully implemented Audience and Content Format Steps.
+
+Implementation details:
+- Created ContentFormatStep.tsx component with conditional platform selection
+- Updated main wizard component to use separated step components
+- Fixed import issues in AudienceStep.tsx (moved demographic options to correct source)
+- All TypeScript compilation and linting checks pass
+
+Files changed:
+- /components/topic-builder/steps/ContentFormatStep.tsx (new file)
+- /app/ideas/create/page.tsx (refactored to use step components)
+- /components/topic-builder/steps/AudienceStep.tsx (fixed imports)
+
+Key features implemented:
+✅ Content type selection with custom option support
+✅ Platform selection for social media and video content types
+✅ Conditional rendering based on content type selection
+✅ Proper validation and error handling integration
+✅ Consistent component structure matching existing patterns
+</info added on 2025-09-01T12:04:57.122Z>
+
+## 4. Implement Goals and Advanced Options Steps [done]
+### Dependencies: None
+### Description: Create the goals setting and advanced options step components
+### Details:
+1. Create `GoalsStep.tsx` with content purpose and tone selection
+2. Implement `AdvancedStep.tsx` with keywords, exclusions, and preferences
+3. Add tone selection with preview examples
+4. Implement keyword input with tags or chips UI
+5. Create exclusion patterns input with validation
+6. Add advanced preference toggles with explanations
+<info added on 2025-09-01T12:21:51.216Z>
+COMPLETED: Successfully implemented Goals and Advanced Options Steps.
+
+Implementation details:
+- Created GoalsStep.tsx component with content purpose, goals, and tone selection
+- Created AdvancedStep.tsx component with keywords, exclude patterns, preferences, and settings
+- Updated main wizard component to use separated step components  
+- Maintained existing functionality and validation patterns
+- All TypeScript compilation and linting checks pass
+
+Files changed:
+- /components/topic-builder/steps/GoalsStep.tsx (new file)
+- /components/topic-builder/steps/AdvancedStep.tsx (new file)
+- /app/ideas/create/page.tsx (refactored to use step components)
+
+Key features implemented:
+✅ Content purpose multi-select with custom option support
+✅ Content goals and tone selection with validation
+✅ Keywords and exclusion patterns input fields
+✅ Number of ideas, region, and language selectors
+✅ Content timing and originality preference toggles
+✅ Additional notes textarea for special instructions
+✅ Consistent error handling integration across all fields
+✅ Clean component separation following established patterns
+</info added on 2025-09-01T12:21:51.216Z>
+
+## 5. Implement Review and Generation Steps [done]
+### Dependencies: None
+### Description: Create the final review summary and generation result step components
+### Details:
+1. Create `ReviewStep.tsx` with summary of all user selections
+2. Implement `GenerationStep.tsx` with loading state and results display
+3. Add edit capabilities from the review step to jump back to specific steps
+4. Create a visually appealing summary layout with sections for each step
+5. Implement loading animations for the generation step
+6. Add result display with options to regenerate or export
+<info added on 2025-09-01T12:29:30.822Z>
+COMPLETED: Successfully implemented Review and Generation Steps.
+
+Implementation details:
+- Created ReviewStep.tsx component with complete summary of all user selections
+- Created GenerationStep.tsx component with generation interface and loading state support
+- Updated main wizard component to use separated step components
+- Added edit navigation buttons in review step to jump back to specific steps
+- Maintained existing functionality and handleGenerate callback integration
+- All TypeScript compilation and linting checks pass
+
+Files changed:
+- /components/topic-builder/steps/ReviewStep.tsx (new file)
+- /components/topic-builder/steps/GenerationStep.tsx (new file)
+- /app/ideas/create/page.tsx (refactored to use step components)
+
+Key features implemented:
+✅ Complete review summary with dynamic display of filled fields
+✅ Edit buttons for each section to navigate back to specific steps
+✅ Generation interface with proper callback integration
+✅ Consistent component structure following established patterns
+✅ Clean separation of concerns with modular step components
+✅ Maintained existing wizard flow and validation
+✅ Removed all hardcoded step content from main component
+
+The wizard architecture is now fully modularized with each step in its own dedicated component.
+</info added on 2025-09-01T12:29:30.822Z>
+
+## 6. Implement Form State Management Hook [done]
+### Dependencies: None
+### Description: Create a custom hook to manage the wizard's form state across all steps
+### Details:
+1. Create `/hooks/use-topic-builder.ts` custom hook
+2. Implement form state management with TypeScript interfaces
+3. Add validation functions for each step
+4. Create step navigation logic with validation checks
+5. Implement conditional field logic based on previous selections
+6. Add state persistence (optional: using localStorage) to prevent data loss on refresh
+<info added on 2025-09-01T12:39:12.878Z>
+IMPLEMENTATION COMPLETED
+
+Created comprehensive form state management hook at `/hooks/use-topic-builder.ts` with the following features:
+
+**What Changed:**
+- **New File**: `/hooks/use-topic-builder.ts` (336 lines) - Complete custom hook implementation
+- **Updated**: `/app/ideas/create/page.tsx` - Refactored to use custom hook, removed 44 lines of local state management
+
+**Key Features Implemented:**
+1. **Form State Management**: TypeScript interfaces with centralized state
+2. **Validation Functions**: Step-by-step validation using existing utilities from `/lib/topic-builder-utils.ts:355-561`
+3. **Step Navigation Logic**: Validation gates prevent progression without valid data
+4. **Conditional Field Logic**: Auto-reset dependent fields (industry → audience, content_type → platform) 
+5. **State Persistence**: LocalStorage draft saving with 1-second debounce
+6. **Error Handling**: Centralized error state with field-specific clearing
+
+**Technical Implementation:**
+- Uses React `useCallback` for performance optimization
+- Leverages existing validation from `validateFormStepDetailed()`
+- Integrates with existing utilities: `detectYMYL()`, `updateFormDataForIndustryChange()`, etc.
+- Maintains all TypeScript type safety
+- Follows Next.js 15 client component patterns
+
+**Integration:**
+- Page component simplified from 154 lines to 109 lines (-29% reduction)
+- All form logic centralized in reusable hook
+- Existing step components continue to work without changes
+- Ready for API integration (placeholder `/api/generate-topics` endpoint)
+
+**Testing Status:**
+- Linting: ✅ All issues resolved
+- Formatting: ✅ Code properly formatted
+- Type checking: ✅ Full TypeScript compliance
+- Integration: ✅ Page component successfully refactored
+
+All acceptance criteria met. Hook is ready for production use.
+</info added on 2025-09-01T12:39:12.878Z>
+
+## 7. Remove Wizard Mode Step and Integrate Approach Selection [pending]
+### Dependencies: None
+### Description: Eliminate the separate "Wizard Mode" step and integrate the approach question into the Industry/Subject step
+### Details:
+**Current Issue**: The "Wizard Mode" wording is confusing and adds an unnecessary step.
+
+**Implementation Plan**:
+1. **Remove WizardModeSelectionStep component** from the steps array and routing
+2. **Modify IndustryStep.tsx** to include approach selection at the top:
+   - Add radio buttons or toggle for "I have a specific topic" vs "I want ideas for my industry"
+   - Show subject input field when "specific topic" is selected
+   - Show industry dropdown when "industry ideas" is selected
+3. **Update step numbering** in the main wizard (reduce from 8 to 7 steps)
+4. **Update useTopicBuilder hook** to handle the merged logic
+5. **Update progress calculation** and step indicators
+6. **Update validation logic** to handle the combined step
+
+**Files to modify**:
+- `/app/ideas/create/page.tsx` - Remove step 1, renumber steps
+- `/components/topic-builder/steps/IndustryStep.tsx` - Add approach selection
+- `/hooks/use-topic-builder.ts` - Update step validation
+- `/lib/topic-builder-utils.ts` - Update validation functions
+
+**UI Design**:
+- Use modern toggle/segmented control for approach selection
+- Clear visual separation between approach choice and industry/subject fields
+- Progressive disclosure: show relevant fields based on selection
+
+## 8. Implement Sidebar Step Navigator [pending]
+### Dependencies: None
+### Description: Create a vertical sidebar showing all wizard steps with completion status and click navigation
+### Details:
+**Current Issue**: Steps are shown horizontally at the top with icons, making it hard to see all steps on mobile.
+
+**Implementation Plan**:
+1. **Create new WizardSidebar component**:
+   - Vertical layout showing all steps
+   - Step numbers with completion indicators (checkmarks for completed)
+   - Current step highlighted with primary color
+   - Clickable navigation to any valid step
+   - Responsive: full sidebar on desktop, collapsible on mobile
+
+2. **Modify main wizard layout**:
+   - Two-column layout: sidebar + main content
+   - Sidebar sticky/fixed positioning
+   - Main content area responsive to sidebar width
+
+3. **Step status indicators**:
+   - Pending: Grey circle with step number
+   - Current: Primary color circle with step number
+   - Completed: Green circle with checkmark
+   - Validation errors: Red circle with warning icon
+
+**Files to create/modify**:
+- `/components/topic-builder/WizardSidebar.tsx` - New sidebar component
+- `/app/ideas/create/page.tsx` - Update layout to include sidebar
+- Update CSS/Tailwind classes for responsive layout
+
+**Design Requirements**:
+- Mobile-first responsive design
+- Accessible keyboard navigation
+- Clear visual hierarchy
+- Smooth transitions between states
+
+## 9. Replace Progress Bar with Sidebar Step Highlighting [pending]
+### Dependencies: None
+### Description: Remove the horizontal progress bar and rely on sidebar step completion indicators
+### Details:
+**Current Issue**: Progress bar is redundant when we have step indicators and takes up unnecessary space.
+
+**Implementation Plan**:
+1. **Remove Progress component** from the main wizard page
+2. **Remove progress calculation** logic from useTopicBuilder hook
+3. **Enhance sidebar step indicators** to clearly show progress:
+   - Visual completion percentage within each step circle
+   - Connecting lines between completed steps
+   - Animated transitions when steps are completed
+
+4. **Update header area** to use the space more effectively:
+   - Larger step title and description
+   - Breadcrumb navigation
+   - Current step context information
+
+**Files to modify**:
+- `/app/ideas/create/page.tsx` - Remove Progress component and calculation
+- `/components/topic-builder/WizardSidebar.tsx` - Enhanced progress indicators
+- `/hooks/use-topic-builder.ts` - Remove progress-related state
+
+**Visual Design**:
+- Clean, minimal header without progress bar
+- Clear step completion status in sidebar
+- More space for step content and instructions
+
+## 10. Convert Text Inputs to Radio/Checkbox Components [pending]
+### Dependencies: None
+### Description: Replace text inputs with modern radio buttons and checkboxes for better user experience
+### Details:
+**Current Issue**: Most questions use dropdowns or text inputs, making selection cumbersome.
+
+**Implementation Plan**:
+
+**1. Create new UI components**:
+- `RadioGroup.tsx` - Modern radio button component with cards
+- `CheckboxGroup.tsx` - Multi-select checkbox component with cards  
+- `ToggleGroup.tsx` - Segmented control for binary choices
+
+**2. Replace components by step**:
+
+**IndustryStep**:
+- Industry selection → CheckboxGroup with popular industries visible, "Show more" for full list
+- Approach selection → ToggleGroup (Subject-first vs Industry-first)
+
+**AudienceStep**:
+- Reader level → RadioGroup with descriptive cards
+- Audience size → RadioGroup with range descriptions
+- Age groups → CheckboxGroup with age ranges
+- Geographic focus → CheckboxGroup with regions
+
+**ContentFormatStep**:
+- Content type → RadioGroup with content type cards and icons
+- Platform → CheckboxGroup (multiple platforms allowed)
+
+**GoalsStep**:
+- Purpose → CheckboxGroup with purpose cards
+- Content goals → CheckboxGroup with goal type cards
+- Tone → CheckboxGroup with tone descriptions
+
+**3. Dropdown fallback strategy**:
+- Use dropdowns only when >8-10 options
+- Add search functionality to large dropdown lists
+- Maintain custom input options where needed
+
+**Files to create**:
+- `/components/ui/radio-group.tsx`
+- `/components/ui/checkbox-group.tsx` 
+- `/components/ui/toggle-group.tsx`
+
+**Files to modify**:
+- All step components to use new input types
+- Form validation to handle new component formats
+
+## 11. Implement Grid Layout for Form Questions [pending]
+### Dependencies: None
+### Description: Replace single-column full-width layout with responsive grid layout for better space utilization
+### Details:
+**Current Issue**: All form elements take full width and are stacked vertically, wasting horizontal space.
+
+**Implementation Plan**:
+
+**1. Create responsive grid system**:
+- 2-column grid on desktop (md and larger)
+- Single column on mobile
+- Smart column spanning for longer content
+
+**2. Update each step component**:
+
+**IndustryStep**:
+```jsx
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="md:col-span-2"> {/* Approach selection full width */}
+  <div className="md:col-span-1"> {/* Industry selection */}
+  <div className="md:col-span-1"> {/* Subject/Focus */}
+</div>
+```
+
+**AudienceStep**:
+```jsx
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="md:col-span-2"> {/* Target audience full width */}
+  <div className="md:col-span-1"> {/* Reader level */}
+  <div className="md:col-span-1"> {/* Audience size */}
+  <div className="md:col-span-1"> {/* Age groups */}
+  <div className="md:col-span-1"> {/* Geographic focus */}
+</div>
+```
+
+**3. Smart layout rules**:
+- Primary questions span full width
+- Secondary questions use half width
+- Related questions grouped visually
+- Maintain logical reading flow
+
+**4. Enhanced spacing and typography**:
+- Consistent spacing between grid items
+- Clear visual separation between question groups
+- Improved label typography and hierarchy
+
+**Files to modify**:
+- All step components in `/components/topic-builder/steps/`
+- Update Tailwind classes for responsive grid layouts
+- Ensure mobile-first responsive design principles
+
+## 12. Implement Smart Edit Navigation System [pending]
+### Dependencies: None
+### Description: Create an intelligent edit system that allows direct navigation back to review after editing any step
+### Details:
+**Current Issue**: Clicking edit in review step requires clicking "Next" 7 times to return to review.
+
+**Implementation Plan**:
+
+**1. Add navigation state management**:
+```typescript
+// Add to useTopicBuilder hook
+const [previousStep, setPreviousStep] = useState<number | null>(null);
+const [editMode, setEditMode] = useState(false);
+
+const goToStepForEdit = (step: number, returnStep: number) => {
+  setPreviousStep(returnStep);
+  setEditMode(true);
+  goToStep(step);
+};
+
+const finishEditing = () => {
+  if (previousStep) {
+    goToStep(previousStep);
+    setPreviousStep(null);
+    setEditMode(false);
+  }
+};
+```
+
+**2. Update ReviewStep edit buttons**:
+```typescript
+// Replace current edit buttons
+<Button onClick={() => goToStepForEdit(2, 7)}>Edit Industry</Button>
+<Button onClick={() => goToStepForEdit(3, 7)}>Edit Audience</Button>
+```
+
+**3. Add edit mode indicators**:
+- Show "Editing Mode" banner when in edit mode
+- Replace "Next" button with "Done Editing" in edit mode
+- Add "Cancel" option to return without saving changes
+
+**4. Smart validation during edit**:
+- Auto-save changes when user clicks "Done Editing"
+- Validate changes before returning to review
+- Show unsaved changes warning if user tries to navigate away
+
+**5. Enhanced navigation footer**:
+- Context-aware button text ("Done Editing" vs "Next")
+- Quick return to review option always visible in edit mode
+- Breadcrumb showing edit path (Review → Industry → Review)
+
+**Files to modify**:
+- `/hooks/use-topic-builder.ts` - Add edit mode state and navigation
+- `/components/topic-builder/steps/ReviewStep.tsx` - Update edit buttons
+- `/app/ideas/create/page.tsx` - Update navigation footer for edit mode
+- All step components - Add edit mode indicators
+
+**UX Improvements**:
+- Instant navigation back to review after editing
+- Clear visual feedback about edit mode
+- Preserve user intent to review and complete wizard quickly
+
+## 13. Fix and Enhance Form Validation System [pending]
+### Dependencies: None
+### Description: Audit and fix validation issues across all wizard steps to ensure proper validation feedback
+### Details:
+**Current Issue**: Validation may not be working properly for all steps according to feedback.
+
+**Implementation Plan**:
+
+**1. Audit current validation system**:
+- Review `validateFormStepDetailed()` in `/lib/topic-builder-utils.ts`
+- Test validation for each step manually
+- Identify missing or broken validation rules
+
+**2. Fix validation issues**:
+- Ensure required fields are properly validated
+- Add validation for conditional fields (industry_other, platform_other, etc.)
+- Fix multi-select validation (purpose, content_goal, tone arrays)
+- Validate custom input values when "other" options are selected
+
+**3. Enhance validation feedback**:
+- Real-time validation feedback (on blur, not just on next)
+- Field-level error messages with specific guidance
+- Success indicators for completed fields
+- Clear required field indicators
+
+**4. Update validation logic**:
+```typescript
+// Enhanced validation with specific error messages
+const validateIndustryStep = (formData: TopicBuilderFormData): ValidationResult => {
+  const errors: string[] = [];
+  
+  if (!formData.industry) {
+    errors.push("Please select an industry");
+  }
+  
+  if (formData.industry === "other" && !formData.industry_other?.trim()) {
+    errors.push("Please specify your industry");
+  }
+  
+  if (formData.wizardMode === "subject-first" && !formData.subject?.trim()) {
+    errors.push("Please enter your specific topic or subject");
+  }
+  
+  return { isValid: errors.length === 0, errors };
+};
+```
+
+**5. Add form validation indicators**:
+- Green checkmarks for completed valid fields
+- Red borders and error icons for invalid fields
+- Loading spinners for async validation
+- Progress indicators showing completion percentage
+
+**Files to modify**:
+- `/lib/topic-builder-utils.ts` - Update validation functions
+- `/hooks/use-topic-builder.ts` - Add real-time validation
+- All step components - Add validation UI indicators
+- Create reusable validation components
+
+**Testing Requirements**:
+- Unit tests for each validation function
+- Integration tests for step navigation with invalid data
+- Manual testing of all validation scenarios
+- Accessibility testing for error announcements
+
+## 14. Implement Visual Selection States and Prominent Styling [pending]
+### Dependencies: None
+### Description: Make selected options visually obvious with prominent colors and clear selection states
+### Details:
+**Current Issue**: Selected options are not prominently displayed, making it hard to see what's been chosen.
+
+**Implementation Plan**:
+
+**1. Create prominent selection styling system**:
+```css
+/* Selected state styling */
+.option-selected {
+  @apply bg-primary text-primary-foreground border-primary ring-2 ring-primary/20;
+}
+
+.option-unselected {
+  @apply bg-background border-border hover:bg-accent hover:text-accent-foreground;
+}
+
+.option-card {
+  @apply transition-all duration-200 cursor-pointer rounded-lg border-2 p-4;
+}
+```
+
+**2. Update UI components for better selection visibility**:
+
+**RadioGroup enhancements**:
+- Card-based radio options with prominent selected state
+- Checkmark overlay on selected cards
+- Smooth hover and selection animations
+- Large touch targets for mobile
+
+**CheckboxGroup enhancements**:
+- Multi-select with distinct selected styling
+- Selected count indicator
+- Clear all / Select popular options shortcuts
+- Visual grouping of related options
+
+**MultiSelect component updates**:
+- Larger, more prominent badges for selected items
+- Primary color for selected badges
+- Better contrast and readability
+- Larger close buttons
+
+**3. Selection feedback enhancements**:
+- Haptic feedback on mobile (where supported)
+- Success animations when selections are made
+- Audio feedback for accessibility
+- Visual confirmation of selections
+
+**4. Color system implementation**:
+- Use primary brand colors for selections
+- High contrast ratios for accessibility
+- Dark mode support for all selection states
+- Consistent color usage across all components
+
+**Files to modify**:
+- `/components/ui/radio-group.tsx` - Enhanced selection styling
+- `/components/ui/checkbox-group.tsx` - Prominent multi-select styling  
+- `/components/ui/multi-select.tsx` - Better badge styling
+- All step components - Apply new selection styling
+- Global CSS - Add selection state utility classes
+
+**Accessibility Requirements**:
+- ARIA states for selected/unselected options
+- High contrast mode support
+- Screen reader announcements for selection changes
+- Keyboard navigation with visual focus indicators
+
+## 15. Modernize Overall UI Design and Visual Hierarchy [pending]
+### Dependencies: None
+### Description: Completely redesign the wizard with modern, beautiful UI patterns and improved visual hierarchy
+### Details:
+**Current Issue**: UI is described as placeholder quality and not modern/beautiful enough.
+
+**Implementation Plan**:
+
+**1. Design System Updates**:
+- **Typography hierarchy**: Clear H1/H2/H3 structure with proper font weights and spacing
+- **Color palette**: Modern primary/secondary colors with proper contrast
+- **Spacing system**: Consistent padding, margins, and gaps using design tokens
+- **Border radius**: Consistent rounded corners (8px, 12px, 16px system)
+- **Shadows**: Subtle elevation system for cards and interactive elements
+
+**2. Card-based Layout System**:
+```jsx
+// Modern card-based step layout
+<Card className="max-w-4xl mx-auto">
+  <CardHeader className="pb-6">
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+        <StepIcon className="w-4 h-4 text-primary-foreground" />
+      </div>
+      <div>
+        <CardTitle className="text-xl">{step.title}</CardTitle>
+        <CardDescription className="text-base">{step.description}</CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {stepContent}
+  </CardContent>
+</Card>
+```
+
+**3. Interactive Elements Redesign**:
+- **Buttons**: Larger, more prominent with clear hierarchy (primary/secondary/ghost)
+- **Form controls**: Larger touch targets, better focus states
+- **Selection cards**: Beautiful hover effects, micro-animations
+- **Icons**: Consistent icon library usage with proper sizing
+
+**4. Modern Layout Patterns**:
+- **Sidebar**: Glass morphism or subtle gradient background
+- **Main content**: Clean white cards with subtle shadows
+- **Navigation**: Floating action buttons or prominent CTAs
+- **Headers**: Clear hierarchy with proper spacing
+
+**5. Animation and Transitions**:
+- Smooth step transitions (slide/fade effects)
+- Micro-interactions on selection
+- Loading states with skeleton components
+- Progress animations
+
+**6. Mobile-First Responsive Design**:
+- Touch-friendly interface with 44px minimum touch targets
+- Swipe gestures for step navigation
+- Collapsible sidebar on mobile
+- Optimized typography scaling
+
+**Files to modify**:
+- All UI components in `/components/ui/`
+- All step components for new layout patterns
+- `/app/ideas/create/page.tsx` - Main layout updates
+- Global CSS/Tailwind configuration
+- Add new design tokens and utility classes
+
+**Design References**:
+- Modern SaaS dashboard patterns
+- Card-based progressive disclosure
+- Clean minimalist design with purposeful color usage
+- Consistent with existing admin panel design system
+
+## 16. Improve Question Wording and User Experience [pending]
+### Dependencies: None
+### Description: Audit and improve all question text, labels, and instructions for clarity and user-friendliness
+### Details:
+**Current Issue**: Questions should be easier to understand and answer, with improved wording throughout.
+
+**Implementation Plan**:
+
+**1. Content Audit and Rewrite**:
+
+**Current → Improved Question Text**:
+- "Choose Your Approach" → "How would you like to start?"
+- "Industry/Domain" → "What's your field or industry?"
+- "Target Audience" → "Who are you creating this for?"
+- "Content Type" → "What type of content will this be?"
+- "Content Purpose" → "What do you want to achieve?"
+- "Tone & Style" → "What tone should we use?"
+
+**2. Add helpful explanations and examples**:
+```jsx
+<Label htmlFor="audience">
+  Who are you creating this for?
+  <span className="text-sm text-muted-foreground block mt-1">
+    For example: "Small business owners", "College students", "Tech professionals"
+  </span>
+</Label>
+```
+
+**3. Improve placeholder text**:
+- Current: "Which industry or domain?"
+- Improved: "e.g., Technology, Healthcare, Education..."
+
+**4. Add contextual help and tips**:
+- Info tooltips next to complex questions
+- Progressive disclosure for advanced options
+- Success tips after selections ("Great choice! This will help us...")
+
+**5. Question grouping and flow**:
+- Logical question progression
+- Related questions visually grouped
+- Clear section headers where needed
+
+**6. Error message improvements**:
+- Current: "This field is required"
+- Improved: "Please select your industry to continue"
+- Actionable error messages with suggestions
+
+**7. Micro-copy enhancements**:
+- Button text: "Continue to Audience" instead of "Next"
+- Progress text: "Step 2 of 7: Define Your Audience"
+- Success messages: "Perfect! Let's choose your content format"
+
+**Files to modify**:
+- All step components - Update labels, placeholders, descriptions
+- `/types/topic-builder.ts` - Update option labels and descriptions
+- Add new tooltip and help text components
+- Update validation error messages
+
+**Content Strategy**:
+- Use conversational, friendly tone
+- Avoid jargon and technical terms
+- Provide examples and suggestions
+- Make each step feel like progress toward a goal
+
+## 17. Comprehensive UX Analysis and Additional Improvements [pending]
+### Dependencies: None
+### Description: Perform systematic UX analysis and implement additional improvements for functionality and user experience
+### Details:
+**Scope**: Analyze the entire wizard flow and implement additional UX improvements beyond the specific feedback items.
+
+**Implementation Plan**:
+
+**1. User Flow Analysis**:
+- **Onboarding**: Add optional wizard intro/overview
+- **Completion**: Success state and next steps after generation
+- **Recovery**: Handle errors gracefully with retry options
+- **Guidance**: Progressive help system for complex choices
+
+**2. Performance and Loading States**:
+- **Step preloading**: Preload next step data/options
+- **Skeleton components**: Beautiful loading states for async operations
+- **Optimistic updates**: Immediate feedback for user actions
+- **Error boundaries**: Graceful error handling with recovery options
+
+**3. Accessibility Enhancements**:
+- **Keyboard navigation**: Full keyboard support with visual focus
+- **Screen reader**: Proper ARIA labels and announcements
+- **High contrast**: Support for high contrast mode
+- **Reduced motion**: Respect user's motion preferences
+
+**4. Smart Features**:
+- **Auto-save**: Preserve progress automatically
+- **Smart suggestions**: AI-powered suggestions based on selections
+- **Quick actions**: "Popular choices" shortcuts
+- **Context awareness**: Industry-specific recommendations
+
+**5. Mobile Experience Optimizations**:
+- **Touch gestures**: Swipe navigation between steps
+- **Bottom sheet**: Mobile-optimized selection interfaces
+- **Haptic feedback**: Touch feedback for selections
+- **One-handed use**: Accessible navigation controls
+
+**6. Advanced Functionality**:
+- **Wizard templates**: Save and reuse common configurations
+- **Bulk editing**: Multi-select for related options
+- **Comparison**: Side-by-side option comparison
+- **History**: Recently used options and patterns
+
+**7. Integration Improvements**:
+- **Deep linking**: Direct links to specific wizard steps
+- **URL state**: Preserve wizard state in URL for sharing
+- **Analytics**: Track user behavior for continuous improvement
+- **A/B testing**: Framework for testing UI variations
+
+**Files to create/modify**:
+- New accessibility utilities and hooks
+- Enhanced loading and error components
+- Mobile-specific interaction handlers
+- Analytics integration hooks
+- Template and history management systems
+
+**Testing and Validation**:
+- Comprehensive accessibility audit
+- Mobile device testing across different screen sizes
+- Performance testing with slow networks
+- User testing with target personas
+- Analytics dashboard for monitoring usage patterns
+

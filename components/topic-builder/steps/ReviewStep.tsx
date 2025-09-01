@@ -65,7 +65,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentStep(2)}
+              onClick={() => setCurrentStep(1)}
             >
               Edit
             </Button>
@@ -79,7 +79,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(2)}
+                onClick={() => setCurrentStep(1)}
               >
                 Edit
               </Button>
@@ -94,7 +94,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(3)}
+                onClick={() => setCurrentStep(2)}
               >
                 Edit
               </Button>
@@ -111,7 +111,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentStep(4)}
+              onClick={() => setCurrentStep(3)}
             >
               Edit
             </Button>
@@ -127,7 +127,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(4)}
+                onClick={() => setCurrentStep(3)}
               >
                 Edit
               </Button>
@@ -149,7 +149,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(5)}
+                onClick={() => setCurrentStep(4)}
               >
                 Edit
               </Button>
@@ -171,7 +171,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(5)}
+                onClick={() => setCurrentStep(4)}
               >
                 Edit
               </Button>
@@ -192,7 +192,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(5)}
+                onClick={() => setCurrentStep(4)}
               >
                 Edit
               </Button>
@@ -206,7 +206,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentStep(6)}
+              onClick={() => setCurrentStep(5)}
             >
               Edit
             </Button>
@@ -220,7 +220,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(6)}
+                onClick={() => setCurrentStep(5)}
               >
                 Edit
               </Button>
@@ -235,7 +235,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(6)}
+                onClick={() => setCurrentStep(5)}
               >
                 Edit
               </Button>
@@ -252,7 +252,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(6)}
+                onClick={() => setCurrentStep(5)}
               >
                 Edit
               </Button>
@@ -269,7 +269,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(6)}
+                onClick={() => setCurrentStep(5)}
               >
                 Edit
               </Button>
@@ -284,7 +284,7 @@ export function ReviewStep({ formData, setCurrentStep }: ReviewStepProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentStep(6)}
+                onClick={() => setCurrentStep(5)}
               >
                 Edit
               </Button>

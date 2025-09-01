@@ -1,0 +1,365 @@
+# Task ID: 7
+# Title: Create Advanced Topic Scoring and Filtering
+# Status: pending
+# Dependencies: 5
+# Priority: medium
+# Description: Implement the scoring system and filtering capabilities for generated topics
+# Details:
+Build the advanced topic scoring and filtering system:
+
+1. Create components for displaying and filtering by topic scores
+2. Implement sorting by relevance, freshness, and novelty
+3. Add tag-based filtering
+4. Create visualization for topic scores
+
+Example implementation:
+```typescript
+// /components/topic-builder/results/TopicFilters.tsx
+import { useState } from 'react';
+
+interface TopicFiltersProps {
+  sortBy: 'relevance' | 'freshness' | 'novelty';
+  onSortChange: (sort: 'relevance' | 'freshness' | 'novelty') => void;
+  availableTags: string[];
+  selectedTags: string[];
+  onTagsChange: (tags: string[]) => void;
+}
+
+export function TopicFilters({ 
+  sortBy, 
+  onSortChange, 
+  availableTags, 
+  selectedTags, 
+  onTagsChange 
+}: TopicFiltersProps) {
+  const [showTagFilter, setShowTagFilter] = useState(false);
+  
+  const handleTagToggle = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      onTagsChange(selectedTags.filter(t => t !== tag));
+    } else {
+      onTagsChange([...selectedTags, tag]);
+    }
+  };
+  
+  return (
+    <div className="topic-filters">
+      <div className="sort-controls">
+        <label>Sort by:</label>
+        <div className="sort-buttons">
+          <button
+            className={sortBy === 'relevance' ? 'active' : ''}
+            onClick={() => onSortChange('relevance')}
+          >
+            Relevance
+          </button>
+          <button
+            className={sortBy === 'freshness' ? 'active' : ''}
+            onClick={() => onSortChange('freshness')}
+          >
+            Freshness
+          </button>
+          <button
+            className={sortBy === 'novelty' ? 'active' : ''}
+            onClick={() => onSortChange('novelty')}
+          >
+            Novelty
+          </button>
+        </div>
+      </div>
+      
+      <div className="tag-filters">
+        <button 
+          className="filter-toggle"
+          onClick={() => setShowTagFilter(!showTagFilter)}
+        >
+          Filter by Tags {showTagFilter ? '▲' : '▼'}
+        </button>
+        
+        {showTagFilter && (
+          <div className="tag-options">
+            {availableTags.map(tag => (
+              <label key={tag} className="tag-option">
+                <input
+                  type="checkbox"
+                  checked={selectedTags.includes(tag)}
+                  onChange={() => handleTagToggle(tag)}
+                />
+                <span>{tag}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// /components/topic-builder/results/ScoreVisualization.tsx
+interface ScoreVisualizationProps {
+  relevance: number;
+  freshness: number;
+  novelty: number;
+  size?: 'small' | 'medium' | 'large';
+}
+
+export function ScoreVisualization({ 
+  relevance, 
+  freshness, 
+  novelty, 
+  size = 'medium' 
+}: ScoreVisualizationProps) {
+  const getScoreColor = (score: number) => {
+    if (score >= 0.8) return 'var(--color-success)';
+    if (score >= 0.6) return 'var(--color-warning)';
+    return 'var(--color-danger)';
+  };
+  
+  const sizeClass = `score-viz-${size}`;
+  
+  return (
+    <div className={`score-visualization ${sizeClass}`}>
+      <div className="score-item">
+        <span className="score-label">Relevance</span>
+        <div className="score-bar-container">
+          <div 
+            className="score-bar" 
+            style={{ 
+              width: `${relevance * 100}%`,
+              backgroundColor: getScoreColor(relevance)
+            }} 
+          />
+        </div>
+        <span className="score-value">{Math.round(relevance * 100)}%</span>
+      </div>
+      
+      <div className="score-item">
+        <span className="score-label">Freshness</span>
+        <div className="score-bar-container">
+          <div 
+            className="score-bar" 
+            style={{ 
+              width: `${freshness * 100}%`,
+              backgroundColor: getScoreColor(freshness)
+            }} 
+          />
+        </div>
+        <span className="score-value">{Math.round(freshness * 100)}%</span>
+      </div>
+      
+      <div className="score-item">
+        <span className="score-label">Novelty</span>
+        <div className="score-bar-container">
+          <div 
+            className="score-bar" 
+            style={{ 
+              width: `${novelty * 100}%`,
+              backgroundColor: getScoreColor(novelty)
+            }} 
+          />
+        </div>
+        <span className="score-value">{Math.round(novelty * 100)}%</span>
+      </div>
+    </div>
+  );
+}
+
+// Enhanced TopicList with advanced filtering
+import { useState, useMemo } from 'react';
+import { TopicCard } from './TopicCard';
+import { TopicFilters } from './TopicFilters';
+import { GeneratedTopic } from '@/types/topic-builder';
+
+interface TopicListProps {
+  topics: GeneratedTopic[];
+  onSaveTopic: (id: string) => void;
+  onDiscardTopic: (id: string) => void;
+}
+
+export function TopicList({ topics, onSaveTopic, onDiscardTopic }: TopicListProps) {
+  const [sortBy, setSortBy] = useState<'relevance' | 'freshness' | 'novelty'>('relevance');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
+  const [minScore, setMinScore] = useState(0);
+  
+  // Get all available tags and audiences from topics
+  const availableTags = useMemo(() => {
+    return Array.from(new Set(topics.flatMap(topic => topic.tags)));
+  }, [topics]);
+  
+  const availableAudiences = useMemo(() => {
+    return Array.from(new Set(topics.flatMap(topic => topic.audience_fit)));
+  }, [topics]);
+  
+  // Filter and sort topics
+  const filteredTopics = useMemo(() => {
+    return topics
+      .filter(topic => {
+        // Filter by tags
+        if (selectedTags.length > 0 && !selectedTags.some(tag => topic.tags.includes(tag))) {
+          return false;
+        }
+        
+        // Filter by audiences
+        if (selectedAudiences.length > 0 && !selectedAudiences.some(audience => topic.audience_fit.includes(audience))) {
+          return false;
+        }
+        
+        // Filter by minimum score
+        if (topic.scores[sortBy] < minScore) {
+          return false;
+        }
+        
+        return true;
+      })
+      .sort((a, b) => b.scores[sortBy] - a.scores[sortBy]);
+  }, [topics, selectedTags, selectedAudiences, minScore, sortBy]);
+  
+  return (
+    <div className="topic-list-container">
+      <div className="topic-list-header">
+        <h2>Generated Topics ({filteredTopics.length} of {topics.length})</h2>
+        
+        <TopicFilters
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          availableTags={availableTags}
+          selectedTags={selectedTags}
+          onTagsChange={setSelectedTags}
+        />
+        
+        <div className="advanced-filters">
+          <div className="audience-filter">
+            <h3>Filter by Audience</h3>
+            <div className="audience-options">
+              {availableAudiences.map(audience => (
+                <label key={audience} className="audience-option">
+                  <input
+                    type="checkbox"
+                    checked={selectedAudiences.includes(audience)}
+                    onChange={() => {
+                      if (selectedAudiences.includes(audience)) {
+                        setSelectedAudiences(selectedAudiences.filter(a => a !== audience));
+                      } else {
+                        setSelectedAudiences([...selectedAudiences, audience]);
+                      }
+                    }}
+                  />
+                  <span>{audience}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          <div className="score-filter">
+            <h3>Minimum {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)} Score</h3>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={minScore}
+              onChange={(e) => setMinScore(parseFloat(e.target.value))}
+            />
+            <span>{Math.round(minScore * 100)}%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="topic-list">
+        {filteredTopics.length > 0 ? (
+          filteredTopics.map(topic => (
+            <TopicCard
+              key={topic.id}
+              topic={topic}
+              onSave={() => onSaveTopic(topic.id)}
+              onDiscard={() => onDiscardTopic(topic.id)}
+            />
+          ))
+        ) : (
+          <div className="no-topics-message">
+            <p>No topics match your current filters.</p>
+            <button onClick={() => {
+              setSelectedTags([]);
+              setSelectedAudiences([]);
+              setMinScore(0);
+            }}>
+              Clear All Filters
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+# Test Strategy:
+1. Test score visualization with various score values
+2. Verify sorting functionality works correctly for all score types
+3. Test tag filtering with multiple tag selections
+4. Test audience filtering with various audience combinations
+5. Verify minimum score filtering works as expected
+6. Test combined filtering (tags + audiences + score)
+7. Ensure filter reset functionality works correctly
+8. Test edge cases like no matching topics or all topics filtered out
+
+# Subtasks:
+## 1. Implement Score Visualization Components [pending]
+### Dependencies: None
+### Description: Create reusable components for visualizing topic scores with different display options
+### Details:
+Create the ScoreVisualization component that displays relevance, freshness, and novelty scores with visual bars:
+
+1. Implement color coding based on score values (high/medium/low)
+2. Support different size variants (small/medium/large)
+3. Add percentage display next to visual bars
+4. Ensure the component is responsive and accessible
+5. Add appropriate styling with CSS variables for theming
+
+The component should accept props for the three score types and render appropriate visual representations that help users quickly understand topic quality.
+
+## 2. Build Topic Sorting Functionality [pending]
+### Dependencies: 7.1
+### Description: Implement the sorting logic for topics based on different metrics
+### Details:
+Create the sorting functionality that allows users to order topics by different metrics:
+
+1. Implement sort controls UI in the TopicFilters component
+2. Add state management for the current sort selection
+3. Create sort functions for each metric (relevance, freshness, novelty)
+4. Ensure sorting is performant with useMemo for large topic lists
+5. Add visual indicators for the active sort option
+
+The sorting should immediately update the topic list display when a user changes the sort option, with smooth transitions between different sort orders.
+
+## 3. Develop Tag and Audience Filtering System [pending]
+### Dependencies: 7.1, 7.2
+### Description: Create the filtering system for tags and audience segments
+### Details:
+Implement the tag and audience-based filtering system:
+
+1. Extract available tags and audiences from the topic data
+2. Create toggle UI for selecting/deselecting filter options
+3. Implement filter logic that supports multiple selected tags/audiences
+4. Add expandable/collapsible filter sections for better UI organization
+5. Ensure filters can be combined (e.g., filter by both tags AND audiences)
+6. Add "Clear filters" functionality
+
+The filtering system should dynamically update as users select different combinations of tags and audiences, with clear visual feedback on active filters.
+
+## 4. Implement Advanced Combined Filtering [pending]
+### Dependencies: 7.1, 7.2, 7.3
+### Description: Create the minimum score filtering and integrate all filtering systems
+### Details:
+Implement the advanced filtering capabilities and integrate all filtering systems:
+
+1. Add minimum score slider for filtering by score threshold
+2. Create the "no results" state with option to clear filters
+3. Implement combined filtering logic that applies all active filters
+4. Optimize performance for filtering large topic lists
+5. Add filter count indicators to show how many topics match current filters
+6. Ensure filter state persistence during the user session
+
+The combined filtering system should allow users to narrow down topics using any combination of sorting, tag filtering, audience filtering, and minimum score requirements.
+
