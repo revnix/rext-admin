@@ -56,7 +56,9 @@
         "details": "Develop the core utility functions and data structures that will power the Topic Builder application:\n\n1. Create `/lib/topic-builder-utils.ts` with the following functions:\n   - `detectYMYL(industry: string): boolean` - Detects if an industry is YMYL (Your Money Your Life)\n   - `getAudienceForIndustry(industry: string): string[]` - Returns relevant audience options for a given industry\n   - `validateFormStep(step: number, data: Partial<TopicBuilderFormData>): boolean` - Validates form data for a specific step\n\n2. Create `/data/topic-builder-options.ts` with comprehensive option datasets:\n   - Industry options with categories\n   - Audience personas mapped to industries\n   - Content types and platforms\n   - Tone and purpose options\n\nExample implementation:\n```typescript\n// /lib/topic-builder-utils.ts\nimport { TopicBuilderFormData } from '../types/topic-builder';\nimport { industryAudienceMap, ymylIndustries } from '../data/topic-builder-options';\n\nexport function detectYMYL(industry: string): boolean {\n  return ymylIndustries.includes(industry);\n}\n\nexport function getAudienceForIndustry(industry: string): string[] {\n  return industryAudienceMap[industry] || [];\n}\n\nexport function validateFormStep(step: number, data: Partial<TopicBuilderFormData>): boolean {\n  switch(step) {\n    case 1: // Wizard Mode Selection\n      return !!data.wizardMode;\n    case 2: // Industry/Subject\n      if (data.wizardMode === 'subject-first') {\n        return !!data.subject && !!data.industry;\n      }\n      return !!data.industry;\n    // Additional step validations...\n  }\n}\n\n// /data/topic-builder-options.ts\nexport const industries = [\n  { value: 'technology', label: 'Technology' },\n  { value: 'healthcare', label: 'Healthcare' },\n  // More industries...\n];\n\nexport const ymylIndustries = ['healthcare', 'finance', 'legal'];\n\nexport const industryAudienceMap = {\n  'technology': ['developers', 'IT professionals', 'tech enthusiasts'],\n  'healthcare': ['patients', 'healthcare providers', 'medical professionals'],\n  // More mappings...\n};\n```",
         "testStrategy": "1. Write unit tests for each utility function\n2. Test YMYL detection with various industries\n3. Verify audience mapping returns correct values for each industry\n4. Test form validation with valid and invalid data for each step\n5. Ensure data structures are comprehensive and match PRD requirements\n6. Test edge cases like unknown industries or empty inputs",
         "priority": "high",
-        "dependencies": [1],
+        "dependencies": [
+          1
+        ],
         "status": "done",
         "subtasks": [
           {
@@ -113,7 +115,10 @@
         "details": "Create the core wizard component architecture for the Topic Builder:\n\n1. Create main wizard container in `/app/ideas/create/page.tsx`\n2. Implement step navigation and progress tracking\n3. Create individual step components in `/components/topic-builder/steps/`:\n   - `WizardModeSelectionStep.tsx` - Choose between subject-first and industry-first modes\n   - `IndustryStep.tsx` - Select industry and subject (conditional)\n   - `AudienceStep.tsx` - Select target audience\n   - `ContentFormatStep.tsx` - Choose content type and platform\n   - `GoalsStep.tsx` - Set content purpose and tone\n   - `AdvancedStep.tsx` - Add keywords, exclusions, and preferences\n   - `ReviewStep.tsx` - Summary of all selections\n   - `GenerationStep.tsx` - Display loading state and results\n\n4. Implement form state management with custom hook in `/hooks/use-topic-builder.ts`\n\nExample implementation:\n```typescript\n// /hooks/use-topic-builder.ts\nimport { useState } from 'react';\nimport { TopicBuilderFormData } from '../types/topic-builder';\nimport { validateFormStep } from '../lib/topic-builder-utils';\n\nexport function useTopicBuilder() {\n  const [currentStep, setCurrentStep] = useState(1);\n  const [formData, setFormData] = useState<Partial<TopicBuilderFormData>>({\n    wizardMode: 'subject-first',\n    num_ideas: 5,\n  });\n  const [errors, setErrors] = useState<Record<string, string>>({});\n\n  const updateFormData = (newData: Partial<TopicBuilderFormData>) => {\n    setFormData(prev => ({ ...prev, ...newData }));\n  };\n\n  const goToNextStep = () => {\n    if (validateFormStep(currentStep, formData)) {\n      setCurrentStep(prev => prev + 1);\n      setErrors({});\n    } else {\n      // Set validation errors\n    }\n  };\n\n  const goToPrevStep = () => {\n    setCurrentStep(prev => Math.max(1, prev - 1));\n  };\n\n  return {\n    currentStep,\n    formData,\n    errors,\n    updateFormData,\n    goToNextStep,\n    goToPrevStep,\n  };\n}\n\n// /components/topic-builder/steps/IndustryStep.tsx\nimport { industries } from '../../../data/topic-builder-options';\n\nexport function IndustryStep({ formData, updateFormData }) {\n  return (\n    <div className=\"step-container\">\n      <h2>Select Your Industry</h2>\n      <select\n        value={formData.industry || ''}\n        onChange={(e) => updateFormData({ industry: e.target.value })}\n      >\n        <option value=\"\">Select an industry...</option>\n        {industries.map(industry => (\n          <option key={industry.value} value={industry.value}>\n            {industry.label}\n          </option>\n        ))}\n      </select>\n      \n      {formData.wizardMode === 'subject-first' && (\n        <div>\n          <h3>What's your specific subject?</h3>\n          <input\n            type=\"text\"\n            value={formData.subject || ''}\n            onChange={(e) => updateFormData({ subject: e.target.value })}\n            placeholder=\"Enter your subject or keyword\"\n          />\n        </div>\n      )}\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Test each wizard step component in isolation\n2. Verify form state updates correctly when inputs change\n3. Test step navigation (next/previous) with valid and invalid data\n4. Ensure conditional rendering works based on wizard mode\n5. Test that the wizard maintains state between steps\n6. Verify accessibility features (keyboard navigation, ARIA attributes)\n7. Test responsive design on different screen sizes",
         "priority": "high",
-        "dependencies": [1, 2],
+        "dependencies": [
+          1,
+          2
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -241,6 +246,186 @@
             "status": "done",
             "dependencies": [],
             "parentTaskId": 3
+          },
+          {
+            "id": 17,
+            "title": "Update IndustryStep to use RadioGroup for approach selection",
+            "description": "Replace the current ToggleGroup with RadioGroup component for the \"How would you like to start?\" question in the first step to maintain consistency with other steps",
+            "details": "- Change from ToggleGroup to RadioGroup component in IndustryStep.tsx:42-55\n- Update styling to match RadioGroup visual design patterns used in other steps\n- Ensure proper validation and error handling remains intact\n- Test the RadioGroup selection behavior and visual feedback\n- The options remain: \"I have a specific topic in mind\" and \"I want to explore my industry\"\n<info added on 2025-09-02T13:45:25.421Z>\nTask completed successfully. Replaced ToggleGroup with RadioGroup component in IndustryStep.tsx for the approach selection. Changes include: 1) Updated imports to use RadioGroup and RadioOption type, 2) Created approachOptions array with proper descriptions, 3) Replaced ToggleGroup with RadioGroup using columns=2 for horizontal layout, 4) Maintained all existing form validation and state management, 5) Fixed linting issues and committed changes. The approach selection now uses consistent RadioGroup styling that matches other wizard steps.\n</info added on 2025-09-02T13:45:25.421Z>",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 18,
+            "title": "Update AudienceStep to use CheckboxGroup in full-row layout",
+            "description": "Modify the AudienceStep to use CheckboxGroup component for the \"Who are you creating this for?\" question in full row layout instead of current MultiSelect component",
+            "details": "- Replace MultiSelect with CheckboxGroup in AudienceStep.tsx:89-98\n- Set columns=1 for full-row layout as specified in feedback\n- Convert from single selection to multi-selection behavior\n- Update the formData.audience field to accept string[] instead of string\n- Update form validation logic to handle array of audience values\n- Ensure proper error handling and validation feedback",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 19,
+            "title": "Update AudienceStep experience level to show 3 options in a row",
+            "description": "Modify the experience level RadioGroup in AudienceStep to display 3 options in a single row instead of single column layout",
+            "details": "- Change RadioGroup columns from 1 to 3 in AudienceStep.tsx:114 for reader_level\n- Ensure responsive design works properly on smaller screens\n- Test visual layout and readability with 3 columns\n- Verify that all option descriptions display correctly in the condensed layout\n- Options: Beginner, Intermediate, Expert",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 20,
+            "title": "Update AudienceStep audience size to show 2 options in a row",
+            "description": "Modify the audience size RadioGroup in AudienceStep to display 2 options per row instead of single column layout",
+            "details": "- Change RadioGroup columns from 1 to 2 in AudienceStep.tsx:132 for audience_size\n- Ensure responsive design works properly on smaller screens\n- Test visual layout with 2 columns for the 4 audience size options\n- Verify proper spacing and readability in the 2-column grid\n- Options: Small audience (under 1K), Medium audience (1K - 10K), Large audience (10K - 100K), Massive audience (100K+)",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 21,
+            "title": "Replace Geographic focus CheckboxGroup with Dropdown component",
+            "description": "Replace the Geographic focus CheckboxGroup in AudienceStep with a Dropdown (SelectWithCustom) component for better UX as specified in feedback",
+            "details": "- Replace CheckboxGroup with SelectWithCustom component in AudienceStep.tsx:154-167\n- Import necessary components and options for geographic regions\n- Update formData.demographic_location from string[] to single string value\n- Update the label to match \"Geographic focus\" as mentioned in feedback\n- Use DEMOGRAPHIC_LOCATION_OPTIONS or similar for dropdown options\n- Ensure validation and error handling works with single selection",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 22,
+            "title": "Update ContentFormatStep content type to show 4 options in a row",
+            "description": "Modify the content type RadioGroup in ContentFormatStep to display 4 options per row instead of current 2-column layout",
+            "details": "- Change RadioGroup columns from 2 to 4 in ContentFormatStep.tsx:54 for content_type\n- Ensure responsive design handles 4 columns gracefully on different screen sizes\n- May need to add responsive column classes like columns={4} with appropriate responsive breakpoints\n- Test visual layout and readability with 4 columns\n- Verify that all content type options and descriptions remain readable\n- Options include: Blog Post, Social Media, Video Content, Podcast, etc.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 23,
+            "title": "Update ContentFormatStep platform selection to show 4 options in a row",
+            "description": "Replace the current SelectWithCustom with RadioGroup component for platform selection and display 4 options per row",
+            "details": "- Replace SelectWithCustom with RadioGroup component in ContentFormatStep.tsx:105-112\n- Set columns=4 for the RadioGroup to show 4 platform options in a row\n- Convert PLATFORM_OPTIONS to RadioOption[] format with descriptions\n- Update the conditional logic to show RadioGroup when content_type is social-media or video-content\n- Ensure proper responsive design for smaller screens\n- Handle custom platform selection with an \"Other\" option that shows input field",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 24,
+            "title": "Update GoalsStep purpose section to show 4 options in a row",
+            "description": "Modify the \"What do you want to achieve?\" CheckboxGroup in GoalsStep to display 4 options per row instead of current 2-column layout",
+            "details": "- Change CheckboxGroup columns from 2 to 4 in GoalsStep.tsx:70 for purpose field\n- Ensure responsive design handles 4 columns appropriately on different screen sizes\n- Test visual layout and readability with 4 columns for purpose options\n- Verify that descriptions and option text remain clear and readable\n- Purpose options include: Educate & Inform, Entertain & Engage, Inspire & Motivate, etc.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 25,
+            "title": "Update GoalsStep content goal section to show 4 options in a row",
+            "description": "Modify the \"What style of content?\" CheckboxGroup in GoalsStep to display 4 options per row instead of current single column layout",
+            "details": "- Change CheckboxGroup columns from 1 to 4 in GoalsStep.tsx:124 for content_goal field\n- Ensure responsive design handles 4 columns appropriately on different screen sizes\n- Test visual layout and readability with 4 columns for content goal options\n- Verify that descriptions and option text remain clear and readable\n- Content goal options include: Tutorial & How-to, Explainer & Beginner Guide, News Updates & Trends, etc.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 26,
+            "title": "Update GoalsStep tone section to show 4 options in a row",
+            "description": "Modify the \"What tone should we use?\" CheckboxGroup in GoalsStep to display 4 options per row instead of current single column layout",
+            "details": "- Change CheckboxGroup columns from 1 to 4 in GoalsStep.tsx:142 for tone field\n- Ensure responsive design handles 4 columns appropriately on different screen sizes\n- Test visual layout and readability with 4 columns for tone options\n- Verify that descriptions and option text remain clear and readable\n- Tone options include: Professional & Formal, Casual & Conversational, Friendly & Warm, Humorous & Playful, etc.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 27,
+            "title": "Reorder AdvancedStep questions according to feedback specification",
+            "description": "Reorganize the question order in AdvancedStep to match the specified sequence in the feedback document",
+            "details": "- Reorder fields in AdvancedStep.tsx to match this sequence:\n  1. Content Language (language field)\n  2. Target Region (region field)  \n  3. Any specific topics to focus on? (keywords field)\n  4. Anything to avoid? (exclude field)\n  5. Content Timing Preference (fresh_vs_evergreen field)\n  6. Originality Preference (safe_vs_original field)\n  7. Any other requirements? (notes field)\n- Update the grid layout and spacing to accommodate the new order\n- Ensure all validation and error handling continues to work properly",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 28,
+            "title": "Update AdvancedStep timing and originality preferences to show 3 options in full rows",
+            "description": "Modify both Content Timing Preference and Originality Preference RadioGroups to display 3 options in a single full row layout",
+            "details": "- Update RadioGroup columns from 1 to 3 in AdvancedStep.tsx:156 for fresh_vs_evergreen field\n- Update RadioGroup columns from 1 to 3 in AdvancedStep.tsx:177 for safe_vs_original field  \n- Ensure both fields use full-width layout (remove md:col-span-1, use md:col-span-2)\n- Test responsive design with 3 columns on different screen sizes\n- Verify that option descriptions remain readable in the condensed layout\n- Options for timing: Fresh & Trending, Evergreen, Balanced\n- Options for originality: Safe/Conventional, Original/Contrarian, Balanced",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 29,
+            "title": "Redesign ReviewStep to use single column layout with icons",
+            "description": "Replace the current 3-card layout in ReviewStep with a single column layout using 3 columns with icons and headings as specified in feedback",
+            "details": "- Remove the current Card-based layout in ReviewStep.tsx:48-235\n- Create a new 3-column layout with Core Settings, Audience Goals, and Your Request sections\n- Add appropriate icons for each section heading (Settings, Target, Sparkles)\n- Use a clean column layout without boxes or minimal styling\n- Display values under each heading in a structured way\n- Remove the separate \"number of ideas\" display since it's mentioned it's not needed\n- Ensure responsive design works well on mobile devices",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 30,
+            "title": "Increase font size for question labels and titles",
+            "description": "Update all question labels and titles across wizard steps to use larger font sizes for better readability as specified in general feedback",
+            "details": "- Update FormField label styling to use larger font sizes in form-field.tsx\n- Review and update question labels in all step components (IndustryStep, AudienceStep, ContentFormatStep, GoalsStep, AdvancedStep)\n- Change from text-sm to text-base or text-lg for main question labels\n- Ensure consistency across all steps\n- Test readability and visual hierarchy with larger fonts\n- Maintain responsive design and proper spacing",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 31,
+            "title": "Enhance required field validation with red asterisk highlighting",
+            "description": "Ensure all mandatory/required fields are highlighted with red asterisks and validation is working properly across all wizard steps",
+            "details": "- Audit all FormField components across steps to ensure required fields show red asterisk\n- Update FormField component styling to make required asterisks more prominent\n- Verify validation is working for all required fields: wizardMode, industry, audience, content_type, purpose, content_goal, tone\n- Test validation feedback appears immediately when fields are left empty\n- Ensure asterisk color is consistently red (#ef4444 or similar)\n- Check that validation errors display properly for required fields",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 32,
+            "title": "Fix step completion logic to prevent premature green status",
+            "description": "Fix the issue where Step Z becomes green before user reaches Step Z, even when Step Y has optional fields and user filled Step X",
+            "details": "- Analyze the isStepCompleted logic in use-topic-builder.ts:208-214\n- Update the step completion logic to only mark a step as completed after user has actually visited and completed it\n- Ensure that optional steps don't cause future steps to show as completed prematurely\n- Test scenario: Fill step 1, go to step 3 (skipping optional step 2), ensure step 4 isn't green until actually reached\n- Update WizardSidebar component logic if needed to properly reflect completion status\n- Maintain proper validation while fixing the visual state issue",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 33,
+            "title": "Add navigation buttons to top of wizard form",
+            "description": "Add next/previous buttons to the top of the form in addition to the existing bottom navigation buttons for improved UX",
+            "details": "- Add navigation buttons to the top section of the main wizard page (page.tsx:216-226)\n- Duplicate the existing navigation logic from the footer (lines 229-255)\n- Position the top navigation appropriately within the CardHeader or above CardContent\n- Ensure both top and bottom navigation buttons stay in sync\n- Test navigation functionality from both locations\n- Maintain proper spacing and visual hierarchy\n- Consider making top navigation slightly smaller or different styling to differentiate from bottom",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 34,
+            "title": "Implement enhanced loading state for topic generation",
+            "description": "Create an AI-themed loading state that replaces the entire sidebar and form content during topic generation, giving a premium AI working experience",
+            "details": "- Create a new loading component with AI-themed animations and messaging\n- Replace the entire wizard content (sidebar + form) with loading state during generation\n- Design loading animations that convey AI processing (thinking, analyzing, generating)\n- Include progress indicators or animated elements related to AI work\n- Use appropriate messaging like \"AI is analyzing your requirements...\", \"Generating personalized topics...\"\n- Ensure loading state is responsive and works well on all screen sizes\n- Replace current simple \"Generating...\" text with immersive loading experience",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 35,
+            "title": "Create detailed topic results display layout",
+            "description": "Implement the detailed layout for displaying generated topic ideas with individual rows, titles, descriptions, scores, and save buttons",
+            "details": "- Create a new component for displaying generated topics after the loading state\n- Each topic should be displayed in its own row with proper spacing\n- Include topic title, description, score display, and individual save button for each topic\n- Add checkbox/selection mechanism for multiple topic selection\n- Display all necessary meta details (tags, audience fit, channel fit, why it works)\n- Implement bulk save functionality for selected topics\n- Ensure responsive design for topic list on different screen sizes\n- Replace the existing simple topic display with this detailed layout",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
+          },
+          {
+            "id": 36,
+            "title": "Implement bulk topic selection and library save functionality",
+            "description": "Create functionality for users to select multiple generated topics and save them to their library in bulk",
+            "details": "- Add selection state management for multiple topics in use-topic-builder.ts\n- Create checkbox selection UI for each topic row\n- Implement \"Select All\" / \"Deselect All\" functionality\n- Add bulk save button that saves all selected topics to the library\n- Create API endpoint or service for saving topics to user library\n- Display selection count and bulk action controls\n- Ensure proper error handling for bulk save operations\n- Add success feedback when topics are saved successfully",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 3
           }
         ]
       },
@@ -251,7 +436,10 @@
         "details": "Implement the AI service integration layer for topic generation:\n\n1. Create `/app/api/generate-topics/route.ts` Next.js API route\n2. Implement OpenAI API integration with the `openai` npm package\n3. Add Groq API as a fallback option\n4. Implement error handling, retry logic, and rate limiting\n5. Create structured prompt templates based on form data\n\nExample implementation:\n```typescript\n// /lib/ai-service.ts\nimport OpenAI from 'openai';\nimport { TopicBuilderFormData } from '../types/topic-builder';\n\nconst openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n});\n\nexport async function generateTopicsWithAI(formData: TopicBuilderFormData) {\n  try {\n    const prompt = buildPromptFromFormData(formData);\n    \n    const response = await openai.chat.completions.create({\n      model: 'gpt-4-turbo',\n      messages: [\n        { role: 'system', content: 'You are a specialized content topic generator.' },\n        { role: 'user', content: prompt }\n      ],\n      response_format: { type: 'json_object' },\n      temperature: 0.7,\n    });\n    \n    const result = JSON.parse(response.choices[0].message.content);\n    return {\n      topics: result.topics,\n      request_id: response.id,\n      model_used: 'gpt-4-turbo',\n      generation_time_ms: response.usage.completion_tokens * 10, // Approximation\n    };\n  } catch (error) {\n    console.error('OpenAI API error:', error);\n    // Try fallback to Groq if OpenAI fails\n    return generateTopicsWithGroq(formData);\n  }\n}\n\n// Fallback to Groq API\nasync function generateTopicsWithGroq(formData: TopicBuilderFormData) {\n  // Similar implementation using Groq API\n}\n\nfunction buildPromptFromFormData(formData: TopicBuilderFormData): string {\n  const { wizardMode, industry, subject, content_type, audience, purpose, tone } = formData;\n  \n  let prompt = '';\n  \n  if (wizardMode === 'subject-first') {\n    prompt = `Generate ${formData.num_ideas} content topics about ${subject} for the ${industry} industry.`;\n  } else {\n    prompt = `Generate ${formData.num_ideas} content topics for the ${industry} industry.`;\n  }\n  \n  prompt += `\\n\\nContent type: ${content_type}`;\n  if (formData.platform) prompt += `\\nPlatform: ${formData.platform}`;\n  prompt += `\\nTarget audience: ${audience.join(', ')}`;\n  prompt += `\\nContent purpose: ${purpose.join(', ')}`;\n  prompt += `\\nTone: ${tone.join(', ')}`;\n  \n  if (formData.keywords) prompt += `\\nInclude these keywords: ${formData.keywords}`;\n  if (formData.exclude) prompt += `\\nAvoid these topics: ${formData.exclude}`;\n  \n  prompt += `\\n\\nReturn the results as a JSON object with this structure:\n{\n  \"topics\": [\n    {\n      \"id\": \"unique-id\",\n      \"title\": \"Topic title\",\n      \"angle\": \"Brief description of the angle\",\n      \"channel_fit\": [\"platforms this works well for\"],\n      \"audience_fit\": [\"audiences this appeals to\"],\n      \"why_it_works\": \"Explanation of why this topic works\",\n      \"scores\": {\n        \"relevance\": 0.95,\n        \"freshness\": 0.85,\n        \"novelty\": 0.75\n      },\n      \"tags\": [\"relevant\", \"tags\"]\n    }\n  ]\n}`;\n  \n  return prompt;\n}\n\n// /app/api/generate-topics/route.ts\nimport { NextResponse } from 'next/server';\nimport { generateTopicsWithAI } from '@/lib/ai-service';\nimport { TopicBuilderFormData } from '@/types/topic-builder';\n\nexport async function POST(request: Request) {\n  try {\n    const body = await request.json();\n    const formData = body.formData as TopicBuilderFormData;\n    \n    // Validate the request data\n    if (!formData || !formData.industry) {\n      return NextResponse.json(\n        { error: 'Invalid request data' },\n        { status: 400 }\n      );\n    }\n    \n    const result = await generateTopicsWithAI(formData);\n    \n    return NextResponse.json({\n      topics: result.topics,\n      request_id: result.request_id,\n      generated_at: new Date().toISOString(),\n      model_used: result.model_used,\n      generation_time_ms: result.generation_time_ms\n    });\n  } catch (error) {\n    console.error('Topic generation error:', error);\n    return NextResponse.json(\n      { \n        error: 'Failed to generate topics',\n        error_code: 'generation_failed',\n        fallback_available: true\n      },\n      { status: 500 }\n    );\n  }\n}\n```",
         "testStrategy": "1. Create unit tests for prompt generation with different form data\n2. Mock OpenAI API responses for testing without actual API calls\n3. Test error handling and fallback to Groq API\n4. Verify rate limiting and retry logic\n5. Test with various industry/audience combinations\n6. Ensure proper parsing of AI-generated JSON responses\n7. Test API route with valid and invalid requests\n8. Measure response times and optimize if needed",
         "priority": "high",
-        "dependencies": [1, 2],
+        "dependencies": [
+          1,
+          2
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -267,7 +455,9 @@
             "id": 2,
             "title": "Develop Groq API Fallback Integration",
             "description": "Implement Groq API as a fallback option when OpenAI fails",
-            "dependencies": ["4.1"],
+            "dependencies": [
+              "4.1"
+            ],
             "details": "1. Install the Groq API client library\n2. Create the `generateTopicsWithGroq` function in `/lib/ai-service.ts`\n3. Configure Groq API with appropriate models and parameters\n4. Ensure response format matches OpenAI's structure for consistency\n5. Implement proper error handling specific to Groq API\n6. Add environment variable configuration for Groq API keys\n7. Create a seamless fallback mechanism from OpenAI to Groq",
             "status": "pending",
             "testStrategy": ""
@@ -285,7 +475,10 @@
             "id": 4,
             "title": "Implement Response Parsing and Error Handling",
             "description": "Create robust response parsing and error handling for AI services",
-            "dependencies": ["4.1", "4.2"],
+            "dependencies": [
+              "4.1",
+              "4.2"
+            ],
             "details": "1. Implement JSON parsing with error handling for malformed responses\n2. Create a standardized response format for both AI services\n3. Add validation for the parsed response structure\n4. Implement detailed error logging with request IDs\n5. Create error classification (network, API limit, malformed response)\n6. Add telemetry for tracking API usage and errors\n7. Implement graceful degradation when both services fail",
             "status": "pending",
             "testStrategy": ""
@@ -294,7 +487,12 @@
             "id": 5,
             "title": "Create Next.js API Route for Topic Generation",
             "description": "Implement the Next.js API route for handling topic generation requests",
-            "dependencies": ["4.1", "4.2", "4.3", "4.4"],
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.3",
+              "4.4"
+            ],
             "details": "1. Create `/app/api/generate-topics/route.ts` file\n2. Implement the POST handler for receiving form data\n3. Add request validation to ensure required fields are present\n4. Integrate with the AI service functions\n5. Implement proper HTTP status codes and error responses\n6. Add request logging for debugging\n7. Create a standardized API response format\n8. Implement request timeout handling",
             "status": "pending",
             "testStrategy": ""
@@ -303,7 +501,11 @@
             "id": 6,
             "title": "Implement Rate Limiting and Retry Logic",
             "description": "Add rate limiting and retry mechanisms for reliable AI service integration",
-            "dependencies": ["4.1", "4.2", "4.4"],
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.4"
+            ],
             "details": "1. Implement exponential backoff retry logic for transient errors\n2. Add configurable retry attempts and timeout settings\n3. Implement client-side rate limiting to prevent API quota exhaustion\n4. Create a request queue system for high-traffic scenarios\n5. Add circuit breaker pattern to prevent cascading failures\n6. Implement request caching for identical prompts\n7. Add monitoring for API usage and rate limit tracking\n8. Create fallback strategies when rate limits are reached",
             "status": "pending",
             "testStrategy": ""
@@ -317,7 +519,10 @@
         "details": "Implement the UI components for displaying and managing generated topics:\n\n1. Create `/components/topic-builder/results/` directory with the following components:\n   - `TopicCard.tsx` - Display individual topic with metadata\n   - `TopicList.tsx` - Container for all generated topics\n   - `TopicFilters.tsx` - Filtering and sorting controls\n   - `TopicActions.tsx` - Buttons for save, edit, regenerate, export\n\n2. Implement local storage integration for saving topics\n\nExample implementation:\n```typescript\n// /components/topic-builder/results/TopicCard.tsx\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface TopicCardProps {\n  topic: GeneratedTopic;\n  onSave: (id: string) => void;\n  onDiscard: (id: string) => void;\n}\n\nexport function TopicCard({ topic, onSave, onDiscard }: TopicCardProps) {\n  const { id, title, angle, scores, audience_fit, why_it_works, tags } = topic;\n  \n  return (\n    <div className=\"topic-card\">\n      <h3 className=\"topic-title\">{title}</h3>\n      <p className=\"topic-angle\">{angle}</p>\n      \n      <div className=\"topic-metadata\">\n        <div className=\"topic-scores\">\n          <div className=\"score-item\">\n            <span>Relevance</span>\n            <div className=\"score-bar\" style={{ width: `${scores.relevance * 100}%` }} />\n            <span>{(scores.relevance * 100).toFixed(0)}%</span>\n          </div>\n          <div className=\"score-item\">\n            <span>Freshness</span>\n            <div className=\"score-bar\" style={{ width: `${scores.freshness * 100}%` }} />\n            <span>{(scores.freshness * 100).toFixed(0)}%</span>\n          </div>\n          <div className=\"score-item\">\n            <span>Novelty</span>\n            <div className=\"score-bar\" style={{ width: `${scores.novelty * 100}%` }} />\n            <span>{(scores.novelty * 100).toFixed(0)}%</span>\n          </div>\n        </div>\n        \n        <div className=\"topic-audience\">\n          <h4>Audience Fit</h4>\n          <div className=\"audience-tags\">\n            {audience_fit.map(audience => (\n              <span key={audience} className=\"audience-tag\">{audience}</span>\n            ))}\n          </div>\n        </div>\n        \n        <div className=\"topic-explanation\">\n          <h4>Why It Works</h4>\n          <p>{why_it_works}</p>\n        </div>\n        \n        <div className=\"topic-tags\">\n          {tags.map(tag => (\n            <span key={tag} className=\"topic-tag\">{tag}</span>\n          ))}\n        </div>\n      </div>\n      \n      <div className=\"topic-actions\">\n        <button onClick={() => onSave(id)} className=\"save-button\">\n          Save Topic\n        </button>\n        <button onClick={() => onDiscard(id)} className=\"discard-button\">\n          Discard\n        </button>\n      </div>\n    </div>\n  );\n}\n\n// /components/topic-builder/results/TopicList.tsx\nimport { useState } from 'react';\nimport { TopicCard } from './TopicCard';\nimport { TopicFilters } from './TopicFilters';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface TopicListProps {\n  topics: GeneratedTopic[];\n  onSaveTopic: (id: string) => void;\n  onDiscardTopic: (id: string) => void;\n  onExportTopics: () => void;\n  onRegenerateTopic: (id: string) => void;\n}\n\nexport function TopicList({ topics, onSaveTopic, onDiscardTopic, onExportTopics, onRegenerateTopic }: TopicListProps) {\n  const [sortBy, setSortBy] = useState<'relevance' | 'freshness' | 'novelty'>('relevance');\n  const [filterTags, setFilterTags] = useState<string[]>([]);\n  \n  // Sort and filter topics\n  const filteredTopics = topics\n    .filter(topic => {\n      if (filterTags.length === 0) return true;\n      return filterTags.some(tag => topic.tags.includes(tag));\n    })\n    .sort((a, b) => b.scores[sortBy] - a.scores[sortBy]);\n  \n  return (\n    <div className=\"topic-list-container\">\n      <div className=\"topic-list-header\">\n        <h2>Generated Topics</h2>\n        <TopicFilters\n          sortBy={sortBy}\n          onSortChange={setSortBy}\n          availableTags={Array.from(new Set(topics.flatMap(t => t.tags)))}\n          selectedTags={filterTags}\n          onTagsChange={setFilterTags}\n        />\n        <button onClick={onExportTopics} className=\"export-button\">\n          Export Topics\n        </button>\n      </div>\n      \n      <div className=\"topic-list\">\n        {filteredTopics.map(topic => (\n          <TopicCard\n            key={topic.id}\n            topic={topic}\n            onSave={onSaveTopic}\n            onDiscard={onDiscardTopic}\n          />\n        ))}\n      </div>\n    </div>\n  );\n}\n\n// /hooks/use-topic-storage.ts\nimport { useState, useEffect } from 'react';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\nexport function useTopicStorage() {\n  const [savedTopics, setSavedTopics] = useState<GeneratedTopic[]>([]);\n  \n  // Load saved topics from localStorage on mount\n  useEffect(() => {\n    const storedTopics = localStorage.getItem('savedTopics');\n    if (storedTopics) {\n      try {\n        setSavedTopics(JSON.parse(storedTopics));\n      } catch (error) {\n        console.error('Failed to parse saved topics:', error);\n      }\n    }\n  }, []);\n  \n  // Save topics to localStorage whenever they change\n  useEffect(() => {\n    localStorage.setItem('savedTopics', JSON.stringify(savedTopics));\n  }, [savedTopics]);\n  \n  const saveTopic = (topic: GeneratedTopic) => {\n    setSavedTopics(prev => {\n      // Don't add duplicates\n      if (prev.some(t => t.id === topic.id)) return prev;\n      return [...prev, topic];\n    });\n  };\n  \n  const removeTopic = (id: string) => {\n    setSavedTopics(prev => prev.filter(topic => topic.id !== id));\n  };\n  \n  const exportTopics = (format: 'json' | 'csv' = 'json') => {\n    if (format === 'json') {\n      const dataStr = JSON.stringify(savedTopics, null, 2);\n      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;\n      \n      const exportFileDefaultName = `topic-ideas-${new Date().toISOString().slice(0, 10)}.json`;\n      \n      const linkElement = document.createElement('a');\n      linkElement.setAttribute('href', dataUri);\n      linkElement.setAttribute('download', exportFileDefaultName);\n      linkElement.click();\n    } else if (format === 'csv') {\n      // CSV export implementation\n    }\n  };\n  \n  return {\n    savedTopics,\n    saveTopic,\n    removeTopic,\n    exportTopics,\n  };\n}\n```",
         "testStrategy": "1. Test TopicCard component rendering with various topic data\n2. Verify sorting and filtering functionality in TopicList\n3. Test localStorage saving and loading with mock data\n4. Verify export functionality generates correct file formats\n5. Test responsive design for different screen sizes\n6. Ensure accessibility for all interactive elements\n7. Test edge cases like empty topic lists or missing data\n8. Verify that topic scores display correctly",
         "priority": "medium",
-        "dependencies": [1, 3],
+        "dependencies": [
+          1,
+          3
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -333,7 +538,9 @@
             "id": 2,
             "title": "Build TopicList Container Component",
             "description": "Implement the TopicList component that serves as a container for all generated topics",
-            "dependencies": ["5.1"],
+            "dependencies": [
+              "5.1"
+            ],
             "details": "Create `/components/topic-builder/results/TopicList.tsx` that:\n- Renders a collection of TopicCard components\n- Manages the layout of topic cards (grid or list view)\n- Handles empty states when no topics are available\n- Implements pagination or infinite scroll if needed\n- Provides a header with summary information\n- Integrates with the filtering and sorting system\n- Passes appropriate props to child components\n\nImplement state management for the current view and pagination if applicable.",
             "status": "pending",
             "testStrategy": ""
@@ -342,7 +549,9 @@
             "id": 3,
             "title": "Create TopicFilters Component",
             "description": "Implement filtering and sorting controls for the topic list",
-            "dependencies": ["5.2"],
+            "dependencies": [
+              "5.2"
+            ],
             "details": "Create `/components/topic-builder/results/TopicFilters.tsx` that includes:\n- Dropdown for sorting by relevance, freshness, or novelty\n- Tag-based filtering with multi-select capability\n- Audience filtering options\n- Clear filters button\n- Visual indicators for active filters\n- Mobile-friendly filter UI\n\nImplement the state management for filter selections and the logic to apply filters to the topic list.",
             "status": "pending",
             "testStrategy": ""
@@ -351,7 +560,9 @@
             "id": 4,
             "title": "Implement TopicActions Component",
             "description": "Create action buttons and handlers for topic management operations",
-            "dependencies": ["5.1"],
+            "dependencies": [
+              "5.1"
+            ],
             "details": "Create `/components/topic-builder/results/TopicActions.tsx` with:\n- Save topic button and handler\n- Edit topic functionality\n- Regenerate topic button and handler\n- Export topics button (single or multiple)\n- Confirmation dialogs for destructive actions\n- Visual feedback for action states (loading, success, error)\n\nEnsure proper event handling and integration with parent components.",
             "status": "pending",
             "testStrategy": ""
@@ -374,7 +585,10 @@
         "details": "Implement the dynamic form behavior and dependencies for the Topic Builder wizard:\n\n1. Create industry-dependent audience options\n2. Implement conditional fields based on wizard mode\n3. Add platform-specific content format suggestions\n4. Implement YMYL detection and special handling\n\nExample implementation:\n```typescript\n// Enhanced version of /components/topic-builder/steps/AudienceStep.tsx\nimport { useEffect } from 'react';\nimport { getAudienceForIndustry } from '@/lib/topic-builder-utils';\nimport { TopicBuilderFormData } from '@/types/topic-builder';\n\ninterface AudienceStepProps {\n  formData: Partial<TopicBuilderFormData>;\n  updateFormData: (data: Partial<TopicBuilderFormData>) => void;\n}\n\nexport function AudienceStep({ formData, updateFormData }: AudienceStepProps) {\n  // Get audience options based on selected industry\n  const audienceOptions = formData.industry ? \n    getAudienceForIndustry(formData.industry) : [];\n  \n  // Update audience selection when industry changes\n  useEffect(() => {\n    if (formData.industry && (!formData.audience || formData.audience.length === 0)) {\n      // Set default audience based on industry\n      const defaultAudiences = audienceOptions.slice(0, 2); // First two options as default\n      updateFormData({ audience: defaultAudiences });\n    }\n  }, [formData.industry, formData.audience, audienceOptions, updateFormData]);\n  \n  const handleAudienceChange = (audience: string, checked: boolean) => {\n    const currentAudiences = formData.audience || [];\n    if (checked) {\n      updateFormData({ \n        audience: [...currentAudiences, audience] \n      });\n    } else {\n      updateFormData({ \n        audience: currentAudiences.filter(a => a !== audience) \n      });\n    }\n  };\n  \n  return (\n    <div className=\"step-container\">\n      <h2>Select Your Target Audience</h2>\n      <p>Who will be consuming this content?</p>\n      \n      <div className=\"audience-options\">\n        {audienceOptions.map(audience => (\n          <label key={audience} className=\"audience-option\">\n            <input\n              type=\"checkbox\"\n              checked={(formData.audience || []).includes(audience)}\n              onChange={(e) => handleAudienceChange(audience, e.target.checked)}\n            />\n            <span>{audience}</span>\n          </label>\n        ))}\n        \n        <label className=\"audience-option custom\">\n          <input\n            type=\"checkbox\"\n            checked={!!(formData.audience_other)}\n            onChange={(e) => {\n              if (!e.target.checked) {\n                updateFormData({ audience_other: undefined });\n              }\n            }}\n          />\n          <span>Other:</span>\n          <input\n            type=\"text\"\n            value={formData.audience_other || ''}\n            onChange={(e) => {\n              const value = e.target.value;\n              updateFormData({ \n                audience_other: value,\n                audience: value ? \n                  [...(formData.audience || []).filter(a => a !== formData.audience_other), value] :\n                  (formData.audience || []).filter(a => a !== formData.audience_other)\n              });\n            }}\n            placeholder=\"Custom audience\"\n            disabled={!formData.audience_other && !(formData.audience || []).some(a => a === formData.audience_other)}\n          />\n        </label>\n      </div>\n      \n      <div className=\"reader-level-selection\">\n        <h3>Reader Knowledge Level</h3>\n        <div className=\"toggle-group\">\n          <button\n            className={formData.reader_level === 'beginner' ? 'active' : ''}\n            onClick={() => updateFormData({ reader_level: 'beginner' })}\n          >\n            Beginner\n          </button>\n          <button\n            className={formData.reader_level === 'intermediate' ? 'active' : ''}\n            onClick={() => updateFormData({ reader_level: 'intermediate' })}\n          >\n            Intermediate\n          </button>\n          <button\n            className={formData.reader_level === 'expert' ? 'active' : ''}\n            onClick={() => updateFormData({ reader_level: 'expert' })}\n          >\n            Expert\n          </button>\n          <button\n            className={formData.reader_level === 'mixed' ? 'active' : ''}\n            onClick={() => updateFormData({ reader_level: 'mixed' })}\n          >\n            Mixed\n          </button>\n        </div>\n      </div>\n    </div>\n  );\n}\n\n// Enhanced version of /components/topic-builder/steps/ContentFormatStep.tsx\nimport { useEffect } from 'react';\nimport { contentTypes, platformsByContentType } from '@/data/topic-builder-options';\nimport { TopicBuilderFormData } from '@/types/topic-builder';\n\ninterface ContentFormatStepProps {\n  formData: Partial<TopicBuilderFormData>;\n  updateFormData: (data: Partial<TopicBuilderFormData>) => void;\n}\n\nexport function ContentFormatStep({ formData, updateFormData }: ContentFormatStepProps) {\n  // Get platform options based on selected content type\n  const platformOptions = formData.content_type ? \n    platformsByContentType[formData.content_type] : [];\n  \n  // Update platform when content type changes\n  useEffect(() => {\n    if (formData.content_type && formData.platform) {\n      // Check if current platform is valid for new content type\n      const isValidPlatform = platformOptions.some(p => p.value === formData.platform);\n      if (!isValidPlatform) {\n        // Reset platform if not valid for new content type\n        updateFormData({ platform: undefined });\n      }\n    }\n  }, [formData.content_type, formData.platform, platformOptions, updateFormData]);\n  \n  return (\n    <div className=\"step-container\">\n      <h2>Content Format & Distribution</h2>\n      <p>What type of content are you creating?</p>\n      \n      <div className=\"content-type-selection\">\n        <select\n          value={formData.content_type || ''}\n          onChange={(e) => updateFormData({ content_type: e.target.value })}\n        >\n          <option value=\"\">Select content type...</option>\n          {contentTypes.map(type => (\n            <option key={type.value} value={type.value}>\n              {type.label}\n            </option>\n          ))}\n        </select>\n      </div>\n      \n      {formData.content_type && (\n        <div className=\"platform-selection\">\n          <h3>Distribution Platform</h3>\n          <p>Where will this content be published?</p>\n          \n          <select\n            value={formData.platform || ''}\n            onChange={(e) => updateFormData({ platform: e.target.value })}\n          >\n            <option value=\"\">Select platform...</option>\n            {platformOptions.map(platform => (\n              <option key={platform.value} value={platform.value}>\n                {platform.label}\n              </option>\n            ))}\n          </select>\n        </div>\n      )}\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Test industry-audience mapping with various industry selections\n2. Verify that audience options update correctly when industry changes\n3. Test conditional rendering based on wizard mode selection\n4. Verify platform options update correctly when content type changes\n5. Test YMYL detection for relevant industries\n6. Verify form validation with dynamic dependencies\n7. Test default value population for dependent fields\n8. Ensure all form state updates correctly with complex dependencies",
         "priority": "medium",
-        "dependencies": [2, 3],
+        "dependencies": [
+          2,
+          3
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -390,7 +604,9 @@
             "id": 2,
             "title": "Implement Conditional Fields Based on Wizard Mode",
             "description": "Create a system that shows or hides form fields based on the selected wizard mode (subject-first or industry-first)",
-            "dependencies": ["6.1"],
+            "dependencies": [
+              "6.1"
+            ],
             "details": "1. Create a utility function to determine which fields should be shown based on wizard mode\n2. Implement conditional rendering in the wizard step components\n3. Add logic to reset invalid field values when wizard mode changes\n4. Create smooth transitions for appearing/disappearing fields\n5. Ensure form validation rules adapt to the active wizard mode\n6. Test different wizard mode paths to verify correct field visibility",
             "status": "pending",
             "testStrategy": ""
@@ -399,7 +615,10 @@
             "id": 3,
             "title": "Add Platform-Specific Content Format Suggestions",
             "description": "Implement a system that suggests appropriate content formats based on the selected platform",
-            "dependencies": ["6.1", "6.2"],
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
             "details": "1. Create a data structure mapping platforms to recommended content formats\n2. Implement the ContentFormatStep component with dynamic options\n3. Add logic to update content type options when platform changes\n4. Create UI for displaying platform-specific recommendations\n5. Implement auto-selection of default content format when platform changes\n6. Add tests to verify content format suggestions update correctly",
             "status": "pending",
             "testStrategy": ""
@@ -408,7 +627,10 @@
             "id": 4,
             "title": "Implement YMYL Detection and Special Handling",
             "description": "Create a system to detect Your Money Your Life (YMYL) topics and implement special handling for these sensitive topics",
-            "dependencies": ["6.1", "6.2"],
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
             "details": "1. Create a utility function to detect YMYL topics based on industry and subject\n2. Implement warning UI components for YMYL topics\n3. Add special validation rules for YMYL content\n4. Create documentation guidelines that appear for YMYL topics\n5. Implement special API parameters for YMYL content generation\n6. Test YMYL detection with various industry/subject combinations",
             "status": "pending",
             "testStrategy": ""
@@ -417,7 +639,12 @@
             "id": 5,
             "title": "Optimize Form State Updates and Performance",
             "description": "Implement performance optimizations for form state updates to ensure smooth user experience with complex dependencies",
-            "dependencies": ["6.1", "6.2", "6.3", "6.4"],
+            "dependencies": [
+              "6.1",
+              "6.2",
+              "6.3",
+              "6.4"
+            ],
             "details": "1. Implement debounced form updates for frequently changing fields\n2. Add memoization for expensive computations in form dependencies\n3. Optimize re-renders using React.memo and useMemo for form components\n4. Implement batched state updates for related form fields\n5. Add performance monitoring for form interactions\n6. Test form responsiveness under various update scenarios",
             "status": "pending",
             "testStrategy": ""
@@ -431,7 +658,9 @@
         "details": "Build the advanced topic scoring and filtering system:\n\n1. Create components for displaying and filtering by topic scores\n2. Implement sorting by relevance, freshness, and novelty\n3. Add tag-based filtering\n4. Create visualization for topic scores\n\nExample implementation:\n```typescript\n// /components/topic-builder/results/TopicFilters.tsx\nimport { useState } from 'react';\n\ninterface TopicFiltersProps {\n  sortBy: 'relevance' | 'freshness' | 'novelty';\n  onSortChange: (sort: 'relevance' | 'freshness' | 'novelty') => void;\n  availableTags: string[];\n  selectedTags: string[];\n  onTagsChange: (tags: string[]) => void;\n}\n\nexport function TopicFilters({ \n  sortBy, \n  onSortChange, \n  availableTags, \n  selectedTags, \n  onTagsChange \n}: TopicFiltersProps) {\n  const [showTagFilter, setShowTagFilter] = useState(false);\n  \n  const handleTagToggle = (tag: string) => {\n    if (selectedTags.includes(tag)) {\n      onTagsChange(selectedTags.filter(t => t !== tag));\n    } else {\n      onTagsChange([...selectedTags, tag]);\n    }\n  };\n  \n  return (\n    <div className=\"topic-filters\">\n      <div className=\"sort-controls\">\n        <label>Sort by:</label>\n        <div className=\"sort-buttons\">\n          <button\n            className={sortBy === 'relevance' ? 'active' : ''}\n            onClick={() => onSortChange('relevance')}\n          >\n            Relevance\n          </button>\n          <button\n            className={sortBy === 'freshness' ? 'active' : ''}\n            onClick={() => onSortChange('freshness')}\n          >\n            Freshness\n          </button>\n          <button\n            className={sortBy === 'novelty' ? 'active' : ''}\n            onClick={() => onSortChange('novelty')}\n          >\n            Novelty\n          </button>\n        </div>\n      </div>\n      \n      <div className=\"tag-filters\">\n        <button \n          className=\"filter-toggle\"\n          onClick={() => setShowTagFilter(!showTagFilter)}\n        >\n          Filter by Tags {showTagFilter ? '▲' : '▼'}\n        </button>\n        \n        {showTagFilter && (\n          <div className=\"tag-options\">\n            {availableTags.map(tag => (\n              <label key={tag} className=\"tag-option\">\n                <input\n                  type=\"checkbox\"\n                  checked={selectedTags.includes(tag)}\n                  onChange={() => handleTagToggle(tag)}\n                />\n                <span>{tag}</span>\n              </label>\n            ))}\n          </div>\n        )}\n      </div>\n    </div>\n  );\n}\n\n// /components/topic-builder/results/ScoreVisualization.tsx\ninterface ScoreVisualizationProps {\n  relevance: number;\n  freshness: number;\n  novelty: number;\n  size?: 'small' | 'medium' | 'large';\n}\n\nexport function ScoreVisualization({ \n  relevance, \n  freshness, \n  novelty, \n  size = 'medium' \n}: ScoreVisualizationProps) {\n  const getScoreColor = (score: number) => {\n    if (score >= 0.8) return 'var(--color-success)';\n    if (score >= 0.6) return 'var(--color-warning)';\n    return 'var(--color-danger)';\n  };\n  \n  const sizeClass = `score-viz-${size}`;\n  \n  return (\n    <div className={`score-visualization ${sizeClass}`}>\n      <div className=\"score-item\">\n        <span className=\"score-label\">Relevance</span>\n        <div className=\"score-bar-container\">\n          <div \n            className=\"score-bar\" \n            style={{ \n              width: `${relevance * 100}%`,\n              backgroundColor: getScoreColor(relevance)\n            }} \n          />\n        </div>\n        <span className=\"score-value\">{Math.round(relevance * 100)}%</span>\n      </div>\n      \n      <div className=\"score-item\">\n        <span className=\"score-label\">Freshness</span>\n        <div className=\"score-bar-container\">\n          <div \n            className=\"score-bar\" \n            style={{ \n              width: `${freshness * 100}%`,\n              backgroundColor: getScoreColor(freshness)\n            }} \n          />\n        </div>\n        <span className=\"score-value\">{Math.round(freshness * 100)}%</span>\n      </div>\n      \n      <div className=\"score-item\">\n        <span className=\"score-label\">Novelty</span>\n        <div className=\"score-bar-container\">\n          <div \n            className=\"score-bar\" \n            style={{ \n              width: `${novelty * 100}%`,\n              backgroundColor: getScoreColor(novelty)\n            }} \n          />\n        </div>\n        <span className=\"score-value\">{Math.round(novelty * 100)}%</span>\n      </div>\n    </div>\n  );\n}\n\n// Enhanced TopicList with advanced filtering\nimport { useState, useMemo } from 'react';\nimport { TopicCard } from './TopicCard';\nimport { TopicFilters } from './TopicFilters';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface TopicListProps {\n  topics: GeneratedTopic[];\n  onSaveTopic: (id: string) => void;\n  onDiscardTopic: (id: string) => void;\n}\n\nexport function TopicList({ topics, onSaveTopic, onDiscardTopic }: TopicListProps) {\n  const [sortBy, setSortBy] = useState<'relevance' | 'freshness' | 'novelty'>('relevance');\n  const [selectedTags, setSelectedTags] = useState<string[]>([]);\n  const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);\n  const [minScore, setMinScore] = useState(0);\n  \n  // Get all available tags and audiences from topics\n  const availableTags = useMemo(() => {\n    return Array.from(new Set(topics.flatMap(topic => topic.tags)));\n  }, [topics]);\n  \n  const availableAudiences = useMemo(() => {\n    return Array.from(new Set(topics.flatMap(topic => topic.audience_fit)));\n  }, [topics]);\n  \n  // Filter and sort topics\n  const filteredTopics = useMemo(() => {\n    return topics\n      .filter(topic => {\n        // Filter by tags\n        if (selectedTags.length > 0 && !selectedTags.some(tag => topic.tags.includes(tag))) {\n          return false;\n        }\n        \n        // Filter by audiences\n        if (selectedAudiences.length > 0 && !selectedAudiences.some(audience => topic.audience_fit.includes(audience))) {\n          return false;\n        }\n        \n        // Filter by minimum score\n        if (topic.scores[sortBy] < minScore) {\n          return false;\n        }\n        \n        return true;\n      })\n      .sort((a, b) => b.scores[sortBy] - a.scores[sortBy]);\n  }, [topics, selectedTags, selectedAudiences, minScore, sortBy]);\n  \n  return (\n    <div className=\"topic-list-container\">\n      <div className=\"topic-list-header\">\n        <h2>Generated Topics ({filteredTopics.length} of {topics.length})</h2>\n        \n        <TopicFilters\n          sortBy={sortBy}\n          onSortChange={setSortBy}\n          availableTags={availableTags}\n          selectedTags={selectedTags}\n          onTagsChange={setSelectedTags}\n        />\n        \n        <div className=\"advanced-filters\">\n          <div className=\"audience-filter\">\n            <h3>Filter by Audience</h3>\n            <div className=\"audience-options\">\n              {availableAudiences.map(audience => (\n                <label key={audience} className=\"audience-option\">\n                  <input\n                    type=\"checkbox\"\n                    checked={selectedAudiences.includes(audience)}\n                    onChange={() => {\n                      if (selectedAudiences.includes(audience)) {\n                        setSelectedAudiences(selectedAudiences.filter(a => a !== audience));\n                      } else {\n                        setSelectedAudiences([...selectedAudiences, audience]);\n                      }\n                    }}\n                  />\n                  <span>{audience}</span>\n                </label>\n              ))}\n            </div>\n          </div>\n          \n          <div className=\"score-filter\">\n            <h3>Minimum {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)} Score</h3>\n            <input\n              type=\"range\"\n              min=\"0\"\n              max=\"1\"\n              step=\"0.1\"\n              value={minScore}\n              onChange={(e) => setMinScore(parseFloat(e.target.value))}\n            />\n            <span>{Math.round(minScore * 100)}%</span>\n          </div>\n        </div>\n      </div>\n      \n      <div className=\"topic-list\">\n        {filteredTopics.length > 0 ? (\n          filteredTopics.map(topic => (\n            <TopicCard\n              key={topic.id}\n              topic={topic}\n              onSave={() => onSaveTopic(topic.id)}\n              onDiscard={() => onDiscardTopic(topic.id)}\n            />\n          ))\n        ) : (\n          <div className=\"no-topics-message\">\n            <p>No topics match your current filters.</p>\n            <button onClick={() => {\n              setSelectedTags([]);\n              setSelectedAudiences([]);\n              setMinScore(0);\n            }}>\n              Clear All Filters\n            </button>\n          </div>\n        )}\n      </div>\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Test score visualization with various score values\n2. Verify sorting functionality works correctly for all score types\n3. Test tag filtering with multiple tag selections\n4. Test audience filtering with various audience combinations\n5. Verify minimum score filtering works as expected\n6. Test combined filtering (tags + audiences + score)\n7. Ensure filter reset functionality works correctly\n8. Test edge cases like no matching topics or all topics filtered out",
         "priority": "medium",
-        "dependencies": [5],
+        "dependencies": [
+          5
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -447,7 +676,9 @@
             "id": 2,
             "title": "Build Topic Sorting Functionality",
             "description": "Implement the sorting logic for topics based on different metrics",
-            "dependencies": ["7.1"],
+            "dependencies": [
+              "7.1"
+            ],
             "details": "Create the sorting functionality that allows users to order topics by different metrics:\n\n1. Implement sort controls UI in the TopicFilters component\n2. Add state management for the current sort selection\n3. Create sort functions for each metric (relevance, freshness, novelty)\n4. Ensure sorting is performant with useMemo for large topic lists\n5. Add visual indicators for the active sort option\n\nThe sorting should immediately update the topic list display when a user changes the sort option, with smooth transitions between different sort orders.",
             "status": "pending",
             "testStrategy": ""
@@ -456,7 +687,10 @@
             "id": 3,
             "title": "Develop Tag and Audience Filtering System",
             "description": "Create the filtering system for tags and audience segments",
-            "dependencies": ["7.1", "7.2"],
+            "dependencies": [
+              "7.1",
+              "7.2"
+            ],
             "details": "Implement the tag and audience-based filtering system:\n\n1. Extract available tags and audiences from the topic data\n2. Create toggle UI for selecting/deselecting filter options\n3. Implement filter logic that supports multiple selected tags/audiences\n4. Add expandable/collapsible filter sections for better UI organization\n5. Ensure filters can be combined (e.g., filter by both tags AND audiences)\n6. Add \"Clear filters\" functionality\n\nThe filtering system should dynamically update as users select different combinations of tags and audiences, with clear visual feedback on active filters.",
             "status": "pending",
             "testStrategy": ""
@@ -465,7 +699,11 @@
             "id": 4,
             "title": "Implement Advanced Combined Filtering",
             "description": "Create the minimum score filtering and integrate all filtering systems",
-            "dependencies": ["7.1", "7.2", "7.3"],
+            "dependencies": [
+              "7.1",
+              "7.2",
+              "7.3"
+            ],
             "details": "Implement the advanced filtering capabilities and integrate all filtering systems:\n\n1. Add minimum score slider for filtering by score threshold\n2. Create the \"no results\" state with option to clear filters\n3. Implement combined filtering logic that applies all active filters\n4. Optimize performance for filtering large topic lists\n5. Add filter count indicators to show how many topics match current filters\n6. Ensure filter state persistence during the user session\n\nThe combined filtering system should allow users to narrow down topics using any combination of sorting, tag filtering, audience filtering, and minimum score requirements.",
             "status": "pending",
             "testStrategy": ""
@@ -479,7 +717,10 @@
         "details": "Implement the topic export and management system:\n\n1. Create export functionality for JSON and CSV formats\n2. Implement topic saving and organization\n3. Add bulk selection and actions\n4. Create topic editing capabilities\n\nExample implementation:\n```typescript\n// /lib/export-utils.ts\nimport { GeneratedTopic } from '@/types/topic-builder';\n\nexport function exportTopicsAsJSON(topics: GeneratedTopic[]): void {\n  const dataStr = JSON.stringify(topics, null, 2);\n  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;\n  \n  const exportFileDefaultName = `content-topics-${new Date().toISOString().slice(0, 10)}.json`;\n  \n  const linkElement = document.createElement('a');\n  linkElement.setAttribute('href', dataUri);\n  linkElement.setAttribute('download', exportFileDefaultName);\n  linkElement.click();\n}\n\nexport function exportTopicsAsCSV(topics: GeneratedTopic[]): void {\n  // Define CSV headers\n  const headers = [\n    'Title',\n    'Angle',\n    'Relevance Score',\n    'Freshness Score',\n    'Novelty Score',\n    'Audience Fit',\n    'Why It Works',\n    'Tags'\n  ];\n  \n  // Convert topics to CSV rows\n  const rows = topics.map(topic => [\n    `\"${topic.title.replace(/\"/g, '\"\"')}\"`,\n    `\"${topic.angle.replace(/\"/g, '\"\"')}\"`,\n    topic.scores.relevance.toFixed(2),\n    topic.scores.freshness.toFixed(2),\n    topic.scores.novelty.toFixed(2),\n    `\"${topic.audience_fit.join(', ')}\"`,\n    `\"${topic.why_it_works.replace(/\"/g, '\"\"')}\"`,\n    `\"${topic.tags.join(', ')}\"`\n  ]);\n  \n  // Combine headers and rows\n  const csvContent = [\n    headers.join(','),\n    ...rows.map(row => row.join(','))\n  ].join('\\n');\n  \n  const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;\n  const exportFileDefaultName = `content-topics-${new Date().toISOString().slice(0, 10)}.csv`;\n  \n  const linkElement = document.createElement('a');\n  linkElement.setAttribute('href', dataUri);\n  linkElement.setAttribute('download', exportFileDefaultName);\n  linkElement.click();\n}\n\n// /components/topic-builder/results/TopicManagement.tsx\nimport { useState } from 'react';\nimport { GeneratedTopic } from '@/types/topic-builder';\nimport { exportTopicsAsJSON, exportTopicsAsCSV } from '@/lib/export-utils';\n\ninterface TopicManagementProps {\n  topics: GeneratedTopic[];\n  savedTopics: GeneratedTopic[];\n  onSaveTopic: (topic: GeneratedTopic) => void;\n  onRemoveTopic: (id: string) => void;\n  onRegenerateTopic: (id: string) => void;\n  onEditTopic: (id: string, updates: Partial<GeneratedTopic>) => void;\n}\n\nexport function TopicManagement({ \n  topics, \n  savedTopics, \n  onSaveTopic, \n  onRemoveTopic,\n  onRegenerateTopic,\n  onEditTopic\n}: TopicManagementProps) {\n  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);\n  const [editingTopic, setEditingTopic] = useState<string | null>(null);\n  const [editForm, setEditForm] = useState<Partial<GeneratedTopic>>({});\n  \n  const handleSelectAll = () => {\n    if (selectedTopics.length === topics.length) {\n      setSelectedTopics([]);\n    } else {\n      setSelectedTopics(topics.map(topic => topic.id));\n    }\n  };\n  \n  const handleSelectTopic = (id: string) => {\n    if (selectedTopics.includes(id)) {\n      setSelectedTopics(selectedTopics.filter(topicId => topicId !== id));\n    } else {\n      setSelectedTopics([...selectedTopics, id]);\n    }\n  };\n  \n  const handleBulkSave = () => {\n    const topicsToSave = topics.filter(topic => selectedTopics.includes(topic.id));\n    topicsToSave.forEach(topic => onSaveTopic(topic));\n    setSelectedTopics([]);\n  };\n  \n  const handleBulkExport = (format: 'json' | 'csv') => {\n    const topicsToExport = topics.filter(topic => selectedTopics.includes(topic.id));\n    if (format === 'json') {\n      exportTopicsAsJSON(topicsToExport);\n    } else {\n      exportTopicsAsCSV(topicsToExport);\n    }\n  };\n  \n  const startEditing = (topic: GeneratedTopic) => {\n    setEditingTopic(topic.id);\n    setEditForm({\n      title: topic.title,\n      angle: topic.angle,\n      tags: [...topic.tags]\n    });\n  };\n  \n  const saveEdit = () => {\n    if (editingTopic && editForm) {\n      onEditTopic(editingTopic, editForm);\n      setEditingTopic(null);\n      setEditForm({});\n    }\n  };\n  \n  const cancelEdit = () => {\n    setEditingTopic(null);\n    setEditForm({});\n  };\n  \n  return (\n    <div className=\"topic-management\">\n      <div className=\"bulk-actions\">\n        <label className=\"select-all\">\n          <input\n            type=\"checkbox\"\n            checked={selectedTopics.length === topics.length && topics.length > 0}\n            onChange={handleSelectAll}\n          />\n          Select All\n        </label>\n        \n        <div className=\"action-buttons\">\n          <button \n            onClick={handleBulkSave}\n            disabled={selectedTopics.length === 0}\n          >\n            Save Selected\n          </button>\n          \n          <div className=\"export-dropdown\">\n            <button \n              className=\"export-button\"\n              disabled={selectedTopics.length === 0}\n            >\n              Export Selected\n            </button>\n            <div className=\"export-options\">\n              <button onClick={() => handleBulkExport('json')}>JSON</button>\n              <button onClick={() => handleBulkExport('csv')}>CSV</button>\n            </div>\n          </div>\n        </div>\n      </div>\n      \n      <div className=\"topic-list\">\n        {topics.map(topic => (\n          <div key={topic.id} className=\"topic-item\">\n            <div className=\"topic-select\">\n              <input\n                type=\"checkbox\"\n                checked={selectedTopics.includes(topic.id)}\n                onChange={() => handleSelectTopic(topic.id)}\n              />\n            </div>\n            \n            {editingTopic === topic.id ? (\n              <div className=\"topic-edit-form\">\n                <div className=\"form-field\">\n                  <label>Title</label>\n                  <input\n                    type=\"text\"\n                    value={editForm.title || ''}\n                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}\n                  />\n                </div>\n                \n                <div className=\"form-field\">\n                  <label>Angle</label>\n                  <textarea\n                    value={editForm.angle || ''}\n                    onChange={(e) => setEditForm({ ...editForm, angle: e.target.value })}\n                  />\n                </div>\n                \n                <div className=\"form-field\">\n                  <label>Tags (comma separated)</label>\n                  <input\n                    type=\"text\"\n                    value={(editForm.tags || []).join(', ')}\n                    onChange={(e) => {\n                      const tagsString = e.target.value;\n                      const tags = tagsString.split(',').map(tag => tag.trim()).filter(Boolean);\n                      setEditForm({ ...editForm, tags });\n                    }}\n                  />\n                </div>\n                \n                <div className=\"edit-actions\">\n                  <button onClick={saveEdit}>Save</button>\n                  <button onClick={cancelEdit}>Cancel</button>\n                </div>\n              </div>\n            ) : (\n              <div className=\"topic-content\">\n                <h3>{topic.title}</h3>\n                <p>{topic.angle}</p>\n                \n                <div className=\"topic-actions\">\n                  <button onClick={() => onSaveTopic(topic)}>\n                    {savedTopics.some(t => t.id === topic.id) ? 'Saved' : 'Save'}\n                  </button>\n                  <button onClick={() => startEditing(topic)}>Edit</button>\n                  <button onClick={() => onRegenerateTopic(topic.id)}>Regenerate</button>\n                </div>\n              </div>\n            )}\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Test JSON export functionality with various topic data\n2. Verify CSV export produces correctly formatted files\n3. Test bulk selection and actions (select all, deselect all)\n4. Verify topic editing functionality updates topics correctly\n5. Test topic regeneration API integration\n6. Verify saved topics are correctly stored in localStorage\n7. Test edge cases like exporting empty selections\n8. Ensure all interactive elements are accessible",
         "priority": "medium",
-        "dependencies": [5, 7],
+        "dependencies": [
+          5,
+          7
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -495,7 +736,9 @@
             "id": 2,
             "title": "Implement Topic Saving and Organization",
             "description": "Create functionality for saving, organizing, and managing topics with proper state management.",
-            "dependencies": ["8.1"],
+            "dependencies": [
+              "8.1"
+            ],
             "details": "Implement the topic saving and organization system with these features:\n- Create state management for saved topics (using React context or Redux)\n- Implement persistent storage using localStorage or IndexedDB\n- Add functionality to save individual topics\n- Create UI components for viewing saved topics\n- Implement topic categorization or tagging system\n- Add functionality to remove topics from saved collection\n- Ensure saved topics are accessible across sessions",
             "status": "pending",
             "testStrategy": ""
@@ -504,7 +747,10 @@
             "id": 3,
             "title": "Implement Bulk Selection and Actions",
             "description": "Create functionality for selecting multiple topics and performing bulk actions like export and save.",
-            "dependencies": ["8.1", "8.2"],
+            "dependencies": [
+              "8.1",
+              "8.2"
+            ],
             "details": "Implement bulk selection and actions with these features:\n- Create UI for selecting individual and multiple topics\n- Implement 'Select All' and 'Deselect All' functionality\n- Add state management for tracking selected topics\n- Create bulk action buttons (Save Selected, Export Selected)\n- Implement dropdown for export format selection\n- Ensure proper UI feedback when bulk actions are performed\n- Add accessibility support for selection mechanisms\n- Implement responsive design for bulk action controls",
             "status": "pending",
             "testStrategy": ""
@@ -513,7 +759,9 @@
             "id": 4,
             "title": "Implement Topic Editing Capabilities",
             "description": "Create functionality for editing topic properties with form validation and state updates.",
-            "dependencies": ["8.2"],
+            "dependencies": [
+              "8.2"
+            ],
             "details": "Implement topic editing capabilities with these features:\n- Create edit mode toggle for individual topics\n- Implement form components for editing topic properties (title, angle, tags)\n- Add validation for edited content\n- Create save and cancel functionality for edits\n- Implement state updates when edits are saved\n- Add UI feedback for successful edits\n- Ensure edited topics are properly saved to persistent storage\n- Implement topic regeneration functionality for specific topics",
             "status": "pending",
             "testStrategy": ""
@@ -527,7 +775,10 @@
         "details": "Implement error handling and loading states for a better user experience:\n\n1. Create loading states for AI generation\n2. Implement error boundaries for component failures\n3. Add retry logic for API failures\n4. Create user-friendly error messages\n\nExample implementation:\n```typescript\n// /components/ui/LoadingState.tsx\ninterface LoadingStateProps {\n  message?: string;\n  size?: 'small' | 'medium' | 'large';\n}\n\nexport function LoadingState({ message = 'Loading...', size = 'medium' }: LoadingStateProps) {\n  const sizeClass = `loading-${size}`;\n  \n  return (\n    <div className={`loading-container ${sizeClass}`} aria-live=\"polite\" aria-busy=\"true\">\n      <div className=\"loading-spinner\">\n        <div className=\"spinner-circle\"></div>\n      </div>\n      <p className=\"loading-message\">{message}</p>\n    </div>\n  );\n}\n\n// /components/ui/ErrorMessage.tsx\ninterface ErrorMessageProps {\n  error: string;\n  onRetry?: () => void;\n}\n\nexport function ErrorMessage({ error, onRetry }: ErrorMessageProps) {\n  return (\n    <div className=\"error-container\" role=\"alert\">\n      <div className=\"error-icon\">⚠️</div>\n      <p className=\"error-message\">{error}</p>\n      {onRetry && (\n        <button onClick={onRetry} className=\"retry-button\">\n          Try Again\n        </button>\n      )}\n    </div>\n  );\n}\n\n// /components/ErrorBoundary.tsx\nimport { Component, ErrorInfo, ReactNode } from 'react';\n\ninterface ErrorBoundaryProps {\n  children: ReactNode;\n  fallback?: ReactNode;\n}\n\ninterface ErrorBoundaryState {\n  hasError: boolean;\n  error?: Error;\n}\n\nexport class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {\n  constructor(props: ErrorBoundaryProps) {\n    super(props);\n    this.state = { hasError: false };\n  }\n\n  static getDerivedStateFromError(error: Error): ErrorBoundaryState {\n    return { hasError: true, error };\n  }\n\n  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {\n    console.error('Error caught by boundary:', error, errorInfo);\n    // Could send to error reporting service here\n  }\n\n  render(): ReactNode {\n    if (this.state.hasError) {\n      if (this.props.fallback) {\n        return this.props.fallback;\n      }\n      \n      return (\n        <div className=\"error-boundary\">\n          <h2>Something went wrong</h2>\n          <p>We're sorry, but there was an error loading this component.</p>\n          <p className=\"error-details\">{this.state.error?.message}</p>\n          <button onClick={() => this.setState({ hasError: false })}>\n            Try Again\n          </button>\n        </div>\n      );\n    }\n\n    return this.props.children;\n  }\n}\n\n// Enhanced version of topic generation with loading and error states\nimport { useState } from 'react';\nimport { TopicBuilderFormData, GeneratedTopic } from '@/types/topic-builder';\nimport { LoadingState } from '@/components/ui/LoadingState';\nimport { ErrorMessage } from '@/components/ui/ErrorMessage';\n\nexport function GenerationStep({ formData }: { formData: TopicBuilderFormData }) {\n  const [topics, setTopics] = useState<GeneratedTopic[]>([]);\n  const [isLoading, setIsLoading] = useState(false);\n  const [error, setError] = useState<string | null>(null);\n  const [retryCount, setRetryCount] = useState(0);\n  \n  const generateTopics = async () => {\n    setIsLoading(true);\n    setError(null);\n    \n    try {\n      const response = await fetch('/api/generate-topics', {\n        method: 'POST',\n        headers: {\n          'Content-Type': 'application/json',\n        },\n        body: JSON.stringify({\n          formData,\n          timestamp: new Date().toISOString(),\n          requestId: `req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,\n        }),\n      });\n      \n      if (!response.ok) {\n        const errorData = await response.json();\n        throw new Error(errorData.error || 'Failed to generate topics');\n      }\n      \n      const data = await response.json();\n      setTopics(data.topics);\n    } catch (err) {\n      console.error('Topic generation error:', err);\n      setError(err instanceof Error ? err.message : 'An unexpected error occurred');\n    } finally {\n      setIsLoading(false);\n    }\n  };\n  \n  const handleRetry = () => {\n    setRetryCount(prev => prev + 1);\n    generateTopics();\n  };\n  \n  // Auto-generate on first render\n  useEffect(() => {\n    generateTopics();\n  }, []);\n  \n  if (isLoading) {\n    return (\n      <div className=\"generation-step\">\n        <LoadingState \n          message={`Generating ${formData.num_ideas} content topics for you...`} \n          size=\"large\" \n        />\n        <div className=\"generation-info\">\n          <p>This may take up to 15 seconds.</p>\n          <p>We're analyzing your inputs and creating tailored content topics.</p>\n        </div>\n      </div>\n    );\n  }\n  \n  if (error) {\n    return (\n      <div className=\"generation-step error\">\n        <ErrorMessage \n          error={`Failed to generate topics: ${error}`} \n          onRetry={handleRetry} \n        />\n        <div className=\"error-help\">\n          <p>This could be due to:</p>\n          <ul>\n            <li>Temporary service disruption</li>\n            <li>Network connectivity issues</li>\n            <li>High server load</li>\n          </ul>\n          <p>You've tried {retryCount} time(s). Please try again or come back later.</p>\n        </div>\n      </div>\n    );\n  }\n  \n  return (\n    <div className=\"generation-step success\">\n      <div className=\"generation-header\">\n        <h2>Generated Topics</h2>\n        <button onClick={generateTopics} className=\"regenerate-button\">\n          Regenerate All\n        </button>\n      </div>\n      \n      {topics.length > 0 ? (\n        <TopicList \n          topics={topics} \n          onSaveTopic={(id) => console.log('Save topic:', id)} \n          onDiscardTopic={(id) => console.log('Discard topic:', id)} \n        />\n      ) : (\n        <div className=\"no-topics\">\n          <p>No topics were generated. Please try again with different inputs.</p>\n          <button onClick={generateTopics}>Generate Topics</button>\n        </div>\n      )}\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Test loading states with simulated API delays\n2. Verify error messages display correctly for different error types\n3. Test retry functionality for failed API calls\n4. Verify error boundary catches component errors\n5. Test accessibility of loading and error states\n6. Verify that loading indicators provide appropriate feedback\n7. Test edge cases like network disconnection during API calls\n8. Ensure all error messages are user-friendly and actionable",
         "priority": "medium",
-        "dependencies": [3, 4],
+        "dependencies": [
+          3,
+          4
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -552,7 +803,10 @@
             "id": 3,
             "title": "Implement API Error Handling and Retry Logic",
             "description": "Create a system for handling API errors with automatic and manual retry capabilities",
-            "dependencies": ["9.1", "9.2"],
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
             "details": "Build a comprehensive API error handling system:\n1. Create a centralized API error handling utility\n2. Implement automatic retry logic with exponential backoff\n3. Add request deduplication to prevent duplicate API calls\n4. Create request timeout handling\n5. Implement error categorization (network, server, validation)\n6. Add detailed error logging with request context\n7. Create recovery strategies for different error types\n8. Implement offline detection and recovery",
             "status": "pending",
             "testStrategy": ""
@@ -561,7 +815,10 @@
             "id": 4,
             "title": "Design User-Friendly Error Messages and Recovery Options",
             "description": "Create a system of user-friendly error messages with clear recovery options",
-            "dependencies": ["9.2", "9.3"],
+            "dependencies": [
+              "9.2",
+              "9.3"
+            ],
             "details": "Develop an intuitive error messaging system:\n1. Implement the ErrorMessage component as shown in the example\n2. Create a library of user-friendly error messages for different scenarios\n3. Design contextual help content for common errors\n4. Implement inline error recovery options\n5. Add progressive disclosure for technical error details\n6. Create toast notifications for non-blocking errors\n7. Implement error state persistence for page refreshes\n8. Design error messages with clear next steps for users",
             "status": "pending",
             "testStrategy": ""
@@ -575,7 +832,10 @@
         "details": "Implement accessibility features and performance optimizations throughout the application:\n\n1. Add keyboard navigation for the wizard\n2. Implement proper ARIA attributes and roles\n3. Optimize component rendering with React.memo and useMemo\n4. Add responsive design optimizations for mobile\n\nExample implementation:\n```typescript\n// /components/topic-builder/WizardNavigation.tsx with keyboard support\nimport { useEffect, useRef } from 'react';\n\ninterface WizardNavigationProps {\n  currentStep: number;\n  totalSteps: number;\n  canGoNext: boolean;\n  canGoPrev: boolean;\n  onNext: () => void;\n  onPrev: () => void;\n}\n\nexport function WizardNavigation({ \n  currentStep, \n  totalSteps, \n  canGoNext, \n  canGoPrev, \n  onNext, \n  onPrev \n}: WizardNavigationProps) {\n  const nextButtonRef = useRef<HTMLButtonElement>(null);\n  \n  // Add keyboard navigation\n  useEffect(() => {\n    const handleKeyDown = (e: KeyboardEvent) => {\n      // Allow keyboard navigation only when not in an input field\n      const activeElement = document.activeElement;\n      const isInputActive = activeElement instanceof HTMLInputElement || \n                           activeElement instanceof HTMLTextAreaElement || \n                           activeElement instanceof HTMLSelectElement;\n      \n      if (isInputActive) return;\n      \n      if (e.key === 'ArrowRight' && canGoNext) {\n        onNext();\n      } else if (e.key === 'ArrowLeft' && canGoPrev) {\n        onPrev();\n      }\n    };\n    \n    window.addEventListener('keydown', handleKeyDown);\n    return () => window.removeEventListener('keydown', handleKeyDown);\n  }, [canGoNext, canGoPrev, onNext, onPrev]);\n  \n  // Focus next button when step changes\n  useEffect(() => {\n    if (nextButtonRef.current) {\n      nextButtonRef.current.focus();\n    }\n  }, [currentStep]);\n  \n  return (\n    <div className=\"wizard-navigation\" role=\"navigation\" aria-label=\"Wizard Navigation\">\n      <div className=\"step-indicator\" aria-hidden=\"true\">\n        {Array.from({ length: totalSteps }).map((_, index) => (\n          <div \n            key={index} \n            className={`step-dot ${index + 1 === currentStep ? 'active' : ''} ${index + 1 < currentStep ? 'completed' : ''}`}\n          />\n        ))}\n      </div>\n      \n      <div className=\"step-counter\" aria-live=\"polite\">\n        Step {currentStep} of {totalSteps}\n      </div>\n      \n      <div className=\"navigation-buttons\">\n        <button\n          onClick={onPrev}\n          disabled={!canGoPrev}\n          className=\"prev-button\"\n          aria-label=\"Previous Step\"\n        >\n          Back\n        </button>\n        \n        <button\n          ref={nextButtonRef}\n          onClick={onNext}\n          disabled={!canGoNext}\n          className=\"next-button\"\n          aria-label={currentStep === totalSteps ? 'Generate Topics' : 'Next Step'}\n        >\n          {currentStep === totalSteps ? 'Generate Topics' : 'Next'}\n        </button>\n      </div>\n    </div>\n  );\n}\n\n// Performance optimized TopicCard component\nimport { memo } from 'react';\nimport { GeneratedTopic } from '@/types/topic-builder';\nimport { ScoreVisualization } from './ScoreVisualization';\n\ninterface TopicCardProps {\n  topic: GeneratedTopic;\n  onSave: (id: string) => void;\n  onDiscard: (id: string) => void;\n}\n\nexport const TopicCard = memo(function TopicCard({ topic, onSave, onDiscard }: TopicCardProps) {\n  const { id, title, angle, scores, audience_fit, why_it_works, tags } = topic;\n  \n  return (\n    <div \n      className=\"topic-card\"\n      tabIndex={0}\n      role=\"article\"\n      aria-labelledby={`topic-title-${id}`}\n    >\n      <h3 id={`topic-title-${id}`} className=\"topic-title\">{title}</h3>\n      <p className=\"topic-angle\">{angle}</p>\n      \n      <ScoreVisualization\n        relevance={scores.relevance}\n        freshness={scores.freshness}\n        novelty={scores.novelty}\n      />\n      \n      <div className=\"topic-metadata\">\n        <div className=\"topic-audience\">\n          <h4>Audience Fit</h4>\n          <div className=\"audience-tags\" role=\"list\">\n            {audience_fit.map(audience => (\n              <span key={audience} className=\"audience-tag\" role=\"listitem\">{audience}</span>\n            ))}\n          </div>\n        </div>\n        \n        <div className=\"topic-explanation\">\n          <h4>Why It Works</h4>\n          <p>{why_it_works}</p>\n        </div>\n        \n        <div className=\"topic-tags\" role=\"list\">\n          {tags.map(tag => (\n            <span key={tag} className=\"topic-tag\" role=\"listitem\">{tag}</span>\n          ))}\n        </div>\n      </div>\n      \n      <div className=\"topic-actions\">\n        <button \n          onClick={() => onSave(id)} \n          className=\"save-button\"\n          aria-label={`Save topic: ${title}`}\n        >\n          Save Topic\n        </button>\n        <button \n          onClick={() => onDiscard(id)} \n          className=\"discard-button\"\n          aria-label={`Discard topic: ${title}`}\n        >\n          Discard\n        </button>\n      </div>\n    </div>\n  );\n});\n\n// Responsive design optimizations\nimport { useMediaQuery } from '@/hooks/use-media-query';\n\nexport function useResponsiveLayout() {\n  const isMobile = useMediaQuery('(max-width: 640px)');\n  const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');\n  const isDesktop = useMediaQuery('(min-width: 1025px)');\n  \n  return { isMobile, isTablet, isDesktop };\n}\n\n// /hooks/use-media-query.ts\nimport { useState, useEffect } from 'react';\n\nexport function useMediaQuery(query: string): boolean {\n  // Default to false for SSR\n  const [matches, setMatches] = useState(false);\n  \n  useEffect(() => {\n    // Create media query list\n    const mediaQuery = window.matchMedia(query);\n    \n    // Set initial value\n    setMatches(mediaQuery.matches);\n    \n    // Create event listener\n    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);\n    \n    // Add event listener\n    mediaQuery.addEventListener('change', handler);\n    \n    // Clean up\n    return () => mediaQuery.removeEventListener('change', handler);\n  }, [query]);\n  \n  return matches;\n}\n\n// Example of responsive component\nimport { useResponsiveLayout } from '@/hooks/use-responsive-layout';\n\nexport function ResponsiveTopicList({ topics }) {\n  const { isMobile, isTablet } = useResponsiveLayout();\n  \n  if (isMobile) {\n    return (\n      <div className=\"mobile-topic-list\">\n        {/* Simplified mobile layout */}\n        {topics.map(topic => (\n          <MobileTopicCard key={topic.id} topic={topic} />\n        ))}\n      </div>\n    );\n  }\n  \n  if (isTablet) {\n    return (\n      <div className=\"tablet-topic-grid\">\n        {/* 2-column grid for tablets */}\n        {topics.map(topic => (\n          <TopicCard key={topic.id} topic={topic} />\n        ))}\n      </div>\n    );\n  }\n  \n  return (\n    <div className=\"desktop-topic-grid\">\n      {/* 3-column grid for desktop */}\n      {topics.map(topic => (\n        <TopicCard key={topic.id} topic={topic} />\n      ))}\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Test keyboard navigation through the wizard\n2. Verify ARIA attributes with accessibility testing tools\n3. Test screen reader compatibility with popular screen readers\n4. Measure component render performance before and after optimizations\n5. Test responsive layouts on various device sizes\n6. Verify color contrast meets WCAG standards\n7. Test focus management and tab order\n8. Verify that all interactive elements are accessible via keyboard\n9. Run Lighthouse accessibility audits\n10. Test with actual assistive technology users if possible",
         "priority": "medium",
-        "dependencies": [3, 5],
+        "dependencies": [
+          3,
+          5
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -591,7 +851,9 @@
             "id": 2,
             "title": "Implement ARIA Attributes and Roles",
             "description": "Add proper ARIA attributes and roles to all components to ensure screen reader compatibility and accessibility.",
-            "dependencies": ["10.1"],
+            "dependencies": [
+              "10.1"
+            ],
             "details": "1. Audit existing components for missing ARIA attributes\n2. Add appropriate roles to all interactive elements\n3. Implement aria-live regions for dynamic content\n4. Add descriptive aria-labels to buttons and controls\n5. Ensure form fields have proper labels and descriptions\n6. Implement status announcements for loading states\n7. Add appropriate landmark roles (navigation, main, etc.)\n8. Ensure proper heading hierarchy throughout the application",
             "status": "pending",
             "testStrategy": ""
@@ -618,7 +880,11 @@
             "id": 5,
             "title": "Conduct Accessibility Testing and Fixes",
             "description": "Test the application with accessibility tools and screen readers, then implement necessary fixes.",
-            "dependencies": ["10.1", "10.2", "10.4"],
+            "dependencies": [
+              "10.1",
+              "10.2",
+              "10.4"
+            ],
             "details": "1. Run automated accessibility tests using tools like Axe or Lighthouse\n2. Test with screen readers (NVDA, VoiceOver, JAWS)\n3. Verify color contrast meets WCAG standards\n4. Test keyboard focus visibility and navigation wizard mode\n5. Implement fixes for identified accessibility issues\n6. Add skip navigation links\n7. Test with various assistive technologies\n8. Document accessibility features and known limitations",
             "status": "pending",
             "testStrategy": ""
@@ -628,7 +894,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-02T00:20:47.369Z",
+      "updated": "2025-09-02T13:45:04.246Z",
       "description": "Tasks for master context"
     }
   }

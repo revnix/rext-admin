@@ -3,7 +3,7 @@ Task/Subtask Implementation Prompt
 Inputs (fill before starting)
 
 - Task ID: 3
-- Subtask ID: 3.15
+- Subtask ID: 3.17
 - Related plan files: `topic-builder-plan.md`, `topic-builder-context.md`, `topic-questions.md` and `topic-questions.jsonc`
 
 Authoritative references
@@ -47,9 +47,11 @@ Workflow
    - Apply edits per plan; 
 
 4. Completion
+   - Run linting and formatting: `npm run lint && npm run format`
    - If tests pass, mark the subtask as done and append implementation notes summarizing:
      - What changed (files/classes/functions)
      - Any follow-ups or risks
+   - Commit changes to git with a descriptive commit message (standard format without Claude attribution)
 
 Notes & tips
 - Always anlayze the latest codebase, previous tasks done and latest docs of any libraries/packages involved to have the most accurate and up to date information before making the plan.

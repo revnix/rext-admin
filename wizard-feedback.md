@@ -1,40 +1,63 @@
 # Idea / Topic Builder Feedback
 
-I build the topic builder page on /ideas/create. The questions seems fine, however, the way it looks, it is not user friendly. I would like to have a more user friendly design and great user experience.
+I built the topic builder page on /ideas/create. I want to improve the UI and User Experience of the whole wizard.
 
-I want to completly revamp the UI/UX of whole Wizard. 
+For that, I would like you to work on all the feedback points one by one.
 
-Here are the feedbacks/points I want you to work on one by one. These are in random order. You need to decide which one to work on first.:
+## Feedback Points:
 
-- I don't like the Wizard Mode wording at all. Instead, we can remove the Wizard mode step, and then we can ask the same approach question in the Industry/Subject. Based on the answer, we can show the relevant questions.
+All the feedback points are in random order. You need to decide which one to work on first.
 
-- Show all the steps on the left side. Maybe make a sidebar with showing all the steps vertically.
+- The First Step: Getting Started:
+    - The first question "How would you like to start?", the UI needs to be changed for the options. We can use the RadioGroup component for this just like the rest of the steps.
+    - Show the next questions in this step based on the selected option of the first question.
 
-- No need for the progress bar. We can Highlight the completed steps in the steps's sidebar.
+- The Second Step: Your Audience:
+    - The First Question: "Who are you creating this for?", the UI needs to be changed for the options. I think we can use the CheckboxGroup component for this but in Full Row.
+    - Show the next questions having checkboxes/radios in full rows as well.
+        - For the question experience level, show 3 options in a row.
+        - For the question audience size, show 2 options in a row.
+    - For the question "Geographic focus", we can use the Dropdown component for the options.
 
-- I think we should mostly show the questions in a checkboxes/radio buttons where user can select either one or multiple options based on the question. If there are too many options, we can show them in a dropdown like we are doing currently.
+- The Third Step: Content Type:
+    - The First Question about what type of content this will be: Show 4 options in a row.
+    - For the question "Platform", we can show the optipons in radiogroup component. 4 options in a row.
 
-- All the questions are showing in seperate rows and fields are taking full width. Maybe we can show them in a grid layout?
+- The Fourth Step: Your Content Goal:
+    - The First Question: "What do you want to achieve?", show 4 options in a row.
+    - For the question "style of content", show 4 options in a row.
+    - For the question "tone", show 4 options in a row.
 
-- The review process is showing edit buttons, when I click on them, it takes me to that particular step but going to the review step again take so many clicks on the next buttons. For example, if I want to edit the industry, I have to click on the next button 7 times to get to the review step again. Improve whole Edit process.
+- The Fifth Step: Fine-tune:
+    - This should be the questions order on this step:
+        1. Content Language
+        2. Target Region
+        3. Any specific topics to focus on?
+        4. Anything to avoid?
+        5. Content Timing Preference (show 3 options in a full row)
+        6. Originality Preference (show 3 options in a full row)
+        7. Any other requirements?
 
-- Check if validations are working properly. I think they're not working properly for all the steps. 
+- The Sixth Step: Generate Ideas:
+    - There should not be much boxes. Currently there are 3 boxes, 1 for core settings, one for audience goals and one for your request. All these should be shown in a single box or no box but in column layout. Maybe 3 columns and value under each heading. Maybe use icon with the heading of each item.
+    - No need to show number of ideas in this step.
 
-- Analyze the whole wizard and see where can we improve the:
+- General:
+    - Make overall question labels/titles a bit bigger so that they are easy to read.
+    - Make sure all the mandoatory/required are highlighted with a red asterisk and make sure the validations are working for all the questions.
+    - If I fill a step X, and I still need to go to Step Y, don't make the step Z green until I reach the step Z even though Step Y has all the fields optional.
+    - I think we should show the next/previous buttons on the top of the form as well just like we are doing in the bottom of the form.
 
-    - User experience
-    - Functionality
-    - User Interface    
-    - etc.
-
-- Make the selected options obvious to the user. Maybe show the selected options in a prominent color.
-
-- We don't need to stick with the current UI, it was a placeholder. I want modern and most beautiful and user friendly UI/UX.
-
-Selecting answers should be more intuitive and user friendly.
-
-The questions should be easy to understand and answer.
-
-Improve the wording where you can.
-
-Improve the whole experience where you can.
+- After Generate:
+    - If I click on Generate Topic, it should:
+        - Replace the whole sidebar + fields etc and only show the loading state. Loading state should be nice and related to AI, which gives the vibe of AI is working on something.
+        - After the loading state, it should show the generated ideas in a nice detailed layout.
+        - User should be able to select/check multiple ideas from the generated ideas list.
+        - Each generated idea:
+            - Should be on it's own row
+            - Should have a title
+            - Should have a description
+            - Should have a score
+            - Should have a save button
+            - any nessary meta details should be shown.
+        - User should be able to save the selected ideas to the library.
