@@ -363,8 +363,8 @@
             "id": 30,
             "title": "Increase font size for question labels and titles",
             "description": "Update all question labels and titles across wizard steps to use larger font sizes for better readability as specified in general feedback",
-            "details": "- Update FormField label styling to use larger font sizes in form-field.tsx\n- Review and update question labels in all step components (IndustryStep, AudienceStep, ContentFormatStep, GoalsStep, AdvancedStep)\n- Change from text-sm to text-base or text-lg for main question labels\n- Ensure consistency across all steps\n- Test readability and visual hierarchy with larger fonts\n- Maintain responsive design and proper spacing",
-            "status": "pending",
+            "details": "- Update FormField label styling to use larger font sizes in form-field.tsx\n- Review and update question labels in all step components (IndustryStep, AudienceStep, ContentFormatStep, GoalsStep, AdvancedStep)\n- Change from text-sm to text-base or text-lg for main question labels\n- Ensure consistency across all steps\n- Test readability and visual hierarchy with larger fonts\n- Maintain responsive design and proper spacing\n<info added on 2025-09-02T16:44:05.172Z>\nImplementation completed successfully. Updated FormField label styling to use larger font size for better readability. Changes: 1) Changed label className from text-sm to text-base in form-field.tsx line 30, increasing font size from 14px to 16px, 2) This automatically updates all question labels across all wizard steps (IndustryStep, AudienceStep, ContentFormatStep, GoalsStep, AdvancedStep) since they all use FormField component, 3) Improved visual hierarchy and readability while maintaining consistency, 4) All build, linting, and formatting checks pass. Question labels now have better readability with 16px font size instead of 14px.\n</info added on 2025-09-02T16:44:05.172Z>",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -808,7 +808,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-02T16:30:48.308Z",
+      "updated": "2025-09-02T16:43:55.028Z",
       "description": "Tasks for master context"
     }
   }
