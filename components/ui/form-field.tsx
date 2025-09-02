@@ -30,7 +30,7 @@ export function FormField({
           className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-red-600 ml-1 font-bold">*</span>}
           {isValid && !error && (
             <Check className="inline h-4 w-4 ml-2 text-green-500" />
           )}
