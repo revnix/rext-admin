@@ -67,7 +67,7 @@ export function GoalsStep({
               options={purposeOptions}
               value={formData.purpose}
               onValueChange={(selected) => updateFormData("purpose", selected)}
-              columns={2}
+              columns={4}
               maxSelections={3}
             />
           </FormField>
@@ -106,7 +106,7 @@ export function GoalsStep({
         )}
 
         {/* Content Goals */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <FormField
             label="What style of content?"
             error={getFieldError?.("content_goal") || errors?.content_goal}
@@ -122,14 +122,14 @@ export function GoalsStep({
               onValueChange={(selected) =>
                 updateFormData("content_goal", selected)
               }
-              columns={1}
+              columns={4}
               maxSelections={3}
             />
           </FormField>
         </div>
 
         {/* Tone & Style */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <FormField
             label="What tone should we use?"
             error={getFieldError?.("tone") || errors?.tone}
@@ -140,7 +140,7 @@ export function GoalsStep({
               options={toneOptions}
               value={formData.tone}
               onValueChange={(selected) => updateFormData("tone", selected)}
-              columns={1}
+              columns={4}
               maxSelections={3}
             />
           </FormField>

@@ -1,6 +1,5 @@
 import { FormField, ValidationInput } from "@/components/ui/form-field";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
-import { SelectWithCustom } from "@/components/ui/select-with-custom";
 import type {
   TopicBuilderFormData,
   ValidationResult,
@@ -34,6 +33,13 @@ export function ContentFormatStep({
     }),
   );
 
+  // Convert PLATFORM_OPTIONS to RadioOption format with descriptions
+  const platformOptions: RadioOption[] = PLATFORM_OPTIONS.map((option) => ({
+    label: option.label,
+    value: option.value,
+    description: getPlatformDescription(option.value),
+  }));
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -51,7 +57,7 @@ export function ContentFormatStep({
               options={contentTypeOptions}
               value={formData.content_type}
               onValueChange={(value) => updateFormData("content_type", value)}
-              columns={2}
+              columns={4}
             />
           </FormField>
         </div>
@@ -95,19 +101,17 @@ export function ContentFormatStep({
         {/* Platform/Channel */}
         {(formData.content_type === "social-media" ||
           formData.content_type === "video-content") && (
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
             <FormField
               label="Where will you publish this?"
               error={getFieldError?.("platform") || errors?.platform}
               isValid={!!formData.platform && !getFieldError?.("platform")}
-              htmlFor="platform"
             >
-              <SelectWithCustom
-                options={PLATFORM_OPTIONS}
+              <RadioGroup
+                options={platformOptions}
                 value={formData.platform || ""}
-                onChange={(value) => updateFormData("platform", value)}
-                placeholder="e.g., LinkedIn, YouTube, Instagram..."
-                allowCustom={true}
+                onValueChange={(value) => updateFormData("platform", value)}
+                columns={4}
               />
             </FormField>
           </div>
@@ -176,6 +180,30 @@ function getContentTypeDescription(value: string): string {
       return "Slide decks and presentations";
     case "press-release":
       return "News announcements and PR";
+    default:
+      return "";
+  }
+}
+
+// Helper function for platform descriptions
+function getPlatformDescription(value: string): string {
+  switch (value) {
+    case "facebook":
+      return "Professional and personal content sharing";
+    case "instagram":
+      return "Visual content and stories";
+    case "twitter":
+      return "Real-time updates and conversations";
+    case "linkedin":
+      return "Professional networking and B2B content";
+    case "tiktok":
+      return "Short-form video content";
+    case "youtube":
+      return "Long-form video content and tutorials";
+    case "website":
+      return "Your own website or blog";
+    case "vimeo":
+      return "Professional video hosting";
     default:
       return "";
   }
