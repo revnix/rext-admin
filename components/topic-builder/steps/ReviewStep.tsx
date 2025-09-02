@@ -1,8 +1,7 @@
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
   CONTENT_GOAL_OPTIONS,
@@ -45,13 +44,15 @@ export function ReviewStep({
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Core Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Core Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-base">Core Settings</h3>
+          </div>
+
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Mode</span>
               <Badge variant="secondary">
@@ -64,7 +65,7 @@ export function ReviewStep({
             {formData.subject && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Subject</span>
-                <span className="text-sm text-right max-w-48 truncate">
+                <span className="text-sm text-right max-w-32 truncate">
                   {formData.subject}
                 </span>
               </div>
@@ -80,7 +81,7 @@ export function ReviewStep({
             {formData.focus && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Focus</span>
-                <span className="text-sm text-right max-w-48 truncate">
+                <span className="text-sm text-right max-w-32 truncate">
                   {formData.focus}
                 </span>
               </div>
@@ -101,21 +102,27 @@ export function ReviewStep({
                 </Badge>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Audience & Goals */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Audience & Goals</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {formData.audience && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-base">Audience & Goals</h3>
+          </div>
+
+          <div className="space-y-3">
+            {formData.audience && formData.audience.length > 0 && (
               <div>
                 <span className="text-sm font-medium">Audience</span>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {formData.audience}
-                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {formData.audience.map((aud) => (
+                    <Badge key={aud} variant="secondary" className="text-xs">
+                      {aud}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -157,82 +164,63 @@ export function ReviewStep({
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Advanced Options */}
-        {(formData.keywords ||
-          formData.exclude ||
-          formData.region ||
-          formData.language ||
-          formData.notes) && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">Advanced Options</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {formData.keywords && (
-                  <div>
-                    <span className="text-sm font-medium">Keywords</span>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {formData.keywords}
-                    </p>
-                  </div>
-                )}
+        {/* Your Request */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-base">Your Request</h3>
+          </div>
 
-                {formData.exclude && (
-                  <div>
-                    <span className="text-sm font-medium">Exclude</span>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {formData.exclude}
-                    </p>
-                  </div>
-                )}
-
-                {formData.region && (
-                  <div>
-                    <span className="text-sm font-medium">Region</span>
-                    <Badge variant="outline">
-                      {getDisplayValue(REGION_OPTIONS, formData.region)}
-                    </Badge>
-                  </div>
-                )}
-
-                {formData.language && (
-                  <div>
-                    <span className="text-sm font-medium">Language</span>
-                    <Badge variant="outline">
-                      {getDisplayValue(LANGUAGE_OPTIONS, formData.language)}
-                    </Badge>
-                  </div>
-                )}
+          <div className="space-y-3">
+            {formData.keywords && (
+              <div>
+                <span className="text-sm font-medium">Keywords</span>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formData.keywords}
+                </p>
               </div>
+            )}
 
-              {formData.notes && (
-                <div>
-                  <span className="text-sm font-medium">Notes</span>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {formData.notes}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+            {formData.exclude && (
+              <div>
+                <span className="text-sm font-medium">Exclude</span>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formData.exclude}
+                </p>
+              </div>
+            )}
 
-        {/* Generation Settings */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Your Request</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Number of Ideas</span>
-              <Badge variant="default">{formData.num_ideas}</Badge>
-            </div>
-          </CardContent>
-        </Card>
+            {formData.region && (
+              <div>
+                <span className="text-sm font-medium">Region</span>
+                <Badge variant="outline">
+                  {getDisplayValue(REGION_OPTIONS, formData.region)}
+                </Badge>
+              </div>
+            )}
+
+            {formData.language && (
+              <div>
+                <span className="text-sm font-medium">Language</span>
+                <Badge variant="outline">
+                  {getDisplayValue(LANGUAGE_OPTIONS, formData.language)}
+                </Badge>
+              </div>
+            )}
+
+            {formData.notes && (
+              <div>
+                <span className="text-sm font-medium">Notes</span>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formData.notes}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Action Buttons */}
