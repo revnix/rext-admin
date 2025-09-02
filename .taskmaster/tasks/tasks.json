@@ -264,8 +264,8 @@
             "id": 19,
             "title": "Update AudienceStep experience level to show 3 options in a row",
             "description": "Modify the experience level RadioGroup in AudienceStep to display 3 options in a single row instead of single column layout",
-            "details": "- Change RadioGroup columns from 1 to 3 in AudienceStep.tsx:114 for reader_level\n- Ensure responsive design works properly on smaller screens\n- Test visual layout and readability with 3 columns\n- Verify that all option descriptions display correctly in the condensed layout\n- Options: Beginner, Intermediate, Expert",
-            "status": "pending",
+            "details": "- Change RadioGroup columns from 1 to 3 in AudienceStep.tsx:114 for reader_level\n- Ensure responsive design works properly on smaller screens\n- Test visual layout and readability with 3 columns\n- Verify that all option descriptions display correctly in the condensed layout\n- Options: Beginner, Intermediate, Expert\n<info added on 2025-09-02T15:25:21.777Z>\nTask completed successfully. Updated experience level RadioGroup in AudienceStep.tsx to display 3 options in a full-width row. Changed RadioGroup columns from 1 to 3 for reader_level field. Updated container from md:col-span-1 to md:col-span-2 for full-width layout. Each question now spans its own full-width row as requested. Maintained responsive design for smaller screens. All linting and formatting checks pass. The experience level selection now displays Beginner, Intermediate, Expert options horizontally in a clean 3-column layout.\n</info added on 2025-09-02T15:25:21.777Z>",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -808,7 +808,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-02T13:52:05.156Z",
+      "updated": "2025-09-02T15:24:23.414Z",
       "description": "Tasks for master context"
     }
   }

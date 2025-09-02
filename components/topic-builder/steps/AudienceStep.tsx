@@ -97,7 +97,7 @@ export function AudienceStep({
         </div>
 
         {/* Reader Experience Level */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <FormField
             label="What's their experience level?"
             error={getFieldError?.("reader_level") || errors?.reader_level}
