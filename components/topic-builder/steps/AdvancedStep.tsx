@@ -57,13 +57,13 @@ export function AdvancedStep({
         {/* Keywords/Focus Areas */}
         <div className="md:col-span-1">
           <FormField
-            label="Keywords/Focus Areas"
+            label="Any specific topics to focus on?"
             error={getFieldError?.("keywords") || errors?.keywords}
             htmlFor="keywords"
           >
             <ValidationInput
               id="keywords"
-              placeholder="Enter keywords or key phrases (comma-separated)"
+              placeholder="e.g., AI, automation, productivity (optional)"
               value={formData.keywords || ""}
               onChange={(e) => updateFormData("keywords", e.target.value)}
               error={getFieldError?.("keywords") || errors?.keywords}
@@ -74,13 +74,13 @@ export function AdvancedStep({
         {/* Exclude/Avoid */}
         <div className="md:col-span-1">
           <FormField
-            label="Exclude/Avoid"
+            label="Anything to avoid?"
             error={getFieldError?.("exclude") || errors?.exclude}
             htmlFor="exclude"
           >
             <ValidationInput
               id="exclude"
-              placeholder="Topics or angles to avoid (comma-separated)"
+              placeholder="e.g., competitors, controversial topics (optional)"
               value={formData.exclude || ""}
               onChange={(e) => updateFormData("exclude", e.target.value)}
               error={getFieldError?.("exclude") || errors?.exclude}
@@ -91,7 +91,7 @@ export function AdvancedStep({
         {/* Number of Ideas */}
         <div className="md:col-span-1">
           <FormField
-            label="Number of Ideas"
+            label="How many ideas do you need?"
             error={getFieldError?.("num_ideas") || errors?.num_ideas}
             htmlFor="num_ideas"
           >
@@ -185,13 +185,13 @@ export function AdvancedStep({
         {/* Additional Notes - Full width */}
         <div className="md:col-span-2">
           <FormField
-            label="Additional Notes"
+            label="Any other requirements?"
             error={getFieldError?.("notes") || errors?.notes}
             htmlFor="notes"
           >
             <Textarea
               id="notes"
-              placeholder="Any special instructions or context?"
+              placeholder="e.g., Keep topics beginner-friendly, focus on practical tips..."
               value={formData.notes || ""}
               onChange={(e) => updateFormData("notes", e.target.value)}
               rows={3}

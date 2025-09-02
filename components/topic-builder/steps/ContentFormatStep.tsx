@@ -40,7 +40,7 @@ export function ContentFormatStep({
         {/* Content Type - Full width */}
         <div className="md:col-span-2">
           <FormField
-            label="Content Type"
+            label="What type of content will this be?"
             error={getFieldError?.("content_type") || errors?.content_type}
             isValid={
               !!formData.content_type && !getFieldError?.("content_type")
@@ -97,7 +97,7 @@ export function ContentFormatStep({
           formData.content_type === "video-content") && (
           <div className="md:col-span-1">
             <FormField
-              label="Platform/Channel"
+              label="Where will you publish this?"
               error={getFieldError?.("platform") || errors?.platform}
               isValid={!!formData.platform && !getFieldError?.("platform")}
               htmlFor="platform"
@@ -106,7 +106,7 @@ export function ContentFormatStep({
                 options={PLATFORM_OPTIONS}
                 value={formData.platform || ""}
                 onChange={(value) => updateFormData("platform", value)}
-                placeholder="Where will you publish this?"
+                placeholder="e.g., LinkedIn, YouTube, Instagram..."
                 allowCustom={true}
               />
             </FormField>

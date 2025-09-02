@@ -46,10 +46,10 @@ export function IndustryStep({
               className="justify-start"
             >
               <ToggleGroupItem value="subject-first">
-                I have a specific topic
+                I have a specific topic in mind
               </ToggleGroupItem>
               <ToggleGroupItem value="industry-first">
-                I want ideas for my industry
+                I want to explore my industry
               </ToggleGroupItem>
             </ToggleGroup>
           </FormField>
@@ -58,7 +58,7 @@ export function IndustryStep({
         {formData.wizardMode === "subject-first" && (
           <div className="md:col-span-2">
             <FormField
-              label="Your Subject/Topic"
+              label="What's your topic?"
               error={getFieldError?.("subject") || errors?.subject}
               isValid={
                 !!formData.subject?.trim() && !getFieldError?.("subject")
@@ -66,16 +66,21 @@ export function IndustryStep({
               required
               htmlFor="subject"
             >
-              <ValidationInput
-                id="subject"
-                placeholder="What specific subject do you want to write about?"
-                value={formData.subject || ""}
-                onChange={(e) => updateFormData("subject", e.target.value)}
-                error={getFieldError?.("subject") || errors?.subject}
-                isValid={
-                  !!formData.subject?.trim() && !getFieldError?.("subject")
-                }
-              />
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Tell us the specific subject you want to explore
+                </p>
+                <ValidationInput
+                  id="subject"
+                  placeholder="e.g., AI in healthcare, sustainable fashion, remote work productivity..."
+                  value={formData.subject || ""}
+                  onChange={(e) => updateFormData("subject", e.target.value)}
+                  error={getFieldError?.("subject") || errors?.subject}
+                  isValid={
+                    !!formData.subject?.trim() && !getFieldError?.("subject")
+                  }
+                />
+              </div>
             </FormField>
           </div>
         )}
@@ -83,12 +88,17 @@ export function IndustryStep({
         {/* Industry Selection */}
         <div className="md:col-span-1">
           <div className="grid gap-2">
-            <Label htmlFor="industry">Industry/Domain *</Label>
+            <Label htmlFor="industry">
+              What's your field or industry? *
+              <span className="text-sm text-muted-foreground block mt-1">
+                For example: Technology, Healthcare, Education, Finance
+              </span>
+            </Label>
             <SelectWithCustom
               options={INDUSTRY_OPTIONS}
               value={formData.industry}
               onChange={(value) => updateFormData("industry", value)}
-              placeholder="Which industry or domain?"
+              placeholder="e.g., Technology, Healthcare, Education..."
               allowCustom={true}
             />
             {errors?.industry && (
@@ -101,10 +111,15 @@ export function IndustryStep({
         {formData.wizardMode === "industry-first" && (
           <div className="md:col-span-1">
             <div className="grid gap-2">
-              <Label htmlFor="focus">Specific Focus (Optional)</Label>
+              <Label htmlFor="focus">
+                Any specific focus? (Optional)
+                <span className="text-sm text-muted-foreground block mt-1">
+                  Narrow down to a specific area if you have one in mind
+                </span>
+              </Label>
               <Input
                 id="focus"
-                placeholder="Any specific area within this industry?"
+                placeholder="e.g., AI in healthcare, mobile app development..."
                 value={formData.focus || ""}
                 onChange={(e) => updateFormData("focus", e.target.value)}
               />

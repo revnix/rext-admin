@@ -362,11 +362,11 @@ export interface TopicBuilderDraft {
  */
 export const WIZARD_MODE_OPTIONS: SelectOption[] = [
   {
-    label: "Subject-First - I have a specific topic in mind",
+    label: "I have a specific topic in mind",
     value: "subject-first",
   },
   {
-    label: "Industry-First - I want ideas for my industry",
+    label: "I want to explore my industry",
     value: "industry-first",
   },
 ];
@@ -375,16 +375,16 @@ export const WIZARD_MODE_OPTIONS: SelectOption[] = [
  * Content type/format options
  */
 export const CONTENT_TYPE_OPTIONS: SelectOption[] = [
-  { label: "Blog Post / Article", value: "blog-post" },
+  { label: "Blog Post or Article", value: "blog-post" },
   { label: "Social Media Post", value: "social-media" },
   { label: "Video Content", value: "video-content" },
   { label: "Podcast Episode", value: "podcast" },
   { label: "Infographic", value: "infographic" },
-  { label: "E-book / Guide", value: "ebook-guide" },
+  { label: "Guide or E-book", value: "ebook-guide" },
   { label: "Case Study", value: "case-study" },
-  { label: "Whitepaper / Report", value: "whitepaper" },
+  { label: "Report or Whitepaper", value: "whitepaper" },
   { label: "Email Newsletter", value: "newsletter" },
-  { label: "Presentation / Webinar", value: "presentation" },
+  { label: "Presentation or Webinar", value: "presentation" },
   { label: "Press Release", value: "press-release" },
   { label: "Other", value: "other" },
 ];
@@ -408,24 +408,24 @@ export const PLATFORM_OPTIONS: SelectOption[] = [
  * Industry/domain options
  */
 export const INDUSTRY_OPTIONS: SelectOption[] = [
-  { label: "Technology / IT", value: "technology" },
-  { label: "Healthcare / Medical", value: "healthcare" },
-  { label: "Finance / Banking", value: "finance" },
-  { label: "Education / E-Learning", value: "education" },
-  { label: "Travel / Hospitality", value: "travel" },
-  { label: "Food / Culinary", value: "food" },
-  { label: "Fashion / Beauty", value: "fashion" },
-  { label: "Business / Entrepreneurship", value: "business" },
-  { label: "Marketing / Advertising", value: "marketing" },
-  { label: "Science / Research", value: "science" },
-  { label: "Sports / Fitness", value: "sports" },
-  { label: "Lifestyle / Personal Development", value: "lifestyle" },
-  { label: "Government / Public Policy", value: "government" },
+  { label: "Technology & IT", value: "technology" },
+  { label: "Healthcare & Medical", value: "healthcare" },
+  { label: "Finance & Banking", value: "finance" },
+  { label: "Education & Learning", value: "education" },
+  { label: "Travel & Hospitality", value: "travel" },
+  { label: "Food & Culinary", value: "food" },
+  { label: "Fashion & Beauty", value: "fashion" },
+  { label: "Business & Entrepreneurship", value: "business" },
+  { label: "Marketing & Advertising", value: "marketing" },
+  { label: "Science & Research", value: "science" },
+  { label: "Sports & Fitness", value: "sports" },
+  { label: "Lifestyle & Personal Development", value: "lifestyle" },
+  { label: "Government & Public Policy", value: "government" },
   { label: "Real Estate", value: "real-estate" },
-  { label: "E-commerce / Retail", value: "ecommerce" },
-  { label: "HR / Human Resources", value: "hr" },
-  { label: "Legal / Law", value: "legal" },
-  { label: "Fitness / Health", value: "fitness" },
+  { label: "E-commerce & Retail", value: "ecommerce" },
+  { label: "HR & Human Resources", value: "hr" },
+  { label: "Legal & Law", value: "legal" },
+  { label: "Health & Fitness", value: "fitness" },
   { label: "Other", value: "other" },
 ];
 
@@ -442,10 +442,10 @@ export const READER_LEVEL_OPTIONS: SelectOption[] = [
  * Content purpose/goal options
  */
 export const PURPOSE_OPTIONS: SelectOption[] = [
-  { label: "Educate / Inform", value: "educate-inform" },
-  { label: "Entertain / Engage", value: "entertain-engage" },
-  { label: "Inspire / Motivate", value: "inspire-motivate" },
-  { label: "Persuade / Convince", value: "persuade-convince" },
+  { label: "Educate & Inform", value: "educate-inform" },
+  { label: "Entertain & Engage", value: "entertain-engage" },
+  { label: "Inspire & Motivate", value: "inspire-motivate" },
+  { label: "Persuade & Convince", value: "persuade-convince" },
   { label: "Promote a Product/Service", value: "promote-product" },
   { label: "Drive SEO Traffic", value: "drive-seo" },
   { label: "Establish Thought Leadership", value: "thought-leadership" },
@@ -456,14 +456,14 @@ export const PURPOSE_OPTIONS: SelectOption[] = [
  * Content goal type options
  */
 export const CONTENT_GOAL_OPTIONS: SelectOption[] = [
-  { label: "Tutorial / How-to", value: "tutorial" },
-  { label: "Explainer / Beginner Guide", value: "explainer" },
-  { label: "News / Update / Trend", value: "news-trend" },
-  { label: "Opinion / Thought Leadership", value: "opinion-leadership" },
-  { label: "Listicle / Checklist / Playbook", value: "listicle" },
-  { label: "Case Study / Story", value: "case-study" },
-  { label: "Comparison (X vs Y)", value: "comparison" },
-  { label: "FAQs / Common Questions", value: "faq" },
+  { label: "Tutorial & How-to", value: "tutorial" },
+  { label: "Explainer & Beginner Guide", value: "explainer" },
+  { label: "News, Updates & Trends", value: "news-trend" },
+  { label: "Opinion & Thought Leadership", value: "opinion-leadership" },
+  { label: "Lists, Checklists & Playbooks", value: "listicle" },
+  { label: "Case Studies & Stories", value: "case-study" },
+  { label: "Comparisons (X vs Y)", value: "comparison" },
+  { label: "FAQs & Common Questions", value: "faq" },
   { label: "Other", value: "other" },
 ];
 
@@ -471,14 +471,14 @@ export const CONTENT_GOAL_OPTIONS: SelectOption[] = [
  * Tone and voice options
  */
 export const TONE_OPTIONS: SelectOption[] = [
-  { label: "Professional / Formal", value: "professional-formal" },
-  { label: "Casual / Conversational", value: "casual-conversational" },
-  { label: "Friendly / Warm", value: "friendly-warm" },
-  { label: "Humorous / Playful", value: "humorous-playful" },
-  { label: "Serious / Academic", value: "serious-academic" },
-  { label: "Technical / Analytical", value: "technical-analytical" },
-  { label: "Simple / Accessible", value: "simple-accessible" },
-  { label: "Inspirational / Uplifting", value: "inspirational-uplifting" },
+  { label: "Professional & Formal", value: "professional-formal" },
+  { label: "Casual & Conversational", value: "casual-conversational" },
+  { label: "Friendly & Warm", value: "friendly-warm" },
+  { label: "Humorous & Playful", value: "humorous-playful" },
+  { label: "Serious & Academic", value: "serious-academic" },
+  { label: "Technical & Analytical", value: "technical-analytical" },
+  { label: "Simple & Accessible", value: "simple-accessible" },
+  { label: "Inspirational & Uplifting", value: "inspirational-uplifting" },
   { label: "Other", value: "other" },
 ];
 
@@ -486,10 +486,10 @@ export const TONE_OPTIONS: SelectOption[] = [
  * Audience size options
  */
 export const AUDIENCE_SIZE_OPTIONS: SelectOption[] = [
-  { label: "Small (< 1,000 people)", value: "small" },
-  { label: "Medium (1K - 10K people)", value: "medium" },
-  { label: "Large (10K - 100K people)", value: "large" },
-  { label: "Massive (100K+ people)", value: "massive" },
+  { label: "Small audience (under 1K)", value: "small" },
+  { label: "Medium audience (1K - 10K)", value: "medium" },
+  { label: "Large audience (10K - 100K)", value: "large" },
+  { label: "Massive audience (100K+)", value: "massive" },
 ];
 
 /**

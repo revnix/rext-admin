@@ -256,7 +256,7 @@
             "title": "Improve Question Wording and User Experience",
             "description": "Audit and improve all question text, labels, and instructions for clarity and user-friendliness",
             "details": "**Current Issue**: Questions should be easier to understand and answer, with improved wording throughout.\n\n**Implementation Plan**:\n\n**1. Content Audit and Rewrite**:\n\n**Current → Improved Question Text**:\n- \"Choose Your Approach\" → \"How would you like to start?\"\n- \"Industry/Domain\" → \"What's your field or industry?\"\n- \"Target Audience\" → \"Who are you creating this for?\"\n- \"Content Type\" → \"What type of content will this be?\"\n- \"Content Purpose\" → \"What do you want to achieve?\"\n- \"Tone & Style\" → \"What tone should we use?\"\n\n**2. Add helpful explanations and examples**:\n```jsx\n<Label htmlFor=\"audience\">\n  Who are you creating this for?\n  <span className=\"text-sm text-muted-foreground block mt-1\">\n    For example: \"Small business owners\", \"College students\", \"Tech professionals\"\n  </span>\n</Label>\n```\n\n**3. Improve placeholder text**:\n- Current: \"Which industry or domain?\"\n- Improved: \"e.g., Technology, Healthcare, Education...\"\n\n**4. Add contextual help and tips**:\n- Info tooltips next to complex questions\n- Progressive disclosure for advanced options\n- Success tips after selections (\"Great choice! This will help us...\")\n\n**5. Question grouping and flow**:\n- Logical question progression\n- Related questions visually grouped\n- Clear section headers where needed\n\n**6. Error message improvements**:\n- Current: \"This field is required\"\n- Improved: \"Please select your industry to continue\"\n- Actionable error messages with suggestions\n\n**7. Micro-copy enhancements**:\n- Button text: \"Continue to Audience\" instead of \"Next\"\n- Progress text: \"Step 2 of 7: Define Your Audience\"\n- Success messages: \"Perfect! Let's choose your content format\"\n\n**Files to modify**:\n- All step components - Update labels, placeholders, descriptions\n- `/types/topic-builder.ts` - Update option labels and descriptions\n- Add new tooltip and help text components\n- Update validation error messages\n\n**Content Strategy**:\n- Use conversational, friendly tone\n- Avoid jargon and technical terms\n- Provide examples and suggestions\n- Make each step feel like progress toward a goal",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -655,7 +655,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-01T23:19:34.861Z",
+      "updated": "2025-09-02T00:20:47.369Z",
       "description": "Tasks for master context"
     }
   }

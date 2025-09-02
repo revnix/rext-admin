@@ -58,7 +58,7 @@ export function GoalsStep({
         {/* Content Purpose - Full width */}
         <div className="md:col-span-2">
           <FormField
-            label="Content Purpose"
+            label="What do you want to achieve?"
             error={getFieldError?.("purpose") || errors?.purpose}
             isValid={formData.purpose.length > 0 && !getFieldError?.("purpose")}
             required
@@ -108,7 +108,7 @@ export function GoalsStep({
         {/* Content Goals */}
         <div className="md:col-span-1">
           <FormField
-            label="Content Goals"
+            label="What style of content?"
             error={getFieldError?.("content_goal") || errors?.content_goal}
             isValid={
               formData.content_goal.length > 0 &&
@@ -131,7 +131,7 @@ export function GoalsStep({
         {/* Tone & Style */}
         <div className="md:col-span-1">
           <FormField
-            label="Tone & Style"
+            label="What tone should we use?"
             error={getFieldError?.("tone") || errors?.tone}
             isValid={formData.tone.length > 0 && !getFieldError?.("tone")}
             required

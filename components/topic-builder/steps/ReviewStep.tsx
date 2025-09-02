@@ -38,10 +38,10 @@ export function ReviewStep({
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-2">Review & Generate</h3>
+        <h3 className="text-lg font-semibold mb-2">Ready to Generate Ideas!</h3>
         <p className="text-muted-foreground">
-          Review your selections and generate {formData.num_ideas} topic ideas.
-          Use the sidebar to edit any step.
+          We'll create {formData.num_ideas} topic ideas based on your choices
+          below. You can go back to any step to make changes.
         </p>
       </div>
 
@@ -224,7 +224,7 @@ export function ReviewStep({
         {/* Generation Settings */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Generation Settings</CardTitle>
+            <CardTitle className="text-base">Your Request</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">

@@ -78,7 +78,7 @@ export function AudienceStep({
         {/* Target Audience - Full width */}
         <div className="md:col-span-2">
           <FormField
-            label="Target Audience"
+            label="Who are you creating this for?"
             error={getFieldError?.("audience") || errors?.audience}
             isValid={
               !!formData.audience?.trim() && !getFieldError?.("audience")
@@ -92,7 +92,7 @@ export function AudienceStep({
               onChange={(selected) =>
                 updateFormData("audience", selected[0] || "")
               }
-              placeholder="Who are you writing for?"
+              placeholder="e.g., Small business owners, College students, Tech professionals"
               allowCustom={true}
             />
           </FormField>
@@ -101,7 +101,7 @@ export function AudienceStep({
         {/* Reader Experience Level */}
         <div className="md:col-span-1">
           <FormField
-            label="Reader Experience Level"
+            label="What's their experience level?"
             error={getFieldError?.("reader_level") || errors?.reader_level}
             isValid={
               !!formData.reader_level && !getFieldError?.("reader_level")
@@ -119,7 +119,7 @@ export function AudienceStep({
         {/* Audience Size */}
         <div className="md:col-span-1">
           <FormField
-            label="Audience Size"
+            label="How big is your audience?"
             error={getFieldError?.("audience_size") || errors?.audience_size}
             isValid={
               !!formData.audience_size && !getFieldError?.("audience_size")

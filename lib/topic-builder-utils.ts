@@ -358,19 +358,19 @@ export const validateFormStepDetailed = (
   switch (step) {
     case 1: // Industry/Domain + Approach Selection (merged step)
       if (!formData.wizardMode) {
-        errors.push("Please select how you'd like to start");
+        errors.push("Please choose how you'd like to start creating topics");
       }
       if (!formData.industry) {
-        errors.push("Please select an industry or domain");
+        errors.push("Please select your field or industry to continue");
       }
       if (formData.industry === "other" && !formData.industry_other?.trim()) {
-        errors.push("Please specify your custom industry");
+        errors.push("Please tell us what industry you're in");
       }
       if (
         formData.wizardMode === "subject-first" &&
         !formData.subject?.trim()
       ) {
-        errors.push("Please enter your specific topic or subject");
+        errors.push("Please enter the topic you want to explore");
       }
       // Interdependent validation: subject relevance to industry
       if (
@@ -398,7 +398,7 @@ export const validateFormStepDetailed = (
         !formData.audience &&
         (!formData.demographic_age || formData.demographic_age.length === 0)
       ) {
-        errors.push("Please specify target audience or select age groups");
+        errors.push("Please tell us who you're creating content for");
       }
       if (
         !formData.demographic_location ||
@@ -424,13 +424,13 @@ export const validateFormStepDetailed = (
 
     case 3: // Content Format & Platform
       if (!formData.content_type) {
-        errors.push("Please select a content type");
+        errors.push("Please choose what type of content you'll create");
       }
       if (
         formData.content_type === "other" &&
         !formData.content_type_other?.trim()
       ) {
-        errors.push("Please specify your custom content type");
+        errors.push("Please tell us what type of content this will be");
       }
       // Platform required for social media and video content
       if (
@@ -438,22 +438,22 @@ export const validateFormStepDetailed = (
         ["social-media", "video-content"].includes(formData.content_type) &&
         !formData.platform
       ) {
-        errors.push("Please select a platform for this content type");
+        errors.push("Please choose where you'll publish this content");
       }
       if (formData.platform === "other" && !formData.platform_other?.trim()) {
-        errors.push("Please specify your custom platform");
+        errors.push("Please tell us which platform you'll use");
       }
       break;
 
     case 4: // Content Goals & Style
       if (!formData.purpose || formData.purpose.length === 0) {
-        errors.push("Please select at least one content purpose");
+        errors.push("Please choose what you want to achieve with this content");
       }
       if (!formData.content_goal || formData.content_goal.length === 0) {
-        errors.push("Please select at least one content goal type");
+        errors.push("Please select what style of content you want to create");
       }
       if (!formData.tone || formData.tone.length === 0) {
-        warnings.push("Consider selecting a tone to guide content style");
+        warnings.push("Consider choosing a tone to help us match your style");
       }
       break;
 
@@ -463,19 +463,19 @@ export const validateFormStepDetailed = (
         formData.num_ideas &&
         (formData.num_ideas < 1 || formData.num_ideas > 20)
       ) {
-        errors.push("Number of ideas must be between 1 and 20");
+        errors.push("Please choose between 1 and 20 topic ideas");
       }
       // Enhanced validation for advanced options
       if (formData.keywords && !validateKeywordsFormat(formData.keywords)) {
         errors.push(
-          "Keywords should be comma-separated, with each keyword 1-50 characters long (max 10 keywords)",
+          "Please use simpler keywords separated by commas (up to 10 keywords)",
         );
       }
       if (
         formData.exclude &&
         !validateExcludePatternsFormat(formData.exclude)
       ) {
-        errors.push("Exclusion patterns should be 200 characters or less");
+        errors.push("Please keep your exclusions brief (under 200 characters)");
       }
       // Validate focus field for industry-first mode
       if (
@@ -517,7 +517,7 @@ export const validateFormStepDetailed = (
 
       // Additional generation-specific validation
       if (!formData.num_ideas || formData.num_ideas < 1) {
-        errors.push("Please specify how many topic ideas you want to generate");
+        errors.push("Please choose how many topic ideas you need");
       }
       break;
     }
