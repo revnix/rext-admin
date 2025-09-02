@@ -1,8 +1,8 @@
 import { FormField, ValidationInput } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
 import { SelectWithCustom } from "@/components/ui/select-with-custom";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type {
   TopicBuilderFormData,
   ValidationResult,
@@ -27,6 +27,19 @@ export function IndustryStep({
   getFieldError,
   errors,
 }: IndustryStepProps) {
+  const approachOptions: RadioOption[] = [
+    {
+      label: "I have a specific topic in mind",
+      value: "subject-first",
+      description: "Start with your topic and we'll help refine it",
+    },
+    {
+      label: "I want to explore my industry",
+      value: "industry-first",
+      description: "Browse trending topics in your field",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -37,21 +50,14 @@ export function IndustryStep({
             error={getFieldError?.("wizardMode") || errors?.wizardMode}
             required
           >
-            <ToggleGroup
-              type="single"
+            <RadioGroup
+              options={approachOptions}
               value={formData.wizardMode}
               onValueChange={(value: string) =>
-                value && updateFormData("wizardMode", value)
+                updateFormData("wizardMode", value)
               }
-              className="justify-start"
-            >
-              <ToggleGroupItem value="subject-first">
-                I have a specific topic in mind
-              </ToggleGroupItem>
-              <ToggleGroupItem value="industry-first">
-                I want to explore my industry
-              </ToggleGroupItem>
-            </ToggleGroup>
+              columns={2}
+            />
           </FormField>
         </div>
         {/* Subject/Topic - Full width when visible */}
