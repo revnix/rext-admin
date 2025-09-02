@@ -621,8 +621,8 @@ export const buildPromptFromFormData = (
   if (demographic_age.length > 0) {
     prompt += `AGE GROUPS: ${demographic_age.join(", ")}\n`;
   }
-  if (demographic_location.length > 0) {
-    prompt += `GEOGRAPHIC FOCUS: ${demographic_location.join(", ")}\n`;
+  if (demographic_location) {
+    prompt += `GEOGRAPHIC FOCUS: ${demographic_location}\n`;
   }
   if (reader_level) {
     prompt += `READER LEVEL: ${reader_level}\n`;
@@ -806,7 +806,7 @@ export const createInitialFormData = (): TopicBuilderFormData => {
     industry: "technology",
     content_type: "blog-post",
     demographic_age: [],
-    demographic_location: [],
+    demographic_location: "",
     purpose: [],
     content_goal: [],
     tone: [],
@@ -833,7 +833,7 @@ export const updateFormDataForIndustryChange = (
     // Reset dependent fields
     audience: undefined,
     demographic_age: [],
-    demographic_location: [],
+    demographic_location: "",
     // Auto-detect YMYL
     is_ymyl: detectYMYL(newIndustry),
   };

@@ -287,8 +287,8 @@
             "id": 21,
             "title": "Replace Geographic focus CheckboxGroup with Dropdown component",
             "description": "Replace the Geographic focus CheckboxGroup in AudienceStep with a Dropdown (SelectWithCustom) component for better UX as specified in feedback",
-            "details": "- Replace CheckboxGroup with SelectWithCustom component in AudienceStep.tsx:154-167\n- Import necessary components and options for geographic regions\n- Update formData.demographic_location from string[] to single string value\n- Update the label to match \"Geographic focus\" as mentioned in feedback\n- Use DEMOGRAPHIC_LOCATION_OPTIONS or similar for dropdown options\n- Ensure validation and error handling works with single selection",
-            "status": "pending",
+            "details": "- Replace CheckboxGroup with SelectWithCustom component in AudienceStep.tsx:154-167\n- Import necessary components and options for geographic regions\n- Update formData.demographic_location from string[] to single string value\n- Update the label to match \"Geographic focus\" as mentioned in feedback\n- Use DEMOGRAPHIC_LOCATION_OPTIONS or similar for dropdown options\n- Ensure validation and error handling works with single selection\n<info added on 2025-09-02T15:35:05.651Z>\nImplementation completed successfully. Replaced CheckboxGroup with SelectWithCustom dropdown for geographic focus selection. Updated demographic_location field type from string[] to string in types/topic-builder.ts. Added 4-column support to RadioGroup and CheckboxGroup components. Fixed TypeScript errors in topic-builder-utils.ts related to string type changes. Applied FormField wrapper for validation integration. All linting and formatting pass. Changes committed to git.\n</info added on 2025-09-02T15:35:05.651Z>",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -894,7 +894,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-02T15:27:56.803Z",
+      "updated": "2025-09-02T15:34:49.058Z",
       "description": "Tasks for master context"
     }
   }

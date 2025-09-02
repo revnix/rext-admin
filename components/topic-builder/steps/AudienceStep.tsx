@@ -5,6 +5,7 @@ import {
 import { FormField } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
+import { SelectWithCustom } from "@/components/ui/select-with-custom";
 import {
   DEMOGRAPHIC_AGE_OPTIONS,
   DEMOGRAPHIC_LOCATION_OPTIONS,
@@ -64,13 +65,6 @@ export function AudienceStep({
     }),
   );
 
-  const locationOptions: CheckboxOption[] = DEMOGRAPHIC_LOCATION_OPTIONS.map(
-    (option) => ({
-      label: option.label,
-      value: option.value,
-    }),
-  );
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -90,7 +84,7 @@ export function AudienceStep({
               options={audienceOptions}
               value={formData.audience || []}
               onValueChange={(selected) => updateFormData("audience", selected)}
-              columns={1}
+              columns={4}
               maxSelections={5}
             />
           </FormField>
@@ -150,18 +144,27 @@ export function AudienceStep({
 
         {/* Geographic Focus */}
         <div className="md:col-span-1">
-          <div className="grid gap-3">
-            <Label>Geographic Focus (Optional)</Label>
-            <CheckboxGroup
-              options={locationOptions}
-              value={formData.demographic_location}
-              onValueChange={(selected) =>
-                updateFormData("demographic_location", selected)
+          <FormField
+            label="Geographic Focus (Optional)"
+            error={
+              getFieldError?.("demographic_location") ||
+              errors?.demographic_location
+            }
+            isValid={
+              !formData.demographic_location ||
+              !getFieldError?.("demographic_location")
+            }
+          >
+            <SelectWithCustom
+              options={DEMOGRAPHIC_LOCATION_OPTIONS}
+              value={formData.demographic_location || ""}
+              onChange={(value) =>
+                updateFormData("demographic_location", value)
               }
-              columns={1}
-              maxSelections={3}
+              placeholder="Select a region..."
+              allowCustom={true}
             />
-          </div>
+          </FormField>
         </div>
       </div>
     </div>
