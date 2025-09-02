@@ -109,7 +109,7 @@ export function AudienceStep({
               options={readerLevelOptions}
               value={formData.reader_level || ""}
               onValueChange={(value) => updateFormData("reader_level", value)}
-              columns={1}
+              columns={3}
             />
           </FormField>
         </div>
