@@ -54,6 +54,38 @@ export function AdvancedStep({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Content Language */}
+        <div className="md:col-span-1">
+          <FormField
+            label="Content Language"
+            error={getFieldError?.("language") || errors?.language}
+            htmlFor="language"
+          >
+            <SelectWithCustom
+              options={LANGUAGE_OPTIONS}
+              value={formData.language || ""}
+              onChange={(value) => updateFormData("language", value)}
+              placeholder="What language? (optional)"
+            />
+          </FormField>
+        </div>
+
+        {/* Target Region */}
+        <div className="md:col-span-1">
+          <FormField
+            label="Target Region"
+            error={getFieldError?.("region") || errors?.region}
+            htmlFor="region"
+          >
+            <SelectWithCustom
+              options={REGION_OPTIONS}
+              value={formData.region || ""}
+              onChange={(value) => updateFormData("region", value)}
+              placeholder="Geographic focus (optional)"
+            />
+          </FormField>
+        </div>
+
         {/* Keywords/Focus Areas */}
         <div className="md:col-span-1">
           <FormField
@@ -84,61 +116,6 @@ export function AdvancedStep({
               value={formData.exclude || ""}
               onChange={(e) => updateFormData("exclude", e.target.value)}
               error={getFieldError?.("exclude") || errors?.exclude}
-            />
-          </FormField>
-        </div>
-
-        {/* Number of Ideas */}
-        <div className="md:col-span-1">
-          <FormField
-            label="How many ideas do you need?"
-            error={getFieldError?.("num_ideas") || errors?.num_ideas}
-            htmlFor="num_ideas"
-          >
-            <SelectWithCustom
-              options={[
-                { label: "3 ideas", value: "3" },
-                { label: "5 ideas", value: "5" },
-                { label: "10 ideas", value: "10" },
-                { label: "15 ideas", value: "15" },
-              ]}
-              value={formData.num_ideas.toString()}
-              onChange={(value) =>
-                updateFormData("num_ideas", parseInt(value, 10))
-              }
-              placeholder="How many topic ideas?"
-            />
-          </FormField>
-        </div>
-
-        {/* Target Region */}
-        <div className="md:col-span-1">
-          <FormField
-            label="Target Region"
-            error={getFieldError?.("region") || errors?.region}
-            htmlFor="region"
-          >
-            <SelectWithCustom
-              options={REGION_OPTIONS}
-              value={formData.region || ""}
-              onChange={(value) => updateFormData("region", value)}
-              placeholder="Geographic focus (optional)"
-            />
-          </FormField>
-        </div>
-
-        {/* Content Language */}
-        <div className="md:col-span-1">
-          <FormField
-            label="Content Language"
-            error={getFieldError?.("language") || errors?.language}
-            htmlFor="language"
-          >
-            <SelectWithCustom
-              options={LANGUAGE_OPTIONS}
-              value={formData.language || ""}
-              onChange={(value) => updateFormData("language", value)}
-              placeholder="What language? (optional)"
             />
           </FormField>
         </div>
