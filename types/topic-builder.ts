@@ -185,7 +185,7 @@ export interface TopicBuilderFormData {
 
   /** Audience and targeting configuration */
   /** Target audience description or persona chips */
-  audience?: string;
+  audience?: string[];
   /** Estimated size of target audience */
   audience_size?: AudienceSize;
   /** Demographic age group selections */

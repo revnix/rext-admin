@@ -395,7 +395,7 @@ export const validateFormStepDetailed = (
 
     case 2: // Audience & Targeting
       if (
-        !formData.audience &&
+        (!formData.audience || formData.audience.length === 0) &&
         (!formData.demographic_age || formData.demographic_age.length === 0)
       ) {
         errors.push("Please tell us who you're creating content for");
@@ -409,11 +409,15 @@ export const validateFormStepDetailed = (
         );
       }
       // Enhanced validation: ensure audience makes sense for industry
-      if (formData.audience && formData.industry) {
+      if (
+        formData.audience &&
+        formData.audience.length > 0 &&
+        formData.industry
+      ) {
         const audienceOptions = getAudienceForIndustry(formData.industry);
         if (
           audienceOptions.length > 0 &&
-          !audienceOptions.includes(formData.audience)
+          !formData.audience.some((aud) => audienceOptions.includes(aud))
         ) {
           warnings.push(
             "Consider selecting an audience that's more specific to your industry for better results",
@@ -899,7 +903,10 @@ export const prepareFormDataForAPI = (formData: TopicBuilderFormData) => {
     platform_other: formData.platform_other
       ? sanitizeInput(formData.platform_other)
       : undefined,
-    audience: formData.audience ? sanitizeInput(formData.audience) : undefined,
+    audience:
+      formData.audience && formData.audience.length > 0
+        ? formData.audience.map((aud) => sanitizeInput(aud)).join(", ")
+        : undefined,
     purpose_other: formData.purpose_other
       ? sanitizeInput(formData.purpose_other)
       : undefined,

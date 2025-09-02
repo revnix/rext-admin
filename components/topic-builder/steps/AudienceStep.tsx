@@ -4,7 +4,6 @@ import {
 } from "@/components/ui/checkbox-group";
 import { FormField } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
 import {
   DEMOGRAPHIC_AGE_OPTIONS,
@@ -81,19 +80,18 @@ export function AudienceStep({
             label="Who are you creating this for?"
             error={getFieldError?.("audience") || errors?.audience}
             isValid={
-              !!formData.audience?.trim() && !getFieldError?.("audience")
+              (formData.audience?.length ?? 0) > 0 &&
+              !getFieldError?.("audience")
             }
             required
             htmlFor="audience"
           >
-            <MultiSelect
+            <CheckboxGroup
               options={audienceOptions}
-              selected={formData.audience ? [formData.audience] : []}
-              onChange={(selected) =>
-                updateFormData("audience", selected[0] || "")
-              }
-              placeholder="e.g., Small business owners, College students, Tech professionals"
-              allowCustom={true}
+              value={formData.audience || []}
+              onValueChange={(selected) => updateFormData("audience", selected)}
+              columns={1}
+              maxSelections={5}
             />
           </FormField>
         </div>
