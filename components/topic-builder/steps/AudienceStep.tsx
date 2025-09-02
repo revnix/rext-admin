@@ -115,7 +115,7 @@ export function AudienceStep({
         </div>
 
         {/* Audience Size */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <FormField
             label="How big is your audience?"
             error={getFieldError?.("audience_size") || errors?.audience_size}
@@ -127,7 +127,7 @@ export function AudienceStep({
               options={audienceSizeOptions}
               value={formData.audience_size || ""}
               onValueChange={(value) => updateFormData("audience_size", value)}
-              columns={1}
+              columns={4}
             />
           </FormField>
         </div>
