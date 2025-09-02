@@ -121,7 +121,7 @@ export function AdvancedStep({
         </div>
 
         {/* Content Timing Preference */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <FormField
             label="Content Timing Preference"
             error={
@@ -135,13 +135,13 @@ export function AdvancedStep({
               onValueChange={(value) =>
                 updateFormData("fresh_vs_evergreen", value)
               }
-              columns={1}
+              columns={3}
             />
           </FormField>
         </div>
 
         {/* Originality Preference */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <FormField
             label="Originality Preference"
             error={
@@ -154,7 +154,7 @@ export function AdvancedStep({
               onValueChange={(value) =>
                 updateFormData("safe_vs_original", value)
               }
-              columns={1}
+              columns={3}
             />
           </FormField>
         </div>
