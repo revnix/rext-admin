@@ -37,9 +37,7 @@ Note: This is the backend that I've already built and it's in a separate repo. I
 
 
 ## Database
-
-- PostgreSQL
-- PGVector
+- Supabase
 
 ## Hosting
 

@@ -1,8 +1,7 @@
 // Jest setup file for global test configuration
 
-// Optional: configure or set up a testing framework before each test
-// If you're using jest-dom for additional matchers
-// import '@testing-library/jest-dom'
+// Enable jest-dom matchers
+import "@testing-library/jest-dom";
 
 // Mock Next.js router
 jest.mock("next/router", () => ({
@@ -58,3 +57,35 @@ global.console = {
 };
 
 // Custom matchers or global test setup can be added here
+
+// Mock TanStack Query Client for tests
+jest.mock("@/lib/query-client", () => ({
+  getQueryClient: () => ({
+    clear: jest.fn(),
+    getQueryCache: jest.fn(() => ({
+      clear: jest.fn(),
+    })),
+    getMutationCache: jest.fn(() => ({
+      clear: jest.fn(),
+    })),
+    invalidateQueries: jest.fn(),
+    refetchQueries: jest.fn(),
+  }),
+}));
+
+// Mock fetch globally
+global.fetch = jest.fn();
+
+// Mock ResizeObserver
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
+// Mock IntersectionObserver
+global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));

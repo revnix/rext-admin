@@ -1,0 +1,302 @@
+import { z } from "zod";
+
+/**
+ * Zod Validation Schemas for Topic Builder
+ *
+ * These schemas validate API requests, form data, and responses.
+ * Separate from TypeScript types for better organization.
+ */
+
+// Base enum schemas
+export const wizardModeSchema = z.enum(["subject-first", "industry-first"]);
+
+export const industrySchema = z.enum([
+  "technology",
+  "healthcare",
+  "finance",
+  "education",
+  "travel",
+  "food",
+  "fashion",
+  "business",
+  "marketing",
+  "science",
+  "sports",
+  "lifestyle",
+  "government",
+  "real-estate",
+  "ecommerce",
+  "hr",
+  "legal",
+  "fitness",
+  "other",
+]);
+
+export const contentTypeSchema = z.enum([
+  "blog-post",
+  "social-media",
+  "video-content",
+  "podcast",
+  "infographic",
+  "ebook-guide",
+  "case-study",
+  "whitepaper",
+  "newsletter",
+  "presentation",
+  "press-release",
+  "other",
+]);
+
+export const platformSchema = z.enum([
+  "facebook",
+  "instagram",
+  "twitter",
+  "linkedin",
+  "tiktok",
+  "youtube",
+  "website",
+  "blog",
+  "vimeo",
+  "other",
+]);
+
+export const readerLevelSchema = z.enum(["beginner", "intermediate", "expert"]);
+
+export const purposeTypeSchema = z.enum([
+  "educate-inform",
+  "entertain-engage",
+  "inspire-motivate",
+  "persuade-convince",
+  "promote-product",
+  "drive-seo",
+  "thought-leadership",
+  "other",
+]);
+
+export const contentGoalTypeSchema = z.enum([
+  "tutorial",
+  "explainer",
+  "news-trend",
+  "opinion-leadership",
+  "listicle",
+  "case-study",
+  "comparison",
+  "faq",
+  "other",
+]);
+
+export const toneTypeSchema = z.enum([
+  "professional-formal",
+  "casual-conversational",
+  "friendly-warm",
+  "humorous-playful",
+  "serious-academic",
+  "technical-analytical",
+  "simple-accessible",
+  "inspirational-uplifting",
+  "other",
+]);
+
+export const preferenceToggleSchema = z.enum([
+  "fresh",
+  "evergreen",
+  "balanced",
+]);
+export const originalityToggleSchema = z.enum(["safe", "original", "balanced"]);
+
+// Main form data schema
+export const topicBuilderFormDataSchema = z.object({
+  // Wizard configuration
+  wizardMode: wizardModeSchema,
+
+  // Subject-first specific
+  subject: z.string().optional(),
+
+  // Industry/Domain
+  industry: industrySchema,
+  industry_other: z.string().optional(),
+
+  // Content type and platform
+  content_type: contentTypeSchema,
+  content_type_other: z.string().optional(),
+  platform: platformSchema.optional(),
+  platform_other: z.string().optional(),
+
+  // Audience and targeting
+  audience: z.array(z.string()).optional(),
+  audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
+  demographic_age: z.array(z.string()).default([]),
+  demographic_location: z.string().default("global"),
+  reader_level: readerLevelSchema.optional(),
+
+  // Content goals and style
+  purpose: z
+    .array(purposeTypeSchema)
+    .min(1, "Please select at least one purpose"),
+  purpose_other: z.string().optional(),
+  content_goal: z
+    .array(contentGoalTypeSchema)
+    .min(1, "Please select at least one content goal"),
+  tone: z.array(toneTypeSchema).min(1, "Please select at least one tone"),
+  tone_other: z.string().optional(),
+
+  // Advanced options
+  keywords: z.string().optional(),
+  exclude: z.string().optional(),
+  focus: z.string().optional(),
+  num_ideas: z.number().min(1).max(20).default(5),
+  notes: z.string().optional(),
+
+  // Localization
+  region: z
+    .enum([
+      "us",
+      "uk",
+      "canada",
+      "australia",
+      "pakistan",
+      "india",
+      "europe",
+      "global",
+      "other",
+    ])
+    .optional(),
+  language: z
+    .enum([
+      "english",
+      "urdu",
+      "spanish",
+      "french",
+      "german",
+      "arabic",
+      "chinese",
+      "japanese",
+      "other",
+    ])
+    .optional(),
+
+  // Content sensitivity
+  is_ymyl: z.boolean().optional(),
+
+  // Content preferences
+  fresh_vs_evergreen: preferenceToggleSchema.optional(),
+  safe_vs_original: originalityToggleSchema.optional(),
+});
+
+// Generated topic schema
+export const generatedTopicSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  angle: z.string(),
+  description: z.string().optional(),
+  channel_fit: z.array(z.string()),
+  audience_fit: z.array(z.string()),
+  why_it_works: z.string(),
+  scores: z.object({
+    relevance: z.number().min(0).max(1),
+    freshness: z.number().min(0).max(1),
+    novelty: z.number().min(0).max(1),
+  }),
+  tags: z.array(z.string()),
+  is_saved: z.boolean().optional(),
+});
+
+// API request/response schemas
+export const topicGenerationRequestSchema = z.object({
+  formData: topicBuilderFormDataSchema,
+  timestamp: z.string().datetime(),
+});
+
+export const topicGenerationResponseSchema = z.object({
+  topics: z.array(generatedTopicSchema),
+  request_id: z.string(),
+  generated_at: z.string().datetime(),
+  model_used: z.string().optional(),
+  generation_time_ms: z.number().optional(),
+});
+
+// Backend API payload schema
+export const backendTopicGenerationPayloadSchema = z.object({
+  industry: z.string(),
+  subject: z.string().optional(),
+  content_type: z.string(),
+  platform: z.string().optional(),
+  audience: z.array(z.string()).optional(),
+  purpose: z.array(z.string()),
+  tone: z.array(z.string()),
+  keywords: z.string().optional(),
+  exclude: z.string().optional(),
+  num_ideas: z.number().min(1).max(20),
+  industry_specific_focus: z.string().optional(),
+  additional_notes: z.string().optional(),
+  content_timing_preference: z.string().optional(),
+  content_originality_preference: z.string().optional(),
+  demographic_location: z.array(z.string()),
+  timestamp: z.string().datetime(),
+  wizard_mode: z.string(),
+});
+
+// Form validation schemas for individual steps
+export const industryStepSchema = z
+  .object({
+    wizardMode: wizardModeSchema,
+    industry: industrySchema,
+    industry_other: z.string().optional(),
+    subject: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.industry === "other" && !data.industry_other?.trim()) {
+        return false;
+      }
+      if (data.wizardMode === "subject-first" && !data.subject?.trim()) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        "Please provide the required information based on your selections",
+    },
+  );
+
+export const audienceStepSchema = z.object({
+  audience: z
+    .array(z.string())
+    .min(1, "Please select at least one audience type"),
+  reader_level: readerLevelSchema.optional(),
+  audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
+  demographic_age: z.array(z.string()).optional(),
+  demographic_location: z.string().optional(),
+});
+
+export const contentFormatStepSchema = z
+  .object({
+    content_type: contentTypeSchema,
+    content_type_other: z.string().optional(),
+    platform: platformSchema.optional(),
+    platform_other: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.content_type === "other" && !data.content_type_other?.trim()) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please specify your content type",
+    },
+  );
+
+export const goalsStepSchema = z.object({
+  purpose: z
+    .array(purposeTypeSchema)
+    .min(1, "Please select at least one purpose"),
+  purpose_other: z.string().optional(),
+  content_goal: z
+    .array(contentGoalTypeSchema)
+    .min(1, "Please select at least one content goal"),
+  tone: z.array(toneTypeSchema).min(1, "Please select at least one tone"),
+  tone_other: z.string().optional(),
+});

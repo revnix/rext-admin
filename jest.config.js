@@ -22,6 +22,9 @@ const customJestConfig = {
     "**/*.(test|spec).(ts|tsx|js|jsx)",
   ],
 
+  // Exclude utility files from being treated as tests
+  testPathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/utils/"],
+
   // Coverage configuration
   collectCoverageFrom: [
     "lib/**/*.{ts,tsx}",
@@ -29,9 +32,14 @@ const customJestConfig = {
     "types/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",
     "app/**/*.{ts,tsx}",
+    "services/**/*.{ts,tsx}",
+    "stores/**/*.{ts,tsx}",
+    "schemas/**/*.{ts,tsx}",
+    "constants/**/*.{ts,tsx}",
     "!**/*.d.ts",
     "!**/node_modules/**",
     "!**/.next/**",
+    "!**/index.ts", // Exclude index files
   ],
 
   // Coverage thresholds - focused on tested files only
