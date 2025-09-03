@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // Mock API endpoint for testing the topic generation loading screen
 export async function POST(request: NextRequest) {

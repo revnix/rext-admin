@@ -1,11 +1,7 @@
 "use client";
 
-import { Brain, Clock, FileText, Sparkles, Target, Users } from "lucide-react";
+import { Brain, FileText, Sparkles, Target } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 
 interface AILoadingScreenProps {
   numIdeas?: number;
@@ -45,52 +41,21 @@ const loadingSteps = [
 
 export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     let stepTimer: NodeJS.Timeout;
-    let progressTimer: NodeJS.Timeout;
-
-    const totalDuration = loadingSteps.reduce(
-      (sum, step) => sum + step.duration,
-      0,
-    );
-    let accumulatedTime = 0;
 
     const runStep = (stepIndex: number) => {
       if (stepIndex >= loadingSteps.length) {
         setIsComplete(true);
-        setProgress(100);
         return;
       }
 
       setCurrentStep(stepIndex);
       const step = loadingSteps[stepIndex];
 
-      // Update progress smoothly during this step
-      const startProgress = (accumulatedTime / totalDuration) * 100;
-      const endProgress =
-        ((accumulatedTime + step.duration) / totalDuration) * 100;
-
-      const progressStart = Date.now();
-
-      const updateProgress = () => {
-        const elapsed = Date.now() - progressStart;
-        const stepProgress = Math.min(elapsed / step.duration, 1);
-        const currentProgress =
-          startProgress + (endProgress - startProgress) * stepProgress;
-        setProgress(currentProgress);
-
-        if (stepProgress < 1) {
-          progressTimer = setTimeout(updateProgress, 50);
-        }
-      };
-
-      updateProgress();
-
       stepTimer = setTimeout(() => {
-        accumulatedTime += step.duration;
         runStep(stepIndex + 1);
       }, step.duration);
     };
@@ -99,7 +64,6 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
 
     return () => {
       clearTimeout(stepTimer);
-      clearTimeout(progressTimer);
     };
   }, []);
 
@@ -107,136 +71,153 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
   const CurrentIcon = currentStepData?.icon || Brain;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20" />
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full animate-pulse opacity-40" />
-        <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-secondary rounded-full animate-pulse opacity-30" />
-        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-primary rounded-full animate-pulse opacity-50" />
-        <div className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-secondary rounded-full animate-pulse opacity-35" />
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+      {/* Modal Container - Bigger and More Prominent */}
+      <div className="relative w-full max-w-4xl mx-4 bg-background rounded-3xl shadow-2xl overflow-hidden border border-primary/20">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20" />
+          {/* Floating particles */}
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full animate-pulse opacity-40" />
+          <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-secondary rounded-full animate-pulse opacity-30" />
+          <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-primary rounded-full animate-pulse opacity-50" />
+          <div className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-secondary rounded-full animate-pulse opacity-35" />
+        </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto p-6">
-        {/* Main Loading Card */}
-        <Card className="p-8 text-center border-primary/20 bg-gradient-to-b from-background to-background/80 backdrop-blur">
-          {/* AI Brain Animation */}
+        <div className="relative z-10 p-12 text-center">
+          {/* Animated Icon */}
           <div className="mb-8">
-            <div className="relative inline-block">
-              <div
-                className={cn(
-                  "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500",
-                  "bg-gradient-to-br from-primary/20 via-primary/10 to-transparent",
-                  "border-2 border-primary/30",
-                  "animate-pulse",
-                  isComplete && "animate-none bg-green-100 border-green-300",
-                )}
-              >
+            <div className="flex justify-center mb-6">
+              <div className="relative">
                 <CurrentIcon
-                  className={cn(
-                    "h-12 w-12 transition-colors duration-500",
-                    isComplete ? "text-green-600" : "text-primary",
-                  )}
+                  className="w-24 h-24 text-primary animate-pulse"
+                  strokeWidth={1.5}
                 />
+                <div className="absolute inset-0 w-24 h-24">
+                  <CurrentIcon
+                    className="w-24 h-24 text-primary/20 animate-ping"
+                    strokeWidth={1.5}
+                  />
+                </div>
               </div>
-
-              {/* Rotating ring */}
-              {!isComplete && (
-                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary/50 animate-spin" />
-              )}
-
-              {/* Pulsing dots around the brain */}
-              {!isComplete && (
-                <>
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full animate-ping" />
-                  <div className="absolute top-1/2 -right-2 transform -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full animate-ping animation-delay-300" />
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full animate-ping animation-delay-700" />
-                  <div className="absolute top-1/2 -left-2 transform -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full animate-ping animation-delay-1000" />
-                </>
-              )}
             </div>
           </div>
 
-          {/* Status Message */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 transition-all duration-500">
-              {isComplete ? "Your Topics Are Ready!" : currentStepData?.title}
-            </h2>
-            <p className="text-muted-foreground text-lg">
+          {/* Main Heading - Big and Bold */}
+          <div className="mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+              {isComplete ? "Topics Ready!" : "AI Working"}
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground font-medium">
               {isComplete
-                ? `Generated ${numIdeas} personalized topic ideas for your content strategy`
-                : currentStepData?.description}
+                ? `${numIdeas} personalized ideas generated`
+                : currentStepData?.title
+                    ?.replace("AI is ", "")
+                    .replace("...", "")}
             </p>
           </div>
 
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progress</span>
-              <span className="text-sm text-muted-foreground">
-                {Math.round(progress)}%
-              </span>
-            </div>
-            <Progress
-              value={progress}
-              className="h-2 transition-all duration-300"
-            />
-          </div>
-
-          {/* Step Indicators */}
-          <div className="flex justify-center space-x-2 mb-8">
-            {loadingSteps.map((step, index) => (
+          {/* Single Prominent Progress Bar with Enhanced Animation */}
+          <div className="mb-12">
+            <div className="w-full h-6 md:h-8 bg-gradient-to-r from-primary/30 via-primary to-primary/30 rounded-2xl relative overflow-hidden shadow-2xl border-2 border-primary/20">
+              {/* Primary shimmer effect */}
               <div
-                key={step.id}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-300",
-                  index <= currentStep ? "bg-primary" : "bg-muted",
-                  index === currentStep && "animate-pulse",
-                )}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+                style={{
+                  animation: "shimmer 2s ease-in-out infinite",
+                  backgroundSize: "200% 100%",
+                }}
               />
-            ))}
+
+              {/* Secondary wave effect */}
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-primary/40 via-transparent to-primary/40"
+                style={{
+                  animation: "shimmer 3s ease-in-out infinite reverse",
+                  backgroundSize: "150% 100%",
+                }}
+              />
+
+              {/* Enhanced pulsing elements */}
+              <div className="absolute inset-0 flex items-center justify-around">
+                <div className="relative">
+                  <div
+                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
+                    style={{ animationDelay: "0s" }}
+                  />
+                  <div
+                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
+                    style={{ animationDelay: "0.5s" }}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div
+                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
+                    style={{ animationDelay: "0.7s" }}
+                  />
+                  <div
+                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
+                    style={{ animationDelay: "1.2s" }}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div
+                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
+                    style={{ animationDelay: "1.4s" }}
+                  />
+                  <div
+                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
+                    style={{ animationDelay: "1.9s" }}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div
+                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
+                    style={{ animationDelay: "2.1s" }}
+                  />
+                  <div
+                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
+                    style={{ animationDelay: "2.6s" }}
+                  />
+                </div>
+              </div>
+
+              {/* Floating particles inside the bar */}
+              <div className="absolute inset-0">
+                <div
+                  className="absolute top-1 left-4 w-1 h-1 bg-white/60 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.3s", animationDuration: "2s" }}
+                />
+                <div
+                  className="absolute bottom-1 left-1/3 w-1 h-1 bg-white/60 rounded-full animate-bounce"
+                  style={{ animationDelay: "1.1s", animationDuration: "2.5s" }}
+                />
+                <div
+                  className="absolute top-1 right-1/3 w-1 h-1 bg-white/60 rounded-full animate-bounce"
+                  style={{ animationDelay: "1.8s", animationDuration: "2s" }}
+                />
+                <div
+                  className="absolute bottom-1 right-4 w-1 h-1 bg-white/60 rounded-full animate-bounce"
+                  style={{ animationDelay: "2.5s", animationDuration: "2.5s" }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* AI Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="space-y-1">
-              <Users className="h-4 w-4 mx-auto text-muted-foreground" />
-              <div className="text-xs text-muted-foreground">Audience</div>
-              <Badge variant="secondary" className="text-xs">
-                Analyzed
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <Target className="h-4 w-4 mx-auto text-muted-foreground" />
-              <div className="text-xs text-muted-foreground">Goals</div>
-              <Badge variant="secondary" className="text-xs">
-                Optimized
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <FileText className="h-4 w-4 mx-auto text-muted-foreground" />
-              <div className="text-xs text-muted-foreground">Ideas</div>
-              <Badge variant="secondary" className="text-xs">
-                {numIdeas}
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              <Clock className="h-4 w-4 mx-auto text-muted-foreground" />
-              <div className="text-xs text-muted-foreground">Time</div>
-              <Badge variant="secondary" className="text-xs">
-                ~10s
-              </Badge>
+          {/* Status Text */}
+          <div className="mb-8">
+            <div className="text-center">
+              <p className="text-xl md:text-2xl text-muted-foreground font-semibold mb-2">
+                {isComplete ? "Complete!" : currentStepData?.description}
+              </p>
+              <p className="text-base md:text-lg text-muted-foreground">
+                <strong>Generating {numIdeas} unique topics</strong>
+              </p>
             </div>
           </div>
-        </Card>
-
-        {/* Loading Tips */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            💡 <strong>Pro Tip:</strong> While we generate your topics, think
-            about how you'll adapt them for different platforms and audiences.
-          </p>
         </div>
       </div>
     </div>

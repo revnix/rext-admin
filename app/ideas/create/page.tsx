@@ -183,11 +183,6 @@ export default function TopicBuilderPage() {
 
   const currentStepData = steps[currentStep - 1];
 
-  // Show AI loading screen during generation
-  if (isGenerating) {
-    return <AILoadingScreen numIdeas={formData.num_ideas} />;
-  }
-
   return (
     <PageLayout
       title="Topic Builder"
@@ -290,6 +285,9 @@ export default function TopicBuilderPage() {
           )}
         </div>
       </div>
+
+      {/* AI Loading Modal */}
+      {isGenerating && <AILoadingScreen numIdeas={formData.num_ideas} />}
     </PageLayout>
   );
 }
