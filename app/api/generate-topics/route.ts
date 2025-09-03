@@ -1,127 +1,88 @@
-import { type NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { backendService } from "@/services/backend";
+import type { BackendError } from "@/types/backend";
+import type { TopicBuilderFormData } from "@/types/topic-builder";
 
-// Mock API endpoint for testing the topic generation loading screen
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.json();
+    const body = await request.json();
+    const formData = body.formData as TopicBuilderFormData;
 
-    // Simulate AI processing time (8-12 seconds to test the loading screen)
-    const processingTime = Math.random() * 4000 + 8000; // 8-12 seconds
-    await new Promise((resolve) => setTimeout(resolve, processingTime));
+    if (!formData || !formData.industry) {
+      return Response.json(
+        {
+          error: "Invalid request data",
+          error_code: "validation_failed",
+          details: "Missing required field: industry",
+        },
+        { status: 400 },
+      );
+    }
 
-    // Mock generated topics based on the form data
-    const mockTopics = [
-      {
-        id: "topic_1",
-        title: `${formData.industry} Content Strategy: A Beginner's Guide`,
-        angle:
-          "Comprehensive introduction covering fundamentals and practical steps",
-        description: `Learn the essential strategies for creating effective ${formData.industry.toLowerCase()} content`,
-        channel_fit: formData.platform
-          ? [formData.platform]
-          : ["blog", "social"],
-        audience_fit: Array.isArray(formData.audience)
-          ? formData.audience
-          : [formData.audience || "general"],
-        why_it_works:
-          "Addresses a common knowledge gap with actionable insights",
-        scores: {
-          relevance: 0.92,
-          freshness: 0.78,
-          novelty: 0.65,
-        },
-        tags: ["beginner", "strategy", formData.industry.toLowerCase()],
-        is_saved: false,
-      },
-      {
-        id: "topic_2",
-        title: `Top 10 ${formData.industry} Trends to Watch This Year`,
-        angle: "Forward-looking analysis of emerging industry developments",
-        description: `Stay ahead with the latest trends shaping the ${formData.industry.toLowerCase()} landscape`,
-        channel_fit: ["blog", "social", "newsletter"],
-        audience_fit: Array.isArray(formData.audience)
-          ? formData.audience
-          : [formData.audience || "professionals"],
-        why_it_works:
-          "Trending content that provides valuable industry insights",
-        scores: {
-          relevance: 0.88,
-          freshness: 0.94,
-          novelty: 0.72,
-        },
-        tags: ["trends", "analysis", formData.industry.toLowerCase()],
-        is_saved: false,
-      },
-      {
-        id: "topic_3",
-        title: `Common ${formData.industry} Mistakes and How to Avoid Them`,
-        angle: "Problem-solving approach with practical solutions",
-        description: `Identify and overcome the most frequent challenges in ${formData.industry.toLowerCase()}`,
-        channel_fit: ["blog", "video", "podcast"],
-        audience_fit: Array.isArray(formData.audience)
-          ? formData.audience
-          : [formData.audience || "beginners"],
-        why_it_works: "Addresses pain points with actionable solutions",
-        scores: {
-          relevance: 0.85,
-          freshness: 0.67,
-          novelty: 0.58,
-        },
-        tags: ["mistakes", "solutions", formData.industry.toLowerCase()],
-        is_saved: false,
-      },
-      {
-        id: "topic_4",
-        title: `${formData.industry} Success Stories: What We Can Learn`,
-        angle: "Case study approach with real-world examples",
-        description: `Analyze successful ${formData.industry.toLowerCase()} examples and extract key lessons`,
-        channel_fit: ["blog", "social", "video"],
-        audience_fit: Array.isArray(formData.audience)
-          ? formData.audience
-          : [formData.audience || "professionals"],
-        why_it_works: "People love success stories and learning from examples",
-        scores: {
-          relevance: 0.9,
-          freshness: 0.71,
-          novelty: 0.69,
-        },
-        tags: ["case-study", "success", formData.industry.toLowerCase()],
-        is_saved: false,
-      },
-      {
-        id: "topic_5",
-        title: `The Future of ${formData.industry}: Predictions and Insights`,
-        angle: "Forward-thinking analysis with expert predictions",
-        description: `Explore where ${formData.industry.toLowerCase()} is heading and what it means for you`,
-        channel_fit: ["blog", "podcast", "social"],
-        audience_fit: Array.isArray(formData.audience)
-          ? formData.audience
-          : [formData.audience || "thought-leaders"],
-        why_it_works: "Future-focused content generates engagement and shares",
-        scores: {
-          relevance: 0.87,
-          freshness: 0.89,
-          novelty: 0.84,
-        },
-        tags: ["future", "predictions", formData.industry.toLowerCase()],
-        is_saved: false,
-      },
-    ];
+    const result = await backendService.generateTopics(formData);
 
-    // Generate the requested number of topics
-    const numIdeas = Math.min(formData.num_ideas || 5, mockTopics.length);
-    const selectedTopics = mockTopics.slice(0, numIdeas);
-
-    return NextResponse.json({
-      topics: selectedTopics,
-      request_id: `req_${Date.now()}`,
+    return Response.json({
+      topics: result.topics,
+      request_id: result.request_id,
       generated_at: new Date().toISOString(),
+      model_used: result.model_used,
+      generation_time_ms: result.generation_time_ms,
     });
   } catch (error) {
-    console.error("Topic generation failed:", error);
-    return NextResponse.json(
-      { error: "Failed to generate topics. Please try again." },
-      { status: 500 },
-    );
+    console.error("Topic generation error:", error);
+
+    const backendError = error as BackendError;
+
+    switch (backendError.type) {
+      case "server_error":
+        return Response.json(
+          {
+            error: backendError.message,
+            error_code: "backend_unavailable",
+            fallback_available: false,
+          },
+          { status: 503 },
+        );
+
+      case "configuration_error":
+        return Response.json(
+          {
+            error: backendError.message,
+            error_code: "configuration_error",
+            fallback_available: false,
+          },
+          { status: 500 },
+        );
+
+      case "parsing_error":
+        return Response.json(
+          {
+            error: backendError.message,
+            error_code: "invalid_response",
+            fallback_available: false,
+          },
+          { status: 502 },
+        );
+
+      case "timeout_error":
+        return Response.json(
+          {
+            error: "Request timed out",
+            error_code: "timeout_error",
+            fallback_available: false,
+          },
+          { status: 504 },
+        );
+
+      default:
+        return Response.json(
+          {
+            error: "Failed to generate topics",
+            error_code: "generation_failed",
+            fallback_available: false,
+          },
+          { status: 500 },
+        );
+    }
   }
 }
