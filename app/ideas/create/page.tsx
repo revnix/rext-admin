@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { AILoadingScreen } from "@/components/topic-builder/AILoadingScreen";
+import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
@@ -78,6 +79,7 @@ export default function TopicBuilderPage() {
     formData,
     currentStep,
     errors,
+    generatedTopics,
     isGenerating,
     updateFormData,
     nextStep,
@@ -87,6 +89,7 @@ export default function TopicBuilderPage() {
     validateField,
     getFieldError,
     generateTopics,
+    clearTopics,
   } = useTopicBuilder();
 
   const breadcrumbs = [
@@ -106,6 +109,31 @@ export default function TopicBuilderPage() {
   };
 
   const handleGenerate = async () => {
+    await generateTopics();
+  };
+
+  const handleTopicSave = async (topicId: string) => {
+    // TODO: Implement topic saving to user's ideas library
+    console.log("Saving topic:", topicId);
+    // For now, just mark as saved in the local state
+    // In a real implementation, this would call an API
+  };
+
+  const handleBulkSave = async (topicIds: string[]) => {
+    // TODO: Implement bulk saving to user's ideas library
+    console.log("Bulk saving topics:", topicIds);
+    // For now, just log the action
+    // In a real implementation, this would call an API
+  };
+
+  const handleBackToWizard = () => {
+    clearTopics();
+    // Optionally reset to step 6 for review
+    goToStep(6);
+  };
+
+  const handleRegenerateTopics = async () => {
+    clearTopics();
     await generateTopics();
   };
 
@@ -183,6 +211,9 @@ export default function TopicBuilderPage() {
 
   const currentStepData = steps[currentStep - 1];
 
+  // Show results if we have generated topics
+  const showResults = generatedTopics.length > 0 && !isGenerating;
+
   return (
     <PageLayout
       title="Topic Builder"
@@ -190,101 +221,117 @@ export default function TopicBuilderPage() {
       breadcrumbs={breadcrumbs}
       className="p-0"
     >
-      <div className="flex h-full">
-        {/* Sidebar */}
-        <WizardSidebar
-          steps={steps}
-          currentStep={currentStep}
-          onStepClick={goToStep}
-          isStepCompleted={isStepCompleted}
-          errors={errors}
-          className="hidden lg:block"
-        />
-
-        {/* Mobile Sidebar - Collapsible */}
-        <div className="lg:hidden">
+      {showResults ? (
+        // Results View
+        <div className="flex-1 p-6">
+          <TopicsList
+            topics={generatedTopics}
+            onTopicSave={handleTopicSave}
+            onBulkSave={handleBulkSave}
+            onBackToWizard={handleBackToWizard}
+            onRegenerateTopics={handleRegenerateTopics}
+          />
+        </div>
+      ) : (
+        // Wizard View
+        <div className="flex h-full">
+          {/* Sidebar */}
           <WizardSidebar
             steps={steps}
             currentStep={currentStep}
             onStepClick={goToStep}
             isStepCompleted={isStepCompleted}
             errors={errors}
-            className="absolute inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out bg-background border-r"
+            className="hidden lg:block"
           />
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-full lg:ml-0">
-          <div className="flex-1 p-6">
-            <Card className="h-full">
-              <CardHeader>
-                <CardDescription>{currentStepData.description}</CardDescription>
-
-                {/* Top Navigation */}
-                {currentStep < 6 && (
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handlePrev}
-                      disabled={currentStep === 1}
-                      className="flex items-center gap-1.5"
-                    >
-                      <ArrowLeft className="h-3 w-3" />
-                      Previous
-                    </Button>
-
-                    <div className="text-xs text-muted-foreground">
-                      Step {currentStep} of {steps.length}
-                    </div>
-
-                    <Button
-                      size="sm"
-                      onClick={handleNext}
-                      className="flex items-center gap-1.5"
-                    >
-                      Next
-                      <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent className="flex-1">
-                {renderStepContent()}
-              </CardContent>
-            </Card>
+          {/* Mobile Sidebar - Collapsible */}
+          <div className="lg:hidden">
+            <WizardSidebar
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={goToStep}
+              isStepCompleted={isStepCompleted}
+              errors={errors}
+              className="absolute inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out bg-background border-r"
+            />
           </div>
 
-          {/* Navigation Footer */}
-          {currentStep < 6 && (
-            <div className="p-6 pt-0">
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  onClick={handlePrev}
-                  disabled={currentStep === 1}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col min-h-full lg:ml-0">
+            <div className="flex-1 p-6">
+              <Card className="h-full">
+                <CardHeader>
+                  <CardDescription>
+                    {currentStepData.description}
+                  </CardDescription>
 
-                <div className="text-sm text-muted-foreground">
-                  Step {currentStep} of {steps.length}
-                </div>
+                  {/* Top Navigation */}
+                  {currentStep < 6 && (
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handlePrev}
+                        disabled={currentStep === 1}
+                        className="flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="h-3 w-3" />
+                        Previous
+                      </Button>
 
-                <Button
-                  onClick={handleNext}
-                  className="flex items-center gap-2"
-                >
-                  Next
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
+                      <div className="text-xs text-muted-foreground">
+                        Step {currentStep} of {steps.length}
+                      </div>
+
+                      <Button
+                        size="sm"
+                        onClick={handleNext}
+                        className="flex items-center gap-1.5"
+                      >
+                        Next
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent className="flex-1">
+                  {renderStepContent()}
+                </CardContent>
+              </Card>
             </div>
-          )}
+
+            {/* Navigation Footer */}
+            {currentStep < 6 && (
+              <div className="p-6 pt-0">
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrev}
+                    disabled={currentStep === 1}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+
+                  <div className="text-sm text-muted-foreground">
+                    Step {currentStep} of {steps.length}
+                  </div>
+
+                  <Button
+                    onClick={handleNext}
+                    className="flex items-center gap-2"
+                  >
+                    Next
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* AI Loading Modal */}
       {isGenerating && <AILoadingScreen numIdeas={formData.num_ideas} />}
