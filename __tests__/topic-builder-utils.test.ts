@@ -208,8 +208,9 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
     wizardMode: "industry-first",
     industry: "technology",
     content_type: "blog-post",
+    audience: ["developers"],
     demographic_age: [],
-    demographic_location: [],
+    demographic_location: "us",
     purpose: ["educate-inform"],
     content_goal: ["tutorial"],
     tone: [],
@@ -225,43 +226,43 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
     expect(result).toBe(false);
   });
 
-  test("step 2 validation - requires industry", () => {
+  test("step 1 validation - requires industry and wizard mode", () => {
     const invalidData = {
       ...baseFormData,
       industry: undefined,
     };
-    const result = validateFormStep(2, invalidData);
+    const result = validateFormStep(1, invalidData);
     expect(result).toBe(false);
   });
 
-  test("step 2 validation - subject-first requires subject", () => {
+  test("step 1 validation - subject-first requires subject", () => {
     const invalidData = {
       ...baseFormData,
       wizardMode: "subject-first" as const,
       subject: undefined,
     };
-    const result = validateFormStep(2, invalidData);
+    const result = validateFormStep(1, invalidData);
     expect(result).toBe(false);
   });
 
-  test("step 4 validation - requires content type", () => {
+  test("step 3 validation - requires content type", () => {
     const invalidData = {
       ...baseFormData,
       content_type: undefined,
     };
+    const result = validateFormStep(3, invalidData);
+    expect(result).toBe(false);
+  });
+
+  test("step 4 validation - requires purpose and content goal", () => {
+    const invalidData = { ...baseFormData, purpose: [], content_goal: [] };
     const result = validateFormStep(4, invalidData);
     expect(result).toBe(false);
   });
 
-  test("step 5 validation - requires purpose and content goal", () => {
-    const invalidData = { ...baseFormData, purpose: [], content_goal: [] };
-    const result = validateFormStep(5, invalidData);
-    expect(result).toBe(false);
-  });
-
-  test("step 8 validation - final generation step", () => {
+  test("step 6 validation - final generation step", () => {
     const invalidData = { ...baseFormData, num_ideas: 0 };
-    const result = validateFormStep(8, invalidData);
+    const result = validateFormStep(6, invalidData);
     expect(result).toBe(false);
   });
 
@@ -276,8 +277,9 @@ describe("validateFormStepDetailed (detailed validation results)", () => {
     wizardMode: "industry-first",
     industry: "technology",
     content_type: "blog-post",
+    audience: ["developers"],
     demographic_age: [],
-    demographic_location: [],
+    demographic_location: "us",
     purpose: ["educate-inform"],
     content_goal: ["tutorial"],
     tone: [],
@@ -291,78 +293,84 @@ describe("validateFormStepDetailed (detailed validation results)", () => {
     };
     const result = validateFormStepDetailed(1, invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain("Please select a wizard mode to continue");
+    expect(result.errors).toContain(
+      "Please choose how you'd like to start creating topics",
+    );
   });
 
-  test("step 2 validation - requires industry", () => {
+  test("step 1 validation - requires industry", () => {
     const invalidData = {
       ...baseFormData,
       industry: undefined,
     };
-    const result = validateFormStepDetailed(2, invalidData);
+    const result = validateFormStepDetailed(1, invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain("Please select an industry or domain");
+    expect(result.errors).toContain(
+      "Please select your field or industry to continue",
+    );
   });
 
-  test("step 2 validation - subject-first requires subject", () => {
+  test("step 1 validation - subject-first requires subject", () => {
     const invalidData = {
       ...baseFormData,
       wizardMode: "subject-first" as const,
       subject: undefined,
     };
-    const result = validateFormStepDetailed(2, invalidData);
+    const result = validateFormStepDetailed(1, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
-      "Please provide a subject for subject-first mode",
+      "Please enter the topic you want to explore",
     );
   });
 
-  test("step 4 validation - requires content type", () => {
+  test("step 3 validation - requires content type", () => {
     const invalidData = {
       ...baseFormData,
       content_type: undefined,
     };
-    const result = validateFormStepDetailed(4, invalidData);
+    const result = validateFormStepDetailed(3, invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain("Please select a content type");
+    expect(result.errors).toContain(
+      "Please choose what type of content you'll create",
+    );
   });
 
-  test("step 4 validation - social media requires platform", () => {
+  test("step 3 validation - social media requires platform", () => {
     const invalidData = {
       ...baseFormData,
       content_type: "social-media" as const,
       platform: undefined,
     };
+    const result = validateFormStepDetailed(3, invalidData);
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Please choose where you'll publish this content",
+    );
+  });
+
+  test("step 4 validation - requires purpose and content goal", () => {
+    const invalidData = { ...baseFormData, purpose: [], content_goal: [] };
     const result = validateFormStepDetailed(4, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
-      "Please select a platform for this content type",
+      "Please choose what you want to achieve with this content",
+    );
+    expect(result.errors).toContain(
+      "Please select what style of content you want to create",
     );
   });
 
-  test("step 5 validation - requires purpose and content goal", () => {
-    const invalidData = { ...baseFormData, purpose: [], content_goal: [] };
-    const result = validateFormStepDetailed(5, invalidData);
-    expect(result.isValid).toBe(false);
-    expect(result.errors).toContain(
-      "Please select at least one content purpose",
-    );
-    expect(result.errors).toContain(
-      "Please select at least one content goal type",
-    );
-  });
-
-  test("step 8 validation - final generation step", () => {
+  test("step 6 validation - final generation step", () => {
     const invalidData = { ...baseFormData, num_ideas: 0 };
-    const result = validateFormStepDetailed(8, invalidData);
+    const result = validateFormStepDetailed(6, invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
-      "Please specify how many topic ideas you want to generate",
+      "Please choose how many topic ideas you need",
     );
   });
 
   test("valid form data passes validation", () => {
-    const result = validateFormStepDetailed(5, baseFormData);
+    const result = validateFormStepDetailed(4, baseFormData);
     expect(result.isValid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
@@ -465,9 +473,9 @@ describe("updateFormDataForIndustryChange", () => {
     wizardMode: "industry-first",
     industry: "technology",
     content_type: "blog-post",
-    audience: "existing audience",
+    audience: ["existing audience"],
     demographic_age: ["25-34"],
-    demographic_location: ["us"],
+    demographic_location: "us",
     purpose: [],
     content_goal: [],
     tone: [],
@@ -480,7 +488,7 @@ describe("updateFormDataForIndustryChange", () => {
     expect(result.industry).toBe("healthcare");
     expect(result.audience).toBeUndefined();
     expect(result.demographic_age).toEqual([]);
-    expect(result.demographic_location).toEqual([]);
+    expect(result.demographic_location).toBe("");
     expect(result.is_ymyl).toBe(true);
   });
 
@@ -501,8 +509,9 @@ describe("updateFormDataForContentTypeChange", () => {
     industry: "technology",
     content_type: "social-media",
     platform: "linkedin",
+    audience: ["professionals"],
     demographic_age: [],
-    demographic_location: [],
+    demographic_location: "us",
     purpose: [],
     content_goal: [],
     tone: [],
@@ -577,8 +586,9 @@ describe("buildPromptFromFormData", () => {
       wizardMode: "industry-first",
       industry: "technology",
       content_type: "blog-post",
+      audience: ["developers"],
       demographic_age: [],
-      demographic_location: [],
+      demographic_location: "us",
       purpose: ["educate-inform"],
       content_goal: ["tutorial"],
       tone: ["professional-formal"],
@@ -601,8 +611,9 @@ describe("buildPromptFromFormData", () => {
       subject: "AI in healthcare",
       industry: "healthcare",
       content_type: "blog-post",
+      audience: ["healthcare professionals"],
       demographic_age: [],
-      demographic_location: [],
+      demographic_location: "us",
       purpose: ["educate-inform"],
       content_goal: ["explainer"],
       tone: [],
@@ -621,8 +632,9 @@ describe("buildPromptFromFormData", () => {
       wizardMode: "industry-first",
       industry: "healthcare",
       content_type: "blog-post",
+      audience: ["medical professionals"],
       demographic_age: [],
-      demographic_location: [],
+      demographic_location: "us",
       purpose: ["educate-inform"],
       content_goal: ["tutorial"],
       tone: [],
@@ -641,9 +653,9 @@ describe("buildPromptFromFormData", () => {
       wizardMode: "industry-first",
       industry: "technology",
       content_type: "blog-post",
-      audience: "software developers",
+      audience: ["software developers"],
       demographic_age: ["25-34"],
-      demographic_location: ["us", "canada"],
+      demographic_location: "us",
       purpose: ["educate-inform"],
       content_goal: ["tutorial"],
       tone: ["technical-analytical"],
@@ -659,7 +671,7 @@ describe("buildPromptFromFormData", () => {
 
     expect(prompt).toContain("TARGET AUDIENCE: software developers");
     expect(prompt).toContain("AGE GROUPS: 25-34");
-    expect(prompt).toContain("GEOGRAPHIC FOCUS: us, canada");
+    expect(prompt).toContain("GEOGRAPHIC FOCUS: us");
     expect(prompt).toContain("KEYWORDS TO INCLUDE: machine learning, AI");
     expect(prompt).toContain("TOPICS TO AVOID: basic tutorials");
     expect(prompt).toContain("TARGET REGION: us");
@@ -806,9 +818,14 @@ describe("Industry change integration", () => {
     expect(updatedData.audience).toBeUndefined();
     expect(updatedData.demographic_age).toEqual([]);
 
-    // Validation should pass for step 2
-    const validation = validateFormStepDetailed(2, updatedData);
-    expect(validation.isValid).toBe(true);
+    // Step 1 should pass (industry is set)
+    updatedData.wizardMode = "industry-first"; // Need to set this for step 1 validation
+    const step1Validation = validateFormStepDetailed(1, updatedData);
+    expect(step1Validation.isValid).toBe(true);
+
+    // Step 2 should fail since audience was reset
+    const step2Validation = validateFormStepDetailed(2, updatedData);
+    expect(step2Validation.isValid).toBe(false);
   });
 
   test("changing to non-YMYL industry works correctly", () => {
@@ -833,11 +850,11 @@ describe("Content type change integration", () => {
 
     expect(updatedData.content_type).toBe("social-media");
 
-    // Should require platform selection
-    const validation = validateFormStepDetailed(4, updatedData);
+    // Should require platform selection (step 3 handles content format & platform)
+    const validation = validateFormStepDetailed(3, updatedData);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toContain(
-      "Please select a platform for this content type",
+      "Please choose where you'll publish this content",
     );
   });
 
@@ -856,8 +873,8 @@ describe("Content type change integration", () => {
     expect(updatedData.content_type).toBe("blog-post");
     expect(updatedData.platform).toBeUndefined();
 
-    // Should pass validation without platform
-    const validation = validateFormStepDetailed(4, updatedData);
+    // Should pass validation without platform (step 3 handles content format)
+    const validation = validateFormStepDetailed(3, updatedData);
     expect(validation.isValid).toBe(true);
   });
 });
@@ -868,47 +885,41 @@ describe("Content type change integration", () => {
 
 describe("Complete User Flow Integration Tests", () => {
   describe("Subject-first wizard flow simulation", () => {
-    test("complete 8-step subject-first flow", () => {
+    test("complete 6-step subject-first flow", () => {
       let formData = createInitialFormData();
 
-      // Step 1: Wizard Mode Selection
+      // Step 1: Wizard Mode + Industry/Subject Selection (merged step)
       formData.wizardMode = "subject-first";
-      expect(validateFormStep(1, formData)).toBe(true);
-
-      // Step 2: Subject + Industry Selection
       formData.subject = "AI in patient diagnosis";
       formData = updateFormDataForIndustryChange(formData, "healthcare");
-      expect(validateFormStep(2, formData)).toBe(true);
+      expect(validateFormStep(1, formData)).toBe(true);
       expect(formData.is_ymyl).toBe(true);
 
-      // Step 3: Audience & Targeting
-      formData.audience = "doctors";
+      // Step 2: Audience & Targeting
+      formData.audience = ["doctors"];
       formData.demographic_age = ["35-44", "45-54"];
-      formData.demographic_location = ["us", "canada"];
-      expect(validateFormStep(3, formData)).toBe(true);
+      formData.demographic_location = "us";
+      expect(validateFormStep(2, formData)).toBe(true);
 
-      // Step 4: Content Format & Platform
+      // Step 3: Content Format & Platform
       formData = updateFormDataForContentTypeChange(formData, "blog-post");
-      expect(validateFormStep(4, formData)).toBe(true);
+      expect(validateFormStep(3, formData)).toBe(true);
       expect(formData.platform).toBeUndefined(); // No platform needed for blog
 
-      // Step 5: Content Goals & Style
+      // Step 4: Content Goals & Style
       formData.purpose = ["educate-inform"];
       formData.content_goal = ["explainer"];
       formData.tone = ["professional-formal"];
-      expect(validateFormStep(5, formData)).toBe(true);
+      expect(validateFormStep(4, formData)).toBe(true);
 
-      // Step 6: Advanced Options
+      // Step 5: Advanced Options
       formData.keywords = "AI, diagnosis, healthcare";
       formData.exclude = "controversial treatments";
       formData.num_ideas = 5;
+      expect(validateFormStep(5, formData)).toBe(true);
+
+      // Step 6: Review & Generate (final step)
       expect(validateFormStep(6, formData)).toBe(true);
-
-      // Step 7: Review
-      expect(validateFormStep(7, formData)).toBe(true);
-
-      // Step 8: Generate Topics
-      expect(validateFormStep(8, formData)).toBe(true);
 
       // Verify prompt generation works
       const prompt = buildPromptFromFormData(formData);
@@ -919,49 +930,43 @@ describe("Complete User Flow Integration Tests", () => {
   });
 
   describe("Industry-first wizard flow simulation", () => {
-    test("complete 8-step industry-first flow with social media", () => {
+    test("complete 6-step industry-first flow with social media", () => {
       let formData = createInitialFormData();
 
-      // Step 1: Wizard Mode Selection
+      // Step 1: Wizard Mode + Industry Selection (merged step)
       formData.wizardMode = "industry-first";
-      expect(validateFormStep(1, formData)).toBe(true);
-
-      // Step 2: Industry Selection
       formData = updateFormDataForIndustryChange(formData, "technology");
-      expect(validateFormStep(2, formData)).toBe(true);
+      expect(validateFormStep(1, formData)).toBe(true);
       expect(formData.is_ymyl).toBe(false);
 
-      // Step 3: Audience & Targeting
+      // Step 2: Audience & Targeting
       const audiences = getAudienceForIndustry("technology");
-      formData.audience = audiences[0]; // Use first suggested audience
+      formData.audience = [audiences[0]]; // Use first suggested audience as array
       formData.demographic_age = ["25-34"];
-      formData.demographic_location = ["us"];
-      expect(validateFormStep(3, formData)).toBe(true);
+      formData.demographic_location = "us";
+      expect(validateFormStep(2, formData)).toBe(true);
 
-      // Step 4: Content Format & Platform (Social Media requires platform)
+      // Step 3: Content Format & Platform (Social Media requires platform)
       formData = updateFormDataForContentTypeChange(formData, "social-media");
-      expect(validateFormStep(4, formData)).toBe(false); // Should fail without platform
+      expect(validateFormStep(3, formData)).toBe(false); // Should fail without platform
 
       formData.platform = "linkedin";
-      expect(validateFormStep(4, formData)).toBe(true);
+      expect(validateFormStep(3, formData)).toBe(true);
 
-      // Step 5: Content Goals & Style
+      // Step 4: Content Goals & Style
       formData.purpose = ["promote-product"];
       formData.content_goal = ["thought-leadership"];
       formData.tone = ["professional-formal", "friendly-approachable"];
-      expect(validateFormStep(5, formData)).toBe(true);
+      expect(validateFormStep(4, formData)).toBe(true);
 
-      // Step 6: Advanced Options with focus
+      // Step 5: Advanced Options with focus
       formData.focus = "AI automation tools";
       formData.keywords = "automation, productivity, AI tools";
       formData.num_ideas = 3;
+      expect(validateFormStep(5, formData)).toBe(true);
+
+      // Step 6: Review & Generate (final step)
       expect(validateFormStep(6, formData)).toBe(true);
-
-      // Step 7: Review
-      expect(validateFormStep(7, formData)).toBe(true);
-
-      // Step 8: Generate Topics
-      expect(validateFormStep(8, formData)).toBe(true);
 
       // Verify prompt generation
       const prompt = buildPromptFromFormData(formData);
@@ -984,14 +989,14 @@ describe("Cross-Step Validation Integration Tests", () => {
     // Set up initial valid state
     formData.wizardMode = "industry-first";
     formData.industry = "technology";
-    formData.audience = "developers";
+    formData.audience = ["developers"];
     formData.content_type = "social-media";
     formData.platform = "linkedin";
     formData.purpose = ["educate-inform"];
     formData.content_goal = ["tutorial"];
 
-    // Verify initial state is valid
-    expect(validateFormStep(5, formData)).toBe(true);
+    // Verify initial state is valid through step 4 (goals & style complete)
+    expect(validateFormStep(4, formData)).toBe(true);
 
     // Change industry to one that doesn't support "developers" audience
     formData = updateFormDataForIndustryChange(formData, "food");
@@ -1000,11 +1005,11 @@ describe("Cross-Step Validation Integration Tests", () => {
     expect(formData.audience).toBeUndefined();
     expect(formData.is_ymyl).toBe(false);
 
-    // Should fail step 3 validation until new audience is selected
-    const step3Validation = validateFormStepDetailed(3, formData);
-    expect(step3Validation.isValid).toBe(false);
-    expect(step3Validation.errors).toContain(
-      "Please specify target audience or select age groups",
+    // Should fail step 2 validation until new audience is selected
+    const step2Validation = validateFormStepDetailed(2, formData);
+    expect(step2Validation.isValid).toBe(false);
+    expect(step2Validation.errors).toContain(
+      "Please tell us who you're creating content for",
     );
   });
 
@@ -1014,19 +1019,19 @@ describe("Cross-Step Validation Integration Tests", () => {
     // Set up social media content with platform
     formData.content_type = "social-media";
     formData.platform = "twitter";
-    expect(validateFormStep(4, formData)).toBe(true);
+    expect(validateFormStep(3, formData)).toBe(true);
 
     // Change to blog post
     formData = updateFormDataForContentTypeChange(formData, "blog-post");
     expect(formData.platform).toBeUndefined();
-    expect(validateFormStep(4, formData)).toBe(true);
+    expect(validateFormStep(3, formData)).toBe(true);
 
     // Change back to video content
     formData = updateFormDataForContentTypeChange(formData, "video-content");
-    expect(validateFormStep(4, formData)).toBe(false); // Should require platform
+    expect(validateFormStep(3, formData)).toBe(false); // Should require platform
 
     formData.platform = "youtube";
-    expect(validateFormStep(4, formData)).toBe(true);
+    expect(validateFormStep(3, formData)).toBe(true);
   });
 
   test("YMYL detection integrates with form validation warnings", () => {
@@ -1037,14 +1042,14 @@ describe("Cross-Step Validation Integration Tests", () => {
     formData.industry = "technology";
     formData.subject = "cooking recipes and meal planning";
 
-    const validation = validateFormStepDetailed(2, formData);
+    const validation = validateFormStepDetailed(1, formData);
     expect(validation.isValid).toBe(true);
     expect(validation.warnings).toBeDefined();
     expect(validation.warnings?.[0]).toContain("might not be closely related");
 
     // Change to food industry - should resolve warning
     formData = updateFormDataForIndustryChange(formData, "food");
-    const newValidation = validateFormStepDetailed(2, formData);
+    const newValidation = validateFormStepDetailed(1, formData);
     expect(newValidation.warnings).toBeUndefined();
     expect(formData.is_ymyl).toBe(false);
   });
@@ -1201,9 +1206,9 @@ describe("Data Consistency Integration Tests", () => {
       industry: "finance",
       content_type: "video-content",
       platform: "youtube",
-      audience: "retail-investors",
+      audience: ["retail-investors"],
       demographic_age: ["25-34", "35-44"],
-      demographic_location: ["us", "uk", "canada"],
+      demographic_location: "us",
       reader_level: "intermediate",
       purpose: ["educate-inform", "establish-thought-leadership"],
       content_goal: ["explainer", "comparison"],
@@ -1228,7 +1233,7 @@ describe("Data Consistency Integration Tests", () => {
     expect(prompt).toContain("PLATFORM: youtube");
     expect(prompt).toContain("TARGET AUDIENCE: retail-investors");
     expect(prompt).toContain("AGE GROUPS: 25-34, 35-44");
-    expect(prompt).toContain("GEOGRAPHIC FOCUS: us, uk, canada");
+    expect(prompt).toContain("GEOGRAPHIC FOCUS: us");
     expect(prompt).toContain(
       "CONTENT PURPOSE: educate-inform, establish-thought-leadership",
     );
@@ -1251,7 +1256,7 @@ describe("Data Consistency Integration Tests", () => {
     expect(typeof formData.industry).toBe("string");
     expect(typeof formData.content_type).toBe("string");
     expect(Array.isArray(formData.demographic_age)).toBe(true);
-    expect(Array.isArray(formData.demographic_location)).toBe(true);
+    expect(typeof formData.demographic_location).toBe("string");
     expect(Array.isArray(formData.purpose)).toBe(true);
     expect(Array.isArray(formData.content_goal)).toBe(true);
     expect(Array.isArray(formData.tone)).toBe(true);
@@ -1267,10 +1272,10 @@ describe("Data Consistency Integration Tests", () => {
       content_type_other: "custom content",
       platform: "linkedin",
       platform_other: "custom platform",
-      audience: "developers",
+      audience: ["developers"],
       audience_size: "medium",
       demographic_age: ["25-34"],
-      demographic_location: ["us"],
+      demographic_location: "us",
       reader_level: "intermediate",
       purpose: ["educate-inform"],
       purpose_other: "custom purpose",
@@ -1290,7 +1295,7 @@ describe("Data Consistency Integration Tests", () => {
     };
 
     // Should be able to validate and generate prompt
-    expect(validateFormStep(8, fullFormData)).toBe(true);
+    expect(validateFormStep(6, fullFormData)).toBe(true);
     const prompt = buildPromptFromFormData(fullFormData);
     expect(prompt.length).toBeGreaterThan(100);
   });
@@ -1309,15 +1314,15 @@ describe("Error Recovery Integration Tests", () => {
     formData.industry = "technology";
     // Missing required subject for subject-first mode
 
-    const validation = validateFormStepDetailed(2, formData);
+    const validation = validateFormStepDetailed(1, formData);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toContain(
-      "Please provide a subject for subject-first mode",
+      "Please enter the topic you want to explore",
     );
 
     // Recovery: add subject
     formData.subject = "web development trends";
-    const recoveredValidation = validateFormStepDetailed(2, formData);
+    const recoveredValidation = validateFormStepDetailed(1, formData);
     expect(recoveredValidation.isValid).toBe(true);
   });
 
@@ -1327,25 +1332,25 @@ describe("Error Recovery Integration Tests", () => {
     // Start valid
     formData.wizardMode = "industry-first";
     formData = updateFormDataForIndustryChange(formData, "technology");
-    expect(validateFormStep(2, formData)).toBe(true);
+    expect(validateFormStep(1, formData)).toBe(true);
 
     // Move to step 4 without completing step 3 (audience)
     formData.content_type = "social-media";
     // No platform set yet - should fail
     expect(validateFormStep(4, formData)).toBe(false);
 
-    // Also step 3 should fail due to missing audience
-    expect(validateFormStep(3, formData)).toBe(false);
+    // Also step 2 should fail due to missing audience
+    expect(validateFormStep(2, formData)).toBe(false);
+
+    // Complete step 2
+    formData.audience = ["developers"];
+    formData.demographic_age = ["25-34"];
+    formData.demographic_location = "us";
+    expect(validateFormStep(2, formData)).toBe(true);
 
     // Complete step 3
-    formData.audience = "developers";
-    formData.demographic_age = ["25-34"];
-    formData.demographic_location = ["us"];
-    expect(validateFormStep(3, formData)).toBe(true);
-
-    // Complete step 4
     formData.platform = "linkedin";
-    expect(validateFormStep(4, formData)).toBe(true);
+    expect(validateFormStep(3, formData)).toBe(true);
   });
 
   test("handles multiple validation errors across steps", () => {
@@ -1363,17 +1368,23 @@ describe("Error Recovery Integration Tests", () => {
     formData.num_ideas = 0;
     // Invalid num_ideas
 
-    // Step 8 validation should catch all issues
-    const validation = validateFormStepDetailed(8, formData);
+    // Step 6 validation should catch all issues
+    const validation = validateFormStepDetailed(6, formData);
     expect(validation.isValid).toBe(false);
     expect(validation.errors.length).toBeGreaterThan(5);
 
     const errorString = formatValidationErrors(validation.errors);
     expect(errorString).toContain("Please fix the following issues:");
-    expect(errorString).toContain("Please select an industry");
-    expect(errorString).toContain("Please provide a subject");
-    expect(errorString).toContain("Please select a platform");
-    expect(errorString).toContain("Please select at least one content purpose");
+    expect(errorString).toContain(
+      "Please select your field or industry to continue",
+    );
+    expect(errorString).toContain("Please enter the topic you want to explore");
+    expect(errorString).toContain(
+      "Please choose where you'll publish this content",
+    );
+    expect(errorString).toContain(
+      "Please choose what you want to achieve with this content",
+    );
   });
 
   test("progressive form completion with validation at each step", () => {
@@ -1387,45 +1398,44 @@ describe("Error Recovery Integration Tests", () => {
     formData.wizardMode = "industry-first";
     expect(validateFormStep(1, formData)).toBe(true);
 
-    // Step 2: Industry required
+    // Step 1: Industry required
     formData.industry = "";
+    expect(validateFormStep(1, formData)).toBe(false);
+
+    // Fix step 1
+    formData = updateFormDataForIndustryChange(formData, "healthcare");
+    expect(validateFormStep(1, formData)).toBe(true);
+
+    // Step 2: Audience required
     expect(validateFormStep(2, formData)).toBe(false);
 
     // Fix step 2
-    formData = updateFormDataForIndustryChange(formData, "healthcare");
+    formData.audience = ["patients"];
+    formData.demographic_age = ["35-44"];
+    formData.demographic_location = "us";
     expect(validateFormStep(2, formData)).toBe(true);
 
-    // Step 3: Audience required
+    // Step 3: Content type required
+    formData.content_type = "";
     expect(validateFormStep(3, formData)).toBe(false);
 
     // Fix step 3
-    formData.audience = "patients";
-    formData.demographic_age = ["35-44"];
-    formData.demographic_location = ["us"];
+    formData.content_type = "blog-post";
     expect(validateFormStep(3, formData)).toBe(true);
 
-    // Step 4: Content type required
-    formData.content_type = "";
+    // Step 4: Goals required
     expect(validateFormStep(4, formData)).toBe(false);
 
     // Fix step 4
-    formData.content_type = "blog-post";
-    expect(validateFormStep(4, formData)).toBe(true);
-
-    // Step 5: Goals required
-    expect(validateFormStep(5, formData)).toBe(false);
-
-    // Fix step 5
     formData.purpose = ["educate-inform"];
     formData.content_goal = ["explainer"];
+    expect(validateFormStep(4, formData)).toBe(true);
+
+    // Step 5: Advanced options (all optional)
     expect(validateFormStep(5, formData)).toBe(true);
 
-    // Step 6: Advanced options (all optional)
+    // Step 6: Final step should pass with complete data
     expect(validateFormStep(6, formData)).toBe(true);
-
-    // Steps 7 & 8: Should pass with complete data
-    expect(validateFormStep(7, formData)).toBe(true);
-    expect(validateFormStep(8, formData)).toBe(true);
   });
 });
 
@@ -1446,9 +1456,9 @@ describe("Advanced Integration Scenario Tests", () => {
     expect(formData.is_ymyl).toBe(true);
 
     // Target both healthcare and tech audiences
-    formData.audience = "doctors"; // Primary healthcare audience
+    formData.audience = ["doctors"]; // Primary healthcare audience
     formData.demographic_age = ["35-44", "45-54"];
-    formData.demographic_location = ["us", "europe"];
+    formData.demographic_location = "us";
     formData.reader_level = "expert";
 
     // Professional content for medical conferences
@@ -1468,7 +1478,7 @@ describe("Advanced Integration Scenario Tests", () => {
       "Focus on proven AI applications, cite recent research studies";
 
     // Verify all validations pass
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
 
     // Verify prompt includes cross-domain elements
     const prompt = buildPromptFromFormData(formData);
@@ -1486,9 +1496,9 @@ describe("Advanced Integration Scenario Tests", () => {
     formData = updateFormDataForIndustryChange(formData, "education");
 
     // Specific Pakistani education audience
-    formData.audience = "teachers";
+    formData.audience = ["teachers"];
     formData.demographic_age = ["25-34", "35-44"];
-    formData.demographic_location = ["pakistan"];
+    formData.demographic_location = "pakistan";
     formData.reader_level = "intermediate";
 
     // Social media content for local platforms
@@ -1510,7 +1520,7 @@ describe("Advanced Integration Scenario Tests", () => {
     formData.notes =
       "Consider local infrastructure limitations and cultural context";
 
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
 
     const prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain("TARGET REGION: pakistan");
@@ -1526,9 +1536,9 @@ describe("Advanced Integration Scenario Tests", () => {
     formData = updateFormDataForIndustryChange(formData, "business");
 
     // High-level business audience
-    formData.audience = "executives";
+    formData.audience = ["executives"];
     formData.demographic_age = ["45-54", "55-64"];
-    formData.demographic_location = ["us", "uk", "germany"];
+    formData.demographic_location = "us";
     formData.reader_level = "expert";
 
     // Long-form professional content
@@ -1549,7 +1559,7 @@ describe("Advanced Integration Scenario Tests", () => {
     formData.fresh_vs_evergreen = "evergreen";
     formData.safe_vs_original = "original";
 
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
 
     const prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain(
@@ -1567,9 +1577,9 @@ describe("Advanced Integration Scenario Tests", () => {
     // Content creator exploring fitness niche
     formData.wizardMode = "industry-first";
     formData = updateFormDataForIndustryChange(formData, "fitness");
-    formData.audience = "fitness-enthusiasts";
+    formData.audience = ["fitness-enthusiasts"];
     formData.demographic_age = ["18-24", "25-34"];
-    formData.demographic_location = ["us"];
+    formData.demographic_location = "us";
 
     // Test YouTube video content first
     formData = updateFormDataForContentTypeChange(formData, "video-content");
@@ -1579,7 +1589,7 @@ describe("Advanced Integration Scenario Tests", () => {
     formData.tone = ["friendly-warm", "inspirational-uplifting"];
     formData.num_ideas = 5;
 
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
     let prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain("CONTENT TYPE: video-content");
     expect(prompt).toContain("PLATFORM: youtube");
@@ -1589,7 +1599,7 @@ describe("Advanced Integration Scenario Tests", () => {
     formData.platform = "instagram";
     formData.content_goal = ["listicle"]; // Better for social
 
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
     prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain("CONTENT TYPE: social-media");
     expect(prompt).toContain("PLATFORM: instagram");
@@ -1599,7 +1609,7 @@ describe("Advanced Integration Scenario Tests", () => {
     expect(formData.platform).toBeUndefined();
     formData.content_goal = ["tutorial", "explainer"]; // More detailed for blog
 
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
     prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain("CONTENT TYPE: blog-post");
     expect(prompt).not.toContain("PLATFORM:");
@@ -1624,13 +1634,7 @@ describe("Advanced Integration Scenario Tests", () => {
       "55-64",
       "65+",
     ];
-    formData.demographic_location = [
-      "us",
-      "uk",
-      "canada",
-      "australia",
-      "germany",
-    ];
+    formData.demographic_location = "us";
 
     // Maximum content goals
     formData.content_type = "other";
@@ -1663,7 +1667,7 @@ describe("Advanced Integration Scenario Tests", () => {
 
     // Should validate successfully
     expect(validateFormStep(6, formData)).toBe(true);
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
 
     // Prompt should handle all data
     const prompt = buildPromptFromFormData(formData);
@@ -1682,7 +1686,7 @@ describe("Advanced Integration Scenario Tests", () => {
     formData.subject = "heart surgery techniques";
     formData = updateFormDataForIndustryChange(formData, "technology");
 
-    const validation = validateFormStepDetailed(2, formData);
+    const validation = validateFormStepDetailed(1, formData);
     // Check if warnings exist, if not this means the validation logic may be different
     if (validation.warnings && validation.warnings.length > 0) {
       expect(validation.warnings[0]).toContain("might not be closely related");
@@ -1691,9 +1695,9 @@ describe("Advanced Integration Scenario Tests", () => {
     // Test audience mismatch differently - use proper step 3 setup
     formData = updateFormDataForIndustryChange(formData, "healthcare");
     const healthcareAudiences = getAudienceForIndustry("healthcare");
-    formData.audience = "developers"; // This should be invalid for healthcare
+    formData.audience = ["developers"]; // This should be invalid for healthcare
     formData.demographic_age = ["35-44"];
-    formData.demographic_location = ["us"];
+    formData.demographic_location = "us";
 
     // The actual warning might be about geographic targeting, not audience mismatch
     // Let's verify the core functionality - that healthcare doesn't include developers
@@ -1722,9 +1726,9 @@ describe("Real User Journey Simulation Tests", () => {
     expect(formData.is_ymyl).toBe(true);
 
     // User selects HR professionals as audience
-    formData.audience = "hr-managers";
+    formData.audience = ["hr-managers"];
     formData.demographic_age = ["35-44", "45-54"];
-    formData.demographic_location = ["us"];
+    formData.demographic_location = "us";
 
     // User wants to create a guide
     formData.content_type = "ebook-guide";
@@ -1740,7 +1744,7 @@ describe("Real User Journey Simulation Tests", () => {
     formData.num_ideas = 5;
 
     // Final validation should pass
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
 
     // Prompt should include YMYL warnings
     const prompt = buildPromptFromFormData(formData);
@@ -1756,9 +1760,9 @@ describe("Real User Journey Simulation Tests", () => {
     formData = updateFormDataForIndustryChange(formData, "technology");
 
     // User narrows to specific audience
-    formData.audience = "startup-founders";
+    formData.audience = ["startup-founders"];
     formData.demographic_age = ["25-34"];
-    formData.demographic_location = ["us", "india"];
+    formData.demographic_location = "us";
 
     // User wants blog content
     formData.content_type = "blog-post";
@@ -1774,7 +1778,7 @@ describe("Real User Journey Simulation Tests", () => {
     formData.num_ideas = 8;
 
     // Should validate successfully
-    expect(validateFormStep(8, formData)).toBe(true);
+    expect(validateFormStep(6, formData)).toBe(true);
 
     // Prompt should be structured correctly
     const prompt = buildPromptFromFormData(formData);
@@ -1788,74 +1792,68 @@ describe("Real User Journey Simulation Tests", () => {
     // Start with industry-first
     formData.wizardMode = "industry-first";
     formData = updateFormDataForIndustryChange(formData, "education");
-    formData.audience = "teachers";
+    formData.audience = ["teachers"];
 
     // User switches to subject-first
     formData.wizardMode = "subject-first";
 
     // Should now require subject for validation
-    expect(validateFormStep(2, formData)).toBe(false);
+    expect(validateFormStep(1, formData)).toBe(false);
 
     // Add subject
     formData.subject = "classroom management techniques";
-    expect(validateFormStep(2, formData)).toBe(true);
-
-    // Previous audience selection should be preserved
-    expect(formData.audience).toBe("teachers");
-  });
-
-  test("complete 8-step industry-first journey with platform changes", () => {
-    let formData = createInitialFormData();
-
-    // Step 1: Select wizard mode
-    formData.wizardMode = "industry-first";
     expect(validateFormStep(1, formData)).toBe(true);
 
-    // Step 2: Select industry
+    // Previous audience selection should be preserved
+    expect(formData.audience).toEqual(["teachers"]);
+  });
+
+  test("complete 6-step industry-first journey with platform changes", () => {
+    let formData = createInitialFormData();
+
+    // Step 1: Select wizard mode and industry
+    formData.wizardMode = "industry-first";
     formData = updateFormDataForIndustryChange(formData, "marketing");
-    expect(validateFormStep(2, formData)).toBe(true);
+    expect(validateFormStep(1, formData)).toBe(true);
     expect(formData.is_ymyl).toBe(false);
 
-    // Step 3: Select audience and demographics
+    // Step 2: Select audience and demographics
     const marketingAudiences = getAudienceForIndustry("marketing");
     expect(marketingAudiences.length).toBeGreaterThan(0);
-    formData.audience = marketingAudiences[0];
+    formData.audience = [marketingAudiences[0]];
     formData.demographic_age = ["25-34", "35-44"];
-    formData.demographic_location = ["us", "canada"];
-    expect(validateFormStep(3, formData)).toBe(true);
+    formData.demographic_location = "us";
+    expect(validateFormStep(2, formData)).toBe(true);
 
-    // Step 4: Start with social media (requires platform)
+    // Step 3: Start with social media (requires platform)
     formData = updateFormDataForContentTypeChange(formData, "social-media");
-    expect(validateFormStep(4, formData)).toBe(false); // Should fail without platform
+    expect(validateFormStep(3, formData)).toBe(false); // Should fail without platform
 
     formData.platform = "linkedin";
-    expect(validateFormStep(4, formData)).toBe(true);
+    expect(validateFormStep(3, formData)).toBe(true);
 
     // User changes mind to blog post (platform should be removed)
     formData = updateFormDataForContentTypeChange(formData, "blog-post");
     expect(formData.platform).toBeUndefined();
-    expect(validateFormStep(4, formData)).toBe(true);
+    expect(validateFormStep(3, formData)).toBe(true);
 
-    // Step 5: Content goals and style
+    // Step 4: Content goals and style
     formData.purpose = ["drive-seo", "establish-thought-leadership"];
     formData.content_goal = ["tutorial", "listicle"];
     formData.tone = ["friendly-warm", "professional-formal"];
-    expect(validateFormStep(5, formData)).toBe(true);
+    expect(validateFormStep(4, formData)).toBe(true);
 
-    // Step 6: Advanced options
+    // Step 5: Advanced options
     formData.focus = "content marketing automation";
     formData.keywords = "content marketing, automation, AI tools";
     formData.exclude = "overly technical jargon";
     formData.num_ideas = 6;
     formData.fresh_vs_evergreen = "balanced";
     formData.safe_vs_original = "original";
+    expect(validateFormStep(5, formData)).toBe(true);
+
+    // Step 6: Final generation
     expect(validateFormStep(6, formData)).toBe(true);
-
-    // Step 7: Review
-    expect(validateFormStep(7, formData)).toBe(true);
-
-    // Step 8: Final generation
-    expect(validateFormStep(8, formData)).toBe(true);
 
     // Verify complete prompt includes all elements
     const prompt = buildPromptFromFormData(formData);
@@ -1864,14 +1862,11 @@ describe("Real User Journey Simulation Tests", () => {
     expect(prompt).toContain("ORIGINALITY: original");
   });
 
-  test("complete 8-step subject-first journey with YMYL transitions", () => {
+  test("complete 6-step subject-first journey with YMYL transitions", () => {
     let formData = createInitialFormData();
 
-    // Step 1: Select wizard mode
+    // Step 1: Select wizard mode, subject + Industry (start non-YMYL, then switch)
     formData.wizardMode = "subject-first";
-    expect(validateFormStep(1, formData)).toBe(true);
-
-    // Step 2: Subject + Industry (start non-YMYL, then switch)
     formData.subject = "personal budgeting apps";
     formData = updateFormDataForIndustryChange(formData, "technology");
     expect(formData.is_ymyl).toBe(false);
@@ -1879,35 +1874,34 @@ describe("Real User Journey Simulation Tests", () => {
     // User realizes this is actually financial content
     formData = updateFormDataForIndustryChange(formData, "finance");
     expect(formData.is_ymyl).toBe(true);
-    expect(validateFormStep(2, formData)).toBe(true);
+    expect(validateFormStep(1, formData)).toBe(true);
 
-    // Step 3: Audience reset after industry change
+    // Step 2: Audience reset after industry change
     expect(formData.audience).toBeUndefined(); // Should be reset
     const financeAudiences = getAudienceForIndustry("finance");
-    formData.audience = financeAudiences[0];
+    formData.audience = [financeAudiences[0]];
     formData.demographic_age = ["25-34"];
-    formData.demographic_location = ["us"];
+    formData.demographic_location = "us";
+    expect(validateFormStep(2, formData)).toBe(true);
+
+    // Step 3: Content format
+    formData.content_type = "infographic";
     expect(validateFormStep(3, formData)).toBe(true);
 
-    // Step 4: Content format
-    formData.content_type = "infographic";
-    expect(validateFormStep(4, formData)).toBe(true);
-
-    // Step 5: Goals emphasizing financial education
+    // Step 4: Goals emphasizing financial education
     formData.purpose = ["educate-inform"];
     formData.content_goal = ["explainer", "tutorial"];
     formData.tone = ["simple-accessible", "friendly-warm"];
-    expect(validateFormStep(5, formData)).toBe(true);
+    expect(validateFormStep(4, formData)).toBe(true);
 
-    // Step 6: YMYL-appropriate constraints
+    // Step 5: YMYL-appropriate constraints
     formData.keywords = "budgeting, personal finance, apps";
     formData.exclude = "investment advice, specific product recommendations";
     formData.num_ideas = 4;
-    expect(validateFormStep(6, formData)).toBe(true);
+    expect(validateFormStep(5, formData)).toBe(true);
 
-    // Step 7 & 8: Final validation
-    expect(validateFormStep(7, formData)).toBe(true);
-    expect(validateFormStep(8, formData)).toBe(true);
+    // Step 6: Final validation
+    expect(validateFormStep(6, formData)).toBe(true);
 
     // Verify YMYL compliance in prompt
     const prompt = buildPromptFromFormData(formData);

@@ -402,7 +402,7 @@ export const validateFormStepDetailed = (
       }
       if (
         !formData.demographic_location ||
-        formData.demographic_location.length === 0
+        formData.demographic_location.trim() === ""
       ) {
         warnings.push(
           "Consider specifying geographic targeting for better results",

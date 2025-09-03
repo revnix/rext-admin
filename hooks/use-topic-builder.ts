@@ -67,6 +67,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Step tracking state - track which steps user has actually visited
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
+
   // Generation state
   const [generatedTopics, setGeneratedTopics] = useState<GeneratedTopic[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -138,6 +141,18 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     return () => clearTimeout(timeoutId);
   }, [saveDraft]);
 
+  // Ensure visited steps includes all steps up to current step (for draft loading)
+  useEffect(() => {
+    setVisitedSteps((prev) => {
+      const newVisited = new Set(prev);
+      // Add all steps from 1 to currentStep
+      for (let i = 1; i <= currentStep; i++) {
+        newVisited.add(i);
+      }
+      return newVisited;
+    });
+  }, [currentStep]);
+
   // Form data update with conditional field logic
   const updateFormData = useCallback(
     (
@@ -181,6 +196,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   const resetForm = useCallback(() => {
     setFormData(createInitialFormData());
     setCurrentStep(1);
+    setVisitedSteps(new Set([1])); // Reset to only step 1 visited
     setErrors({});
     setGeneratedTopics([]);
     setIsGenerating(false);
@@ -204,13 +220,18 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     return validation.isValid;
   }, [validateCurrentStep]);
 
-  // Step completion check
+  // Step completion check - only completed if valid AND user has visited the step
   const isStepCompleted = useCallback(
     (step: number): boolean => {
+      // A step is only completed if:
+      // 1. User has visited it (or it's before current step), AND
+      // 2. It passes validation
+      const hasBeenVisited = visitedSteps.has(step) || step < currentStep;
       const validation = validateStep(step);
-      return validation.isValid;
+
+      return hasBeenVisited && validation.isValid;
     },
-    [validateStep],
+    [validateStep, visitedSteps, currentStep],
   );
 
   // Real-time field validation for immediate feedback
@@ -284,7 +305,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     setErrors({});
 
     if (currentStep < 6) {
-      setCurrentStep(currentStep + 1);
+      const nextStepNumber = currentStep + 1;
+      setCurrentStep(nextStepNumber);
+      setVisitedSteps((prev) => new Set([...prev, nextStepNumber]));
       return true;
     }
 
@@ -327,6 +350,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       }
 
       setCurrentStep(step);
+      setVisitedSteps((prev) => new Set([...prev, step]));
       setErrors({});
       return true;
     },
