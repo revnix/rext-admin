@@ -4,21 +4,27 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.json();
-    
+
     // Simulate AI processing time (8-12 seconds to test the loading screen)
     const processingTime = Math.random() * 4000 + 8000; // 8-12 seconds
-    await new Promise(resolve => setTimeout(resolve, processingTime));
+    await new Promise((resolve) => setTimeout(resolve, processingTime));
 
     // Mock generated topics based on the form data
     const mockTopics = [
       {
         id: "topic_1",
         title: `${formData.industry} Content Strategy: A Beginner's Guide`,
-        angle: "Comprehensive introduction covering fundamentals and practical steps",
+        angle:
+          "Comprehensive introduction covering fundamentals and practical steps",
         description: `Learn the essential strategies for creating effective ${formData.industry.toLowerCase()} content`,
-        channel_fit: formData.platform ? [formData.platform] : ["blog", "social"],
-        audience_fit: Array.isArray(formData.audience) ? formData.audience : [formData.audience || "general"],
-        why_it_works: "Addresses a common knowledge gap with actionable insights",
+        channel_fit: formData.platform
+          ? [formData.platform]
+          : ["blog", "social"],
+        audience_fit: Array.isArray(formData.audience)
+          ? formData.audience
+          : [formData.audience || "general"],
+        why_it_works:
+          "Addresses a common knowledge gap with actionable insights",
         scores: {
           relevance: 0.92,
           freshness: 0.78,
@@ -28,13 +34,16 @@ export async function POST(request: NextRequest) {
         is_saved: false,
       },
       {
-        id: "topic_2", 
+        id: "topic_2",
         title: `Top 10 ${formData.industry} Trends to Watch This Year`,
         angle: "Forward-looking analysis of emerging industry developments",
         description: `Stay ahead with the latest trends shaping the ${formData.industry.toLowerCase()} landscape`,
         channel_fit: ["blog", "social", "newsletter"],
-        audience_fit: Array.isArray(formData.audience) ? formData.audience : [formData.audience || "professionals"],
-        why_it_works: "Trending content that provides valuable industry insights",
+        audience_fit: Array.isArray(formData.audience)
+          ? formData.audience
+          : [formData.audience || "professionals"],
+        why_it_works:
+          "Trending content that provides valuable industry insights",
         scores: {
           relevance: 0.88,
           freshness: 0.94,
@@ -49,7 +58,9 @@ export async function POST(request: NextRequest) {
         angle: "Problem-solving approach with practical solutions",
         description: `Identify and overcome the most frequent challenges in ${formData.industry.toLowerCase()}`,
         channel_fit: ["blog", "video", "podcast"],
-        audience_fit: Array.isArray(formData.audience) ? formData.audience : [formData.audience || "beginners"],
+        audience_fit: Array.isArray(formData.audience)
+          ? formData.audience
+          : [formData.audience || "beginners"],
         why_it_works: "Addresses pain points with actionable solutions",
         scores: {
           relevance: 0.85,
@@ -65,10 +76,12 @@ export async function POST(request: NextRequest) {
         angle: "Case study approach with real-world examples",
         description: `Analyze successful ${formData.industry.toLowerCase()} examples and extract key lessons`,
         channel_fit: ["blog", "social", "video"],
-        audience_fit: Array.isArray(formData.audience) ? formData.audience : [formData.audience || "professionals"],
+        audience_fit: Array.isArray(formData.audience)
+          ? formData.audience
+          : [formData.audience || "professionals"],
         why_it_works: "People love success stories and learning from examples",
         scores: {
-          relevance: 0.90,
+          relevance: 0.9,
           freshness: 0.71,
           novelty: 0.69,
         },
@@ -81,7 +94,9 @@ export async function POST(request: NextRequest) {
         angle: "Forward-thinking analysis with expert predictions",
         description: `Explore where ${formData.industry.toLowerCase()} is heading and what it means for you`,
         channel_fit: ["blog", "podcast", "social"],
-        audience_fit: Array.isArray(formData.audience) ? formData.audience : [formData.audience || "thought-leaders"],
+        audience_fit: Array.isArray(formData.audience)
+          ? formData.audience
+          : [formData.audience || "thought-leaders"],
         why_it_works: "Future-focused content generates engagement and shares",
         scores: {
           relevance: 0.87,
@@ -102,12 +117,11 @@ export async function POST(request: NextRequest) {
       request_id: `req_${Date.now()}`,
       generated_at: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error("Topic generation failed:", error);
     return NextResponse.json(
       { error: "Failed to generate topics. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
