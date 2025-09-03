@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
+import { AILoadingScreen } from "@/components/topic-builder/AILoadingScreen";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
@@ -181,6 +182,11 @@ export default function TopicBuilderPage() {
   };
 
   const currentStepData = steps[currentStep - 1];
+
+  // Show AI loading screen during generation
+  if (isGenerating) {
+    return <AILoadingScreen numIdeas={formData.num_ideas} />;
+  }
 
   return (
     <PageLayout
