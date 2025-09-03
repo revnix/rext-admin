@@ -199,7 +199,7 @@ export default function TopicBuilderPage() {
           <ReviewStep
             formData={formData}
             onGenerate={handleGenerate}
-            onGoBack={handlePrev}
+            onRestart={() => goToStep(1)}
             isGenerating={isGenerating}
           />
         );

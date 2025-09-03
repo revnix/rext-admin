@@ -1,7 +1,14 @@
-import { ArrowLeft, Settings, Sparkles, Target } from "lucide-react";
+import { Lightbulb, RotateCcw, Settings, Sparkles, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
   CONTENT_GOAL_OPTIONS,
@@ -17,14 +24,14 @@ import {
 interface ReviewStepProps {
   formData: TopicBuilderFormData;
   onGenerate: () => Promise<void>;
-  onGoBack: () => void;
+  onRestart: () => void;
   isGenerating: boolean;
 }
 
 export function ReviewStep({
   formData,
   onGenerate,
-  onGoBack,
+  onRestart,
   isGenerating,
 }: ReviewStepProps) {
   const getDisplayValue = (
@@ -35,27 +42,52 @@ export function ReviewStep({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-2">Ready to Generate Ideas!</h3>
-        <p className="text-muted-foreground">
-          We'll create {formData.num_ideas} topic ideas based on your choices
-          below. You can go back to any step to make changes.
-        </p>
+    <div className="space-y-8">
+      {/* Header Section with Start Over Button */}
+      <div className="relative">
+        <Button
+          variant="ghost"
+          onClick={onRestart}
+          disabled={isGenerating}
+          className="absolute top-0 right-0 flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Start Over
+        </Button>
+
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-4">
+            <Sparkles className="h-10 w-10 text-primary" />
+          </div>
+          <h3 className="text-2xl font-bold">Ready to Generate Ideas!</h3>
+          <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+            We'll create{" "}
+            <span className="font-semibold text-primary">
+              {formData.num_ideas} targeted topic ideas
+            </span>{" "}
+            based on your preferences below. You can start over if you want to
+            change your selections.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Core Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Settings className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold text-base">Core Settings</h3>
-          </div>
-
-          <div className="space-y-3">
+      {/* Configuration Review Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Core Settings Card */}
+        <Card className="h-fit">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Settings className="h-5 w-5 text-primary" />
+              Core Settings
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Your content foundation and format preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Mode</span>
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="text-xs">
                 {formData.wizardMode === "subject-first"
                   ? "Subject-First"
                   : "Industry-First"}
@@ -63,33 +95,33 @@ export function ReviewStep({
             </div>
 
             {formData.subject && (
-              <div className="flex items-center justify-between">
+              <div className="space-y-1">
                 <span className="text-sm font-medium">Subject</span>
-                <span className="text-sm text-right max-w-32 truncate">
+                <p className="text-sm text-muted-foreground break-words">
                   {formData.subject}
-                </span>
+                </p>
               </div>
             )}
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Industry</span>
-              <Badge variant="outline">
+              <Badge variant="outline" className="text-xs">
                 {getDisplayValue(INDUSTRY_OPTIONS, formData.industry)}
               </Badge>
             </div>
 
             {formData.focus && (
-              <div className="flex items-center justify-between">
+              <div className="space-y-1">
                 <span className="text-sm font-medium">Focus</span>
-                <span className="text-sm text-right max-w-32 truncate">
+                <p className="text-sm text-muted-foreground break-words">
                   {formData.focus}
-                </span>
+                </p>
               </div>
             )}
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Content Type</span>
-              <Badge variant="outline">
+              <Badge variant="outline" className="text-xs">
                 {getDisplayValue(CONTENT_TYPE_OPTIONS, formData.content_type)}
               </Badge>
             </div>
@@ -97,26 +129,30 @@ export function ReviewStep({
             {formData.platform && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Platform</span>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   {getDisplayValue(PLATFORM_OPTIONS, formData.platform)}
                 </Badge>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Audience & Goals */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Target className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold text-base">Audience & Goals</h3>
-          </div>
-
-          <div className="space-y-3">
+        {/* Audience & Goals Card */}
+        <Card className="h-fit">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Target className="h-5 w-5 text-primary" />
+              Audience & Goals
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Who you're targeting and what you want to achieve
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {formData.audience && formData.audience.length > 0 && (
-              <div>
-                <span className="text-sm font-medium">Audience</span>
-                <div className="flex flex-wrap gap-1 mt-1">
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Target Audience</span>
+                <div className="flex flex-wrap gap-1">
                   {formData.audience.map((aud) => (
                     <Badge key={aud} variant="secondary" className="text-xs">
                       {aud}
@@ -127,9 +163,9 @@ export function ReviewStep({
             )}
 
             {formData.purpose.length > 0 && (
-              <div>
+              <div className="space-y-2">
                 <span className="text-sm font-medium">Purpose</span>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex flex-wrap gap-1">
                   {formData.purpose.map((p) => (
                     <Badge key={p} variant="secondary" className="text-xs">
                       {getDisplayValue(PURPOSE_OPTIONS, p)}
@@ -140,9 +176,9 @@ export function ReviewStep({
             )}
 
             {formData.content_goal.length > 0 && (
-              <div>
+              <div className="space-y-2">
                 <span className="text-sm font-medium">Content Goals</span>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex flex-wrap gap-1">
                   {formData.content_goal.map((g) => (
                     <Badge key={g} variant="secondary" className="text-xs">
                       {getDisplayValue(CONTENT_GOAL_OPTIONS, g)}
@@ -153,9 +189,9 @@ export function ReviewStep({
             )}
 
             {formData.tone.length > 0 && (
-              <div>
+              <div className="space-y-2">
                 <span className="text-sm font-medium">Tone</span>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex flex-wrap gap-1">
                   {formData.tone.map((t) => (
                     <Badge key={t} variant="secondary" className="text-xs">
                       {getDisplayValue(TONE_OPTIONS, t)}
@@ -164,92 +200,87 @@ export function ReviewStep({
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Your Request */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold text-base">Your Request</h3>
-          </div>
-
-          <div className="space-y-3">
+        {/* Advanced Options Card */}
+        <Card className="h-fit">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Advanced Options
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Specific requirements and customizations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {formData.keywords && (
-              <div>
+              <div className="space-y-1">
                 <span className="text-sm font-medium">Keywords</span>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground break-words">
                   {formData.keywords}
                 </p>
               </div>
             )}
 
             {formData.exclude && (
-              <div>
+              <div className="space-y-1">
                 <span className="text-sm font-medium">Exclude</span>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground break-words">
                   {formData.exclude}
                 </p>
               </div>
             )}
 
             {formData.region && (
-              <div>
+              <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Region</span>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   {getDisplayValue(REGION_OPTIONS, formData.region)}
                 </Badge>
               </div>
             )}
 
             {formData.language && (
-              <div>
+              <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Language</span>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   {getDisplayValue(LANGUAGE_OPTIONS, formData.language)}
                 </Badge>
               </div>
             )}
 
             {formData.notes && (
-              <div>
-                <span className="text-sm font-medium">Notes</span>
-                <p className="text-sm text-muted-foreground mt-1">
+              <div className="space-y-1">
+                <span className="text-sm font-medium">Additional Notes</span>
+                <p className="text-sm text-muted-foreground break-words">
                   {formData.notes}
                 </p>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-6">
-        <Button
-          variant="outline"
-          onClick={onGoBack}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Go Back
-        </Button>
-
+      <div className="flex items-center justify-center pt-6">
         <div className="text-center">
           <Button
             onClick={onGenerate}
             disabled={isGenerating}
             size="lg"
-            className="flex items-center gap-2"
+            className="h-14 px-8 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            <Sparkles className="h-4 w-4" />
-            {isGenerating ? "Generating..." : "Generate Topic Ideas"}
+            <Sparkles className="h-5 w-5 mr-3" />
+            {isGenerating
+              ? "Generating..."
+              : `Generate ${formData.num_ideas} Topic Ideas`}
           </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            This will create {formData.num_ideas} targeted topic ideas
+          <p className="text-sm text-muted-foreground mt-3">
+            This usually takes 10-15 seconds to complete
           </p>
         </div>
-
-        <div className="w-24" />
       </div>
     </div>
   );

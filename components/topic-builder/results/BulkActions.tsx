@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkCheck, CheckSquare, Square } from "lucide-react";
+import { BookmarkCheck } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,31 +56,23 @@ export function BulkActions({
   return (
     <div
       className={cn(
-        "flex items-center justify-between p-4 bg-muted/30 border rounded-lg",
+        "flex items-center justify-between p-4 bg-muted/20 border rounded-lg backdrop-blur-sm",
         className,
       )}
     >
       {/* Selection Controls */}
       <div className="flex items-center gap-4">
-        {/* Select All Checkbox */}
-        <div className="flex items-center gap-2">
+        {/* Select All Checkbox - Single checkbox only */}
+        <div className="flex items-center gap-3">
           <Checkbox
             checked={getCheckboxState()}
             onCheckedChange={handleSelectAll}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             aria-label="Select all topics"
           />
-          <div className="flex items-center gap-1.5">
-            {someSelected ? (
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            ) : allSelected ? (
-              <CheckSquare className="h-4 w-4 text-primary" />
-            ) : (
-              <Square className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span className="text-sm font-medium">
-              {allSelected ? "Deselect All" : "Select All"}
-            </span>
-          </div>
+          <span className="text-sm font-medium">
+            {allSelected ? "Deselect All" : "Select All"}
+          </span>
         </div>
 
         <Separator orientation="vertical" className="h-6" />
@@ -94,7 +86,7 @@ export function BulkActions({
               </span>{" "}
               of{" "}
               <span className="font-medium text-foreground">{totalTopics}</span>{" "}
-              topics selected
+              topic{totalTopics !== 1 ? "s" : ""} selected
             </span>
           ) : (
             <span>No topics selected</span>
@@ -109,7 +101,7 @@ export function BulkActions({
             onClick={handleBulkSave}
             disabled={isBulkSaving || selectedCount === 0}
             size="sm"
-            className="gap-1.5"
+            className="gap-1.5 shadow-sm"
           >
             <BookmarkCheck className="h-4 w-4" />
             {isBulkSaving

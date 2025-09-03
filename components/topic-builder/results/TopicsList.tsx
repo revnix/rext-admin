@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  FileText,
-  Grid3X3,
-  List,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, FileText, RotateCcw, Sparkles } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +26,6 @@ interface TopicsListProps {
 }
 
 type SortOption = "relevance" | "freshness" | "novelty" | "overall";
-type ViewMode = "grid" | "list";
 
 export function TopicsList({
   topics,
@@ -45,7 +37,6 @@ export function TopicsList({
 }: TopicsListProps) {
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("relevance");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   // Sort topics based on selected criteria
   const sortedTopics = [...topics].sort((a, b) => {
@@ -194,28 +185,6 @@ export function TopicsList({
                 </SelectContent>
               </Select>
             </div>
-
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="h-8 w-8 p-0"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="h-8 w-8 p-0"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -229,14 +198,7 @@ export function TopicsList({
       </div>
 
       {/* Topics Grid */}
-      <div
-        className={cn(
-          "gap-4",
-          viewMode === "grid"
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            : "space-y-4",
-        )}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedTopics.map((topic) => (
           <TopicCard
             key={topic.id}
@@ -244,7 +206,6 @@ export function TopicsList({
             isSelected={selectedTopicIds.includes(topic.id)}
             onSelect={handleTopicSelect}
             onSave={handleTopicSave}
-            className={cn(viewMode === "list" && "max-w-none")}
           />
         ))}
       </div>

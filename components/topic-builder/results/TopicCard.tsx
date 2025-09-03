@@ -1,21 +1,23 @@
 "use client";
 
 import {
-  Bookmark,
-  BookmarkCheck,
+  Check,
+  Hash,
+  Info,
   Lightbulb,
+  Plus,
   Target,
-  TrendingUp,
   Users,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -36,7 +38,8 @@ export function TopicCard({
 }: TopicCardProps) {
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsSaving(true);
     try {
       await onSave(topic.id);
@@ -47,232 +50,235 @@ export function TopicCard({
     }
   };
 
-  const handleSelectChange = (checked: boolean) => {
-    onSelect(topic.id, checked);
+  const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+    if ((e.target as HTMLElement).closest('[role="checkbox"], button')) {
+      return;
+    }
+    onSelect(topic.id, !isSelected);
   };
 
-  // Convert scores to percentages for display
-  const relevancePercent = Math.round(topic.scores.relevance * 100);
-  const freshnessPercent = Math.round(topic.scores.freshness * 100);
-  const noveltyPercent = Math.round(topic.scores.novelty * 100);
-
-  // Get overall score (average of all scores)
   const overallScore = Math.round(
     ((topic.scores.relevance + topic.scores.freshness + topic.scores.novelty) /
       3) *
       100,
   );
 
-  // Determine score color based on overall score
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
+    if (score >= 80) return "emerald";
+    if (score >= 60) return "amber";
+    return "red";
   };
 
+  const scoreColor = getScoreColor(overallScore);
+
+  // Enhanced Grid View - Single View with Icons and Tooltips
   return (
-    <Card
-      className={cn(
-        "group relative transition-all duration-200 hover:shadow-md",
-        isSelected && "ring-2 ring-primary ring-opacity-50",
-        className,
-      )}
-    >
-      {/* Selection Checkbox - Top Left */}
-      <div className="absolute top-4 left-4 z-10">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={handleSelectChange}
-          className="bg-background shadow-sm"
-          aria-label={`Select topic: ${topic.title}`}
-        />
-      </div>
-
-      {/* Save Button - Top Right */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant={topic.is_saved ? "secondary" : "outline"}
-          size="sm"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="shadow-sm bg-background/80 backdrop-blur-sm hover:bg-background"
-        >
-          {topic.is_saved ? (
-            <>
-              <BookmarkCheck className="h-3 w-3 mr-1.5" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Bookmark className="h-3 w-3 mr-1.5" />
-              {isSaving ? "Saving..." : "Save"}
-            </>
-          )}
-        </Button>
-      </div>
-
-      <CardHeader className="pb-4 pt-12">
-        <CardTitle className="text-lg leading-tight pr-20">
-          {topic.title}
-        </CardTitle>
-        {topic.angle && (
-          <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-            {topic.angle}
-          </p>
+    <TooltipProvider>
+      {/* biome-ignore lint/a11y/useSemanticElements: Card needs div for proper styling */}
+      <div
+        role="button"
+        tabIndex={0}
+        className={cn(
+          "group relative cursor-pointer rounded-lg border-2 border-border/80 bg-background/50 backdrop-blur-sm transition-all duration-150 hover:border-border hover:bg-background/80 hover:shadow-md",
+          isSelected &&
+            "border-primary bg-primary/8 shadow-md ring-1 ring-primary/20",
+          className,
         )}
-      </CardHeader>
+        onClick={handleCardClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleCardClick(e);
+          }
+        }}
+      >
+        {/* Header */}
+        <div className="relative p-5 pb-4">
+          {/* Selection Checkbox */}
+          <div className="absolute left-4 top-4">
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) => onSelect(topic.id, !!checked)}
+              className="border-muted-foreground/40 data-[state=checked]:border-primary data-[state=checked]:bg-primary transition-all duration-150"
+              aria-label={`Select topic: ${topic.title}`}
+            />
+          </div>
 
-      <CardContent className="space-y-4">
-        {/* Description */}
-        {topic.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {topic.description}
-          </p>
-        )}
+          {/* Save Button */}
+          <div className="absolute right-4 top-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={topic.is_saved ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="h-8 w-8 p-0 hover:bg-muted"
+                >
+                  {topic.is_saved ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {topic.is_saved ? "Added to library" : "Add to library"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
 
-        {/* Scores Section */}
-        <div className="space-y-3">
+          {/* Content */}
+          <div className="mt-6">
+            <h3 className="mb-2 text-base font-medium leading-snug text-foreground pr-16">
+              {topic.title}
+            </h3>
+            {topic.angle && (
+              <p className="mb-3 text-sm text-muted-foreground/80">
+                {topic.angle}
+              </p>
+            )}
+            {topic.description && (
+              <p className="text-sm text-muted-foreground/70 leading-relaxed">
+                {topic.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="space-y-4 p-5 pt-0">
+          {/* Score Row */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Quality Scores
-            </span>
-            <span
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 cursor-help">
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+                  <span className="text-xs text-muted-foreground/60">
+                    Quality Score
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-xs">
+                  Based on relevance ({Math.round(topic.scores.relevance * 100)}
+                  %), freshness ({Math.round(topic.scores.freshness * 100)}%),
+                  and novelty ({Math.round(topic.scores.novelty * 100)}%)
+                </p>
+              </TooltipContent>
+            </Tooltip>
+            <div
               className={cn(
-                "text-xs font-semibold",
-                getScoreColor(overallScore),
+                "inline-flex h-7 w-12 items-center justify-center rounded-full text-xs font-semibold",
+                scoreColor === "emerald" &&
+                  "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+                scoreColor === "amber" &&
+                  "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+                scoreColor === "red" &&
+                  "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
               )}
             >
-              {overallScore}% Overall
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {/* Relevance */}
-            <div className="flex items-center gap-3">
-              <Target className="h-3 w-3 text-blue-500 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium">Relevance</span>
-                  <span className="text-xs text-muted-foreground">
-                    {relevancePercent}%
-                  </span>
-                </div>
-                <Progress value={relevancePercent} className="h-1.5" />
-              </div>
-            </div>
-
-            {/* Freshness */}
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-3 w-3 text-green-500 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium">Freshness</span>
-                  <span className="text-xs text-muted-foreground">
-                    {freshnessPercent}%
-                  </span>
-                </div>
-                <Progress value={freshnessPercent} className="h-1.5" />
-              </div>
-            </div>
-
-            {/* Novelty */}
-            <div className="flex items-center gap-3">
-              <Zap className="h-3 w-3 text-purple-500 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium">Novelty</span>
-                  <span className="text-xs text-muted-foreground">
-                    {noveltyPercent}%
-                  </span>
-                </div>
-                <Progress value={noveltyPercent} className="h-1.5" />
-              </div>
+              {overallScore}%
             </div>
           </div>
-        </div>
 
-        <Separator />
-
-        {/* Channel and Audience Fit */}
-        <div className="space-y-3">
-          {/* Channel Fit */}
-          {topic.channel_fit && topic.channel_fit.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Target className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Best Channels
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {topic.channel_fit.map((channel) => (
-                  <Badge key={channel} variant="secondary" className="text-xs">
-                    {channel}
-                  </Badge>
-                ))}
+          {/* Why It Works */}
+          {topic.why_it_works && (
+            <div className="rounded-md bg-muted/30 p-3">
+              <div className="flex gap-2 text-xs">
+                <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 text-amber-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">
+                    Why This Works
+                  </p>
+                  <p className="text-muted-foreground/80 leading-relaxed">
+                    {topic.why_it_works}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Audience Fit */}
-          {topic.audience_fit && topic.audience_fit.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Target Audience
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {topic.audience_fit.map((audience) => (
-                  <Badge key={audience} variant="outline" className="text-xs">
-                    {audience}
-                  </Badge>
-                ))}
-              </div>
+          {/* Metadata Row with Icons */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Channels & Audience */}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {/* Channels */}
+              {topic.channel_fit && topic.channel_fit.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 cursor-help">
+                      <Target className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                      <span className="text-xs text-muted-foreground/80 truncate">
+                        {topic.channel_fit.slice(0, 2).join(", ")}
+                        {topic.channel_fit.length > 2 &&
+                          ` +${topic.channel_fit.length - 2}`}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs font-medium mb-1">Best Channels:</p>
+                    <p className="text-xs">{topic.channel_fit.join(", ")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Audience */}
+              {topic.audience_fit && topic.audience_fit.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 cursor-help">
+                      <Users className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                      <span className="text-xs text-muted-foreground/80 truncate">
+                        {topic.audience_fit.slice(0, 2).join(", ")}
+                        {topic.audience_fit.length > 2 &&
+                          ` +${topic.audience_fit.length - 2}`}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs font-medium mb-1">Target Audience:</p>
+                    <p className="text-xs">{topic.audience_fit.join(", ")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
-          )}
+
+            {/* Right: Tags */}
+            {topic.tags && topic.tags.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 cursor-help">
+                    <Hash className="h-3.5 w-3.5 text-purple-500 flex-shrink-0" />
+                    <div className="flex items-center gap-1">
+                      {topic.tags.slice(0, 3).map((tag, index) => (
+                        <div
+                          key={tag}
+                          className={cn(
+                            "h-2 w-2 rounded-full",
+                            index === 0 && "bg-purple-400",
+                            index === 1 && "bg-purple-300",
+                            index === 2 && "bg-purple-200",
+                          )}
+                        />
+                      ))}
+                      {topic.tags.length > 3 && (
+                        <span className="text-xs text-muted-foreground/60 ml-1">
+                          +{topic.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs font-medium mb-1">Tags:</p>
+                  <p className="text-xs">{topic.tags.join(", ")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
-
-        {/* Tags */}
-        {topic.tags && topic.tags.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Tags
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {topic.tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="text-xs bg-muted/50"
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <Separator />
-
-        {/* Why It Works */}
-        {topic.why_it_works && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="h-3 w-3 text-yellow-500" />
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Why This Works
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 p-3 rounded-md">
-              {topic.why_it_works}
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </TooltipProvider>
   );
 }
