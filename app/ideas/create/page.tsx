@@ -218,6 +218,35 @@ export default function TopicBuilderPage() {
             <Card className="h-full">
               <CardHeader>
                 <CardDescription>{currentStepData.description}</CardDescription>
+
+                {/* Top Navigation */}
+                {currentStep < 6 && (
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handlePrev}
+                      disabled={currentStep === 1}
+                      className="flex items-center gap-1.5"
+                    >
+                      <ArrowLeft className="h-3 w-3" />
+                      Previous
+                    </Button>
+
+                    <div className="text-xs text-muted-foreground">
+                      Step {currentStep} of {steps.length}
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={handleNext}
+                      className="flex items-center gap-1.5"
+                    >
+                      Next
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="flex-1">
                 {renderStepContent()}

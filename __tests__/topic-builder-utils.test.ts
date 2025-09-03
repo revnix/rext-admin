@@ -20,7 +20,7 @@ import {
   validateKeywordsFormat,
   validateSubjectIndustryRelevance,
 } from "@/lib/topic-builder-utils";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
+import type { TopicBuilderFormData, WizardMode } from "@/types/topic-builder";
 
 // ============================================================================
 // YMYL DETECTION TESTS
