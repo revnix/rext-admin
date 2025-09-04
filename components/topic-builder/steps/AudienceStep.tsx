@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   CheckboxGroup,
   type CheckboxOption,
@@ -10,7 +11,10 @@ import {
   DEMOGRAPHIC_AGE_OPTIONS,
   DEMOGRAPHIC_LOCATION_OPTIONS,
 } from "@/data/topic-builder-options";
-import { getAudienceOptions } from "@/lib/topic-builder-utils";
+import {
+  getAudienceForIndustry,
+  getAudienceOptions,
+} from "@/lib/topic-builder-utils";
 import type {
   TopicBuilderFormData,
   ValidationResult,
@@ -39,6 +43,37 @@ export function AudienceStep({
   errors,
 }: AudienceStepProps) {
   const audienceOptions = getAudienceOptions(formData.industry);
+
+  // Auto-update audience options and defaults when industry changes
+  useEffect(() => {
+    if (formData.industry) {
+      const availableAudiences = getAudienceForIndustry(formData.industry);
+      const currentAudiences = formData.audience || [];
+
+      // If no audiences selected or industry changed, set smart defaults
+      if (currentAudiences.length === 0 && availableAudiences.length > 0) {
+        // Auto-select first 2 audience options as defaults
+        const defaultAudiences = availableAudiences.slice(0, 2);
+        updateFormData("audience", defaultAudiences);
+      } else if (currentAudiences.length > 0) {
+        // Filter out audiences that are no longer valid for the new industry
+        const validAudiences = currentAudiences.filter((audience) =>
+          availableAudiences.includes(audience),
+        );
+
+        // Update audience selection if some became invalid
+        if (validAudiences.length !== currentAudiences.length) {
+          updateFormData("audience", validAudiences);
+        }
+
+        // If all audiences became invalid but we have new options, set defaults
+        if (validAudiences.length === 0 && availableAudiences.length > 0) {
+          const defaultAudiences = availableAudiences.slice(0, 2);
+          updateFormData("audience", defaultAudiences);
+        }
+      }
+    }
+  }, [formData.industry, formData.audience, updateFormData]);
 
   // Convert SelectOption to RadioOption format
   const readerLevelOptions: RadioOption[] = READER_LEVEL_OPTIONS.map(

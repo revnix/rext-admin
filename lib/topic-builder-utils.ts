@@ -825,15 +825,31 @@ export const updateFormDataForIndustryChange = (
   formData: TopicBuilderFormData,
   newIndustry: string,
 ): TopicBuilderFormData => {
+  const availableAudiences = getAudienceForIndustry(newIndustry);
+  const currentAudiences = formData.audience || [];
+
+  // Filter current audiences to keep only those valid for the new industry
+  const validAudiences = currentAudiences.filter((audience) =>
+    availableAudiences.includes(audience),
+  );
+
+  // If no valid audiences remain and we have options, set smart defaults
+  let audienceSelection = validAudiences;
+  if (validAudiences.length === 0 && availableAudiences.length > 0) {
+    // Auto-select first 2 audience options as defaults
+    audienceSelection = availableAudiences.slice(0, 2);
+  }
+
   return {
     ...formData,
     industry: newIndustry as TopicBuilderFormData["industry"],
     industry_other:
       newIndustry === "other" ? formData.industry_other : undefined,
-    // Reset dependent fields
-    audience: undefined,
-    demographic_age: [],
-    demographic_location: "",
+    // Update audience with smart filtering/defaults
+    audience: audienceSelection,
+    // Reset other dependent fields only if they become invalid
+    demographic_age: formData.demographic_age, // Keep existing age selections
+    demographic_location: formData.demographic_location, // Keep existing location
     // Auto-detect YMYL
     is_ymyl: detectYMYL(newIndustry),
   };
