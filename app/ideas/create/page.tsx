@@ -30,6 +30,7 @@ import {
 import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
+import { useTopicStorage } from "@/hooks/use-topic-storage";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 const steps = [
@@ -99,6 +100,15 @@ export default function TopicBuilderPage() {
     clearGenerationError,
   } = useTopicBuilder();
 
+  const {
+    saveTopic,
+    saveTopics,
+    removeTopic,
+    exportTopics,
+    error: storageError,
+    clearError: clearStorageError,
+  } = useTopicStorage();
+
   const breadcrumbs = [
     { label: "Ideas", href: "/ideas" },
     { label: "Topic Builder" },
@@ -120,17 +130,19 @@ export default function TopicBuilderPage() {
   };
 
   const handleTopicSave = async (topicId: string) => {
-    // TODO: Implement topic saving to user's ideas library
-    console.log("Saving topic:", topicId);
-    // For now, just mark as saved in the local state
-    // In a real implementation, this would call an API
+    const topic = generatedTopics.find((t) => t.id === topicId);
+    if (topic) {
+      saveTopic(topic);
+      console.log("Topic saved to localStorage:", topicId);
+    }
   };
 
   const handleBulkSave = async (topicIds: string[]) => {
-    // TODO: Implement bulk saving to user's ideas library
-    console.log("Bulk saving topics:", topicIds);
-    // For now, just log the action
-    // In a real implementation, this would call an API
+    const topicsToSave = generatedTopics.filter((topic) =>
+      topicIds.includes(topic.id),
+    );
+    saveTopics(topicsToSave);
+    console.log("Bulk saved topics to localStorage:", topicIds);
   };
 
   const handleTopicEdit = async (
@@ -149,18 +161,16 @@ export default function TopicBuilderPage() {
   };
 
   const handleTopicExport = async (
-    topics: GeneratedTopic[],
+    _topics: GeneratedTopic[],
     format: "json" | "csv",
   ) => {
-    // TODO: Implement topic export functionality
-    console.log("Exporting topics:", topics.length, "format:", format);
-    // In a real implementation, this would export topics to the specified format
+    exportTopics(format);
+    console.log("Exporting saved topics:", format);
   };
 
   const handleTopicDelete = async (topicId: string) => {
-    // TODO: Implement topic deletion
-    console.log("Deleting topic:", topicId);
-    // In a real implementation, this would remove the topic from state
+    removeTopic(topicId);
+    console.log("Topic deleted from localStorage:", topicId);
   };
 
   const handleBackToWizard = () => {
@@ -332,6 +342,30 @@ export default function TopicBuilderPage() {
                         onContactSupport={() => {
                           // TODO: Implement support contact functionality
                           console.log("Contact support clicked");
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Storage Error Display */}
+                  {storageError && (
+                    <div className="mt-4">
+                      <ErrorAlert
+                        error={{
+                          type: "unknown_error",
+                          message: storageError,
+                          severity: "medium",
+                          recoveryActions: ["retry"],
+                          isRetryable: true,
+                          timestamp: new Date().toISOString(),
+                        }}
+                        operation="data_save"
+                        onRetry={clearStorageError}
+                        onGoBack={() => clearStorageError()}
+                        onContactSupport={() => {
+                          console.log(
+                            "Storage error - contact support clicked",
+                          );
                         }}
                       />
                     </div>
