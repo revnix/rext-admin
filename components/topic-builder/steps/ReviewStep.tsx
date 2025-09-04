@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { BackendError } from "@/types/backend";
+import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
   CONTENT_GOAL_OPTIONS,
   CONTENT_TYPE_OPTIONS,
@@ -37,9 +37,9 @@ export function ReviewStep({
   onGenerate,
   onRestart,
   isGenerating,
-  generationError,
-  onRetry,
-  onClearError,
+  generationError: _generationError,
+  onRetry: _onRetry,
+  onClearError: _onClearError,
 }: ReviewStepProps) {
   const getDisplayValue = (
     options: { label: string; value: string }[],

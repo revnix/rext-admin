@@ -1,10 +1,10 @@
 "use client";
 
+import { AlertTriangle, Home, RefreshCw, RotateCcw } from "lucide-react";
 import { useEffect } from "react";
-import { AlertTriangle, RefreshCw, Home, RotateCcw } from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageLayout } from "@/components/page-layout";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -136,7 +136,9 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
                 </Button>
 
                 <Button
-                  onClick={() => (window.location.href = "/ideas")}
+                  onClick={() => {
+                    window.location.href = "/ideas";
+                  }}
                   variant="secondary"
                   className="flex-1"
                 >

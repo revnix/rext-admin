@@ -2,6 +2,7 @@
  * Tests for Topic Generation API Route
  */
 
+import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/generate-topics/route";
 import { backendService } from "@/services/backend";
 import type {
@@ -9,7 +10,6 @@ import type {
   BackendTopicGenerationResponse,
 } from "@/types/backend";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
-import type { NextRequest } from "next/server";
 
 // Mock the backend service
 jest.mock("@/services/backend", () => ({

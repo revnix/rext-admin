@@ -113,7 +113,7 @@ export function classifyError(
 
   if (error instanceof Error) {
     let errorType: BackendErrorType = "unknown_error";
-    let technicalMessage = error.message;
+    const technicalMessage = error.message;
     let statusCode: number | undefined;
 
     // Network and fetch-related errors
@@ -202,7 +202,7 @@ export function calculateRetryDelay(
   config: RetryConfig = DEFAULT_RETRY_CONFIG,
 ): number {
   const exponentialDelay = Math.min(
-    config.initialDelay * Math.pow(config.backoffMultiplier, attempt - 1),
+    config.initialDelay * config.backoffMultiplier ** (attempt - 1),
     config.maxDelay,
   );
 

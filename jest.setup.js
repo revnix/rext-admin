@@ -108,7 +108,7 @@ global.Request = class MockRequest {
     this.method = init.method || "GET";
     this.headers = {
       get: (name) => {
-        if (init.headers && init.headers[name]) {
+        if (init.headers?.[name]) {
           return init.headers[name];
         }
         return null;

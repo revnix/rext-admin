@@ -1,11 +1,9 @@
 "use client";
 
-import React from "react";
 import { AlertTriangle, RefreshCw, RotateCcw } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { sanitizeErrorForLogging } from "@/lib/error-utils";
-import type { BackendError } from "@/types/backend";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -142,7 +140,7 @@ export class ErrorBoundary extends React.Component<
       hasError &&
       resetKeys &&
       prevProps.resetKeys &&
-      resetKeys.some((key, idx) => key !== prevProps.resetKeys![idx])
+      resetKeys.some((key, idx) => key !== prevProps.resetKeys?.[idx])
     ) {
       this.resetError();
     }
@@ -217,7 +215,7 @@ export function APIErrorBoundary({
   onRetry?: () => void;
 }) {
   const fallback: React.ComponentType<ErrorFallbackProps> = ({
-    error,
+    error: _error,
     resetError,
     errorId,
   }) => (

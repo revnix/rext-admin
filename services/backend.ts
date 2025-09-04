@@ -1,3 +1,11 @@
+import {
+  calculateRetryDelay,
+  classifyError,
+  DEFAULT_RETRY_CONFIG,
+  generateRequestId,
+  sanitizeErrorForLogging,
+  shouldRetry,
+} from "@/lib/error-utils";
 import type {
   BackendConfig,
   BackendError,
@@ -5,14 +13,6 @@ import type {
   BackendTopicGenerationResponse,
 } from "@/types/backend";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
-import {
-  DEFAULT_RETRY_CONFIG,
-  calculateRetryDelay,
-  classifyError,
-  generateRequestId,
-  shouldRetry,
-  sanitizeErrorForLogging,
-} from "@/lib/error-utils";
 
 /**
  * Backend service class for handling API communications with comprehensive error handling
@@ -323,7 +323,7 @@ export class BackendService {
    * Cancel all active requests
    */
   public cancelAllRequests(): void {
-    for (const [requestId, controller] of this.activeRequests.entries()) {
+    for (const [_requestId, controller] of this.activeRequests.entries()) {
       controller.abort();
     }
     this.activeRequests.clear();

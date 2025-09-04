@@ -1,22 +1,22 @@
 "use client";
 
-import React from "react";
 import {
   AlertCircle,
   AlertTriangle,
   CheckCircle,
+  ExternalLink,
   Info,
   RefreshCw,
   RotateCcw,
   Wifi,
   WifiOff,
-  ExternalLink,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { BackendError, ErrorRecoveryAction } from "@/types/backend";
 import { getContextualErrorMessage, isOnline } from "@/lib/error-utils";
+import { cn } from "@/lib/utils";
+import type { BackendError, ErrorRecoveryAction } from "@/types/backend";
 
 interface ErrorAlertProps {
   error: BackendError;

@@ -13,8 +13,6 @@ import {
 import { PageLayout } from "@/components/page-layout";
 import { AILoadingScreen } from "@/components/topic-builder/AILoadingScreen";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
-import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
-import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
@@ -29,6 +27,8 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 
 const steps = [

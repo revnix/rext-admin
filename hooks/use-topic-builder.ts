@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { classifyError, isOnline } from "@/lib/error-utils";
 import {
   createInitialFormData,
   detectYMYL,
@@ -9,14 +10,13 @@ import {
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
-import { classifyError, isOnline } from "@/lib/error-utils";
+import type { BackendError } from "@/types/backend";
 import type {
   GeneratedTopic,
   TopicBuilderDraft,
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
-import type { BackendError } from "@/types/backend";
 
 const STORAGE_KEY = "topic-builder-draft";
 
