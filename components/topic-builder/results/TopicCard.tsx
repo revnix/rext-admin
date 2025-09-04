@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Check,
-  Hash,
-  Info,
-  Lightbulb,
-  Plus,
-  Target,
-  Users,
-} from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Hash, Info, Lightbulb, Target, Users } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -20,12 +10,23 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import { TopicActions } from "./TopicActions";
 
 interface TopicCardProps {
   topic: GeneratedTopic;
   isSelected: boolean;
   onSelect: (topicId: string, selected: boolean) => void;
-  onSave: (topicId: string) => void;
+  onSave?: (topicId: string) => Promise<void> | void;
+  onEdit?: (
+    topicId: string,
+    updates: Partial<GeneratedTopic>,
+  ) => Promise<void> | void;
+  onRegenerate?: (topicId: string) => Promise<void> | void;
+  onExport?: (
+    topics: GeneratedTopic[],
+    format: "json" | "csv",
+  ) => Promise<void> | void;
+  onDelete?: (topicId: string) => Promise<void> | void;
   className?: string;
 }
 
@@ -34,22 +35,12 @@ export function TopicCard({
   isSelected,
   onSelect,
   onSave,
+  onEdit,
+  onRegenerate,
+  onExport,
+  onDelete,
   className,
 }: TopicCardProps) {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsSaving(true);
-    try {
-      await onSave(topic.id);
-    } catch (error) {
-      console.error("Failed to save topic:", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     if ((e.target as HTMLElement).closest('[role="checkbox"], button')) {
       return;
@@ -104,28 +95,17 @@ export function TopicCard({
             />
           </div>
 
-          {/* Save Button */}
+          {/* Topic Actions */}
           <div className="absolute right-4 top-4">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={topic.is_saved ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="h-8 w-8 p-0 hover:bg-muted"
-                >
-                  {topic.is_saved ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {topic.is_saved ? "Added to library" : "Add to library"}
-              </TooltipContent>
-            </Tooltip>
+            <TopicActions
+              topic={topic}
+              onSave={onSave}
+              onEdit={onEdit}
+              onRegenerate={onRegenerate}
+              onExport={onExport}
+              onDelete={onDelete}
+              variant="dropdown"
+            />
           </div>
 
           {/* Content */}

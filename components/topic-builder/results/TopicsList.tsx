@@ -13,6 +13,16 @@ import { type SortOption, TopicFilters, type ViewMode } from "./TopicFilters";
 interface TopicsListProps {
   topics: GeneratedTopic[];
   onTopicSave: (topicId: string) => void;
+  onTopicEdit?: (
+    topicId: string,
+    updates: Partial<GeneratedTopic>,
+  ) => Promise<void> | void;
+  onTopicRegenerate?: (topicId: string) => Promise<void> | void;
+  onTopicExport?: (
+    topics: GeneratedTopic[],
+    format: "json" | "csv",
+  ) => Promise<void> | void;
+  onTopicDelete?: (topicId: string) => Promise<void> | void;
   onBulkSave: (topicIds: string[]) => void;
   onBackToWizard: () => void;
   onRegenerateTopics: () => void;
@@ -22,6 +32,10 @@ interface TopicsListProps {
 export function TopicsList({
   topics,
   onTopicSave,
+  onTopicEdit,
+  onTopicRegenerate,
+  onTopicExport,
+  onTopicDelete,
   onBulkSave,
   onBackToWizard,
   onRegenerateTopics,
@@ -315,6 +329,10 @@ export function TopicsList({
             isSelected={selectedTopicIds.includes(topic.id)}
             onSelect={handleTopicSelect}
             onSave={handleTopicSave}
+            onEdit={onTopicEdit}
+            onRegenerate={onTopicRegenerate}
+            onExport={onTopicExport}
+            onDelete={onTopicDelete}
             className={viewMode === "list" ? "max-w-none" : undefined}
           />
         ))}

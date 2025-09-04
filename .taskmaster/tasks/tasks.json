@@ -515,7 +515,7 @@
             "description": "Implement filtering and sorting controls for the topic list",
             "dependencies": ["5.2"],
             "details": "Create `/components/topic-builder/results/TopicFilters.tsx` that includes:\n- Dropdown for sorting by relevance, freshness, or novelty\n- Tag-based filtering with multi-select capability\n- Audience filtering options\n- Clear filters button\n- Visual indicators for active filters\n- Mobile-friendly filter UI\n\nImplement the state management for filter selections and the logic to apply filters to the topic list.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -524,7 +524,7 @@
             "description": "Create action buttons and handlers for topic management operations",
             "dependencies": ["5.1"],
             "details": "Create `/components/topic-builder/results/TopicActions.tsx` with:\n- Save topic button and handler\n- Edit topic functionality\n- Regenerate topic button and handler\n- Export topics button (single or multiple)\n- Confirmation dialogs for destructive actions\n- Visual feedback for action states (loading, success, error)\n\nEnsure proper event handling and integration with parent components.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -799,7 +799,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-04T16:23:24.008Z",
+      "updated": "2025-09-04T16:33:52.416Z",
       "description": "Tasks for master context"
     }
   }

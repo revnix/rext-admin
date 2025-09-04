@@ -30,6 +30,7 @@ import {
 import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
+import type { GeneratedTopic } from "@/types/topic-builder";
 
 const steps = [
   {
@@ -130,6 +131,36 @@ export default function TopicBuilderPage() {
     console.log("Bulk saving topics:", topicIds);
     // For now, just log the action
     // In a real implementation, this would call an API
+  };
+
+  const handleTopicEdit = async (
+    topicId: string,
+    updates: Partial<GeneratedTopic>,
+  ) => {
+    // TODO: Implement topic editing functionality
+    console.log("Editing topic:", topicId, updates);
+    // In a real implementation, this would update the topic in state/API
+  };
+
+  const handleTopicRegenerate = async (topicId: string) => {
+    // TODO: Implement single topic regeneration
+    console.log("Regenerating topic:", topicId);
+    // In a real implementation, this would call the API to regenerate just this topic
+  };
+
+  const handleTopicExport = async (
+    topics: GeneratedTopic[],
+    format: "json" | "csv",
+  ) => {
+    // TODO: Implement topic export functionality
+    console.log("Exporting topics:", topics.length, "format:", format);
+    // In a real implementation, this would export topics to the specified format
+  };
+
+  const handleTopicDelete = async (topicId: string) => {
+    // TODO: Implement topic deletion
+    console.log("Deleting topic:", topicId);
+    // In a real implementation, this would remove the topic from state
   };
 
   const handleBackToWizard = () => {
@@ -237,6 +268,10 @@ export default function TopicBuilderPage() {
             <TopicsList
               topics={generatedTopics}
               onTopicSave={handleTopicSave}
+              onTopicEdit={handleTopicEdit}
+              onTopicRegenerate={handleTopicRegenerate}
+              onTopicExport={handleTopicExport}
+              onTopicDelete={handleTopicDelete}
               onBulkSave={handleBulkSave}
               onBackToWizard={handleBackToWizard}
               onRegenerateTopics={handleRegenerateTopics}
