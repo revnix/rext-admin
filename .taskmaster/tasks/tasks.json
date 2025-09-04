@@ -114,7 +114,7 @@
         "testStrategy": "1. Test each wizard step component in isolation\n2. Verify form state updates correctly when inputs change\n3. Test step navigation (next/previous) with valid and invalid data\n4. Ensure conditional rendering works based on wizard mode\n5. Test that the wizard maintains state between steps\n6. Verify accessibility features (keyboard navigation, ARIA attributes)\n7. Test responsive design on different screen sizes",
         "priority": "high",
         "dependencies": [1, 2],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -428,7 +428,7 @@
         "id": 4,
         "title": "Develop AI Service Integration Layer",
         "description": "Create the API integration for the LangGraph backend service",
-        "status": "pending",
+        "status": "done",
         "dependencies": [1, 2],
         "priority": "high",
         "details": "Implement the AI service integration layer for topic generation by connecting to the existing LangGraph backend:\n\n1. Create `/app/api/generate-topics/route.ts` Next.js API route that connects to the backend\n2. Implement data transformation utilities to map frontend data to backend format\n3. Handle backend API responses and error cases\n4. Add proper environment configuration for backend URL\n5. Create structured data mapping between frontend and backend formats\n\nExample implementation:\n```typescript\n// /lib/backend-service.ts\nimport { TopicBuilderFormData } from '../types/topic-builder';\n\nconst BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://127.0.0.1:2024';\n\nexport async function generateTopicsWithBackend(formData: TopicBuilderFormData) {\n  try {\n    const backendPayload = transformFormDataToBackendFormat(formData);\n    \n    const response = await fetch(`${BACKEND_API_URL}/api/topic/generate-topic`, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n      },\n      body: JSON.stringify(backendPayload),\n    });\n    \n    if (!response.ok) {\n      throw new Error(`Backend API error: ${response.status} ${response.statusText}`);\n    }\n    \n    const result = await response.json();\n    return {\n      topics: result.topics,\n      request_id: result.request_id,\n      model_used: result.model_used,\n      generation_time_ms: result.generation_time_ms,\n    };\n  } catch (error) {\n    console.error('Backend API error:', error);\n    throw error;\n  }\n}\n\nfunction transformFormDataToBackendFormat(formData: TopicBuilderFormData) {\n  const { wizardMode, industry, subject, content_type, audience, purpose, tone } = formData;\n  \n  return {\n    industry: industry,\n    subject: subject,\n    content_type: content_type,\n    platform: formData.platform,\n    audience: audience,\n    purpose: purpose,\n    tone: tone,\n    keywords: formData.keywords,\n    exclude: formData.exclude,\n    num_ideas: formData.num_ideas,\n    industry_specific_focus: formData.focus,\n    additional_notes: formData.notes,\n    content_timing_preference: formData.fresh_vs_evergreen,\n    content_originality_preference: formData.safe_vs_original,\n    demographic_location: Array.isArray(formData.demographic_location) ? \n      formData.demographic_location : \n      [formData.demographic_location],\n    timestamp: new Date().toISOString(),\n    wizard_mode: wizardMode\n  };\n}\n\n// /app/api/generate-topics/route.ts\nimport { NextResponse } from 'next/server';\nimport { generateTopicsWithBackend } from '@/lib/backend-service';\nimport { TopicBuilderFormData } from '@/types/topic-builder';\n\nexport async function POST(request: Request) {\n  try {\n    const body = await request.json();\n    const formData = body.formData as TopicBuilderFormData;\n    \n    // Validate the request data\n    if (!formData || !formData.industry) {\n      return NextResponse.json(\n        { error: 'Invalid request data' },\n        { status: 400 }\n      );\n    }\n    \n    const result = await generateTopicsWithBackend(formData);\n    \n    return NextResponse.json({\n      topics: result.topics,\n      request_id: result.request_id,\n      generated_at: new Date().toISOString(),\n      model_used: result.model_used,\n      generation_time_ms: result.generation_time_ms\n    });\n  } catch (error) {\n    console.error('Topic generation error:', error);\n    return NextResponse.json(\n      { \n        error: 'Failed to generate topics',\n        error_code: 'generation_failed',\n        fallback_available: false\n      },\n      { status: 500 }\n    );\n  }\n}\n```",
@@ -497,7 +497,7 @@
             "description": "Create the TopicCard component for displaying individual topic information with metadata and action buttons",
             "dependencies": [],
             "details": "Create `/components/topic-builder/results/TopicCard.tsx` that displays a single topic with:\n- Title and angle display\n- Score visualization (relevance, freshness, novelty)\n- Audience fit section\n- 'Why It Works' explanation\n- Tags display\n- Action buttons (save, discard)\n- Responsive design for different screen sizes\n\nEnsure proper TypeScript typing with the GeneratedTopic interface and implement event handlers for user interactions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -505,8 +505,8 @@
             "title": "Build TopicList Container Component",
             "description": "Implement the TopicList component that serves as a container for all generated topics",
             "dependencies": ["5.1"],
-            "details": "Create `/components/topic-builder/results/TopicList.tsx` that:\n- Renders a collection of TopicCard components\n- Manages the layout of topic cards (grid or list view)\n- Handles empty states when no topics are available\n- Implements pagination or infinite scroll if needed\n- Provides a header with summary information\n- Integrates with the filtering and sorting system\n- Passes appropriate props to child components\n\nImplement state management for the current view and pagination if applicable.",
-            "status": "pending",
+            "details": "Create `/components/topic-builder/results/TopicList.tsx` that:\n- Renders a collection of TopicCard components\n- Manages the layout of topic cards (grid or list view)\n- Handles empty states when no topics are available\n- Implements pagination or infinite scroll if needed\n- Provides a header with summary information\n- Integrates with the filtering and sorting system\n- Passes appropriate props to child components\n\nImplement state management for the current view and pagination if applicable.\n<info added on 2025-09-04T16:23:31.066Z>\nImplementation completed successfully. The TopicsList component has been enhanced with comprehensive filtering and sorting capabilities through integration with the new TopicFilters component. Key improvements include tag and audience filtering, view mode toggle between grid and list layouts, minimum score filtering, improved empty states, and better mobile responsiveness. The implementation features advanced filtering options by tags, audiences, and minimum scores, along with multiple sorting options (relevance, freshness, novelty, overall). The UI now supports grid/list view toggle with responsive layout, filter state management with clear all functionality, visual filter indicators with active filter count, and a mobile-friendly filter popover interface. All components are properly integrated with correct props and event handlers, maintaining compatibility with existing TopicCard and BulkActions components. The implementation passes all TypeScript compilation checks, accessibility requirements, and code quality standards.\n</info added on 2025-09-04T16:23:31.066Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -799,7 +799,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:34:21.058Z",
-      "updated": "2025-09-04T05:58:54.852Z",
+      "updated": "2025-09-04T16:23:24.008Z",
       "description": "Tasks for master context"
     }
   }
