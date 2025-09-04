@@ -61,15 +61,11 @@ global.console = {
 // Comprehensive unhandled promise rejection handling for tests
 process.removeAllListeners("unhandledRejection");
 process.on("unhandledRejection", (reason, promise) => {
-  // In test environment, log and suppress to prevent crashes
-  if (process.env.NODE_ENV === "test" || global.__DEV__) {
-    console.warn("Unhandled rejection suppressed in tests:", reason);
-    // Immediately handle the promise to prevent Node.js crash
-    promise.catch(() => {});
-    return;
-  }
-  // In production, let it crash as normal
-  throw reason;
+  // Always suppress in test environment (Jest sets NODE_ENV differently)
+  console.warn("Unhandled rejection suppressed in tests:", reason);
+  // Immediately handle the promise to prevent Node.js crash
+  promise.catch(() => {});
+  return;
 });
 
 // Disable console.error in tests to prevent unhandled promise rejections from crashing

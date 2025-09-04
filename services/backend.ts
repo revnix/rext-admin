@@ -66,9 +66,13 @@ export class BackendService {
       this.requestDeduplicationMap.set(dedupeKey, requestPromise);
 
       // Clean up deduplication map after request completes
-      requestPromise.finally(() => {
-        this.requestDeduplicationMap.delete(dedupeKey);
-      });
+      requestPromise
+        .then(() => {
+          this.requestDeduplicationMap.delete(dedupeKey);
+        })
+        .catch(() => {
+          this.requestDeduplicationMap.delete(dedupeKey);
+        });
 
       return requestPromise;
     }
