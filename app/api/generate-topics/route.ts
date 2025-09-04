@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
+import { classifyError, sanitizeErrorForLogging } from "@/lib/error-utils";
 import { backendService } from "@/services/backend";
-import type { BackendError } from "@/types/backend";
+import type { APIErrorResponse, BackendError } from "@/types/backend";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 
 export async function POST(request: NextRequest) {
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const formData = body.formData as TopicBuilderFormData;
 
-    if (!formData || !formData.industry) {
+    if (!formData || !formData.industry || !formData.industry.trim()) {
       return Response.json(
         {
           error: "Invalid request data",
@@ -29,60 +30,67 @@ export async function POST(request: NextRequest) {
       generation_time_ms: result.generation_time_ms,
     });
   } catch (error) {
-    console.error("Topic generation error:", error);
+    // Classify and log error safely
+    const classifiedError =
+      error && typeof error === "object" && "type" in error
+        ? (error as BackendError)
+        : classifyError(error);
 
-    const backendError = error as BackendError;
+    // Log error for debugging without sensitive data
+    const sanitizedError = sanitizeErrorForLogging(classifiedError);
+    // Header access in tests uses a simple mock that's case-sensitive.
+    // Read common variants to ensure values are captured in both runtime and tests.
+    const userAgent =
+      request.headers.get("user-agent") || request.headers.get("User-Agent");
+    const requestId =
+      request.headers.get("x-request-id") ||
+      request.headers.get("X-Request-ID");
 
-    switch (backendError.type) {
-      case "server_error":
-        return Response.json(
-          {
-            error: backendError.message,
-            error_code: "backend_unavailable",
-            fallback_available: false,
-          },
-          { status: 503 },
-        );
+    console.error("Topic generation API error:", {
+      ...sanitizedError,
+      endpoint: "/api/generate-topics",
+      userAgent,
+      requestId,
+    });
 
-      case "configuration_error":
-        return Response.json(
-          {
-            error: backendError.message,
-            error_code: "configuration_error",
-            fallback_available: false,
-          },
-          { status: 500 },
-        );
+    // Map error types to HTTP status codes
+    const statusCodeMap: Record<string, number> = {
+      validation_error: 400,
+      authentication_error: 401,
+      rate_limit_error: 429,
+      server_error: 503,
+      configuration_error: 500,
+      parsing_error: 502,
+      timeout_error: 504,
+      network_error: 503,
+      cors_error: 500,
+      abort_error: 499,
+      unknown_error: 500,
+    };
 
-      case "parsing_error":
-        return Response.json(
-          {
-            error: backendError.message,
-            error_code: "invalid_response",
-            fallback_available: false,
-          },
-          { status: 502 },
-        );
+    const statusCode = statusCodeMap[classifiedError.type] || 500;
 
-      case "timeout_error":
-        return Response.json(
-          {
-            error: "Request timed out",
-            error_code: "timeout_error",
-            fallback_available: false,
-          },
-          { status: 504 },
-        );
+    // Determine if fallback behavior is available
+    const fallbackAvailable = false; // Currently no offline fallback for topic generation
 
-      default:
-        return Response.json(
-          {
-            error: "Failed to generate topics",
-            error_code: "generation_failed",
-            fallback_available: false,
-          },
-          { status: 500 },
-        );
+    // Add retry-after header for rate limit errors
+    const headers: Record<string, string> = {};
+    if (classifiedError.type === "rate_limit_error") {
+      headers["Retry-After"] = "60"; // Suggest waiting 60 seconds
     }
+
+    const errorResponse: APIErrorResponse = {
+      error: classifiedError.message,
+      error_code: classifiedError.type,
+      details: classifiedError.technicalMessage,
+      fallback_available: fallbackAvailable,
+      retry_after: classifiedError.type === "rate_limit_error" ? 60 : undefined,
+      request_id: classifiedError.requestId,
+    };
+
+    return Response.json(errorResponse, {
+      status: statusCode,
+      headers,
+    });
   }
 }

@@ -890,36 +890,16 @@ export const sanitizeInput = (input: string): string => {
  * @returns Serializable object ready for API transmission
  */
 export const prepareFormDataForAPI = (formData: TopicBuilderFormData) => {
-  return {
+  console.log("Raw form data:", formData);
+
+  // Just return the form data - backend service handles transformation
+  const apiData = {
     ...formData,
-    // Sanitize text inputs
-    subject: formData.subject ? sanitizeInput(formData.subject) : undefined,
-    industry_other: formData.industry_other
-      ? sanitizeInput(formData.industry_other)
-      : undefined,
-    content_type_other: formData.content_type_other
-      ? sanitizeInput(formData.content_type_other)
-      : undefined,
-    platform_other: formData.platform_other
-      ? sanitizeInput(formData.platform_other)
-      : undefined,
-    audience:
-      formData.audience && formData.audience.length > 0
-        ? formData.audience.map((aud) => sanitizeInput(aud)).join(", ")
-        : undefined,
-    purpose_other: formData.purpose_other
-      ? sanitizeInput(formData.purpose_other)
-      : undefined,
-    tone_other: formData.tone_other
-      ? sanitizeInput(formData.tone_other)
-      : undefined,
-    keywords: formData.keywords ? sanitizeInput(formData.keywords) : undefined,
-    exclude: formData.exclude ? sanitizeInput(formData.exclude) : undefined,
-    focus: formData.focus ? sanitizeInput(formData.focus) : undefined,
-    notes: formData.notes ? sanitizeInput(formData.notes) : undefined,
-    // Timestamp for tracking
     timestamp: new Date().toISOString(),
   };
+
+  console.log("Prepared API data:", apiData);
+  return apiData;
 };
 
 // ============================================================================

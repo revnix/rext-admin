@@ -13,6 +13,8 @@ import {
 import { PageLayout } from "@/components/page-layout";
 import { AILoadingScreen } from "@/components/topic-builder/AILoadingScreen";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
+import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { AdvancedStep } from "@/components/topic-builder/steps/AdvancedStep";
 import { AudienceStep } from "@/components/topic-builder/steps/AudienceStep";
 import { ContentFormatStep } from "@/components/topic-builder/steps/ContentFormatStep";
@@ -81,6 +83,8 @@ export default function TopicBuilderPage() {
     errors,
     generatedTopics,
     isGenerating,
+    generationError,
+    isOnline,
     updateFormData,
     nextStep,
     prevStep,
@@ -90,6 +94,8 @@ export default function TopicBuilderPage() {
     getFieldError,
     generateTopics,
     clearTopics,
+    retryGeneration,
+    clearGenerationError,
   } = useTopicBuilder();
 
   const breadcrumbs = [
@@ -201,6 +207,9 @@ export default function TopicBuilderPage() {
             onGenerate={handleGenerate}
             onRestart={() => goToStep(1)}
             isGenerating={isGenerating}
+            generationError={generationError}
+            onRetry={retryGeneration}
+            onClearError={clearGenerationError}
           />
         );
 
@@ -223,27 +232,38 @@ export default function TopicBuilderPage() {
     >
       {showResults ? (
         // Results View
-        <div className="flex-1 p-6">
-          <TopicsList
-            topics={generatedTopics}
-            onTopicSave={handleTopicSave}
-            onBulkSave={handleBulkSave}
-            onBackToWizard={handleBackToWizard}
-            onRegenerateTopics={handleRegenerateTopics}
-          />
-        </div>
+        <APIErrorBoundary onRetry={retryGeneration}>
+          <div className="flex-1 p-6">
+            <TopicsList
+              topics={generatedTopics}
+              onTopicSave={handleTopicSave}
+              onBulkSave={handleBulkSave}
+              onBackToWizard={handleBackToWizard}
+              onRegenerateTopics={handleRegenerateTopics}
+            />
+          </div>
+        </APIErrorBoundary>
       ) : (
         // Wizard View
         <div className="flex h-full">
+          {/* Network Status - show when offline */}
+          {!isOnline && (
+            <div className="fixed top-4 right-4 z-50">
+              <NetworkStatus />
+            </div>
+          )}
+
           {/* Sidebar */}
-          <WizardSidebar
-            steps={steps}
-            currentStep={currentStep}
-            onStepClick={goToStep}
-            isStepCompleted={isStepCompleted}
-            errors={errors}
-            className="hidden lg:block"
-          />
+          <APIErrorBoundary onRetry={retryGeneration}>
+            <WizardSidebar
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={goToStep}
+              isStepCompleted={isStepCompleted}
+              errors={errors}
+              className="hidden lg:block"
+            />
+          </APIErrorBoundary>
 
           {/* Mobile Sidebar - Collapsible */}
           <div className="lg:hidden">
@@ -265,6 +285,22 @@ export default function TopicBuilderPage() {
                   <CardDescription>
                     {currentStepData.description}
                   </CardDescription>
+
+                  {/* Generation Error Display */}
+                  {generationError && (
+                    <div className="mt-4">
+                      <ErrorAlert
+                        error={generationError}
+                        operation="topic_generation"
+                        onRetry={retryGeneration}
+                        onGoBack={() => goToStep(Math.max(1, currentStep - 1))}
+                        onContactSupport={() => {
+                          // TODO: Implement support contact functionality
+                          console.log("Contact support clicked");
+                        }}
+                      />
+                    </div>
+                  )}
 
                   {/* Top Navigation */}
                   {currentStep < 6 && (
@@ -296,7 +332,9 @@ export default function TopicBuilderPage() {
                   )}
                 </CardHeader>
                 <CardContent className="flex-1">
-                  {renderStepContent()}
+                  <APIErrorBoundary onRetry={retryGeneration}>
+                    {renderStepContent()}
+                  </APIErrorBoundary>
                 </CardContent>
               </Card>
             </div>

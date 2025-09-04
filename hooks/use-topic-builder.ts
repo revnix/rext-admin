@@ -9,12 +9,14 @@ import {
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
+import { classifyError, isOnline } from "@/lib/error-utils";
 import type {
   GeneratedTopic,
   TopicBuilderDraft,
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
+import type { BackendError } from "@/types/backend";
 
 const STORAGE_KEY = "topic-builder-draft";
 
@@ -27,6 +29,8 @@ interface UseTopicBuilderReturn {
   // Generated topics state
   generatedTopics: GeneratedTopic[];
   isGenerating: boolean;
+  generationError: BackendError | null;
+  isOnline: boolean;
 
   // Form management
   updateFormData: (
@@ -51,6 +55,9 @@ interface UseTopicBuilderReturn {
   // Topic generation
   generateTopics: () => Promise<void>;
   clearTopics: () => void;
+  retryGeneration: () => Promise<void>;
+  cancelGeneration: () => void;
+  clearGenerationError: () => void;
 
   // Draft management
   saveDraft: (draftName?: string) => void;
@@ -73,9 +80,36 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   // Generation state
   const [generatedTopics, setGeneratedTopics] = useState<GeneratedTopic[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<BackendError | null>(
+    null,
+  );
+  const [connectionStatus, setConnectionStatus] = useState(isOnline());
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
 
   // Draft persistence state
   const [hasDraft, setHasDraft] = useState(false);
+
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => {
+      setConnectionStatus(true);
+      // Clear network-related errors when coming back online
+      setGenerationError((prev) =>
+        prev && prev.type === "network_error" ? null : prev,
+      );
+    };
+    const handleOffline = () => setConnectionStatus(false);
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    }
+  }, []);
 
   // Draft management functions (defined early to avoid dependency issues)
   const loadDraft = useCallback((): TopicBuilderDraft | null => {
@@ -357,8 +391,15 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     [currentStep, validateStep],
   );
 
-  // Topic generation
+  // Topic generation with enhanced error handling
   const generateTopics = useCallback(async (): Promise<void> => {
+    // Check online status first
+    if (!connectionStatus) {
+      const offlineError = classifyError(new Error("No internet connection"));
+      setGenerationError(offlineError);
+      return;
+    }
+
     // Final validation before generation
     const validation = validateStep(6);
     if (!validation.isValid) {
@@ -372,20 +413,42 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
     setIsGenerating(true);
     setErrors({});
+    setGenerationError(null);
+
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setCurrentRequestId(requestId);
 
     try {
       const apiData = prepareFormDataForAPI(formData);
+
+      // Debug logging to see what's being sent
+      console.log("Form data being sent:", apiData);
+      console.log("Required fields check:", {
+        wizardMode: apiData.wizardMode,
+        industry: apiData.industry,
+        reader_level: apiData.reader_level,
+        audience_size: apiData.audience_size,
+        demographic_age: apiData.demographic_age,
+        content_goal: apiData.content_goal,
+      });
 
       const response = await fetch("/api/generate-topics", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Request-ID": requestId,
         },
-        body: JSON.stringify(apiData),
+        body: JSON.stringify({ formData: apiData }),
+        signal: AbortSignal.timeout(35000), // Slightly longer than backend timeout
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to generate topics: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(
+          `Backend API error: ${response.status} ${errorMessage}`,
+        );
       }
 
       const result = await response.json();
@@ -400,25 +463,61 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         );
 
         setGeneratedTopics(topicsWithIds);
+        setGenerationError(null); // Clear any previous errors
       } else {
         throw new Error("Invalid response format from topic generation API");
       }
     } catch (error) {
-      console.error("Topic generation failed:", error);
+      const classifiedError = classifyError(error, requestId);
+      console.error("Topic generation failed:", classifiedError);
+      setGenerationError(classifiedError);
+
+      // Also set legacy error format for backward compatibility
       setErrors({
-        generation:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate topics. Please try again.",
+        generation: classifiedError.message,
       });
     } finally {
       setIsGenerating(false);
+      setCurrentRequestId(null);
     }
-  }, [formData, validateStep]);
+  }, [formData, validateStep, connectionStatus]);
 
   const clearTopics = useCallback(() => {
     setGeneratedTopics([]);
     setErrors({});
+    setGenerationError(null);
+  }, []);
+
+  // Retry generation function
+  const retryGeneration = useCallback(async (): Promise<void> => {
+    await generateTopics();
+  }, [generateTopics]);
+
+  // Cancel current generation
+  const cancelGeneration = useCallback(() => {
+    if (currentRequestId) {
+      // Note: We can't actually cancel the fetch here since we don't store the AbortController
+      // But we can clear the generating state and ignore the response when it comes back
+      setIsGenerating(false);
+      setCurrentRequestId(null);
+
+      const cancelError = classifyError(
+        new Error("Request cancelled by user"),
+        currentRequestId,
+      );
+      setGenerationError(cancelError);
+    }
+  }, [currentRequestId]);
+
+  // Clear generation error
+  const clearGenerationError = useCallback(() => {
+    setGenerationError(null);
+    // Also clear legacy errors
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.generation;
+      return newErrors;
+    });
   }, []);
 
   return {
@@ -430,6 +529,8 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     // Generated topics state
     generatedTopics,
     isGenerating,
+    generationError,
+    isOnline: connectionStatus,
 
     // Form management
     updateFormData,
@@ -451,6 +552,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     // Topic generation
     generateTopics,
     clearTopics,
+    retryGeneration,
+    cancelGeneration,
+    clearGenerationError,
 
     // Draft management
     saveDraft,

@@ -32,12 +32,10 @@ Note: This is the backend that I've already built and it's in a separate repo. I
 - **Forms:** React Hook Form + Zod validation
 - **Charts/Analytics:** Recharts or Chart.js
 - **Date/Time:** date-fns
-- **HTTP Client:** Axios with interceptors (not sure about this)
-- **Real-time:** WebSocket or Server-Sent Events (not sure about this too)
 
 
 ## Database
-- Supabase
+- PostgreSQL
 
 ## Hosting
 

@@ -1,43 +1,41 @@
 import type { GeneratedTopic } from "./topic-builder";
 
 /**
- * Backend API payload structure for topic generation request
+ * Backend API payload structure for topic generation request - matches Pydantic schema exactly
  */
 export interface BackendTopicGenerationPayload {
-  /** Industry or domain */
+  wizardMode: string;
   industry: string;
-  /** Subject for subject-first mode */
-  subject?: string;
-  /** Content type */
+  industry_other?: string | null;
+  industry_specific_focus?: string | null;
   content_type: string;
-  /** Platform for content distribution */
-  platform?: string;
-  /** Target audience list */
-  audience?: string[];
-  /** Content purposes */
-  purpose: string[];
-  /** Tone preferences */
-  tone: string[];
-  /** Keywords to focus on */
-  keywords?: string;
-  /** Topics to exclude */
-  exclude?: string;
-  /** Number of ideas to generate */
-  num_ideas: number;
-  /** Industry-specific focus area */
-  industry_specific_focus?: string;
-  /** Additional notes */
-  additional_notes?: string;
-  /** Content timing preference */
-  content_timing_preference?: string;
-  /** Content originality preference */
-  content_originality_preference?: string;
-  /** Geographic/demographic location */
+  content_type_other?: string | null;
+  platform?: string | null;
+  platform_other?: string | null;
+  audience: string;
+  reader_level: string;
+  audience_size: string;
+  demographic_age: string[];
   demographic_location: string[];
-  /** Request timestamp */
+  purpose: string[];
+  purpose_other?: string | null;
+  content_goal: string[];
+  tone: string[];
+  tone_other?: string | null;
+  keywords?: string | null;
+  notes?: string | null;
+  additional_notes?: string | null;
+  num_ideas: number;
+  region?: string | null;
+  language?: string;
+  content_timing_preference?: string | null;
+  content_originality_preference?: string | null;
+  fresh_vs_evergreen?: string | null;
+  safe_vs_original?: string | null;
+  exclude?: string | null;
+  focus?: string | null;
+  subject?: string | null;
   timestamp: string;
-  /** Wizard mode */
-  wizard_mode: string;
 }
 
 /**
@@ -61,9 +59,15 @@ export interface BackendConfig {
   /** Base URL for backend API */
   baseUrl: string;
   /** Timeout for requests in milliseconds */
-  timeout?: number;
-  /** Retry attempts for failed requests */
-  retryAttempts?: number;
+  timeout: number;
+  /** Retry configuration */
+  retry: RetryConfig;
+  /** Enable request deduplication */
+  enableDeduplication?: boolean;
+  /** Health check endpoint */
+  healthCheckEndpoint?: string;
+  /** Whether to enable offline detection */
+  enableOfflineDetection?: boolean;
 }
 
 /**
@@ -75,7 +79,47 @@ export type BackendErrorType =
   | "validation_error"
   | "server_error"
   | "configuration_error"
-  | "parsing_error";
+  | "parsing_error"
+  | "rate_limit_error"
+  | "authentication_error"
+  | "cors_error"
+  | "abort_error"
+  | "unknown_error";
+
+/**
+ * Error severity levels for user messaging
+ */
+export type ErrorSeverity = "low" | "medium" | "high" | "critical";
+
+/**
+ * User recovery actions available for different error types
+ */
+export type ErrorRecoveryAction =
+  | "retry"
+  | "retry_with_changes"
+  | "go_back"
+  | "reload_page"
+  | "contact_support"
+  | "check_connection"
+  | "none";
+
+/**
+ * Retry strategy configuration
+ */
+export interface RetryConfig {
+  /** Maximum number of retry attempts */
+  maxAttempts: number;
+  /** Initial delay in milliseconds */
+  initialDelay: number;
+  /** Maximum delay cap in milliseconds */
+  maxDelay: number;
+  /** Backoff multiplier (exponential backoff) */
+  backoffMultiplier: number;
+  /** Jitter factor to prevent thundering herd (0-1) */
+  jitterFactor: number;
+  /** Error types that should trigger retries */
+  retryableErrors: BackendErrorType[];
+}
 
 /**
  * Backend API error structure
@@ -83,10 +127,38 @@ export type BackendErrorType =
 export interface BackendError {
   /** Error type */
   type: BackendErrorType;
-  /** Error message */
+  /** User-friendly error message */
   message: string;
+  /** Technical error message for logging */
+  technicalMessage?: string;
   /** HTTP status code if applicable */
   statusCode?: number;
-  /** Original error object */
+  /** Error severity level */
+  severity: ErrorSeverity;
+  /** Available recovery actions */
+  recoveryActions: ErrorRecoveryAction[];
+  /** Whether this error is retryable */
+  isRetryable: boolean;
+  /** Retry attempt number (if retrying) */
+  retryAttempt?: number;
+  /** Request ID for tracking */
+  requestId?: string;
+  /** Timestamp when error occurred */
+  timestamp: string;
+  /** Original error object (for logging only) */
   originalError?: Error;
+  /** Additional context data */
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Error response from API routes
+ */
+export interface APIErrorResponse {
+  error: string;
+  error_code: string;
+  details?: string;
+  fallback_available?: boolean;
+  retry_after?: number;
+  request_id?: string;
 }

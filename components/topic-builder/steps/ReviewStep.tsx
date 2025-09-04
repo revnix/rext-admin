@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
+import type { BackendError } from "@/types/backend";
 import {
   CONTENT_GOAL_OPTIONS,
   CONTENT_TYPE_OPTIONS,
@@ -26,6 +27,9 @@ interface ReviewStepProps {
   onGenerate: () => Promise<void>;
   onRestart: () => void;
   isGenerating: boolean;
+  generationError?: BackendError | null;
+  onRetry?: () => Promise<void>;
+  onClearError?: () => void;
 }
 
 export function ReviewStep({
@@ -33,6 +37,9 @@ export function ReviewStep({
   onGenerate,
   onRestart,
   isGenerating,
+  generationError,
+  onRetry,
+  onClearError,
 }: ReviewStepProps) {
   const getDisplayValue = (
     options: { label: string; value: string }[],

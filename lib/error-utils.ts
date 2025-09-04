@@ -1,0 +1,368 @@
+import type {
+  BackendError,
+  BackendErrorType,
+  ErrorRecoveryAction,
+  ErrorSeverity,
+  RetryConfig,
+} from "@/types/backend";
+
+/**
+ * Default retry configuration for backend requests
+ */
+export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxAttempts: 3,
+  initialDelay: 1000,
+  maxDelay: 30000,
+  backoffMultiplier: 2,
+  jitterFactor: 0.1,
+  retryableErrors: [
+    "network_error",
+    "timeout_error",
+    "server_error",
+    "rate_limit_error",
+    "abort_error",
+  ],
+};
+
+/**
+ * Error classification mappings
+ */
+const ERROR_MAPPINGS: Record<
+  BackendErrorType,
+  {
+    severity: ErrorSeverity;
+    userMessage: string;
+    recoveryActions: ErrorRecoveryAction[];
+  }
+> = {
+  network_error: {
+    severity: "high",
+    userMessage:
+      "Unable to connect to our servers. Please check your internet connection and try again.",
+    recoveryActions: ["retry", "check_connection", "reload_page"],
+  },
+  timeout_error: {
+    severity: "medium",
+    userMessage:
+      "The request is taking longer than expected. Please try again.",
+    recoveryActions: ["retry", "go_back"],
+  },
+  server_error: {
+    severity: "high",
+    userMessage:
+      "Our servers are experiencing issues. Please try again in a few minutes.",
+    recoveryActions: ["retry", "contact_support"],
+  },
+  configuration_error: {
+    severity: "critical",
+    userMessage:
+      "There's a configuration issue. Please contact support if this persists.",
+    recoveryActions: ["contact_support", "reload_page"],
+  },
+  parsing_error: {
+    severity: "medium",
+    userMessage:
+      "We received an unexpected response. Please try generating topics again.",
+    recoveryActions: ["retry", "go_back"],
+  },
+  validation_error: {
+    severity: "low",
+    userMessage: "Please check your inputs and try again.",
+    recoveryActions: ["go_back", "retry_with_changes"],
+  },
+  rate_limit_error: {
+    severity: "medium",
+    userMessage:
+      "You're making requests too quickly. Please wait a moment and try again.",
+    recoveryActions: ["retry"],
+  },
+  authentication_error: {
+    severity: "medium",
+    userMessage:
+      "Authentication failed. Please refresh the page and try again.",
+    recoveryActions: ["reload_page", "contact_support"],
+  },
+  cors_error: {
+    severity: "critical",
+    userMessage:
+      "Connection blocked by browser security. Please contact support.",
+    recoveryActions: ["contact_support", "reload_page"],
+  },
+  abort_error: {
+    severity: "low",
+    userMessage: "Request was cancelled. You can try again.",
+    recoveryActions: ["retry", "go_back"],
+  },
+  unknown_error: {
+    severity: "medium",
+    userMessage:
+      "An unexpected error occurred. Please try again or contact support.",
+    recoveryActions: ["retry", "contact_support"],
+  },
+};
+
+/**
+ * Classify an error and return user-friendly information
+ */
+export function classifyError(
+  error: unknown,
+  requestId?: string,
+  retryAttempt?: number,
+): BackendError {
+  const timestamp = new Date().toISOString();
+
+  if (error instanceof Error) {
+    let errorType: BackendErrorType = "unknown_error";
+    let technicalMessage = error.message;
+    let statusCode: number | undefined;
+
+    // Network and fetch-related errors
+    if (error.name === "AbortError") {
+      errorType = "abort_error";
+    } else if (error.name === "TimeoutError") {
+      errorType = "timeout_error";
+    } else if (error.message.includes("fetch")) {
+      errorType = "network_error";
+    } else if (error.message.includes("CORS")) {
+      errorType = "cors_error";
+    }
+
+    // Backend API specific errors
+    else if (error.message.includes("Backend API error:")) {
+      const statusMatch = error.message.match(/(\d{3})/);
+      if (statusMatch) {
+        statusCode = parseInt(statusMatch[1], 10);
+
+        if (statusCode >= 500) {
+          errorType = "server_error";
+        } else if (statusCode === 429) {
+          errorType = "rate_limit_error";
+        } else if (statusCode === 401 || statusCode === 403) {
+          errorType = "authentication_error";
+        } else if (statusCode >= 400) {
+          errorType = "validation_error";
+        }
+      }
+    }
+
+    // Configuration errors
+    else if (
+      error.message.includes("Backend API URL") ||
+      error.message.includes("configuration")
+    ) {
+      errorType = "configuration_error";
+    }
+
+    // Response parsing errors
+    else if (
+      error.message.includes("Invalid response") ||
+      error.message.includes("parsing")
+    ) {
+      errorType = "parsing_error";
+    }
+
+    const mapping = ERROR_MAPPINGS[errorType];
+
+    return {
+      type: errorType,
+      message: mapping.userMessage,
+      technicalMessage,
+      statusCode,
+      severity: mapping.severity,
+      recoveryActions: mapping.recoveryActions,
+      isRetryable: DEFAULT_RETRY_CONFIG.retryableErrors.includes(errorType),
+      retryAttempt,
+      requestId,
+      timestamp,
+      originalError: error,
+    };
+  }
+
+  // Handle non-Error objects
+  const mapping = ERROR_MAPPINGS.unknown_error;
+  return {
+    type: "unknown_error",
+    message: mapping.userMessage,
+    technicalMessage: String(error),
+    severity: mapping.severity,
+    recoveryActions: mapping.recoveryActions,
+    isRetryable: false,
+    retryAttempt,
+    requestId,
+    timestamp,
+    originalError: error instanceof Error ? error : new Error(String(error)),
+  };
+}
+
+/**
+ * Calculate retry delay with exponential backoff and jitter
+ */
+export function calculateRetryDelay(
+  attempt: number,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
+): number {
+  const exponentialDelay = Math.min(
+    config.initialDelay * Math.pow(config.backoffMultiplier, attempt - 1),
+    config.maxDelay,
+  );
+
+  // Add jitter to prevent thundering herd
+  const jitter = exponentialDelay * config.jitterFactor * Math.random();
+
+  return Math.round(exponentialDelay + jitter);
+}
+
+/**
+ * Check if an error should trigger a retry
+ */
+export function shouldRetry(
+  error: BackendError,
+  attempt: number,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
+): boolean {
+  return (
+    error.isRetryable &&
+    attempt <= config.maxAttempts &&
+    config.retryableErrors.includes(error.type)
+  );
+}
+
+/**
+ * Sanitize error data for logging (remove sensitive information)
+ */
+export function sanitizeErrorForLogging(error: BackendError): Omit<
+  BackendError,
+  "originalError"
+> & {
+  stackTrace?: string;
+  sanitizedContext?: Record<string, unknown>;
+} {
+  // Remove sensitive fields from context
+  const sanitizedContext = error.context
+    ? Object.entries(error.context).reduce(
+        (acc, [key, value]) => {
+          // Skip sensitive fields
+          if (
+            key.toLowerCase().includes("password") ||
+            key.toLowerCase().includes("token") ||
+            key.toLowerCase().includes("secret") ||
+            key.toLowerCase().includes("key")
+          ) {
+            acc[key] = "[REDACTED]";
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      )
+    : undefined;
+
+  return {
+    type: error.type,
+    message: error.message,
+    technicalMessage: error.technicalMessage,
+    statusCode: error.statusCode,
+    severity: error.severity,
+    recoveryActions: error.recoveryActions,
+    isRetryable: error.isRetryable,
+    retryAttempt: error.retryAttempt,
+    requestId: error.requestId,
+    timestamp: error.timestamp,
+    stackTrace: error.originalError?.stack,
+    sanitizedContext,
+  };
+}
+
+/**
+ * Generate a unique request ID
+ */
+export function generateRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Check if the browser is online
+ */
+export function isOnline(): boolean {
+  return typeof navigator !== "undefined" ? navigator.onLine : true;
+}
+
+/**
+ * Get contextual error message based on operation
+ */
+export function getContextualErrorMessage(
+  error: BackendError,
+  operation:
+    | "topic_generation"
+    | "form_validation"
+    | "data_save" = "topic_generation",
+): string {
+  const baseMessage = error.message;
+
+  switch (operation) {
+    case "topic_generation":
+      if (error.type === "timeout_error") {
+        return "Topic generation is taking longer than expected. This sometimes happens with complex requests.";
+      }
+      if (error.type === "server_error") {
+        return "Our AI service is temporarily unavailable. Your form data has been saved and you can try again shortly.";
+      }
+      break;
+
+    case "form_validation":
+      if (error.type === "validation_error") {
+        return "Please review your form entries and make sure all required fields are completed correctly.";
+      }
+      break;
+
+    case "data_save":
+      if (error.type === "network_error") {
+        return "Unable to save your data. Please check your connection and try again.";
+      }
+      break;
+  }
+
+  return baseMessage;
+}
+
+/**
+ * Check if error indicates backend is completely unavailable
+ */
+export function isBackendUnavailable(error: BackendError): boolean {
+  return (
+    error.type === "network_error" ||
+    error.type === "configuration_error" ||
+    (error.type === "server_error" && error.statusCode === 503)
+  );
+}
+
+/**
+ * Get appropriate fallback behavior for backend unavailability
+ */
+export function getFallbackBehavior(operation: string): {
+  enableOfflineMode: boolean;
+  showCachedData: boolean;
+  allowRetry: boolean;
+  message: string;
+} {
+  switch (operation) {
+    case "topic_generation":
+      return {
+        enableOfflineMode: false,
+        showCachedData: false,
+        allowRetry: true,
+        message:
+          "Topic generation requires an active connection. Please check your internet and try again.",
+      };
+
+    default:
+      return {
+        enableOfflineMode: false,
+        showCachedData: false,
+        allowRetry: true,
+        message:
+          "This feature requires an active connection. Please try again when you're online.",
+      };
+  }
+}
