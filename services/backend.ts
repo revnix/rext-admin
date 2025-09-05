@@ -6,6 +6,7 @@ import {
   sanitizeErrorForLogging,
   shouldRetry,
 } from "@/lib/error-utils";
+import { transformTopicsForSavingEnhanced } from "@/lib/transformation-utils";
 import type {
   BackendConfig,
   BackendError,
@@ -139,7 +140,29 @@ export class BackendService {
     this.validateConfig();
 
     const requestId = generateRequestId();
-    const payload: SaveTopicRequest = { topics };
+
+    // Transform GeneratedTopic[] to SaveTopicItem[] using enhanced transformation utilities
+    const transformationResult = await transformTopicsForSavingEnhanced(
+      topics,
+      {
+        autoFix: true,
+        continueOnError: false, // Fail fast if any topic has issues
+        includeMetrics: false, // Don't need metrics for this operation
+      },
+    );
+
+    if (!transformationResult.success) {
+      const error = classifyError(
+        new Error(
+          `Topic transformation failed: ${transformationResult.errors[0]?.error.message || "Unknown transformation error"}`,
+        ),
+        requestId,
+      );
+      error.type = "validation_error";
+      throw error;
+    }
+
+    const payload: SaveTopicRequest = { topics: transformationResult.data };
 
     return this.executeWithRetryGeneric(
       "/api/topic/save-topic",

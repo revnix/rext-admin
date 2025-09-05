@@ -330,9 +330,21 @@ describe("transformFormDataToBackendEnhanced", () => {
   });
 
   it("should validate required fields when requested", () => {
+    // Create a minimal form data that passes schema validation but has empty transformed fields
     const incompleteData = {
-      ...validFormData,
-      industry: "", // Missing required field
+      wizardMode: "industry-first" as const,
+      industry: "technology",
+      content_type: "blog-post",
+      audience: ["developers"],
+      reader_level: "", // This will be empty in the final payload
+      audience_size: "medium",
+      demographic_age: [],
+      demographic_location: "North America",
+      purpose: ["educate-inform"],
+      content_goal: [],
+      tone: ["professional-formal"],
+      num_ideas: 5,
+      language: "english",
     };
 
     const result = transformFormDataToBackendEnhanced(incompleteData, {
@@ -353,12 +365,12 @@ describe("transformFormDataToBackendEnhanced", () => {
       content_type: "blog-post",
       audience: ["developers"],
       reader_level: "beginner",
-      audience_size: "100-500",
+      audience_size: "medium",
       demographic_age: [],
-      demographic_location: [],
-      purpose: ["educate"],
+      demographic_location: "North America",
+      purpose: ["educate-inform"],
       content_goal: [],
-      tone: [],
+      tone: ["professional-formal"],
       num_ideas: 3,
     };
 
@@ -371,6 +383,9 @@ describe("transformFormDataToBackendEnhanced", () => {
       defaultValues,
     });
 
+    if (!result.success) {
+      console.log("Error:", result.error);
+    }
     expect(result.success).toBe(true);
     expect(result.data?.language).toBe("English");
     expect(result.data?.region).toBe("Global");
@@ -560,6 +575,10 @@ describe("Edge Cases", () => {
     const result = transformTopicForSavingEnhanced(topicWithLargeText, {
       autoFix: true,
     });
+
+    if (!result.success) {
+      console.log("Large text error:", result.error);
+    }
     expect(result.success).toBe(true);
     // Auto-fix should truncate the fields
     expect(result.data?.title.length).toBeLessThanOrEqual(200);

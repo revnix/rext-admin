@@ -1,3 +1,4 @@
+import type { SaveTopicItem } from "./api";
 import type { GeneratedTopic } from "./topic-builder";
 
 /**
@@ -193,7 +194,7 @@ export interface APIErrorResponse {
  * @see transformTopicsForSaving in /types/schemas.ts for transformation helper
  */
 export interface SaveTopicRequest {
-  topics: GeneratedTopic[];
+  topics: SaveTopicItem[];
 }
 
 /**

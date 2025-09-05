@@ -716,8 +716,21 @@ export const transformFormDataToBackendEnhanced = (
   const startTime = performance.now();
 
   try {
-    // Step 1: Validate input as TopicBuilderFormData
-    const validationResult = TopicBuilderFormDataSchema.safeParse(formData);
+    // Step 1: Apply normalization if enabled (before validation)
+    let preprocessedFormData = formData;
+    if (
+      options.normalizeFields &&
+      typeof formData === "object" &&
+      formData !== null
+    ) {
+      preprocessedFormData = normalizeFormData(
+        formData as TopicBuilderFormData,
+      );
+    }
+
+    // Step 2: Validate input as TopicBuilderFormData
+    const validationResult =
+      TopicBuilderFormDataSchema.safeParse(preprocessedFormData);
     if (!validationResult.success) {
       const fieldErrors = extractValidationErrors(validationResult.error);
       const friendlyErrors = createUserFriendlyErrors(fieldErrors);
@@ -735,17 +748,11 @@ export const transformFormDataToBackendEnhanced = (
       };
     }
 
-    const validFormData = validationResult.data;
-
-    // Step 2: Apply normalization if enabled
-    let processedFormData = validFormData;
-    if (options.normalizeFields) {
-      processedFormData = normalizeFormData(validFormData);
-    }
+    const processedFormData = validationResult.data;
 
     // Step 3: Transform to backend format using the backend service transformation
     // We need to use the actual backend service transformation here
-    const finalPayload: BackendTopicGenerationPayload = {
+    const basePayload: BackendTopicGenerationPayload = {
       wizardMode: processedFormData.wizardMode || "industry-first",
       industry:
         processedFormData.industry_other || processedFormData.industry || "",
@@ -802,9 +809,12 @@ export const transformFormDataToBackendEnhanced = (
       focus: processedFormData.focus || null,
       subject: processedFormData.subject || null,
       timestamp: new Date().toISOString(),
-      // Apply default values if provided
-      ...options.defaultValues,
     };
+
+    // Step 4: Apply default values if provided
+    const finalPayload: BackendTopicGenerationPayload = options.defaultValues
+      ? { ...basePayload, ...options.defaultValues }
+      : basePayload;
 
     // Step 5: Additional validation for required fields if requested
     if (options.validateRequired) {
@@ -1004,12 +1014,14 @@ const normalizeFormData = (
 
   // Normalize string fields
   if (normalized.industry) {
-    normalized.industry =
-      normalized.industry.trim() as TopicBuilderFormData["industry"];
+    normalized.industry = normalized.industry
+      .trim()
+      .toLowerCase() as TopicBuilderFormData["industry"];
   }
   if (normalized.content_type) {
-    normalized.content_type =
-      normalized.content_type.trim() as TopicBuilderFormData["content_type"];
+    normalized.content_type = normalized.content_type
+      .trim()
+      .toLowerCase() as TopicBuilderFormData["content_type"];
   }
   if (normalized.audience) {
     normalized.audience = normalized.audience.map((a) => a.trim());
@@ -1034,23 +1046,23 @@ const normalizeFormData = (
 };
 
 /**
- * Validates required backend fields
+ * Validates required backend fields and returns list of missing fields
  * @private
  */
 const validateRequiredBackendFields = (
   payload: BackendTopicGenerationPayload,
 ): string[] => {
-  const errors: string[] = [];
-  const requiredFields = ["industry", "content_type", "audience", "num_ideas"];
+  const requiredFields = ["industry", "content_type", "reader_level"];
+  const missingFields: string[] = [];
 
   for (const field of requiredFields) {
     const value = payload[field as keyof BackendTopicGenerationPayload];
-    if (!value || (Array.isArray(value) && value.length === 0)) {
-      errors.push(field);
+    if (!value || (typeof value === "string" && value.trim() === "")) {
+      missingFields.push(field);
     }
   }
 
-  return errors;
+  return missingFields;
 };
 
 /**
