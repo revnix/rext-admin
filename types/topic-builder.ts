@@ -276,6 +276,10 @@ export interface GeneratedTopic {
   tags: string[];
   /** Whether the topic has been saved to user's library */
   is_saved?: boolean;
+  /** Optimistic UI state: marks topic as saved while API call is in progress */
+  _optimisticSaved?: boolean;
+  /** Tracks if topic is currently being saved (for loading states) */
+  _isBeingSaved?: boolean;
 }
 
 /**

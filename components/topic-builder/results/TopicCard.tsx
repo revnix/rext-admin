@@ -1,6 +1,6 @@
 "use client";
 
-import { Hash, Info, Lightbulb, Target, Users } from "lucide-react";
+import { Check, Hash, Info, Lightbulb, Target, Users } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -94,6 +94,33 @@ export function TopicCard({
               aria-label={`Select topic: ${topic.title}`}
             />
           </div>
+
+          {/* Saved Indicator */}
+          {(topic._optimisticSaved || topic.is_saved) && (
+            <div className="absolute right-16 top-4">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm",
+                      topic._optimisticSaved && !topic.is_saved
+                        ? "bg-amber-500"
+                        : "bg-green-500",
+                    )}
+                  >
+                    <Check className="h-3 w-3" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {topic._optimisticSaved && !topic.is_saved
+                      ? "Saving..."
+                      : "Saved"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
 
           {/* Topic Actions */}
           <div className="absolute right-4 top-4">

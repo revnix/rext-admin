@@ -36,6 +36,11 @@ interface TopicBuilderState {
   selectAllTopics: () => void;
   deselectAllTopics: () => void;
   resetWizard: () => void;
+
+  // Optimistic update actions
+  optimisticallyMarkTopicSaved: (topicId: string) => void;
+  revertOptimisticSave: (topicId: string) => void;
+  updateTopicSaveState: (topicId: string, isBeingSaved: boolean) => void;
 }
 
 /**
@@ -136,6 +141,37 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             generatedTopics: [],
             selectedTopicIds: [],
           });
+        },
+
+        // Optimistic update actions
+        optimisticallyMarkTopicSaved: (topicId) => {
+          set((state) => ({
+            generatedTopics: state.generatedTopics.map((topic) =>
+              topic.id === topicId
+                ? { ...topic, _optimisticSaved: true, _isBeingSaved: false }
+                : topic,
+            ),
+          }));
+        },
+
+        revertOptimisticSave: (topicId) => {
+          set((state) => ({
+            generatedTopics: state.generatedTopics.map((topic) =>
+              topic.id === topicId
+                ? { ...topic, _optimisticSaved: false, _isBeingSaved: false }
+                : topic,
+            ),
+          }));
+        },
+
+        updateTopicSaveState: (topicId, isBeingSaved) => {
+          set((state) => ({
+            generatedTopics: state.generatedTopics.map((topic) =>
+              topic.id === topicId
+                ? { ...topic, _isBeingSaved: isBeingSaved }
+                : topic,
+            ),
+          }));
         },
       }),
       {

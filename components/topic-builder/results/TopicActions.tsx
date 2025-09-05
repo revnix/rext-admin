@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { classifyError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import type { BackendError } from "@/types/backend";
@@ -104,6 +105,9 @@ export function TopicActions({
     deleting?: string;
   }>({});
 
+  // TanStack Query mutation for optimistic saves
+  const saveMutation = useTopicSaveMutation();
+
   const editForm = useForm<TopicEditFormData>({
     resolver: zodResolver(topicEditFormSchema),
     defaultValues: {
@@ -122,7 +126,15 @@ export function TopicActions({
   const [exportFormat, setExportFormat] = useState<"json" | "csv">("json");
 
   const setLoading = (action: keyof typeof loadingStates, loading: boolean) => {
-    setLoadingStates((prev) => ({ ...prev, [action]: loading }));
+    // For save action, also check mutation state
+    if (action === "saving") {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [action]: loading || saveMutation.isPending,
+      }));
+    } else {
+      setLoadingStates((prev) => ({ ...prev, [action]: loading }));
+    }
   };
 
   const setError = (action: keyof typeof errorStates, error?: BackendError) => {
@@ -146,37 +158,15 @@ export function TopicActions({
 
   const handleSave = async () => {
     clearFeedback("saving");
-    setLoading("saving", true);
 
     try {
-      // Call the Next.js API route which handles backend communication server-side
-      const response = await fetch("/api/topic/save-topic", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          topics: [topic],
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: `HTTP ${response.status}`,
-        }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
+      // Use TanStack Query mutation for optimistic updates
+      await saveMutation.mutateAsync(topic);
 
       // Call the optional onSave callback if provided
       if (onSave) {
         await onSave(topic.id);
       }
-
-      console.log(
-        `Topic ${topic.id} saved successfully - ${result.saved_count} topics saved`,
-      );
 
       // Show success message
       setSuccess("saving", `Topic "${topic.title}" saved successfully!`);
@@ -186,8 +176,6 @@ export function TopicActions({
       // Classify error for user-friendly display
       const classifiedError = classifyError(error);
       setError("saving", classifiedError);
-    } finally {
-      setLoading("saving", false);
     }
   };
 
@@ -288,7 +276,8 @@ export function TopicActions({
     }
   };
 
-  const isAnyLoading = Object.values(loadingStates).some(Boolean);
+  const isAnyLoading =
+    Object.values(loadingStates).some(Boolean) || saveMutation.isPending;
 
   if (variant === "buttons") {
     return (
@@ -301,7 +290,7 @@ export function TopicActions({
             disabled={isAnyLoading}
             className="gap-1.5"
           >
-            {loadingStates.saving ? (
+            {loadingStates.saving || saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
