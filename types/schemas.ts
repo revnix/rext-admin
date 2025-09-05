@@ -413,6 +413,130 @@ export const validateTopicsForSaving = (topics: unknown[]): SaveTopicItem[] => {
   });
 };
 
+/**
+ * Validates an array of topics with detailed error reporting
+ * @param topics Array of topics to validate
+ * @returns Validation result with individual item success/error details
+ */
+export const validateArrayOfTopics = (
+  topics: unknown[],
+): {
+  success: boolean;
+  validTopics: SaveTopicItem[];
+  errors: Array<{ index: number; error: string; topic: unknown }>;
+} => {
+  const validTopics: SaveTopicItem[] = [];
+  const errors: Array<{ index: number; error: string; topic: unknown }> = [];
+
+  topics.forEach((topic, index) => {
+    const result = SaveTopicItemSchema.safeParse(topic);
+    if (result.success) {
+      validTopics.push(result.data);
+    } else {
+      const errorDetails = extractValidationErrors(result.error);
+      const friendlyErrors = createUserFriendlyErrors(errorDetails);
+      errors.push({
+        index,
+        error: friendlyErrors.join("; "),
+        topic,
+      });
+    }
+  });
+
+  return {
+    success: errors.length === 0,
+    validTopics,
+    errors,
+  };
+};
+
+/**
+ * Validates that all required fields are present in an object
+ * @param data Object to validate
+ * @param requiredFields Array of required field names
+ * @returns Validation result with missing fields
+ */
+export const validateFieldPresence = (
+  data: Record<string, unknown>,
+  requiredFields: string[],
+): {
+  success: boolean;
+  missingFields: string[];
+  presentFields: string[];
+} => {
+  const missingFields: string[] = [];
+  const presentFields: string[] = [];
+
+  requiredFields.forEach((field) => {
+    const value = data[field];
+    if (value === undefined || value === null || value === "") {
+      missingFields.push(field);
+    } else if (Array.isArray(value) && value.length === 0) {
+      missingFields.push(field);
+    } else {
+      presentFields.push(field);
+    }
+  });
+
+  return {
+    success: missingFields.length === 0,
+    missingFields,
+    presentFields,
+  };
+};
+
+/**
+ * Creates a detailed validation report for data transformation
+ * @param data Data to validate
+ * @param schema Zod schema to validate against
+ * @param context Additional context for the validation
+ * @returns Detailed validation report
+ */
+export const createValidationReport = <T>(
+  data: unknown,
+  schema: z.ZodSchema<T>,
+  context?: string,
+): {
+  isValid: boolean;
+  data?: T;
+  errors: Array<{
+    field: string;
+    message: string;
+    code: string;
+    path: (string | number)[];
+  }>;
+  summary: string;
+} => {
+  const result = schema.safeParse(data);
+
+  if (result.success) {
+    return {
+      isValid: true,
+      data: result.data,
+      errors: [],
+      summary: `Validation successful${context ? ` for ${context}` : ""}`,
+    };
+  }
+
+  const errors = result.error.issues.map((issue) => ({
+    field: issue.path.join(".") || "root",
+    message: issue.message,
+    code: issue.code,
+    path: issue.path.filter(
+      (p): p is string | number =>
+        typeof p === "string" || typeof p === "number",
+    ),
+  }));
+
+  const summary = `Validation failed${context ? ` for ${context}` : ""}: ${errors.length} error(s) found`;
+
+  return {
+    isValid: false,
+    errors,
+    summary,
+  };
+};
+
 // ============================================================================
 // TRANSFORMATION HELPERS
 // ============================================================================
@@ -533,7 +657,7 @@ export const extractValidationErrors = (
   const fieldErrors: Record<string, string[]> = {};
 
   error.issues.forEach((err) => {
-    const fieldPath = err.path.join(".");
+    const fieldPath = err.path.join(".") || "root";
     if (!fieldErrors[fieldPath]) {
       fieldErrors[fieldPath] = [];
     }
@@ -541,6 +665,54 @@ export const extractValidationErrors = (
   });
 
   return fieldErrors;
+};
+
+/**
+ * Enhanced validation error extraction with detailed field information
+ * @param error Zod validation error
+ * @returns Enhanced field error information
+ */
+export const extractDetailedValidationErrors = (
+  error: z.ZodError,
+): Array<{
+  field: string;
+  message: string;
+  code: string;
+  path: (string | number)[];
+  received?: unknown;
+  expected?: string;
+}> => {
+  return error.issues.map((issue) => {
+    const result: {
+      field: string;
+      message: string;
+      code: string;
+      path: (string | number)[];
+      received?: unknown;
+      expected?: string;
+    } = {
+      field: issue.path.join(".") || "root",
+      message: issue.message,
+      code: issue.code,
+      path: issue.path.filter(
+        (p): p is string | number =>
+          typeof p === "string" || typeof p === "number",
+      ),
+    };
+
+    // Add received value for certain error types
+    if ("received" in issue) {
+      result.received = issue.received;
+    }
+
+    // Add expected type information
+    if (issue.code === "invalid_type") {
+      result.expected =
+        "expected" in issue ? String(issue.expected) : "unknown";
+    }
+
+    return result;
+  });
 };
 
 /**
@@ -570,3 +742,28 @@ export type ValidatedTopicBuilderFormData = z.infer<
   typeof TopicBuilderFormDataSchema
 >;
 export type ValidatedTopicScores = z.infer<typeof TopicScoresSchema>;
+
+// Enhanced validation result types
+export interface ValidationResult<T> {
+  success: boolean;
+  data?: T;
+  errors: string[];
+  fieldErrors?: Record<string, string[]>;
+  warnings?: string[];
+}
+
+export interface BatchValidationResult<T> {
+  success: boolean;
+  validItems: T[];
+  invalidItems: Array<{
+    index: number;
+    item: unknown;
+    errors: string[];
+  }>;
+  summary: {
+    total: number;
+    valid: number;
+    invalid: number;
+    successRate: number;
+  };
+}
