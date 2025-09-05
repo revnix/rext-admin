@@ -521,3 +521,203 @@ export const createErrorResponse = (
     timestamp: createTimestamp(),
   };
 };
+
+// ============================================================================
+// TOPIC SAVE API INTERFACES
+// ============================================================================
+
+/**
+ * Request interface for saving topics to user's library
+ * Based on the backend cURL example in the plan file
+ */
+export interface SaveTopicRequest {
+  /** Array of topics to save */
+  topics: SaveTopicItem[];
+  /** Optional session ID for tracking */
+  session_id?: string;
+  /** Client-generated request ID */
+  request_id?: string;
+  /** Request timestamp */
+  timestamp?: string;
+}
+
+/**
+ * Individual topic item to be saved
+ */
+export interface SaveTopicItem {
+  /** Topic title/headline */
+  title: string;
+  /** Specific angle or approach */
+  angle: string;
+  /** Channels/platforms this topic fits well */
+  channel_fit: string[];
+  /** Audience segments this topic appeals to */
+  audience_fit: string[];
+  /** AI-generated quality scores */
+  scores: {
+    relevance: number;
+    freshness: number;
+    novelty: number;
+  };
+  /** Explanation of why this topic works well */
+  why_it_works: string;
+  /** Categorization tags for the topic */
+  tags: string[];
+}
+
+/**
+ * Response interface for save topics operation
+ */
+export interface SaveTopicResponse {
+  /** Whether the save operation was successful */
+  success: boolean;
+  /** Number of topics successfully saved */
+  saved_count: number;
+  /** Optional success message for user feedback */
+  message?: string;
+  /** Saved topic IDs (if backend assigns IDs) */
+  saved_topic_ids?: string[];
+  /** Request ID for tracking */
+  request_id: string;
+  /** Save timestamp */
+  saved_at: string;
+}
+
+// ============================================================================
+// TOPIC RETRIEVAL API INTERFACES
+// ============================================================================
+
+/**
+ * Request interface for retrieving saved topics
+ * Based on the backend cURL example in the plan file
+ */
+export interface GetTopicsRequest {
+  /** Optional pagination parameters */
+  pagination?: {
+    /** Page number (1-based) */
+    page?: number;
+    /** Number of items per page */
+    per_page?: number;
+  };
+  /** Optional filters */
+  filters?: {
+    /** Filter by tags */
+    tags?: string[];
+    /** Filter by date range */
+    date_range?: {
+      start_date: string;
+      end_date: string;
+    };
+    /** Filter by minimum score thresholds */
+    min_scores?: {
+      relevance?: number;
+      freshness?: number;
+      novelty?: number;
+    };
+  };
+  /** Sort options */
+  sort?: {
+    /** Field to sort by */
+    field: "created_at" | "title" | "relevance" | "freshness" | "novelty";
+    /** Sort direction */
+    direction: "asc" | "desc";
+  };
+  /** Session ID for tracking */
+  session_id?: string;
+  /** Request ID */
+  request_id?: string;
+}
+
+/**
+ * Individual saved topic with metadata
+ */
+export interface SavedTopic extends SaveTopicItem {
+  /** Unique topic ID assigned by backend */
+  id: string;
+  /** When the topic was saved */
+  created_at: string;
+  /** Last modified timestamp */
+  updated_at?: string;
+  /** Whether topic is marked as favorite */
+  is_favorite?: boolean;
+  /** User notes on the topic */
+  user_notes?: string;
+}
+
+/**
+ * Response interface for get topics operation
+ */
+export interface GetTopicsResponse {
+  /** Array of saved topics */
+  topics: SavedTopic[];
+  /** Pagination information (if applicable) */
+  pagination?: {
+    current_page: number;
+    per_page: number;
+    total_items: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
+  /** Response metadata */
+  metadata: {
+    /** Total number of topics in user's library */
+    total_saved_topics: number;
+    /** When the data was last updated */
+    last_updated: string;
+    /** Response generation time */
+    response_time_ms?: number;
+  };
+  /** Request tracking */
+  request_id: string;
+  /** Response timestamp */
+  retrieved_at: string;
+}
+
+// ============================================================================
+// TYPE GUARDS FOR NEW INTERFACES
+// ============================================================================
+
+/**
+ * Type guard to validate SaveTopicRequest
+ */
+export const isValidSaveTopicRequest = (
+  request: unknown,
+): request is SaveTopicRequest => {
+  return (
+    typeof request === "object" &&
+    request !== null &&
+    "topics" in request &&
+    Array.isArray((request as SaveTopicRequest).topics) &&
+    (request as SaveTopicRequest).topics.length > 0
+  );
+};
+
+/**
+ * Type guard to validate SaveTopicItem
+ */
+export const isValidSaveTopicItem = (item: unknown): item is SaveTopicItem => {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "title" in item &&
+    "angle" in item &&
+    "scores" in item &&
+    typeof (item as SaveTopicItem).title === "string" &&
+    typeof (item as SaveTopicItem).angle === "string" &&
+    typeof (item as SaveTopicItem).scores === "object"
+  );
+};
+
+/**
+ * Type guard to validate GetTopicsRequest
+ */
+export const isValidGetTopicsRequest = (
+  request: unknown,
+): request is GetTopicsRequest => {
+  if (typeof request !== "object" || request === null) {
+    return true; // Empty request is valid for get-all-topics
+  }
+  // Add more specific validation as needed
+  return true;
+};
