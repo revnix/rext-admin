@@ -24,21 +24,16 @@
             "id": 2,
             "title": "Implement Secure Authentication Handling",
             "description": "Integrate authentication by injecting the content-api-key header into all service requests, sourcing the key from Next.js server-side environment variables.",
-            "dependencies": [
-              "1.1"
-            ],
-            "details": "Use process.env for secure access to the API key. Ensure the header is present in all Axios or fetch requests and never exposed to the client bundle.",
-            "status": "pending",
+            "dependencies": ["1.1"],
+            "details": "Use process.env for secure access to the API key. Ensure the header is present in all Axios or fetch requests and never exposed to the client bundle.\n<info added on 2025-09-05T09:29:26.946Z>\nImplementation completed successfully:\n\n**What changed:**\n- Added CONTENT_API_KEY environment variable to .env and .env.example\n- Modified services/backend.ts makeRequest method to include 'content-api-key' header\n- Enhanced validateConfig method to check for required API key\n- Used secure environment variable handling without non-null assertions\n\n**Files modified:**\n- /.env - Added CONTENT_API_KEY=supersecretapikey\n- /.env.example - Added documentation for CONTENT_API_KEY  \n- /services/backend.ts:160-174 - Added API key validation and header injection\n- /services/backend.ts:290-295 - Enhanced config validation\n\n**Testing results:**\n- Linting passed (fixed non-null assertion warning)\n- Build successful (no TypeScript errors)\n- Authentication header now included in all backend service requests\n- Proper error handling for missing API key\n\n**Next steps:**\nReady for save/get topics functionality implementation (Tasks 1 & 2 from plan file)\n</info added on 2025-09-05T09:29:26.946Z>",
+            "status": "done",
             "testStrategy": "Test that the authentication header is included in all outgoing requests using Jest and request mocking."
           },
           {
             "id": 3,
             "title": "Develop Service Functions for API Endpoints",
             "description": "Implement robust TypeScript service functions for POST /api/generate-topics, POST /api/topic/save-topic, and GET /api/topic/get-topics, abstracting all backend interactions.",
-            "dependencies": [
-              "1.1",
-              "1.2"
-            ],
+            "dependencies": ["1.1", "1.2"],
             "details": "Use Axios v1.6+ or native fetch to perform API calls. Each function should accept and return strictly typed data, handle serialization, and encapsulate endpoint URLs.",
             "status": "pending",
             "testStrategy": "Write Jest unit tests for each service function, mocking API responses for success, failure, and edge cases. Validate correct request formatting and response typing."
@@ -47,9 +42,7 @@
             "id": 4,
             "title": "Implement Error Handling and Retry Logic",
             "description": "Abstract error classification (network, validation, backend) and implement retry logic for transient failures within the service layer.",
-            "dependencies": [
-              "1.3"
-            ],
+            "dependencies": ["1.3"],
             "details": "Design a reusable error handler to classify and format errors. Integrate retry logic (e.g., exponential backoff) for network or 5xx errors, and ensure all errors are surfaced with actionable messages.",
             "status": "pending",
             "testStrategy": "Simulate various error scenarios in Jest tests, verifying correct error classification, retry attempts, and error propagation."
@@ -58,12 +51,7 @@
             "id": 5,
             "title": "Document and Export Service Layer Abstraction",
             "description": "Document the service layer API and export all service functions and types for use throughout the frontend application.",
-            "dependencies": [
-              "1.1",
-              "1.2",
-              "1.3",
-              "1.4"
-            ],
+            "dependencies": ["1.1", "1.2", "1.3", "1.4"],
             "details": "Write clear JSDoc comments for each function and interface. Ensure all service functions are exported from a single entry point for easy import and maintainability.",
             "status": "pending",
             "testStrategy": "Review documentation for completeness and accuracy. Validate that all service functions and types are accessible and correctly typed in consuming modules."
@@ -77,9 +65,7 @@
         "details": "Create TypeScript utility functions to transform GeneratedTopic (and TopicBuilderFormData) to the backend schema (title, angle, channel_fit, audience_fit, scores, why_it_works, tags). Validate field presence and types using Zod v4.1.5. Ensure compatibility with backend expectations and handle edge cases (missing fields, type mismatches).",
         "testStrategy": "Write Jest unit tests for transformation functions, including valid/invalid input, edge cases, and schema mismatch scenarios. Use Zod validation to assert output structure.",
         "priority": "high",
-        "dependencies": [
-          1
-        ],
+        "dependencies": [1],
         "status": "pending",
         "subtasks": [
           {
@@ -95,9 +81,7 @@
             "id": 2,
             "title": "Implement TypeScript Transformation Utilities",
             "description": "Develop TypeScript utility functions to transform GeneratedTopic and TopicBuilderFormData objects into the backend topic schema format.",
-            "dependencies": [
-              "2.1"
-            ],
+            "dependencies": ["2.1"],
             "details": "Write pure functions that map and convert fields, handle renaming, and ensure all required backend fields are populated from frontend data.",
             "status": "pending",
             "testStrategy": "Write Jest unit tests for transformation logic, covering typical and edge-case inputs."
@@ -106,9 +90,7 @@
             "id": 3,
             "title": "Integrate Zod Validation for Field Presence and Types",
             "description": "Use Zod v4.1.5 to validate the transformed data, ensuring all required fields are present and types match backend expectations.",
-            "dependencies": [
-              "2.2"
-            ],
+            "dependencies": ["2.2"],
             "details": "Define Zod schemas for the backend topic structure and integrate validation into the transformation utilities.",
             "status": "pending",
             "testStrategy": "Write Jest tests to assert that invalid or incomplete data triggers validation errors."
@@ -117,9 +99,7 @@
             "id": 4,
             "title": "Handle Edge Cases and Error Reporting",
             "description": "Implement logic to manage edge cases such as missing fields, type mismatches, and unexpected input, providing clear error messages or fallback behaviors.",
-            "dependencies": [
-              "2.3"
-            ],
+            "dependencies": ["2.3"],
             "details": "Ensure the transformation layer gracefully handles all anticipated data issues and logs or returns actionable errors.",
             "status": "pending",
             "testStrategy": "Test with malformed, incomplete, and unexpected input data to verify robust error handling."
@@ -128,9 +108,7 @@
             "id": 5,
             "title": "Ensure Backend Compatibility and Maintainability",
             "description": "Verify that the transformation output is fully compatible with the backend save-topic endpoint and document the mapping logic for future maintenance.",
-            "dependencies": [
-              "2.4"
-            ],
+            "dependencies": ["2.4"],
             "details": "Coordinate with backend developers to confirm schema alignment, and write clear documentation for the transformation and validation process.",
             "status": "pending",
             "testStrategy": "Perform integration tests with the backend endpoint and review documentation with stakeholders."
@@ -144,9 +122,7 @@
         "details": "Use React Hook Form v7.62.0 for form state and submission. Integrate the service layer and transformation utilities. Implement loading indicators (shadcn/ui Spinner), error alerts (ErrorAlert), and retry logic. Ensure optimistic UI updates and TanStack Query cache invalidation on successful save.",
         "testStrategy": "Write React Testing Library tests for TopicActions, covering save operation, loading state, error display, retry, and cache update. Use Jest mocks for API calls.",
         "priority": "high",
-        "dependencies": [
-          2
-        ],
+        "dependencies": [2],
         "status": "pending",
         "subtasks": [
           {
@@ -162,9 +138,7 @@
             "id": 2,
             "title": "Integrate Service Layer and Transformation Utilities",
             "description": "Connect the TopicActions component to the save-topic API using the service layer and transformation utilities to map frontend data to backend schema.",
-            "dependencies": [
-              "3.1"
-            ],
+            "dependencies": ["3.1"],
             "details": "Invoke the service layer's save-topic function on form submission, utilizing transformation utilities to convert form data to the backend schema. Ensure strict typing and error handling during the API call.",
             "status": "pending",
             "testStrategy": "Mock API calls in Jest and verify correct data transformation and service invocation."
@@ -173,9 +147,7 @@
             "id": 3,
             "title": "Implement Loading Indicators and Error Handling",
             "description": "Display loading indicators during save operations and show error alerts when API calls fail, providing retry options.",
-            "dependencies": [
-              "3.2"
-            ],
+            "dependencies": ["3.2"],
             "details": "Use shadcn/ui Spinner for loading states and ErrorAlert for error display. Implement retry logic to allow users to attempt saving again after a failure.",
             "status": "pending",
             "testStrategy": "Test loading and error states using React Testing Library, simulating API delays and failures."
@@ -184,9 +156,7 @@
             "id": 4,
             "title": "Enable Optimistic UI Updates and TanStack Query Cache Invalidation",
             "description": "Update the UI optimistically upon save initiation and invalidate TanStack Query cache on successful topic save to ensure data consistency.",
-            "dependencies": [
-              "3.3"
-            ],
+            "dependencies": ["3.3"],
             "details": "Implement optimistic UI updates to reflect saved topics immediately. Use TanStack Query's cache invalidation methods to refresh topic data after a successful save.",
             "status": "pending",
             "testStrategy": "Verify optimistic updates and cache invalidation with React Testing Library and Jest mocks."
@@ -195,9 +165,7 @@
             "id": 5,
             "title": "Write Comprehensive Tests for Save Functionality",
             "description": "Develop React Testing Library tests for the TopicActions component, covering save operation, loading state, error display, retry logic, optimistic updates, and cache invalidation.",
-            "dependencies": [
-              "3.4"
-            ],
+            "dependencies": ["3.4"],
             "details": "Create test cases for all critical paths, including successful saves, API failures, retries, and UI state transitions. Use Jest to mock API responses and TanStack Query behaviors.",
             "status": "pending",
             "testStrategy": "Ensure all features are covered by automated tests, including edge cases and error scenarios."
@@ -211,9 +179,7 @@
         "details": "Use shadcn/ui AlertDialog for confirmation. Implement navigation using Next.js router (useRouter). Ensure accessibility compliance (ARIA roles, focus management). Integrate with TopicActions component to trigger messaging and navigation.",
         "testStrategy": "Write React Testing Library tests for success messaging, navigation actions, and accessibility (focus, ARIA attributes).",
         "priority": "medium",
-        "dependencies": [
-          3
-        ],
+        "dependencies": [3],
         "status": "pending",
         "subtasks": [
           {
@@ -229,9 +195,7 @@
             "id": 2,
             "title": "Implement Navigation Options in Confirmation Dialog",
             "description": "Add navigation actions to the AlertDialog, allowing users to proceed to the Ideas page or initiate topic generation.",
-            "dependencies": [
-              "4.1"
-            ],
+            "dependencies": ["4.1"],
             "details": "Integrate Next.js useRouter to handle navigation actions triggered from dialog buttons. Ensure navigation options are clearly labeled and accessible within the dialog.",
             "status": "pending",
             "testStrategy": "Test navigation actions using React Testing Library and Next.js router mocks to confirm correct routing and button accessibility."
@@ -240,9 +204,7 @@
             "id": 3,
             "title": "Integrate Success Messaging and Navigation with TopicActions Component",
             "description": "Connect the success confirmation dialog and navigation logic to the TopicActions component, triggering them after a successful topic save.",
-            "dependencies": [
-              "4.2"
-            ],
+            "dependencies": ["4.2"],
             "details": "Modify TopicActions to invoke the AlertDialog upon successful save, passing necessary props for messaging and navigation. Ensure seamless integration with existing save logic.",
             "status": "pending",
             "testStrategy": "Write integration tests to verify that saving a topic triggers the dialog and navigation options, using Jest and React Testing Library."
@@ -251,9 +213,7 @@
             "id": 4,
             "title": "Ensure Accessibility Compliance for Dialog and Navigation",
             "description": "Audit and enhance the AlertDialog and navigation controls for accessibility, including ARIA roles, keyboard navigation, and focus management.",
-            "dependencies": [
-              "4.3"
-            ],
+            "dependencies": ["4.3"],
             "details": "Review dialog structure for ARIA compliance, test keyboard navigation (Tab, Enter, Escape), and ensure focus is managed correctly when the dialog opens and closes.",
             "status": "pending",
             "testStrategy": "Use automated accessibility testing tools and manual keyboard navigation tests to validate compliance."
@@ -262,9 +222,7 @@
             "id": 5,
             "title": "Write Comprehensive Tests for Success Messaging and Navigation",
             "description": "Develop unit and integration tests covering success messaging display, navigation actions, and accessibility features.",
-            "dependencies": [
-              "4.4"
-            ],
+            "dependencies": ["4.4"],
             "details": "Create test cases for dialog rendering, message content, navigation button actions, ARIA attributes, and focus management. Simulate user interactions and edge cases.",
             "status": "pending",
             "testStrategy": "Use React Testing Library and Jest to automate tests for all dialog and navigation scenarios, including accessibility checks."
@@ -278,9 +236,7 @@
         "details": "Use TanStack Query v5 to fetch topics, handle loading/error states, and cache results. Integrate the service layer for API calls. Ensure authentication header is included. Display loading spinners and error alerts as needed.",
         "testStrategy": "Write integration tests for Ideas page data fetching, loading/error states, and cache behavior. Mock API responses for various scenarios.",
         "priority": "high",
-        "dependencies": [
-          1
-        ],
+        "dependencies": [1],
         "status": "pending",
         "subtasks": [
           {
@@ -296,9 +252,7 @@
             "id": 2,
             "title": "Implement Service Layer for get-topics API with Authentication",
             "description": "Create or update a service function to call the get-topics API, ensuring the authentication header is included in all requests.",
-            "dependencies": [
-              "5.1"
-            ],
+            "dependencies": ["5.1"],
             "details": "Use TypeScript to define the API call, handle request/response typing, and inject the authentication token from context or storage.",
             "status": "pending",
             "testStrategy": "Write unit tests for the service function, mocking API responses and verifying correct header inclusion and error handling."
@@ -307,9 +261,7 @@
             "id": 3,
             "title": "Integrate TanStack Query v5 for Topics Fetching and Caching",
             "description": "Use TanStack Query v5 to fetch topics from the service layer, manage cache, and expose loading and error states to the Ideas page.",
-            "dependencies": [
-              "5.2"
-            ],
+            "dependencies": ["5.2"],
             "details": "Set up a query with a unique query key, connect it to the service function, and configure caching and refetching behavior as needed.",
             "status": "pending",
             "testStrategy": "Write integration tests to confirm correct data fetching, caching, and refetching logic using TanStack Query's devtools and mocks."
@@ -318,9 +270,7 @@
             "id": 4,
             "title": "Display Loading Spinners and Error Alerts on the Ideas Page",
             "description": "Render appropriate loading indicators and error messages on the Ideas page based on the TanStack Query state.",
-            "dependencies": [
-              "5.3"
-            ],
+            "dependencies": ["5.3"],
             "details": "Show a spinner or skeleton UI when data is loading, and display an error alert with retry options if the API call fails.",
             "status": "pending",
             "testStrategy": "Test UI states by simulating loading and error conditions, ensuring correct components are rendered and user experience is clear."
@@ -329,9 +279,7 @@
             "id": 5,
             "title": "Render Real Topics Data in the Ideas Page UI",
             "description": "Map the fetched topics data to the UI components, ensuring all topic fields are displayed correctly and the page updates reactively.",
-            "dependencies": [
-              "5.4"
-            ],
+            "dependencies": ["5.4"],
             "details": "Bind the topics data from TanStack Query to the Ideas page components, replacing all previous static content with dynamic rendering.",
             "status": "pending",
             "testStrategy": "Write integration tests to verify that real API data is displayed, updates on refetch, and UI remains consistent with backend changes."
@@ -345,9 +293,7 @@
         "details": "Create TypeScript utility functions to map backend topic objects to IdeaData. Validate field mapping and handle missing/extra fields. Use Zod for runtime validation. Ensure compatibility with DataTable and other UI components.",
         "testStrategy": "Write Jest unit tests for adapter functions, covering all field mappings, edge cases, and validation errors.",
         "priority": "high",
-        "dependencies": [
-          5
-        ],
+        "dependencies": [5],
         "status": "pending",
         "subtasks": [
           {
@@ -363,9 +309,7 @@
             "id": 2,
             "title": "Design Field Mapping and Transformation Logic",
             "description": "Define explicit mapping rules and transformation logic to convert backend topic objects to the IdeaData interface, including handling of missing or extra fields.",
-            "dependencies": [
-              "6.1"
-            ],
+            "dependencies": ["6.1"],
             "details": "Specify how each backend field maps to the corresponding IdeaData field, including any necessary type conversions, default values, or computed fields. Document handling for missing or unexpected fields.",
             "status": "pending",
             "testStrategy": "Create mapping documentation and sample mapping tables. Review with team or stakeholders for correctness."
@@ -374,9 +318,7 @@
             "id": 3,
             "title": "Implement TypeScript Adapter Utility Functions",
             "description": "Develop TypeScript utility functions that perform the mapping and transformation from backend topic objects to the IdeaData interface.",
-            "dependencies": [
-              "6.2"
-            ],
+            "dependencies": ["6.2"],
             "details": "Write pure functions or static class methods to encapsulate the mapping logic. Ensure functions are reusable and maintainable, and support mapping of both single objects and arrays.",
             "status": "pending",
             "testStrategy": "Write Jest unit tests for all mapping functions, covering typical, missing, and extra field scenarios."
@@ -385,9 +327,7 @@
             "id": 4,
             "title": "Integrate Zod Runtime Validation",
             "description": "Use Zod schemas to validate backend data before and after transformation, ensuring runtime type safety and clear error reporting.",
-            "dependencies": [
-              "6.3"
-            ],
+            "dependencies": ["6.3"],
             "details": "Define Zod schemas for both the backend response and the IdeaData interface. Integrate validation into the adapter functions, with error handling for invalid data.",
             "status": "pending",
             "testStrategy": "Write Jest tests to verify that invalid data is correctly rejected and errors are descriptive. Test with both valid and invalid payloads."
@@ -396,9 +336,7 @@
             "id": 5,
             "title": "Ensure Compatibility with DataTable and UI Components",
             "description": "Test and adjust the adapter output to guarantee seamless integration with DataTable and other frontend UI components.",
-            "dependencies": [
-              "6.4"
-            ],
+            "dependencies": ["6.4"],
             "details": "Validate that the mapped IdeaData objects render correctly in DataTable and other relevant UI components. Address any issues with field formats, missing data, or UI expectations.",
             "status": "pending",
             "testStrategy": "Perform integration tests in the frontend, using real and mock data. Confirm correct display, sorting, and filtering in DataTable and other components."
@@ -412,9 +350,7 @@
         "details": "Use shadcn/ui v3 DataTable primitives. Integrate with TanStack Table v8 for advanced features. Ensure all columns display correct metadata (scores, tags, audience_fit, etc.). Implement bulk actions and export (JSON/CSV) using Papaparse v5.4+ for CSV.",
         "testStrategy": "Write React Testing Library tests for DataTable, covering sorting, pagination, search, filtering, bulk actions, and export. Use mock data and real API integration tests.",
         "priority": "medium",
-        "dependencies": [
-          6
-        ],
+        "dependencies": [6],
         "status": "pending",
         "subtasks": [
           {
@@ -430,9 +366,7 @@
             "id": 2,
             "title": "Implement Sorting, Pagination, and Search Functionality",
             "description": "Enable sorting, pagination, and search features in the DataTable, leveraging TanStack Table v8 capabilities and shadcn/ui controls.",
-            "dependencies": [
-              "7.1"
-            ],
+            "dependencies": ["7.1"],
             "details": "Configure column definitions for sortable headers, set up pagination controls, and add a search input that filters table rows based on user input.",
             "status": "pending",
             "testStrategy": "Test sorting, pagination, and search interactions with React Testing Library, ensuring correct UI updates and backend query integration."
@@ -441,9 +375,7 @@
             "id": 3,
             "title": "Add Advanced Filtering Based on Backend Data",
             "description": "Implement advanced filtering options (e.g., by tags, scores, audience_fit) that interact with backend data and update the DataTable accordingly.",
-            "dependencies": [
-              "7.1"
-            ],
+            "dependencies": ["7.1"],
             "details": "Use TanStack Table's filtering API and shadcn/ui filter components to build a flexible filter UI. Ensure filters trigger backend queries or local filtering as appropriate.",
             "status": "pending",
             "testStrategy": "Write tests to validate filter UI, backend query integration, and correct filtering of displayed data."
@@ -452,9 +384,7 @@
             "id": 4,
             "title": "Implement Bulk Actions and Row Selection",
             "description": "Enable row selection and bulk actions (e.g., delete, export) in the DataTable, providing a user interface for selecting multiple rows and performing actions.",
-            "dependencies": [
-              "7.1"
-            ],
+            "dependencies": ["7.1"],
             "details": "Use shadcn/ui selection primitives and TanStack Table's row selection API. Implement an action bar for bulk operations, ensuring correct state management.",
             "status": "pending",
             "testStrategy": "Test row selection, bulk action triggers, and UI feedback using React Testing Library."
@@ -463,9 +393,7 @@
             "id": 5,
             "title": "Add Export Functionality (JSON/CSV) Using Papaparse",
             "description": "Implement export options to download selected or all table data as JSON or CSV, utilizing Papaparse v5.4+ for CSV generation.",
-            "dependencies": [
-              "7.4"
-            ],
+            "dependencies": ["7.4"],
             "details": "Integrate export buttons in the DataTable toolbar. Use Papaparse to convert table data to CSV and provide download links for both formats.",
             "status": "pending",
             "testStrategy": "Test export actions for correct file generation and data integrity using unit and integration tests."
@@ -479,10 +407,7 @@
         "details": "Use APIErrorBoundary and ErrorAlert components for error display. Implement retry logic in service layer and UI components. Classify errors (network, validation, backend) and provide actionable messages. Integrate with TanStack Query error handling patterns.",
         "testStrategy": "Write unit and integration tests for error scenarios, retry logic, and error message display. Simulate network failures and backend errors.",
         "priority": "high",
-        "dependencies": [
-          3,
-          5
-        ],
+        "dependencies": [3, 5],
         "status": "pending",
         "subtasks": [
           {
@@ -498,9 +423,7 @@
             "id": 2,
             "title": "Implement and Centralize Retry Logic in Service Layer and UI Components",
             "description": "Develop robust retry mechanisms for API calls in the service layer and expose retry options in UI components, allowing users to recover from transient failures.",
-            "dependencies": [
-              "8.1"
-            ],
+            "dependencies": ["8.1"],
             "details": "Use TanStack Query's built-in retry patterns for API calls and supplement with custom retry logic where necessary. Ensure UI components provide clear retry actions (e.g., 'Try Again' buttons) and update state appropriately after retries.",
             "status": "pending",
             "testStrategy": "Write unit and integration tests to simulate network failures and verify retry logic triggers correctly. Test user-initiated retries and automatic retries for transient errors."
@@ -509,9 +432,7 @@
             "id": 3,
             "title": "Classify and Handle Error Types with Actionable Messages",
             "description": "Detect and classify errors (network, validation, backend) in the service layer, and map them to actionable, user-friendly messages displayed in the UI.",
-            "dependencies": [
-              "8.1"
-            ],
+            "dependencies": ["8.1"],
             "details": "Implement error classification logic in the service layer. Define a mapping from error types to message templates. Ensure UI components display specific messages and recovery options based on error type.",
             "status": "pending",
             "testStrategy": "Write unit tests for error classification and message mapping. Verify that each error type triggers the correct message and UI behavior."
@@ -520,10 +441,7 @@
             "id": 4,
             "title": "Integrate TanStack Query Error Handling Patterns",
             "description": "Align error handling and retry logic with TanStack Query's patterns, leveraging its hooks and configuration for consistent API state management.",
-            "dependencies": [
-              "8.2",
-              "8.3"
-            ],
+            "dependencies": ["8.2", "8.3"],
             "details": "Refactor API calls to use TanStack Query hooks. Configure error handling and retry options using TanStack Query's API. Ensure error boundaries and alerts work seamlessly with TanStack Query's error states.",
             "status": "pending",
             "testStrategy": "Write integration tests for components using TanStack Query. Simulate API errors and verify error states, retry logic, and UI feedback are handled as expected."
@@ -532,12 +450,7 @@
             "id": 5,
             "title": "Test Error Handling, Retry Logic, and User Recovery Flows",
             "description": "Develop comprehensive unit and integration tests to validate error handling, retry mechanisms, and user recovery options across all API interactions.",
-            "dependencies": [
-              "8.1",
-              "8.2",
-              "8.3",
-              "8.4"
-            ],
+            "dependencies": ["8.1", "8.2", "8.3", "8.4"],
             "details": "Simulate network failures, backend errors, and validation issues in tests. Assert correct error containment, message display, retry behavior, and recovery flows. Use Jest and React Testing Library for coverage.",
             "status": "pending",
             "testStrategy": "Write test suites covering all error scenarios, retry logic, and user recovery actions. Ensure tests validate both service layer and UI component behaviors."
@@ -551,9 +464,7 @@
         "details": "Use Tailwind CSS 4 with custom design tokens for responsive layouts. Audit shadcn/ui and Radix UI components for accessibility. Implement progressive disclosure (collapsible advanced options) and ensure all forms and dialogs are ARIA-compliant. Test on multiple device sizes and screen readers.",
         "testStrategy": "Write Cypress end-to-end tests for responsiveness and accessibility. Use axe-core for automated accessibility checks. Manual testing on mobile devices and screen readers.",
         "priority": "medium",
-        "dependencies": [
-          7
-        ],
+        "dependencies": [7],
         "status": "pending",
         "subtasks": [
           {
@@ -569,9 +480,7 @@
             "id": 2,
             "title": "Customize and Apply Design Tokens in Tailwind Configuration",
             "description": "Define and integrate custom design tokens (colors, spacing, typography, breakpoints) in the Tailwind CSS configuration to ensure consistent, scalable theming.",
-            "dependencies": [
-              "9.1"
-            ],
+            "dependencies": ["9.1"],
             "details": "Update tailwind.config.js to include project-specific tokens. Replace hardcoded values in components with token-based utility classes.",
             "status": "pending",
             "testStrategy": "Visually inspect components for consistent theming. Run automated visual regression tests if available."
@@ -580,9 +489,7 @@
             "id": 3,
             "title": "Audit shadcn/ui and Radix UI Components for Accessibility Compliance",
             "description": "Systematically review all shadcn/ui and Radix UI components for ARIA compliance, keyboard navigation, and screen reader support.",
-            "dependencies": [
-              "9.1"
-            ],
+            "dependencies": ["9.1"],
             "details": "Check for correct ARIA roles, labels, and attributes. Verify all interactive elements are keyboard accessible and provide visible focus indicators.",
             "status": "pending",
             "testStrategy": "Use axe-core for automated accessibility checks. Manually test with screen readers and keyboard navigation."
@@ -591,9 +498,7 @@
             "id": 4,
             "title": "Implement Progressive Disclosure and ARIA-Compliant Forms/Dialogs",
             "description": "Enhance UI with progressive disclosure patterns (e.g., collapsible advanced options) and ensure all forms and dialogs are fully ARIA-compliant.",
-            "dependencies": [
-              "9.3"
-            ],
+            "dependencies": ["9.3"],
             "details": "Use accessible disclosure components and ensure all forms/dialogs have appropriate ARIA attributes, focus management, and error messaging.",
             "status": "pending",
             "testStrategy": "Write Cypress tests for disclosure behavior and ARIA compliance. Manually verify with screen readers and keyboard navigation."
@@ -602,10 +507,7 @@
             "id": 5,
             "title": "Comprehensive Responsive and Accessibility Testing",
             "description": "Conduct thorough testing of all UI components for responsiveness and accessibility across device sizes and assistive technologies.",
-            "dependencies": [
-              "9.2",
-              "9.4"
-            ],
+            "dependencies": ["9.2", "9.4"],
             "details": "Test on real mobile devices, emulators, and multiple browsers. Use automated tools (axe-core) and manual testing for accessibility. Document and address any issues found.",
             "status": "pending",
             "testStrategy": "Maintain a test matrix covering device sizes, browsers, and assistive tech. Ensure all Cypress and accessibility tests pass before release."
@@ -619,13 +521,7 @@
         "details": "Use Jest for unit tests, React Testing Library for component tests, and Cypress for end-to-end flows. Integrate coverage reporting (jest --coverage). Test all user flows: topic generation, save, ideas page management, error handling, and export. Automate CI pipeline for test execution and coverage enforcement.",
         "testStrategy": "Monitor coverage reports, enforce coverage thresholds, and run full test suite on CI. Manual regression testing for critical flows.",
         "priority": "high",
-        "dependencies": [
-          1,
-          3,
-          5,
-          7,
-          9
-        ],
+        "dependencies": [1, 3, 5, 7, 9],
         "status": "pending",
         "subtasks": [
           {
@@ -641,9 +537,7 @@
             "id": 2,
             "title": "Implement Unit and Integration Tests for Core Features",
             "description": "Write comprehensive unit and integration tests using Jest and React Testing Library to cover all core logic, components, and user flows such as topic generation, save, ideas page management, error handling, and export.",
-            "dependencies": [
-              "10.1"
-            ],
+            "dependencies": ["10.1"],
             "details": "Target all business logic and UI components, ensuring edge cases and error states are tested. Mock API calls and user interactions as needed.",
             "status": "pending",
             "testStrategy": "Achieve high coverage for all modules and components; validate with 'jest --coverage'."
@@ -652,9 +546,7 @@
             "id": 3,
             "title": "Develop End-to-End Tests for User Flows",
             "description": "Create Cypress end-to-end tests to simulate real user interactions across all critical flows, including topic generation, saving, ideas management, error handling, and export.",
-            "dependencies": [
-              "10.1"
-            ],
+            "dependencies": ["10.1"],
             "details": "Automate browser-based scenarios to verify integration between frontend and backend, covering both positive and negative cases.",
             "status": "pending",
             "testStrategy": "Run Cypress tests locally and in CI to ensure all user flows work as expected."
@@ -663,10 +555,7 @@
             "id": 4,
             "title": "Integrate and Enforce Coverage Reporting",
             "description": "Configure coverage reporting for Jest and ensure all tests contribute to overall coverage metrics. Set up thresholds and fail builds if coverage drops below targets.",
-            "dependencies": [
-              "10.2",
-              "10.3"
-            ],
+            "dependencies": ["10.2", "10.3"],
             "details": "Use 'jest --coverage' to generate reports, integrate with CI pipeline, and enforce minimum coverage requirements for statements, branches, and functions.",
             "status": "pending",
             "testStrategy": "Monitor coverage reports in CI, validate enforcement by intentionally lowering coverage and confirming build failure."
@@ -675,9 +564,7 @@
             "id": 5,
             "title": "Automate Test Execution and Coverage Enforcement in CI Pipeline",
             "description": "Integrate all test suites and coverage checks into the CI pipeline, ensuring automated execution on every commit and enforcing coverage thresholds.",
-            "dependencies": [
-              "10.4"
-            ],
+            "dependencies": ["10.4"],
             "details": "Configure CI scripts to run Jest, React Testing Library, and Cypress tests, collect coverage artifacts, and block merges if tests or coverage fail.",
             "status": "pending",
             "testStrategy": "Verify CI runs all tests, generates coverage reports, and enforces thresholds on pull requests and merges."
@@ -687,7 +574,7 @@
     ],
     "metadata": {
       "created": "2025-09-05T09:03:31.429Z",
-      "updated": "2025-09-05T09:22:44.571Z",
+      "updated": "2025-09-05T09:29:49.996Z",
       "description": "Tasks for master context"
     }
   }

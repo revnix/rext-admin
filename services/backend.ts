@@ -157,11 +157,17 @@ export class BackendService {
     }, this.config.timeout);
 
     try {
+      const contentApiKey = process.env.CONTENT_API_KEY;
+      if (!contentApiKey) {
+        throw new Error("CONTENT_API_KEY environment variable is not set");
+      }
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
+          "content-api-key": contentApiKey,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -284,6 +290,12 @@ export class BackendService {
     } catch {
       throw new Error(
         `Invalid BACKEND_API_URL format: ${this.config.baseUrl}. Must be a valid URL.`,
+      );
+    }
+
+    if (!process.env.CONTENT_API_KEY) {
+      throw new Error(
+        "Content API key is not configured. Please set CONTENT_API_KEY environment variable.",
       );
     }
   }
