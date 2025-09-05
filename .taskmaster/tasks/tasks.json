@@ -123,7 +123,7 @@
         "testStrategy": "Write React Testing Library tests for TopicActions, covering save operation, loading state, error display, retry, and cache update. Use Jest mocks for API calls.",
         "priority": "high",
         "dependencies": [2],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -574,7 +574,7 @@
     ],
     "metadata": {
       "created": "2025-09-05T09:03:31.429Z",
-      "updated": "2025-09-05T18:08:39.239Z",
+      "updated": "2025-09-05T18:09:44.089Z",
       "description": "Tasks for master context"
     }
   }
