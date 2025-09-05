@@ -29,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ErrorAlert, SuccessAlert } from "@/components/ui/error-alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -39,7 +40,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { classifyError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
+import type { BackendError } from "@/types/backend";
 import { type TopicEditFormData, topicEditFormSchema } from "@/types/forms";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -85,6 +88,22 @@ export function TopicActions({
     deleting: false,
   });
 
+  const [errorStates, setErrorStates] = useState<{
+    saving?: BackendError;
+    editing?: BackendError;
+    regenerating?: BackendError;
+    exporting?: BackendError;
+    deleting?: BackendError;
+  }>({});
+
+  const [successStates, setSuccessStates] = useState<{
+    saving?: string;
+    editing?: string;
+    regenerating?: string;
+    exporting?: string;
+    deleting?: string;
+  }>({});
+
   const editForm = useForm<TopicEditFormData>({
     resolver: zodResolver(topicEditFormSchema),
     defaultValues: {
@@ -106,8 +125,29 @@ export function TopicActions({
     setLoadingStates((prev) => ({ ...prev, [action]: loading }));
   };
 
+  const setError = (action: keyof typeof errorStates, error?: BackendError) => {
+    setErrorStates((prev) => ({ ...prev, [action]: error }));
+  };
+
+  const setSuccess = (action: keyof typeof successStates, message?: string) => {
+    setSuccessStates((prev) => ({ ...prev, [action]: message }));
+    // Auto-clear success messages after 5 seconds
+    if (message) {
+      setTimeout(() => {
+        setSuccessStates((prev) => ({ ...prev, [action]: undefined }));
+      }, 5000);
+    }
+  };
+
+  const clearFeedback = (action: keyof typeof errorStates) => {
+    setError(action, undefined);
+    setSuccess(action, undefined);
+  };
+
   const handleSave = async () => {
+    clearFeedback("saving");
     setLoading("saving", true);
+
     try {
       // Call the Next.js API route which handles backend communication server-side
       const response = await fetch("/api/topic/save-topic", {
@@ -137,11 +177,15 @@ export function TopicActions({
       console.log(
         `Topic ${topic.id} saved successfully - ${result.saved_count} topics saved`,
       );
-      // TODO: Add user notification when toast system is available
+
+      // Show success message
+      setSuccess("saving", `Topic "${topic.title}" saved successfully!`);
     } catch (error) {
       console.error(`Failed to save topic ${topic.id}:`, error);
-      // TODO: Add user error notification when toast system is available
-      // For now, the error is logged and loading state is cleared
+
+      // Classify error for user-friendly display
+      const classifiedError = classifyError(error);
+      setError("saving", classifiedError);
     } finally {
       setLoading("saving", false);
     }
@@ -151,7 +195,9 @@ export function TopicActions({
     async (formData: TopicEditFormData) => {
       if (!onEdit) return;
 
+      clearFeedback("editing");
       setLoading("editing", true);
+
       try {
         const updates: Partial<GeneratedTopic> = {
           title: formData.title,
@@ -168,8 +214,11 @@ export function TopicActions({
         setIsEditDialogOpen(false);
         editForm.reset(); // Reset form after successful submission
         console.log(`Topic ${topic.id} updated successfully`);
+        setSuccess("editing", "Topic updated successfully!");
       } catch (error) {
         console.error(`Failed to update topic ${topic.id}:`, error);
+        const classifiedError = classifyError(error);
+        setError("editing", classifiedError);
       } finally {
         setLoading("editing", false);
       }
@@ -179,13 +228,18 @@ export function TopicActions({
   const handleRegenerate = async () => {
     if (!onRegenerate) return;
 
+    clearFeedback("regenerating");
     setLoading("regenerating", true);
+
     try {
       await onRegenerate(topic.id);
       setIsRegenerateDialogOpen(false);
       console.log(`Topic ${topic.id} regenerated successfully`);
+      setSuccess("regenerating", "Topic regenerated successfully!");
     } catch (error) {
       console.error(`Failed to regenerate topic ${topic.id}:`, error);
+      const classifiedError = classifyError(error);
+      setError("regenerating", classifiedError);
     } finally {
       setLoading("regenerating", false);
     }
@@ -194,13 +248,21 @@ export function TopicActions({
   const handleExport = async () => {
     if (!onExport) return;
 
+    clearFeedback("exporting");
     setLoading("exporting", true);
+
     try {
       await onExport([topic], exportFormat);
       setIsExportDialogOpen(false);
       console.log(`Topic ${topic.id} exported as ${exportFormat}`);
+      setSuccess(
+        "exporting",
+        `Topic exported as ${exportFormat.toUpperCase()} successfully!`,
+      );
     } catch (error) {
       console.error(`Failed to export topic ${topic.id}:`, error);
+      const classifiedError = classifyError(error);
+      setError("exporting", classifiedError);
     } finally {
       setLoading("exporting", false);
     }
@@ -209,13 +271,18 @@ export function TopicActions({
   const handleDelete = async () => {
     if (!onDelete) return;
 
+    clearFeedback("deleting");
     setLoading("deleting", true);
+
     try {
       await onDelete(topic.id);
       setIsDeleteDialogOpen(false);
       console.log(`Topic ${topic.id} deleted successfully`);
+      setSuccess("deleting", "Topic deleted successfully!");
     } catch (error) {
       console.error(`Failed to delete topic ${topic.id}:`, error);
+      const classifiedError = classifyError(error);
+      setError("deleting", classifiedError);
     } finally {
       setLoading("deleting", false);
     }
@@ -404,6 +471,82 @@ export function TopicActions({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+
+        {/* Error and Success Alerts for button variant */}
+        <div className="space-y-3 mt-4">
+          {/* Save operation feedback */}
+          {errorStates.saving && (
+            <ErrorAlert
+              error={errorStates.saving}
+              operation="data_save"
+              onRetry={() => {
+                setError("saving", undefined);
+                handleSave();
+              }}
+            />
+          )}
+          {successStates.saving && (
+            <SuccessAlert message={successStates.saving} />
+          )}
+
+          {/* Edit operation feedback */}
+          {errorStates.editing && (
+            <ErrorAlert
+              error={errorStates.editing}
+              operation="form_validation"
+              onRetry={() => {
+                setError("editing", undefined);
+                handleEdit();
+              }}
+            />
+          )}
+          {successStates.editing && (
+            <SuccessAlert message={successStates.editing} />
+          )}
+
+          {/* Other operations feedback */}
+          {errorStates.regenerating && (
+            <ErrorAlert
+              error={errorStates.regenerating}
+              operation="topic_generation"
+              onRetry={() => {
+                setError("regenerating", undefined);
+                handleRegenerate();
+              }}
+            />
+          )}
+          {successStates.regenerating && (
+            <SuccessAlert message={successStates.regenerating} />
+          )}
+
+          {errorStates.exporting && (
+            <ErrorAlert
+              error={errorStates.exporting}
+              operation="data_save"
+              onRetry={() => {
+                setError("exporting", undefined);
+                handleExport();
+              }}
+            />
+          )}
+          {successStates.exporting && (
+            <SuccessAlert message={successStates.exporting} />
+          )}
+
+          {errorStates.deleting && (
+            <ErrorAlert
+              error={errorStates.deleting}
+              operation="data_save"
+              onRetry={() => {
+                setError("deleting", undefined);
+                handleDelete();
+              }}
+            />
+          )}
+          {successStates.deleting && (
+            <SuccessAlert message={successStates.deleting} />
+          )}
+        </div>
       </div>
     );
   }
@@ -701,6 +844,84 @@ export function TopicActions({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Error and Success Alerts */}
+      <div className="space-y-3 mt-4">
+        {/* Save operation feedback */}
+        {errorStates.saving && (
+          <ErrorAlert
+            error={errorStates.saving}
+            operation="data_save"
+            onRetry={() => {
+              setError("saving", undefined);
+              handleSave();
+            }}
+          />
+        )}
+        {successStates.saving && (
+          <SuccessAlert message={successStates.saving} />
+        )}
+
+        {/* Edit operation feedback */}
+        {errorStates.editing && (
+          <ErrorAlert
+            error={errorStates.editing}
+            operation="form_validation"
+            onRetry={() => {
+              setError("editing", undefined);
+              handleEdit();
+            }}
+          />
+        )}
+        {successStates.editing && (
+          <SuccessAlert message={successStates.editing} />
+        )}
+
+        {/* Regenerate operation feedback */}
+        {errorStates.regenerating && (
+          <ErrorAlert
+            error={errorStates.regenerating}
+            operation="topic_generation"
+            onRetry={() => {
+              setError("regenerating", undefined);
+              handleRegenerate();
+            }}
+          />
+        )}
+        {successStates.regenerating && (
+          <SuccessAlert message={successStates.regenerating} />
+        )}
+
+        {/* Export operation feedback */}
+        {errorStates.exporting && (
+          <ErrorAlert
+            error={errorStates.exporting}
+            operation="data_save"
+            onRetry={() => {
+              setError("exporting", undefined);
+              handleExport();
+            }}
+          />
+        )}
+        {successStates.exporting && (
+          <SuccessAlert message={successStates.exporting} />
+        )}
+
+        {/* Delete operation feedback */}
+        {errorStates.deleting && (
+          <ErrorAlert
+            error={errorStates.deleting}
+            operation="data_save"
+            onRetry={() => {
+              setError("deleting", undefined);
+              handleDelete();
+            }}
+          />
+        )}
+        {successStates.deleting && (
+          <SuccessAlert message={successStates.deleting} />
+        )}
+      </div>
     </div>
   );
 }
