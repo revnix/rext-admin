@@ -184,6 +184,15 @@ export default function TopicBuilderPage() {
     await generateTopics();
   };
 
+  const handleNavigateToIdeas = () => {
+    window.location.href = "/ideas";
+  };
+
+  const handleGenerateNew = () => {
+    clearTopics();
+    goToStep(1);
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -285,6 +294,8 @@ export default function TopicBuilderPage() {
               onBulkSave={handleBulkSave}
               onBackToWizard={handleBackToWizard}
               onRegenerateTopics={handleRegenerateTopics}
+              onNavigateToIdeas={handleNavigateToIdeas}
+              onGenerateNew={handleGenerateNew}
             />
           </div>
         </APIErrorBoundary>

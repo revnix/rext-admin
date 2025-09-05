@@ -27,6 +27,8 @@ interface TopicCardProps {
     format: "json" | "csv",
   ) => Promise<void> | void;
   onDelete?: (topicId: string) => Promise<void> | void;
+  onNavigateToIdeas?: () => void;
+  onGenerateNew?: () => void;
   className?: string;
 }
 
@@ -39,6 +41,8 @@ export function TopicCard({
   onRegenerate,
   onExport,
   onDelete,
+  onNavigateToIdeas,
+  onGenerateNew,
   className,
 }: TopicCardProps) {
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -131,6 +135,8 @@ export function TopicCard({
               onRegenerate={onRegenerate}
               onExport={onExport}
               onDelete={onDelete}
+              onNavigateToIdeas={onNavigateToIdeas}
+              onGenerateNew={onGenerateNew}
               variant="dropdown"
             />
           </div>

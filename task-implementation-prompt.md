@@ -2,8 +2,8 @@ Task/Subtask Implementation Prompt
 
 Inputs (fill before starting)
 
-- Task ID: 3
-- Subtask ID: 3.5
+- Task ID: 4
+- Subtask ID: 4.1
 - Related plan files: `topic-builder-functionality.md`
 
 Authoritative references

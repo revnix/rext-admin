@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils";
 import type { BackendError } from "@/types/backend";
 import { type TopicEditFormData, topicEditFormSchema } from "@/types/forms";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import { SuccessConfirmationDialog } from "./SuccessConfirmationDialog";
 
 interface TopicActionsProps {
   topic: GeneratedTopic;
@@ -60,6 +61,8 @@ interface TopicActionsProps {
     format: "json" | "csv",
   ) => Promise<void> | void;
   onDelete?: (topicId: string) => Promise<void> | void;
+  onNavigateToIdeas?: () => void;
+  onGenerateNew?: () => void;
   className?: string;
   variant?: "dropdown" | "buttons";
   showLabels?: boolean;
@@ -72,6 +75,8 @@ export function TopicActions({
   onRegenerate,
   onExport,
   onDelete,
+  onNavigateToIdeas,
+  onGenerateNew,
   className,
   variant = "dropdown",
   showLabels = false,
@@ -80,6 +85,7 @@ export function TopicActions({
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
 
   const [loadingStates, setLoadingStates] = useState({
     saving: false,
@@ -168,8 +174,11 @@ export function TopicActions({
         await onSave(topic.id);
       }
 
-      // Show success message
-      setSuccess("saving", `Topic "${topic.title}" saved successfully!`);
+      // Show success confirmation dialog instead of inline message
+      console.log(
+        `Topic ${topic.id} saved successfully, showing confirmation dialog`,
+      );
+      setIsSuccessDialogOpen(true);
     } catch (error) {
       console.error(`Failed to save topic ${topic.id}:`, error);
 
@@ -536,6 +545,20 @@ export function TopicActions({
             <SuccessAlert message={successStates.deleting} />
           )}
         </div>
+
+        {/* Success Confirmation Dialog for buttons variant */}
+        <SuccessConfirmationDialog
+          open={isSuccessDialogOpen}
+          onOpenChange={setIsSuccessDialogOpen}
+          topicTitle={topic.title}
+          onNavigateToIdeas={
+            onNavigateToIdeas ||
+            (() => console.log("Navigate to ideas not implemented"))
+          }
+          onGenerateNew={
+            onGenerateNew || (() => console.log("Generate new not implemented"))
+          }
+        />
       </div>
     );
   }
@@ -911,6 +934,20 @@ export function TopicActions({
           <SuccessAlert message={successStates.deleting} />
         )}
       </div>
+
+      {/* Success Confirmation Dialog */}
+      <SuccessConfirmationDialog
+        open={isSuccessDialogOpen}
+        onOpenChange={setIsSuccessDialogOpen}
+        topicTitle={topic.title}
+        onNavigateToIdeas={
+          onNavigateToIdeas ||
+          (() => console.log("Navigate to ideas not implemented"))
+        }
+        onGenerateNew={
+          onGenerateNew || (() => console.log("Generate new not implemented"))
+        }
+      />
     </div>
   );
 }
