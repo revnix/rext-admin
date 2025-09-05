@@ -3,6 +3,9 @@
  *
  * This module defines all TypeScript interfaces and types needed for the Topic Builder
  * wizard that supports both subject-first and industry-first content topic generation flows.
+ *
+ * For schema validation and field mappings, see /types/schemas.ts
+ * For backend API interfaces, see /types/backend.ts
  */
 
 // ============================================================================
@@ -239,7 +242,11 @@ export interface TopicBuilderFormData {
 /**
  * Interface for individual generated topic ideas
  *
- * Represents a single AI-generated topic with metadata and scoring
+ * Represents a single AI-generated topic with metadata and scoring.
+ * This is the frontend representation containing UI-specific fields.
+ *
+ * @see SaveTopicItem in /types/backend.ts for backend API format
+ * @see GeneratedTopicSchema in /types/schemas.ts for validation
  */
 export interface GeneratedTopic {
   /** Unique identifier for the topic */

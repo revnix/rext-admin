@@ -4,6 +4,10 @@
  * This module defines all TypeScript interfaces for API interactions in the Topic Builder,
  * extending the core TopicBuilderFormData with API-specific fields and providing
  * comprehensive request/response structures for topic generation operations.
+ *
+ * @see /types/schemas.ts for validation schemas and transformation helpers
+ * @see /types/backend.ts for backend service interfaces
+ * @see /types/topic-builder.ts for core data structures
  */
 
 import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
@@ -542,7 +546,17 @@ export interface SaveTopicRequest {
 }
 
 /**
- * Individual topic item to be saved
+ * Individual topic item to be saved - Backend API format
+ *
+ * This represents the expected structure for topics when saving to the backend.
+ * Differs from GeneratedTopic by:
+ * - No 'id' field (backend assigns IDs)
+ * - No 'description' field
+ * - Required non-empty arrays for channel_fit, audience_fit, tags
+ *
+ * @see GeneratedTopic in /types/topic-builder.ts for frontend format
+ * @see SaveTopicItemSchema in /types/schemas.ts for validation
+ * @see transformTopicForSaving in /types/schemas.ts for conversion helper
  */
 export interface SaveTopicItem {
   /** Topic title/headline */

@@ -1,6 +1,16 @@
 import type { GeneratedTopic } from "./topic-builder";
 
 /**
+ * Backend API Type Definitions
+ *
+ * This module defines interfaces for communication with the backend API,
+ * including request/response structures and error handling.
+ *
+ * @see /types/schemas.ts for validation schemas and field mappings
+ * @see /types/topic-builder.ts for frontend data structures
+ */
+
+/**
  * Backend API payload structure for topic generation request - matches Pydantic schema exactly
  */
 export interface BackendTopicGenerationPayload {
@@ -166,14 +176,21 @@ export interface APIErrorResponse {
 /**
  * Request payload for saving generated topics to the backend.
  *
+ * NOTE: The backend expects SaveTopicItem format, not GeneratedTopic.
+ * Use transformTopicForSaving() from /types/schemas.ts to convert.
+ *
  * @example
  * ```typescript
+ * import { transformTopicsForSaving } from '/types/schemas';
+ *
+ * const frontendTopics: GeneratedTopic[] = [...];
  * const saveRequest: SaveTopicRequest = {
- *   topics: [
- *     { id: "1", title: "AI in Healthcare", angle: "Future prospects", ... }
- *   ]
+ *   topics: transformTopicsForSaving(frontendTopics)
  * };
  * ```
+ *
+ * @see SaveTopicItem for the expected backend structure
+ * @see transformTopicsForSaving in /types/schemas.ts for transformation helper
  */
 export interface SaveTopicRequest {
   topics: GeneratedTopic[];
