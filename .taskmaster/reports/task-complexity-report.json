@@ -1,93 +1,93 @@
 {
-  "meta": {
-    "generatedAt": "2025-08-29T17:37:29.362Z",
-    "tasksAnalyzed": 10,
-    "totalTasks": 10,
-    "analysisCount": 10,
-    "thresholdScore": 5,
-    "projectName": "Taskmaster",
-    "usedResearch": false
-  },
-  "complexityAnalysis": [
-    {
-      "taskId": 1,
-      "taskTitle": "Setup TypeScript Foundation and Core Types",
-      "complexityScore": 6,
-      "recommendedSubtasks": 4,
-      "expansionPrompt": "Break down the TypeScript foundation task into subtasks covering: 1) Core data interfaces (TopicBuilderFormData, GeneratedTopic), 2) Enum type definitions, 3) API request/response type interfaces, and 4) Component prop type definitions. For each subtask, specify implementation details and test criteria.",
-      "reasoning": "This task requires creating comprehensive TypeScript interfaces that will be used throughout the application. While not algorithmically complex, it requires careful planning to ensure the type system properly represents all data structures and relationships. The interfaces need to account for form state, API interactions, and UI components, making it moderately complex."
-    },
-    {
-      "taskId": 2,
-      "taskTitle": "Create Utility Functions and Data Layer",
-      "complexityScore": 7,
-      "recommendedSubtasks": 5,
-      "expansionPrompt": "Divide the utility functions and data layer task into subtasks: 1) YMYL detection implementation, 2) Industry-audience mapping functions, 3) Form validation utilities, 4) Data structure creation for options/selections, and 5) Integration tests for utility functions. For each subtask, include implementation details and test cases.",
-      "reasoning": "This task involves creating multiple utility functions with business logic and comprehensive data structures. The complexity comes from implementing domain-specific logic (YMYL detection, audience mapping) and ensuring the data structures are complete and accurate. The form validation function needs to handle multiple steps with different validation rules, adding to the complexity."
-    },
-    {
-      "taskId": 3,
-      "taskTitle": "Implement Wizard Component Architecture",
-      "complexityScore": 8,
-      "recommendedSubtasks": 6,
-      "expansionPrompt": "Break down the wizard component architecture into subtasks: 1) Main wizard container and navigation, 2) Flow selection and industry steps, 3) Audience and content format steps, 4) Goals and advanced option steps, 5) Review and generation steps, and 6) Form state management hook. For each subtask, detail the component structure, state management, and interaction patterns.",
-      "reasoning": "This task involves building a complex multi-step wizard with state management across 8 different steps. It requires implementing progressive disclosure patterns, conditional rendering based on previous selections, and maintaining form state throughout the flow. The interdependencies between steps and the need for a cohesive user experience make this a highly complex task."
-    },
-    {
-      "taskId": 4,
-      "taskTitle": "Develop AI Service Integration Layer",
-      "complexityScore": 9,
-      "recommendedSubtasks": 6,
-      "expansionPrompt": "Divide the AI service integration task into subtasks: 1) OpenAI API client implementation, 2) Groq API fallback integration, 3) Prompt template generation from form data, 4) Response parsing and error handling, 5) API route implementation, and 6) Rate limiting and retry logic. For each subtask, include implementation details and error handling strategies.",
-      "reasoning": "This task involves complex API integrations with multiple AI services, sophisticated prompt engineering, error handling, and fallback mechanisms. It requires building structured prompts from form data, parsing AI responses, implementing retry logic, and handling rate limiting. The complexity is high due to the need to handle various edge cases and ensure reliable AI service communication."
-    },
-    {
-      "taskId": 5,
-      "taskTitle": "Build Topic Display and Management Components",
-      "complexityScore": 7,
-      "recommendedSubtasks": 5,
-      "expansionPrompt": "Break down the topic display and management components into subtasks: 1) TopicCard component for individual topics, 2) TopicList container with layout management, 3) Topic filtering and sorting controls, 4) Topic action buttons and handlers, and 5) Local storage integration for saved topics. For each subtask, detail the component structure, props, and state management.",
-      "reasoning": "This task involves creating multiple UI components for displaying and managing generated topics. It requires implementing card layouts, list containers, filtering controls, and local storage integration. The complexity comes from the need to handle various user interactions, implement sorting and filtering logic, and manage topic state across components."
-    },
-    {
-      "taskId": 6,
-      "taskTitle": "Implement Form Dependencies and Dynamic Behavior",
-      "complexityScore": 8,
-      "recommendedSubtasks": 5,
-      "expansionPrompt": "Divide the form dependencies task into subtasks: 1) Industry-dependent audience options implementation, 2) Conditional field rendering based on wizard mode, 3) Content format and platform dependencies, 4) YMYL detection and special handling, and 5) Form state update optimizations. For each subtask, detail the implementation approach and test scenarios.",
-      "reasoning": "This task involves implementing complex form dependencies and dynamic behavior. It requires creating relationships between different form fields, conditional rendering based on user selections, and special handling for certain industries. The complexity comes from managing these interdependencies while maintaining a smooth user experience and ensuring form state remains consistent."
-    },
-    {
-      "taskId": 7,
-      "taskTitle": "Create Advanced Topic Scoring and Filtering",
-      "complexityScore": 7,
-      "recommendedSubtasks": 4,
-      "expansionPrompt": "Break down the topic scoring and filtering system into subtasks: 1) Score visualization components, 2) Sorting implementation by different metrics, 3) Tag and audience filtering functionality, and 4) Combined filtering with multiple criteria. For each subtask, detail the component structure, filtering logic, and user interaction patterns.",
-      "reasoning": "This task involves implementing advanced filtering and sorting capabilities for generated topics. It requires creating score visualizations, implementing multiple sorting options, and building a flexible filtering system. The complexity comes from handling combined filters, maintaining performance with large topic lists, and creating an intuitive user interface for these features."
-    },
-    {
-      "taskId": 8,
-      "taskTitle": "Implement Topic Export and Management System",
-      "complexityScore": 6,
-      "recommendedSubtasks": 4,
-      "expansionPrompt": "Divide the topic export and management system into subtasks: 1) JSON and CSV export functionality, 2) Topic saving and organization features, 3) Bulk selection and action implementation, and 4) Topic editing capabilities. For each subtask, detail the implementation approach, user interactions, and data handling.",
-      "reasoning": "This task involves creating functionality for exporting and managing generated topics. It requires implementing file export in multiple formats, topic organization features, bulk actions, and editing capabilities. The complexity is moderate, focusing on data transformation for exports and implementing a clean user interface for topic management."
-    },
-    {
-      "taskId": 9,
-      "taskTitle": "Implement Error Handling and Loading States",
-      "complexityScore": 6,
-      "recommendedSubtasks": 4,
-      "expansionPrompt": "Break down the error handling and loading states task into subtasks: 1) Loading state components and animations, 2) Error boundary implementation, 3) API error handling and retry logic, and 4) User-friendly error messages and recovery options. For each subtask, detail the implementation approach and user experience considerations.",
-      "reasoning": "This task involves creating comprehensive error handling and loading states throughout the application. It requires implementing loading indicators, error boundaries, retry logic, and user-friendly error messages. The complexity is moderate, focusing on creating a robust error handling system that provides good user feedback and recovery options."
-    },
-    {
-      "taskId": 10,
-      "taskTitle": "Implement Accessibility and Performance Optimizations",
-      "complexityScore": 8,
-      "recommendedSubtasks": 5,
-      "expansionPrompt": "Divide the accessibility and performance optimizations task into subtasks: 1) Keyboard navigation implementation, 2) ARIA attributes and roles, 3) Component rendering optimizations, 4) Responsive design for mobile devices, and 5) Accessibility testing and fixes. For each subtask, detail the implementation approach and success criteria.",
-      "reasoning": "This task involves enhancing the application with accessibility features and performance optimizations. It requires implementing keyboard navigation, proper ARIA attributes, component optimizations, and responsive design. The complexity is high due to the need to ensure accessibility across all components while maintaining performance, requiring deep knowledge of both accessibility standards and React optimization techniques."
-    }
-  ]
+	"meta": {
+		"generatedAt": "2025-09-05T09:08:34.728Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Implement Service Layer Abstraction for Backend API",
+			"complexityScore": 8,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Break down the service layer implementation into: (1) API contract/interface definition, (2) authentication header and environment config, (3) service function for generate-topics, (4) service function for save-topic, (5) service function for get-topics, (6) error handling and retry abstraction, (7) Jest unit tests for all service functions.",
+			"reasoning": "This task involves designing a robust, reusable service layer with strict typing, authentication, error handling, and retry logic, all of which increase both cyclomatic and cognitive complexity. It also requires comprehensive unit testing and adherence to security and type safety best practices. Each API endpoint and cross-cutting concern (auth, error handling) warrants its own subtask for clarity and maintainability."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Data Transformation Layer: Frontend to Backend Schema Mapping",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the transformation layer into: (1) mapping utility for GeneratedTopic, (2) mapping utility for TopicBuilderFormData, (3) Zod schema validation, (4) edge case and error handling, (5) Jest unit tests for all transformation scenarios.",
+			"reasoning": "Mapping between schemas is moderately complex, especially with strict validation and edge case handling. The use of Zod for runtime validation and the need for comprehensive tests add to the complexity, but the logic is mostly linear and well-bounded."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Integrate Topic Save Functionality in TopicActions Component",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Decompose integration into: (1) connect form state with React Hook Form, (2) integrate service layer, (3) integrate transformation utilities, (4) implement loading and error UI states, (5) implement retry and optimistic updates, (6) write React Testing Library tests for all flows.",
+			"reasoning": "This task requires orchestrating multiple layers (form, service, transformation), managing UI state, error handling, and cache invalidation, each of which introduces branching logic and increases cyclomatic complexity. Testing all flows is also non-trivial."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Success Messaging and Navigation Options Post-Save",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Split into: (1) implement confirmation dialog, (2) implement navigation logic, (3) ensure accessibility (ARIA, focus), (4) write tests for messaging, navigation, and accessibility.",
+			"reasoning": "While important for UX, this task is relatively straightforward, involving standard UI patterns and navigation. Accessibility and integration with existing components add some complexity, but the logic is mostly sequential."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Replace Ideas Page Dummy Data with Real API Integration",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: (1) integrate service layer for get-topics, (2) implement TanStack Query data fetching, (3) handle loading and error states, (4) update UI to display real data, (5) write integration tests for all scenarios.",
+			"reasoning": "Integrating real API data and managing asynchronous state, caching, and error handling increases complexity. However, the patterns are well-established, and the task is bounded to a single page."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Map Backend Response to IdeaData Interface",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand into: (1) implement mapping utility, (2) add Zod validation for mapped data, (3) handle missing/extra fields and edge cases, (4) write Jest unit tests for all mappings.",
+			"reasoning": "This is a focused transformation task with validation and error handling. The complexity is moderate due to the need for robust mapping and validation, but the logic is not deeply nested."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Update DataTable Component for Real Topic Metadata",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Decompose into: (1) update columns for real metadata, (2) implement sorting and pagination, (3) implement search and filtering, (4) implement bulk actions, (5) implement export (JSON/CSV), (6) write tests for all features.",
+			"reasoning": "Enhancing a data table with advanced features like sorting, filtering, bulk actions, and export introduces significant branching logic and state management, increasing both cyclomatic and cognitive complexity."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Error Handling and Retry Mechanisms Across UI",
+			"complexityScore": 8,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Break down into: (1) implement APIErrorBoundary, (2) implement ErrorAlert UI, (3) add retry logic in service layer, (4) add retry logic in UI components, (5) classify and display contextual error messages, (6) integrate with TanStack Query error handling, (7) write unit and integration tests for all error scenarios.",
+			"reasoning": "Comprehensive error handling and retry logic across multiple layers and components is inherently complex, requiring careful orchestration, error classification, and user feedback. Testing all failure modes further increases complexity."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Ensure Responsive and Accessible UI Design",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Expand into: (1) audit and update layouts for responsiveness, (2) audit and enhance accessibility (ARIA, keyboard), (3) update shadcn/ui and Radix UI components, (4) implement progressive disclosure, (5) test on devices and screen readers, (6) write Cypress and axe-core tests.",
+			"reasoning": "Ensuring both responsiveness and accessibility across all UI components is a cross-cutting concern that requires detailed audits, updates, and testing. The breadth of coverage and need for manual and automated testing increase complexity."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Comprehensive Testing and Coverage Reporting",
+			"complexityScore": 9,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Decompose into: (1) implement unit tests with Jest, (2) implement component tests with React Testing Library, (3) implement end-to-end tests with Cypress, (4) set up coverage reporting, (5) automate CI pipeline for tests, (6) enforce coverage thresholds, (7) test all user flows (generation, save, ideas, error, export), (8) manual regression testing for critical flows.",
+			"reasoning": "This task spans the entire codebase, requiring multiple test types, coverage enforcement, CI integration, and manual regression. The breadth, depth, and need for automation and reporting make this one of the most complex tasks."
+		}
+	]
 }

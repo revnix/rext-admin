@@ -1,1121 +1,161 @@
 <context>
 # Overview  
-The Topic Builder is a comprehensive AI-powered content topic generation tool that replaces the existing general business idea builder with a specialized wizard for creating content topics. This product solves the challenge content creators, marketers, and writers face when generating relevant, engaging, and targeted content ideas across different industries, audiences, and platforms.
+Wrext Admin is an AI-powered content management and topic generation platform that enables content creators and marketing teams to generate, manage, and organize high-quality content ideas across multiple industries and platforms. The system combines a sophisticated topic builder wizard with comprehensive content library management, providing users with data-driven topic suggestions powered by LangGraph and multiple AI models.
 
-**Target Users:**
-- Content creators and writers seeking topic inspiration
-- Marketing teams planning content calendars
-- Educators developing curriculum topics  
-- Business professionals creating thought leadership content
-- Social media managers generating platform-specific content ideas
-
-**Value Proposition:**
-- Eliminates content creator's block through AI-generated topic suggestions
-- Provides industry-specific and audience-targeted topic recommendations
-- Offers dual-flow wizard supporting both topic-first and industry-first approaches
-- Generates topics optimized for specific content formats and distribution channels
-- Includes advanced scoring system for relevance, freshness, and novelty
+The platform solves the challenge of consistent, relevant content ideation by offering intelligent topic generation with customizable parameters, audience targeting, and content format optimization. It serves content creators, marketing professionals, social media managers, and businesses looking to scale their content operations efficiently.
 
 # Core Features  
+**AI-Powered Topic Builder Wizard:** Multi-step intelligent wizard supporting both subject-first and industry-first content generation flows. Features comprehensive form validation, real-time error handling, and responsive design with 6 configurable steps covering industry selection, audience targeting, content formatting, goals/style preferences, advanced options, and final review/generation.
 
-## 1. Hybrid Wizard Flow System
-**What it does:** Provides two distinct user paths - Subject-First Flow (when users have specific topics in mind) and Industry-First Flow (when users start with broad industry interests)
-**Why it's important:** Accommodates different user starting points and creative processes
-**How it works:** 8-step progressive disclosure wizard with dynamic form dependencies and conditional field rendering
+**Comprehensive Content Library Management:** Full CRUD operations for managing generated topics with advanced filtering, bulk operations, export capabilities (JSON/CSV), and seamless integration between topic generation and library storage. Includes sophisticated data table with sorting, pagination, and search functionality.
 
-## 2. AI-Powered Topic Generation Engine  
-**What it does:** Leverages OpenAI/Groq APIs to generate contextually relevant content topics based on comprehensive user inputs
-**Why it's important:** Provides high-quality, creative topic suggestions that human brainstorming might miss
-**How it works:** Processes form data through structured prompts, returns JSON-formatted topic arrays with metadata
+**Backend Integration with LangGraph:** Seamless integration with Python-based AI backend featuring LangGraph workflows, multiple LLM providers (OpenAI, Groq, Hugging Face), web scraping capabilities, and PGVector for RAG-enhanced content generation.
 
-## 3. Dynamic Industry-Audience Mapping
-**What it does:** Automatically suggests relevant audience personas based on selected industry with smart defaults
-**Why it's important:** Reduces user cognitive load while ensuring comprehensive targeting
-**How it works:** Dependency system that updates audience options when industry changes, includes YMYL detection
-
-## 4. Multi-Platform Content Optimization
-**What it does:** Tailors topic suggestions for specific content formats (blog, social media, video, etc.) and platforms (YouTube, LinkedIn, etc.)
-**Why it's important:** Different platforms require different content approaches and tonality
-**How it works:** Conditional form fields and platform-specific prompt modifications
-
-## 5. Advanced Topic Scoring & Filtering
-**What it does:** Provides relevance, freshness, and novelty scores for each generated topic with sorting capabilities
-**Why it's important:** Helps users quickly identify the most suitable topics for their needs
-**How it works:** AI-generated numerical scores (0-1 scale) with client-side filtering and sorting
-
-## 6. Topic Management & Export System
-**What it does:** Allows users to save, edit, regenerate, and export selected topics in various formats
-**Why it's important:** Integrates with broader content workflow and planning processes  
-**How it works:** Local storage for drafts, bulk actions for topic management, export to JSON/CSV
+**Responsive Design System:** Built on shadcn/ui v3 with Radix UI primitives, featuring comprehensive component library, consistent design tokens, accessibility compliance, and mobile-first responsive patterns.
 
 # User Experience  
+**User Personas:**
+- Content Marketing Managers: Need consistent, high-quality topic ideas for blogs, social media, and campaigns
+- Social Media Specialists: Require platform-specific content suggestions with audience targeting
+- Content Creators: Want diverse topic inspiration across multiple industries and formats
+- Business Owners: Need scalable content planning solutions for marketing efforts
 
-## User Personas
+**Key User Flows:**
+1. Topic Generation Flow: Landing → Wizard Selection → Multi-step Form → AI Generation → Results Review → Save/Export
+2. Content Library Flow: Ideas Page → Browse/Search/Filter → View Details → Edit/Delete/Export
+3. Integration Flow: Generate Topics → Save to Library → Navigate to Ideas Page → Manage Saved Content
 
-### Primary Persona: Content Marketing Manager
-- **Demographics:** 28-45 years old, marketing professional
-- **Goals:** Generate consistent, engaging content for multiple channels
-- **Pain Points:** Content planning overwhelm, maintaining brand voice consistency
-- **Tech Comfort:** High - comfortable with complex tools
-
-### Secondary Persona: Freelance Content Creator  
-- **Demographics:** 22-40 years old, independent creator
-- **Goals:** Quick topic generation for client work across various industries
-- **Pain Points:** Time constraints, need for industry expertise across domains
-- **Tech Comfort:** Medium-High - prefers streamlined interfaces
-
-### Tertiary Persona: Small Business Owner
-- **Demographics:** 30-55 years old, entrepreneur with limited marketing resources
-- **Goals:** Create thought leadership content to build authority
-- **Pain Points:** Limited time, lack of content strategy experience
-- **Tech Comfort:** Medium - needs guided, intuitive experiences
-
-## Key User Flows
-
-### Flow 1: Subject-First Journey (Expert Users)
-1. **Entry:** User arrives with specific topic in mind
-2. **Input:** Enters primary subject/keyword 
-3. **Context:** Selects industry, content type, platform
-4. **Targeting:** Defines audience and demographics
-5. **Goals:** Sets content purpose and tone preferences
-6. **Advanced:** Optionally adds keywords, constraints, regional preferences
-7. **Review:** Confirms all selections in summary view
-8. **Generate:** Receives AI-generated topic suggestions with scores
-9. **Action:** Saves, edits, or regenerates topics as needed
-
-### Flow 2: Industry-First Journey (Exploratory Users)
-1. **Entry:** User explores without specific topic
-2. **Industry:** Selects broad industry/domain
-3. **Focus:** Optionally narrows to specific subtopic area
-4. **Format:** Chooses content type and distribution platform
-5. **Audience:** Defines target demographics and personas
-6. **Style:** Sets content goals, tone, and preferences
-7. **Advanced:** Adds optional constraints and regional targeting
-8. **Review:** Validates all inputs before generation
-9. **Generate:** Receives diverse topic suggestions for industry
-10. **Refine:** Iterates on results or explores different angles
-
-## UI/UX Considerations
-
-### Progressive Disclosure Strategy
-- **Core Questions (Required):** Industry, audience, content type, purpose - maximum 4 fields per step
-- **Advanced Options:** Collapsible sections for keywords, constraints, regional preferences
-- **Smart Defaults:** Pre-populate common choices to reduce friction
-
-### Visual Design Principles  
-- **Step Indicator:** Clear progress visualization with completion states
-- **Dependency Highlights:** Visual cues when selections affect subsequent options
-- **Loading States:** Skeleton screens and progress indicators during AI generation
-- **Error Prevention:** Real-time validation with helpful error messages
-
-### Accessibility Features
-- **Keyboard Navigation:** Full wizard navigation without mouse
-- **Screen Reader Support:** Proper ARIA labels and landmark roles
-- **Color Blind Friendly:** Non-color-dependent status indicators  
-- **Mobile Responsive:** Touch-friendly interface with optimized layouts
+**UI/UX Considerations:**
+- Progressive disclosure with collapsible advanced options
+- Real-time validation with contextual error messages
+- Loading states and progress indicators during AI generation
+- Responsive design with mobile-optimized wizard navigation
+- Accessibility-first component design with ARIA compliance
 </context>
 <PRD>
 # Technical Architecture  
 
-## System Components
+**Frontend Stack (Next.js 15+ App Router):**
+- Framework: Next.js 15.5.0 with App Router architecture
+- UI Library: shadcn/ui v3 + Radix UI primitives
+- Styling: Tailwind CSS 4 with custom design tokens
+- State Management: Zustand for global state, TanStack Query v5 for server state
+- Forms: React Hook Form v7.62.0 + Zod v4.1.5 validation
+- TypeScript: Full type safety with comprehensive interfaces
+- Testing: Jest + Testing Library with coverage reporting
 
-### Frontend Architecture (Next.js 15 App Router)
-**Framework:** Next.js 15+ with App Router, React 19, TypeScript 5+
-**UI Components:** shadcn/ui v3 + Radix UI primitives for accessibility
-**Styling:** Tailwind CSS 4 with custom component library
-**State Management:** 
-- React useState for wizard form state with custom hooks
-- TanStack Query for server state and API caching (planned for future phases)
-- Zustand for global state management (if needed)
+**Component Architecture:**
+- Topic Builder: Modular wizard components with step-based navigation
+- Results Management: TopicsList, TopicCard, TopicActions, BulkActions, TopicFilters
+- UI Components: Comprehensive shadcn/ui component library
+- Layout System: PageLayout, AppSidebar with responsive navigation
+- Error Handling: APIErrorBoundary, ErrorAlert with retry mechanisms
 
-**Key Frontend Components:**
-```
-/app/ideas/create/page.tsx (main wizard container)
-/components/topic-builder/
-  ├── steps/ (individual wizard steps)
-  ├── results/ (topic display and management)
-  └── ui/ (specialized UI components)
-/types/topic-builder.ts (TypeScript interfaces)
-/hooks/use-topic-builder.ts (form state management)
-```
-
-### Backend Integration
-**API Layer:** Next.js API Routes (/app/api/generate-topics/route.ts)
-**AI Services Integration:**
-- **Primary:** OpenAI API (gpt-4-turbo, gpt-3.5-turbo)
-- **Secondary:** Groq API (Llama, Mixtral models) for cost optimization
-- **Package:** `openai@^4.x` npm package for latest OpenAI integration
-- **Fallback:** Structured prompt templates with retry logic
+**API Integration:**
+- Backend Service: Abstract service layer for AI endpoint communication
+- Error Classification: Sophisticated error typing and recovery strategies
+- Request/Response: TypeScript interfaces for all API contracts
+- Headers: Authentication via content-api-key header
 
 **Data Models:**
 ```typescript
-interface TopicBuilderFormData {
-  wizardMode: 'subject-first' | 'industry-first'
-  industry: string
-  subject?: string
-  content_type: string
-  platform?: string
-  audience: string[]
-  purpose: string[]
-  tone: string[]
-  keywords?: string
-  exclude?: string
-  num_ideas: number
-  region?: string
-  language?: string
-  is_ymyl: boolean
-}
-
-interface GeneratedTopic {
-  id: string
-  title: string
-  angle: string
-  channel_fit: string[]
-  audience_fit: string[]
-  why_it_works: string
-  scores: {
-    relevance: number
-    freshness: number
-    novelty: number
-  }
-  tags: string[]
-}
+TopicBuilderFormData: Comprehensive form state with 20+ fields
+GeneratedTopic: AI-generated topic with scores, metadata, and relationships
+TopicGenerationResponse: API response with request tracking and metadata
+ValidationResult: Form validation with errors and warnings
 ```
 
-## APIs and Integrations
-
-### AI Service Integration
-**OpenAI API Integration:**
-- **Models:** GPT-4-turbo for complex prompts, GPT-3.5-turbo for speed
-- **Rate Limiting:** Exponential backoff with retry logic
-- **Error Handling:** Graceful degradation with fallback prompts
-- **Security:** API keys managed via environment variables
-
-**Prompt Engineering:**
-- Dynamic prompt construction based on form data
-- Industry-specific prompt templates
-- YMYL content safety guidelines
-- Output structured as JSON for consistent parsing
-
-### External Dependencies
-**Required npm packages:**
-```json
-{
-  "openai": "^4.28.0",
-  "zod": "^3.22.0", // form validation
-  "react-hook-form": "^7.49.0", // form management
-  "date-fns": "^3.0.0", // date handling
-  "recharts": "^2.10.0" // topic analytics (future)
-}
-```
-
-## Infrastructure Requirements
-
-### Development Environment
-- **Node.js:** v18+ (for Next.js 15 compatibility)
-- **Package Manager:** npm or pnpm for dependency management
-- **Code Quality:** Biome for linting and formatting (already configured)
-- **TypeScript:** v5+ for enhanced type safety
-
-### Production Deployment (Vercel)
-- **Platform:** Vercel for seamless Next.js deployment
-- **Environment Variables:** 
-  - `OPENAI_API_KEY` (required)
-  - `GROQ_API_KEY` (optional fallback)
-  - `NODE_ENV` (production/development)
-- **Edge Functions:** API routes optimized for edge runtime
-- **CDN:** Automatic static asset optimization
-
-### Data Storage Strategy
-**Phase 1 (MVP):** Browser localStorage for draft saving and topic management
-**Phase 2:** PostgreSQL + PGVector for topic persistence and similarity search
-**Phase 3:** Redis caching for frequently requested topics and user sessions
-
-## Security Considerations
-
-### API Security
-- **Rate Limiting:** Implement request throttling for AI API calls
-- **Input Validation:** Zod schemas for all form inputs and API requests
-- **Output Sanitization:** Clean AI-generated content before client display
-- **YMYL Protection:** Special handling for health, finance, legal content
-
-### Data Privacy
-- **No PII Storage:** Avoid storing personally identifiable information
-- **Session Management:** Temporary data storage with automatic cleanup
-- **GDPR Compliance:** User data deletion capabilities (future requirement)
-
-## Performance Optimization
-
-### Frontend Performance
-- **Code Splitting:** Lazy loading of wizard steps to reduce initial bundle size
-- **Memoization:** React.memo and useMemo for expensive component operations
-- **Image Optimization:** Next.js Image component for assets
-- **Bundle Analysis:** Regular webpack-bundle-analyzer reviews
-
-### API Performance
-- **Caching Strategy:** Response caching for similar prompt patterns
-- **Timeout Handling:** 30-second timeout for AI API calls
-- **Streaming:** Consider streaming responses for better UX (future enhancement)
-- **CDN Utilization:** Static asset delivery via Vercel Edge Network
+**Backend Integration Points:**
+- Topic Generation: POST /api/generate-topics
+- Topic Persistence: POST http://127.0.0.1:2024/api/topic/save-topic
+- Topic Retrieval: GET http://127.0.0.1:2024/api/topic/get-topics
+- Authentication: content-api-key: supersecretapikey
 
 # Development Roadmap  
 
-## Phase 1: Foundation & Core Architecture (MVP)
+**Phase 1: Topic Save Functionality (Immediate MVP)**
+- Implement topic save API integration with backend endpoint (http://127.0.0.1:2024/api/topic/save-topic)
+- Add proper request formatting matching backend schema (topics array with title, angle, channel_fit, audience_fit, scores, why_it_works, tags)
+- Implement success messaging with navigation options (Ideas page or generate new topics)
+- Add error handling for save failures with retry mechanisms
+- Update TopicActions component to handle save operations with loading states
 
-### 1.1 Type System & Core Infrastructure
-**Scope:** Establish TypeScript foundation and utility functions
-**Deliverables:**
-- `/types/topic-builder.ts` - Complete interface definitions for all form data and generated topics
-- `/lib/topic-builder-utils.ts` - Utility functions for YMYL detection, industry-audience mapping, form validation
-- `/data/topic-builder-options.ts` - Comprehensive option datasets for all dropdowns and multi-selects
-- Migration of existing `/app/ideas/create/page.tsx` to new topic builder architecture
-
-### 1.2 Wizard Component Architecture  
-**Scope:** Build 8-step wizard with progressive disclosure
-**Deliverables:**
-- Main wizard container with step navigation and progress tracking
-- Individual step components (FlowSelection, Industry, Audience, ContentFormat, Goals, Advanced, Review, Generation)
-- Form state management with custom hooks (`use-topic-builder.ts`)
-- Dynamic form dependencies and conditional field rendering
-- Basic validation and error handling
-
-### 1.3 AI Integration Layer
-**Scope:** Core AI service integration for topic generation
-**Deliverables:**
-- `/app/api/generate-topics/route.ts` - Next.js API route for AI processing
-- `/lib/ai-service.ts` - OpenAI API integration with structured prompting
-- Dynamic prompt construction from form data
-- JSON response parsing and error handling
-- Rate limiting and retry logic implementation
-
-### 1.4 Basic Topic Display
-**Scope:** Essential topic results interface
-**Deliverables:**
-- Topic card component with title, angle, and basic metadata
-- Simple list view for generated topics
-- Save/discard actions for individual topics
-- Local storage integration for draft management
-
-## Phase 2: Enhanced User Experience & Features
-
-### 2.1 Advanced UI Components
-**Scope:** Specialized components for complex interactions
-**Deliverables:**
-- Custom toggle groups for fresh vs evergreen, safe vs original preferences
-- Industry-dependent audience chip selectors
-- Collapsible advanced options sections
-- Enhanced step indicator with completion states
-- Loading states and skeleton screens for AI generation
-
-### 2.2 Topic Management System
-**Scope:** Comprehensive topic handling and organization
-**Deliverables:**
-- Topic filtering and sorting by relevance, freshness, novelty scores
-- Bulk selection and batch operations
-- Topic editing and regeneration capabilities
-- Export functionality (JSON, CSV formats)
-- Topic similarity detection and duplicate prevention
-
-### 2.3 Advanced AI Features
-**Scope:** Enhanced AI capabilities and prompt optimization
-**Deliverables:**
-- Groq API integration as fallback/alternative
-- Industry-specific prompt templates
-- YMYL content safety measures
-- Context-aware topic refinement
-- Topic clustering and theme identification
-
-### 2.4 Platform-Specific Optimization
-**Scope:** Content format and platform tailoring
-**Deliverables:**
-- Platform-specific topic formatting (YouTube vs LinkedIn vs Blog)
-- Content type optimization (video titles vs article headlines)
-- Tone adjustment based on platform selection
-- Length and style guidelines per content type
-
-## Phase 3: Data Persistence & Analytics
-
-### 3.1 Backend Data Layer
-**Scope:** Transition from localStorage to persistent storage
-**Deliverables:**
-- PostgreSQL database schema for topics and user preferences
-- PGVector integration for semantic topic search
-- Topic history and analytics tracking
-- User preference learning and optimization
-
-### 3.2 Topic Analytics & Insights
-**Scope:** Data-driven topic recommendations and performance tracking
-**Deliverables:**
-- Topic performance prediction based on historical data
-- Trend analysis and seasonal topic suggestions
-- Industry-specific topic popularity metrics
-- A/B testing framework for prompt optimization
-
-### 3.3 Collaboration Features
-**Scope:** Multi-user topic management and sharing
-**Deliverables:**
-- Topic library sharing between team members
-- Collaborative topic refinement and commenting
-- Topic approval workflows for enterprise users
-- Integration with content calendar systems
-
-## Phase 4: Enterprise & Integration Features
-
-### 4.1 Advanced Integrations
-**Scope:** Third-party service connections and API expansions
-**Deliverables:**
-- Google Trends API integration for topic relevance validation
-- Social media platform APIs for trend detection
-- CMS integrations (WordPress, Contentful, etc.)
-- Marketing automation platform connections
-
-### 4.2 Enterprise Features
-**Scope:** Advanced organizational and compliance features
-**Deliverables:**
-- Multi-tenant architecture with workspace separation
-- Advanced YMYL compliance and content review workflows
-- Custom prompt templates and brand voice training
-- Advanced analytics dashboard with ROI tracking
-
-### 4.3 AI Model Enhancement
-**Scope:** Advanced AI capabilities and model optimization
-**Deliverables:**
-- Custom fine-tuned models for specific industries
-- Multi-modal content suggestions (text + image + video concepts)
-- Real-time trend incorporation and news analysis
-- Competitive content analysis and gap identification
-
-## MVP Definition (Phase 1 Complete)
-
-### Core MVP Requirements
-1. **Functional 8-step wizard** with both subject-first and industry-first flows
-2. **AI-powered topic generation** using OpenAI API with structured output
-3. **Dynamic form dependencies** with industry-audience mapping and YMYL detection
-4. **Basic topic management** including save, discard, and local storage
-5. **Responsive design** optimized for desktop and mobile experiences
-6. **Error handling** with graceful AI service degradation
-7. **Form validation** with real-time feedback and helpful error messages
-
-### MVP Success Criteria
-- User can complete full wizard flow in under 3 minutes
-- AI generates relevant topics in under 10 seconds
-- Form dependencies work correctly across all industry-audience combinations
-- Topics display with proper scoring and metadata
-- Basic accessibility compliance (keyboard navigation, screen reader support)
-- Mobile-responsive interface with touch-friendly interactions
-
-### Out of Scope for MVP
-- User authentication and persistent accounts
-- Topic sharing and collaboration features
-- Advanced analytics and performance tracking
-- Third-party API integrations beyond AI services
-- Custom prompt template creation
-- Advanced topic clustering and similarity analysis
+**Phase 2: Ideas Page Data Integration (Core Functionality)**  
+- Replace dummy data with real topic retrieval from backend (http://127.0.0.1:2024/api/topic/get-topics)
+- Map backend response to existing IdeaData interface
+- Implement data fetching with TanStack Query for caching and error handling
+- Update DataTable to display real saved topics with proper metadata
+- Ensure seamless integration between topic generation and ideas page display
 
 # Logical Dependency Chain
 
-## Foundation Layer (Week 1-2): Core Infrastructure
-**Critical Path:** These components must be built first as everything depends on them
+**Completed Foundation (Already in place):**
+- ✅ Next.js 15 with App Router setup
+- ✅ shadcn/ui component library implementation
+- ✅ TypeScript interfaces for topic generation (GeneratedTopic, TopicBuilderFormData)
+- ✅ Topic builder wizard with 6-step flow
+- ✅ AI topic generation with backend integration
+- ✅ Form validation and error handling infrastructure
+- ✅ TanStack Query setup with query client
+- ✅ Responsive design and mobile optimization
 
-### 1. Type System Foundation
-**Priority:** Highest - Blocking all other development
-**Dependencies:** None
-**Deliverables:** Complete TypeScript interfaces in `/types/topic-builder.ts`
-**Rationale:** All components need type safety and shared interfaces
-
-### 2. Utility Functions & Data Layer
-**Priority:** Highest - Required for form logic
-**Dependencies:** Type system
-**Deliverables:** 
-- `/lib/topic-builder-utils.ts` (YMYL detection, validation functions)
-- `/data/topic-builder-options.ts` (all dropdown options and mappings)
-**Rationale:** Form behavior depends on these utility functions
-
-### 3. Basic UI Components
-**Priority:** High - Needed for rapid prototyping
-**Dependencies:** None (uses existing shadcn/ui)
-**Deliverables:** Enhanced components (toggle groups, collapsible sections)
-**Rationale:** Enables immediate visual progress and user testing
-
-## Minimum Viable Frontend (Week 2-3): Early User Interaction
-**Goal:** Get to something usable and testable as quickly as possible
-
-### 4. Static Wizard Shell
-**Priority:** High - Creates visible progress
-**Dependencies:** Type system, basic UI components
-**Deliverables:** 
-- Step navigation with progress indicator
-- Static form layouts for all 8 steps
-- Form state management hooks
-**Rationale:** Provides immediate visual feedback and enables UX testing
-
-### 5. Form State & Validation
-**Priority:** High - Essential for user experience
-**Dependencies:** Static wizard shell, utility functions
-**Deliverables:**
-- Dynamic form state management
-- Real-time validation with error messages
-- Form step progression logic
-**Rationale:** Makes the wizard functional without requiring AI integration
-
-### 6. Mock Topic Generation
-**Priority:** Medium - Enables end-to-end testing
-**Dependencies:** Form state management
-**Deliverables:**
-- Hardcoded topic responses for testing
-- Basic topic card display
-- Save/discard functionality with localStorage
-**Rationale:** Allows testing complete user flow before AI integration
-
-## AI Integration Layer (Week 3-4): Core Functionality
-**Goal:** Add real AI capabilities to tested wizard foundation
-
-### 7. API Route Infrastructure
-**Priority:** High - Core product functionality
-**Dependencies:** Mock topic generation (for interface compatibility)
-**Deliverables:**
-- `/app/api/generate-topics/route.ts` with error handling
-- OpenAI API integration with retry logic
-- Input sanitization and output validation
-**Rationale:** Transforms mock system into real product
-
-### 8. Dynamic Prompt Engineering
-**Priority:** Medium - Quality improvement
-**Dependencies:** API route infrastructure, utility functions
-**Deliverables:**
-- Form data to prompt conversion
-- Industry-specific prompt templates
-- YMYL safety measures
-**Rationale:** Ensures generated topics are relevant and safe
-
-### 9. Enhanced Topic Display
-**Priority:** Medium - User experience improvement
-**Dependencies:** Real AI integration
-**Deliverables:**
-- Topic scoring visualization
-- Filtering and sorting capabilities
-- Topic metadata display
-**Rationale:** Helps users evaluate and select best topics
-
-## Polish & Enhancement Layer (Week 4-6): Production Ready
-**Goal:** Production-ready features with full user experience
-
-### 10. Form Dependencies & Dynamic Behavior
-**Priority:** Medium - Advanced UX
-**Dependencies:** Form state management, utility functions
-**Deliverables:**
-- Industry-dependent audience options
-- Platform-conditional fields
-- Smart defaults and auto-population
-**Rationale:** Creates intelligent, context-aware wizard experience
-
-### 11. Advanced Topic Management
-**Priority:** Medium - User workflow optimization
-**Dependencies:** Enhanced topic display
-**Deliverables:**
-- Bulk topic operations
-- Topic editing and regeneration
-- Export functionality
-**Rationale:** Enables integration with user's content planning workflow
-
-### 12. Performance & Accessibility
-**Priority:** Medium - Production requirements
-**Dependencies:** All core functionality
-**Deliverables:**
-- Loading states and error boundaries
-- Keyboard navigation and screen reader support
-- Mobile responsiveness optimization
-**Rationale:** Meets production quality and accessibility standards
-
-## Atomic Development Approach
-
-### Build Strategy: Horizontal Slicing
-Each feature is built as a complete horizontal slice that provides immediate value:
-
-1. **Types First:** Complete interface definition enables parallel development
-2. **Static Then Dynamic:** Static layouts first, then add interactivity
-3. **Mock Then Real:** Mock APIs enable end-to-end testing before external dependencies
-4. **Core Then Polish:** Essential functionality before enhancements
-
-### Incremental Value Delivery
-Each phase delivers a functional improvement:
-
-- **Week 1:** Type-safe static wizard (no functionality, but shows progress)
-- **Week 2:** Functional wizard with mock data (complete user flow testable)
-- **Week 3:** Real AI integration (MVP functional)
-- **Week 4:** Enhanced UX and topic management (production ready)
-
-### Testing Integration Points
-**Parallel Testing Development:**
-- Unit tests written alongside each utility function
-- Component tests for each wizard step as it's built
-- Integration tests for form state management
-- End-to-end tests using mock API first, then real API
-
-### Risk Mitigation Through Dependencies
-**Low-Risk Foundations First:**
-- UI components can be built and tested independently
-- Form logic can be validated with mock data
-- AI integration is isolated and can be swapped/modified without affecting UI
-
-**High-Risk Components Last:**
-- AI API integration (external dependency)
-- Complex form dependencies (builds on stable foundation)
-- Performance optimization (applies to working system)
-
-### Scalability Considerations
-**Designed for Future Enhancement:**
-- Type system accommodates future fields without breaking changes
-- Component architecture supports additional wizard steps
-- API layer designed for multiple AI providers
-- State management can scale to complex multi-user scenarios
+**Remaining Core Tasks (Sequential):**
+1. **Topic Save API Integration** - Connect TopicActions to save-topic endpoint
+2. **Backend Request Mapping** - Format GeneratedTopic data to match backend schema
+3. **Success Flow Implementation** - Add save confirmation and navigation options
+4. **Ideas Page Data Source** - Replace dummy data with get-topics API
+5. **Data Interface Alignment** - Map backend response to IdeaData interface
 
 # Risks and Mitigations  
 
-## Technical Risks
+**Immediate Implementation Risks:**
+- Backend Schema Mismatch: GeneratedTopic interface may not align perfectly with save-topic endpoint expectations. Mitigation: Create data transformation layer to map between frontend and backend schemas.
+- API Authentication: content-api-key header implementation needs secure handling. Mitigation: Use environment variables and service abstraction layer.
+- Error Handling: Save operations may fail silently or with unclear error messages. Mitigation: Implement comprehensive error catching with user-friendly messages and retry mechanisms.
 
-### 1. AI API Reliability and Rate Limiting
-**Risk:** OpenAI/Groq API downtime or rate limits could render the product unusable
-**Impact:** High - Core functionality depends on AI services
-**Probability:** Medium - External service dependencies always carry risk
-**Mitigation Strategies:**
-- Implement multiple AI provider fallbacks (OpenAI → Groq → fallback prompts)
-- Build comprehensive retry logic with exponential backoff
-- Create cached response system for similar prompt patterns
-- Implement graceful degradation with pre-generated topic examples
-- Set up monitoring and alerting for API response times and error rates
-
-### 2. Complex Form State Management
-**Risk:** Dynamic form dependencies and conditional logic could become unmaintainable
-**Impact:** Medium - Could slow development and introduce bugs
-**Probability:** Medium - Complex state interactions are inherently risky
-**Mitigation Strategies:**
-- Use TypeScript for compile-time validation of state transitions
-- Implement comprehensive unit tests for all form state logic
-- Create state machine pattern for form progression validation
-- Build isolated component testing to catch dependency issues early
-- Document all form dependencies and interaction patterns
-
-### 3. Performance Issues with Large Option Sets
-**Risk:** Large industry/audience/platform option lists could cause UI lag
-**Impact:** Medium - Poor user experience, especially on mobile
-**Probability:** Low-Medium - Depends on data size and implementation
-**Mitigation Strategies:**
-- Implement virtualization for large dropdown lists
-- Use lazy loading and search-based filtering
-- Optimize re-rendering with React.memo and useMemo
-- Consider pagination for option sets
-- Implement performance monitoring and bundle size analysis
-
-### 4. AI-Generated Content Quality
-**Risk:** Generated topics may be irrelevant, inappropriate, or low-quality
-**Impact:** High - Directly affects product value proposition
-**Probability:** Medium - AI output quality varies with prompt design
-**Mitigation Strategies:**
-- Develop comprehensive prompt engineering with multiple templates
-- Implement content filtering and YMYL safety measures
-- Build topic scoring system to surface best results first
-- Create feedback mechanism for topic quality improvement
-- Establish manual review process for YMYL industries
-
-## Product and Scope Risks
-
-### 5. MVP Definition and Scope Creep
-**Risk:** Unclear MVP boundaries could lead to over-engineering initial version
-**Impact:** High - Could delay launch and increase complexity
-**Probability:** Medium - Common in feature-rich products
-**Mitigation Strategies:**
-- Define strict MVP feature boundaries with clear in/out scope lists
-- Implement feature flagging to enable gradual rollout
-- Focus on horizontal slicing - complete simple features before complex ones
-- Regular stakeholder review to validate MVP assumptions
-- Time-box development phases with clear deliverable milestones
-
-### 6. User Experience Complexity
-**Risk:** 8-step wizard might be too complex for casual users
-**Impact:** Medium - Could reduce adoption and completion rates
-**Probability:** Medium - Long forms typically have high abandonment
-**Mitigation Strategies:**
-- Implement progressive disclosure with collapsible advanced options
-- Provide smart defaults to minimize required user input
-- Create "quick mode" with simplified 3-step flow for basic users
-- Build comprehensive user testing and feedback collection
-- Implement analytics to track drop-off points and optimize accordingly
-
-### 7. Integration with Existing System
-**Risk:** Replacing existing idea builder could disrupt current users
-**Impact:** Medium - User workflow disruption and potential data loss
-**Probability:** Low - Controlled migration with proper planning
-**Mitigation Strategies:**
-- Implement parallel deployment with gradual user migration
-- Create data export/import tools for existing idea data
-- Build feature parity mapping to ensure no functionality loss
-- Provide comprehensive user documentation and migration guide
-- Implement rollback plan in case of critical issues
-
-## Resource and Timeline Risks
-
-### 8. AI Integration Learning Curve
-**Risk:** Team unfamiliarity with AI APIs could slow development
-**Impact:** Medium - Could extend development timeline
-**Probability:** Medium - Depends on team's current AI experience
-**Mitigation Strategies:**
-- Allocate time for AI API research and experimentation
-- Build proof-of-concept integration before full implementation
-- Create comprehensive documentation of AI integration patterns
-- Plan for external consultation if needed
-- Implement mock AI responses for parallel frontend development
-
-### 9. TypeScript Migration Complexity
-**Risk:** Moving from simple interfaces to complex type system could introduce bugs
-**Impact:** Medium - Type errors could block development
-**Probability:** Low - TypeScript generally improves code quality
-**Mitigation Strategies:**
-- Implement gradual TypeScript adoption with incremental improvements
-- Use strict type checking from the beginning to catch issues early
-- Build comprehensive type tests alongside implementation
-- Create type utility functions to reduce complexity
-- Document type patterns and conventions for team consistency
-
-### 10. Third-Party Dependency Vulnerabilities
-**Risk:** Dependencies (React 19, Next.js 15) are cutting-edge and may have unknown issues
-**Impact:** Low-Medium - Could require workarounds or version rollbacks
-**Probability:** Low - Established frameworks with good support
-**Mitigation Strategies:**
-- Monitor dependency security advisories and update schedules
-- Implement automated dependency vulnerability scanning
-- Maintain version pinning to ensure reproducible builds
-- Create fallback plans for major dependency issues
-- Regular testing with latest stable versions
-
-## Mitigation Implementation Priority
-
-### High Priority (Implement Immediately)
-1. AI API reliability (multiple providers, retry logic)
-2. MVP scope definition (clear boundaries, time-boxing)
-3. Form state management (TypeScript, testing)
-
-### Medium Priority (Implement During Development)
-4. Performance optimization (monitoring, lazy loading)
-5. User experience testing (analytics, feedback collection)
-6. Integration planning (migration strategy, rollback plan)
-
-### Low Priority (Monitor and Address if Needed)
-7. AI content quality (feedback mechanisms, manual review)
-8. Learning curve issues (documentation, consultation)
-9. Dependency management (security monitoring, update planning)
-
-## Success Metrics for Risk Management
-- **AI API uptime:** >99.5% availability across all providers
-- **Form completion rate:** >80% of users complete wizard
-- **Performance:** <2 second page load, <10 second topic generation
-- **Error rates:** <1% unhandled errors in production
-- **User satisfaction:** >4.0/5.0 rating for topic relevance and quality
+**Data Integration Challenges:**
+- Interface Mapping: Backend topic response may not match existing IdeaData interface used in Ideas page. Mitigation: Create adapter functions to transform backend data to frontend interface.
+- State Synchronization: Saved topics should appear immediately in Ideas page. Mitigation: Use TanStack Query cache invalidation after successful saves.
+- Data Consistency: Generated topics and saved topics may have different field structures. Mitigation: Standardize data models and ensure consistent field mapping.
 
 # Appendix  
 
-## A. Comprehensive Testing Strategy
+**Backend API Specification:**
 
-### A.1 Unit Testing Framework
-**Framework:** Jest + React Testing Library
-**Coverage Target:** >90% code coverage for core business logic
-
-**Testing Scope:**
-```typescript
-// Utility Functions (/lib/topic-builder-utils.ts)
-describe('YMYL Detection', () => {
-  test('detects healthcare industry as YMYL', () => {
-    expect(detectYMYL('healthcare')).toBe(true)
-  })
-  test('detects technology industry as non-YMYL', () => {
-    expect(detectYMYL('technology')).toBe(false)
-  })
-})
-
-// Form Validation Logic
-describe('Form Validation', () => {
-  test('validates required fields for each step', () => {
-    expect(validateFormStep(1, invalidData)).toBe(false)
-    expect(validateFormStep(1, validData)).toBe(true)
-  })
-})
-
-// Prompt Generation
-describe('Prompt Construction', () => {
-  test('builds correct prompt for subject-first flow', () => {
-    expect(buildPromptFromFormData(subjectFirstData))
-      .toContain('Generate 5 content topics for artificial intelligence')
-  })
-})
+*Save Topic Endpoint:*
 ```
-
-### A.2 Component Testing Strategy
-**Framework:** React Testing Library with user-event simulation
-
-**Key Test Scenarios:**
-```typescript
-// Wizard Navigation
-describe('Topic Builder Wizard', () => {
-  test('progresses through all steps with valid data', async () => {
-    render(<TopicBuilderWizard />)
-    
-    // Step 1: Flow Selection
-    fireEvent.click(getByText('Subject-First Flow'))
-    fireEvent.click(getByText('Next'))
-    
-    // Step 2: Industry Selection
-    fireEvent.change(getByLabelText('Industry'), { 
-      target: { value: 'technology' } 
-    })
-    fireEvent.click(getByText('Next'))
-    
-    // Continue through all steps...
-    expect(getByText('Generate Topics')).toBeInTheDocument()
-  })
-  
-  test('shows validation errors for incomplete steps', () => {
-    render(<TopicBuilderWizard />)
-    fireEvent.click(getByText('Next'))
-    expect(getByText('Industry selection is required')).toBeVisible()
-  })
-})
-
-// Dynamic Dependencies
-describe('Form Dependencies', () => {
-  test('updates audience options when industry changes', () => {
-    render(<AudienceStep />)
-    fireEvent.change(getByLabelText('Industry'), { 
-      target: { value: 'education' } 
-    })
-    expect(getByText('Student')).toBeInTheDocument()
-    expect(getByText('Teacher')).toBeInTheDocument()
-  })
-})
-```
-
-### A.3 Integration Testing
-**Framework:** Jest with MSW (Mock Service Worker) for API mocking
-
-**Test Coverage:**
-```typescript
-// API Integration
-describe('Topic Generation API', () => {
-  test('successfully generates topics with valid form data', async () => {
-    server.use(
-      rest.post('/api/generate-topics', (req, res, ctx) => {
-        return res(ctx.json({ 
-          topics: mockTopicResponse,
-          request_id: 'test-123' 
-        }))
-      })
-    )
-    
-    const response = await generateTopics(validFormData)
-    expect(response.topics).toHaveLength(5)
-    expect(response.topics[0]).toHaveProperty('title')
-    expect(response.topics[0]).toHaveProperty('scores')
-  })
-  
-  test('handles API errors gracefully', async () => {
-    server.use(
-      rest.post('/api/generate-topics', (req, res, ctx) => {
-        return res(ctx.status(500))
-      })
-    )
-    
-    await expect(generateTopics(validFormData))
-      .rejects.toThrow('Topic generation failed')
-  })
-})
-```
-
-### A.4 End-to-End Testing (Future Phase)
-**Framework:** Playwright for cross-browser testing
-
-**Critical User Journeys:**
-1. Complete wizard flow from start to topic generation
-2. Form validation and error handling
-3. Topic management and export functionality
-4. Mobile responsiveness across devices
-5. Accessibility compliance verification
-
-## B. Technical Specifications
-
-### B.1 Browser Compatibility Matrix
-```
-Desktop Browsers:
-- Chrome 120+ (Primary)
-- Firefox 120+ (Secondary)
-- Safari 17+ (Secondary)
-- Edge 120+ (Secondary)
-
-Mobile Browsers:
-- Chrome Mobile 120+ (Primary)
-- Safari iOS 17+ (Primary)
-- Samsung Internet 23+ (Secondary)
-
-Minimum Screen Resolutions:
-- Desktop: 1024x768
-- Tablet: 768x1024
-- Mobile: 375x667
-```
-
-### B.2 Performance Benchmarks
-```
-Core Web Vitals Targets:
-- Largest Contentful Paint (LCP): <2.5s
-- First Input Delay (FID): <100ms
-- Cumulative Layout Shift (CLS): <0.1
-
-Additional Performance Metrics:
-- Time to Interactive (TTI): <3.0s
-- First Contentful Paint (FCP): <1.5s
-- Topic Generation Response: <10s
-- Form Step Transition: <200ms
-```
-
-### B.3 API Specifications
-
-#### Generate Topics Endpoint
-```typescript
-POST /api/generate-topics
-
-Request Body:
-{
-  "formData": TopicBuilderFormData,
-  "timestamp": string,
-  "requestId": string
-}
-
-Response (Success - 200):
-{
-  "topics": GeneratedTopic[],
-  "request_id": string,
-  "generated_at": string,
-  "model_used": string,
-  "generation_time_ms": number
-}
-
-Response (Error - 500):
-{
-  "error": string,
-  "error_code": string,
-  "retry_after": number?,
-  "fallback_available": boolean
-}
-
-Rate Limiting:
-- 10 requests per minute per IP
-- 100 requests per hour per IP
-- Exponential backoff for burst requests
-```
-
-### B.4 Data Models Schema
-
-#### Complete TypeScript Interfaces
-```typescript
-// Extended from basic types with full production requirements
-interface TopicBuilderFormData {
-  // Flow Control
-  wizardMode: 'subject-first' | 'industry-first'
-  currentStep: number
-  completedSteps: number[]
-  
-  // Core Content Definition
-  subject?: string
-  industry: string
-  industry_other?: string
-  focus?: string // For industry-first flow
-  
-  // Content Format & Distribution
-  content_type: ContentType
-  content_type_other?: string
-  platform?: Platform
-  platform_other?: string
-  
-  // Audience Targeting
-  audience: string[]
-  audience_other?: string
-  reader_level: ReaderLevel
-  demographic_age: string[]
-  demographic_location: string[]
-  
-  // Content Goals & Style
-  purpose: ContentPurpose[]
-  purpose_other?: string
-  content_goal: ContentGoal[]
-  tone: ContentTone[]
-  tone_other?: string
-  
-  // Advanced Options
-  keywords?: string
-  exclude?: string
-  num_ideas: number
-  notes?: string
-  
-  // Localization
-  region?: string
-  language?: string
-  
-  // System Generated
-  is_ymyl: boolean
-  created_at: string
-  updated_at: string
-  
-  // Preferences
-  fresh_vs_evergreen: 'fresh' | 'evergreen' | 'balanced'
-  safe_vs_original: 'safe' | 'original' | 'balanced'
-}
-
-interface GeneratedTopic {
-  id: string
-  title: string
-  angle: string
-  description?: string
-  content_type: ContentType
-  target_platform: Platform[]
-  
-  // Audience Matching
-  audience_fit: string[]
-  reader_level_match: ReaderLevel
-  demographic_match: {
-    age: string[]
-    location: string[]
-  }
-  
-  // Quality Metrics
-  scores: {
-    relevance: number      // 0-1 scale
-    freshness: number      // 0-1 scale
-    novelty: number        // 0-1 scale
-    engagement_potential: number
-  }
-  
-  // Metadata
-  tags: string[]
-  industry_relevance: number
-  estimated_difficulty: 'beginner' | 'intermediate' | 'advanced'
-  estimated_length: string
-  why_it_works: string
-  
-  // Management
-  is_saved: boolean
-  created_at: string
-  generation_model: string
-  prompt_version: string
-}
-
-// Enum Type Definitions
-type ContentType = 
-  | 'blog-post' 
-  | 'social-media' 
-  | 'video-content' 
-  | 'podcast' 
-  | 'newsletter'
-  | 'whitepaper'
-  | 'case-study'
-  | 'infographic'
-  | 'webinar'
-  | 'ebook'
-
-type Platform = 
-  | 'website' 
-  | 'linkedin' 
-  | 'twitter' 
-  | 'facebook' 
-  | 'instagram'
-  | 'youtube'
-  | 'tiktok'
-  | 'medium'
-  | 'substack'
-  | 'email'
-
-type ReaderLevel = 'beginner' | 'intermediate' | 'expert' | 'mixed'
-
-type ContentPurpose = 
-  | 'educate' 
-  | 'entertain' 
-  | 'inspire' 
-  | 'persuade'
-  | 'promote'
-  | 'build-authority'
-  | 'drive-traffic'
-
-type ContentGoal = 
-  | 'tutorial' 
-  | 'explainer' 
-  | 'news-analysis' 
-  | 'opinion'
-  | 'listicle'
-  | 'case-study'
-  | 'comparison'
-  | 'faq'
-
-type ContentTone = 
-  | 'professional' 
-  | 'casual' 
-  | 'friendly' 
-  | 'humorous'
-  | 'authoritative'
-  | 'technical'
-  | 'simple'
-  | 'inspirational'
-```
-
-### B.5 Security Specifications
-
-#### Content Security Policy
-```
-default-src 'self';
-script-src 'self' 'unsafe-inline' 'unsafe-eval';
-style-src 'self' 'unsafe-inline';
-img-src 'self' data: https:;
-font-src 'self' data:;
-connect-src 'self' https://api.openai.com https://api.groq.com;
-frame-ancestors 'none';
-base-uri 'self';
-form-action 'self';
-```
-
-#### Input Validation Rules
-```typescript
-const ValidationRules = {
-  subject: z.string().min(3).max(100),
-  industry: z.string().min(1),
-  keywords: z.string().max(500).optional(),
-  num_ideas: z.number().min(1).max(10),
-  notes: z.string().max(1000).optional(),
-  // YMYL content requires additional validation
-  ymyl_content: z.boolean().optional()
+POST http://127.0.0.1:2024/api/topic/save-topic
+Headers: Content-Type: application/json, content-api-key: supersecretapikey
+Body: {
+  topics: [{
+    title: string,
+    angle: string,
+    channel_fit: string[],
+    audience_fit: string[],
+    scores: { relevance: number, freshness: number, novelty: number },
+    why_it_works: string,
+    tags: string[]
+  }]
 }
 ```
 
-## C. Research Findings & Industry Analysis
+*Get Topics Endpoint:*
+```
+GET http://127.0.0.1:2024/api/topic/get-topics
+Headers: content-api-key: supersecretapikey
+```
 
-### C.1 Content Creation Market Research
-**Market Size:** $14.2B content marketing industry (2024)
-**Target Segment:** 67% of content creators report "content ideation" as their biggest challenge
-**Competitive Analysis:** Existing tools focus on SEO keywords, not comprehensive topic generation
+**Implementation Requirements:**
+- Create service layer abstraction for backend API calls
+- Implement data transformation between GeneratedTopic and backend schema
+- Add TanStack Query hooks for save and fetch operations
+- Update TopicActions component with real save functionality
+- Replace Ideas page dummy data with real API integration
+- Add proper error handling and loading states for all operations
 
-### C.2 User Research Insights
-**Primary Pain Points:**
-1. 73% struggle with consistent content idea generation
-2. 61% need industry-specific content suggestions
-3. 58% require platform-optimized content ideas
-4. 45% want AI-assisted creative brainstorming
-
-**Preferred Workflow:**
-- Quick topic generation (<5 minutes from start to results)
-- Industry-specific customization
-- Export capabilities for content calendar integration
-- Quality scoring to prioritize best ideas
-
-### C.3 Technical Research
-**AI Model Performance:**
-- GPT-4-turbo: Best quality, higher cost (~$0.03/1K tokens)
-- GPT-3.5-turbo: Good quality, lower cost (~$0.002/1K tokens)
-- Groq Llama: Fast inference, competitive quality, cost-effective
-
-**Optimal Prompt Length:** 800-1200 tokens for best topic generation results
-**Response Format:** Structured JSON significantly improves parsing accuracy (94% vs 76% for unstructured)
+**Testing Focus:**
+- API integration testing for save and retrieve operations
+- Data transformation validation between frontend and backend schemas  
+- Error handling for network failures and API errors
+- User flow testing for save → navigate to Ideas page workflow
 </PRD>
