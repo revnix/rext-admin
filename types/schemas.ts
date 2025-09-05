@@ -94,39 +94,126 @@ export const SaveTopicItemSchema = z.object({
  */
 export const TopicBuilderFormDataSchema = z.object({
   /** Wizard mode selection */
-  wizardMode: z.enum(["quick", "comprehensive"]),
+  wizardMode: z.enum(["subject-first", "industry-first"]),
   /** Industry selection */
-  industry: z.string().min(1),
+  industry: z.enum([
+    "technology",
+    "healthcare",
+    "finance",
+    "education",
+    "travel",
+    "food",
+    "fashion",
+    "business",
+    "marketing",
+    "science",
+    "sports",
+    "lifestyle",
+    "government",
+    "real-estate",
+    "ecommerce",
+    "hr",
+    "legal",
+    "fitness",
+    "other",
+  ]),
   /** Custom industry specification (when industry = "Other") */
   industry_other: z.string().optional(),
   /** Industry-specific focus area */
   industry_specific_focus: z.string().optional(),
   /** Content type selection */
-  content_type: z.string().min(1),
+  content_type: z.enum([
+    "blog-post",
+    "social-media",
+    "video-content",
+    "podcast",
+    "infographic",
+    "ebook-guide",
+    "case-study",
+    "whitepaper",
+    "newsletter",
+    "presentation",
+    "press-release",
+    "other",
+  ]),
   /** Custom content type (when content_type = "Other") */
   content_type_other: z.string().optional(),
   /** Platform/channel selection */
-  platform: z.string().optional(),
+  platform: z
+    .enum([
+      "facebook",
+      "instagram",
+      "twitter",
+      "linkedin",
+      "tiktok",
+      "youtube",
+      "website",
+      "blog",
+      "vimeo",
+      "other",
+    ])
+    .optional(),
   /** Custom platform (when platform = "Other") */
   platform_other: z.string().optional(),
   /** Target audience description */
-  audience: z.string().min(1),
+  audience: z.array(z.string()).optional(),
   /** Reader expertise level */
-  reader_level: z.string().min(1),
+  reader_level: z.enum(["beginner", "intermediate", "expert"]).optional(),
   /** Audience size estimate */
-  audience_size: z.string().min(1),
+  audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
   /** Demographic age groups */
   demographic_age: z.array(z.string()).default([]),
   /** Geographic/location demographics */
-  demographic_location: z.array(z.string()).default([]),
+  demographic_location: z.string().default(""),
   /** Content purpose/goals */
-  purpose: z.array(z.string()).min(1),
+  purpose: z
+    .array(
+      z.enum([
+        "educate-inform",
+        "entertain-engage",
+        "inspire-motivate",
+        "persuade-convince",
+        "promote-product",
+        "drive-seo",
+        "thought-leadership",
+        "other",
+      ]),
+    )
+    .min(1),
   /** Custom purpose (when purpose includes "Other") */
   purpose_other: z.string().optional(),
   /** Content goals */
-  content_goal: z.array(z.string()).default([]),
+  content_goal: z
+    .array(
+      z.enum([
+        "tutorial",
+        "explainer",
+        "news-trend",
+        "opinion-leadership",
+        "listicle",
+        "case-study",
+        "comparison",
+        "faq",
+        "other",
+      ]),
+    )
+    .default([]),
   /** Tone preferences */
-  tone: z.array(z.string()).min(1),
+  tone: z
+    .array(
+      z.enum([
+        "professional-formal",
+        "casual-conversational",
+        "friendly-warm",
+        "humorous-playful",
+        "serious-academic",
+        "technical-analytical",
+        "simple-accessible",
+        "inspirational-uplifting",
+        "other",
+      ]),
+    )
+    .min(1),
   /** Custom tone (when tone includes "Other") */
   tone_other: z.string().optional(),
   /** Keywords to include/focus on */
@@ -138,17 +225,41 @@ export const TopicBuilderFormDataSchema = z.object({
   /** Number of topic ideas to generate */
   num_ideas: z.number().min(1).max(50).default(10),
   /** Regional preferences */
-  region: z.string().optional(),
+  region: z
+    .enum([
+      "us",
+      "uk",
+      "canada",
+      "australia",
+      "pakistan",
+      "india",
+      "europe",
+      "global",
+      "other",
+    ])
+    .optional(),
   /** Language preference */
-  language: z.string().default("English"),
+  language: z
+    .enum([
+      "english",
+      "urdu",
+      "spanish",
+      "french",
+      "german",
+      "arabic",
+      "chinese",
+      "japanese",
+      "other",
+    ])
+    .optional(),
   /** Content timing preferences */
   content_timing_preference: z.string().optional(),
   /** Content originality preferences */
   content_originality_preference: z.string().optional(),
   /** Fresh vs evergreen content preference */
-  fresh_vs_evergreen: z.string().optional(),
+  fresh_vs_evergreen: z.enum(["fresh", "evergreen", "balanced"]).optional(),
   /** Safe vs original content preference */
-  safe_vs_original: z.string().optional(),
+  safe_vs_original: z.enum(["safe", "original", "balanced"]).optional(),
   /** Topics/themes to exclude */
   exclude: z.string().optional(),
   /** Specific focus areas */
@@ -309,9 +420,28 @@ export const validateTopicsForSaving = (topics: unknown[]): SaveTopicItem[] => {
 /**
  * Transforms a GeneratedTopic to SaveTopicItem format for backend API
  *
+ * This is a basic transformation utility. For enhanced error handling,
+ * performance metrics, and batch processing, use the utilities in
+ * @see /lib/transformation-utils.ts
+ *
  * @param topic - Frontend GeneratedTopic object
  * @returns SaveTopicItem formatted for backend API
  * @throws Error if transformation fails due to missing required fields
+ *
+ * @example
+ * ```typescript
+ * // Basic transformation
+ * const backendTopic = transformTopicForSaving(frontendTopic);
+ *
+ * // Enhanced transformation with error handling
+ * import { transformTopicForSavingEnhanced } from '@/lib/transformation-utils';
+ * const result = transformTopicForSavingEnhanced(frontendTopic);
+ * if (result.success) {
+ *   console.log('Transformed:', result.data);
+ * } else {
+ *   console.error('Error:', result.error.message);
+ * }
+ * ```
  */
 export const transformTopicForSaving = (
   topic: GeneratedTopic,
@@ -354,8 +484,13 @@ export const transformTopicForSaving = (
 /**
  * Transforms multiple GeneratedTopics to SaveTopicItems for bulk saving
  *
+ * This is a basic batch transformation utility. For enhanced error handling,
+ * per-item error reporting, and performance optimization, use:
+ * @see /lib/transformation-utils.ts - transformTopicsForSavingEnhanced()
+ *
  * @param topics - Array of frontend GeneratedTopic objects
  * @returns Array of SaveTopicItem formatted for backend API
+ * @throws Error if any topic transformation fails
  */
 export const transformTopicsForSaving = (
   topics: GeneratedTopic[],

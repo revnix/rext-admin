@@ -3,7 +3,7 @@ Task/Subtask Implementation Prompt
 Inputs (fill before starting)
 
 - Task ID: 2
-- Subtask ID: 2.1
+- Subtask ID: 2.2
 - Related plan files: `topic-builder-functionality.md`
 
 Authoritative references

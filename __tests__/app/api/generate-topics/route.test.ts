@@ -367,7 +367,7 @@ describe("/api/generate-topics", () => {
         body: JSON.stringify({ formData: mockFormData }),
       });
 
-      await POST(request as any);
+      await POST(request as NextRequest);
 
       expect(console.error).toHaveBeenCalledWith(
         "Topic generation API error:",
@@ -390,7 +390,7 @@ describe("/api/generate-topics", () => {
         body: JSON.stringify({ formData: mockFormData }),
       });
 
-      await POST(request as any);
+      await POST(request as NextRequest);
 
       expect(console.error).toHaveBeenCalledWith(
         "Topic generation API error:",
@@ -537,7 +537,7 @@ describe("/api/generate-topics", () => {
 
       for (const mapping of errorMappings) {
         const testError: BackendError = {
-          type: mapping.errorType as any,
+          type: mapping.errorType,
           message: `Test ${mapping.errorType}`,
           severity: "medium",
           recoveryActions: ["retry"],
