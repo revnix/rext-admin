@@ -107,14 +107,41 @@ export function TopicActions({
   };
 
   const handleSave = async () => {
-    if (!onSave) return;
-
     setLoading("saving", true);
     try {
-      await onSave(topic.id);
-      console.log(`Topic ${topic.id} saved successfully`);
+      // Call the Next.js API route which handles backend communication server-side
+      const response = await fetch("/api/topic/save-topic", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topics: [topic],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          error: `HTTP ${response.status}`,
+        }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Call the optional onSave callback if provided
+      if (onSave) {
+        await onSave(topic.id);
+      }
+
+      console.log(
+        `Topic ${topic.id} saved successfully - ${result.saved_count} topics saved`,
+      );
+      // TODO: Add user notification when toast system is available
     } catch (error) {
       console.error(`Failed to save topic ${topic.id}:`, error);
+      // TODO: Add user error notification when toast system is available
+      // For now, the error is logged and loading state is cleared
     } finally {
       setLoading("saving", false);
     }
