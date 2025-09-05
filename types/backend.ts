@@ -164,14 +164,27 @@ export interface APIErrorResponse {
 }
 
 /**
- * Backend API payload structure for saving topics
+ * Request payload for saving generated topics to the backend.
+ *
+ * @example
+ * ```typescript
+ * const saveRequest: SaveTopicRequest = {
+ *   topics: [
+ *     { id: "1", title: "AI in Healthcare", angle: "Future prospects", ... }
+ *   ]
+ * };
+ * ```
  */
 export interface SaveTopicRequest {
   topics: GeneratedTopic[];
 }
 
 /**
- * Backend API response structure for saving topics
+ * Response from the backend after attempting to save topics.
+ *
+ * @property success - Whether the save operation completed successfully
+ * @property saved_count - Number of topics that were successfully saved
+ * @property message - Human-readable status message from the backend
  */
 export interface SaveTopicResponse {
   success: boolean;
@@ -180,7 +193,18 @@ export interface SaveTopicResponse {
 }
 
 /**
- * Backend API response structure for getting all topics
+ * Response containing all saved topics retrieved from the backend.
+ *
+ * @property topics - Array of all saved topics with complete metadata
+ * @property total_count - Total number of topics available in the backend
+ *
+ * @example
+ * ```typescript
+ * const response: GetTopicsResponse = {
+ *   topics: [{ id: "1", title: "Topic", ... }],
+ *   total_count: 1
+ * };
+ * ```
  */
 export interface GetTopicsResponse {
   topics: GeneratedTopic[];

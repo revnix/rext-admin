@@ -31,6 +31,19 @@ export class BackendService {
     Promise<BackendTopicGenerationResponse>
   >();
 
+  /**
+   * Create a new BackendService instance with optional configuration overrides.
+   *
+   * @param config - Optional partial configuration to override defaults
+   *
+   * @example
+   * ```typescript
+   * const customService = new BackendService({
+   *   timeout: 60000,
+   *   retry: { maxAttempts: 5 }
+   * });
+   * ```
+   */
   constructor(config?: Partial<BackendConfig>) {
     this.config = {
       baseUrl: process.env.BACKEND_API_URL || "http://127.0.0.1:2024",
@@ -44,7 +57,23 @@ export class BackendService {
   }
 
   /**
-   * Generate topics using the backend API with retry logic
+   * Generate topic ideas using the backend AI API with comprehensive retry logic and deduplication.
+   *
+   * @param formData - Complete topic builder form data containing all user preferences
+   * @returns Promise resolving to generated topics with metadata
+   * @throws {BackendError} When topic generation fails after all retry attempts
+   *
+   * @example
+   * ```typescript
+   * const formData: TopicBuilderFormData = {
+   *   industry: "technology",
+   *   content_type: "blog-post",
+   *   num_ideas: 5,
+   *   // ... other required fields
+   * };
+   * const result = await backendService.generateTopics(formData);
+   * console.log(`Generated ${result.topics.length} topics`);
+   * ```
    */
   async generateTopics(
     formData: TopicBuilderFormData,
@@ -91,7 +120,20 @@ export class BackendService {
   }
 
   /**
-   * Save topics to the backend API
+   * Save generated topics to the backend API with comprehensive error handling and retry logic.
+   *
+   * @param topics - Array of generated topics to save to the backend
+   * @returns Promise resolving to save operation results including success status and count
+   * @throws {BackendError} When the save operation fails after all retry attempts
+   *
+   * @example
+   * ```typescript
+   * const topics: GeneratedTopic[] = [
+   *   { id: "1", title: "AI in Healthcare", angle: "Future prospects", ... }
+   * ];
+   * const result = await backendService.saveTopics(topics);
+   * console.log(`Saved ${result.saved_count} topics successfully`);
+   * ```
    */
   async saveTopics(topics: GeneratedTopic[]): Promise<SaveTopicResponse> {
     this.validateConfig();
@@ -108,7 +150,17 @@ export class BackendService {
   }
 
   /**
-   * Get all saved topics from the backend API
+   * Retrieve all saved topics from the backend API with error handling.
+   *
+   * @returns Promise resolving to all saved topics and total count
+   * @throws {BackendError} When the retrieval operation fails after all retry attempts
+   *
+   * @example
+   * ```typescript
+   * const response = await backendService.getTopics();
+   * console.log(`Found ${response.total_count} saved topics`);
+   * response.topics.forEach(topic => console.log(topic.title));
+   * ```
    */
   async getTopics(): Promise<GetTopicsResponse> {
     this.validateConfig();
