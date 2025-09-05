@@ -162,3 +162,27 @@ export interface APIErrorResponse {
   retry_after?: number;
   request_id?: string;
 }
+
+/**
+ * Backend API payload structure for saving topics
+ */
+export interface SaveTopicRequest {
+  topics: GeneratedTopic[];
+}
+
+/**
+ * Backend API response structure for saving topics
+ */
+export interface SaveTopicResponse {
+  success: boolean;
+  saved_count: number;
+  message: string;
+}
+
+/**
+ * Backend API response structure for getting all topics
+ */
+export interface GetTopicsResponse {
+  topics: GeneratedTopic[];
+  total_count: number;
+}

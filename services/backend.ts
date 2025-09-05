@@ -11,8 +11,14 @@ import type {
   BackendError,
   BackendTopicGenerationPayload,
   BackendTopicGenerationResponse,
+  GetTopicsResponse,
+  SaveTopicRequest,
+  SaveTopicResponse,
 } from "@/types/backend";
-import type { TopicBuilderFormData } from "@/types/topic-builder";
+import type {
+  GeneratedTopic,
+  TopicBuilderFormData,
+} from "@/types/topic-builder";
 
 /**
  * Backend service class for handling API communications with comprehensive error handling
@@ -82,6 +88,34 @@ export class BackendService {
       payload,
       requestId,
     );
+  }
+
+  /**
+   * Save topics to the backend API
+   */
+  async saveTopics(topics: GeneratedTopic[]): Promise<SaveTopicResponse> {
+    this.validateConfig();
+
+    const requestId = generateRequestId();
+    const payload: SaveTopicRequest = { topics };
+
+    return this.executeWithRetryGeneric(
+      "/api/topic/save-topic",
+      payload,
+      requestId,
+      "POST",
+    ) as Promise<SaveTopicResponse>;
+  }
+
+  /**
+   * Get all saved topics from the backend API
+   */
+  async getTopics(): Promise<GetTopicsResponse> {
+    this.validateConfig();
+
+    const requestId = generateRequestId();
+
+    return this.makeGetRequest("/api/topic/get-topics", requestId);
   }
 
   /**
@@ -267,6 +301,181 @@ export class BackendService {
       model_used: result.model_used,
       generation_time_ms: result.generation_time_ms,
     };
+  }
+
+  /**
+   * Execute request with retry logic for generic payloads
+   */
+  private async executeWithRetryGeneric<T, R>(
+    endpoint: string,
+    payload: T,
+    requestId: string,
+    method: "POST" | "PUT" = "POST",
+  ): Promise<R> {
+    let lastError: BackendError | null = null;
+
+    for (let attempt = 1; attempt <= this.config.retry.maxAttempts; attempt++) {
+      try {
+        console.log(
+          `[${requestId}] Attempt ${attempt}/${this.config.retry.maxAttempts}`,
+        );
+
+        const response = await this.makeGenericRequest(
+          endpoint,
+          payload,
+          requestId,
+          method,
+        );
+        const result = await this.validateGenericResponse<R>(response);
+
+        // Success - clean up any stored controllers
+        this.activeRequests.delete(requestId);
+        return result;
+      } catch (error) {
+        const classifiedError = classifyError(error, requestId, attempt);
+        lastError = classifiedError;
+
+        this.logError(
+          `Attempt ${attempt} failed for ${requestId}`,
+          classifiedError,
+        );
+
+        // Don't retry if error is not retryable or we've reached max attempts
+        if (!shouldRetry(classifiedError, attempt, this.config.retry)) {
+          break;
+        }
+
+        // Wait before retrying (except on last attempt)
+        if (attempt < this.config.retry.maxAttempts) {
+          const delay = calculateRetryDelay(attempt, this.config.retry);
+          console.log(`[${requestId}] Waiting ${delay}ms before retry`);
+          await this.delay(delay);
+        }
+      }
+    }
+
+    // Clean up and throw the last error
+    this.activeRequests.delete(requestId);
+    throw (
+      lastError || classifyError(new Error("Unknown retry failure"), requestId)
+    );
+  }
+
+  /**
+   * Make HTTP request for generic payloads
+   */
+  private async makeGenericRequest<T>(
+    endpoint: string,
+    payload: T,
+    requestId: string,
+    method: "POST" | "PUT" = "POST",
+  ): Promise<Response> {
+    const url = `${this.config.baseUrl}${endpoint}`;
+    const controller = new AbortController();
+
+    // Store controller for potential cancellation
+    this.activeRequests.set(requestId, controller);
+
+    // Set up timeout
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      this.activeRequests.delete(requestId);
+    }, this.config.timeout);
+
+    try {
+      const contentApiKey = process.env.CONTENT_API_KEY;
+      if (!contentApiKey) {
+        throw new Error("CONTENT_API_KEY environment variable is not set");
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": requestId,
+          "content-api-key": contentApiKey,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      this.activeRequests.delete(requestId);
+      throw error;
+    }
+  }
+
+  /**
+   * Validate generic backend response
+   */
+  private async validateGenericResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new Error(
+        `Backend API error: ${response.status} ${response.statusText} - ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+    return result as T;
+  }
+
+  /**
+   * Make GET request to backend
+   */
+  private async makeGetRequest(
+    endpoint: string,
+    requestId: string,
+  ): Promise<GetTopicsResponse> {
+    const url = `${this.config.baseUrl}${endpoint}`;
+    const controller = new AbortController();
+
+    this.activeRequests.set(requestId, controller);
+
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      this.activeRequests.delete(requestId);
+    }, this.config.timeout);
+
+    try {
+      const contentApiKey = process.env.CONTENT_API_KEY;
+      if (!contentApiKey) {
+        throw new Error("CONTENT_API_KEY environment variable is not set");
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "X-Request-ID": requestId,
+          "content-api-key": contentApiKey,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        throw new Error(
+          `Backend API error: ${response.status} ${response.statusText} - ${errorText}`,
+        );
+      }
+
+      const result = await response.json();
+      this.activeRequests.delete(requestId);
+
+      return {
+        topics: result.topics || [],
+        total_count: result.total_count || 0,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      this.activeRequests.delete(requestId);
+      throw error;
+    }
   }
 
   /**
