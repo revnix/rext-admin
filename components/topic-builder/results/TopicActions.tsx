@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Download,
   Edit,
@@ -10,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { type TopicEditFormData, topicEditFormSchema } from "@/types/forms";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 interface TopicActionsProps {
@@ -56,14 +59,6 @@ interface TopicActionsProps {
   className?: string;
   variant?: "dropdown" | "buttons";
   showLabels?: boolean;
-}
-
-interface EditFormData {
-  title: string;
-  angle: string;
-  description: string;
-  why_it_works: string;
-  tags: string;
 }
 
 export function TopicActions({
@@ -90,13 +85,20 @@ export function TopicActions({
     deleting: false,
   });
 
-  const [editForm, setEditForm] = useState<EditFormData>({
-    title: topic.title,
-    angle: topic.angle || "",
-    description: topic.description || "",
-    why_it_works: topic.why_it_works || "",
-    tags: topic.tags?.join(", ") || "",
+  const editForm = useForm<TopicEditFormData>({
+    resolver: zodResolver(topicEditFormSchema),
+    defaultValues: {
+      title: topic.title,
+      angle: topic.angle || "",
+      description: topic.description || "",
+      why_it_works: topic.why_it_works || "",
+      tags: topic.tags?.join(", ") || "",
+    },
   });
+
+  const {
+    formState: { errors },
+  } = editForm;
 
   const [exportFormat, setExportFormat] = useState<"json" | "csv">("json");
 
@@ -118,31 +120,34 @@ export function TopicActions({
     }
   };
 
-  const handleEdit = async () => {
-    if (!onEdit) return;
+  const handleEdit = editForm.handleSubmit(
+    async (formData: TopicEditFormData) => {
+      if (!onEdit) return;
 
-    setLoading("editing", true);
-    try {
-      const updates: Partial<GeneratedTopic> = {
-        title: editForm.title,
-        angle: editForm.angle,
-        description: editForm.description,
-        why_it_works: editForm.why_it_works,
-        tags: editForm.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      };
+      setLoading("editing", true);
+      try {
+        const updates: Partial<GeneratedTopic> = {
+          title: formData.title,
+          angle: formData.angle,
+          description: formData.description,
+          why_it_works: formData.why_it_works,
+          tags: formData.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        };
 
-      await onEdit(topic.id, updates);
-      setIsEditDialogOpen(false);
-      console.log(`Topic ${topic.id} updated successfully`);
-    } catch (error) {
-      console.error(`Failed to update topic ${topic.id}:`, error);
-    } finally {
-      setLoading("editing", false);
-    }
-  };
+        await onEdit(topic.id, updates);
+        setIsEditDialogOpen(false);
+        editForm.reset(); // Reset form after successful submission
+        console.log(`Topic ${topic.id} updated successfully`);
+      } catch (error) {
+        console.error(`Failed to update topic ${topic.id}:`, error);
+      } finally {
+        setLoading("editing", false);
+      }
+    },
+  );
 
   const handleRegenerate = async () => {
     if (!onRegenerate) return;
@@ -237,74 +242,72 @@ export function TopicActions({
                   <Label htmlFor="edit-title">Title</Label>
                   <Input
                     id="edit-title"
-                    value={editForm.title}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
+                    {...editForm.register("title")}
                     placeholder="Enter topic title..."
                   />
+                  {errors.title && (
+                    <p className="text-sm text-red-500">
+                      {errors.title.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-angle">Angle</Label>
                   <Input
                     id="edit-angle"
-                    value={editForm.angle}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({
-                        ...prev,
-                        angle: e.target.value,
-                      }))
-                    }
+                    {...editForm.register("angle")}
                     placeholder="Enter topic angle..."
                   />
+                  {errors.angle && (
+                    <p className="text-sm text-red-500">
+                      {errors.angle.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-description">Description</Label>
                   <Textarea
                     id="edit-description"
-                    value={editForm.description}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
+                    {...editForm.register("description")}
                     placeholder="Enter topic description..."
                     rows={3}
                   />
+                  {errors.description && (
+                    <p className="text-sm text-red-500">
+                      {errors.description.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-why-it-works">Why It Works</Label>
                   <Textarea
                     id="edit-why-it-works"
-                    value={editForm.why_it_works}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({
-                        ...prev,
-                        why_it_works: e.target.value,
-                      }))
-                    }
+                    {...editForm.register("why_it_works")}
                     placeholder="Explain why this topic works..."
                     rows={3}
                   />
+                  {errors.why_it_works && (
+                    <p className="text-sm text-red-500">
+                      {errors.why_it_works.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-tags">Tags</Label>
                   <Input
                     id="edit-tags"
-                    value={editForm.tags}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({ ...prev, tags: e.target.value }))
-                    }
+                    {...editForm.register("tags")}
                     placeholder="Enter tags separated by commas..."
                   />
+                  {errors.tags && (
+                    <p className="text-sm text-red-500">
+                      {errors.tags.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -450,68 +453,66 @@ export function TopicActions({
               <Label htmlFor="edit-title">Title</Label>
               <Input
                 id="edit-title"
-                value={editForm.title}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, title: e.target.value }))
-                }
+                {...editForm.register("title")}
                 placeholder="Enter topic title..."
               />
+              {errors.title && (
+                <p className="text-sm text-red-500">{errors.title.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-angle">Angle</Label>
               <Input
                 id="edit-angle"
-                value={editForm.angle}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, angle: e.target.value }))
-                }
+                {...editForm.register("angle")}
                 placeholder="Enter topic angle..."
               />
+              {errors.angle && (
+                <p className="text-sm text-red-500">{errors.angle.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
                 id="edit-description"
-                value={editForm.description}
-                onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
+                {...editForm.register("description")}
                 placeholder="Enter topic description..."
                 rows={3}
               />
+              {errors.description && (
+                <p className="text-sm text-red-500">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-why-it-works">Why It Works</Label>
               <Textarea
                 id="edit-why-it-works"
-                value={editForm.why_it_works}
-                onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    why_it_works: e.target.value,
-                  }))
-                }
+                {...editForm.register("why_it_works")}
                 placeholder="Explain why this topic works..."
                 rows={3}
               />
+              {errors.why_it_works && (
+                <p className="text-sm text-red-500">
+                  {errors.why_it_works.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-tags">Tags</Label>
               <Input
                 id="edit-tags"
-                value={editForm.tags}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, tags: e.target.value }))
-                }
+                {...editForm.register("tags")}
                 placeholder="Enter tags separated by commas..."
               />
+              {errors.tags && (
+                <p className="text-sm text-red-500">{errors.tags.message}</p>
+              )}
             </div>
           </div>
 
