@@ -10,6 +10,7 @@ import {
   Target,
   Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
 import { AILoadingScreen } from "@/components/topic-builder/AILoadingScreen";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
@@ -79,6 +80,8 @@ const steps = [
 ];
 
 export default function TopicBuilderPage() {
+  const router = useRouter();
+
   const {
     formData,
     currentStep,
@@ -185,7 +188,7 @@ export default function TopicBuilderPage() {
   };
 
   const handleNavigateToIdeas = () => {
-    window.location.href = "/ideas";
+    router.push("/ideas");
   };
 
   const handleGenerateNew = () => {
