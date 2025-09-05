@@ -28,6 +28,7 @@ import type {
   BatchTransformationOptions,
   BatchTransformationResult,
   BenchmarkResult,
+  EdgeCaseOptions,
   FormDataTransformationOptions,
   TopicTransformationOptions,
   TransformationError,
@@ -39,6 +40,142 @@ import type {
 // ============================================================================
 // ENHANCED TRANSFORMATION UTILITIES
 // ============================================================================
+
+/**
+ * Determines error severity based on error type
+ * @private
+ */
+const determineSeverity = (
+  type: TransformationErrorType,
+): "low" | "medium" | "high" | "critical" => {
+  const severityMap: Record<
+    TransformationErrorType,
+    "low" | "medium" | "high" | "critical"
+  > = {
+    validation: "medium",
+    conversion: "medium",
+    missing_field: "high",
+    type_mismatch: "high",
+    field_required: "high",
+    array_empty: "medium",
+    schema_mismatch: "high",
+    size_limit_exceeded: "medium",
+    circular_reference: "high",
+    network_timeout: "low",
+    rate_limit_exceeded: "low",
+    memory_limit_exceeded: "critical",
+    unknown: "medium",
+  };
+  return severityMap[type];
+};
+
+/**
+ * Determines if an error type is recoverable
+ * @private
+ */
+const isErrorRecoverable = (type: TransformationErrorType): boolean => {
+  const recoverableErrors: TransformationErrorType[] = [
+    "validation",
+    "missing_field",
+    "type_mismatch",
+    "field_required",
+    "array_empty",
+    "size_limit_exceeded",
+    "network_timeout",
+    "rate_limit_exceeded",
+  ];
+  return recoverableErrors.includes(type);
+};
+
+/**
+ * Determines the specific error type based on Zod validation issues
+ * @private
+ */
+const determineValidationErrorType = (
+  issues: import("zod").ZodIssue[],
+): TransformationErrorType => {
+  for (const issue of issues) {
+    switch (issue.code) {
+      case "invalid_type":
+        return "type_mismatch";
+      case "too_small":
+        if ("type" in issue && issue.type === "array") return "array_empty";
+        return "field_required";
+      case "invalid_format":
+        return "schema_mismatch";
+      case "custom":
+        return "validation";
+      default:
+        if (issue.message.toLowerCase().includes("required")) {
+          return "field_required";
+        }
+        if (issue.message.toLowerCase().includes("empty")) {
+          return "array_empty";
+        }
+    }
+  }
+  return "validation";
+};
+
+/**
+ * Classifies transformation errors based on error message content
+ * @private
+ */
+const classifyTransformationError = (
+  errorMessage: string,
+): TransformationErrorType => {
+  const message = errorMessage.toLowerCase();
+
+  if (message.includes("empty") || message.includes("required")) {
+    return "field_required";
+  }
+  if (message.includes("type") || message.includes("mismatch")) {
+    return "type_mismatch";
+  }
+  if (message.includes("validation") || message.includes("invalid")) {
+    return "validation";
+  }
+  if (message.includes("size") || message.includes("limit")) {
+    return "size_limit_exceeded";
+  }
+  if (message.includes("circular") || message.includes("reference")) {
+    return "circular_reference";
+  }
+
+  return "conversion";
+};
+
+/**
+ * Creates a fallback SaveTopicItem with minimal valid data
+ * @private
+ */
+const createFallbackSaveTopicItem = (input: unknown): SaveTopicItem | null => {
+  try {
+    const fallbackData: SaveTopicItem = {
+      title: extractStringValue(input, "title") || "Untitled Topic",
+      angle: extractStringValue(input, "angle") || "General angle",
+      channel_fit: extractArrayValue(input, "channel_fit") || ["blog"],
+      audience_fit: extractArrayValue(input, "audience_fit") || [
+        "general-audience",
+      ],
+      scores: {
+        relevance: extractNumberValue(input, "scores.relevance") || 50,
+        freshness: extractNumberValue(input, "scores.freshness") || 50,
+        novelty: extractNumberValue(input, "scores.novelty") || 50,
+      },
+      why_it_works:
+        extractStringValue(input, "why_it_works") ||
+        "Standard content approach",
+      tags: extractArrayValue(input, "tags") || ["content"],
+    };
+
+    // Validate the fallback data
+    const validation = SaveTopicItemSchema.safeParse(fallbackData);
+    return validation.success ? validation.data : null;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Creates a standardized transformation error with recovery suggestions
@@ -59,16 +196,26 @@ export const createTransformationError = (
   error.type = type;
   error.originalData = originalData;
   error.fieldPath = options.fieldPath;
-  error.isRecoverable = options.isRecoverable ?? true;
+  error.expectedType = options.expectedType;
+  error.actualType = options.actualType;
+  error.context = options.context;
+  error.severity = options.severity ?? determineSeverity(type);
+  error.timestamp = new Date().toISOString();
+  error.isRecoverable = options.isRecoverable ?? isErrorRecoverable(type);
   error.validationIssues = options.validationIssues;
 
-  // Default recovery actions based on error type
+  // Enhanced recovery actions based on error type and context
   const defaultRecoveryActions: Record<TransformationError["type"], string[]> =
     {
       validation: [
         "Check that all required fields are present",
         "Verify field types match expected formats",
         "Review field value constraints (min/max lengths, etc.)",
+        ...(options.constraints
+          ? [
+              `Ensure values meet constraints: ${options.constraints.join(", ")}`,
+            ]
+          : []),
       ],
       conversion: [
         "Ensure input data is in the expected format",
@@ -79,15 +226,64 @@ export const createTransformationError = (
         "Add the missing required field to your input data",
         "Check if field name spelling is correct",
         "Verify that the field is not undefined or null",
+        ...(options.expectedType
+          ? [`Expected type: ${options.expectedType}`]
+          : []),
       ],
       type_mismatch: [
         "Convert field value to the expected type",
         "Check for string/number/boolean type mismatches",
         "Ensure arrays are used where array types are expected",
+        ...(options.expectedType && options.actualType
+          ? [
+              `Expected ${options.expectedType}, but received ${options.actualType}`,
+            ]
+          : []),
+      ],
+      field_required: [
+        "This field is mandatory and cannot be empty",
+        "Provide a valid value for this field",
+        "Check if the field is properly initialized",
+      ],
+      array_empty: [
+        "Arrays marked as required cannot be empty",
+        "Add at least one valid element to the array",
+        "Verify array initialization before processing",
+      ],
+      schema_mismatch: [
+        "Input data structure doesn't match expected schema",
+        "Review the required schema format",
+        "Check for missing or extra fields",
+      ],
+      size_limit_exceeded: [
+        "Input data exceeds maximum allowed size",
+        "Reduce data size or split into smaller chunks",
+        "Consider data compression techniques",
+      ],
+      circular_reference: [
+        "Remove circular references from input data",
+        "Use JSON.stringify replacer to handle cycles",
+        "Restructure data to avoid self-referencing objects",
+      ],
+      network_timeout: [
+        "Check network connectivity",
+        "Retry the operation after a delay",
+        "Consider increasing timeout limits",
+      ],
+      rate_limit_exceeded: [
+        "Wait before retrying the operation",
+        "Implement exponential backoff strategy",
+        "Check API rate limit documentation",
+      ],
+      memory_limit_exceeded: [
+        "Reduce memory usage by processing data in chunks",
+        "Clear unused variables and references",
+        "Consider streaming data processing",
       ],
       unknown: [
         "Check the error message for specific details",
         "Verify input data format matches expectations",
+        "Enable debug mode for more detailed error information",
         "Contact support if the issue persists",
       ],
     };
@@ -96,6 +292,104 @@ export const createTransformationError = (
     options.recoveryActions ?? defaultRecoveryActions[type];
 
   return error;
+};
+
+/**
+ * Comprehensive edge case validation and handling
+ * @private
+ */
+const handleEdgeCases = (
+  input: unknown,
+  options: TopicTransformationOptions & EdgeCaseOptions = {},
+): {
+  isValid: boolean;
+  error?: TransformationError;
+  processedInput?: unknown;
+} => {
+  // Handle null/undefined input
+  if (input === null || input === undefined) {
+    if (options.handleNullInput === "return_null") {
+      return { isValid: false, processedInput: null };
+    }
+    if (options.handleNullInput === "return_empty") {
+      return { isValid: false, processedInput: {} };
+    }
+    return {
+      isValid: false,
+      error: createTransformationError(
+        "validation",
+        "Input cannot be null or undefined",
+        input,
+        {
+          severity: "high",
+          expectedType: "object",
+          actualType: typeof input,
+        },
+      ),
+    };
+  }
+
+  // Check for circular references
+  try {
+    JSON.stringify(input);
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes("circular")) {
+      if (options.handleCircularRefs === "serialize") {
+        try {
+          const seen = new WeakSet();
+          const processedInput = JSON.parse(
+            JSON.stringify(input, (_key, value) => {
+              if (typeof value === "object" && value !== null) {
+                if (seen.has(value)) return "[Circular Reference]";
+                seen.add(value);
+              }
+              return value;
+            }),
+          );
+          return { isValid: true, processedInput };
+        } catch {
+          // Fallback if serialization fails
+        }
+      }
+      return {
+        isValid: false,
+        error: createTransformationError(
+          "circular_reference",
+          "Input contains circular references",
+          "[Circular data structure]",
+          { severity: "high" },
+        ),
+      };
+    }
+  }
+
+  // Check input size limits
+  const inputSize = JSON.stringify(input).length;
+  const maxSize = options.maxInputSize ?? 1000000; // 1MB default
+  if (inputSize > maxSize) {
+    if (options.handleOversizedInput === "truncate") {
+      const truncatedInput = JSON.stringify(input).substring(0, maxSize);
+      try {
+        return { isValid: true, processedInput: JSON.parse(truncatedInput) };
+      } catch {
+        // Fallback to error if truncation breaks JSON
+      }
+    }
+    return {
+      isValid: false,
+      error: createTransformationError(
+        "size_limit_exceeded",
+        `Input size (${inputSize} chars) exceeds limit (${maxSize} chars)`,
+        input,
+        {
+          severity: "medium",
+          context: { inputSize, maxSize },
+        },
+      ),
+    };
+  }
+
+  return { isValid: true, processedInput: input };
 };
 
 /**
@@ -123,20 +417,50 @@ export const transformTopicForSavingEnhanced = (
   const startTime = performance.now();
 
   try {
+    // Step 0: Handle edge cases and input validation
+    const edgeCaseResult = handleEdgeCases(topic, options);
+    if (!edgeCaseResult.isValid) {
+      if (edgeCaseResult.error) {
+        return {
+          success: false,
+          error: edgeCaseResult.error,
+          metrics: options.includeMetrics
+            ? {
+                durationMs: performance.now() - startTime,
+                inputSize: 0,
+                outputSize: 0,
+              }
+            : undefined,
+        };
+      }
+      // Handle special return cases (null/empty)
+      topic = edgeCaseResult.processedInput;
+    } else if (edgeCaseResult.processedInput !== undefined) {
+      topic = edgeCaseResult.processedInput;
+    }
+
     // Step 1: Validate input as GeneratedTopic
     const validationResult = GeneratedTopicSchema.safeParse(topic);
     if (!validationResult.success) {
       const fieldErrors = extractValidationErrors(validationResult.error);
       const friendlyErrors = createUserFriendlyErrors(fieldErrors);
 
+      // Determine specific error type based on validation issues
+      const specificErrorType = determineValidationErrorType(
+        validationResult.error.issues,
+      );
+
       return {
         success: false,
         error: createTransformationError(
-          "validation",
+          specificErrorType,
           `Invalid GeneratedTopic input: ${friendlyErrors.join("; ")}`,
           topic,
           {
             validationIssues: validationResult.error.issues,
+            expectedType: "GeneratedTopic",
+            actualType: typeof topic,
+            context: { validationStep: "input_validation" },
             recoveryActions: [
               "Ensure the topic object has all required fields",
               "Check field types match the GeneratedTopic schema",
@@ -155,7 +479,7 @@ export const transformTopicForSavingEnhanced = (
       processedTopic = applyTopicAutoFixes(validTopic);
     }
 
-    // Step 3: Perform transformation using base utility
+    // Step 3: Perform transformation using base utility with fallback handling
     let transformedTopic: SaveTopicItem;
     try {
       transformedTopic = transformTopicForSaving(processedTopic);
@@ -164,13 +488,46 @@ export const transformTopicForSavingEnhanced = (
         error instanceof Error ? error.message : String(error);
 
       // Classify error type based on message
-      let errorType: TransformationErrorType = "unknown";
-      if (errorMessage.includes("empty")) {
-        errorType = "missing_field";
-      } else if (errorMessage.includes("validation")) {
-        errorType = "validation";
-      } else {
-        errorType = "conversion";
+      const errorType = classifyTransformationError(errorMessage);
+
+      // Handle fallback behavior for recoverable errors
+      if (
+        isErrorRecoverable(errorType) &&
+        options.fallbackBehavior !== "strict"
+      ) {
+        if (options.fallbackBehavior === "skip") {
+          return {
+            success: false,
+            error: createTransformationError(
+              errorType,
+              `Transformation skipped due to error: ${errorMessage}`,
+              topic,
+              {
+                isRecoverable: false,
+                context: { fallbackBehavior: "skip" },
+              },
+            ),
+          };
+        }
+
+        if (options.fallbackBehavior === "lenient") {
+          // Attempt to create a minimal valid SaveTopicItem
+          const fallbackTopic = createFallbackSaveTopicItem(processedTopic);
+          if (fallbackTopic) {
+            const endTime = performance.now();
+            return {
+              success: true,
+              data: fallbackTopic,
+              metrics: options.includeMetrics
+                ? {
+                    durationMs: endTime - startTime,
+                    inputSize: JSON.stringify(topic).length,
+                    outputSize: JSON.stringify(fallbackTopic).length,
+                  }
+                : undefined,
+            };
+          }
+        }
       }
 
       return {
@@ -180,7 +537,8 @@ export const transformTopicForSavingEnhanced = (
           `Transformation failed: ${errorMessage}`,
           topic,
           {
-            isRecoverable: true,
+            isRecoverable: isErrorRecoverable(errorType),
+            context: { originalError: errorMessage },
           },
         ),
       };
@@ -509,6 +867,81 @@ export const transformFormDataToBackendEnhanced = (
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Safely extracts a string value from nested object properties
+ * @private
+ */
+const extractStringValue = (obj: unknown, path: string): string | null => {
+  try {
+    if (!obj || typeof obj !== "object") return null;
+
+    const keys = path.split(".");
+    let current: unknown = obj;
+
+    for (const key of keys) {
+      if (current && typeof current === "object" && key in current) {
+        current = (current as Record<string, unknown>)[key];
+      } else {
+        return null;
+      }
+    }
+
+    return typeof current === "string" ? current : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Safely extracts a number value from nested object properties
+ * @private
+ */
+const extractNumberValue = (obj: unknown, path: string): number | null => {
+  try {
+    if (!obj || typeof obj !== "object") return null;
+
+    const keys = path.split(".");
+    let current: unknown = obj;
+
+    for (const key of keys) {
+      if (current && typeof current === "object" && key in current) {
+        current = (current as Record<string, unknown>)[key];
+      } else {
+        return null;
+      }
+    }
+
+    return typeof current === "number" ? current : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Safely extracts an array value from nested object properties
+ * @private
+ */
+const extractArrayValue = (obj: unknown, path: string): string[] | null => {
+  try {
+    if (!obj || typeof obj !== "object") return null;
+
+    const keys = path.split(".");
+    let current: unknown = obj;
+
+    for (const key of keys) {
+      if (current && typeof current === "object" && key in current) {
+        current = (current as Record<string, unknown>)[key];
+      } else {
+        return null;
+      }
+    }
+
+    return Array.isArray(current) ? current : null;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Applies automatic fixes to a GeneratedTopic object

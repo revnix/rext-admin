@@ -25,6 +25,14 @@ export interface TransformationError extends Error {
     | "conversion"
     | "missing_field"
     | "type_mismatch"
+    | "field_required"
+    | "array_empty"
+    | "schema_mismatch"
+    | "size_limit_exceeded"
+    | "circular_reference"
+    | "network_timeout"
+    | "rate_limit_exceeded"
+    | "memory_limit_exceeded"
     | "unknown";
   /** Original input data that caused the error */
   originalData?: unknown;
@@ -36,6 +44,16 @@ export interface TransformationError extends Error {
   isRecoverable: boolean;
   /** Detailed validation issues if applicable */
   validationIssues?: z.ZodIssue[];
+  /** Expected data type/format */
+  expectedType?: string;
+  /** Actual received data type/format */
+  actualType?: string;
+  /** Additional contextual information */
+  context?: Record<string, unknown>;
+  /** Error severity level */
+  severity?: "low" | "medium" | "high" | "critical";
+  /** Timestamp when error occurred */
+  timestamp?: string;
 }
 
 /**
@@ -110,6 +128,16 @@ export interface TopicTransformationOptions {
   includeMetrics?: boolean;
   /** Custom field mappings to override defaults */
   customMappings?: Record<string, string>;
+  /** Maximum input size allowed (in characters) */
+  maxInputSize?: number;
+  /** Maximum processing time allowed (in milliseconds) */
+  timeoutMs?: number;
+  /** Fallback behavior for recoverable errors */
+  fallbackBehavior?: "strict" | "lenient" | "skip";
+  /** Whether to enable detailed error context */
+  enableDetailedErrors?: boolean;
+  /** Whether to sanitize sensitive data in error logs */
+  sanitizeLogs?: boolean;
 }
 
 /**
@@ -144,6 +172,29 @@ export interface TransformationErrorOptions {
   recoveryActions?: string[];
   isRecoverable?: boolean;
   validationIssues?: z.ZodIssue[];
+  expectedType?: string;
+  actualType?: string;
+  context?: Record<string, unknown>;
+  severity?: "low" | "medium" | "high" | "critical";
+  constraints?: string[];
+}
+
+/**
+ * Edge case handling options
+ */
+export interface EdgeCaseOptions {
+  /** How to handle null/undefined input */
+  handleNullInput?: "error" | "return_null" | "return_empty";
+  /** How to handle circular references */
+  handleCircularRefs?: "error" | "serialize" | "remove";
+  /** How to handle oversized input */
+  handleOversizedInput?: "error" | "truncate" | "compress";
+  /** How to handle memory limits */
+  handleMemoryLimits?: "error" | "chunk" | "stream";
+  /** Maximum retry attempts for recoverable errors */
+  maxRetryAttempts?: number;
+  /** Delay between retry attempts (in ms) */
+  retryDelayMs?: number;
 }
 
 // ============================================================================

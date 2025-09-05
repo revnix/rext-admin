@@ -277,9 +277,14 @@ describe("Zod Validation Integration", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
-      expect(result.error?.type).toMatch(
-        /validation|field_required|missing_field/,
-      );
+      expect(
+        [
+          "validation",
+          "field_required",
+          "missing_field",
+          "type_mismatch",
+        ].includes(result.error?.type || ""),
+      ).toBe(true);
       expect(result.error?.recoveryActions).toBeDefined();
       expect(result.error?.fieldPath).toBeDefined();
     });
@@ -304,7 +309,11 @@ describe("Zod Validation Integration", () => {
 
       const missingResult = transformTopicForSavingEnhanced(missingFieldTopic);
       expect(missingResult.success).toBe(false);
-      expect(missingResult.error?.type).toMatch(/validation|field_required/);
+      expect(
+        ["validation", "field_required", "type_mismatch"].includes(
+          missingResult.error?.type || "",
+        ),
+      ).toBe(true);
     });
 
     it("should apply auto-fixes when enabled", () => {
