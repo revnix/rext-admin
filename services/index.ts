@@ -29,6 +29,8 @@ export {
   sanitizeErrorForLogging,
   shouldRetry,
 } from "@/lib/error-utils";
+// Export transformation utilities
+export { transformTopicsToIdeas } from "@/lib/topic-transformations";
 // Re-export all backend-related types for convenience
 export type {
   APIErrorResponse,
@@ -54,6 +56,7 @@ export type {
   TopicGenerationRequest,
   TopicGenerationResponse,
 } from "@/types/topic-builder";
+
 // Export the main service class and default instance
 // Export legacy compatibility function (marked as deprecated)
 export {

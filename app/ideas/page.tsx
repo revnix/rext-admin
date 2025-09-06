@@ -1,494 +1,232 @@
 "use client";
 
-import { Edit2, Eye, Lightbulb, Plus, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  Edit2,
+  Eye,
+  Lightbulb,
+  Plus,
+  RefreshCw,
+  Trash2,
+  WifiOff,
+} from "lucide-react";
 import Link from "next/link";
 import { DataTable, type RowAction } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { useTopics } from "@/hooks/use-topics";
 import type { IdeaData } from "@/types/data-table";
 
 export default function IdeasPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Ideas" }];
 
-  // Sample ideas data with comprehensive information
-  const ideasData: IdeaData[] = [
-    {
-      id: "1",
-      name: "AI-Powered Content Calendar",
-      description:
-        "Automated social media content planning using AI to suggest optimal posting times and content types",
-      category: "Social Media",
-      status: "In Progress",
-      priority: "High",
-      source: "Internal",
-      assignee: "Sarah Johnson",
-      estimatedEffort: "2 weeks",
-      score: 92,
-      ranking: "#1",
-      created: "2024-01-15",
-      lastModified: "2024-01-22",
-      updated: "2024-01-22",
-      author: "Sarah Johnson",
-      tags: ["AI", "Automation", "Social Media", "Content Planning"],
-      contentType: "Social Media Campaign",
-    },
-    {
-      id: "2",
-      name: "Sustainable Living Blog Series",
-      description:
-        "10-part blog series covering eco-friendly lifestyle tips, sustainable products, and green technology",
-      category: "Blog",
-      status: "Draft",
-      priority: "Medium",
-      source: "Internal",
-      assignee: "Mike Chen",
-      estimatedEffort: "4 weeks",
-      score: 87,
-      ranking: "#2",
-      created: "2024-01-14",
-      lastModified: "2024-01-21",
-      updated: "2024-01-21",
-      author: "Mike Chen",
-      tags: ["Sustainability", "Environment", "Lifestyle", "Green Tech"],
-      contentType: "Blog Series",
-    },
-    {
-      id: "3",
-      name: "Weekly Tech Newsletter",
-      description:
-        "Curated newsletter featuring latest tech trends, startup news, and product launches for developers",
-      category: "Newsletter",
-      status: "Published",
-      priority: "High",
-      source: "Internal",
-      assignee: "Alex Rivera",
-      estimatedEffort: "1 week",
-      score: 95,
-      ranking: "#1",
-      created: "2024-01-10",
-      lastModified: "2024-01-20",
-      updated: "2024-01-20",
-      author: "Alex Rivera",
-      tags: ["Technology", "Startups", "Development", "News"],
-      contentType: "Newsletter",
-    },
-    {
-      id: "4",
-      name: "Holiday Season Ad Campaign",
-      description:
-        "Multi-platform advertising campaign for Q4 holiday shopping with festive themes and gift guides",
-      category: "Advertising",
-      status: "Completed",
-      priority: "High",
-      source: "Marketing Team",
-      assignee: "Emma Davis",
-      estimatedEffort: "6 weeks",
-      score: 89,
-      ranking: "#3",
-      created: "2024-01-08",
-      lastModified: "2024-01-19",
-      updated: "2024-01-19",
-      author: "Emma Davis",
-      tags: ["Advertising", "Holidays", "Shopping", "Seasonal"],
-      contentType: "Ad Campaign",
-    },
-    {
-      id: "5",
-      name: "Remote Work Productivity Tips",
-      description:
-        "LinkedIn article series about maintaining productivity while working from home",
-      category: "Social Media",
-      status: "In Review",
-      priority: "Medium",
-      source: "HR Department",
-      assignee: "David Park",
-      estimatedEffort: "2 weeks",
-      score: 78,
-      ranking: "#8",
-      created: "2024-01-12",
-      lastModified: "2024-01-18",
-      updated: "2024-01-18",
-      author: "David Park",
-      tags: ["Remote Work", "Productivity", "LinkedIn", "Professional"],
-      contentType: "Social Media Posts",
-    },
-    {
-      id: "6",
-      name: "Fitness App Launch Campaign",
-      description:
-        "Comprehensive marketing strategy for new fitness mobile app including influencer partnerships",
-      category: "Advertising",
-      status: "Planning",
-      priority: "High",
-      source: "Marketing Team",
-      assignee: "Lisa Wong",
-      estimatedEffort: "3 weeks",
-      score: 84,
-      ranking: "#5",
-      created: "2024-01-11",
-      lastModified: "2024-01-17",
-      updated: "2024-01-17",
-      author: "Lisa Wong",
-      tags: ["Fitness", "Mobile App", "Marketing", "Influencers"],
-      contentType: "Marketing Campaign",
-    },
-    {
-      id: "7",
-      name: "Food Photography Blog",
-      description:
-        "Visual blog featuring restaurant reviews, recipes, and food photography techniques",
-      category: "Blog",
-      status: "Active",
-      priority: "Medium",
-      source: "Internal",
-      assignee: "Carlos Mendez",
-      estimatedEffort: "2 weeks",
-      score: 81,
-      ranking: "#7",
-      created: "2024-01-09",
-      lastModified: "2024-01-16",
-      updated: "2024-01-16",
-      author: "Carlos Mendez",
-      tags: ["Food", "Photography", "Recipes", "Reviews"],
-      contentType: "Visual Blog",
-    },
-    {
-      id: "8",
-      name: "Cybersecurity Awareness Newsletter",
-      description:
-        "Monthly newsletter educating employees about cybersecurity threats and best practices",
-      category: "Newsletter",
-      status: "Scheduled",
-      priority: "High",
-      source: "IT Department",
-      assignee: "Jennifer Taylor",
-      estimatedEffort: "1 week",
-      score: 86,
-      ranking: "#4",
-      created: "2024-01-07",
-      lastModified: "2024-01-15",
-      updated: "2024-01-15",
-      author: "Jennifer Taylor",
-      tags: ["Cybersecurity", "Education", "Corporate", "Safety"],
-      contentType: "Educational Newsletter",
-    },
-    {
-      id: "9",
-      name: "Instagram Reels Strategy",
-      description:
-        "30-day Instagram Reels content plan focusing on behind-the-scenes and trending audio",
-      category: "Social Media",
-      status: "In Progress",
-      priority: "Medium",
-      source: "Marketing Team",
-      assignee: "Zoe Martinez",
-      estimatedEffort: "2 weeks",
-      score: 75,
-      ranking: "#12",
-      created: "2024-01-06",
-      lastModified: "2024-01-14",
-      updated: "2024-01-14",
-      author: "Zoe Martinez",
-      tags: ["Instagram", "Reels", "Video Content", "Trends"],
-      contentType: "Video Strategy",
-    },
-    {
-      id: "10",
-      name: "B2B Sales Email Sequence",
-      description:
-        "5-part email nurture sequence for B2B software leads with case studies and demos",
-      category: "Email",
-      status: "Testing",
-      priority: "High",
-      source: "Sales Team",
-      assignee: "Robert Kim",
-      estimatedEffort: "3 weeks",
-      score: 90,
-      ranking: "#2",
-      created: "2024-01-05",
-      lastModified: "2024-01-13",
-      updated: "2024-01-13",
-      author: "Robert Kim",
-      tags: ["B2B", "Email Marketing", "Sales", "Lead Nurturing"],
-      contentType: "Email Campaign",
-    },
-    {
-      id: "11",
-      name: "Travel Destination Guide",
-      description:
-        "Comprehensive blog post about hidden gems in Southeast Asia for budget travelers",
-      category: "Blog",
-      status: "Published",
-      priority: "Low",
-      source: "Content Team",
-      assignee: "Amanda Foster",
-      estimatedEffort: "1 week",
-      score: 72,
-      ranking: "#15",
-      created: "2024-01-04",
-      lastModified: "2024-01-12",
-      updated: "2024-01-12",
-      author: "Amanda Foster",
-      tags: ["Travel", "Budget Travel", "Asia", "Hidden Gems"],
-      contentType: "Travel Blog",
-    },
-    {
-      id: "12",
-      name: "Black Friday Ad Blitz",
-      description:
-        "48-hour intensive advertising campaign across Google Ads, Facebook, and Instagram for Black Friday sales",
-      category: "Advertising",
-      status: "Completed",
-      priority: "High",
-      source: "Marketing Team",
-      assignee: "Marcus Johnson",
-      estimatedEffort: "4 weeks",
-      score: 94,
-      ranking: "#1",
-      created: "2024-01-03",
-      lastModified: "2024-01-11",
-      updated: "2024-01-11",
-      author: "Marcus Johnson",
-      tags: ["Black Friday", "Paid Ads", "Sales", "E-commerce"],
-      contentType: "Flash Sale Campaign",
-    },
-    {
-      id: "13",
-      name: "Wellness Wednesday Newsletter",
-      description:
-        "Weekly wellness tips newsletter covering mental health, nutrition, and exercise for corporate employees",
-      category: "Newsletter",
-      status: "Active",
-      priority: "Medium",
-      source: "HR Department",
-      assignee: "Dr. Rachel Green",
-      estimatedEffort: "1 week",
-      score: 79,
-      ranking: "#9",
-      created: "2024-01-02",
-      lastModified: "2024-01-10",
-      updated: "2024-01-10",
-      author: "Dr. Rachel Green",
-      tags: ["Wellness", "Mental Health", "Corporate", "Weekly"],
-      contentType: "Wellness Newsletter",
-    },
-    {
-      id: "14",
-      name: "TikTok Challenge Campaign",
-      description:
-        "Viral TikTok challenge promoting eco-friendly products with user-generated content",
-      category: "Social Media",
-      status: "Viral",
-      priority: "High",
-      source: "Marketing Team",
-      assignee: "Taylor Swift",
-      estimatedEffort: "2 weeks",
-      score: 96,
-      ranking: "#1",
-      created: "2024-01-01",
-      lastModified: "2024-01-09",
-      updated: "2024-01-09",
-      author: "Taylor Swift",
-      tags: ["TikTok", "Viral", "UGC", "Eco-friendly"],
-      contentType: "Social Challenge",
-    },
-    {
-      id: "15",
-      name: "Cryptocurrency Education Blog",
-      description:
-        "Beginner-friendly blog series explaining cryptocurrency, blockchain, and DeFi concepts",
-      category: "Blog",
-      status: "Draft",
-      priority: "Medium",
-      source: "Content Team",
-      assignee: "Nathan Brooks",
-      estimatedEffort: "3 weeks",
-      score: 77,
-      ranking: "#11",
-      created: "2023-12-30",
-      lastModified: "2024-01-08",
-      updated: "2024-01-08",
-      author: "Nathan Brooks",
-      tags: ["Cryptocurrency", "Blockchain", "Education", "Finance"],
-      contentType: "Educational Blog",
-    },
-    {
-      id: "16",
-      name: "Mother's Day Gift Guide",
-      description:
-        "Curated email campaign featuring personalized gift recommendations for Mother's Day",
-      category: "Email",
-      status: "Scheduled",
-      priority: "Medium",
-      source: "Marketing Team",
-      assignee: "Sophie Anderson",
-      estimatedEffort: "2 weeks",
-      score: 83,
-      ranking: "#6",
-      created: "2023-12-29",
-      lastModified: "2024-01-07",
-      updated: "2024-01-07",
-      author: "Sophie Anderson",
-      tags: ["Mother's Day", "Gift Guide", "Personalization", "Seasonal"],
-      contentType: "Seasonal Email",
-    },
-    {
-      id: "17",
-      name: "LinkedIn Company Updates",
-      description:
-        "Weekly LinkedIn posts showcasing company culture, employee spotlights, and industry insights",
-      category: "Social Media",
-      status: "Active",
-      priority: "Low",
-      source: "HR Department",
-      assignee: "HR Team",
-      estimatedEffort: "1 week",
-      score: 70,
-      ranking: "#18",
-      created: "2023-12-28",
-      lastModified: "2024-01-06",
-      updated: "2024-01-06",
-      author: "HR Team",
-      tags: ["LinkedIn", "Company Culture", "Employee Spotlight", "B2B"],
-      contentType: "Corporate Social",
-    },
-    {
-      id: "18",
-      name: "Product Launch Teaser Campaign",
-      description:
-        "Multi-channel teaser campaign building anticipation for upcoming product launch with countdown elements",
-      category: "Advertising",
-      status: "Planning",
-      priority: "High",
-      source: "Product Team",
-      assignee: "Product Team",
-      estimatedEffort: "5 weeks",
-      score: 88,
-      ranking: "#3",
-      created: "2023-12-27",
-      lastModified: "2024-01-05",
-      updated: "2024-01-05",
-      author: "Product Team",
-      tags: ["Product Launch", "Teaser", "Multi-channel", "Countdown"],
-      contentType: "Launch Campaign",
-    },
-    {
-      id: "19",
-      name: "DIY Home Improvement Newsletter",
-      description:
-        "Monthly newsletter with DIY tutorials, tool reviews, and home improvement project ideas",
-      category: "Newsletter",
-      status: "Active",
-      priority: "Medium",
-      source: "Content Team",
-      assignee: "Tom Wilson",
-      estimatedEffort: "1 week",
-      score: 74,
-      ranking: "#14",
-      created: "2023-12-26",
-      lastModified: "2024-01-04",
-      updated: "2024-01-04",
-      author: "Tom Wilson",
-      tags: ["DIY", "Home Improvement", "Tutorials", "Tools"],
-      contentType: "DIY Newsletter",
-    },
-    {
-      id: "20",
-      name: "Customer Success Stories Blog",
-      description:
-        "Case study blog series highlighting customer transformations and success stories",
-      category: "Blog",
-      status: "In Progress",
-      priority: "High",
-      source: "Customer Success Team",
-      assignee: "Customer Success Team",
-      estimatedEffort: "3 weeks",
-      score: 85,
-      ranking: "#4",
-      created: "2023-12-25",
-      lastModified: "2024-01-03",
-      updated: "2024-01-03",
-      author: "Customer Success Team",
-      tags: ["Case Studies", "Customer Success", "Testimonials", "B2B"],
-      contentType: "Case Study Blog",
-    },
-  ];
+  // Fetch topics data using TanStack Query with enhanced states
+  const {
+    data: ideas = [],
+    status,
+    error,
+    refetch,
+    isInitialLoading,
+    isBackgroundRefetching,
+  } = useTopics();
+
+  // Log successful data loads for debugging
+  if (status === "success" && ideas.length > 0) {
+    console.log(`Ideas page: Loaded ${ideas.length} topics successfully`);
+  }
+
+  // Handle retry with proper TanStack Query refetch
+  const handleRetry = async () => {
+    console.log("Retrying topics fetch...");
+    await refetch();
+  };
 
   const columns = [
-    { key: "name", header: "Idea Name", width: "300px" },
+    { key: "name", header: "Topic Title", width: "280px" },
     { key: "category", header: "Category", width: "120px" },
-    { key: "status", header: "Status", width: "120px" },
-    { key: "score", header: "Score", width: "80px" },
-    { key: "ranking", header: "Rank", width: "80px" },
-    { key: "priority", header: "Priority", width: "100px" },
-    { key: "author", header: "Author", width: "150px" },
-    { key: "updated", header: "Updated", width: "120px" },
+    { key: "contentType", header: "Content Type", width: "140px" },
+    { key: "status", header: "Status", width: "100px" },
+    { key: "score", header: "Score", width: "70px" },
+    { key: "priority", header: "Priority", width: "90px" },
+    { key: "ranking", header: "Rank", width: "60px" },
+    { key: "updated", header: "Generated", width: "100px" },
   ];
 
   const emptyActions = [
     {
-      label: "Create Idea",
+      label: "Generate Topics",
       icon: <Plus className="h-4 w-4" />,
-      href: "/ideas/create",
+      href: "/topic-builder",
     },
   ];
 
   const tableActions = (
     <Button asChild>
-      <Link href="/ideas/create">
+      <Link href="/topic-builder">
         <Plus className="h-4 w-4 mr-2" />
-        Create Idea
+        Generate Topics
       </Link>
     </Button>
   );
 
-  // Row click handler
+  // Row click handler for topics
   const handleRowClick = (row: IdeaData) => {
-    console.log("Navigating to idea:", row.name);
-    // In a real app, you'd navigate to `/ideas/${row.id}`
+    console.log("Viewing topic details:", row.name);
+    console.log("Topic data:", {
+      id: row.id,
+      title: row.name,
+      description: row.description,
+      category: row.category,
+      contentType: row.contentType,
+      score: row.score,
+      priority: row.priority,
+      status: row.status,
+      tags: row.tags,
+    });
+    // TODO: Navigate to topic detail page when implemented
   };
 
-  // Custom row actions specific to ideas
+  // Row actions specific to topics
   const rowActions: RowAction<IdeaData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: IdeaData) => console.log("View idea:", row.name),
+      onClick: (row: IdeaData) => {
+        console.log("View topic details:", row);
+        // TODO: Open topic details modal or page
+      },
     },
     {
-      label: "Edit Idea",
+      label: "Use Topic",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: IdeaData) => console.log("Edit idea:", row.name),
+      onClick: (row: IdeaData) => {
+        console.log("Using topic for content creation:", row.name);
+        // TODO: Navigate to content creation with topic prefilled
+      },
     },
     {
-      label: "Delete Idea",
+      label: "Archive Topic",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: IdeaData) => console.log("Delete idea:", row.name),
+      onClick: (row: IdeaData) => {
+        console.log("Archive topic:", row.name);
+        // TODO: Implement archive/delete functionality
+      },
       variant: "destructive" as const,
     },
   ];
 
   return (
     <PageLayout
-      title="Ideas"
-      description="Browse, organize, and manage your collection of ideas. Transform concepts into actionable plans."
+      title="Topic Ideas"
+      description="Browse AI-generated topic ideas and transform them into compelling content. Generate new topics or explore your saved collection."
       breadcrumbs={breadcrumbs}
     >
-      {/* Data Table */}
-      <DataTable<IdeaData>
-        columns={columns}
-        data={ideasData}
-        emptyTitle="No ideas yet"
-        emptyDescription="Start building your idea collection. Add your first idea or import existing concepts."
-        emptyActions={emptyActions}
-        emptyIcon={<Lightbulb className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search ideas by name, category, author..."
-        actions={tableActions}
-        onRowClick={handleRowClick}
-        rowActions={rowActions}
-        pageSize={10}
-        searchFields={["name", "category", "author", "status", "priority"]}
-      />
+      {/* Loading State - Enhanced with skeleton */}
+      {isInitialLoading && (
+        <div>
+          <TableSkeleton rows={8} />
+        </div>
+      )}
+
+      {/* Background refetching indicator */}
+      {isBackgroundRefetching && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span>Refreshing topics...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Error State - Enhanced with better context */}
+      {status === "error" && (
+        <Card>
+          <CardContent className="flex items-center justify-center p-8">
+            <div className="flex flex-col items-center gap-4 max-w-md">
+              {/* Different icons based on error type */}
+              {error?.message?.includes("network") ||
+              error?.message?.includes("fetch") ? (
+                <WifiOff className="h-8 w-8 text-destructive" />
+              ) : (
+                <AlertCircle className="h-8 w-8 text-destructive" />
+              )}
+
+              <div className="text-center">
+                <p className="font-medium text-sm mb-2">
+                  Unable to load your topic ideas
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {error?.message?.includes("network")
+                    ? "Please check your internet connection and try again."
+                    : error?.message?.includes("401") ||
+                        error?.message?.includes("403")
+                      ? "Authentication failed. Please refresh the page and sign in again."
+                      : error?.message ||
+                        "Something went wrong while loading your topics. Please try again."}
+                </p>
+
+                {/* Technical details for debugging */}
+                {process.env.NODE_ENV === "development" && error?.message && (
+                  <details className="text-xs text-muted-foreground mt-2">
+                    <summary className="cursor-pointer hover:text-foreground">
+                      Technical details
+                    </summary>
+                    <code className="block mt-1 p-2 bg-muted rounded text-left">
+                      {error.message}
+                    </code>
+                  </details>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleRetry}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </Button>
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="ghost"
+                  size="sm"
+                >
+                  Refresh Page
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Data Table - only show when data is successfully loaded */}
+      {status === "success" && (
+        <DataTable<IdeaData>
+          columns={columns}
+          data={ideas}
+          emptyTitle="No topic ideas yet"
+          emptyDescription="Generate your first collection of AI-powered topic ideas. Use the topic builder to create engaging content ideas tailored to your audience."
+          emptyActions={emptyActions}
+          emptyIcon={<Lightbulb className="h-8 w-8 text-muted-foreground" />}
+          searchPlaceholder="Search topics by title, category, content type..."
+          actions={tableActions}
+          onRowClick={handleRowClick}
+          rowActions={rowActions}
+          pageSize={15}
+          searchFields={[
+            "name",
+            "category",
+            "contentType",
+            "status",
+            "priority",
+            "tags",
+          ]}
+        />
+      )}
     </PageLayout>
   );
 }

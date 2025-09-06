@@ -173,7 +173,7 @@ export class BackendService {
   }
 
   /**
-   * Retrieve all saved topics from the backend API with error handling.
+   * Retrieve all saved topics from the Next.js API route (which proxies to backend)
    *
    * @returns Promise resolving to all saved topics and total count
    * @throws {BackendError} When the retrieval operation fails after all retry attempts
@@ -186,11 +186,41 @@ export class BackendService {
    * ```
    */
   async getTopics(): Promise<GetTopicsResponse> {
-    this.validateConfig();
-
     const requestId = generateRequestId();
 
-    return this.makeGetRequest("/api/topic/get-topics", requestId);
+    try {
+      const response = await fetch("/api/topics", {
+        method: "GET",
+        headers: {
+          "X-Request-ID": requestId,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        throw new Error(
+          errorData.error ||
+            `API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      console.log(
+        `Successfully fetched ${result.topics?.length || 0} topics via Next.js API`,
+      );
+
+      return {
+        topics: result.topics || [],
+        total_count: result.total_count || 0,
+      };
+    } catch (error) {
+      const classifiedError = classifyError(error, requestId);
+      this.logError(`Failed to fetch topics via Next.js API`, classifiedError);
+      throw classifiedError;
+    }
   }
 
   /**
@@ -496,61 +526,6 @@ export class BackendService {
 
     const result = await response.json();
     return result as T;
-  }
-
-  /**
-   * Make GET request to backend
-   */
-  private async makeGetRequest(
-    endpoint: string,
-    requestId: string,
-  ): Promise<GetTopicsResponse> {
-    const url = `${this.config.baseUrl}${endpoint}`;
-    const controller = new AbortController();
-
-    this.activeRequests.set(requestId, controller);
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      this.activeRequests.delete(requestId);
-    }, this.config.timeout);
-
-    try {
-      const contentApiKey = process.env.CONTENT_API_KEY;
-      if (!contentApiKey) {
-        throw new Error("CONTENT_API_KEY environment variable is not set");
-      }
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-Request-ID": requestId,
-          "content-api-key": contentApiKey,
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "Unknown error");
-        throw new Error(
-          `Backend API error: ${response.status} ${response.statusText} - ${errorText}`,
-        );
-      }
-
-      const result = await response.json();
-      this.activeRequests.delete(requestId);
-
-      return {
-        topics: result.topics || [],
-        total_count: result.total_count || 0,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      this.activeRequests.delete(requestId);
-      throw error;
-    }
   }
 
   /**
