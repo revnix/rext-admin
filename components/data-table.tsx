@@ -31,10 +31,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface Column {
+interface Column<T extends Record<string, unknown> = Record<string, unknown>> {
   key: string;
   header: string;
   width?: string;
+  cell?: (value: unknown, row: T) => ReactNode;
+  searchable?: boolean;
 }
 
 interface EmptyStateAction {
@@ -57,7 +59,7 @@ export interface RowAction<
 interface DataTableProps<
   T extends Record<string, unknown> = Record<string, unknown>,
 > {
-  columns: Column[];
+  columns: Column<T>[];
   data?: T[];
   emptyTitle?: string;
   emptyDescription?: string;
@@ -92,7 +94,7 @@ export function DataTable<
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter data based on search query
+  // Filter data with enhanced array field support
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
 
@@ -100,19 +102,41 @@ export function DataTable<
     return data.filter((row) => {
       // If specific search fields are provided, only search those
       if (searchFields.length > 0) {
-        return searchFields.some((field) =>
-          String(row[field] || "")
+        return searchFields.some((field) => {
+          const value = row[field];
+
+          // Handle array fields (like tags)
+          if (Array.isArray(value)) {
+            return value.some((item) =>
+              String(item || "")
+                .toLowerCase()
+                .includes(query),
+            );
+          }
+
+          // Handle regular fields
+          return String(value || "")
             .toLowerCase()
-            .includes(query),
-        );
+            .includes(query);
+        });
       }
 
-      // Otherwise search all string values in the row
-      return Object.values(row).some((value) =>
-        String(value || "")
+      // Otherwise search all values in the row
+      return Object.values(row).some((value) => {
+        // Handle array fields
+        if (Array.isArray(value)) {
+          return value.some((item) =>
+            String(item || "")
+              .toLowerCase()
+              .includes(query),
+          );
+        }
+
+        // Handle regular fields
+        return String(value || "")
           .toLowerCase()
-          .includes(query),
-      );
+          .includes(query);
+      });
     });
   }, [data, searchQuery, searchFields]);
 
@@ -212,9 +236,14 @@ export function DataTable<
                     >
                       {columns.map((column) => (
                         <TableCell key={column.key}>
-                          {((row as Record<string, unknown>)[
-                            column.key
-                          ] as string) || "--"}
+                          {column.cell
+                            ? column.cell(
+                                (row as Record<string, unknown>)[column.key],
+                                row as T,
+                              )
+                            : ((row as Record<string, unknown>)[
+                                column.key
+                              ] as string) || "--"}
                         </TableCell>
                       ))}
                       <TableCell>

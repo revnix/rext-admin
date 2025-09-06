@@ -1,5 +1,6 @@
 // Common data table types for the application
 
+import type { ReactNode } from "react";
 import type { BaseTableRow } from "./shared";
 
 export interface ContentData extends BaseTableRow {
@@ -204,3 +205,14 @@ export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
 // Legacy alias for backwards compatibility
 export interface TableAction<T extends Record<string, unknown> = BaseTableRow>
   extends RowAction<T> {}
+
+// Enhanced column interface with custom cell rendering support
+export interface Column<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> {
+  key: string;
+  header: string;
+  width?: string;
+  cell?: (value: unknown, row: T) => ReactNode;
+  searchable?: boolean;
+}

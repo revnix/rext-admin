@@ -1,3 +1,4 @@
+import type { ZodIssue } from "zod";
 import type { SaveTopicItem } from "./api";
 import type { GeneratedTopic } from "./topic-builder";
 
@@ -172,6 +173,33 @@ export interface APIErrorResponse {
   fallback_available?: boolean;
   retry_after?: number;
   request_id?: string;
+}
+
+/**
+ * Validation error types for backend data processing
+ */
+export interface ValidationError extends BackendError {
+  type: "validation_error";
+  validationIssues: ZodIssue[];
+  originalData: unknown;
+  fieldPath?: string;
+  stage: "input" | "transformation" | "output";
+}
+
+/**
+ * Configuration options for backend validation behavior
+ */
+export interface BackendValidationConfig {
+  /** Skip validation for input data (default: false) */
+  skipInputValidation?: boolean;
+  /** Skip validation for output data (default: false) */
+  skipOutputValidation?: boolean;
+  /** Continue processing on validation warnings (default: true) */
+  continueOnWarnings?: boolean;
+  /** Auto-fix common validation issues (default: false) */
+  enableAutoFix?: boolean;
+  /** Include validation performance metrics (default: false) */
+  includeMetrics?: boolean;
 }
 
 /**

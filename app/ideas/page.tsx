@@ -16,8 +16,18 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import {
+  CategoryDisplay,
+  ContentTypeBadge,
+  DateDisplay,
+  PriorityBadge,
+  RankingDisplay,
+  ScoreDisplay,
+  StatusBadge,
+  TitleDisplay,
+} from "@/components/ui/topic-cell-formatters";
 import { useTopics } from "@/hooks/use-topics";
-import type { IdeaData } from "@/types/data-table";
+import type { Column, IdeaData } from "@/types/data-table";
 
 export default function IdeasPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Ideas" }];
@@ -43,15 +53,63 @@ export default function IdeasPage() {
     await refetch();
   };
 
-  const columns = [
-    { key: "name", header: "Topic Title", width: "280px" },
-    { key: "category", header: "Category", width: "120px" },
-    { key: "contentType", header: "Content Type", width: "140px" },
-    { key: "status", header: "Status", width: "100px" },
-    { key: "score", header: "Score", width: "70px" },
-    { key: "priority", header: "Priority", width: "90px" },
-    { key: "ranking", header: "Rank", width: "60px" },
-    { key: "updated", header: "Generated", width: "100px" },
+  const columns: Column<IdeaData>[] = [
+    {
+      key: "name",
+      header: "Topic Title",
+      width: "280px",
+      cell: (value, row) => <TitleDisplay value={value} row={row} />,
+      searchable: true,
+    },
+    {
+      key: "category",
+      header: "Category",
+      width: "120px",
+      cell: (value) => <CategoryDisplay value={value} />,
+      searchable: true,
+    },
+    {
+      key: "contentType",
+      header: "Content Type",
+      width: "140px",
+      cell: (value) => <ContentTypeBadge value={value} />,
+      searchable: true,
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "100px",
+      cell: (value) => <StatusBadge value={value} />,
+      searchable: true,
+    },
+    {
+      key: "score",
+      header: "Score",
+      width: "70px",
+      cell: (value) => <ScoreDisplay value={value} />,
+      searchable: false,
+    },
+    {
+      key: "priority",
+      header: "Priority",
+      width: "90px",
+      cell: (value) => <PriorityBadge value={value} />,
+      searchable: true,
+    },
+    {
+      key: "ranking",
+      header: "Rank",
+      width: "60px",
+      cell: (value) => <RankingDisplay value={value} />,
+      searchable: false,
+    },
+    {
+      key: "updated",
+      header: "Generated",
+      width: "100px",
+      cell: (value) => <DateDisplay value={value} />,
+      searchable: false,
+    },
   ];
 
   const emptyActions = [
@@ -217,14 +275,9 @@ export default function IdeasPage() {
           onRowClick={handleRowClick}
           rowActions={rowActions}
           pageSize={15}
-          searchFields={[
-            "name",
-            "category",
-            "contentType",
-            "status",
-            "priority",
-            "tags",
-          ]}
+          searchFields={columns
+            .filter((col) => col.searchable)
+            .map((col) => col.key)}
         />
       )}
     </PageLayout>

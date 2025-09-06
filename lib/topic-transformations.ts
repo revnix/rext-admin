@@ -4,6 +4,25 @@ import type { GeneratedTopic } from "@/types/topic-builder";
 /**
  * Transform GeneratedTopic array from API to IdeaData array for DataTable display
  * Enhanced to properly map all topic fields for comprehensive UI display
+ *
+ * @see /docs/field-mapping-documentation.md for complete field mapping rules and transformation logic
+ * @see /lib/topic-adapter-utils.ts for enhanced transformation utilities with error handling
+ * @param topics - Array of GeneratedTopic objects from backend API
+ * @returns Array of IdeaData objects ready for DataTable consumption
+ *
+ * @example
+ * ```typescript
+ * // Basic usage (maintains backward compatibility)
+ * const ideas = transformTopicsToIdeas(topics);
+ *
+ * // For enhanced error handling and performance metrics, use:
+ * import { transformTopicsToIdeasEnhanced } from '@/lib/topic-adapter-utils';
+ * const result = await transformTopicsToIdeasEnhanced(topics, {
+ *   autoFix: true,
+ *   includeMetrics: true,
+ *   continueOnError: true
+ * });
+ * ```
  */
 export function transformTopicsToIdeas(topics: GeneratedTopic[]): IdeaData[] {
   if (!Array.isArray(topics)) {
@@ -218,3 +237,62 @@ function inferContentType(channelFit: string[]): string {
   // Format the channel name as fallback
   return `${primaryChannel.charAt(0).toUpperCase() + primaryChannel.slice(1)} Content`;
 }
+
+// ============================================================================
+// ENHANCED UTILITIES INTEGRATION
+// ============================================================================
+
+/**
+ * Enhanced topic transformation utilities are available for advanced use cases.
+ *
+ * For applications requiring:
+ * - Comprehensive error handling and recovery
+ * - Performance metrics and optimization
+ * - Batch processing with concurrency control
+ * - Zod validation and type safety
+ * - Auto-fix capabilities for common data issues
+ *
+ * Use the utilities from /lib/topic-adapter-utils.ts:
+ *
+ * @example
+ * ```typescript
+ * import {
+ *   transformTopicToIdeaEnhanced,
+ *   transformTopicsToIdeasEnhanced
+ * } from '@/lib/topic-adapter-utils';
+ *
+ * // Single topic transformation with error handling
+ * const result = transformTopicToIdeaEnhanced(topic, {
+ *   autoFix: true,
+ *   includeMetrics: true,
+ *   fallbackBehavior: 'lenient'
+ * });
+ *
+ * if (result.success && result.data) {
+ *   console.log('Transformed idea:', result.data);
+ *   if (result.metrics) {
+ *     console.log('Processing time:', result.metrics.durationMs, 'ms');
+ *   }
+ * } else if (result.error) {
+ *   console.error('Transformation failed:', result.error.message);
+ *   console.log('Recovery actions:', result.error.recoveryActions);
+ * }
+ *
+ * // Batch transformation with performance optimization
+ * const batchResult = await transformTopicsToIdeasEnhanced(topics, {
+ *   continueOnError: true,
+ *   maxConcurrency: 5,
+ *   includeMetrics: true,
+ *   autoFix: true
+ * });
+ *
+ * console.log(`Success: ${batchResult.data.length}/${topics.length}`);
+ * console.log(`Errors: ${batchResult.errors.length}`);
+ * if (batchResult.metrics) {
+ *   console.log(`Throughput: ${batchResult.metrics.throughputPerSecond} items/sec`);
+ * }
+ * ```
+ *
+ * The functions in this file (transformTopicsToIdeas) maintain backward compatibility
+ * and provide a simple interface for basic transformation needs.
+ */

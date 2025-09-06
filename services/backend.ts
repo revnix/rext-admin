@@ -12,10 +12,19 @@ import type {
   BackendError,
   BackendTopicGenerationPayload,
   BackendTopicGenerationResponse,
+  BackendValidationConfig,
   GetTopicsResponse,
   SaveTopicRequest,
   SaveTopicResponse,
+  ValidationError,
 } from "@/types/backend";
+import {
+  BackendTopicGenerationResponseSchema,
+  createUserFriendlyErrors,
+  extractValidationErrors,
+  GeneratedTopicSchema,
+  GetTopicsResponseSchema,
+} from "@/types/schemas";
 import type {
   GeneratedTopic,
   TopicBuilderFormData,
@@ -26,6 +35,7 @@ import type {
  */
 export class BackendService {
   private readonly config: BackendConfig;
+  private readonly validationConfig: BackendValidationConfig;
   private readonly activeRequests = new Map<string, AbortController>();
   private readonly requestDeduplicationMap = new Map<
     string,
@@ -45,7 +55,10 @@ export class BackendService {
    * });
    * ```
    */
-  constructor(config?: Partial<BackendConfig>) {
+  constructor(
+    config?: Partial<BackendConfig>,
+    validationConfig?: BackendValidationConfig,
+  ) {
     this.config = {
       baseUrl: process.env.BACKEND_API_URL || "http://127.0.0.1:2024",
       timeout: 30000,
@@ -54,6 +67,15 @@ export class BackendService {
       healthCheckEndpoint: "/health",
       enableOfflineDetection: true,
       ...config,
+    };
+
+    this.validationConfig = {
+      skipInputValidation: false,
+      skipOutputValidation: false,
+      continueOnWarnings: true,
+      enableAutoFix: false,
+      includeMetrics: false,
+      ...validationConfig,
     };
   }
 
@@ -208,14 +230,66 @@ export class BackendService {
 
       const result = await response.json();
 
+      if (this.validationConfig.skipOutputValidation) {
+        console.log(
+          "⚠️  Skipping output validation for getTopics (disabled in config)",
+        );
+        return {
+          topics: result.topics || [],
+          total_count: (result.topics || []).length,
+        };
+      }
+
+      // Validate response structure with Zod
+      const validationResult = GetTopicsResponseSchema.safeParse(result);
+
+      if (!validationResult.success) {
+        const validationError: ValidationError = {
+          type: "validation_error",
+          message: "Get topics response validation failed",
+          statusCode: 422,
+          severity: "high",
+          recoveryActions: [
+            "retry_with_changes",
+            "contact_support",
+            "reload_page",
+          ],
+          isRetryable: false,
+          requestId,
+          timestamp: new Date().toISOString(),
+          validationIssues: validationResult.error.issues,
+          originalData: result,
+          stage: "output",
+          context: {
+            endpoint: "get_topics",
+            expectedSchema: "GetTopicsResponse",
+          },
+        };
+
+        console.error("🔴 Get topics response validation failed:", {
+          requestId,
+          issues: extractValidationErrors(validationResult.error),
+          friendlyErrors: createUserFriendlyErrors(
+            extractValidationErrors(validationResult.error),
+          ),
+        });
+
+        throw validationError;
+      }
+
+      const validatedResponse = {
+        ...validationResult.data,
+        total_count:
+          (validationResult.data as any).total_count ||
+          (validationResult.data.topics || []).length,
+        request_id: requestId,
+      };
+
       console.log(
-        `Successfully fetched ${result.topics?.length || 0} topics via Next.js API`,
+        `✅ Successfully validated and fetched ${validatedResponse.topics.length} topics via Next.js API`,
       );
 
-      return {
-        topics: result.topics || [],
-        total_count: result.total_count || 0,
-      };
+      return validatedResponse;
     } catch (error) {
       const classifiedError = classifyError(error, requestId);
       this.logError(`Failed to fetch topics via Next.js API`, classifiedError);
@@ -240,7 +314,7 @@ export class BackendService {
         );
 
         const response = await this.makeRequest(endpoint, payload, requestId);
-        const result = await this.validateResponse(response);
+        const result = await this.validateResponse(response, requestId);
 
         // Success - clean up any stored controllers
         this.activeRequests.delete(requestId);
@@ -378,34 +452,126 @@ export class BackendService {
   }
 
   /**
-   * Validate backend response
+   * Validate backend response with comprehensive Zod schema validation
    */
   private async validateResponse(
     response: Response,
+    requestId: string,
   ): Promise<BackendTopicGenerationResponse> {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
-      throw new Error(
-        `Backend API error: ${response.status} ${response.statusText} - ${errorText}`,
-      );
+      const backendError: BackendError = {
+        type: "server_error",
+        message: `Backend API error: ${response.status} ${response.statusText}`,
+        statusCode: response.status,
+        severity: response.status >= 500 ? "critical" : "high",
+        recoveryActions:
+          response.status === 429 ? ["retry"] : ["check_connection"],
+        isRetryable: response.status >= 500 || response.status === 429,
+        requestId,
+        timestamp: new Date().toISOString(),
+        originalError: new Error(errorText),
+        context: { responseStatus: response.status, responseText: errorText },
+      };
+      throw backendError;
     }
 
     const result = await response.json();
 
-    if (!result.topics || !Array.isArray(result.topics)) {
-      throw new Error("Invalid response format from backend API");
+    if (this.validationConfig.skipOutputValidation) {
+      console.log("⚠️  Skipping output validation (disabled in config)");
+      return result as BackendTopicGenerationResponse;
+    }
+
+    // Validate response structure with Zod
+    const validationResult =
+      BackendTopicGenerationResponseSchema.safeParse(result);
+
+    if (!validationResult.success) {
+      const validationError: ValidationError = {
+        type: "validation_error",
+        message: "Backend response validation failed",
+        statusCode: 422,
+        severity: "high",
+        recoveryActions: [
+          "check_connection",
+          "retry_with_changes",
+          "contact_support",
+        ],
+        isRetryable: false,
+        requestId,
+        timestamp: new Date().toISOString(),
+        validationIssues: validationResult.error.issues,
+        originalData: result,
+        stage: "output",
+        context: {
+          endpoint: "generate_topics",
+          expectedSchema: "BackendTopicGenerationResponse",
+        },
+      };
+
+      // Log detailed validation errors
+      console.error("🔴 Backend response validation failed:", {
+        requestId,
+        issues: extractValidationErrors(validationResult.error),
+        friendlyErrors: createUserFriendlyErrors(
+          extractValidationErrors(validationResult.error),
+        ),
+      });
+
+      throw validationError;
+    }
+
+    const validatedResponse = {
+      ...validationResult.data,
+      total_count:
+        (validationResult.data as any).total_count ||
+        (validationResult.data.topics || []).length,
+      request_id: requestId,
+    };
+
+    // Additional validation for individual topics
+    const invalidTopics: string[] = [];
+    for (let i = 0; i < validatedResponse.topics.length; i++) {
+      const topic = validatedResponse.topics[i];
+      const topicValidation = GeneratedTopicSchema.safeParse(topic);
+      if (!topicValidation.success) {
+        invalidTopics.push(
+          `Topic ${i + 1}: ${topicValidation.error.issues[0]?.message || "Invalid structure"}`,
+        );
+      }
+    }
+
+    if (invalidTopics.length > 0) {
+      console.warn(
+        "⚠️  Some topics failed individual validation:",
+        invalidTopics,
+      );
+
+      if (!this.validationConfig.continueOnWarnings) {
+        const validationError: ValidationError = {
+          type: "validation_error",
+          message: `Individual topic validation failed: ${invalidTopics.join(", ")}`,
+          statusCode: 422,
+          severity: "medium",
+          recoveryActions: ["retry_with_changes", "contact_support"],
+          isRetryable: false,
+          requestId,
+          timestamp: new Date().toISOString(),
+          validationIssues: [],
+          originalData: validatedResponse.topics,
+          stage: "output",
+          context: { invalidTopics },
+        };
+        throw validationError;
+      }
     }
 
     console.log(
-      `Successfully generated ${result.topics.length} topics in ${result.generation_time_ms || "unknown"}ms`,
+      `✅ Successfully validated ${validatedResponse.topics.length} topics (${invalidTopics.length} warnings) in ${validatedResponse.generation_time_ms || "unknown"}ms`,
     );
 
-    return {
-      topics: result.topics,
-      request_id: result.request_id || `req_${Date.now()}`,
-      model_used: result.model_used,
-      generation_time_ms: result.generation_time_ms,
-    };
+    return validatedResponse;
   }
 
   /**

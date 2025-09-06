@@ -10,6 +10,7 @@
 
 import { z } from "zod";
 import type { SaveTopicItem } from "./api";
+import type { IdeaData } from "./data-table";
 import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
 // ============================================================================
@@ -86,6 +87,48 @@ export const SaveTopicItemSchema = z.object({
   why_it_works: z.string().min(1),
   /** Categorization tags for the topic (required for backend) */
   tags: z.array(z.string()).min(1),
+});
+
+/**
+ * Zod validation schema for IdeaData
+ * Represents ideas as displayed in the DataTable UI components
+ * @see /docs/field-mapping-documentation.md for transformation rules from GeneratedTopic
+ */
+export const IdeaDataSchema = z.object({
+  /** Unique identifier for the idea */
+  id: z.string().min(1),
+  /** Main idea title/headline */
+  name: z.string().min(1).max(200),
+  /** Comprehensive description combining multiple topic fields */
+  description: z.string().min(1),
+  /** Category derived from tags or channel fit */
+  category: z.string().min(1),
+  /** Current status: generated, saving, saved, etc. */
+  status: z.enum(["generated", "saving", "saved", "published", "archived"]),
+  /** Priority level based on scoring algorithm */
+  priority: z.enum(["low", "medium", "high"]),
+  /** Source of the idea (always "AI Generated" for topic transformations) */
+  source: z.string().min(1),
+  /** Enhanced tags including channel and audience prefixes */
+  tags: z.array(z.string()),
+  /** ISO timestamp when idea was created */
+  created: z.string().datetime(),
+  /** ISO timestamp when idea was last modified */
+  lastModified: z.string().datetime(),
+  /** Assignee responsible for the idea */
+  assignee: z.string().min(1),
+  /** Estimated effort level based on novelty score */
+  estimatedEffort: z.enum(["Low", "Medium", "High"]),
+  /** Optional overall score (0-100) */
+  score: z.number().min(0).max(100).optional(),
+  /** Optional ranking position (e.g., "#1") */
+  ranking: z.string().optional(),
+  /** Optional formatted update date */
+  updated: z.string().optional(),
+  /** Optional author name */
+  author: z.string().optional(),
+  /** Optional inferred content type from channel fit */
+  contentType: z.string().optional(),
 });
 
 /**
@@ -394,6 +437,18 @@ export const isValidTopicBuilderFormData = (
 ): obj is TopicBuilderFormData => {
   try {
     TopicBuilderFormDataSchema.parse(obj);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Type guard to validate if an object is a valid IdeaData
+ */
+export const isValidIdeaData = (obj: unknown): obj is IdeaData => {
+  try {
+    IdeaDataSchema.parse(obj);
     return true;
   } catch {
     return false;
@@ -742,6 +797,45 @@ export type ValidatedTopicBuilderFormData = z.infer<
   typeof TopicBuilderFormDataSchema
 >;
 export type ValidatedTopicScores = z.infer<typeof TopicScoresSchema>;
+export type ValidatedIdeaData = z.infer<typeof IdeaDataSchema>;
+
+// ============================================================================
+// BACKEND RESPONSE VALIDATION SCHEMAS
+// ============================================================================
+
+/**
+ * Backend API response validation schemas for runtime type safety
+ */
+export const BackendTopicGenerationResponseSchema = z.object({
+  topics: z.array(GeneratedTopicSchema),
+  request_id: z.string().optional(),
+  model_used: z.string().optional(),
+  generation_time_ms: z.number().optional(),
+});
+
+export const GetTopicsResponseSchema = z.object({
+  topics: z.array(GeneratedTopicSchema),
+  total_count: z.number().optional(),
+  page: z.number().optional(),
+  page_size: z.number().optional(),
+});
+
+export const SaveTopicResponseSchema = z.object({
+  success: z.boolean(),
+  saved_topics: z.array(z.string()).optional(),
+  failed_topics: z.array(z.string()).optional(),
+  message: z.string().optional(),
+});
+
+export type ValidatedBackendTopicGenerationResponse = z.infer<
+  typeof BackendTopicGenerationResponseSchema
+>;
+export type ValidatedGetTopicsResponse = z.infer<
+  typeof GetTopicsResponseSchema
+>;
+export type ValidatedSaveTopicResponse = z.infer<
+  typeof SaveTopicResponseSchema
+>;
 
 // Enhanced validation result types
 export interface ValidationResult<T> {
