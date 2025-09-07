@@ -116,13 +116,13 @@ export default function IdeasPage() {
     {
       label: "Generate Topics",
       icon: <Plus className="h-4 w-4" />,
-      href: "/topic-builder",
+      href: "/ideas/create",
     },
   ];
 
   const tableActions = (
     <Button asChild>
-      <Link href="/topic-builder">
+      <Link href="/ideas/create">
         <Plus className="h-4 w-4 mr-2" />
         Generate Topics
       </Link>
