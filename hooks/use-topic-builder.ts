@@ -85,6 +85,8 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   );
   const [connectionStatus, setConnectionStatus] = useState(isOnline());
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   // Draft persistence state
   const [hasDraft, setHasDraft] = useState(false);
@@ -415,8 +417,14 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     setErrors({});
     setGenerationError(null);
 
+    // Create new AbortController for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     setCurrentRequestId(requestId);
+
+    console.log(`Starting topic generation request: ${requestId}`);
 
     try {
       const apiData = prepareFormDataForAPI(formData);
@@ -439,7 +447,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           "X-Request-ID": requestId,
         },
         body: JSON.stringify({ formData: apiData }),
-        signal: AbortSignal.timeout(35000), // Slightly longer than backend timeout
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -468,17 +476,26 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         throw new Error("Invalid response format from topic generation API");
       }
     } catch (error) {
-      const classifiedError = classifyError(error, requestId);
-      console.error("Topic generation failed:", classifiedError);
-      setGenerationError(classifiedError);
+      // Handle AbortError specifically (user-initiated cancellation)
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log(`Topic generation aborted: ${requestId}`);
+        // Don't set error state for user-initiated cancellations
+        setGenerationError(null);
+        setErrors({});
+      } else {
+        const classifiedError = classifyError(error, requestId);
+        console.error("Topic generation failed:", classifiedError);
+        setGenerationError(classifiedError);
 
-      // Also set legacy error format for backward compatibility
-      setErrors({
-        generation: classifiedError.message,
-      });
+        // Also set legacy error format for backward compatibility
+        setErrors({
+          generation: classifiedError.message,
+        });
+      }
     } finally {
       setIsGenerating(false);
       setCurrentRequestId(null);
+      setAbortController(null);
     }
   }, [formData, validateStep, connectionStatus]);
 
@@ -495,19 +512,19 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
   // Cancel current generation
   const cancelGeneration = useCallback(() => {
-    if (currentRequestId) {
-      // Note: We can't actually cancel the fetch here since we don't store the AbortController
-      // But we can clear the generating state and ignore the response when it comes back
+    if (abortController && currentRequestId) {
+      console.log(`Cancelling topic generation request: ${currentRequestId}`);
+      // Abort the in-flight request
+      abortController.abort();
+
+      // Clear states immediately for better UX
       setIsGenerating(false);
       setCurrentRequestId(null);
-
-      const cancelError = classifyError(
-        new Error("Request cancelled by user"),
-        currentRequestId,
-      );
-      setGenerationError(cancelError);
+      setAbortController(null);
+      setGenerationError(null);
+      setErrors({});
     }
-  }, [currentRequestId]);
+  }, [abortController, currentRequestId]);
 
   // Clear generation error
   const clearGenerationError = useCallback(() => {
