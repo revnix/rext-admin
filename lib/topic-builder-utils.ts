@@ -422,22 +422,9 @@ export const validateFormStepDetailed = (
       if (!formData.content_type) {
         errors.push("Please choose what type of content you'll create");
       }
-      if (
-        formData.content_type === "other" &&
-        !formData.content_type_other?.trim()
-      ) {
-        errors.push("Please tell us what type of content this will be");
-      }
-      // Platform required for social media and video content
-      if (
-        formData.content_type &&
-        ["social-media", "video-content"].includes(formData.content_type) &&
-        !formData.platform
-      ) {
+      // Platform required only for social media content
+      if (formData.content_type === "social-media" && !formData.platform) {
         errors.push("Please choose where you'll publish this content");
-      }
-      if (formData.platform === "other" && !formData.platform_other?.trim()) {
-        errors.push("Please tell us which platform you'll use");
       }
       break;
 

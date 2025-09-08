@@ -1,4 +1,4 @@
-import { FormField, ValidationInput } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
 import type {
   TopicBuilderFormData,
@@ -40,6 +40,27 @@ export function ContentFormatStep({
     description: getPlatformDescription(option.value),
   }));
 
+  // Enhanced handler for content type changes with proper state management
+  const handleContentTypeChange = (value: string) => {
+    // Update the content type field - this will trigger the updateFormDataForContentTypeChange
+    // logic in the useTopicBuilder hook which properly handles platform field resets
+    updateFormData("content_type", value);
+  };
+
+  // Enhanced handler for platform changes with validation feedback
+  const handlePlatformChange = (value: string) => {
+    updateFormData("platform", value);
+  };
+
+  // Get current error states for better UX feedback
+  const contentTypeError =
+    getFieldError?.("content_type") || errors?.content_type;
+  const platformError = getFieldError?.("platform") || errors?.platform;
+
+  // Check if platform field should be shown and required
+  const shouldShowPlatform = formData.content_type === "social-media";
+  const isPlatformRequired = shouldShowPlatform;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -47,72 +68,50 @@ export function ContentFormatStep({
         <div className="md:col-span-2">
           <FormField
             label="What type of content will this be?"
-            error={getFieldError?.("content_type") || errors?.content_type}
-            isValid={
-              !!formData.content_type && !getFieldError?.("content_type")
-            }
+            error={contentTypeError}
+            isValid={!!formData.content_type && !contentTypeError}
             required
           >
             <RadioGroup
               options={contentTypeOptions}
               value={formData.content_type}
-              onValueChange={(value) => updateFormData("content_type", value)}
+              onValueChange={handleContentTypeChange}
               columns={4}
             />
           </FormField>
         </div>
 
-        {/* Content Type Other - Full width when visible */}
-        {formData.content_type === "other" && (
-          <div className="md:col-span-2">
-            <FormField
-              label="Specify Content Type"
-              error={
-                getFieldError?.("content_type_other") ||
-                errors?.content_type_other
-              }
-              isValid={
-                !!formData.content_type_other?.trim() &&
-                !getFieldError?.("content_type_other")
-              }
-              required
-              htmlFor="content_type_other"
-            >
-              <ValidationInput
-                id="content_type_other"
-                placeholder="Please specify your content type"
-                value={formData.content_type_other || ""}
-                onChange={(e) =>
-                  updateFormData("content_type_other", e.target.value)
-                }
-                error={
-                  getFieldError?.("content_type_other") ||
-                  errors?.content_type_other
-                }
-                isValid={
-                  !!formData.content_type_other?.trim() &&
-                  !getFieldError?.("content_type_other")
-                }
-              />
-            </FormField>
-          </div>
-        )}
-
-        {/* Platform/Channel */}
-        {formData.content_type === "social-media" && (
+        {/* Platform/Channel - Conditional display with enhanced validation */}
+        {shouldShowPlatform && (
           <div className="md:col-span-2">
             <FormField
               label="Where will you publish this?"
-              error={getFieldError?.("platform") || errors?.platform}
-              isValid={!!formData.platform && !getFieldError?.("platform")}
+              error={platformError}
+              isValid={!!formData.platform && !platformError}
+              required={isPlatformRequired}
             >
               <RadioGroup
                 options={platformOptions}
                 value={formData.platform || ""}
-                onValueChange={(value) => updateFormData("platform", value)}
+                onValueChange={handlePlatformChange}
                 columns={4}
               />
             </FormField>
+            {isPlatformRequired && !formData.platform && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Please select a platform to publish your social media post
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Info message for Blog Post selection */}
+        {formData.content_type === "blog-post" && (
+          <div className="md:col-span-2">
+            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+              Blog posts and articles will be optimized for your website or blog
+              platform
+            </p>
           </div>
         )}
       </div>
@@ -147,10 +146,6 @@ function getPlatformDescription(value: string): string {
       return "Short-form video content";
     case "youtube":
       return "Long-form video content and tutorials";
-    case "website":
-      return "Your own website or blog";
-    case "vimeo":
-      return "Professional video hosting";
     default:
       return "";
   }

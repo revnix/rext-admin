@@ -32,20 +32,7 @@ export const industrySchema = z.enum([
   "other",
 ]);
 
-export const contentTypeSchema = z.enum([
-  "blog-post",
-  "social-media",
-  "video-content",
-  "podcast",
-  "infographic",
-  "ebook-guide",
-  "case-study",
-  "whitepaper",
-  "newsletter",
-  "presentation",
-  "press-release",
-  "other",
-]);
+export const contentTypeSchema = z.enum(["blog-post", "social-media"]);
 
 export const platformSchema = z.enum([
   "facebook",
@@ -272,19 +259,19 @@ export const audienceStepSchema = z.object({
 export const contentFormatStepSchema = z
   .object({
     content_type: contentTypeSchema,
-    content_type_other: z.string().optional(),
     platform: platformSchema.optional(),
-    platform_other: z.string().optional(),
   })
   .refine(
     (data) => {
-      if (data.content_type === "other" && !data.content_type_other?.trim()) {
+      // Platform is required only when content_type is 'social-media'
+      if (data.content_type === "social-media" && !data.platform) {
         return false;
       }
       return true;
     },
     {
-      message: "Please specify your content type",
+      message: "Platform selection is required for social media posts",
+      path: ["platform"],
     },
   );
 

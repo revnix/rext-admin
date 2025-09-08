@@ -156,27 +156,34 @@ describe("Topic Builder Schemas", () => {
   });
 
   describe("contentFormatStepSchema", () => {
-    it("should validate standard content type", () => {
+    it("should validate blog post content type", () => {
       const validData = {
         content_type: "blog-post" as const,
-        platform: "website" as const,
       };
 
       const result = contentFormatStepSchema.parse(validData);
       expect(result).toEqual(validData);
     });
 
-    it("should require content_type_other when content_type is other", () => {
+    it("should require platform when content_type is social-media", () => {
       const invalidData = {
-        content_type: "other" as const,
+        content_type: "social-media" as const,
       };
 
       const validData = {
-        content_type: "other" as const,
-        content_type_other: "Custom Content Type",
+        content_type: "social-media" as const,
+        platform: "facebook" as const,
       };
 
       expect(() => contentFormatStepSchema.parse(invalidData)).toThrow();
+      expect(() => contentFormatStepSchema.parse(validData)).not.toThrow();
+    });
+
+    it("should not require platform for blog post content", () => {
+      const validData = {
+        content_type: "blog-post" as const,
+      };
+
       expect(() => contentFormatStepSchema.parse(validData)).not.toThrow();
     });
   });
