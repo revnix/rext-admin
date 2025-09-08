@@ -483,6 +483,14 @@ export class BackendService {
       return result as BackendTopicGenerationResponse;
     }
 
+    // Add missing IDs to topics before validation (backend may not include IDs)
+    if (result.topics && Array.isArray(result.topics)) {
+      result.topics = result.topics.map((topic: any, index: number) => ({
+        ...topic,
+        id: topic.id || `topic_${Date.now()}_${index}`,
+      }));
+    }
+
     // Validate response structure with Zod
     const validationResult =
       BackendTopicGenerationResponseSchema.safeParse(result);

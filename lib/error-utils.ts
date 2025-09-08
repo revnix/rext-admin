@@ -180,17 +180,29 @@ export function classifyError(
 
   // Handle non-Error objects
   const mapping = ERROR_MAPPINGS.unknown_error;
+  let technicalMessage: string;
+  
+  if (typeof error === "object" && error !== null) {
+    try {
+      technicalMessage = JSON.stringify(error, null, 2);
+    } catch {
+      technicalMessage = `[object ${error.constructor?.name || 'Object'}]`;
+    }
+  } else {
+    technicalMessage = String(error);
+  }
+  
   return {
     type: "unknown_error",
     message: mapping.userMessage,
-    technicalMessage: String(error),
+    technicalMessage,
     severity: mapping.severity,
     recoveryActions: mapping.recoveryActions,
     isRetryable: false,
     retryAttempt,
     requestId,
     timestamp,
-    originalError: error instanceof Error ? error : new Error(String(error)),
+    originalError: error instanceof Error ? error : new Error(technicalMessage),
   };
 }
 
@@ -278,7 +290,7 @@ export function sanitizeErrorForLogging(error: BackendError): Omit<
  * Generate a unique request ID
  */
 export function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**
