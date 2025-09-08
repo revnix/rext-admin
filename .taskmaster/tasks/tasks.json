@@ -57,7 +57,7 @@
         "testStrategy": "1. Write unit tests for the updated content type validation rules in `lib/topic-builder-utils.ts`\n2. Create component tests for ContentFormatStep to verify conditional rendering of platform selection\n3. Test validation logic to ensure platform is required only when Social Media is selected\n4. Test that the form data is correctly updated when content type and platform are selected\n5. Verify the UI correctly shows/hides platform options based on content type selection\n6. Test keyboard navigation and accessibility of the selection components",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -105,7 +105,7 @@
         "testStrategy": "1. Write unit tests for the custom input state management logic\n2. Create component tests for GoalsStep to verify conditional rendering of custom input fields\n3. Test validation to ensure custom inputs are properly validated when submitted\n4. Test that the form data is correctly updated with custom values when entered\n5. Verify the UI correctly shows/hides custom input fields based on selection\n6. Test form submission with various combinations of standard and custom values\n7. Test keyboard navigation and accessibility of the custom input fields",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -113,7 +113,7 @@
             "description": "Create separate custom input fields for each question category that has an 'Other' option in the Goals & Style step",
             "dependencies": [],
             "details": "1. Modify `components/topic-builder/steps/GoalsStep.tsx`\n2. Identify all question categories that have 'Other' options (content goal, purpose, tone, etc.)\n3. Add Input components for each 'Other' option\n4. Style the custom input fields to match the design system\n5. Ensure proper labeling for each custom input field\n6. Test rendering of custom input fields",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -619,7 +619,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-08T14:28:20.317Z",
+      "updated": "2025-09-08T14:35:13.355Z",
       "description": "Tasks for master context"
     }
   }
