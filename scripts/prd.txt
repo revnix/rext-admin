@@ -1,47 +1,637 @@
 <context>
 # Overview  
-[Provide a high-level overview of your product here. Explain what problem it solves, who it's for, and why it's valuable.]
+**Wrext Admin** is an AI-powered content topic generation and management platform that helps content creators, marketers, and businesses generate targeted topic ideas for various content formats and social media platforms. The application solves the problem of content ideation by providing intelligent, context-aware topic suggestions based on industry, audience, and content goals.
+
+**Target Users:**
+- Content marketers and social media managers
+- Digital marketing agencies 
+- Business owners creating content for their brands
+- Content creators and bloggers
+
+**Value Proposition:**
+- Reduces time spent on content ideation from hours to minutes
+- Provides data-driven topic suggestions with relevance scoring
+- Supports multiple content formats and social platforms
+- Offers topic management and content workflow integration
 
 # Core Features  
-[List and describe the main features of your product. For each feature, include:
-- What it does
-- Why it's important
-- How it works at a high level]
+**1. AI-Powered Topic Builder Wizard**
+- 6-step guided workflow for topic generation
+- Industry-specific topic suggestions
+- Audience targeting and demographic considerations  
+- Content format optimization (blog posts, social media)
+- Platform-specific recommendations (Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube)
+- Advanced customization with keywords and tone modifiers
+- Intelligent topic scoring and relevance metrics
+
+**2. Topic Management System**
+- Save and organize generated topics
+- Bulk operations for topic management
+- Export functionality (JSON, CSV formats)
+- Topic editing and regeneration capabilities
+- Integration with content creation workflows
+
+**3. Universal Data Management**
+- Reusable data table component across all admin pages
+- Advanced search and filtering capabilities
+- Pagination and sorting functionality
+- Responsive design for mobile and desktop
+
+**4. Session Management**
+- Temporary topic storage for unsaved sessions
+- Session recovery and persistence
+- Offline functionality with local storage fallback
 
 # User Experience  
-[Describe the user journey and experience. Include:
-- User personas
-- Key user flows
-- UI/UX considerations]
+**Primary User Personas:**
+1. **Content Manager**: Needs consistent topic ideas for content calendar planning
+2. **Social Media Specialist**: Requires platform-specific content suggestions
+3. **Marketing Director**: Oversees content strategy and needs bulk topic generation
+4. **Small Business Owner**: Limited time, needs quick and effective topic ideas
+
+**Key User Flows:**
+1. **Topic Generation Flow**: Industry selection → Audience targeting → Content format → Goals & style → Advanced options → Review & generate
+2. **Topic Management Flow**: Browse saved topics → Filter/search → Edit/export → Use for content creation
+3. **Session Recovery Flow**: Resume interrupted sessions → Continue from last step → Complete generation
+
+**UI/UX Considerations:**
+- Mobile-first responsive design
+- Progressive disclosure to reduce cognitive load
+- Clear visual hierarchy and step indicators
+- Contextual help and validation messages
+- Accessible components with proper ARIA labels
 </context>
 <PRD>
 # Technical Architecture  
-[Outline the technical implementation details:
-- System components
-- Data models
-- APIs and integrations
-- Infrastructure requirements]
+
+**Frontend Framework & Core Technologies:**
+- **Next.js 15.5.0** with App Router for server-side rendering and optimal performance
+- **React 19.1.1** with latest features and improved performance
+- **TypeScript** for type safety and better developer experience
+- **Tailwind CSS 4** with PostCSS for modern styling and utility-first approach
+
+**UI Components & Design System:**
+- **Radix UI** primitives for accessible, unstyled components
+- **Lucide React** for consistent iconography
+- **Class Variance Authority (CVA)** for component variant management
+- **Tailwind Merge** for conditional styling
+- **Custom component library** extending Radix with project-specific designs
+
+**State Management:**
+- **Zustand 5.0.8** for lightweight client-side state management
+- **TanStack Query 5.85.9** for server state, caching, and data fetching
+- **React Hook Form 7.62.0** + **Zod 4.1.5** for form handling and validation
+
+**Data Models:**
+```typescript
+interface TopicBuilderFormData {
+  approach: string;
+  industry: string;
+  audience: string[];
+  content_type: string;
+  platform?: string;
+  content_goal: string;
+  purpose: string;
+  tone: string;
+  keywords?: string[];
+  tone_modifiers?: string[];
+  additional_requirements?: string;
+  num_ideas: number;
+}
+
+interface GeneratedTopic {
+  id: string;
+  title: string;
+  description: string;
+  keywords: string[];
+  relevance_score: number;
+  audience_fit: number;
+  channel_fit: number;
+  why_it_works: string;
+  tags: string[];
+  platform?: string;
+  created_at: string;
+}
+
+interface ResultsSession {
+  id: string;
+  topics: GeneratedTopic[];
+  formData: TopicBuilderFormData;
+  createdAt: Date;
+  expiresAt: Date;
+}
+```
+
+**APIs and Backend Integration:**
+- **Python Backend Service** with LangGraph and LLM integrations
+- **Next.js API Routes** as proxy layer for security and data validation
+- **RESTful endpoints** for topic generation, management, and export
+- **Environment variables** for API keys and configuration (CONTENT_API_KEY, BACKEND_API_URL)
+
+**Infrastructure & Deployment:**
+- **Vercel** hosting for frontend with edge functions
+- **PostgreSQL** database for persistent storage
+- **PGVector** for RAG (Retrieval Augmented Generation) capabilities
+- **Local Storage** for offline functionality and temporary sessions
+
+**Development Tools:**
+- **Biome 2.2.0** for linting and formatting (replaces ESLint + Prettier)
+- **Jest 30.1.2** with Testing Library for comprehensive testing
+- **Husky 9.1.7** for Git hooks and code quality enforcement
+- **TypeScript 5** for type checking and development experience
 
 # Development Roadmap  
-[Break down the development process into phases:
-- MVP requirements
-- Future enhancements
-- Do not think about timelines whatsoever -- all that matters is scope and detailing exactly what needs to be build in each phase so it can later be cut up into tasks]
+
+## Phase 1: Topic Builder UX Corrections and Core Functionality
+**Scope:** Fix existing issues and improve core topic generation workflow
+
+**Components to Build/Modify:**
+1. **Audience Step Enhancement** (`components/topic-builder/steps/AudienceStep.tsx`)
+   - Remove automatic audience pre-selection logic in `lib/topic-builder-utils.ts:824`
+   - Remove geographic focus field and related validation
+   - Update form schema to exclude demographic_location
+   - Add proper field validation with clear error messages
+
+2. **Content Type Step Restructure** (`components/topic-builder/steps/ContentFormatStep.tsx`)
+   - Restructure content type options to Blog Post or Article, and Social Media Post
+   - Add platform sub-selection for Social Media (Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube)
+   - Implement conditional platform requirement logic
+   - Update `lib/topic-builder-utils.ts` content type validation rules
+
+3. **Goals & Style Step Improvement** (`components/topic-builder/steps/GoalsStep.tsx`)
+   - Create separate custom input fields for each "Other" option
+   - Implement per-question custom input state management
+   - Add proper labeling and validation for custom inputs
+
+4. **Advanced Step Redesign** (`components/topic-builder/steps/AdvancedStep.tsx`)
+   - Rename step from "Fine Tuning" to "Advanced Options"
+   - Remove Content Language and Target Region fields
+   - Reorder with "Additional requirements" first (larger text area)
+   - Add topic count slider component (1-20 range with live value display)
+   - Update `components/topic-builder/steps/ReviewStep.tsx` to exclude removed fields
+
+5. **Review Step UI Overhaul** (`components/topic-builder/steps/ReviewStep.tsx`)
+   - Replace 3-column layout with responsive grid layout
+   - Create ReviewFieldCard component with icons, labels, and values
+   - Add edit buttons for quick field modifications
+   - Improve mobile responsiveness
+
+6. **Generation Loading Enhancement** (`components/topic-builder/AILoadingScreen.tsx`)
+   - Add functional cancel button with confirmation dialog
+   - Implement AbortController in `hooks/use-topic-builder.ts:395`
+   - Add progress indicators and improved animations
+   - Wire cancellation to abort in-flight API requests
+
+**Testing Strategy for Phase 1:**
+- Unit tests for topic-builder utils (no audience auto-select, removed geo field, content type/platform rules)
+- Component tests for Advanced step slider, Review grid, Loading overlay cancel
+- Integration tests for form validation and error handling
+- E2E tests for complete topic generation workflow
+
+## Phase 2: Results Page and Topic Management
+**Scope:** Dedicated results page with enhanced topic management capabilities
+
+**Components to Build:**
+1. **Dedicated Results Page** (`app/ideas/create/results/[temporaryId]/page.tsx`)
+   - Create new route with temporary ID parameter support
+   - Implement session storage for unsaved results (`localStorage` with expiration)
+   - Add session recovery functionality with banner notifications
+   - Create breadcrumb navigation and dedicated layout
+
+2. **Modern Topic Cards** (`components/topic-builder/results/TopicCard.tsx`)
+   - Redesign with minimalistic, modern aesthetic
+   - Add expand functionality for detailed view
+   - Create TopicDetailsModal component with full metadata display
+   - Add quick action buttons (save, edit, use for content)
+   - Implement card animations and hover effects
+
+3. **Bulk Operations System** (`components/topic-builder/results/BulkActions.tsx`)
+   - Add checkbox selection for multiple topics
+   - Implement selection state management
+   - Create bulk save functionality
+   - Add export options (JSON, CSV formats)
+   - Wire "Write Content" navigation to `/flows/create?topicId=<id>`
+
+4. **Enhanced TopicActions** (`components/topic-builder/results/TopicActions.tsx`)
+   - Integrate with TopicCard for seamless interactions
+   - Add individual save, edit, and content creation actions
+   - Implement topic regeneration functionality
+   - Add delete confirmation dialogs
+
+**Testing Strategy for Phase 2:**
+- Unit tests for session management and localStorage operations
+- Component tests for TopicCard interactions and modal functionality
+- Integration tests for bulk operations and export functionality
+- E2E tests for results page navigation and topic management workflows
+
+## Phase 3: Universal Data Table Enhancement
+**Scope:** Enhance existing DataTable component and standardize across all admin pages
+
+**Components to Build/Modify:**
+1. **Enhanced DataTable Component** (`components/data-table.tsx`)
+   - Add robust multi-field search functionality
+   - Implement advanced filtering with array field support
+   - Create customizable page size options
+   - Add table-level and row-level action systems
+   - Implement responsive mobile design with card view
+   - Add loading skeleton integration (`components/ui/table-skeleton.tsx`)
+
+2. **Table Standardization**
+   - Replace existing table implementations in:
+     - `/ideas` page - Topic ideas table
+     - `/content` page - Content items table
+     - `/tasks` page - Task management table
+     - `/users` page - User management table
+     - `/integrations` page - Integrations status table
+   - Create page-specific column definitions and TypeScript interfaces
+   - Implement consistent loading and error states across all pages
+
+3. **Advanced Features**
+   - Add column sorting functionality
+   - Implement server-side pagination support (future-ready)
+   - Create export functionality for table data
+   - Add batch operations support for selected rows
+
+**Testing Strategy for Phase 3:**
+- Unit tests for search and filtering logic with array fields
+- Component tests for pagination, sorting, and responsive behavior
+- Integration tests for table data operations and export functionality
+- Visual regression tests for consistent table appearance across pages
+
+## Phase 4: API Integration and Performance Optimization
+**Scope:** Backend integration hardening and performance improvements
+
+**Backend API Enhancements:**
+1. **Session Management API**
+   - Create endpoints for temporary session storage and retrieval
+   - Implement session cleanup for expired results
+   - Add session-based topic management with conflict resolution
+
+2. **Topic Management API Enhancement**
+   - Add bulk operations support (save, delete, export)
+   - Implement topic editing and regeneration endpoints
+   - Create advanced search and filtering API endpoints
+   - Add topic archiving and soft delete functionality
+
+3. **API Route Consolidation**
+   - Unify duplicate "get topics" routes (prefer `app/api/topics/route.ts`)
+   - Update `services/backend.ts` to use consistent server-proxy routes
+   - Implement comprehensive error handling and sanitized logging
+   - Add Sentry integration for production error monitoring
+
+**Performance Optimizations:**
+1. **Frontend Performance**
+   - Implement proper code splitting for topic builder steps
+   - Add React.memo for expensive components
+   - Optimize bundle size with dynamic imports
+   - Implement service worker for offline functionality
+
+2. **Caching Strategy**
+   - Configure TanStack Query cache policies with appropriate staleTime and gcTime
+   - Implement localStorage fallback for offline access
+   - Add optimistic updates for topic save operations
+
+**Testing Strategy for Phase 4:**
+- API integration tests for all endpoints
+- Performance testing for large topic datasets
+- Error boundary testing for network failures
+- Load testing for concurrent topic generation requests
 
 # Logical Dependency Chain
-[Define the logical order of development:
-- Which features need to be built first (foundation)
-- Getting as quickly as possible to something usable/visible front end that works
-- Properly pacing and scoping each feature so it is atomic but can also be built upon and improved as development approaches]
+
+## Foundation Layer (Must Build First)
+1. **Core Component Library and Type Safety**
+   - Complete Radix UI integration and custom component variants
+   - Finalize TypeScript interfaces for all data models
+   - Establish form validation schemas with Zod
+   - Set up error boundary and loading states
+
+2. **Topic Builder Form Infrastructure** 
+   - Hook system (`use-topic-builder.ts`) for form state management
+   - Basic step navigation and validation framework
+   - Form data persistence and recovery mechanisms
+   - Integration with backend API proxy routes
+
+## Incremental User Value Delivery (Build to Show Progress Quickly)
+3. **Phase 1 Topic Builder UX Fixes** (Immediate visible improvements)
+   - Fix audience pre-selection bug (users see correct behavior immediately)
+   - Remove geographic focus field (cleaner UI immediately)
+   - Restructure content type options (better UX immediately)
+   - These changes improve existing functionality without breaking workflows
+
+4. **Enhanced Review and Generation Experience** 
+   - Review step grid layout (better information display)
+   - Loading screen with cancellation (better perceived performance)
+   - Error handling improvements (more reliable experience)
+   - Users can complete full topic generation workflow reliably
+
+## Value Multiplication Layer (Build Upon Foundation)
+5. **Results Management System**
+   - Dedicated results page (users can bookmark and share results)
+   - Session management (users don't lose work)
+   - Topic cards with actions (users can manage generated content)
+   - This transforms one-time use into persistent value
+
+6. **Bulk Operations and Export**
+   - Multi-select and bulk actions (efficiency for power users)
+   - Export functionality (integration with external workflows)
+   - Content creation navigation (connects to broader platform)
+
+## Scalability and Polish Layer (Build for Growth)
+7. **Universal Data Table System**
+   - Standardize across all admin pages (consistent user experience)
+   - Advanced search and filtering (handle large datasets)
+   - Mobile responsiveness (broader accessibility)
+   - This creates platform consistency and scales to enterprise use
+
+8. **Performance and Reliability**
+   - API consolidation and caching (faster performance)
+   - Offline functionality (reliability in poor network conditions)
+   - Error monitoring and analytics (proactive issue resolution)
+
+## Atomic Development Approach
+**Each phase is designed to be:**
+- **Independently Deployable**: Each phase delivers complete user value
+- **Non-Breaking**: New features don't disrupt existing functionality  
+- **Testable**: Comprehensive test coverage for each component
+- **Incrementally Valuable**: Each phase increases user satisfaction and retention
+
+**Dependency Management:**
+- Phase 1 can be built and deployed immediately (fixes existing bugs)
+- Phase 2 builds on Phase 1 but doesn't require it to be complete
+- Phase 3 enhances the platform but doesn't break existing functionality
+- Phase 4 optimizes everything built in previous phases
+
+**Risk Mitigation Through Incremental Delivery:**
+- Users see improvements immediately with Phase 1
+- Each phase reduces specific user pain points
+- No single phase is critical for basic functionality
+- Each phase can be tested and validated with real users before proceeding
 
 # Risks and Mitigations  
-[Identify potential risks and how they'll be addressed:
-- Technical challenges
-- Figuring out the MVP that we can build upon
-- Resource constraints]
+
+## Technical Challenges and Solutions
+
+**Risk 1: Topic Generation API Performance and Reliability**
+- **Challenge**: AI/LLM backend may have latency, rate limits, or failures
+- **Mitigation**: 
+  - Implement robust retry logic with exponential backoff
+  - Add request queuing and batching for bulk operations
+  - Provide clear user feedback during generation
+  - Implement cancellation functionality to prevent stuck states
+  - Cache common topic patterns to reduce API calls
+
+**Risk 2: Client-Side State Management Complexity**
+- **Challenge**: Complex form state across 6 steps with validation and persistence
+- **Mitigation**:
+  - Use proven state management with Zustand + TanStack Query
+  - Implement comprehensive TypeScript interfaces to catch errors early
+  - Break state into smaller, manageable pieces per step
+  - Add extensive unit tests for state transitions and validation
+
+**Risk 3: Session and Data Persistence Reliability**
+- **Challenge**: Users losing work due to browser refresh, network issues, or errors
+- **Mitigation**:
+  - Implement redundant storage (localStorage + sessionStorage)
+  - Add session expiration with clear user warnings
+  - Provide session recovery with user confirmation
+  - Use optimistic updates with rollback capabilities
+
+## MVP Definition and Scope Management
+
+**Risk 4: Feature Creep and Scope Expansion**
+- **Challenge**: Adding features that delay core functionality delivery
+- **Mitigation**:
+  - **MVP Core**: Topic generation workflow with basic save/export (Phase 1 + basic Phase 2)
+  - Strict phase-based development with clear acceptance criteria
+  - User testing after each phase to validate before expanding
+  - Feature flagging to enable gradual rollout
+
+**Risk 5: User Experience Complexity**
+- **Challenge**: 6-step wizard might be overwhelming for new users
+- **Mitigation**:
+  - Implement progressive disclosure (show advanced options only when needed)
+  - Add skip/default options for non-essential steps
+  - Provide clear progress indicators and step descriptions
+  - Include onboarding tutorial and contextual help
+  - A/B test simplified vs. full workflow paths
+
+## Resource and Technical Constraints
+
+**Risk 6: Next.js 15 and React 19 Compatibility Issues**
+- **Challenge**: Bleeding-edge versions might have stability issues
+- **Mitigation**:
+  - Comprehensive testing with current dependency versions
+  - Pin specific versions in package.json to prevent breaking updates
+  - Monitor Next.js and React issue trackers proactively
+  - Have rollback plan to stable versions if critical bugs appear
+
+**Risk 7: Mobile and Cross-Browser Compatibility**
+- **Challenge**: Complex wizard UI may not work well on mobile devices
+- **Mitigation**:
+  - Mobile-first design approach with Tailwind responsive utilities
+  - Extensive testing across devices and browsers
+  - Progressive enhancement for advanced features
+  - Fallback UI patterns for unsupported browsers
+
+**Risk 8: Data Export and Integration Complexity**
+- **Challenge**: Users need topics in various formats and external systems
+- **Mitigation**:
+  - Start with simple JSON/CSV export (most universally supported)
+  - Use standard data schemas for interoperability
+  - Provide clear API documentation for custom integrations
+  - Add webhook support for real-time data sync (future phase)
+
+## Performance and Scalability Risks
+
+**Risk 9: Large Dataset Handling**
+- **Challenge**: Performance degradation with hundreds of saved topics
+- **Mitigation**:
+  - Implement pagination and virtualization early
+  - Use efficient search algorithms with proper indexing
+  - Add data archiving for old topics
+  - Monitor performance metrics and optimize bottlenecks
+
+**Risk 10: Backend Service Dependencies**
+- **Challenge**: Dependency on external Python service and LLM APIs
+- **Mitigation**:
+  - Implement circuit breaker patterns for external API calls
+  - Add fallback topic suggestions from static data
+  - Monitor service health and implement alerting
+  - Design for graceful degradation when services are unavailable
+
+## Development and Maintenance Risks
+
+**Risk 11: Code Quality and Technical Debt**
+- **Challenge**: Rapid development might compromise long-term maintainability
+- **Mitigation**:
+  - Enforce code quality with Biome linting and formatting
+  - Maintain 90%+ test coverage with Jest and Testing Library
+  - Regular code reviews and refactoring sessions
+  - Document architectural decisions and patterns
+
+**Risk 12: User Adoption and Feedback Loop**
+- **Challenge**: Building features users don't actually need or use
+- **Mitigation**:
+  - Deploy Phase 1 quickly to get real user feedback
+  - Implement analytics to track feature usage patterns
+  - Regular user interviews and usability testing
+  - Iterative improvement based on actual usage data
 
 # Appendix  
-[Include any additional information:
-- Research findings
-- Technical specifications]
+
+## Technical Specifications
+
+### Current Codebase Analysis
+**Application Structure:**
+- **Pages**: 23 route pages including dashboard, topic builder, ideas management, authentication
+- **Components**: 50+ reusable UI components with comprehensive shadcn/ui integration
+- **Topic Builder**: 6-step wizard with dedicated components for each step
+- **Data Management**: Universal DataTable component with search, pagination, and actions
+- **Hooks**: Custom hooks for topic builder state, storage management, and form handling
+
+**Key File Locations:**
+```
+app/
+├── ideas/create/page.tsx              # Main topic builder page
+├── ideas/page.tsx                     # Topic management/dashboard
+├── login|signup|forgot-password/      # Authentication pages
+└── [other admin pages]/               # Various admin interfaces
+
+components/
+├── topic-builder/
+│   ├── steps/                         # Individual wizard steps
+│   ├── results/                       # Topic results management
+│   └── AILoadingScreen.tsx           # Generation loading state
+├── ui/                               # Base UI components (40+ files)
+└── data-table.tsx                    # Universal table component
+
+types/
+├── topic-builder.ts                  # Core topic builder interfaces
+├── schemas.ts                        # Zod validation schemas
+└── [other type definitions]          # Supporting types
+
+lib/
+└── topic-builder-utils.ts            # Form logic and validation utilities
+```
+
+### Dependency Versions and Compatibility
+**Framework Stack:**
+```json
+{
+  "next": "15.5.0",
+  "react": "^19.1.1", 
+  "typescript": "^5",
+  "tailwindcss": "^4"
+}
+```
+
+**UI and State Management:**
+```json
+{
+  "@radix-ui/*": "^1.1.x - ^2.2.x",
+  "zustand": "^5.0.8",
+  "@tanstack/react-query": "^5.85.9",
+  "react-hook-form": "^7.62.0",
+  "zod": "^4.1.5"
+}
+```
+
+**Development and Quality Tools:**
+```json
+{
+  "@biomejs/biome": "2.2.0",
+  "jest": "^30.1.2",
+  "@testing-library/react": "^16.3.0",
+  "husky": "^9.1.7"
+}
+```
+
+## Implementation Notes
+
+### Current Bug Analysis (From Feature Plans)
+1. **Audience Pre-selection Issue**: Line 824 in `lib/topic-builder-utils.ts` auto-selects first 2 audiences
+2. **Geographic Focus**: Unnecessary field in step 2 requiring removal
+3. **Content Type Limitations**: Current options need restructuring for social media platforms  
+4. **"Other" Input Collision**: Shared input fields across different question categories
+5. **Advanced Step Issues**: Contains unused Language/Region fields, needs renaming and reordering
+
+### Testing Strategy Implementation
+**Unit Testing with Jest:**
+```bash
+npm run test              # Run all tests
+npm run test:watch        # Watch mode for development
+npm run test:coverage     # Generate coverage report
+npm run test:ci           # CI/CD testing
+```
+
+**Component Testing Priorities:**
+- Topic builder step components (form validation, navigation)
+- DataTable component (search, pagination, responsive behavior)
+- Topic card and bulk operations (user interactions)
+- Loading states and error boundaries (error handling)
+
+**Integration Testing Focus:**
+- Complete topic generation workflow (end-to-end user journey)
+- API integration and error handling (backend communication)
+- Session management and recovery (data persistence)
+- Export functionality (data transformation and download)
+
+### Performance Considerations
+**Bundle Size Management:**
+- Current build uses Turbopack for faster development
+- TailwindCSS 4 with PostCSS for optimal CSS bundling
+- Code splitting implemented at page level via Next.js App Router
+- Dynamic imports needed for topic builder steps (identified optimization)
+
+**State Management Performance:**
+- Zustand provides minimal re-renders with selective subscriptions
+- TanStack Query handles server state caching with appropriate cache times
+- Form state isolated per step to prevent unnecessary re-validations
+
+**Mobile Performance:**
+- Tailwind responsive utilities for adaptive layouts
+- Touch-friendly interactions with proper hit targets
+- Progressive enhancement for advanced features
+- Image optimization through Next.js built-in support
+
+## Research Findings
+
+### User Experience Research
+**Topic Generation Workflow Analysis:**
+- Current 6-step process provides comprehensive customization
+- Steps 4-5 could benefit from progressive disclosure to reduce cognitive load
+- Mobile users need streamlined interface due to screen constraints
+- Advanced users prefer bulk operations and export capabilities
+
+**Feature Priority Based on Requirements Analysis:**
+1. **High Impact, Low Effort**: Fix audience pre-selection bug, remove geo field
+2. **High Impact, Medium Effort**: Redesign review step, add cancellation
+3. **Medium Impact, High Effort**: Dedicated results page, bulk operations
+4. **Low Impact, Medium Effort**: Universal table standardization
+
+### Technical Architecture Decisions
+**Why Next.js 15 + React 19:**
+- Server Components reduce client bundle size for better performance
+- App Router provides better SEO and navigation patterns
+- React 19 improvements in concurrent features benefit form handling
+- Vercel deployment optimization for edge performance
+
+**Why Zustand over Redux:**
+- 75% less boilerplate code for state management
+- Better TypeScript integration with minimal setup
+- Smaller bundle size (2.7kb vs 47kb for Redux Toolkit)
+- Simpler testing patterns for state logic
+
+**Why TanStack Query over SWR:**
+- More comprehensive caching strategies with gcTime and staleTime
+- Better error handling and retry mechanisms
+- Built-in optimistic updates support
+- More extensive DevTools for debugging
+
+**Why Biome over ESLint + Prettier:**
+- Single tool replacing two dependencies
+- Faster linting and formatting (10-20x speed improvement)
+- Better error messages and suggestions
+- Consistent code style enforcement
 </PRD>
