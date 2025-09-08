@@ -64,8 +64,8 @@
             "title": "Update Content Type Options",
             "description": "Modify the ContentFormatStep component to include only two main content type options: 'Blog Post or Article' and 'Social Media Post'",
             "dependencies": [],
-            "details": "1. Locate and open `components/topic-builder/steps/ContentFormatStep.tsx`\n2. Replace the existing content type options with the new structure:\n```typescript\nconst contentTypes = [\n  { id: 'blog', label: 'Blog Post or Article' },\n  { id: 'social', label: 'Social Media Post' }\n];\n```\n3. Update the UI rendering to display these options as radio buttons or selection cards\n4. Ensure the form state correctly captures the selected content type\n5. Test that both options can be selected and the selection is properly stored in form state",
-            "status": "pending",
+            "details": "1. Locate and open `components/topic-builder/steps/ContentFormatStep.tsx`\n2. Replace the existing content type options with the new structure:\n```typescript\nconst contentTypes = [\n  { id: 'blog', label: 'Blog Post or Article' },\n  { id: 'social', label: 'Social Media Post' }\n];\n```\n3. Update the UI rendering to display these options as radio buttons or selection cards\n4. Ensure the form state correctly captures the selected content type\n5. Test that both options can be selected and the selection is properly stored in form state\n<info added on 2025-09-08T13:39:15.065Z>\nImplementation completed successfully. The content type options have been simplified to just two main options as required. The platform selection now only appears when \"Social Media Post\" is selected, and the platform options have been reduced to the six specified platforms. All \"Other\" option handling has been removed to streamline the UI. The implementation maintains backward compatibility with the existing form data structure while simplifying the user experience. All tests are passing with the new structure.\n</info added on 2025-09-08T13:39:15.065Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -619,7 +619,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-08T13:22:13.324Z",
+      "updated": "2025-09-08T13:38:49.903Z",
       "description": "Tasks for master context"
     }
   }

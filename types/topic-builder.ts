@@ -386,20 +386,10 @@ export const WIZARD_MODE_OPTIONS: SelectOption[] = [
 export const CONTENT_TYPE_OPTIONS: SelectOption[] = [
   { label: "Blog Post or Article", value: "blog-post" },
   { label: "Social Media Post", value: "social-media" },
-  { label: "Video Content", value: "video-content" },
-  { label: "Podcast Episode", value: "podcast" },
-  { label: "Infographic", value: "infographic" },
-  { label: "Guide or E-book", value: "ebook-guide" },
-  { label: "Case Study", value: "case-study" },
-  { label: "Report or Whitepaper", value: "whitepaper" },
-  { label: "Email Newsletter", value: "newsletter" },
-  { label: "Presentation or Webinar", value: "presentation" },
-  { label: "Press Release", value: "press-release" },
-  { label: "Other", value: "other" },
 ];
 
 /**
- * Platform/channel options (shown conditionally for social media and video content)
+ * Platform/channel options (shown for social media content only)
  */
 export const PLATFORM_OPTIONS: SelectOption[] = [
   { label: "Facebook", value: "facebook" },
@@ -408,9 +398,6 @@ export const PLATFORM_OPTIONS: SelectOption[] = [
   { label: "LinkedIn", value: "linkedin" },
   { label: "TikTok", value: "tiktok" },
   { label: "YouTube", value: "youtube" },
-  { label: "Website/Blog", value: "website" },
-  { label: "Vimeo", value: "vimeo" },
-  { label: "Other", value: "other" },
 ];
 
 /**
