@@ -181,17 +181,17 @@ export function classifyError(
   // Handle non-Error objects
   const mapping = ERROR_MAPPINGS.unknown_error;
   let technicalMessage: string;
-  
+
   if (typeof error === "object" && error !== null) {
     try {
       technicalMessage = JSON.stringify(error, null, 2);
     } catch {
-      technicalMessage = `[object ${error.constructor?.name || 'Object'}]`;
+      technicalMessage = `[object ${error.constructor?.name || "Object"}]`;
     }
   } else {
     technicalMessage = String(error);
   }
-  
+
   return {
     type: "unknown_error",
     message: mapping.userMessage,
