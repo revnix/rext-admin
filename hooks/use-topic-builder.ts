@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { classifyError, isOnline } from "@/lib/error-utils";
 import {
   createInitialFormData,
@@ -479,17 +480,49 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       // Handle AbortError specifically (user-initiated cancellation)
       if (error instanceof Error && error.name === "AbortError") {
         console.log(`Topic generation aborted: ${requestId}`);
+
+        // Enhanced analytics logging for cancellations
+        console.log("ANALYTICS: AbortError caught in generateTopics", {
+          requestId,
+          timestamp: new Date().toISOString(),
+          source: "fetch_abort",
+        });
+
         // Don't set error state for user-initiated cancellations
         setGenerationError(null);
         setErrors({});
+
+        // Toast notification handled in cancelGeneration function
+        // No additional toast here to avoid double notifications
       } else {
         const classifiedError = classifyError(error, requestId);
         console.error("Topic generation failed:", classifiedError);
+
+        // Enhanced error logging
+        console.log("ANALYTICS: Generation error", {
+          requestId,
+          errorType: classifiedError.type,
+          timestamp: new Date().toISOString(),
+          technicalMessage: classifiedError.technicalMessage,
+        });
+
         setGenerationError(classifiedError);
 
         // Also set legacy error format for backward compatibility
         setErrors({
           generation: classifiedError.message,
+        });
+
+        // Error toast notification
+        toast.error("Generation failed", {
+          description: classifiedError.message,
+          action: classifiedError.recoveryActions.includes("retry")
+            ? {
+                label: "Retry",
+                onClick: () => generateTopics(),
+              }
+            : undefined,
+          duration: 6000,
         });
       }
     } finally {
@@ -523,8 +556,30 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       setAbortController(null);
       setGenerationError(null);
       setErrors({});
+
+      // Add user feedback with toast
+      toast.success("Generation cancelled", {
+        description:
+          "Topic generation was cancelled successfully. You can start over anytime.",
+        duration: 4000,
+      });
+
+      // Enhanced logging for analytics
+      console.log("ANALYTICS: Topic generation cancelled", {
+        requestId: currentRequestId,
+        timestamp: new Date().toISOString(),
+        userAgent:
+          typeof window !== "undefined"
+            ? window.navigator.userAgent
+            : "unknown",
+        formDataSnapshot: {
+          industry: formData.industry,
+          content_type: formData.content_type,
+          num_ideas: formData.num_ideas,
+        },
+      });
     }
-  }, [abortController, currentRequestId]);
+  }, [abortController, currentRequestId, formData]);
 
   // Clear generation error
   const clearGenerationError = useCallback(() => {

@@ -3,6 +3,14 @@
 import { Brain, FileText, Sparkles, Target, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 
 interface AILoadingScreenProps {
@@ -44,22 +52,55 @@ const loadingSteps = [
 export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(0);
 
   // Access the topic builder hook for cancellation
   const { cancelGeneration } = useTopicBuilder();
 
-  // Handle cancel button click
-  const handleCancel = () => {
-    console.log("User clicked cancel on loading screen");
+  // Handle initial cancel button click - show confirmation
+  const handleCancelClick = () => {
+    setShowCancelDialog(true);
+  };
+
+  // Handle confirmed cancellation
+  const handleConfirmCancel = () => {
+    console.log("User confirmed cancel on loading screen");
+    setShowCancelDialog(false);
     cancelGeneration();
+  };
+
+  // Handle dismiss dialog
+  const handleDismissCancel = () => {
+    setShowCancelDialog(false);
   };
 
   useEffect(() => {
     let stepTimer: NodeJS.Timeout;
+    let progressTimer: NodeJS.Timeout;
+    const startTime = Date.now();
+
+    const totalDuration = loadingSteps.reduce(
+      (sum, step) => sum + step.duration,
+      0,
+    );
+
+    const updateProgress = () => {
+      const elapsed = Date.now() - startTime;
+      const newProgress = Math.min((elapsed / totalDuration) * 100, 100);
+      const remaining = Math.max(totalDuration - elapsed, 0);
+
+      setProgress(newProgress);
+      setEstimatedTimeRemaining(Math.ceil(remaining / 1000));
+    };
 
     const runStep = (stepIndex: number) => {
       if (stepIndex >= loadingSteps.length) {
         setIsComplete(true);
+        setProgress(100);
+        setEstimatedTimeRemaining(0);
+        clearInterval(progressTimer);
         return;
       }
 
@@ -71,10 +112,13 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
       }, step.duration);
     };
 
+    // Start progress updates every 100ms for smooth animation
+    progressTimer = setInterval(updateProgress, 100);
     runStep(0);
 
     return () => {
       clearTimeout(stepTimer);
+      clearInterval(progressTimer);
     };
   }, []);
 
@@ -89,10 +133,10 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20" />
           {/* Floating particles */}
-          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full animate-pulse opacity-40" />
-          <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-secondary rounded-full animate-pulse opacity-30" />
-          <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-primary rounded-full animate-pulse opacity-50" />
-          <div className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-secondary rounded-full animate-pulse opacity-35" />
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full motion-safe:animate-pulse opacity-40" />
+          <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-secondary rounded-full motion-safe:animate-pulse opacity-30" />
+          <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-primary rounded-full motion-safe:animate-pulse opacity-50" />
+          <div className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-secondary rounded-full motion-safe:animate-pulse opacity-35" />
         </div>
 
         <div className="relative z-10 p-12 text-center">
@@ -101,12 +145,12 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <CurrentIcon
-                  className="w-24 h-24 text-primary animate-pulse"
+                  className="w-24 h-24 text-primary motion-safe:animate-pulse"
                   strokeWidth={1.5}
                 />
                 <div className="absolute inset-0 w-24 h-24">
                   <CurrentIcon
-                    className="w-24 h-24 text-primary/20 animate-ping"
+                    className="w-24 h-24 text-primary/20 motion-safe:animate-ping"
                     strokeWidth={1.5}
                   />
                 </div>
@@ -128,93 +172,67 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
             </p>
           </div>
 
-          {/* Single Prominent Progress Bar with Enhanced Animation */}
-          <div className="mb-12">
-            <div className="w-full h-6 md:h-8 bg-gradient-to-r from-primary/30 via-primary to-primary/30 rounded-2xl relative overflow-hidden shadow-2xl border-2 border-primary/20">
-              {/* Primary shimmer effect */}
+          {/* Step Progress Indicator */}
+          <div className="mb-6">
+            <div className="flex justify-center items-center space-x-4">
+              {loadingSteps.map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div
+                    className={`
+                      w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold
+                      transition-all duration-500
+                      ${
+                        index <= currentStep
+                          ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                          : "border-muted bg-background text-muted-foreground"
+                      }
+                      ${index === currentStep ? "motion-safe:animate-pulse" : ""}
+                    `}
+                    role="progressbar"
+                    aria-label={`Step ${index + 1}: ${step.title}`}
+                  >
+                    {index + 1}
+                  </div>
+                  {index < loadingSteps.length - 1 && (
+                    <div
+                      className={`
+                        w-12 h-0.5 mx-2 transition-colors duration-500
+                        ${index < currentStep ? "bg-primary" : "bg-muted"}
+                      `}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Enhanced Progress Bar with Real Progress */}
+          <div className="mb-8">
+            <div className="w-full h-4 bg-muted rounded-full relative overflow-hidden shadow-inner">
+              {/* Actual progress fill */}
               <div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+                className="h-full bg-gradient-to-r from-primary via-primary to-primary/90 rounded-full transition-all duration-100 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+
+              {/* Shimmer effect on progress */}
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent motion-safe:animate-shimmer"
                 style={{
                   animation: "shimmer 2s ease-in-out infinite",
                   backgroundSize: "200% 100%",
                 }}
               />
+            </div>
 
-              {/* Secondary wave effect */}
-              <div
-                className="absolute inset-0 bg-gradient-to-r from-primary/40 via-transparent to-primary/40"
-                style={{
-                  animation: "shimmer 3s ease-in-out infinite reverse",
-                  backgroundSize: "150% 100%",
-                }}
-              />
-
-              {/* Enhanced pulsing elements */}
-              <div className="absolute inset-0 flex items-center justify-around">
-                <div className="relative">
-                  <div
-                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
-                    style={{ animationDelay: "0s" }}
-                  />
-                  <div
-                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
-                    style={{ animationDelay: "0.5s" }}
-                  />
-                </div>
-
-                <div className="relative">
-                  <div
-                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
-                    style={{ animationDelay: "0.7s" }}
-                  />
-                  <div
-                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
-                    style={{ animationDelay: "1.2s" }}
-                  />
-                </div>
-
-                <div className="relative">
-                  <div
-                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
-                    style={{ animationDelay: "1.4s" }}
-                  />
-                  <div
-                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
-                    style={{ animationDelay: "1.9s" }}
-                  />
-                </div>
-
-                <div className="relative">
-                  <div
-                    className="w-2 h-2 bg-white/80 rounded-full animate-ping"
-                    style={{ animationDelay: "2.1s" }}
-                  />
-                  <div
-                    className="absolute inset-0 w-2 h-2 bg-white/40 rounded-full animate-pulse"
-                    style={{ animationDelay: "2.6s" }}
-                  />
-                </div>
-              </div>
-
-              {/* Floating particles inside the bar */}
-              <div className="absolute inset-0">
-                <div
-                  className="absolute top-1 left-4 w-1 h-1 bg-white/60 rounded-full animate-bounce"
-                  style={{ animationDelay: "0.3s", animationDuration: "2s" }}
-                />
-                <div
-                  className="absolute bottom-1 left-1/3 w-1 h-1 bg-white/60 rounded-full animate-bounce"
-                  style={{ animationDelay: "1.1s", animationDuration: "2.5s" }}
-                />
-                <div
-                  className="absolute top-1 right-1/3 w-1 h-1 bg-white/60 rounded-full animate-bounce"
-                  style={{ animationDelay: "1.8s", animationDuration: "2s" }}
-                />
-                <div
-                  className="absolute bottom-1 right-4 w-1 h-1 bg-white/60 rounded-full animate-bounce"
-                  style={{ animationDelay: "2.5s", animationDuration: "2.5s" }}
-                />
-              </div>
+            {/* Progress percentage and time remaining */}
+            <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+              <span>{Math.round(progress)}% complete</span>
+              <span>
+                {estimatedTimeRemaining > 0
+                  ? `~${estimatedTimeRemaining}s remaining`
+                  : "Finalizing..."}
+              </span>
             </div>
           </div>
 
@@ -236,7 +254,7 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
               <Button
                 variant="outline"
                 size="default"
-                onClick={handleCancel}
+                onClick={handleCancelClick}
                 className="bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-background/90 hover:border-primary/30 transition-all duration-200 text-foreground/80 hover:text-foreground"
               >
                 <X className="w-4 h-4 mr-2" />
@@ -246,6 +264,40 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="sm:max-w-md bg-background border border-primary/20 backdrop-blur-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-foreground">
+              Cancel Topic Generation?
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              This will stop the current generation process. Your form data will
+              be saved, but you'll need to restart generation to get your
+              topics.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-2 sm:gap-3">
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleDismissCancel}
+              className="flex-1 bg-background/60 hover:bg-background/80 border-muted/30 hover:border-muted/50 transition-all duration-200"
+            >
+              Continue Generating
+            </Button>
+            <Button
+              variant="destructive"
+              size="default"
+              onClick={handleConfirmCancel}
+              className="flex-1 bg-destructive/90 hover:bg-destructive text-white transition-all duration-200"
+            >
+              Yes, Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
