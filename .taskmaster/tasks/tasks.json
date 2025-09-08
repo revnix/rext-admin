@@ -1,0 +1,626 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Fix Audience Step Component",
+        "description": "Enhance the Audience Step component by removing automatic audience pre-selection logic and geographic focus field",
+        "details": "1. Locate and modify `components/topic-builder/steps/AudienceStep.tsx`\n2. Remove automatic audience pre-selection logic in `lib/topic-builder-utils.ts` around line 824\n3. Remove the geographic focus field and related validation\n4. Update the form schema in `types/schemas.ts` to exclude demographic_location\n5. Add proper field validation with clear error messages\n6. Ensure the component is fully responsive using Tailwind CSS\n7. Update any related tests to reflect these changes\n\nCode changes should include:\n```typescript\n// In lib/topic-builder-utils.ts - remove or modify around line 824\n// Remove code that auto-selects first 2 audiences\n\n// In types/schemas.ts - update schema\nconst audienceStepSchema = z.object({\n  audience: z.array(z.string()).min(1, \"Select at least one audience\"),\n  // Remove demographic_location field\n});\n\n// In AudienceStep.tsx - update component\nconst AudienceStep = () => {\n  const { formData, updateFormData } = useTopicBuilder();\n  // Remove geographic focus field logic and UI\n  // Ensure proper validation messages\n};\n```",
+        "testStrategy": "1. Write unit tests for the updated `lib/topic-builder-utils.ts` to verify audience selection logic works correctly without auto-selection\n2. Create component tests for AudienceStep to ensure it renders correctly without geographic focus field\n3. Test form validation to ensure proper error messages appear when no audience is selected\n4. Test that the form data is correctly updated when audiences are selected/deselected\n5. Verify the component is responsive across different screen sizes",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Remove automatic audience pre-selection logic",
+            "description": "Modify the topic-builder-utils.ts file to remove the logic that automatically pre-selects the first two audiences when initializing the form.",
+            "dependencies": [],
+            "details": "1. Locate the `initializeFormData` or similar function in `lib/topic-builder-utils.ts` around line 824\n2. Identify and remove the code that automatically selects the first two audience options\n3. Ensure the audience array is initialized as empty or with user-selected values only\n4. Update any related functions that might depend on this pre-selection logic\n5. Test that when a new topic is created, no audiences are pre-selected",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Remove geographic focus field from AudienceStep component",
+            "description": "Update the AudienceStep component to remove the geographic focus field and all related UI elements and logic.",
+            "dependencies": [],
+            "details": "1. Open `components/topic-builder/steps/AudienceStep.tsx`\n2. Remove all UI elements related to the geographic focus field (input, label, error messages)\n3. Remove any state variables or handlers specifically for the geographic focus field\n4. Clean up any conditional rendering that depends on the geographic focus field\n5. Ensure the component layout remains consistent after removing the field\n6. Verify the component renders correctly without the geographic focus field",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Update form schema and validation",
+            "description": "Modify the schema definition in types/schemas.ts to remove the demographic_location field and enhance validation for the audience selection.",
+            "dependencies": [],
+            "details": "1. Open `types/schemas.ts` and locate the audienceStepSchema\n2. Remove the demographic_location field from the schema\n3. Ensure the audience field has proper validation with clear error messages (min 1 selection required)\n4. Update any TypeScript interfaces or types that reference the removed field\n5. Verify that form validation works correctly with the updated schema\n6. Update any validation functions in the component that reference the removed field",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Ensure responsive design and update tests",
+            "description": "Verify the AudienceStep component is fully responsive after changes and update all related tests to reflect the modifications.",
+            "dependencies": [],
+            "details": "1. Review the AudienceStep component with various screen sizes to ensure proper responsive behavior\n2. Use Tailwind CSS utilities to fix any responsive issues\n3. Update existing tests for AudienceStep component to remove expectations for geographic focus field\n4. Update tests for form validation to reflect new schema requirements\n5. Add tests to verify audience selection works correctly without pre-selection\n6. Run the full test suite to ensure no regressions were introduced",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Restructure Content Type Step",
+        "description": "Restructure the Content Type step to include Blog Post/Article and Social Media Post options with platform sub-selection for Social Media",
+        "details": "1. Modify `components/topic-builder/steps/ContentFormatStep.tsx`\n2. Restructure content type options to include only two main categories: 'Blog Post or Article' and 'Social Media Post'\n3. Add conditional platform sub-selection that appears when 'Social Media Post' is selected\n4. Include platform options: Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube\n5. Implement conditional validation logic that requires platform selection when Social Media is chosen\n6. Update `lib/topic-builder-utils.ts` content type validation rules\n\nCode implementation:\n```typescript\n// In ContentFormatStep.tsx\nconst contentTypes = [\n  { id: 'blog', label: 'Blog Post or Article' },\n  { id: 'social', label: 'Social Media Post' }\n];\n\nconst platforms = [\n  { id: 'facebook', label: 'Facebook' },\n  { id: 'instagram', label: 'Instagram' },\n  { id: 'twitter', label: 'Twitter' },\n  { id: 'linkedin', label: 'LinkedIn' },\n  { id: 'tiktok', label: 'TikTok' },\n  { id: 'youtube', label: 'YouTube' }\n];\n\n// Show platform selection only when social media is selected\nconst showPlatformSelection = formData.content_type === 'social';\n\n// Update validation schema in types/schemas.ts\nconst contentTypeSchema = z.object({\n  content_type: z.string().min(1, \"Content type is required\"),\n  platform: z.string().optional()\n    .refine(val => {\n      // Platform is required only when content_type is 'social'\n      return formData.content_type !== 'social' || (val && val.length > 0);\n    }, \"Platform selection is required for social media posts\")\n});\n```",
+        "testStrategy": "1. Write unit tests for the updated content type validation rules in `lib/topic-builder-utils.ts`\n2. Create component tests for ContentFormatStep to verify conditional rendering of platform selection\n3. Test validation logic to ensure platform is required only when Social Media is selected\n4. Test that the form data is correctly updated when content type and platform are selected\n5. Verify the UI correctly shows/hides platform options based on content type selection\n6. Test keyboard navigation and accessibility of the selection components",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update Content Type Options",
+            "description": "Modify the ContentFormatStep component to include only two main content type options: 'Blog Post or Article' and 'Social Media Post'",
+            "dependencies": [],
+            "details": "1. Locate and open `components/topic-builder/steps/ContentFormatStep.tsx`\n2. Replace the existing content type options with the new structure:\n```typescript\nconst contentTypes = [\n  { id: 'blog', label: 'Blog Post or Article' },\n  { id: 'social', label: 'Social Media Post' }\n];\n```\n3. Update the UI rendering to display these options as radio buttons or selection cards\n4. Ensure the form state correctly captures the selected content type\n5. Test that both options can be selected and the selection is properly stored in form state",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Conditional Platform Selection",
+            "description": "Add a conditional platform selection UI that appears only when 'Social Media Post' is selected",
+            "dependencies": [],
+            "details": "1. Define the platform options array in ContentFormatStep.tsx:\n```typescript\nconst platforms = [\n  { id: 'facebook', label: 'Facebook' },\n  { id: 'instagram', label: 'Instagram' },\n  { id: 'twitter', label: 'Twitter' },\n  { id: 'linkedin', label: 'LinkedIn' },\n  { id: 'tiktok', label: 'TikTok' },\n  { id: 'youtube', label: 'YouTube' }\n];\n```\n2. Add conditional rendering logic to show platform selection only when social media is selected:\n```typescript\nconst showPlatformSelection = formData.content_type === 'social';\n```\n3. Create the platform selection UI component (dropdown or radio buttons)\n4. Implement the conditional rendering using the showPlatformSelection flag\n5. Test that the platform selection only appears when 'Social Media Post' is selected",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Update Validation Logic",
+            "description": "Implement conditional validation logic that requires platform selection only when Social Media is chosen",
+            "dependencies": [],
+            "details": "1. Open `types/schemas.ts` or the relevant validation file\n2. Update the content type validation schema to include conditional platform validation:\n```typescript\nconst contentTypeSchema = z.object({\n  content_type: z.string().min(1, \"Content type is required\"),\n  platform: z.string().optional()\n    .refine(val => {\n      // Platform is required only when content_type is 'social'\n      return formData.content_type !== 'social' || (val && val.length > 0);\n    }, \"Platform selection is required for social media posts\")\n});\n```\n3. Update `lib/topic-builder-utils.ts` to incorporate the new validation rules\n4. Test that validation correctly requires platform selection only when 'Social Media Post' is selected\n5. Ensure appropriate error messages are displayed when validation fails",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement UI State Management",
+            "description": "Ensure proper UI state management for the restructured content type step, including form state updates and error handling",
+            "dependencies": [],
+            "details": "1. Update the form state management in ContentFormatStep.tsx to handle both content type and platform selections\n2. Implement handlers for content type changes that reset platform selection when switching between options\n3. Add error display components to show validation errors for both fields\n4. Ensure the form data is correctly updated and persisted when navigating between steps\n5. Test the complete user flow, including:\n   - Selecting 'Blog Post or Article' and proceeding to next step\n   - Selecting 'Social Media Post', choosing a platform, and proceeding\n   - Selecting 'Social Media Post', not choosing a platform, and verifying error message\n   - Switching between content types and verifying state is properly maintained",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Improve Goals & Style Step",
+        "description": "Enhance the Goals & Style step by creating separate custom input fields for each 'Other' option and improving validation",
+        "details": "1. Modify `components/topic-builder/steps/GoalsStep.tsx`\n2. Create separate custom input fields for each question category that has an 'Other' option\n3. Implement per-question custom input state management\n4. Add proper labeling and validation for custom inputs\n5. Ensure each custom field is only shown when the corresponding 'Other' option is selected\n\nImplementation example:\n```typescript\n// In GoalsStep.tsx\nconst GoalsStep = () => {\n  const { formData, updateFormData } = useTopicBuilder();\n  \n  // Separate state for each custom input\n  const [customGoal, setCustomGoal] = useState('');\n  const [customPurpose, setCustomPurpose] = useState('');\n  const [customTone, setCustomTone] = useState('');\n  \n  // Handle selection of 'Other' option for content goal\n  const handleGoalChange = (value: string) => {\n    if (value === 'other') {\n      // Show custom input field\n    } else {\n      updateFormData({ content_goal: value });\n    }\n  };\n  \n  // Similar handlers for purpose and tone\n  \n  // Handle custom input submission\n  const handleCustomGoalSubmit = () => {\n    if (customGoal.trim()) {\n      updateFormData({ content_goal: `custom:${customGoal.trim()}` });\n    }\n  };\n  \n  return (\n    <div>\n      {/* Content goal selection */}\n      <RadioGroup value={formData.content_goal} onValueChange={handleGoalChange}>\n        {/* Goal options */}\n      </RadioGroup>\n      \n      {/* Custom goal input - only shown when 'other' is selected */}\n      {formData.content_goal === 'other' && (\n        <div className=\"mt-2\">\n          <Input \n            value={customGoal}\n            onChange={(e) => setCustomGoal(e.target.value)}\n            placeholder=\"Enter custom goal\"\n            onBlur={handleCustomGoalSubmit}\n          />\n        </div>\n      )}\n      \n      {/* Similar pattern for purpose and tone */}\n    </div>\n  );\n};\n```",
+        "testStrategy": "1. Write unit tests for the custom input state management logic\n2. Create component tests for GoalsStep to verify conditional rendering of custom input fields\n3. Test validation to ensure custom inputs are properly validated when submitted\n4. Test that the form data is correctly updated with custom values when entered\n5. Verify the UI correctly shows/hides custom input fields based on selection\n6. Test form submission with various combinations of standard and custom values\n7. Test keyboard navigation and accessibility of the custom input fields",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement custom input fields for 'Other' options",
+            "description": "Create separate custom input fields for each question category that has an 'Other' option in the Goals & Style step",
+            "dependencies": [],
+            "details": "1. Modify `components/topic-builder/steps/GoalsStep.tsx`\n2. Identify all question categories that have 'Other' options (content goal, purpose, tone, etc.)\n3. Add Input components for each 'Other' option\n4. Style the custom input fields to match the design system\n5. Ensure proper labeling for each custom input field\n6. Test rendering of custom input fields",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement state management for custom inputs",
+            "description": "Create and manage separate state variables for each custom input field",
+            "dependencies": [],
+            "details": "1. Add useState hooks for each custom input (customGoal, customPurpose, customTone, etc.)\n2. Create handler functions for each custom input change\n3. Implement logic to update the main form data when custom inputs change\n4. Format custom values with prefix (e.g., `custom:${value}`) when updating form data\n5. Ensure state is properly initialized based on existing form data\n6. Test state management with various input scenarios",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement conditional rendering logic",
+            "description": "Ensure each custom input field is only shown when the corresponding 'Other' option is selected",
+            "dependencies": [],
+            "details": "1. Add conditional rendering logic for each custom input field\n2. Implement handlers for radio/select changes to show/hide custom inputs\n3. Create logic to detect when a value is a custom value (starts with 'custom:')\n4. Ensure custom inputs are pre-populated when editing existing custom values\n5. Test conditional rendering with different selection scenarios\n6. Verify smooth transitions between standard options and custom inputs",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement validation for custom inputs",
+            "description": "Add proper validation for custom input fields to ensure they contain valid data",
+            "dependencies": [],
+            "details": "1. Create validation rules for custom inputs (e.g., minimum length, required when 'Other' is selected)\n2. Implement error state and error messages for invalid custom inputs\n3. Add onBlur handlers to validate inputs when users tab away\n4. Prevent form submission if custom inputs are invalid\n5. Add visual indicators for validation status\n6. Test validation with various input scenarios including edge cases",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Update form data handling and integration testing",
+            "description": "Ensure proper form data formatting and integration with the rest of the application",
+            "dependencies": [],
+            "details": "1. Update the updateFormData calls to properly format custom values\n2. Ensure custom values are properly parsed when displaying existing data\n3. Update any relevant schema validation in the application\n4. Test the entire flow from selecting 'Other' to entering custom value to form submission\n5. Verify that custom values are properly saved and retrieved from the API\n6. Create integration tests to verify the Goals & Style step works correctly with the rest of the application",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Redesign Advanced Step",
+        "description": "Redesign the Advanced Step by renaming it, removing unnecessary fields, reordering elements, and adding a topic count slider",
+        "details": "1. Modify `components/topic-builder/steps/AdvancedStep.tsx`\n2. Rename step from 'Fine Tuning' to 'Advanced Options' in UI and navigation\n3. Remove Content Language and Target Region fields\n4. Reorder elements with 'Additional requirements' first (larger text area)\n5. Add topic count slider component with range 1-20 and live value display\n6. Update `components/topic-builder/steps/ReviewStep.tsx` to exclude removed fields\n\nImplementation example:\n```typescript\n// In AdvancedStep.tsx\nconst AdvancedStep = () => {\n  const { formData, updateFormData } = useTopicBuilder();\n  \n  // Handle slider change\n  const handleCountChange = (value: number) => {\n    updateFormData({ num_ideas: value });\n  };\n  \n  return (\n    <div className=\"space-y-6\">\n      <h2 className=\"text-xl font-semibold\">Advanced Options</h2>\n      \n      {/* Additional requirements - now first */}\n      <div className=\"space-y-2\">\n        <Label htmlFor=\"additional_requirements\">Additional requirements</Label>\n        <Textarea\n          id=\"additional_requirements\"\n          placeholder=\"Add any specific requirements or constraints...\"\n          className=\"min-h-[120px]\"\n          value={formData.additional_requirements || ''}\n          onChange={(e) => updateFormData({ additional_requirements: e.target.value })}\n        />\n      </div>\n      \n      {/* Keywords */}\n      <div className=\"space-y-2\">\n        <Label htmlFor=\"keywords\">Keywords (optional)</Label>\n        <TagInput\n          id=\"keywords\"\n          value={formData.keywords || []}\n          onChange={(keywords) => updateFormData({ keywords })}\n          placeholder=\"Add keywords and press Enter\"\n        />\n      </div>\n      \n      {/* Tone modifiers */}\n      <div className=\"space-y-2\">\n        <Label htmlFor=\"tone_modifiers\">Tone modifiers (optional)</Label>\n        <TagInput\n          id=\"tone_modifiers\"\n          value={formData.tone_modifiers || []}\n          onChange={(tone_modifiers) => updateFormData({ tone_modifiers })}\n          placeholder=\"Add tone modifiers and press Enter\"\n        />\n      </div>\n      \n      {/* Topic count slider */}\n      <div className=\"space-y-2\">\n        <div className=\"flex justify-between\">\n          <Label htmlFor=\"num_ideas\">Number of topic ideas</Label>\n          <span className=\"text-sm font-medium\">{formData.num_ideas || 5}</span>\n        </div>\n        <Slider\n          id=\"num_ideas\"\n          min={1}\n          max={20}\n          step={1}\n          value={[formData.num_ideas || 5]}\n          onValueChange={([value]) => handleCountChange(value)}\n        />\n        <div className=\"flex justify-between text-xs text-muted-foreground\">\n          <span>1</span>\n          <span>20</span>\n        </div>\n      </div>\n    </div>\n  );\n};\n```",
+        "testStrategy": "1. Write unit tests for the slider component and its integration with form state\n2. Create component tests for AdvancedStep to verify it renders without the removed fields\n3. Test that the form data is correctly updated when slider value changes\n4. Test that the additional requirements textarea properly updates form state\n5. Verify the UI correctly displays the current slider value\n6. Test keyboard navigation and accessibility of the slider component\n7. Test that the ReviewStep correctly excludes the removed fields",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Rename and reorder UI elements in AdvancedStep",
+            "description": "Update the AdvancedStep component by renaming it from 'Fine Tuning' to 'Advanced Options' and reordering UI elements to place 'Additional requirements' first.",
+            "dependencies": [],
+            "details": "1. Modify `components/topic-builder/steps/AdvancedStep.tsx`\n2. Change the heading from 'Fine Tuning' to 'Advanced Options'\n3. Update any references to this step in navigation components\n4. Reorder the UI elements to place 'Additional requirements' textarea first\n5. Increase the textarea height for 'Additional requirements' (min-h-[120px])\n6. Ensure proper spacing between elements using Tailwind's space-y classes",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Remove unnecessary fields from AdvancedStep",
+            "description": "Remove the Content Language and Target Region fields from the AdvancedStep component.",
+            "dependencies": ["4.1"],
+            "details": "1. Identify and remove the Content Language field and its associated label\n2. Identify and remove the Target Region field and its associated label\n3. Ensure the removal doesn't break any existing layout or styling\n4. Remove any related state management code for these fields\n5. Test that the form still functions correctly without these fields\n6. Verify that the form data no longer includes these removed fields when submitted",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement topic count slider with live updates",
+            "description": "Add a new slider component to control the number of topic ideas with a range of 1-20 and live value display.",
+            "dependencies": ["4.1"],
+            "details": "1. Import the Slider component from the UI library\n2. Add a new section for the topic count slider with appropriate labeling\n3. Implement the slider with min=1, max=20, step=1 configuration\n4. Add a live display of the current value next to the label\n5. Create a handler function to update formData with the new value when slider changes\n6. Set a default value of 5 if not already defined\n7. Add min/max labels (1 and 20) below the slider\n8. Ensure the slider updates the form state correctly using the updateFormData function",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Update ReviewStep to reflect AdvancedStep changes",
+            "description": "Modify the ReviewStep component to exclude the removed fields and properly display the new topic count setting.",
+            "dependencies": ["4.2", "4.3"],
+            "details": "1. Open `components/topic-builder/steps/ReviewStep.tsx`\n2. Remove any references to Content Language and Target Region fields\n3. Add or update the display of the topic count (num_ideas) value\n4. Ensure the review step correctly displays all remaining fields from the Advanced Options step\n5. Test that the review accurately reflects the current state of the form\n6. Verify that removed fields don't appear in the final submission data\n7. Update any related validation logic if necessary",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Overhaul Review Step UI",
+        "description": "Replace the 3-column layout in the Review Step with a responsive grid layout and add edit buttons for quick field modifications",
+        "details": "1. Modify `components/topic-builder/steps/ReviewStep.tsx`\n2. Replace 3-column layout with responsive grid layout using Tailwind CSS\n3. Create a new ReviewFieldCard component with icons, labels, and values\n4. Add edit buttons for quick field modifications that navigate back to specific steps\n5. Improve mobile responsiveness with appropriate grid breakpoints\n\nImplementation example:\n```typescript\n// Create new component: components/topic-builder/ReviewFieldCard.tsx\ninterface ReviewFieldCardProps {\n  icon: React.ReactNode;\n  label: string;\n  value: string | string[] | undefined;\n  onEdit?: () => void;\n}\n\nconst ReviewFieldCard = ({ icon, label, value, onEdit }: ReviewFieldCardProps) => {\n  return (\n    <div className=\"p-4 border rounded-lg bg-card\">\n      <div className=\"flex justify-between items-start mb-2\">\n        <div className=\"flex items-center gap-2\">\n          {icon}\n          <h3 className=\"font-medium\">{label}</h3>\n        </div>\n        {onEdit && (\n          <Button variant=\"ghost\" size=\"sm\" onClick={onEdit}>\n            <PencilIcon className=\"h-4 w-4 mr-1\" />\n            Edit\n          </Button>\n        )}\n      </div>\n      <div className=\"text-sm text-muted-foreground\">\n        {Array.isArray(value) ? (\n          <div className=\"flex flex-wrap gap-1\">\n            {value.map((item, i) => (\n              <Badge key={i} variant=\"secondary\">{item}</Badge>\n            ))}\n          </div>\n        ) : (\n          <p>{value || 'Not specified'}</p>\n        )}\n      </div>\n    </div>\n  );\n};\n\n// In ReviewStep.tsx\nconst ReviewStep = () => {\n  const { formData, goToStep } = useTopicBuilder();\n  \n  return (\n    <div className=\"space-y-6\">\n      <h2 className=\"text-xl font-semibold\">Review Your Selections</h2>\n      \n      <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\">\n        <ReviewFieldCard\n          icon={<BuildingIcon className=\"h-5 w-5\" />}\n          label=\"Industry\"\n          value={formData.industry}\n          onEdit={() => goToStep(0)} // Navigate to industry step\n        />\n        \n        <ReviewFieldCard\n          icon={<UsersIcon className=\"h-5 w-5\" />}\n          label=\"Audience\"\n          value={formData.audience}\n          onEdit={() => goToStep(1)} // Navigate to audience step\n        />\n        \n        {/* Additional ReviewFieldCards for other form fields */}\n      </div>\n    </div>\n  );\n};\n```",
+        "testStrategy": "1. Write unit tests for the new ReviewFieldCard component\n2. Create component tests for ReviewStep to verify the grid layout renders correctly\n3. Test that the edit buttons correctly navigate to the appropriate steps\n4. Test the responsive behavior of the grid layout at different screen sizes\n5. Verify that all form data is correctly displayed in the review cards\n6. Test keyboard navigation and accessibility of the edit buttons\n7. Test that the review step correctly handles various data types (strings, arrays, etc.)",
+        "priority": "medium",
+        "dependencies": [1, 2, 3, 4],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create ReviewFieldCard Component",
+            "description": "Develop a new reusable component for displaying review fields with edit functionality",
+            "dependencies": [],
+            "details": "1. Create new file `components/topic-builder/ReviewFieldCard.tsx`\n2. Implement the component interface with props for icon, label, value, and onEdit callback\n3. Add support for displaying both string and array values\n4. Implement conditional rendering for the edit button\n5. Style the component using Tailwind CSS with proper spacing and layout\n6. Add appropriate type definitions\n7. Ensure the component handles empty or undefined values gracefully",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Responsive Grid Layout",
+            "description": "Replace the existing 3-column layout with a responsive grid system in the Review Step",
+            "dependencies": ["5.1"],
+            "details": "1. Modify `components/topic-builder/steps/ReviewStep.tsx`\n2. Remove the existing column layout structure\n3. Implement a responsive grid layout using Tailwind CSS grid classes\n4. Configure appropriate grid breakpoints (1 column on mobile, 2 on medium screens, 3 on large screens)\n5. Ensure proper spacing between grid items\n6. Test the layout at different viewport sizes\n7. Verify that the grid maintains proper alignment and spacing",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Add Edit Functionality with Step Navigation",
+            "description": "Implement edit buttons that navigate users back to specific form steps",
+            "dependencies": ["5.1", "5.2"],
+            "details": "1. Update the ReviewStep component to use the useTopicBuilder hook for accessing navigation functions\n2. Map each field to its corresponding step index in the wizard\n3. Implement onEdit callbacks that use the goToStep function to navigate to the appropriate step\n4. Ensure navigation preserves the current form data\n5. Add appropriate aria labels and keyboard accessibility for edit buttons\n6. Test that clicking edit buttons correctly navigates to the expected steps",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Field Type-Specific Display Logic",
+            "description": "Add specialized rendering for different field types in the review step",
+            "dependencies": ["5.1", "5.2", "5.3"],
+            "details": "1. Enhance the ReviewFieldCard to properly display different data types\n2. Implement Badge components for array values (tags, keywords, etc.)\n3. Add conditional rendering for boolean values\n4. Handle empty states with appropriate placeholder text\n5. Ensure long text values are properly truncated or wrapped\n6. Add appropriate icons for each field type from the icon library\n7. Test the display with various field types and edge cases",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Enhance Generation Loading Screen",
+        "description": "Add functional cancel button with confirmation dialog and implement AbortController for API requests",
+        "details": "1. Modify `components/topic-builder/AILoadingScreen.tsx`\n2. Add functional cancel button with confirmation dialog\n3. Implement AbortController in `hooks/use-topic-builder.ts` around line 395\n4. Add progress indicators and improved animations\n5. Wire cancellation to abort in-flight API requests\n\nImplementation example:\n```typescript\n// In hooks/use-topic-builder.ts\nconst useTopicBuilder = () => {\n  // Existing state...\n  const [abortController, setAbortController] = useState<AbortController | null>(null);\n  \n  const generateTopics = async () => {\n    setIsGenerating(true);\n    setError(null);\n    \n    // Create new AbortController for this request\n    const controller = new AbortController();\n    setAbortController(controller);\n    \n    try {\n      const response = await fetch('/api/topics/generate', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(formData),\n        signal: controller.signal\n      });\n      \n      // Process response...\n    } catch (err) {\n      if (err.name === 'AbortError') {\n        // Handle cancellation\n        setError(null);\n      } else {\n        setError('Failed to generate topics. Please try again.');\n      }\n    } finally {\n      setIsGenerating(false);\n      setAbortController(null);\n    }\n  };\n  \n  const cancelGeneration = () => {\n    if (abortController) {\n      abortController.abort();\n    }\n  };\n  \n  return {\n    // Existing properties...\n    cancelGeneration,\n    isGenerating,\n    error\n  };\n};\n\n// In AILoadingScreen.tsx\nconst AILoadingScreen = () => {\n  const { isGenerating, cancelGeneration } = useTopicBuilder();\n  const [showConfirmation, setShowConfirmation] = useState(false);\n  \n  const handleCancel = () => {\n    setShowConfirmation(true);\n  };\n  \n  const confirmCancel = () => {\n    cancelGeneration();\n    setShowConfirmation(false);\n  };\n  \n  const dismissConfirmation = () => {\n    setShowConfirmation(false);\n  };\n  \n  return (\n    <div className=\"fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center\">\n      <div className=\"bg-card p-6 rounded-lg shadow-lg max-w-md w-full\">\n        <div className=\"text-center space-y-4\">\n          <Spinner className=\"h-12 w-12 mx-auto\" />\n          <h2 className=\"text-xl font-semibold\">Generating Topic Ideas</h2>\n          <p className=\"text-muted-foreground\">Our AI is crafting personalized topic ideas based on your inputs. This may take a moment...</p>\n          \n          <Button variant=\"outline\" onClick={handleCancel}>\n            Cancel\n          </Button>\n        </div>\n      </div>\n      \n      {/* Confirmation Dialog */}\n      {showConfirmation && (\n        <Dialog open={showConfirmation} onOpenChange={dismissConfirmation}>\n          <DialogContent>\n            <DialogHeader>\n              <DialogTitle>Cancel Generation?</DialogTitle>\n              <DialogDescription>\n                Are you sure you want to cancel? The current generation process will be stopped and results will be lost.\n              </DialogDescription>\n            </DialogHeader>\n            <DialogFooter>\n              <Button variant=\"outline\" onClick={dismissConfirmation}>No, Continue</Button>\n              <Button variant=\"destructive\" onClick={confirmCancel}>Yes, Cancel</Button>\n            </DialogFooter>\n          </DialogContent>\n        </Dialog>\n      )}\n    </div>\n  );\n};\n```",
+        "testStrategy": "1. Write unit tests for the AbortController implementation in useTopicBuilder\n2. Create component tests for AILoadingScreen to verify the cancel button and confirmation dialog\n3. Test the cancellation flow to ensure it properly aborts API requests\n4. Test error handling for aborted requests\n5. Verify the UI correctly shows loading state and animations\n6. Test keyboard navigation and accessibility of the cancel button and dialog\n7. Test that the loading screen is properly removed when generation completes or is cancelled",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement AbortController in API Request Flow",
+            "description": "Add AbortController implementation to the useTopicBuilder hook to enable cancellation of in-flight API requests",
+            "dependencies": [],
+            "details": "1. Modify hooks/use-topic-builder.ts to add AbortController state\n2. Update the generateTopics function to use the controller's signal\n3. Create a cancelGeneration function that calls abort()\n4. Add proper error handling for AbortError cases\n5. Ensure all API requests in the hook use the signal\n6. Test the implementation by manually triggering cancellation",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Create Cancel Button UI in Loading Screen",
+            "description": "Add a cancel button to the AILoadingScreen component with proper styling and positioning",
+            "dependencies": ["6.1"],
+            "details": "1. Modify components/topic-builder/AILoadingScreen.tsx\n2. Add a cancel button with appropriate styling using the Button component\n3. Position the button correctly within the loading screen layout\n4. Connect the button's onClick handler to a local handleCancel function\n5. Import the cancelGeneration function from useTopicBuilder\n6. Ensure the button is only visible when generation is in progress",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Confirmation Dialog for Cancellation",
+            "description": "Create a confirmation dialog that appears when the user attempts to cancel generation",
+            "dependencies": ["6.2"],
+            "details": "1. Add state for managing the confirmation dialog visibility\n2. Implement the Dialog component from the UI library\n3. Create confirmCancel and dismissConfirmation functions\n4. Design the dialog with appropriate title, description, and action buttons\n5. Connect the confirmation action to the cancelGeneration function\n6. Ensure the dialog is accessible and follows design guidelines",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Add Progress Indicators and Animations",
+            "description": "Enhance the loading screen with progress indicators and improved animations",
+            "dependencies": [],
+            "details": "1. Add a progress bar or step indicator to show generation progress\n2. Implement smooth animations for the loading state using CSS or animation libraries\n3. Add loading messages that change over time to indicate different stages of generation\n4. Ensure animations are performant and don't cause layout shifts\n5. Make sure animations are accessible (respect reduced motion preferences)\n6. Test the animations across different browsers and devices",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Error Handling for Aborted Requests",
+            "description": "Add proper error handling for aborted requests and user feedback",
+            "dependencies": ["6.1", "6.3"],
+            "details": "1. Update the catch block in API requests to properly identify and handle AbortError\n2. Add user feedback for successful cancellation (toast notification or message)\n3. Ensure the UI returns to the appropriate state after cancellation\n4. Add logging for cancellation events for analytics purposes\n5. Test error handling with various scenarios (slow network, timeout, etc.)\n6. Ensure cancellation doesn't leave the application in an inconsistent state",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Create Dedicated Results Page",
+        "description": "Implement a dedicated results page with temporary ID parameter support and session storage for unsaved results",
+        "details": "1. Create new route file `app/ideas/create/results/[temporaryId]/page.tsx`\n2. Implement session storage for unsaved results using localStorage with expiration\n3. Add session recovery functionality with banner notifications\n4. Create breadcrumb navigation and dedicated layout\n\nImplementation example:\n```typescript\n// Create utility for session storage: lib/session-storage.ts\nconst SESSION_KEY_PREFIX = 'wrext-topic-session-';\nconst SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours\n\nexport interface SessionData {\n  id: string;\n  topics: GeneratedTopic[];\n  formData: TopicBuilderFormData;\n  createdAt: number;\n  expiresAt: number;\n}\n\nexport const saveSession = (data: Omit<SessionData, 'createdAt' | 'expiresAt'>) => {\n  const now = Date.now();\n  const sessionData: SessionData = {\n    ...data,\n    createdAt: now,\n    expiresAt: now + SESSION_EXPIRY\n  };\n  \n  localStorage.setItem(\n    `${SESSION_KEY_PREFIX}${data.id}`,\n    JSON.stringify(sessionData)\n  );\n};\n\nexport const getSession = (id: string): SessionData | null => {\n  const data = localStorage.getItem(`${SESSION_KEY_PREFIX}${id}`);\n  if (!data) return null;\n  \n  const session = JSON.parse(data) as SessionData;\n  \n  // Check if session has expired\n  if (Date.now() > session.expiresAt) {\n    localStorage.removeItem(`${SESSION_KEY_PREFIX}${id}`);\n    return null;\n  }\n  \n  return session;\n};\n\n// Create results page: app/ideas/create/results/[temporaryId]/page.tsx\n'use client';\n\nimport { useEffect, useState } from 'react';\nimport { useParams } from 'next/navigation';\nimport { getSession } from '@/lib/session-storage';\nimport { Breadcrumb } from '@/components/ui/breadcrumb';\nimport { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';\nimport { TopicCard } from '@/components/topic-builder/results/TopicCard';\nimport { BulkActions } from '@/components/topic-builder/results/BulkActions';\n\nexport default function ResultsPage() {\n  const { temporaryId } = useParams();\n  const [session, setSession] = useState<SessionData | null>(null);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState<string | null>(null);\n  \n  useEffect(() => {\n    if (temporaryId) {\n      const sessionData = getSession(temporaryId as string);\n      if (sessionData) {\n        setSession(sessionData);\n      } else {\n        setError('Session not found or expired');\n      }\n    }\n    setLoading(false);\n  }, [temporaryId]);\n  \n  if (loading) {\n    return <div>Loading...</div>;\n  }\n  \n  if (error || !session) {\n    return (\n      <Alert variant=\"destructive\">\n        <AlertTitle>Session Error</AlertTitle>\n        <AlertDescription>\n          {error || 'Unable to load session data. The session may have expired.'}\n        </AlertDescription>\n      </Alert>\n    );\n  }\n  \n  return (\n    <div className=\"space-y-6\">\n      <Breadcrumb items={[\n        { label: 'Dashboard', href: '/' },\n        { label: 'Ideas', href: '/ideas' },\n        { label: 'Create', href: '/ideas/create' },\n        { label: 'Results', href: '#', current: true }\n      ]} />\n      \n      <div className=\"flex justify-between items-center\">\n        <h1 className=\"text-2xl font-bold\">Generated Topic Ideas</h1>\n        <BulkActions topics={session.topics} />\n      </div>\n      \n      <Alert>\n        <AlertTitle>Temporary Session</AlertTitle>\n        <AlertDescription>\n          These results are stored temporarily and will expire in {Math.ceil((session.expiresAt - Date.now()) / (1000 * 60 * 60))} hours. \n          Save your favorite topics to keep them permanently.\n        </AlertDescription>\n      </Alert>\n      \n      <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\">\n        {session.topics.map((topic) => (\n          <TopicCard key={topic.id} topic={topic} />\n        ))}\n      </div>\n    </div>\n  );\n}\n```",
+        "testStrategy": "1. Write unit tests for the session storage utility functions\n2. Test session expiration logic to ensure expired sessions are properly cleaned up\n3. Create component tests for the ResultsPage to verify it correctly loads session data\n4. Test error handling for missing or expired sessions\n5. Test the breadcrumb navigation to ensure it correctly links to parent pages\n6. Test the responsive behavior of the grid layout at different screen sizes\n7. Test that the expiration warning correctly calculates and displays remaining time\n8. Test that the page correctly renders all topics from the session",
+        "priority": "high",
+        "dependencies": [6],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Session Storage Utility",
+            "description": "Implement a utility for managing temporary session storage with expiration logic",
+            "dependencies": [],
+            "details": "1. Create `lib/session-storage.ts` file\n2. Implement SESSION_KEY_PREFIX and SESSION_EXPIRY constants\n3. Define SessionData interface with id, topics, formData, createdAt, and expiresAt properties\n4. Implement saveSession function to store data with expiration timestamp\n5. Implement getSession function with expiration check\n6. Add removeSession and getAllSessions utility functions\n7. Write unit tests for the session storage utility",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Results Page Component",
+            "description": "Create the main results page component with temporary ID parameter support",
+            "dependencies": [],
+            "details": "1. Create new route file `app/ideas/create/results/[temporaryId]/page.tsx`\n2. Implement client-side component with useParams hook to extract temporaryId\n3. Set up state management for session data, loading state, and error handling\n4. Create useEffect hook to load session data on component mount\n5. Implement basic layout structure with title and results grid\n6. Add conditional rendering for loading and error states\n7. Test the component with various session states",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Create Breadcrumb Navigation",
+            "description": "Implement breadcrumb navigation for the results page",
+            "dependencies": [],
+            "details": "1. Create or reuse a Breadcrumb component if not already available\n2. Define breadcrumb items array with proper navigation path\n3. Implement breadcrumb rendering in the results page\n4. Ensure breadcrumbs are responsive and follow design system\n5. Add proper linking to parent pages\n6. Test navigation functionality of breadcrumb links",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Session Recovery and Notifications",
+            "description": "Add functionality to recover sessions and display appropriate notification banners",
+            "dependencies": [],
+            "details": "1. Create Alert component for session notifications\n2. Implement temporary session banner showing expiration time\n3. Add logic to calculate and display remaining session time\n4. Create error notification for expired or missing sessions\n5. Implement recovery mechanism for retrieving previous sessions\n6. Test different notification scenarios (active session, expired session, etc.)",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create Topic Results Display",
+            "description": "Implement the grid display of topic results with proper formatting",
+            "dependencies": [],
+            "details": "1. Create grid layout for topic results using responsive grid classes\n2. Implement mapping of session.topics to individual TopicCard components\n3. Add empty state handling when no topics are available\n4. Ensure proper spacing and alignment of topic cards\n5. Test rendering with different numbers of topics\n6. Verify responsive behavior on different screen sizes",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Implement Bulk Actions Component",
+            "description": "Create a component for bulk actions on topic results",
+            "dependencies": [],
+            "details": "1. Create `components/topic-builder/results/BulkActions.tsx` component\n2. Implement UI for bulk selection and action buttons\n3. Add functionality for selecting all/none topics\n4. Create handlers for bulk save, export, and delete actions\n5. Implement confirmation dialogs for destructive actions\n6. Connect bulk actions to topic cards selection state\n7. Test bulk action functionality with multiple selected topics",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Implement Modern Topic Cards",
+        "description": "Design and implement modern topic cards with expand functionality, detailed view, and quick action buttons",
+        "details": "1. Create `components/topic-builder/results/TopicCard.tsx` component\n2. Design with minimalistic, modern aesthetic\n3. Add expand functionality for detailed view\n4. Create TopicDetailsModal component with full metadata display\n5. Add quick action buttons (save, edit, use for content)\n6. Implement card animations and hover effects\n\nImplementation example:\n```typescript\n// Create TopicCard component: components/topic-builder/results/TopicCard.tsx\nimport { useState } from 'react';\nimport { Card, CardContent, CardFooter } from '@/components/ui/card';\nimport { Badge } from '@/components/ui/badge';\nimport { Button } from '@/components/ui/button';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';\nimport { TopicActions } from '@/components/topic-builder/results/TopicActions';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface TopicCardProps {\n  topic: GeneratedTopic;\n  onSelect?: (id: string, selected: boolean) => void;\n  isSelected?: boolean;\n}\n\nexport const TopicCard = ({ topic, onSelect, isSelected }: TopicCardProps) => {\n  const [showDetails, setShowDetails] = useState(false);\n  \n  return (\n    <>\n      <Card className={`transition-all duration-200 hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''}`}>\n        <CardContent className=\"pt-6\">\n          {onSelect && (\n            <div className=\"absolute top-2 right-2\">\n              <input \n                type=\"checkbox\" \n                checked={isSelected} \n                onChange={(e) => onSelect(topic.id, e.target.checked)}\n                className=\"h-4 w-4\"\n              />\n            </div>\n          )}\n          \n          <h3 className=\"font-semibold text-lg mb-2 line-clamp-2\">{topic.title}</h3>\n          \n          <p className=\"text-muted-foreground text-sm mb-4 line-clamp-3\">{topic.description}</p>\n          \n          <div className=\"flex flex-wrap gap-1 mb-2\">\n            {topic.keywords.slice(0, 3).map((keyword, i) => (\n              <Badge key={i} variant=\"outline\">{keyword}</Badge>\n            ))}\n            {topic.keywords.length > 3 && (\n              <Badge variant=\"outline\">+{topic.keywords.length - 3}</Badge>\n            )}\n          </div>\n          \n          <div className=\"flex items-center gap-4 text-sm\">\n            <div className=\"flex items-center gap-1\">\n              <span className=\"text-muted-foreground\">Relevance:</span>\n              <span className=\"font-medium\">{topic.relevance_score}/10</span>\n            </div>\n            <div className=\"flex items-center gap-1\">\n              <span className=\"text-muted-foreground\">Audience Fit:</span>\n              <span className=\"font-medium\">{topic.audience_fit}/10</span>\n            </div>\n          </div>\n        </CardContent>\n        \n        <CardFooter className=\"flex justify-between border-t pt-4\">\n          <Button variant=\"ghost\" size=\"sm\" onClick={() => setShowDetails(true)}>\n            View Details\n          </Button>\n          \n          <TopicActions topic={topic} />\n        </CardFooter>\n      </Card>\n      \n      {/* Details Modal */}\n      <Dialog open={showDetails} onOpenChange={setShowDetails}>\n        <DialogContent className=\"max-w-2xl\">\n          <DialogHeader>\n            <DialogTitle>{topic.title}</DialogTitle>\n          </DialogHeader>\n          \n          <div className=\"space-y-4\">\n            <div>\n              <h4 className=\"text-sm font-medium mb-1\">Description</h4>\n              <p className=\"text-muted-foreground\">{topic.description}</p>\n            </div>\n            \n            <div>\n              <h4 className=\"text-sm font-medium mb-1\">Why It Works</h4>\n              <p className=\"text-muted-foreground\">{topic.why_it_works}</p>\n            </div>\n            \n            <div>\n              <h4 className=\"text-sm font-medium mb-1\">Keywords</h4>\n              <div className=\"flex flex-wrap gap-1\">\n                {topic.keywords.map((keyword, i) => (\n                  <Badge key={i} variant=\"outline\">{keyword}</Badge>\n                ))}\n              </div>\n            </div>\n            \n            <div className=\"grid grid-cols-2 gap-4\">\n              <div>\n                <h4 className=\"text-sm font-medium mb-1\">Metrics</h4>\n                <ul className=\"text-sm\">\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Relevance Score:</span>\n                    <span>{topic.relevance_score}/10</span>\n                  </li>\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Audience Fit:</span>\n                    <span>{topic.audience_fit}/10</span>\n                  </li>\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Channel Fit:</span>\n                    <span>{topic.channel_fit}/10</span>\n                  </li>\n                </ul>\n              </div>\n              \n              <div>\n                <h4 className=\"text-sm font-medium mb-1\">Details</h4>\n                <ul className=\"text-sm\">\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Platform:</span>\n                    <span>{topic.platform || 'Not specified'}</span>\n                  </li>\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Created:</span>\n                    <span>{new Date(topic.created_at).toLocaleDateString()}</span>\n                  </li>\n                </ul>\n              </div>\n            </div>\n          </div>\n          \n          <div className=\"flex justify-end gap-2 mt-4\">\n            <TopicActions topic={topic} expanded />\n          </div>\n        </DialogContent>\n      </Dialog>\n    </>\n  );\n};\n```",
+        "testStrategy": "1. Write unit tests for the TopicCard component to verify it renders correctly with different props\n2. Test the expand functionality and modal display\n3. Test the selection checkbox behavior when onSelect is provided\n4. Test that the card correctly displays truncated content with line-clamp\n5. Test the responsive behavior of the card at different screen sizes\n6. Test keyboard navigation and accessibility of the card and modal\n7. Test that the TopicActions component is correctly integrated\n8. Test animations and hover effects work as expected",
+        "priority": "medium",
+        "dependencies": [7],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Base TopicCard Component",
+            "description": "Implement the basic structure of the TopicCard component with minimalistic design and proper layout",
+            "dependencies": [],
+            "details": "1. Create `components/topic-builder/results/TopicCard.tsx` file\n2. Implement the basic card structure using the Card component from UI library\n3. Add title, description, and keywords display with proper truncation\n4. Implement the selection checkbox functionality when onSelect prop is provided\n5. Style the card with a minimalistic, modern aesthetic using Tailwind CSS\n6. Add relevance and audience fit score displays\n7. Test the component renders correctly with different topic data",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Expand/Collapse Functionality",
+            "description": "Add the ability to expand and collapse the topic card to show more or less information",
+            "dependencies": ["8.1"],
+            "details": "1. Add state management for expanded/collapsed state using useState\n2. Implement the View Details button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both expanded and collapsed states\n5. Test the expand/collapse toggle functionality\n6. Implement proper accessibility attributes for expandable content",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Create TopicDetailsModal Component",
+            "description": "Implement a modal dialog that displays the full details of a topic when expanded",
+            "dependencies": ["8.2"],
+            "details": "1. Create the Dialog component structure for the details modal\n2. Implement the modal header with topic title\n3. Create sections for description, why it works, and keywords\n4. Add metrics display with relevance score, audience fit, and channel fit\n5. Implement additional details section with platform and creation date\n6. Ensure the modal is responsive and scrollable for large content\n7. Add close functionality and proper focus management",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Quick Action Buttons",
+            "description": "Add action buttons for save, edit, and use for content generation",
+            "dependencies": ["8.1"],
+            "details": "1. Create `components/topic-builder/results/TopicActions.tsx` component\n2. Implement action buttons with appropriate icons\n3. Add hover and focus states for buttons\n4. Create expanded and collapsed variants of the actions component\n5. Implement proper tooltips for action buttons\n6. Ensure actions are accessible via keyboard\n7. Test that all buttons trigger the correct actions",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Add Animations and Hover Effects",
+            "description": "Implement smooth animations and hover effects to enhance the user experience",
+            "dependencies": ["8.1", "8.2", "8.3", "8.4"],
+            "details": "1. Add transition effects for card hover state using Tailwind's transition classes\n2. Implement shadow animation on hover\n3. Add subtle scale effect when hovering over action buttons\n4. Implement smooth transitions for the expand/collapse functionality\n5. Add animation for modal opening and closing\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Create Base TopicCard Component",
+            "description": "Implement the basic structure of the TopicCard component with minimalistic design and proper layout",
+            "dependencies": [],
+            "details": "1. Create `components/topic-builder/results/TopicCard.tsx` file\n2. Implement the basic card structure with title, description, and keywords\n3. Add proper styling using Tailwind CSS classes\n4. Implement the selection checkbox functionality when onSelect is provided\n5. Create the badge display for keywords with truncation logic\n6. Add basic metrics display (relevance score, audience fit)\n7. Test the component renders correctly with different props",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Implement Expand/Collapse Functionality",
+            "description": "Add the ability to expand and collapse the topic card to show more details",
+            "dependencies": ["8.6"],
+            "details": "1. Add state management for expanded/collapsed state\n2. Implement the 'View Details' button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both states\n5. Add proper accessibility attributes for expand/collapse functionality\n6. Test the expand/collapse behavior works correctly",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Create TopicDetailsModal Component",
+            "description": "Implement a modal dialog that displays the full topic details when a card is expanded",
+            "dependencies": ["8.6", "8.7"],
+            "details": "1. Create the Dialog component structure for the details modal\n2. Implement the modal header with topic title\n3. Create sections for description, why it works, and keywords\n4. Add metrics display with proper formatting\n5. Implement additional details section with platform and creation date\n6. Ensure the modal is responsive on different screen sizes\n7. Test that all topic data is correctly displayed in the modal",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 9,
+            "title": "Implement Quick Action Buttons",
+            "description": "Add action buttons for save, edit, and use for content generation",
+            "dependencies": ["8.6"],
+            "details": "1. Create `components/topic-builder/results/TopicActions.tsx` component\n2. Implement action buttons with proper icons\n3. Add hover states and tooltips for each action\n4. Create expanded and collapsed states for the actions component\n5. Wire up basic click handlers for each action\n6. Ensure actions are accessible via keyboard navigation\n7. Test that all buttons render correctly and respond to interactions",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 10,
+            "title": "Add Animations and Hover Effects",
+            "description": "Implement smooth animations and hover effects to enhance the user experience",
+            "dependencies": ["8.6", "8.7", "8.8", "8.9"],
+            "details": "1. Add transition effects for card hover state\n2. Implement subtle scale animation on hover\n3. Add shadow depth changes on hover and selection\n4. Create smooth transitions for expand/collapse actions\n5. Implement fade-in/fade-out animations for the details modal\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Develop Bulk Operations System",
+        "description": "Implement a bulk operations system with checkbox selection, bulk save, and export options",
+        "details": "1. Create `components/topic-builder/results/BulkActions.tsx` component\n2. Add checkbox selection for multiple topics\n3. Implement selection state management\n4. Create bulk save functionality\n5. Add export options (JSON, CSV formats)\n6. Wire \"Write Content\" navigation to `/flows/create?topicId=<id>`\n\nImplementation example:\n```typescript\n// Create BulkActions component: components/topic-builder/results/BulkActions.tsx\nimport { useState } from 'react';\nimport { Button } from '@/components/ui/button';\nimport { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '@/components/ui/dropdown';\nimport { toast } from '@/components/ui/toast';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface BulkActionsProps {\n  topics: GeneratedTopic[];\n  selectedIds?: string[];\n  onSelectAll?: (selected: boolean) => void;\n  onClearSelection?: () => void;\n}\n\nexport const BulkActions = ({ \n  topics, \n  selectedIds = [], \n  onSelectAll, \n  onClearSelection \n}: BulkActionsProps) => {\n  const hasSelection = selectedIds.length > 0;\n  \n  const handleSaveAll = async () => {\n    try {\n      // Filter topics by selected IDs\n      const topicsToSave = topics.filter(topic => selectedIds.includes(topic.id));\n      \n      // Call API to save topics\n      const response = await fetch('/api/topics/bulk-save', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ topics: topicsToSave })\n      });\n      \n      if (!response.ok) throw new Error('Failed to save topics');\n      \n      toast({\n        title: 'Topics Saved',\n        description: `Successfully saved ${selectedIds.length} topics.`\n      });\n      \n      // Clear selection after save\n      if (onClearSelection) onClearSelection();\n    } catch (error) {\n      toast({\n        title: 'Error',\n        description: error.message,\n        variant: 'destructive'\n      });\n    }\n  };\n  \n  const handleExport = async (format: 'json' | 'csv') => {\n    try {\n      // Filter topics by selected IDs\n      const topicsToExport = topics.filter(topic => \n        selectedIds.length ? selectedIds.includes(topic.id) : true\n      );\n      \n      let content: string;\n      let filename: string;\n      let type: string;\n      \n      if (format === 'json') {\n        content = JSON.stringify(topicsToExport, null, 2);\n        filename = 'topics-export.json';\n        type = 'application/json';\n      } else {\n        // Convert to CSV\n        const headers = 'Title,Description,Keywords,Relevance Score,Audience Fit\\n';\n        const rows = topicsToExport.map(topic => {\n          return `\"${topic.title.replace(/\"/g, '\"\"')}\",\"${topic.description.replace(/\"/g, '\"\"')}\",\"${topic.keywords.join(', ')}\",${topic.relevance_score},${topic.audience_fit}`;\n        }).join('\\n');\n        \n        content = headers + rows;\n        filename = 'topics-export.csv';\n        type = 'text/csv';\n      }\n      \n      // Create download link\n      const blob = new Blob([content], { type });\n      const url = URL.createObjectURL(blob);\n      const link = document.createElement('a');\n      link.href = url;\n      link.download = filename;\n      document.body.appendChild(link);\n      link.click();\n      document.body.removeChild(link);\n      URL.revokeObjectURL(url);\n      \n      toast({\n        title: 'Export Complete',\n        description: `Successfully exported ${topicsToExport.length} topics as ${format.toUpperCase()}.`\n      });\n    } catch (error) {\n      toast({\n        title: 'Export Error',\n        description: error.message,\n        variant: 'destructive'\n      });\n    }\n  };\n  \n  return (\n    <div className=\"flex items-center gap-2\">\n      {onSelectAll && (\n        <Button \n          variant=\"outline\" \n          size=\"sm\"\n          onClick={() => onSelectAll(true)}\n        >\n          Select All\n        </Button>\n      )}\n      \n      {hasSelection && onClearSelection && (\n        <Button \n          variant=\"ghost\" \n          size=\"sm\"\n          onClick={onClearSelection}\n        >\n          Clear Selection ({selectedIds.length})\n        </Button>\n      )}\n      \n      <Dropdown>\n        <DropdownTrigger asChild>\n          <Button variant=\"outline\" size=\"sm\">\n            Export\n          </Button>\n        </DropdownTrigger>\n        <DropdownContent>\n          <DropdownItem onClick={() => handleExport('json')}>Export as JSON</DropdownItem>\n          <DropdownItem onClick={() => handleExport('csv')}>Export as CSV</DropdownItem>\n        </DropdownContent>\n      </Dropdown>\n      \n      {hasSelection && (\n        <Button \n          variant=\"default\" \n          size=\"sm\"\n          onClick={handleSaveAll}\n        >\n          Save Selected ({selectedIds.length})\n        </Button>\n      )}\n    </div>\n  );\n};\n```",
+        "testStrategy": "1. Write unit tests for the BulkActions component to verify it renders correctly with different props\n2. Test the selection state management logic\n3. Test the bulk save functionality with API mocking\n4. Test the export functionality for both JSON and CSV formats\n5. Verify that the exported files contain the correct data\n6. Test error handling for API failures\n7. Test that toast notifications are displayed correctly\n8. Test keyboard navigation and accessibility of the dropdown and buttons",
+        "priority": "medium",
+        "dependencies": [8],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Selection State Management",
+            "description": "Create a system to manage the selection state of multiple topics with checkbox functionality",
+            "dependencies": [],
+            "details": "1. Add a selection state in the parent component using useState\n2. Create a function to toggle individual topic selection\n3. Implement a selectAll function to select/deselect all topics\n4. Create a clearSelection function to reset all selections\n5. Pass selection state and handlers to child components\n6. Ensure selection state persists when filtering or sorting topics",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Create BulkActions Component UI",
+            "description": "Develop the BulkActions component with all required UI elements and styling",
+            "dependencies": ["9.1"],
+            "details": "1. Create the BulkActions.tsx file in components/topic-builder/results/\n2. Implement the component interface with required props\n3. Add Select All and Clear Selection buttons\n4. Create the Export dropdown with JSON and CSV options\n5. Add the Save Selected button with counter\n6. Style the component using Tailwind CSS for responsive design\n7. Add proper disabled states for buttons when no selection is present",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Bulk Save Functionality",
+            "description": "Create the functionality to save multiple selected topics at once",
+            "dependencies": ["9.1", "9.2"],
+            "details": "1. Create an API endpoint at /api/topics/bulk-save\n2. Implement the handleSaveAll function in BulkActions component\n3. Filter topics based on selected IDs\n4. Add proper error handling with toast notifications\n5. Implement loading states during save operation\n6. Add success feedback with count of saved topics\n7. Clear selection after successful save operation",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create JSON Export Functionality",
+            "description": "Implement the ability to export selected topics in JSON format",
+            "dependencies": ["9.1", "9.2"],
+            "details": "1. Create a JSON export handler function in the BulkActions component\n2. Filter topics based on selected IDs (or use all if none selected)\n3. Format the data as properly structured JSON\n4. Generate a downloadable file with proper MIME type\n5. Create the browser download mechanism\n6. Add success notification with export count\n7. Test with various data sizes and special characters",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create CSV Export Functionality",
+            "description": "Implement the ability to export selected topics in CSV format",
+            "dependencies": ["9.1", "9.2"],
+            "details": "1. Create a CSV export handler function in the BulkActions component\n2. Filter topics based on selected IDs (or use all if none selected)\n3. Generate CSV headers based on topic properties\n4. Convert topic data to CSV format with proper escaping for special characters\n5. Generate a downloadable file with text/csv MIME type\n6. Create the browser download mechanism\n7. Add success notification with export count",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Implement Content Creation Navigation",
+            "description": "Wire up the \"Write Content\" navigation to the content creation flow",
+            "dependencies": ["9.2"],
+            "details": "1. Add a \"Write Content\" button to individual topic cards\n2. Create a navigation handler that redirects to /flows/create?topicId=<id>\n3. Implement a bulk content creation option for multiple selected topics\n4. Pass the selected topic IDs as query parameters\n5. Ensure the receiving page can handle both single and multiple topic IDs\n6. Add loading states during navigation\n7. Test navigation with various topic selections",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Enhance Universal DataTable Component",
+        "description": "Improve the DataTable component with advanced search, filtering, customizable page size, and responsive design",
+        "details": "1. Modify `components/data-table.tsx`\n2. Add robust multi-field search functionality\n3. Implement advanced filtering with array field support\n4. Create customizable page size options\n5. Add table-level and row-level action systems\n6. Implement responsive mobile design with card view\n7. Add loading skeleton integration\n\nImplementation example:\n```typescript\n// Enhanced DataTable component: components/data-table.tsx\nimport { useState, useMemo } from 'react';\nimport {\n  flexRender,\n  getCoreRowModel,\n  getFilteredRowModel,\n  getPaginationRowModel,\n  getSortedRowModel,\n  useReactTable,\n  type ColumnDef,\n  type ColumnFiltersState,\n  type SortingState,\n} from '@tanstack/react-table';\nimport { Input } from '@/components/ui/input';\nimport { Button } from '@/components/ui/button';\nimport { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';\nimport { TableSkeleton } from '@/components/ui/table-skeleton';\n\ninterface DataTableProps<TData, TValue> {\n  columns: ColumnDef<TData, TValue>[];\n  data: TData[];\n  isLoading?: boolean;\n  searchPlaceholder?: string;\n  searchFields?: string[];\n  enableMultiSort?: boolean;\n  enableRowSelection?: boolean;\n  enablePagination?: boolean;\n  pageSize?: number;\n  pageSizeOptions?: number[];\n  onRowSelectionChange?: (rows: TData[]) => void;\n  tableActions?: React.ReactNode;\n  emptyState?: React.ReactNode;\n}\n\nexport function DataTable<TData, TValue>({\n  columns,\n  data,\n  isLoading = false,\n  searchPlaceholder = 'Search...',\n  searchFields = [],\n  enableMultiSort = false,\n  enableRowSelection = false,\n  enablePagination = true,\n  pageSize = 10,\n  pageSizeOptions = [5, 10, 20, 50],\n  onRowSelectionChange,\n  tableActions,\n  emptyState,\n}: DataTableProps<TData, TValue>) {\n  const [sorting, setSorting] = useState<SortingState>([]);\n  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);\n  const [globalFilter, setGlobalFilter] = useState('');\n  const [rowSelection, setRowSelection] = useState({});\n  const [pagination, setPagination] = useState({\n    pageIndex: 0,\n    pageSize,\n  });\n\n  const table = useReactTable({\n    data,\n    columns,\n    getCoreRowModel: getCoreRowModel(),\n    getFilteredRowModel: getFilteredRowModel(),\n    getPaginationRowModel: getPaginationRowModel(),\n    getSortedRowModel: getSortedRowModel(),\n    onSortingChange: setSorting,\n    onColumnFiltersChange: setColumnFilters,\n    onGlobalFilterChange: setGlobalFilter,\n    onRowSelectionChange: setRowSelection,\n    onPaginationChange: setPagination,\n    state: {\n      sorting,\n      columnFilters,\n      globalFilter,\n      rowSelection,\n      pagination,\n    },\n    enableMultiSort,\n    enableRowSelection,\n  });\n\n  // Get selected rows data\n  const selectedRows = useMemo(() => {\n    return Object.keys(rowSelection).map(\n      (key) => data[parseInt(key, 10)]\n    );\n  }, [data, rowSelection]);\n\n  // Notify parent component when selection changes\n  useMemo(() => {\n    if (onRowSelectionChange) {\n      onRowSelectionChange(selectedRows);\n    }\n  }, [selectedRows, onRowSelectionChange]);\n\n  // Handle global search across specified fields\n  const handleSearch = (value: string) => {\n    setGlobalFilter(value);\n  };\n\n  // Handle page size change\n  const handlePageSizeChange = (value: string) => {\n    table.setPageSize(Number(value));\n  };\n\n  if (isLoading) {\n    return <TableSkeleton columns={columns.length} rows={pageSize} />;\n  }\n\n  return (\n    <div className=\"space-y-4\">\n      <div className=\"flex flex-col sm:flex-row justify-between gap-2\">\n        <div className=\"flex-1 max-w-sm\">\n          <Input\n            placeholder={searchPlaceholder}\n            value={globalFilter}\n            onChange={(e) => handleSearch(e.target.value)}\n            className=\"max-w-sm\"\n          />\n        </div>\n\n        {tableActions && (\n          <div className=\"flex items-center gap-2\">{tableActions}</div>\n        )}\n      </div>\n\n      <div className=\"rounded-md border overflow-hidden\">\n        {/* Desktop Table View */}\n        <div className=\"hidden md:block\">\n          <table className=\"w-full\">\n            <thead className=\"bg-muted/50\">\n              {table.getHeaderGroups().map((headerGroup) => (\n                <tr key={headerGroup.id}>\n                  {headerGroup.headers.map((header) => (\n                    <th\n                      key={header.id}\n                      className=\"px-4 py-3 text-left text-sm font-medium text-muted-foreground\"\n                    >\n                      {header.isPlaceholder ? null : (\n                        <div\n                          className={`flex items-center gap-1 ${header.column.getCanSort() ? 'cursor-pointer select-none' : ''}`}\n                          onClick={header.column.getToggleSortingHandler()}\n                        >\n                          {flexRender(\n                            header.column.columnDef.header,\n                            header.getContext()\n                          )}\n                          {/* Sort indicator */}\n                          {header.column.getIsSorted() === 'asc' && (\n                            <span>↑</span>\n                          )}\n                          {header.column.getIsSorted() === 'desc' && (\n                            <span>↓</span>\n                          )}\n                        </div>\n                      )}\n                    </th>\n                  ))}\n                </tr>\n              ))}\n            </thead>\n            <tbody>\n              {table.getRowModel().rows.length > 0 ? (\n                table.getRowModel().rows.map((row) => (\n                  <tr\n                    key={row.id}\n                    className={`border-t ${row.getIsSelected() ? 'bg-primary/5' : ''}`}\n                  >\n                    {row.getVisibleCells().map((cell) => (\n                      <td\n                        key={cell.id}\n                        className=\"px-4 py-3 text-sm\"\n                      >\n                        {flexRender(\n                          cell.column.columnDef.cell,\n                          cell.getContext()\n                        )}\n                      </td>\n                    ))}\n                  </tr>\n                ))\n              ) : (\n                <tr>\n                  <td\n                    colSpan={columns.length}\n                    className=\"px-4 py-8 text-center text-sm text-muted-foreground\"\n                  >\n                    {emptyState || 'No results found.'}\n                  </td>\n                </tr>\n              )}\n            </tbody>\n          </table>\n        </div>\n\n        {/* Mobile Card View */}\n        <div className=\"md:hidden\">\n          {table.getRowModel().rows.length > 0 ? (\n            <div className=\"divide-y\">\n              {table.getRowModel().rows.map((row) => (\n                <div\n                  key={row.id}\n                  className={`p-4 ${row.getIsSelected() ? 'bg-primary/5' : ''}`}\n                >\n                  {row.getVisibleCells().map((cell) => {\n                    // Get the column name from the header\n                    const columnName = cell.column.columnDef.header as string;\n                    return (\n                      <div key={cell.id} className=\"mb-2\">\n                        <div className=\"text-xs font-medium text-muted-foreground mb-1\">\n                          {columnName}\n                        </div>\n                        <div>\n                          {flexRender(\n                            cell.column.columnDef.cell,\n                            cell.getContext()\n                          )}\n                        </div>\n                      </div>\n                    );\n                  })}\n                </div>\n              ))}\n            </div>\n          ) : (\n            <div className=\"px-4 py-8 text-center text-sm text-muted-foreground\">\n              {emptyState || 'No results found.'}\n            </div>\n          )}\n        </div>\n      </div>\n\n      {enablePagination && (\n        <div className=\"flex flex-col sm:flex-row items-center justify-between gap-4 py-2\">\n          <div className=\"flex items-center gap-2 text-sm text-muted-foreground\">\n            <div>Rows per page:</div>\n            <Select\n              value={pagination.pageSize.toString()}\n              onValueChange={handlePageSizeChange}\n            >\n              <SelectTrigger className=\"h-8 w-16\">\n                <SelectValue placeholder={pagination.pageSize.toString()} />\n              </SelectTrigger>\n              <SelectContent>\n                {pageSizeOptions.map((option) => (\n                  <SelectItem key={option} value={option.toString()}>\n                    {option}\n                  </SelectItem>\n                ))}\n              </SelectContent>\n            </Select>\n            <div>\n              {table.getState().pagination.pageIndex * pagination.pageSize + 1}-\n              {Math.min(\n                (table.getState().pagination.pageIndex + 1) * pagination.pageSize,\n                table.getFilteredRowModel().rows.length\n              )}{' '}\n              of {table.getFilteredRowModel().rows.length}\n            </div>\n          </div>\n\n          <div className=\"flex items-center gap-2\">\n            <Button\n              variant=\"outline\"\n              size=\"sm\"\n              onClick={() => table.previousPage()}\n              disabled={!table.getCanPreviousPage()}\n            >\n              Previous\n            </Button>\n            <Button\n              variant=\"outline\"\n              size=\"sm\"\n              onClick={() => table.nextPage()}\n              disabled={!table.getCanNextPage()}\n            >\n              Next\n            </Button>\n          </div>\n        </div>\n      )}\n    </div>\n  );\n}\n```",
+        "testStrategy": "1. Write unit tests for the DataTable component to verify it renders correctly with different props\n2. Test the search functionality with various search terms and fields\n3. Test sorting functionality for different column types\n4. Test pagination with different page sizes\n5. Test row selection and the onRowSelectionChange callback\n6. Test the responsive behavior at different screen sizes\n7. Test the loading skeleton state\n8. Test keyboard navigation and accessibility of the table and controls\n9. Test that the empty state is displayed correctly when there's no data",
+        "priority": "low",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Multi-Field Search Functionality",
+            "description": "Enhance the DataTable component with robust multi-field search capabilities that allow users to search across multiple columns simultaneously.",
+            "dependencies": [],
+            "details": "1. Modify the DataTable component to accept a searchFields prop that specifies which fields to search\n2. Implement the global filter logic to search across multiple fields\n3. Add debounce functionality to prevent excessive filtering on each keystroke\n4. Create a search input component with clear button\n5. Add support for case-insensitive searching\n6. Implement highlighting of matched text in search results\n7. Test with various data types including strings, numbers, and nested objects",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Create Advanced Filtering with Array Support",
+            "description": "Implement advanced filtering capabilities that support filtering on array fields and multiple filter conditions.",
+            "dependencies": ["10.1"],
+            "details": "1. Add column-specific filter components for different data types (text, number, date, boolean)\n2. Implement array field filtering logic that can search within array values\n3. Create a FilterPopover component for complex filter configuration\n4. Add support for multiple concurrent filters across different columns\n5. Implement filter operators (equals, contains, greater than, less than, etc.)\n6. Add UI for active filters with ability to remove individual filters\n7. Ensure filters work correctly with pagination and sorting",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Customizable Page Size Options",
+            "description": "Add functionality to allow users to customize the number of rows displayed per page with a dropdown selector.",
+            "dependencies": [],
+            "details": "1. Create a page size selector component using the Select component\n2. Implement the handlePageSizeChange function to update pagination state\n3. Add a pageSizeOptions prop to allow customization of available options\n4. Update the pagination display to show current range and total items\n5. Ensure page index is reset when page size changes to prevent empty pages\n6. Add persistence of page size preference using localStorage\n7. Test pagination with various data set sizes and page size options",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Add Table-Level Action System",
+            "description": "Implement a flexible system for adding action buttons and controls at the table level, such as export, bulk actions, and custom controls.",
+            "dependencies": [],
+            "details": "1. Create a tableActions prop that accepts React nodes for custom actions\n2. Position the actions area in the header section of the table\n3. Implement a TableActionButton component with consistent styling\n4. Add support for action button groups with dropdowns\n5. Create example implementations for common actions (export to CSV, print, etc.)\n6. Ensure proper responsive behavior of action buttons on small screens\n7. Add keyboard accessibility for table actions",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Row-Level Action System",
+            "description": "Create a system for adding contextual actions to individual table rows, such as edit, delete, and custom actions.",
+            "dependencies": ["10.4"],
+            "details": "1. Add a rowActions prop that accepts a function returning action components for each row\n2. Create an ActionsCell component for the last column to display row actions\n3. Implement hover-reveal actions to reduce visual clutter\n4. Add support for action menus with multiple options\n5. Ensure actions receive the full row data for context\n6. Add confirmation dialogs for destructive actions\n7. Test row actions with various screen sizes and interaction methods",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Create Responsive Mobile Card View",
+            "description": "Implement a responsive design that transforms the table into a card-based layout on mobile devices for better usability.",
+            "dependencies": ["10.5"],
+            "details": "1. Create a mobile card view component that displays each row as a card\n2. Use media queries and conditional rendering to switch between table and card views\n3. Format each cell's data with appropriate labels from column headers\n4. Ensure row actions are accessible in the card view\n5. Implement collapsible sections for cards with many fields\n6. Add touch-friendly interaction patterns for mobile users\n7. Test the responsive behavior across various device sizes and orientations",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Implement Loading Skeleton Integration",
+            "description": "Add a loading skeleton component that displays while data is being fetched, providing visual feedback to users during loading states.",
+            "dependencies": [],
+            "details": "1. Create a TableSkeleton component with configurable columns and rows\n2. Implement pulse animation for the skeleton elements\n3. Add an isLoading prop to the DataTable component\n4. Ensure the skeleton matches the actual table layout for a smooth transition\n5. Create skeletons for both desktop table and mobile card views\n6. Add aria-busy and appropriate aria attributes for accessibility\n7. Test loading states with various network conditions and data sizes",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-08T12:04:46.664Z",
+      "updated": "2025-09-08T12:04:46.664Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
