@@ -833,12 +833,8 @@ export const updateFormDataForIndustryChange = (
     availableAudiences.includes(audience),
   );
 
-  // If no valid audiences remain and we have options, set smart defaults
-  let audienceSelection = validAudiences;
-  if (validAudiences.length === 0 && availableAudiences.length > 0) {
-    // Auto-select first 2 audience options as defaults
-    audienceSelection = availableAudiences.slice(0, 2);
-  }
+  // Keep only valid audiences, do not auto-select
+  const audienceSelection = validAudiences;
 
   return {
     ...formData,
@@ -847,9 +843,9 @@ export const updateFormDataForIndustryChange = (
       newIndustry === "other" ? formData.industry_other : undefined,
     // Update audience with smart filtering/defaults
     audience: audienceSelection,
-    // Reset other dependent fields only if they become invalid
-    demographic_age: formData.demographic_age, // Keep existing age selections
-    demographic_location: formData.demographic_location, // Keep existing location
+    // Reset dependent fields when industry changes
+    demographic_age: [],
+    demographic_location: "",
     // Auto-detect YMYL
     is_ymyl: detectYMYL(newIndustry),
   };

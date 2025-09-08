@@ -2,14 +2,14 @@ Task/Subtask Implementation Prompt
 
 Inputs (fill before starting)
 
-- Task ID: 6
-- Subtask ID: 6.5
-- Related plan files: `topic-builder-functionality.md`
+- Task ID: 1
+- Subtask ID: 1.1
+- Related plan files: `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md`
 
 Authoritative references
 
 - Codebase: `src/app/**` 
-- Plan, Context and Questions: `topic-builder-functionality.md`
+- Plan, Context and Questions: `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md`
 - Latest official docs (read before each implementation): Next.js App Router, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form
 
 Project guardrails (must follow)
@@ -26,7 +26,7 @@ Workflow
 
 1. Discovery (read-only)
    - Retrieve the task/subtask details from Taskmaster and read any linked context.
-   - Read the relevant `topic-builder-functionality.md` plan(s) to confirm constraints and acceptance criteria.
+   - Read the relevant `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md` plan(s) to confirm constraints and acceptance criteria.
    - Explore the exact files to be changed (APIs, services, db schema/migrations, auth, types). Quote small snippets and line ranges where helpful.
    - Consult latest docs (Next.js, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form) to validate patterns and APIs you will use.
 

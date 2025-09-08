@@ -486,7 +486,7 @@ describe("updateFormDataForIndustryChange", () => {
     const result = updateFormDataForIndustryChange(baseFormData, "healthcare");
 
     expect(result.industry).toBe("healthcare");
-    expect(result.audience).toBeUndefined();
+    expect(result.audience).toEqual([]);
     expect(result.demographic_age).toEqual([]);
     expect(result.demographic_location).toBe("");
     expect(result.is_ymyl).toBe(true);

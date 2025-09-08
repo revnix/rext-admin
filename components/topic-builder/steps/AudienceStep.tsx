@@ -50,12 +50,7 @@ export function AudienceStep({
       const availableAudiences = getAudienceForIndustry(formData.industry);
       const currentAudiences = formData.audience || [];
 
-      // If no audiences selected or industry changed, set smart defaults
-      if (currentAudiences.length === 0 && availableAudiences.length > 0) {
-        // Auto-select first 2 audience options as defaults
-        const defaultAudiences = availableAudiences.slice(0, 2);
-        updateFormData("audience", defaultAudiences);
-      } else if (currentAudiences.length > 0) {
+      if (currentAudiences.length > 0) {
         // Filter out audiences that are no longer valid for the new industry
         const validAudiences = currentAudiences.filter((audience) =>
           availableAudiences.includes(audience),
@@ -64,12 +59,6 @@ export function AudienceStep({
         // Update audience selection if some became invalid
         if (validAudiences.length !== currentAudiences.length) {
           updateFormData("audience", validAudiences);
-        }
-
-        // If all audiences became invalid but we have new options, set defaults
-        if (validAudiences.length === 0 && availableAudiences.length > 0) {
-          const defaultAudiences = availableAudiences.slice(0, 2);
-          updateFormData("audience", defaultAudiences);
         }
       }
     }
