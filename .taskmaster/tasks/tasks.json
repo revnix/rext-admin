@@ -9,7 +9,7 @@
         "testStrategy": "1. Write unit tests for the updated `lib/topic-builder-utils.ts` to verify audience selection logic works correctly without auto-selection\n2. Create component tests for AudienceStep to ensure it renders correctly without geographic focus field\n3. Test form validation to ensure proper error messages appear when no audience is selected\n4. Test that the form data is correctly updated when audiences are selected/deselected\n5. Verify the component is responsive across different screen sizes",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -17,7 +17,7 @@
             "description": "Modify the topic-builder-utils.ts file to remove the logic that automatically pre-selects the first two audiences when initializing the form.",
             "dependencies": [],
             "details": "1. Locate the `initializeFormData` or similar function in `lib/topic-builder-utils.ts` around line 824\n2. Identify and remove the code that automatically selects the first two audience options\n3. Ensure the audience array is initialized as empty or with user-selected values only\n4. Update any related functions that might depend on this pre-selection logic\n5. Test that when a new topic is created, no audiences are pre-selected",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -619,7 +619,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-08T12:04:46.664Z",
+      "updated": "2025-09-08T12:38:35.172Z",
       "description": "Tasks for master context"
     }
   }
