@@ -1,161 +1,47 @@
 <context>
 # Overview  
-Wrext Admin is an AI-powered content management and topic generation platform that enables content creators and marketing teams to generate, manage, and organize high-quality content ideas across multiple industries and platforms. The system combines a sophisticated topic builder wizard with comprehensive content library management, providing users with data-driven topic suggestions powered by LangGraph and multiple AI models.
-
-The platform solves the challenge of consistent, relevant content ideation by offering intelligent topic generation with customizable parameters, audience targeting, and content format optimization. It serves content creators, marketing professionals, social media managers, and businesses looking to scale their content operations efficiently.
+[Provide a high-level overview of your product here. Explain what problem it solves, who it's for, and why it's valuable.]
 
 # Core Features  
-**AI-Powered Topic Builder Wizard:** Multi-step intelligent wizard supporting both subject-first and industry-first content generation flows. Features comprehensive form validation, real-time error handling, and responsive design with 6 configurable steps covering industry selection, audience targeting, content formatting, goals/style preferences, advanced options, and final review/generation.
-
-**Comprehensive Content Library Management:** Full CRUD operations for managing generated topics with advanced filtering, bulk operations, export capabilities (JSON/CSV), and seamless integration between topic generation and library storage. Includes sophisticated data table with sorting, pagination, and search functionality.
-
-**Backend Integration with LangGraph:** Seamless integration with Python-based AI backend featuring LangGraph workflows, multiple LLM providers (OpenAI, Groq, Hugging Face), web scraping capabilities, and PGVector for RAG-enhanced content generation.
-
-**Responsive Design System:** Built on shadcn/ui v3 with Radix UI primitives, featuring comprehensive component library, consistent design tokens, accessibility compliance, and mobile-first responsive patterns.
+[List and describe the main features of your product. For each feature, include:
+- What it does
+- Why it's important
+- How it works at a high level]
 
 # User Experience  
-**User Personas:**
-- Content Marketing Managers: Need consistent, high-quality topic ideas for blogs, social media, and campaigns
-- Social Media Specialists: Require platform-specific content suggestions with audience targeting
-- Content Creators: Want diverse topic inspiration across multiple industries and formats
-- Business Owners: Need scalable content planning solutions for marketing efforts
-
-**Key User Flows:**
-1. Topic Generation Flow: Landing → Wizard Selection → Multi-step Form → AI Generation → Results Review → Save/Export
-2. Content Library Flow: Ideas Page → Browse/Search/Filter → View Details → Edit/Delete/Export
-3. Integration Flow: Generate Topics → Save to Library → Navigate to Ideas Page → Manage Saved Content
-
-**UI/UX Considerations:**
-- Progressive disclosure with collapsible advanced options
-- Real-time validation with contextual error messages
-- Loading states and progress indicators during AI generation
-- Responsive design with mobile-optimized wizard navigation
-- Accessibility-first component design with ARIA compliance
+[Describe the user journey and experience. Include:
+- User personas
+- Key user flows
+- UI/UX considerations]
 </context>
 <PRD>
 # Technical Architecture  
-
-**Frontend Stack (Next.js 15+ App Router):**
-- Framework: Next.js 15.5.0 with App Router architecture
-- UI Library: shadcn/ui v3 + Radix UI primitives
-- Styling: Tailwind CSS 4 with custom design tokens
-- State Management: Zustand for global state, TanStack Query v5 for server state
-- Forms: React Hook Form v7.62.0 + Zod v4.1.5 validation
-- TypeScript: Full type safety with comprehensive interfaces
-- Testing: Jest + Testing Library with coverage reporting
-
-**Component Architecture:**
-- Topic Builder: Modular wizard components with step-based navigation
-- Results Management: TopicsList, TopicCard, TopicActions, BulkActions, TopicFilters
-- UI Components: Comprehensive shadcn/ui component library
-- Layout System: PageLayout, AppSidebar with responsive navigation
-- Error Handling: APIErrorBoundary, ErrorAlert with retry mechanisms
-
-**API Integration:**
-- Backend Service: Abstract service layer for AI endpoint communication
-- Error Classification: Sophisticated error typing and recovery strategies
-- Request/Response: TypeScript interfaces for all API contracts
-- Headers: Authentication via content-api-key header
-
-**Data Models:**
-```typescript
-TopicBuilderFormData: Comprehensive form state with 20+ fields
-GeneratedTopic: AI-generated topic with scores, metadata, and relationships
-TopicGenerationResponse: API response with request tracking and metadata
-ValidationResult: Form validation with errors and warnings
-```
-
-**Backend Integration Points:**
-- Topic Generation: POST /api/generate-topics
-- Topic Persistence: POST http://127.0.0.1:2024/api/topic/save-topic
-- Topic Retrieval: GET http://127.0.0.1:2024/api/topic/get-topics
-- Authentication: content-api-key: supersecretapikey
+[Outline the technical implementation details:
+- System components
+- Data models
+- APIs and integrations
+- Infrastructure requirements]
 
 # Development Roadmap  
-
-**Phase 1: Topic Save Functionality (Immediate MVP)**
-- Implement topic save API integration with backend endpoint (http://127.0.0.1:2024/api/topic/save-topic)
-- Add proper request formatting matching backend schema (topics array with title, angle, channel_fit, audience_fit, scores, why_it_works, tags)
-- Implement success messaging with navigation options (Ideas page or generate new topics)
-- Add error handling for save failures with retry mechanisms
-- Update TopicActions component to handle save operations with loading states
-
-**Phase 2: Ideas Page Data Integration (Core Functionality)**  
-- Replace dummy data with real topic retrieval from backend (http://127.0.0.1:2024/api/topic/get-topics)
-- Map backend response to existing IdeaData interface
-- Implement data fetching with TanStack Query for caching and error handling
-- Update DataTable to display real saved topics with proper metadata
-- Ensure seamless integration between topic generation and ideas page display
+[Break down the development process into phases:
+- MVP requirements
+- Future enhancements
+- Do not think about timelines whatsoever -- all that matters is scope and detailing exactly what needs to be build in each phase so it can later be cut up into tasks]
 
 # Logical Dependency Chain
-
-**Completed Foundation (Already in place):**
-- ✅ Next.js 15 with App Router setup
-- ✅ shadcn/ui component library implementation
-- ✅ TypeScript interfaces for topic generation (GeneratedTopic, TopicBuilderFormData)
-- ✅ Topic builder wizard with 6-step flow
-- ✅ AI topic generation with backend integration
-- ✅ Form validation and error handling infrastructure
-- ✅ TanStack Query setup with query client
-- ✅ Responsive design and mobile optimization
-
-**Remaining Core Tasks (Sequential):**
-1. **Topic Save API Integration** - Connect TopicActions to save-topic endpoint
-2. **Backend Request Mapping** - Format GeneratedTopic data to match backend schema
-3. **Success Flow Implementation** - Add save confirmation and navigation options
-4. **Ideas Page Data Source** - Replace dummy data with get-topics API
-5. **Data Interface Alignment** - Map backend response to IdeaData interface
+[Define the logical order of development:
+- Which features need to be built first (foundation)
+- Getting as quickly as possible to something usable/visible front end that works
+- Properly pacing and scoping each feature so it is atomic but can also be built upon and improved as development approaches]
 
 # Risks and Mitigations  
-
-**Immediate Implementation Risks:**
-- Backend Schema Mismatch: GeneratedTopic interface may not align perfectly with save-topic endpoint expectations. Mitigation: Create data transformation layer to map between frontend and backend schemas.
-- API Authentication: content-api-key header implementation needs secure handling. Mitigation: Use environment variables and service abstraction layer.
-- Error Handling: Save operations may fail silently or with unclear error messages. Mitigation: Implement comprehensive error catching with user-friendly messages and retry mechanisms.
-
-**Data Integration Challenges:**
-- Interface Mapping: Backend topic response may not match existing IdeaData interface used in Ideas page. Mitigation: Create adapter functions to transform backend data to frontend interface.
-- State Synchronization: Saved topics should appear immediately in Ideas page. Mitigation: Use TanStack Query cache invalidation after successful saves.
-- Data Consistency: Generated topics and saved topics may have different field structures. Mitigation: Standardize data models and ensure consistent field mapping.
+[Identify potential risks and how they'll be addressed:
+- Technical challenges
+- Figuring out the MVP that we can build upon
+- Resource constraints]
 
 # Appendix  
-
-**Backend API Specification:**
-
-*Save Topic Endpoint:*
-```
-POST http://127.0.0.1:2024/api/topic/save-topic
-Headers: Content-Type: application/json, content-api-key: supersecretapikey
-Body: {
-  topics: [{
-    title: string,
-    angle: string,
-    channel_fit: string[],
-    audience_fit: string[],
-    scores: { relevance: number, freshness: number, novelty: number },
-    why_it_works: string,
-    tags: string[]
-  }]
-}
-```
-
-*Get Topics Endpoint:*
-```
-GET http://127.0.0.1:2024/api/topic/get-topics
-Headers: content-api-key: supersecretapikey
-```
-
-**Implementation Requirements:**
-- Create service layer abstraction for backend API calls
-- Implement data transformation between GeneratedTopic and backend schema
-- Add TanStack Query hooks for save and fetch operations
-- Update TopicActions component with real save functionality
-- Replace Ideas page dummy data with real API integration
-- Add proper error handling and loading states for all operations
-
-**Testing Focus:**
-- API integration testing for save and retrieve operations
-- Data transformation validation between frontend and backend schemas  
-- Error handling for network failures and API errors
-- User flow testing for save → navigate to Ideas page workflow
+[Include any additional information:
+- Research findings
+- Technical specifications]
 </PRD>
