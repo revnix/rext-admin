@@ -1,7 +1,9 @@
 "use client";
 
-import { Brain, FileText, Sparkles, Target } from "lucide-react";
+import { Brain, FileText, Sparkles, Target, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useTopicBuilder } from "@/hooks/use-topic-builder";
 
 interface AILoadingScreenProps {
   numIdeas?: number;
@@ -42,6 +44,15 @@ const loadingSteps = [
 export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Access the topic builder hook for cancellation
+  const { cancelGeneration } = useTopicBuilder();
+
+  // Handle cancel button click
+  const handleCancel = () => {
+    console.log("User clicked cancel on loading screen");
+    cancelGeneration();
+  };
 
   useEffect(() => {
     let stepTimer: NodeJS.Timeout;
@@ -218,6 +229,21 @@ export function AILoadingScreen({ numIdeas = 10 }: AILoadingScreenProps) {
               </p>
             </div>
           </div>
+
+          {/* Cancel Button */}
+          {!isComplete && (
+            <div className="text-center">
+              <Button
+                variant="outline"
+                size="default"
+                onClick={handleCancel}
+                className="bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-background/90 hover:border-primary/30 transition-all duration-200 text-foreground/80 hover:text-foreground"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel Generation
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
