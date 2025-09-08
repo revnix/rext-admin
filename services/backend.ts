@@ -422,11 +422,6 @@ export class BackendService {
         : formData.demographic_age
           ? [formData.demographic_age]
           : [],
-      demographic_location: Array.isArray(formData.demographic_location)
-        ? formData.demographic_location.filter(Boolean)
-        : formData.demographic_location
-          ? [formData.demographic_location]
-          : [],
       purpose: Array.isArray(formData.purpose) ? formData.purpose : [],
       purpose_other: formData.purpose_other || null,
       content_goal: Array.isArray(formData.content_goal)

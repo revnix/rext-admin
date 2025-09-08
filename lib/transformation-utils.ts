@@ -778,13 +778,6 @@ export const transformFormDataToBackendEnhanced = (
         : processedFormData.demographic_age
           ? [processedFormData.demographic_age]
           : [],
-      demographic_location: Array.isArray(
-        processedFormData.demographic_location,
-      )
-        ? processedFormData.demographic_location.filter(Boolean)
-        : processedFormData.demographic_location
-          ? [processedFormData.demographic_location]
-          : [],
       purpose: Array.isArray(processedFormData.purpose)
         ? processedFormData.purpose
         : [],
@@ -1032,9 +1025,6 @@ const normalizeFormData = (
     normalized.demographic_age = Array.from(
       new Set(normalized.demographic_age.filter(Boolean)),
     );
-  }
-  if (typeof normalized.demographic_location === "string") {
-    normalized.demographic_location = normalized.demographic_location.trim();
   }
   normalized.purpose = Array.from(new Set(normalized.purpose.filter(Boolean)));
   normalized.content_goal = Array.from(

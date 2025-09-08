@@ -6,11 +6,7 @@ import {
 import { FormField } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group";
-import { SelectWithCustom } from "@/components/ui/select-with-custom";
-import {
-  DEMOGRAPHIC_AGE_OPTIONS,
-  DEMOGRAPHIC_LOCATION_OPTIONS,
-} from "@/data/topic-builder-options";
+import { DEMOGRAPHIC_AGE_OPTIONS } from "@/data/topic-builder-options";
 import {
   getAudienceForIndustry,
   getAudienceOptions,
@@ -151,7 +147,7 @@ export function AudienceStep({
         </div>
 
         {/* Age Groups */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <div className="grid gap-3">
             <Label>Age Groups (Optional)</Label>
             <CheckboxGroup
@@ -164,31 +160,6 @@ export function AudienceStep({
               maxSelections={4}
             />
           </div>
-        </div>
-
-        {/* Geographic Focus */}
-        <div className="md:col-span-1">
-          <FormField
-            label="Geographic Focus (Optional)"
-            error={
-              getFieldError?.("demographic_location") ||
-              errors?.demographic_location
-            }
-            isValid={
-              !formData.demographic_location ||
-              !getFieldError?.("demographic_location")
-            }
-          >
-            <SelectWithCustom
-              options={DEMOGRAPHIC_LOCATION_OPTIONS}
-              value={formData.demographic_location || ""}
-              onChange={(value) =>
-                updateFormData("demographic_location", value)
-              }
-              placeholder="Select a region..."
-              allowCustom={true}
-            />
-          </FormField>
         </div>
       </div>
     </div>

@@ -193,8 +193,6 @@ export interface TopicBuilderFormData {
   audience_size?: AudienceSize;
   /** Demographic age group selections */
   demographic_age: string[];
-  /** Geographic/location targeting */
-  demographic_location: string;
   /** Reader experience level (beginner/intermediate/expert) */
   reader_level?: ReaderLevel;
 

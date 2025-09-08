@@ -267,7 +267,6 @@ export const audienceStepSchema = z.object({
   reader_level: readerLevelSchema.optional(),
   audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
   demographic_age: z.array(z.string()).optional(),
-  demographic_location: z.string().optional(),
 });
 
 export const contentFormatStepSchema = z

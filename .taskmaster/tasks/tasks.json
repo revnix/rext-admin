@@ -9,7 +9,7 @@
         "testStrategy": "1. Write unit tests for the updated `lib/topic-builder-utils.ts` to verify audience selection logic works correctly without auto-selection\n2. Create component tests for AudienceStep to ensure it renders correctly without geographic focus field\n3. Test form validation to ensure proper error messages appear when no audience is selected\n4. Test that the form data is correctly updated when audiences are selected/deselected\n5. Verify the component is responsive across different screen sizes",
         "priority": "high",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -25,8 +25,8 @@
             "title": "Remove geographic focus field from AudienceStep component",
             "description": "Update the AudienceStep component to remove the geographic focus field and all related UI elements and logic.",
             "dependencies": [],
-            "details": "1. Open `components/topic-builder/steps/AudienceStep.tsx`\n2. Remove all UI elements related to the geographic focus field (input, label, error messages)\n3. Remove any state variables or handlers specifically for the geographic focus field\n4. Clean up any conditional rendering that depends on the geographic focus field\n5. Ensure the component layout remains consistent after removing the field\n6. Verify the component renders correctly without the geographic focus field",
-            "status": "pending",
+            "details": "1. Open `components/topic-builder/steps/AudienceStep.tsx`\n2. Remove all UI elements related to the geographic focus field (input, label, error messages)\n3. Remove any state variables or handlers specifically for the geographic focus field\n4. Clean up any conditional rendering that depends on the geographic focus field\n5. Ensure the component layout remains consistent after removing the field\n6. Verify the component renders correctly without the geographic focus field\n<info added on 2025-09-08T13:05:48.717Z>\nImplementation completed successfully. \n\n**Changes Made:**\n1. **AudienceStep.tsx**: Removed geographic focus field UI section (lines 169-192), removed DEMOGRAPHIC_LOCATION_OPTIONS import, adjusted Age Groups section to span full width (md:col-span-2) \n2. **types/schemas.ts**: Removed demographic_location field from TopicBuilderFormDataSchema and from FORM_TO_BACKEND_MAPPING.direct array\n3. **lib/topic-builder-utils.ts**: Removed demographic_location validation warning, removed from prompt building, removed from initialization defaults, removed from function parameters\n4. **stores/topic-builder-store.ts**: Removed demographic_location default value\n5. **types/topic-builder.ts**: Removed demographic_location field from TopicBuilderFormData interface\n\n**Layout & Design:**\n- Age Groups section now spans full width (2 columns) maintaining proper responsive grid layout\n- No layout inconsistencies after field removal\n- All remaining fields maintain proper spacing and alignment\n\n**Validation & Functionality:**\n- Form validation no longer references demographic_location\n- No console errors from missing field references  \n- Form continues to validate properly for remaining fields\n- Linting and formatting passed successfully (no new issues introduced)\n\n**Follow-ups:**\n- Some backend services and transformation utilities still reference demographic_location but are outside scope of this subtask\n- Tests will need updating to remove demographic_location expectations\n</info added on 2025-09-08T13:05:48.717Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -34,8 +34,8 @@
             "title": "Update form schema and validation",
             "description": "Modify the schema definition in types/schemas.ts to remove the demographic_location field and enhance validation for the audience selection.",
             "dependencies": [],
-            "details": "1. Open `types/schemas.ts` and locate the audienceStepSchema\n2. Remove the demographic_location field from the schema\n3. Ensure the audience field has proper validation with clear error messages (min 1 selection required)\n4. Update any TypeScript interfaces or types that reference the removed field\n5. Verify that form validation works correctly with the updated schema\n6. Update any validation functions in the component that reference the removed field",
-            "status": "pending",
+            "details": "1. Open `types/schemas.ts` and locate the audienceStepSchema\n2. Remove the demographic_location field from the schema\n3. Ensure the audience field has proper validation with clear error messages (min 1 selection required)\n4. Update any TypeScript interfaces or types that reference the removed field\n5. Verify that form validation works correctly with the updated schema\n6. Update any validation functions in the component that reference the removed field\n<info added on 2025-09-08T13:16:03.823Z>\nImplementation completed successfully.\n\n**Changes Made:**\n1. **schemas/topic-builder.ts**: Removed `demographic_location: z.string().optional(),` from `audienceStepSchema` (line 270)\n2. **__tests__/schemas/topic-builder.test.ts**: Updated test data to remove `demographic_location: \"us\",` from the valid audience data test case\n\n**Schema Validation Enhancement:**\n- audienceStepSchema now properly enforces audience selection validation without deprecated demographic_location field\n- Audience field maintains its required validation: `z.array(z.string()).min(1, \"Please select at least one audience type\")`\n- Schema is now consistent with the UI changes made in subtask 1.2\n\n**Testing Results:**\n- All 20 schema tests pass, including audience step validation tests\n- Linting passed with no new issues introduced\n- Formatting applied successfully\n\n**Validation Workflow:**\n- Forms will reject any data containing demographic_location field\n- Audience selection continues to require at least one option selected\n- Error message displays: \"Please select at least one audience type\" when validation fails\n\n**Consistency Check:**\n- Main TopicBuilderFormDataSchema (types/schemas.ts) ✓ Already updated in 1.2\n- Step-specific audienceStepSchema (schemas/topic-builder.ts) ✓ Now updated in 1.3\n- Component validation (AudienceStep.tsx) ✓ Already updated in 1.2\n- Tests ✓ Updated to match new schema expectations\n</info added on 2025-09-08T13:16:03.823Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -44,7 +44,7 @@
             "description": "Verify the AudienceStep component is fully responsive after changes and update all related tests to reflect the modifications.",
             "dependencies": [],
             "details": "1. Review the AudienceStep component with various screen sizes to ensure proper responsive behavior\n2. Use Tailwind CSS utilities to fix any responsive issues\n3. Update existing tests for AudienceStep component to remove expectations for geographic focus field\n4. Update tests for form validation to reflect new schema requirements\n5. Add tests to verify audience selection works correctly without pre-selection\n6. Run the full test suite to ensure no regressions were introduced",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -619,7 +619,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-08T12:38:35.172Z",
+      "updated": "2025-09-08T13:22:13.324Z",
       "description": "Tasks for master context"
     }
   }

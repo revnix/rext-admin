@@ -53,7 +53,6 @@ const initialFormData: Partial<TopicBuilderFormData> = {
   content_goal: [],
   tone: [],
   demographic_age: [],
-  demographic_location: "global",
 };
 
 /**

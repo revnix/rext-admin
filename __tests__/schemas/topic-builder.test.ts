@@ -138,7 +138,6 @@ describe("Topic Builder Schemas", () => {
         reader_level: "intermediate" as const,
         audience_size: "medium" as const,
         demographic_age: ["25-34", "35-44"],
-        demographic_location: "us",
       };
 
       const result = audienceStepSchema.parse(validData);

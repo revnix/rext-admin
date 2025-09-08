@@ -206,8 +206,6 @@ export const TopicBuilderFormDataSchema = z.object({
   audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
   /** Demographic age groups */
   demographic_age: z.array(z.string()).default([]),
-  /** Geographic/location demographics */
-  demographic_location: z.string().default(""),
   /** Content purpose/goals */
   purpose: z
     .array(
@@ -375,7 +373,6 @@ export const FORM_TO_BACKEND_MAPPING = {
     "reader_level",
     "audience_size",
     "demographic_age",
-    "demographic_location",
     "purpose",
     "purpose_other",
     "content_goal",

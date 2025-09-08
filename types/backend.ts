@@ -28,7 +28,6 @@ export interface BackendTopicGenerationPayload {
   reader_level: string;
   audience_size: string;
   demographic_age: string[];
-  demographic_location: string[];
   purpose: string[];
   purpose_other?: string | null;
   content_goal: string[];
