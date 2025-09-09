@@ -67,16 +67,9 @@ const validFormData: TopicBuilderFormData = {
   industry: "technology",
   content_type: "blog-post",
   audience: ["developers", "students"],
-  reader_level: "intermediate",
-  audience_size: "medium",
-  demographic_age: ["25-34", "35-44"],
-  demographic_location: "North America",
   purpose: ["educate-inform", "entertain-engage"],
-  content_goal: ["tutorial"],
   tone: ["professional-formal"],
-  keywords: "API development, best practices",
   num_ideas: 5,
-  language: "english",
 };
 
 const invalidGeneratedTopic = {
@@ -336,15 +329,9 @@ describe("transformFormDataToBackendEnhanced", () => {
       industry: "technology",
       content_type: "blog-post",
       audience: ["developers"],
-      reader_level: "", // This will be empty in the final payload
-      audience_size: "medium",
-      demographic_age: [],
-      demographic_location: "North America",
-      purpose: ["educate-inform"],
-      content_goal: [],
-      tone: ["professional-formal"],
+      purpose: [],
+      tone: [],
       num_ideas: 5,
-      language: "english",
     };
 
     const result = transformFormDataToBackendEnhanced(incompleteData, {
@@ -364,19 +351,14 @@ describe("transformFormDataToBackendEnhanced", () => {
       industry: "technology",
       content_type: "blog-post",
       audience: ["developers"],
-      reader_level: "beginner",
-      audience_size: "medium",
-      demographic_age: [],
-      demographic_location: "North America",
       purpose: ["educate-inform"],
-      content_goal: [],
       tone: ["professional-formal"],
       num_ideas: 3,
     };
 
     const defaultValues = {
-      language: "English",
-      region: "Global",
+      notes: "Default notes",
+      platform: "linkedin",
     };
 
     const result = transformFormDataToBackendEnhanced(minimalData, {
@@ -387,8 +369,8 @@ describe("transformFormDataToBackendEnhanced", () => {
       console.log("Error:", result.error);
     }
     expect(result.success).toBe(true);
-    expect(result.data?.language).toBe("English");
-    expect(result.data?.region).toBe("Global");
+    expect(result.data?.notes).toBe("Default notes");
+    expect(result.data?.platform).toBe("linkedin");
   });
 
   it("should handle invalid form data", () => {

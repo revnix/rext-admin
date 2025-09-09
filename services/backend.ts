@@ -277,11 +277,13 @@ export class BackendService {
         throw validationError;
       }
 
+      const dataWithTotals = validationResult.data as {
+        total_count?: number;
+        topics: Array<unknown>;
+      };
       const validatedResponse = {
         ...validationResult.data,
-        total_count:
-          (validationResult.data as any).total_count ||
-          (validationResult.data.topics || []).length,
+        total_count: dataWithTotals.total_count ?? dataWithTotals.topics.length,
         request_id: requestId,
       };
 
@@ -461,10 +463,12 @@ export class BackendService {
 
     // Add missing IDs to topics before validation (backend may not include IDs)
     if (result.topics && Array.isArray(result.topics)) {
-      result.topics = result.topics.map((topic: any, index: number) => ({
-        ...topic,
-        id: topic.id || `topic_${Date.now()}_${index}`,
-      }));
+      result.topics = result.topics.map(
+        (topic: Record<string, unknown> & { id?: string }, index: number) => ({
+          ...topic,
+          id: topic.id || `topic_${Date.now()}_${index}`,
+        }),
+      );
     }
 
     // Validate response structure with Zod
@@ -506,11 +510,13 @@ export class BackendService {
       throw validationError;
     }
 
+    const dataTotals = validationResult.data as {
+      total_count?: number;
+      topics: Array<unknown>;
+    };
     const validatedResponse = {
       ...validationResult.data,
-      total_count:
-        (validationResult.data as any).total_count ||
-        (validationResult.data.topics || []).length,
+      total_count: dataTotals.total_count ?? dataTotals.topics.length,
       request_id: requestId,
     };
 

@@ -14,11 +14,8 @@ describe("Generate Topics API Logic", () => {
     industry: "technology",
     content_type: "blog-post",
     purpose: ["educate-inform"],
-    content_goal: ["tutorial"],
     tone: ["professional-formal"],
     num_ideas: 5,
-    demographic_age: [],
-    demographic_location: "global",
   };
 
   describe("BackendService Integration", () => {
@@ -49,13 +46,11 @@ describe("Generate Topics API Logic", () => {
       const formDataWithOptionals: TopicBuilderFormData = {
         ...validFormData,
         subject: "AI Development",
-        keywords: "machine learning, AI",
-        exclude: "basic tutorials",
         notes: "Focus on advanced topics",
       };
 
       expect(formDataWithOptionals.subject).toBe("AI Development");
-      expect(formDataWithOptionals.keywords).toBe("machine learning, AI");
+      expect(formDataWithOptionals.notes).toBe("Focus on advanced topics");
     });
   });
 

@@ -65,8 +65,8 @@ const steps = [
   },
   {
     id: 5,
-    title: "Fine-tune (Optional)",
-    description: "Add keywords and preferences",
+    title: "Advanced Options",
+    description: "Add notes and choose idea count",
     icon: Settings,
     advanced: true,
   },

@@ -270,26 +270,20 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     (field: keyof TopicBuilderFormData): ValidationResult => {
       const validation = validateStep(currentStep);
 
-      // Create a mapping of field names to validation keywords
+      // Create a mapping of field names to validation keywords (simplified)
       const fieldKeywords: Record<string, string[]> = {
         wizardMode: ["select how", "start"],
         industry: ["industry", "domain"],
         industry_other: ["custom industry", "specify"],
         subject: ["subject", "topic"],
-        focus: ["focus"],
         audience: ["audience"],
         content_type: ["content type"],
         content_type_other: ["custom content type"],
         platform: ["platform"],
         platform_other: ["custom platform"],
         purpose: ["purpose"],
-        content_goal: ["content goal"],
         tone: ["tone"],
         num_ideas: ["number of ideas"],
-        keywords: ["keywords"],
-        exclude: ["exclude"],
-        region: ["region"],
-        language: ["language"],
         notes: ["notes"],
       };
 

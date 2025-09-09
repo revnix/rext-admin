@@ -105,7 +105,7 @@ export type ToneType =
  *
  * Supports both flow variations:
  * - Subject-first: User starts with a specific topic/subject
- * - Industry-first: User starts with industry selection, optionally adds focus
+ * - Industry-first: User starts with industry selection
  */
 export interface TopicBuilderFormData {
   /** Wizard mode selection - determines which wizard variation to use */

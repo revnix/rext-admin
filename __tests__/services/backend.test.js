@@ -15,11 +15,8 @@ describe("BackendService", () => {
     industry: "technology",
     content_type: "blog-post",
     purpose: ["educate-inform"],
-    content_goal: ["tutorial"],
     tone: ["professional-formal"],
     num_ideas: 5,
-    demographic_age: [],
-    demographic_location: "global",
   };
 
   beforeEach(() => {
@@ -148,15 +145,7 @@ describe("BackendService", () => {
         subject: "AI Development",
         platform: "linkedin",
         audience: ["developers", "tech-leads"],
-        keywords: "machine learning, AI",
-        exclude: "basic tutorials",
-        focus: "advanced concepts",
         notes: "Technical depth required",
-        region: "us",
-        language: "english",
-        is_ymyl: false,
-        fresh_vs_evergreen: "balanced",
-        safe_vs_original: "original",
       };
 
       await service.generateTopics(complexFormData);
@@ -172,14 +161,8 @@ describe("BackendService", () => {
         audience: "developers, tech-leads",
         purpose: ["educate-inform"],
         tone: ["professional-formal"],
-        keywords: "machine learning, AI",
-        exclude: "basic tutorials",
         num_ideas: 5,
-        industry_specific_focus: "advanced concepts",
         additional_notes: "Technical depth required",
-        content_timing_preference: "balanced",
-        content_originality_preference: "original",
-        demographic_location: ["global"],
         wizardMode: "industry-first",
       });
     });
@@ -253,11 +236,8 @@ describe("BackendService", () => {
         industry: "technology",
         content_type: "blog-post",
         purpose: ["educate-inform"],
-        content_goal: ["tutorial"],
         tone: ["professional-formal"],
         num_ideas: 5,
-        demographic_age: [],
-        demographic_location: "global",
       };
 
       await service.generateTopics(minimalFormData);
@@ -266,11 +246,7 @@ describe("BackendService", () => {
       const requestBody = JSON.parse(callArgs[1].body);
 
       expect(requestBody.subject).toBeNull();
-      expect(requestBody.keywords).toBeNull();
-      expect(requestBody.exclude).toBeNull();
-      expect(requestBody.focus).toBeNull();
       expect(requestBody.notes).toBeNull();
-      expect(requestBody.region).toBeNull();
     });
 
     it("should handle custom industry and content type", async () => {
@@ -293,21 +269,7 @@ describe("BackendService", () => {
       expect(requestBody.content_type_other).toBe("Interactive Tutorial");
     });
 
-    it("should filter out empty values from arrays", async () => {
-      const formDataWithEmptyValues = {
-        ...mockFormData,
-        demographic_age: ["", "25-34", "", "35-44", ""],
-        demographic_location: "us",
-      };
-
-      await service.generateTopics(formDataWithEmptyValues);
-
-      const callArgs = mockFetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
-
-      expect(requestBody.demographic_age).toEqual(["25-34", "35-44"]);
-      expect(requestBody.demographic_location).toEqual(["us"]);
-    });
+    // removed demographic filtering test as demographics are no longer part of payload
   });
 
   describe("Error Handling", () => {

@@ -23,11 +23,8 @@ describe("Topic Builder Schemas", () => {
       industry: "technology",
       content_type: "blog-post",
       purpose: ["educate-inform"],
-      content_goal: ["tutorial"],
       tone: ["professional-formal"],
       num_ideas: 5,
-      demographic_age: [],
-      demographic_location: "global",
     };
 
     it("should validate valid form data", () => {
@@ -41,15 +38,12 @@ describe("Topic Builder Schemas", () => {
         industry: "technology" as const,
         content_type: "blog-post" as const,
         purpose: ["educate-inform"] as const,
-        content_goal: ["tutorial"] as const,
         tone: ["professional-formal"] as const,
       };
 
       const result = topicBuilderFormDataSchema.parse(minimalData);
 
       expect(result.num_ideas).toBe(5);
-      expect(result.demographic_age).toEqual([]);
-      expect(result.demographic_location).toBe("global");
     });
 
     it("should reject invalid enum values", () => {
@@ -135,9 +129,6 @@ describe("Topic Builder Schemas", () => {
     it("should validate valid audience data", () => {
       const validData = {
         audience: ["developers", "tech-leads"],
-        reader_level: "intermediate" as const,
-        audience_size: "medium" as const,
-        demographic_age: ["25-34", "35-44"],
       };
 
       const result = audienceStepSchema.parse(validData);
@@ -192,7 +183,6 @@ describe("Topic Builder Schemas", () => {
     it("should validate valid goals data", () => {
       const validData = {
         purpose: ["educate-inform", "entertain-engage"],
-        content_goal: ["tutorial", "explainer"],
         tone: ["professional-formal", "friendly-warm"],
       };
 
@@ -203,24 +193,15 @@ describe("Topic Builder Schemas", () => {
     it("should require at least one of each goal type", () => {
       const invalidPurpose = {
         purpose: [],
-        content_goal: ["tutorial"],
-        tone: ["professional-formal"],
-      };
-
-      const invalidContentGoal = {
-        purpose: ["educate-inform"],
-        content_goal: [],
         tone: ["professional-formal"],
       };
 
       const invalidTone = {
         purpose: ["educate-inform"],
-        content_goal: ["tutorial"],
         tone: [],
       };
 
       expect(() => goalsStepSchema.parse(invalidPurpose)).toThrow();
-      expect(() => goalsStepSchema.parse(invalidContentGoal)).toThrow();
       expect(() => goalsStepSchema.parse(invalidTone)).toThrow();
     });
   });

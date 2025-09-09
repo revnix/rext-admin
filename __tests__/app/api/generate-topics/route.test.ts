@@ -26,11 +26,8 @@ describe("/api/generate-topics", () => {
     industry: "technology",
     content_type: "blog-post",
     purpose: ["educate-inform"],
-    content_goal: ["tutorial"],
     tone: ["professional-formal"],
     num_ideas: 5,
-    demographic_age: [],
-    demographic_location: "global",
   };
 
   beforeEach(() => {
@@ -95,11 +92,8 @@ describe("/api/generate-topics", () => {
         industry: "education",
         content_type: "blog-post",
         purpose: ["educate-inform"],
-        content_goal: ["explainer"],
         tone: ["friendly-warm"],
         num_ideas: 3,
-        demographic_age: [],
-        demographic_location: "us",
       };
 
       const mockResponse: BackendTopicGenerationResponse = {
@@ -572,22 +566,9 @@ describe("/api/generate-topics", () => {
         platform: "linkedin",
         audience: ["doctors", "healthcare-administrators"],
         purpose: ["educate-inform", "thought-leadership"],
-        content_goal: ["explainer", "case-study"],
         tone: ["professional-formal", "technical-analytical"],
-        keywords: "AI, machine learning, healthcare",
-        exclude: "controversial topics",
-        focus: "diagnostic applications",
         num_ideas: 7,
         notes: "Focus on practical applications",
-        region: "us",
-        language: "english",
-        is_ymyl: true,
-        fresh_vs_evergreen: "balanced",
-        safe_vs_original: "safe",
-        demographic_age: ["25-34", "35-44"],
-        demographic_location: "us",
-        audience_size: "medium",
-        reader_level: "expert",
       };
 
       const comprehensiveResponse: BackendTopicGenerationResponse = {

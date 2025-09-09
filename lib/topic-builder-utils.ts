@@ -691,9 +691,7 @@ export const updateFormDataForContentTypeChange = (
   formData: TopicBuilderFormData,
   newContentType: string,
 ): TopicBuilderFormData => {
-  const needsPlatform = ["social-media", "video-content"].includes(
-    newContentType,
-  );
+  const needsPlatform = newContentType === "social-media";
 
   return {
     ...formData,
