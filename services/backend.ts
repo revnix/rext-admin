@@ -406,7 +406,7 @@ export class BackendService {
       wizardMode: formData.wizardMode || "industry-first",
       industry: formData.industry_other || formData.industry || "",
       industry_other: formData.industry_other || null,
-      industry_specific_focus: formData.focus || null,
+      industry_specific_focus: null,
       content_type: formData.content_type_other || formData.content_type || "",
       content_type_other: formData.content_type_other || null,
       platform: formData.platform_other || formData.platform || null,
@@ -415,32 +415,13 @@ export class BackendService {
         Array.isArray(formData.audience) && formData.audience.length > 0
           ? formData.audience.join(", ")
           : "",
-      reader_level: formData.reader_level || "",
-      audience_size: formData.audience_size || "",
-      demographic_age: Array.isArray(formData.demographic_age)
-        ? formData.demographic_age.filter(Boolean)
-        : formData.demographic_age
-          ? [formData.demographic_age]
-          : [],
       purpose: Array.isArray(formData.purpose) ? formData.purpose : [],
       purpose_other: formData.purpose_other || null,
-      content_goal: Array.isArray(formData.content_goal)
-        ? formData.content_goal
-        : [],
       tone: Array.isArray(formData.tone) ? formData.tone : [],
       tone_other: formData.tone_other || null,
-      keywords: formData.keywords || null,
       notes: formData.notes || null,
       additional_notes: formData.notes || null,
       num_ideas: formData.num_ideas || 5,
-      region: formData.region || null,
-      language: formData.language || "english",
-      content_timing_preference: formData.fresh_vs_evergreen || null,
-      content_originality_preference: formData.safe_vs_original || null,
-      fresh_vs_evergreen: formData.fresh_vs_evergreen || null,
-      safe_vs_original: formData.safe_vs_original || null,
-      exclude: formData.exclude || null,
-      focus: formData.focus || null,
       subject: formData.subject || null,
       timestamp: new Date().toISOString(),
     };
@@ -740,7 +721,8 @@ export class BackendService {
       subject: payload.subject,
       content_type: payload.content_type,
       num_ideas: payload.num_ideas,
-      keywords: payload.keywords,
+      purpose: payload.purpose,
+      tone: payload.tone,
     };
     return btoa(JSON.stringify(keyData)).slice(0, 16);
   }

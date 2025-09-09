@@ -74,11 +74,6 @@ export type Industry =
   | "other";
 
 /**
- * Reader experience level options
- */
-export type ReaderLevel = "beginner" | "intermediate" | "expert";
-
-/**
  * Content purpose/goal types
  */
 export type PurposeType =
@@ -89,20 +84,6 @@ export type PurposeType =
   | "promote-product"
   | "drive-seo"
   | "thought-leadership"
-  | "other";
-
-/**
- * Content goal categories
- */
-export type ContentGoalType =
-  | "tutorial"
-  | "explainer"
-  | "news-trend"
-  | "opinion-leadership"
-  | "listicle"
-  | "case-study"
-  | "comparison"
-  | "faq"
   | "other";
 
 /**
@@ -118,45 +99,6 @@ export type ToneType =
   | "simple-accessible"
   | "inspirational-uplifting"
   | "other";
-
-/**
- * Audience size categories
- */
-export type AudienceSize = "small" | "medium" | "large" | "massive";
-
-/**
- * Geographic region options
- */
-export type Region =
-  | "us"
-  | "uk"
-  | "canada"
-  | "australia"
-  | "pakistan"
-  | "india"
-  | "europe"
-  | "global"
-  | "other";
-
-/**
- * Language options
- */
-export type Language =
-  | "english"
-  | "urdu"
-  | "spanish"
-  | "french"
-  | "german"
-  | "arabic"
-  | "chinese"
-  | "japanese"
-  | "other";
-
-/**
- * Content preference toggles
- */
-export type PreferenceToggle = "fresh" | "evergreen" | "balanced";
-export type OriginalityToggle = "safe" | "original" | "balanced";
 
 /**
  * Main form data interface for the Topic Builder wizard
@@ -189,52 +131,22 @@ export interface TopicBuilderFormData {
   /** Audience and targeting configuration */
   /** Target audience description or persona chips */
   audience?: string[];
-  /** Estimated size of target audience */
-  audience_size?: AudienceSize;
-  /** Demographic age group selections */
-  demographic_age: string[];
-  /** Reader experience level (beginner/intermediate/expert) */
-  reader_level?: ReaderLevel;
 
   /** Content goals and style preferences */
   /** Primary purposes/goals of the content */
   purpose: PurposeType[];
   /** Custom purpose when "Other" is selected */
   purpose_other?: string;
-  /** Content goal types (tutorial, explainer, news, etc.) */
-  content_goal: ContentGoalType[];
   /** Tone and voice preferences */
   tone: ToneType[];
   /** Custom tone when "Other" is selected */
   tone_other?: string;
 
   /** Advanced options and seed inputs */
-  /** Keywords or key phrases to focus on */
-  keywords?: string;
-  /** Topics or angles to exclude */
-  exclude?: string;
-  /** Industry-first flow: specific focus within the industry */
-  focus?: string;
   /** Number of topic ideas to generate */
   num_ideas: number;
   /** Additional notes or special instructions */
   notes?: string;
-
-  /** Localization preferences */
-  /** Target region/country */
-  region?: Region;
-  /** Content language */
-  language?: Language;
-
-  /** Content sensitivity and compliance */
-  /** Auto-detected for sensitive industries (health/finance/legal) */
-  is_ymyl?: boolean;
-
-  /** Content preference toggles */
-  /** Balance between trending vs evergreen content */
-  fresh_vs_evergreen?: PreferenceToggle;
-  /** Balance between safe/conventional vs original/contrarian */
-  safe_vs_original?: OriginalityToggle;
 }
 
 /**
@@ -426,15 +338,6 @@ export const INDUSTRY_OPTIONS: SelectOption[] = [
 ];
 
 /**
- * Reader experience level options
- */
-export const READER_LEVEL_OPTIONS: SelectOption[] = [
-  { label: "Beginner", value: "beginner" },
-  { label: "Intermediate", value: "intermediate" },
-  { label: "Expert", value: "expert" },
-];
-
-/**
  * Content purpose/goal options
  */
 export const PURPOSE_OPTIONS: SelectOption[] = [
@@ -445,21 +348,6 @@ export const PURPOSE_OPTIONS: SelectOption[] = [
   { label: "Promote a Product/Service", value: "promote-product" },
   { label: "Drive SEO Traffic", value: "drive-seo" },
   { label: "Establish Thought Leadership", value: "thought-leadership" },
-  { label: "Other", value: "other" },
-];
-
-/**
- * Content goal type options
- */
-export const CONTENT_GOAL_OPTIONS: SelectOption[] = [
-  { label: "Tutorial & How-to", value: "tutorial" },
-  { label: "Explainer & Beginner Guide", value: "explainer" },
-  { label: "News, Updates & Trends", value: "news-trend" },
-  { label: "Opinion & Thought Leadership", value: "opinion-leadership" },
-  { label: "Lists, Checklists & Playbooks", value: "listicle" },
-  { label: "Case Studies & Stories", value: "case-study" },
-  { label: "Comparisons (X vs Y)", value: "comparison" },
-  { label: "FAQs & Common Questions", value: "faq" },
   { label: "Other", value: "other" },
 ];
 
@@ -476,64 +364,6 @@ export const TONE_OPTIONS: SelectOption[] = [
   { label: "Simple & Accessible", value: "simple-accessible" },
   { label: "Inspirational & Uplifting", value: "inspirational-uplifting" },
   { label: "Other", value: "other" },
-];
-
-/**
- * Audience size options
- */
-export const AUDIENCE_SIZE_OPTIONS: SelectOption[] = [
-  { label: "Small audience (under 1K)", value: "small" },
-  { label: "Medium audience (1K - 10K)", value: "medium" },
-  { label: "Large audience (10K - 100K)", value: "large" },
-  { label: "Massive audience (100K+)", value: "massive" },
-];
-
-/**
- * Geographic region options
- */
-export const REGION_OPTIONS: SelectOption[] = [
-  { label: "United States", value: "us" },
-  { label: "United Kingdom", value: "uk" },
-  { label: "Canada", value: "canada" },
-  { label: "Australia", value: "australia" },
-  { label: "Pakistan", value: "pakistan" },
-  { label: "India", value: "india" },
-  { label: "Europe", value: "europe" },
-  { label: "Global / International", value: "global" },
-  { label: "Other", value: "other" },
-];
-
-/**
- * Language options
- */
-export const LANGUAGE_OPTIONS: SelectOption[] = [
-  { label: "English", value: "english" },
-  { label: "Urdu", value: "urdu" },
-  { label: "Spanish", value: "spanish" },
-  { label: "French", value: "french" },
-  { label: "German", value: "german" },
-  { label: "Arabic", value: "arabic" },
-  { label: "Chinese", value: "chinese" },
-  { label: "Japanese", value: "japanese" },
-  { label: "Other", value: "other" },
-];
-
-/**
- * Content preference toggle options
- */
-export const PREFERENCE_TOGGLE_OPTIONS: SelectOption[] = [
-  { label: "Fresh & Trending", value: "fresh" },
-  { label: "Evergreen", value: "evergreen" },
-  { label: "Balanced", value: "balanced" },
-];
-
-/**
- * Originality toggle options
- */
-export const ORIGINALITY_TOGGLE_OPTIONS: SelectOption[] = [
-  { label: "Safe / Conventional", value: "safe" },
-  { label: "Original / Contrarian", value: "original" },
-  { label: "Balanced", value: "balanced" },
 ];
 
 // ============================================================================
@@ -569,13 +399,6 @@ export const isValidIndustry = (value: string): value is Industry => {
 };
 
 /**
- * Type guard to check if a value is a valid ReaderLevel
- */
-export const isValidReaderLevel = (value: string): value is ReaderLevel => {
-  return READER_LEVEL_OPTIONS.some((option) => option.value === value);
-};
-
-/**
  * Type guard to check if a value is a valid PurposeType
  */
 export const isValidPurposeType = (value: string): value is PurposeType => {
@@ -583,58 +406,10 @@ export const isValidPurposeType = (value: string): value is PurposeType => {
 };
 
 /**
- * Type guard to check if a value is a valid ContentGoalType
- */
-export const isValidContentGoalType = (
-  value: string,
-): value is ContentGoalType => {
-  return CONTENT_GOAL_OPTIONS.some((option) => option.value === value);
-};
-
-/**
  * Type guard to check if a value is a valid ToneType
  */
 export const isValidToneType = (value: string): value is ToneType => {
   return TONE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid AudienceSize
- */
-export const isValidAudienceSize = (value: string): value is AudienceSize => {
-  return AUDIENCE_SIZE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid Region
- */
-export const isValidRegion = (value: string): value is Region => {
-  return REGION_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid Language
- */
-export const isValidLanguage = (value: string): value is Language => {
-  return LANGUAGE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid PreferenceToggle
- */
-export const isValidPreferenceToggle = (
-  value: string,
-): value is PreferenceToggle => {
-  return PREFERENCE_TOGGLE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid OriginalityToggle
- */
-export const isValidOriginalityToggle = (
-  value: string,
-): value is OriginalityToggle => {
-  return ORIGINALITY_TOGGLE_OPTIONS.some((option) => option.value === value);
 };
 
 // YMYL detection function moved to /lib/topic-builder-utils.ts
@@ -648,24 +423,4 @@ export const validateEnumArray = <T extends string>(
   validationFn: (value: string) => value is T,
 ): values is T[] => {
   return values.every(validationFn);
-};
-
-// Import new demographic options for type guards
-import {
-  DEMOGRAPHIC_AGE_OPTIONS,
-  DEMOGRAPHIC_LOCATION_OPTIONS,
-} from "@/data/topic-builder-options";
-
-/**
- * Type guard to check if a value is a valid demographic age group
- */
-export const isValidDemographicAge = (value: string): boolean => {
-  return DEMOGRAPHIC_AGE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid demographic location
- */
-export const isValidDemographicLocation = (value: string): boolean => {
-  return DEMOGRAPHIC_LOCATION_OPTIONS.some((option) => option.value === value);
 };

@@ -287,56 +287,6 @@ export const validateSubjectIndustryRelevance = (
   return hasRelevantKeywords || hasIndustryMention;
 };
 
-/**
- * Validates keyword format and patterns
- *
- * @param keywords - Comma-separated keywords string
- * @returns true if keywords are properly formatted
- */
-export const validateKeywordsFormat = (keywords: string): boolean => {
-  if (!keywords || typeof keywords !== "string") {
-    return true; // Allow empty keywords
-  }
-
-  const trimmed = keywords.trim();
-  if (trimmed === "") {
-    return true;
-  }
-
-  // Check for reasonable keyword length and format
-  const keywordArray = trimmed.split(",").map((k) => k.trim());
-
-  // Each keyword should be 1-50 characters
-  const validLength = keywordArray.every(
-    (keyword) => keyword.length > 0 && keyword.length <= 50,
-  );
-
-  // Should not have too many keywords (max 10)
-  const reasonableCount = keywordArray.length <= 10;
-
-  return validLength && reasonableCount;
-};
-
-/**
- * Validates exclude patterns format
- *
- * @param exclude - Exclusion patterns string
- * @returns true if exclude patterns are properly formatted
- */
-export const validateExcludePatternsFormat = (exclude: string): boolean => {
-  if (!exclude || typeof exclude !== "string") {
-    return true; // Allow empty exclude
-  }
-
-  const trimmed = exclude.trim();
-  if (trimmed === "") {
-    return true;
-  }
-
-  // Should be reasonable length (max 200 characters)
-  return trimmed.length <= 200;
-};
-
 // ============================================================================
 // FORM VALIDATION FUNCTIONS
 // ============================================================================
@@ -394,10 +344,7 @@ export const validateFormStepDetailed = (
       break;
 
     case 2: // Audience & Targeting
-      if (
-        (!formData.audience || formData.audience.length === 0) &&
-        (!formData.demographic_age || formData.demographic_age.length === 0)
-      ) {
+      if (!formData.audience || formData.audience.length === 0) {
         errors.push("Please tell us who you're creating content for");
       }
       // Enhanced validation: ensure audience makes sense for industry
@@ -432,9 +379,6 @@ export const validateFormStepDetailed = (
       if (!formData.purpose || formData.purpose.length === 0) {
         errors.push("Please choose what you want to achieve with this content");
       }
-      if (!formData.content_goal || formData.content_goal.length === 0) {
-        errors.push("Please select what style of content you want to create");
-      }
       if (!formData.tone || formData.tone.length === 0) {
         warnings.push("Consider choosing a tone to help us match your style");
       }
@@ -447,37 +391,6 @@ export const validateFormStepDetailed = (
         (formData.num_ideas < 1 || formData.num_ideas > 20)
       ) {
         errors.push("Please choose between 1 and 20 topic ideas");
-      }
-      // Enhanced validation for advanced options
-      if (formData.keywords && !validateKeywordsFormat(formData.keywords)) {
-        errors.push(
-          "Please use simpler keywords separated by commas (up to 10 keywords)",
-        );
-      }
-      if (
-        formData.exclude &&
-        !validateExcludePatternsFormat(formData.exclude)
-      ) {
-        errors.push("Please keep your exclusions brief (under 200 characters)");
-      }
-      // Validate focus field for industry-first mode
-      if (
-        formData.wizardMode === "industry-first" &&
-        formData.focus &&
-        formData.industry
-      ) {
-        const actualIndustry =
-          formData.industry === "other"
-            ? formData.industry_other
-            : formData.industry;
-        if (
-          actualIndustry &&
-          !validateSubjectIndustryRelevance(formData.focus, actualIndustry)
-        ) {
-          warnings.push(
-            "The focus area might not be closely related to the selected industry",
-          );
-        }
       }
       break;
 
@@ -554,23 +467,12 @@ export const buildPromptFromFormData = (
     platform,
     platform_other,
     audience,
-    demographic_age,
-    reader_level,
     purpose,
     purpose_other,
-    content_goal,
     tone,
     tone_other,
-    keywords,
-    exclude,
-    focus,
     num_ideas,
     notes,
-    region,
-    language,
-    is_ymyl,
-    fresh_vs_evergreen,
-    safe_vs_original,
   } = formData;
 
   // Determine the actual industry and content type
@@ -588,19 +490,9 @@ export const buildPromptFromFormData = (
   }
   prompt += `INDUSTRY: ${actualIndustry}\n`;
 
-  if (wizardMode === "industry-first" && focus) {
-    prompt += `FOCUS AREA: ${focus}\n`;
-  }
-
   // Audience and targeting
-  if (audience) {
-    prompt += `TARGET AUDIENCE: ${audience}\n`;
-  }
-  if (demographic_age.length > 0) {
-    prompt += `AGE GROUPS: ${demographic_age.join(", ")}\n`;
-  }
-  if (reader_level) {
-    prompt += `READER LEVEL: ${reader_level}\n`;
+  if (audience && audience.length > 0) {
+    prompt += `TARGET AUDIENCE: ${audience.join(", ")}\n`;
   }
 
   // Content specifications
@@ -616,9 +508,6 @@ export const buildPromptFromFormData = (
       .join(", ");
     prompt += `CONTENT PURPOSE: ${purposeList}\n`;
   }
-  if (content_goal.length > 0) {
-    prompt += `CONTENT GOALS: ${content_goal.join(", ")}\n`;
-  }
   if (tone.length > 0) {
     const toneList = tone
       .map((t) => (t === "other" ? tone_other : t))
@@ -626,32 +515,8 @@ export const buildPromptFromFormData = (
     prompt += `TONE: ${toneList}\n`;
   }
 
-  // Advanced options
-  if (keywords) {
-    prompt += `KEYWORDS TO INCLUDE: ${keywords}\n`;
-  }
-  if (exclude) {
-    prompt += `TOPICS TO AVOID: ${exclude}\n`;
-  }
-  if (region) {
-    prompt += `TARGET REGION: ${region}\n`;
-  }
-  if (language) {
-    prompt += `LANGUAGE: ${language}\n`;
-  }
-
-  // Content preferences
-  if (fresh_vs_evergreen) {
-    prompt += `CONTENT FRESHNESS: ${fresh_vs_evergreen}\n`;
-  }
-  if (safe_vs_original) {
-    prompt += `ORIGINALITY: ${safe_vs_original}\n`;
-  }
-
-  // YMYL compliance
-  if (is_ymyl) {
-    prompt += `\n⚠️ YMYL CONTENT: This is sensitive content affecting health, finance, or legal matters. Generate topics that are factual, neutral, and non-advisory.\n`;
-  }
+  // Advanced options (simplified)
+  // Only include additional notes if provided
 
   // Additional context
   if (notes) {
@@ -682,9 +547,6 @@ export const buildPromptFromFormData = (
   prompt += `- Matches the requested content type and platform\n`;
   prompt += `- Aligns with the stated purpose and goals\n`;
   prompt += `- Uses the appropriate tone and style\n`;
-  if (is_ymyl) {
-    prompt += `- Follows YMYL content guidelines (factual, neutral, non-advisory)\n`;
-  }
   prompt += `- Includes realistic scores (0.0-1.0) for relevance, freshness, and novelty\n`;
   prompt += `- Has 3-5 relevant tags for categorization`;
 
@@ -780,9 +642,7 @@ export const createInitialFormData = (): TopicBuilderFormData => {
     wizardMode: "industry-first",
     industry: "technology",
     content_type: "blog-post",
-    demographic_age: [],
     purpose: [],
-    content_goal: [],
     tone: [],
     num_ideas: 5,
   };
@@ -817,10 +677,6 @@ export const updateFormDataForIndustryChange = (
       newIndustry === "other" ? formData.industry_other : undefined,
     // Update audience with smart filtering/defaults
     audience: audienceSelection,
-    // Reset dependent fields when industry changes
-    demographic_age: [],
-    // Auto-detect YMYL
-    is_ymyl: detectYMYL(newIndustry),
   };
 };
 
@@ -927,6 +783,6 @@ export const logValidationResult = (
     warnings: result.warnings,
     wizardMode: formData.wizardMode,
     industry: formData.industry,
-    isYMYL: formData.is_ymyl,
+    contentType: formData.content_type,
   });
 };

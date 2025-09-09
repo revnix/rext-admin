@@ -113,29 +113,6 @@ export function IndustryStep({
           </div>
         </div>
 
-        {/* Specific Focus */}
-        {formData.wizardMode === "industry-first" && (
-          <div className="md:col-span-1">
-            <div className="grid gap-2">
-              <Label htmlFor="focus">
-                Any specific focus? (Optional)
-                <span className="text-sm text-muted-foreground block mt-1">
-                  Narrow down to a specific area if you have one in mind
-                </span>
-              </Label>
-              <Input
-                id="focus"
-                placeholder="e.g., AI in healthcare, mobile app development..."
-                value={formData.focus || ""}
-                onChange={(e) => updateFormData("focus", e.target.value)}
-              />
-              {errors?.focus && (
-                <p className="text-sm text-red-500">{errors.focus}</p>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Industry Other - Full width when visible */}
         {formData.industry === "other" && (
           <div className="md:col-span-2">
@@ -152,19 +129,6 @@ export function IndustryStep({
               {errors?.industry_other && (
                 <p className="text-sm text-red-500">{errors.industry_other}</p>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* YMYL Warning - Full width when visible */}
-        {formData.is_ymyl && (
-          <div className="md:col-span-2">
-            <div className="rounded-lg bg-yellow-50 p-4 border border-yellow-200">
-              <p className="text-sm text-yellow-800">
-                <strong>YMYL Content Detected:</strong> This industry involves
-                health, finance, or legal topics. We'll keep suggestions factual
-                and non-advisory.
-              </p>
             </div>
           </div>
         )}

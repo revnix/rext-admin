@@ -25,26 +25,13 @@ export interface BackendTopicGenerationPayload {
   platform?: string | null;
   platform_other?: string | null;
   audience: string;
-  reader_level: string;
-  audience_size: string;
-  demographic_age: string[];
   purpose: string[];
   purpose_other?: string | null;
-  content_goal: string[];
   tone: string[];
   tone_other?: string | null;
-  keywords?: string | null;
   notes?: string | null;
   additional_notes?: string | null;
   num_ideas: number;
-  region?: string | null;
-  language?: string;
-  content_timing_preference?: string | null;
-  content_originality_preference?: string | null;
-  fresh_vs_evergreen?: string | null;
-  safe_vs_original?: string | null;
-  exclude?: string | null;
-  focus?: string | null;
   subject?: string | null;
   timestamp: string;
 }

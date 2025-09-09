@@ -47,8 +47,6 @@ export const platformSchema = z.enum([
   "other",
 ]);
 
-export const readerLevelSchema = z.enum(["beginner", "intermediate", "expert"]);
-
 export const purposeTypeSchema = z.enum([
   "educate-inform",
   "entertain-engage",
@@ -57,18 +55,6 @@ export const purposeTypeSchema = z.enum([
   "promote-product",
   "drive-seo",
   "thought-leadership",
-  "other",
-]);
-
-export const contentGoalTypeSchema = z.enum([
-  "tutorial",
-  "explainer",
-  "news-trend",
-  "opinion-leadership",
-  "listicle",
-  "case-study",
-  "comparison",
-  "faq",
   "other",
 ]);
 
@@ -83,13 +69,6 @@ export const toneTypeSchema = z.enum([
   "inspirational-uplifting",
   "other",
 ]);
-
-export const preferenceToggleSchema = z.enum([
-  "fresh",
-  "evergreen",
-  "balanced",
-]);
-export const originalityToggleSchema = z.enum(["safe", "original", "balanced"]);
 
 // Main form data schema
 export const topicBuilderFormDataSchema = z.object({
@@ -111,63 +90,18 @@ export const topicBuilderFormDataSchema = z.object({
 
   // Audience and targeting
   audience: z.array(z.string()).optional(),
-  audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
-  demographic_age: z.array(z.string()).default([]),
-  demographic_location: z.string().default("global"),
-  reader_level: readerLevelSchema.optional(),
 
   // Content goals and style
   purpose: z
     .array(purposeTypeSchema)
     .min(1, "Please select at least one purpose"),
   purpose_other: z.string().optional(),
-  content_goal: z
-    .array(contentGoalTypeSchema)
-    .min(1, "Please select at least one content goal"),
   tone: z.array(toneTypeSchema).min(1, "Please select at least one tone"),
   tone_other: z.string().optional(),
 
   // Advanced options
-  keywords: z.string().optional(),
-  exclude: z.string().optional(),
-  focus: z.string().optional(),
   num_ideas: z.number().min(1).max(20).default(5),
   notes: z.string().optional(),
-
-  // Localization
-  region: z
-    .enum([
-      "us",
-      "uk",
-      "canada",
-      "australia",
-      "pakistan",
-      "india",
-      "europe",
-      "global",
-      "other",
-    ])
-    .optional(),
-  language: z
-    .enum([
-      "english",
-      "urdu",
-      "spanish",
-      "french",
-      "german",
-      "arabic",
-      "chinese",
-      "japanese",
-      "other",
-    ])
-    .optional(),
-
-  // Content sensitivity
-  is_ymyl: z.boolean().optional(),
-
-  // Content preferences
-  fresh_vs_evergreen: preferenceToggleSchema.optional(),
-  safe_vs_original: originalityToggleSchema.optional(),
 });
 
 // Generated topic schema
@@ -211,14 +145,8 @@ export const backendTopicGenerationPayloadSchema = z.object({
   audience: z.array(z.string()).optional(),
   purpose: z.array(z.string()),
   tone: z.array(z.string()),
-  keywords: z.string().optional(),
-  exclude: z.string().optional(),
   num_ideas: z.number().min(1).max(20),
-  industry_specific_focus: z.string().optional(),
   additional_notes: z.string().optional(),
-  content_timing_preference: z.string().optional(),
-  content_originality_preference: z.string().optional(),
-  demographic_location: z.array(z.string()),
   timestamp: z.string().datetime(),
   wizard_mode: z.string(),
 });
@@ -251,9 +179,6 @@ export const audienceStepSchema = z.object({
   audience: z
     .array(z.string())
     .min(1, "Please select at least one audience type"),
-  reader_level: readerLevelSchema.optional(),
-  audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
-  demographic_age: z.array(z.string()).optional(),
 });
 
 export const contentFormatStepSchema = z
@@ -280,9 +205,6 @@ export const goalsStepSchema = z.object({
     .array(purposeTypeSchema)
     .min(1, "Please select at least one purpose"),
   purpose_other: z.string().optional(),
-  content_goal: z
-    .array(contentGoalTypeSchema)
-    .min(1, "Please select at least one content goal"),
   tone: z.array(toneTypeSchema).min(1, "Please select at least one tone"),
   tone_other: z.string().optional(),
 });

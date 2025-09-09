@@ -12,13 +12,10 @@ import {
 import type { BackendError } from "@/types/backend";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
-  CONTENT_GOAL_OPTIONS,
   CONTENT_TYPE_OPTIONS,
   INDUSTRY_OPTIONS,
-  LANGUAGE_OPTIONS,
   PLATFORM_OPTIONS,
   PURPOSE_OPTIONS,
-  REGION_OPTIONS,
   TONE_OPTIONS,
 } from "@/types/topic-builder";
 
@@ -117,15 +114,6 @@ export function ReviewStep({
               </Badge>
             </div>
 
-            {formData.focus && (
-              <div className="space-y-1">
-                <span className="text-sm font-medium">Focus</span>
-                <p className="text-sm text-muted-foreground break-words">
-                  {formData.focus}
-                </p>
-              </div>
-            )}
-
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Content Type</span>
               <Badge variant="outline" className="text-xs">
@@ -182,19 +170,6 @@ export function ReviewStep({
               </div>
             )}
 
-            {formData.content_goal.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Content Goals</span>
-                <div className="flex flex-wrap gap-1">
-                  {formData.content_goal.map((g) => (
-                    <Badge key={g} variant="secondary" className="text-xs">
-                      {getDisplayValue(CONTENT_GOAL_OPTIONS, g)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {formData.tone.length > 0 && (
               <div className="space-y-2">
                 <span className="text-sm font-medium">Tone</span>
@@ -222,42 +197,6 @@ export function ReviewStep({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {formData.keywords && (
-              <div className="space-y-1">
-                <span className="text-sm font-medium">Keywords</span>
-                <p className="text-sm text-muted-foreground break-words">
-                  {formData.keywords}
-                </p>
-              </div>
-            )}
-
-            {formData.exclude && (
-              <div className="space-y-1">
-                <span className="text-sm font-medium">Exclude</span>
-                <p className="text-sm text-muted-foreground break-words">
-                  {formData.exclude}
-                </p>
-              </div>
-            )}
-
-            {formData.region && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Region</span>
-                <Badge variant="outline" className="text-xs">
-                  {getDisplayValue(REGION_OPTIONS, formData.region)}
-                </Badge>
-              </div>
-            )}
-
-            {formData.language && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Language</span>
-                <Badge variant="outline" className="text-xs">
-                  {getDisplayValue(LANGUAGE_OPTIONS, formData.language)}
-                </Badge>
-              </div>
-            )}
-
             {formData.notes && (
               <div className="space-y-1">
                 <span className="text-sm font-medium">Additional Notes</span>

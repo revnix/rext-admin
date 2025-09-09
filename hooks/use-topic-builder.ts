@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { classifyError, isOnline } from "@/lib/error-utils";
 import {
   createInitialFormData,
-  detectYMYL,
   prepareFormDataForAPI,
   updateFormDataForContentTypeChange,
   updateFormDataForIndustryChange,
@@ -207,11 +206,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         // Handle content type change - reset platform if not needed
         else if (field === "content_type" && typeof value === "string") {
           updated = updateFormDataForContentTypeChange(prev, value);
-        }
-
-        // Auto-detect YMYL for any industry-related changes
-        else if (field === "industry_other" && typeof value === "string") {
-          updated.is_ymyl = detectYMYL(value);
         }
 
         return updated;
@@ -435,10 +429,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       console.log("Required fields check:", {
         wizardMode: apiData.wizardMode,
         industry: apiData.industry,
-        reader_level: apiData.reader_level,
-        audience_size: apiData.audience_size,
-        demographic_age: apiData.demographic_age,
-        content_goal: apiData.content_goal,
+        content_type: apiData.content_type,
+        purpose: apiData.purpose,
+        tone: apiData.tone,
       });
 
       const response = await fetch("/api/generate-topics", {

@@ -771,35 +771,15 @@ export const transformFormDataToBackendEnhanced = (
         processedFormData.audience.length > 0
           ? processedFormData.audience.join(", ")
           : "",
-      reader_level: processedFormData.reader_level || "",
-      audience_size: processedFormData.audience_size || "",
-      demographic_age: Array.isArray(processedFormData.demographic_age)
-        ? processedFormData.demographic_age.filter(Boolean)
-        : processedFormData.demographic_age
-          ? [processedFormData.demographic_age]
-          : [],
       purpose: Array.isArray(processedFormData.purpose)
         ? processedFormData.purpose
         : [],
       purpose_other: processedFormData.purpose_other || null,
-      content_goal: Array.isArray(processedFormData.content_goal)
-        ? processedFormData.content_goal
-        : [],
       tone: Array.isArray(processedFormData.tone) ? processedFormData.tone : [],
       tone_other: processedFormData.tone_other || null,
-      keywords: processedFormData.keywords || null,
       notes: processedFormData.notes || null,
       additional_notes: processedFormData.notes || null,
       num_ideas: processedFormData.num_ideas || 5,
-      region: processedFormData.region || null,
-      language: processedFormData.language || "English",
-      content_timing_preference: processedFormData.fresh_vs_evergreen || null,
-      content_originality_preference:
-        processedFormData.safe_vs_original || null,
-      fresh_vs_evergreen: processedFormData.fresh_vs_evergreen || null,
-      safe_vs_original: processedFormData.safe_vs_original || null,
-      exclude: processedFormData.exclude || null,
-      focus: processedFormData.focus || null,
       subject: processedFormData.subject || null,
       timestamp: new Date().toISOString(),
     };
@@ -1021,15 +1001,7 @@ const normalizeFormData = (
   }
 
   // Normalize array fields - remove empty strings and duplicates
-  if (Array.isArray(normalized.demographic_age)) {
-    normalized.demographic_age = Array.from(
-      new Set(normalized.demographic_age.filter(Boolean)),
-    );
-  }
   normalized.purpose = Array.from(new Set(normalized.purpose.filter(Boolean)));
-  normalized.content_goal = Array.from(
-    new Set(normalized.content_goal.filter(Boolean)),
-  );
   normalized.tone = Array.from(new Set(normalized.tone.filter(Boolean)));
 
   return normalized;

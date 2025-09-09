@@ -7,11 +7,7 @@ import type {
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
-import {
-  CONTENT_GOAL_OPTIONS,
-  PURPOSE_OPTIONS,
-  TONE_OPTIONS,
-} from "@/types/topic-builder";
+import { PURPOSE_OPTIONS, TONE_OPTIONS } from "@/types/topic-builder";
 
 interface GoalsStepProps {
   formData: TopicBuilderFormData;
@@ -37,14 +33,6 @@ export function GoalsStep({
     value: option.value,
     description: getPurposeDescription(option.value),
   }));
-
-  const contentGoalOptions: CheckboxOption[] = CONTENT_GOAL_OPTIONS.map(
-    (option) => ({
-      label: option.label,
-      value: option.value,
-      description: getContentGoalDescription(option.value),
-    }),
-  );
 
   const toneOptions: CheckboxOption[] = TONE_OPTIONS.map((option) => ({
     label: option.label,
@@ -104,29 +92,6 @@ export function GoalsStep({
             </FormField>
           </div>
         )}
-
-        {/* Content Goals */}
-        <div className="md:col-span-2">
-          <FormField
-            label="What style of content?"
-            error={getFieldError?.("content_goal") || errors?.content_goal}
-            isValid={
-              formData.content_goal.length > 0 &&
-              !getFieldError?.("content_goal")
-            }
-            required
-          >
-            <CheckboxGroup
-              options={contentGoalOptions}
-              value={formData.content_goal}
-              onValueChange={(selected) =>
-                updateFormData("content_goal", selected)
-              }
-              columns={4}
-              maxSelections={3}
-            />
-          </FormField>
-        </div>
 
         {/* Tone & Style */}
         <div className="md:col-span-2">
@@ -194,29 +159,6 @@ function getPurposeDescription(value: string): string {
       return "Improve search engine visibility";
     case "thought-leadership":
       return "Establish expertise and authority";
-    default:
-      return "";
-  }
-}
-
-function getContentGoalDescription(value: string): string {
-  switch (value) {
-    case "tutorial":
-      return "Step-by-step instructional content";
-    case "explainer":
-      return "Break down complex topics simply";
-    case "news-trend":
-      return "Cover current events and trends";
-    case "opinion-leadership":
-      return "Share insights and perspectives";
-    case "listicle":
-      return "Organized lists and actionable tips";
-    case "case-study":
-      return "Real-world examples and results";
-    case "comparison":
-      return "Compare options and alternatives";
-    case "review":
-      return "Evaluate products or services";
     default:
       return "";
   }

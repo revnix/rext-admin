@@ -50,9 +50,7 @@ const initialFormData: Partial<TopicBuilderFormData> = {
   wizardMode: "industry-first",
   num_ideas: 5,
   purpose: [],
-  content_goal: [],
   tone: [],
-  demographic_age: [],
 };
 
 /**
