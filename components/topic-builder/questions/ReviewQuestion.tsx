@@ -16,12 +16,13 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import {
   CONTENT_TYPE_OPTIONS,
@@ -53,6 +54,7 @@ interface ReviewCardProps {
   value: string | string[] | number | boolean | undefined;
   field: keyof TopicBuilderFormData;
   hasError?: boolean;
+  errorMessage?: string;
   onEdit?: () => void;
   ariaLabel: string;
 }
@@ -61,15 +63,45 @@ function ReviewCard({
   icon,
   label,
   value,
+  field,
   hasError,
+  errorMessage,
   onEdit,
   ariaLabel,
 }: ReviewCardProps) {
   return (
     <Card
-      className={`h-fit transition-colors ${hasError ? "border-destructive bg-destructive/5" : ""}`}
+      className={cn(
+        "h-fit transition-all duration-200",
+        hasError
+          ? "border-destructive bg-destructive/5 shadow-sm ring-1 ring-destructive/20"
+          : "hover:shadow-sm",
+      )}
+      aria-invalid={hasError ? "true" : "false"}
+      aria-describedby={hasError ? `${field}-error` : undefined}
     >
       <CardContent className="p-3 sm:p-4">
+        {/* Error Context */}
+        {hasError && errorMessage && (
+          <div
+            id={`${field}-error`}
+            className="text-xs text-destructive mb-3 p-2 bg-destructive/10 rounded border border-destructive/20"
+            role="alert"
+          >
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-3 w-3 flex-shrink-0 mt-0.5" />
+              <div>
+                <strong>Error:</strong> {errorMessage}
+                {getErrorGuidance(field, errorMessage) && (
+                  <div className="mt-1 text-muted-foreground">
+                    💡 {getErrorGuidance(field, errorMessage)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
             <div className="flex-shrink-0">{icon}</div>
@@ -85,13 +117,18 @@ function ReviewCard({
           </div>
           {onEdit && (
             <Button
-              variant="ghost"
+              variant={hasError ? "destructive" : "ghost"}
               size="sm"
               onClick={onEdit}
               aria-label={ariaLabel}
-              className="h-auto p-2 min-w-[44px] min-h-[44px] flex-shrink-0 ml-2"
+              className={cn(
+                "h-auto p-2 min-w-[44px] min-h-[44px] flex-shrink-0 ml-2",
+                hasError &&
+                  "text-destructive-foreground hover:bg-destructive/90",
+              )}
             >
               <Pencil className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+              {hasError && <span className="sr-only">Fix error</span>}
             </Button>
           )}
         </div>
@@ -147,6 +184,47 @@ function renderValue(
   );
 }
 
+// Helper function to provide contextual error guidance
+function getErrorGuidance(field: string, error: string): string | null {
+  const guidance: Record<string, Record<string, string>> = {
+    subject: {
+      required: "Enter a specific topic you want to create content about.",
+      "at least 3": "Provide more detail to help generate better ideas.",
+    },
+    purpose: {
+      "at least one": "Select what you want to achieve with your content.",
+      required: "Choose your main content goal from the available options.",
+    },
+    tone: {
+      "at least one": "Choose how you want your content to sound.",
+      required: "Select the voice and style that matches your brand.",
+    },
+    num_ideas: {
+      "between 1 and 20": "Enter a number from 1 to 20.",
+      required: "Specify how many topic ideas you want us to generate.",
+    },
+    wizardMode: {
+      required: "Choose how you want to approach brainstorming.",
+    },
+    industry: {
+      required: "Select your industry to tailor content ideas to your market.",
+    },
+    content_type: {
+      required: "Choose what type of content you want to create.",
+    },
+  };
+
+  const fieldGuidance = guidance[field];
+  if (!fieldGuidance) return null;
+
+  for (const [errorKey, message] of Object.entries(fieldGuidance)) {
+    if (error.toLowerCase().includes(errorKey)) {
+      return message;
+    }
+  }
+  return null;
+}
+
 export function ReviewQuestion({
   formData,
   onGoToQuestion,
@@ -188,28 +266,123 @@ export function ReviewQuestion({
     return (questionId: string) => mapping.get(questionId) ?? 0;
   }, [questions]);
 
-  const hasErrors =
-    getQuestionError &&
-    (!!getQuestionError("wizardMode") ||
-      !!getQuestionError("industry") ||
-      !!getQuestionError("content_type") ||
-      !!getQuestionError("purpose") ||
-      !!getQuestionError("tone") ||
-      !!getQuestionError("num_ideas"));
+  // Enhanced error detection across all possible fields
+  const errors = useMemo(() => {
+    if (!getQuestionError || !questions) return {};
+
+    const errorMap: Record<string, string> = {};
+    questions.forEach((q) => {
+      const error = getQuestionError(q.id);
+      if (error) {
+        errorMap[q.id] = error;
+      }
+    });
+    return errorMap;
+  }, [getQuestionError, questions]);
+
+  const errorCount = Object.keys(errors).length;
+  const errorCategories = useMemo(() => {
+    const categories = { required: 0, validation: 0 };
+    Object.entries(errors).forEach(([, error]) => {
+      if (error?.toLowerCase().includes("required")) {
+        categories.required++;
+      } else {
+        categories.validation++;
+      }
+    });
+    return categories;
+  }, [errors]);
+
+  // Navigation functions for error fixing
+  const handleFixFirstError = useCallback(() => {
+    const firstErrorField = Object.keys(errors)[0];
+    if (firstErrorField && onGoToQuestion) {
+      const questionIndex = getQuestionIndex(firstErrorField);
+      onGoToQuestion(questionIndex);
+    }
+  }, [errors, onGoToQuestion, getQuestionIndex]);
+
+  const handleFixError = useCallback(
+    (field: string) => {
+      if (onGoToQuestion) {
+        const questionIndex = getQuestionIndex(field);
+        onGoToQuestion(questionIndex);
+      }
+    },
+    [onGoToQuestion, getQuestionIndex],
+  );
+
+  // Keyboard navigation for accessibility
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case "e":
+            e.preventDefault();
+            handleFixFirstError();
+            break;
+        }
+      }
+    };
+
+    if (errorCount > 0) {
+      window.addEventListener("keydown", handleKeyPress);
+      return () => window.removeEventListener("keydown", handleKeyPress);
+    }
+  }, [errorCount, handleFixFirstError]);
 
   return (
     <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
-      {/* Error Summary */}
-      {hasErrors && (
-        <Alert variant="destructive" className="mx-auto max-w-2xl">
+      {/* Enhanced Error Summary */}
+      {errorCount > 0 && (
+        <Alert
+          variant="destructive"
+          className="mx-auto max-w-2xl"
+          role="alert"
+          aria-live="polite"
+        >
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <AlertTitle className="text-sm sm:text-base">
-              Please review your selections
+              {errorCount} {errorCount === 1 ? "issue" : "issues"} need
+              attention
             </AlertTitle>
-            <AlertDescription className="text-xs sm:text-sm">
-              Some required information is missing. Use the edit buttons below
-              to fix any issues.
+            <AlertDescription className="text-xs sm:text-sm space-y-2">
+              <p>Please review and fix the following:</p>
+              {errorCategories.required > 0 && (
+                <p>
+                  • {errorCategories.required} required field
+                  {errorCategories.required !== 1 ? "s" : ""}
+                </p>
+              )}
+              {errorCategories.validation > 0 && (
+                <p>
+                  • {errorCategories.validation} validation error
+                  {errorCategories.validation !== 1 ? "s" : ""}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFixFirstError}
+                  className="text-xs bg-background hover:bg-muted"
+                >
+                  Fix First Issue
+                </Button>
+                {errorCount > 1 && (
+                  <span className="text-xs text-muted-foreground self-center">
+                    or use edit buttons below
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                💡 Tip: Press{" "}
+                <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                  Ctrl+E
+                </kbd>{" "}
+                to quickly fix the first error
+              </p>
             </AlertDescription>
           </div>
         </Alert>
@@ -246,11 +419,10 @@ export function ReviewQuestion({
               : "Industry-First"
           }
           field="wizardMode"
-          hasError={getQuestionError?.("wizardMode") !== undefined}
+          hasError={!!errors.wizardMode}
+          errorMessage={errors.wizardMode}
           onEdit={
-            onGoToQuestion
-              ? () => onGoToQuestion(getQuestionIndex("wizardMode"))
-              : undefined
+            onGoToQuestion ? () => handleFixError("wizardMode") : undefined
           }
           ariaLabel="Edit wizard mode selection"
         />
@@ -261,11 +433,10 @@ export function ReviewQuestion({
             label="Subject"
             value={formData.subject}
             field="subject"
-            hasError={getQuestionError?.("subject") !== undefined}
+            hasError={!!errors.subject}
+            errorMessage={errors.subject}
             onEdit={
-              onGoToQuestion
-                ? () => onGoToQuestion(getQuestionIndex("subject"))
-                : undefined
+              onGoToQuestion ? () => handleFixError("subject") : undefined
             }
             ariaLabel="Edit subject"
           />
@@ -276,12 +447,9 @@ export function ReviewQuestion({
           label="Industry"
           value={getDisplayValue(INDUSTRY_OPTIONS, formData.industry)}
           field="industry"
-          hasError={getQuestionError?.("industry") !== undefined}
-          onEdit={
-            onGoToQuestion
-              ? () => onGoToQuestion(getQuestionIndex("industry"))
-              : undefined
-          }
+          hasError={!!errors.industry}
+          errorMessage={errors.industry}
+          onEdit={onGoToQuestion ? () => handleFixError("industry") : undefined}
           ariaLabel="Edit industry selection"
         />
 
@@ -290,11 +458,10 @@ export function ReviewQuestion({
           label="Content Type"
           value={getDisplayValue(CONTENT_TYPE_OPTIONS, formData.content_type)}
           field="content_type"
-          hasError={getQuestionError?.("content_type") !== undefined}
+          hasError={!!errors.content_type}
+          errorMessage={errors.content_type}
           onEdit={
-            onGoToQuestion
-              ? () => onGoToQuestion(getQuestionIndex("content_type"))
-              : undefined
+            onGoToQuestion ? () => handleFixError("content_type") : undefined
           }
           ariaLabel="Edit content type selection"
         />
@@ -305,11 +472,10 @@ export function ReviewQuestion({
             label="Platform"
             value={getDisplayValue(PLATFORM_OPTIONS, formData.platform)}
             field="platform"
-            hasError={getQuestionError?.("platform") !== undefined}
+            hasError={!!errors.platform}
+            errorMessage={errors.platform}
             onEdit={
-              onGoToQuestion
-                ? () => onGoToQuestion(getQuestionIndex("platform"))
-                : undefined
+              onGoToQuestion ? () => handleFixError("platform") : undefined
             }
             ariaLabel="Edit platform selection"
           />
@@ -321,11 +487,10 @@ export function ReviewQuestion({
             label="Target Audience"
             value={formData.audience}
             field="audience"
-            hasError={getQuestionError?.("audience") !== undefined}
+            hasError={!!errors.audience}
+            errorMessage={errors.audience}
             onEdit={
-              onGoToQuestion
-                ? () => onGoToQuestion(getQuestionIndex("audience"))
-                : undefined
+              onGoToQuestion ? () => handleFixError("audience") : undefined
             }
             ariaLabel="Edit audience selection"
           />
@@ -338,12 +503,9 @@ export function ReviewQuestion({
             getDisplayValue(PURPOSE_OPTIONS, p),
           )}
           field="purpose"
-          hasError={getQuestionError?.("purpose") !== undefined}
-          onEdit={
-            onGoToQuestion
-              ? () => onGoToQuestion(getQuestionIndex("purpose"))
-              : undefined
-          }
+          hasError={!!errors.purpose}
+          errorMessage={errors.purpose}
+          onEdit={onGoToQuestion ? () => handleFixError("purpose") : undefined}
           ariaLabel="Edit purpose selection"
         />
 
@@ -352,12 +514,9 @@ export function ReviewQuestion({
           label="Tone"
           value={formData.tone.map((t) => getDisplayValue(TONE_OPTIONS, t))}
           field="tone"
-          hasError={getQuestionError?.("tone") !== undefined}
-          onEdit={
-            onGoToQuestion
-              ? () => onGoToQuestion(getQuestionIndex("tone"))
-              : undefined
-          }
+          hasError={!!errors.tone}
+          errorMessage={errors.tone}
+          onEdit={onGoToQuestion ? () => handleFixError("tone") : undefined}
           ariaLabel="Edit tone selection"
         />
 
@@ -366,11 +525,10 @@ export function ReviewQuestion({
           label="Number of Ideas"
           value={formData.num_ideas}
           field="num_ideas"
-          hasError={getQuestionError?.("num_ideas") !== undefined}
+          hasError={!!errors.num_ideas}
+          errorMessage={errors.num_ideas}
           onEdit={
-            onGoToQuestion
-              ? () => onGoToQuestion(getQuestionIndex("num_ideas"))
-              : undefined
+            onGoToQuestion ? () => handleFixError("num_ideas") : undefined
           }
           ariaLabel="Edit number of ideas"
         />
@@ -381,12 +539,9 @@ export function ReviewQuestion({
             label="Additional Notes"
             value={formData.notes}
             field="notes"
-            hasError={getQuestionError?.("notes") !== undefined}
-            onEdit={
-              onGoToQuestion
-                ? () => onGoToQuestion(getQuestionIndex("notes"))
-                : undefined
-            }
+            hasError={!!errors.notes}
+            errorMessage={errors.notes}
+            onEdit={onGoToQuestion ? () => handleFixError("notes") : undefined}
             ariaLabel="Edit additional notes"
           />
         )}
