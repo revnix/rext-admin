@@ -496,12 +496,12 @@ describe("Error Utils", () => {
             detail: [
               {
                 type: "missing",
-                loc: ["body", "reader_level"],
+                loc: ["body", "industry"],
                 msg: "Field required",
               },
               {
                 type: "missing",
-                loc: ["body", "audience_size"],
+                loc: ["body", "content_type"],
                 msg: "Field required",
               },
             ],
@@ -511,8 +511,8 @@ describe("Error Utils", () => {
 
       const errors = extractValidationErrors(validationError);
       expect(errors).toHaveLength(2);
-      expect(errors[0]).toBe("reader_level: Field required");
-      expect(errors[1]).toBe("audience_size: Field required");
+      expect(errors[0]).toBe("industry: Field required");
+      expect(errors[1]).toBe("content_type: Field required");
     });
 
     it("should return empty array for non-validation errors", () => {

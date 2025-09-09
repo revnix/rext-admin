@@ -103,6 +103,7 @@ export type ToneType =
 /**
  * Main form data interface for the Topic Builder wizard
  *
+ * Updated for TypeForm-style single-question-per-screen flow.
  * Supports both flow variations:
  * - Subject-first: User starts with a specific topic/subject
  * - Industry-first: User starts with industry selection
@@ -272,6 +273,49 @@ export interface TopicBuilderDraft {
   savedAt: string;
   /** Optional name/label for the draft */
   draftName?: string;
+}
+
+/**
+ * Step navigation types for TypeForm-style wizard flow
+ */
+export type CurrentStep =
+  | "wizard-mode"
+  | "industry"
+  | "subject"
+  | "audience"
+  | "content-type"
+  | "platform"
+  | "purpose"
+  | "tone"
+  | "notes"
+  | "num-ideas";
+
+/**
+ * Step history tracking for navigation
+ */
+export interface StepHistory {
+  /** Array of visited steps in order */
+  visited: CurrentStep[];
+  /** Current active step */
+  current: CurrentStep;
+  /** Whether user can navigate backwards */
+  canGoBack: boolean;
+  /** Whether user can navigate forwards */
+  canGoForward: boolean;
+}
+
+/**
+ * Form state for step-based TypeForm wizard flow
+ */
+export interface TypeFormWizardState {
+  /** Current step in the wizard */
+  currentStep: CurrentStep;
+  /** Step history for navigation */
+  stepHistory: StepHistory;
+  /** Form validation state per step */
+  stepValidation: Record<CurrentStep, ValidationResult>;
+  /** Whether to show validation errors */
+  showValidation: boolean;
 }
 
 // ============================================================================

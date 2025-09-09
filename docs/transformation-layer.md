@@ -122,8 +122,7 @@ const result = transformFormDataToBackendEnhanced(formData, {
   normalizeFields: true,
   validateRequired: true,
   defaultValues: {
-    language: 'english',
-    region: 'global'
+    num_ideas: 5
   }
 });
 ```

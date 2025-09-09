@@ -1,10 +1,12 @@
 // JSON Representation of the Simplified Topic Builder Wizard
 
 // The wizard has been simplified to focus on essential questions only.
-// Removed non-essential fields like demographics, advanced options, and complex configurations.
-// This creates a more TypeForm-like experience with core functionality.
+// All deprecated fields (audience_size, demographic_age, demographic_location, reader_level,
+// content_goal, keywords, exclude, focus, region, language, is_ymyl, fresh_vs_evergreen,
+// safe_vs_original, industry_specific_focus, additional_notes) have been completely removed.
+// This creates a TypeForm-like single-question-per-screen experience.
 
-// Essential Questions for Both Wizard Modes:
+// Current Questions (TypeForm-style flow):
 
 [
   {
@@ -171,16 +173,11 @@
   }
 ]
 
-// Fields Removed for Simplicity:
-// - audience_size: Not essential for topic generation
-// - demographic_age: Demographic details unnecessary
-// - demographic_location: Geographic focus not needed
-// - reader_level: Can be inferred from content type/platform
-// - content_goal: Too complex, overlaps with purpose
-// - keywords: Advanced option not essential
-// - exclude: Advanced filtering not needed
-// - focus: Consolidated with subject/notes
-// - region/language: Not essential for basic generation
-// - is_ymyl: Advanced sensitivity flag not needed
-// - fresh_vs_evergreen: Advanced preference not required
-// - safe_vs_original: Advanced preference not required
+// DEPRECATED FIELDS COMPLETELY REMOVED:
+// All the following fields have been completely removed from schemas, validation, and transformations:
+// - audience_size, demographic_age, demographic_location, reader_level
+// - content_goal, keywords, exclude, focus, region, language
+// - is_ymyl, fresh_vs_evergreen, safe_vs_original
+// - industry_specific_focus, additional_notes
+//
+// These fields are no longer supported and will cause validation errors if used.

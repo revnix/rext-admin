@@ -755,16 +755,17 @@ export const transformFormDataToBackendEnhanced = (
   const startTime = performance.now();
 
   try {
-    // Step 1: Apply normalization if enabled (before validation)
+    // Step 1: Handle legacy form data migration and normalization
     let preprocessedFormData = formData;
-    if (
-      options.normalizeFields &&
-      typeof formData === "object" &&
-      formData !== null
-    ) {
-      preprocessedFormData = normalizeFormData(
-        formData as TopicBuilderFormData,
-      );
+    if (typeof formData === "object" && formData !== null) {
+      // Apply normalization if enabled
+      if (options.normalizeFields) {
+        preprocessedFormData = normalizeFormData(
+          formData as TopicBuilderFormData,
+        );
+      } else {
+        preprocessedFormData = formData;
+      }
     }
 
     // Step 2: Validate input as TopicBuilderFormData
@@ -816,7 +817,6 @@ export const transformFormDataToBackendEnhanced = (
       tone: Array.isArray(processedFormData.tone) ? processedFormData.tone : [],
       tone_other: processedFormData.tone_other || null,
       notes: processedFormData.notes || null,
-      additional_notes: processedFormData.notes || null,
       num_ideas: processedFormData.num_ideas || 5,
       subject: processedFormData.subject || null,
       timestamp: new Date().toISOString(),
@@ -1015,7 +1015,7 @@ const applyCustomMappings = (
 };
 
 /**
- * Normalizes form data field values
+ * Normalizes form data field values with graceful degradation support
  * @private
  */
 const normalizeFormData = (

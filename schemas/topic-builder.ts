@@ -146,7 +146,6 @@ export const backendTopicGenerationPayloadSchema = z.object({
   purpose: z.array(z.string()),
   tone: z.array(z.string()),
   num_ideas: z.number().min(1).max(20),
-  additional_notes: z.string().optional(),
   timestamp: z.string().datetime(),
   wizard_mode: z.string(),
 });

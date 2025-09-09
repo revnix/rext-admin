@@ -406,12 +406,11 @@ export class BackendService {
   private transformFormDataToBackendFormat(
     formData: TopicBuilderFormData,
   ): BackendTopicGenerationPayload {
-    // Transform to exact Pydantic schema format
+    // Transform to exact Pydantic schema format with backward compatibility
     return {
       wizardMode: formData.wizardMode || "industry-first",
       industry: formData.industry_other || formData.industry || "",
       industry_other: formData.industry_other || null,
-      industry_specific_focus: null,
       content_type: formData.content_type_other || formData.content_type || "",
       content_type_other: formData.content_type_other || null,
       platform: formData.platform_other || formData.platform || null,
@@ -425,7 +424,6 @@ export class BackendService {
       tone: Array.isArray(formData.tone) ? formData.tone : [],
       tone_other: formData.tone_other || null,
       notes: formData.notes || null,
-      additional_notes: formData.notes || null,
       num_ideas: formData.num_ideas || 5,
       subject: formData.subject || null,
       timestamp: new Date().toISOString(),

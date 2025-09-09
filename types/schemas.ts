@@ -133,11 +133,13 @@ export const IdeaDataSchema = z.object({
 
 /**
  * Zod validation schema for TopicBuilderFormData
- * Represents the complete form state from the topic builder wizard
+ * Updated for TypeForm-style wizard flow with step-by-step validation
  */
 export const TopicBuilderFormDataSchema = z.object({
-  // Core
+  // Core wizard mode
   wizardMode: z.enum(["subject-first", "industry-first"]),
+
+  // Industry selection
   industry: z.enum([
     "technology",
     "healthcare",
@@ -161,7 +163,7 @@ export const TopicBuilderFormDataSchema = z.object({
   ]),
   industry_other: z.string().optional(),
 
-  // Content type & platform
+  // Content type & platform (platform only required for social-media)
   content_type: z.enum(["blog-post", "social-media"]),
   content_type_other: z.string().optional(),
   platform: z
@@ -180,10 +182,10 @@ export const TopicBuilderFormDataSchema = z.object({
     .optional(),
   platform_other: z.string().optional(),
 
-  // Targeting
+  // Audience targeting
   audience: z.array(z.string()).optional(),
 
-  // Goals & style
+  // Content goals and style preferences
   purpose: z
     .array(
       z.enum([
@@ -216,12 +218,191 @@ export const TopicBuilderFormDataSchema = z.object({
     .min(1),
   tone_other: z.string().optional(),
 
-  // Advanced
+  // Advanced options
   notes: z.string().optional(),
   num_ideas: z.number().min(1).max(20).default(5),
 
-  // Subject-first
+  // Subject-first flow specific field
   subject: z.string().optional(),
+});
+
+/**
+ * Step-specific validation schemas for TypeForm wizard flow
+ * Each step has its own validation requirements for better UX
+ */
+export const stepValidationSchemas = {
+  "wizard-mode": z.object({
+    wizardMode: z.enum(["subject-first", "industry-first"]),
+  }),
+
+  industry: z
+    .object({
+      industry: z.enum([
+        "technology",
+        "healthcare",
+        "finance",
+        "education",
+        "travel",
+        "food",
+        "fashion",
+        "business",
+        "marketing",
+        "science",
+        "sports",
+        "lifestyle",
+        "government",
+        "real-estate",
+        "ecommerce",
+        "hr",
+        "legal",
+        "fitness",
+        "other",
+      ]),
+      industry_other: z
+        .string()
+        .min(1, "Please specify your industry")
+        .optional(),
+    })
+    .refine(
+      (data) =>
+        data.industry !== "other" ||
+        (data.industry_other && data.industry_other.length > 0),
+      {
+        message: "Please specify your industry when selecting 'Other'",
+        path: ["industry_other"],
+      },
+    ),
+
+  subject: z.object({
+    subject: z.string().min(1, "Please enter a subject or topic"),
+  }),
+
+  audience: z.object({
+    audience: z.array(z.string()).min(1, "Please select at least one audience"),
+  }),
+
+  "content-type": z.object({
+    content_type: z.enum(["blog-post", "social-media"]),
+    content_type_other: z.string().optional(),
+  }),
+
+  platform: z
+    .object({
+      platform: z
+        .enum([
+          "facebook",
+          "instagram",
+          "twitter",
+          "linkedin",
+          "tiktok",
+          "youtube",
+          "website",
+          "blog",
+          "vimeo",
+          "other",
+        ])
+        .optional(),
+      platform_other: z.string().optional(),
+    })
+    .refine(
+      (data) =>
+        data.platform !== "other" ||
+        (data.platform_other && data.platform_other.length > 0),
+      {
+        message: "Please specify your platform when selecting 'Other'",
+        path: ["platform_other"],
+      },
+    ),
+
+  purpose: z
+    .object({
+      purpose: z
+        .array(
+          z.enum([
+            "educate-inform",
+            "entertain-engage",
+            "inspire-motivate",
+            "persuade-convince",
+            "promote-product",
+            "drive-seo",
+            "thought-leadership",
+            "other",
+          ]),
+        )
+        .min(1, "Please select at least one purpose"),
+      purpose_other: z.string().optional(),
+    })
+    .refine(
+      (data) =>
+        !data.purpose.includes("other") ||
+        (data.purpose_other && data.purpose_other.length > 0),
+      {
+        message: "Please specify your purpose when selecting 'Other'",
+        path: ["purpose_other"],
+      },
+    ),
+
+  tone: z
+    .object({
+      tone: z
+        .array(
+          z.enum([
+            "professional-formal",
+            "casual-conversational",
+            "friendly-warm",
+            "humorous-playful",
+            "serious-academic",
+            "technical-analytical",
+            "simple-accessible",
+            "inspirational-uplifting",
+            "other",
+          ]),
+        )
+        .min(1, "Please select at least one tone"),
+      tone_other: z.string().optional(),
+    })
+    .refine(
+      (data) =>
+        !data.tone.includes("other") ||
+        (data.tone_other && data.tone_other.length > 0),
+      {
+        message: "Please specify your tone when selecting 'Other'",
+        path: ["tone_other"],
+      },
+    ),
+
+  notes: z.object({
+    notes: z.string().optional(),
+  }),
+
+  "num-ideas": z.object({
+    num_ideas: z
+      .number()
+      .min(1, "Please select at least 1 idea")
+      .max(20, "Maximum 20 ideas allowed"),
+  }),
+} as const;
+
+/**
+ * Backend payload transformation schema - Updated for clean data structure
+ */
+export const backendTopicGenerationPayloadSchema = z.object({
+  wizardMode: z.string(),
+  industry: z.string(),
+  industry_other: z.string().nullable().optional(),
+  content_type: z.string(),
+  content_type_other: z.string().nullable().optional(),
+  platform: z.string().nullable().optional(),
+  platform_other: z.string().nullable().optional(),
+  audience: z.array(z.string()),
+  purpose: z.array(z.string()),
+  purpose_other: z.string().nullable().optional(),
+  tone: z.array(z.string()),
+  tone_other: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  num_ideas: z.number(),
+  subject: z.string().nullable().optional(),
+  timestamp: z.string(),
 });
 
 // ============================================================================

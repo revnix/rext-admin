@@ -19,7 +19,6 @@ export interface BackendTopicGenerationPayload {
   wizardMode: string;
   industry: string;
   industry_other?: string | null;
-  industry_specific_focus?: string | null;
   content_type: string;
   content_type_other?: string | null;
   platform?: string | null;
@@ -30,7 +29,6 @@ export interface BackendTopicGenerationPayload {
   tone: string[];
   tone_other?: string | null;
   notes?: string | null;
-  additional_notes?: string | null;
   num_ideas: number;
   subject?: string | null;
   timestamp: string;

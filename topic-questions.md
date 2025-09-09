@@ -43,27 +43,6 @@ The Topic Builder wizard has been streamlined to focus on essential questions on
 ### Step 6: Generate Ideas
 - Review and generate (unchanged)
 
-## Removed Fields (Non-Essential)
-
-The following fields were removed to simplify the user experience:
-
-### Demographic Fields
-- ~~**audience_size**~~: Not essential for topic generation
-- ~~**demographic_age**~~: Demographic details unnecessary for initial topic creation
-- ~~**demographic_location**~~: Geographic focus not needed for topic generation
-- ~~**reader_level**~~: Can be inferred from content type/platform selection
-
-### Complex Content Configuration
-- ~~**content_goal**~~: Too complex and overlaps with purpose field
-
-### Advanced Options (Moved to Later Enhancement)
-- ~~**keywords**~~: Advanced option not essential for initial generation
-- ~~**exclude**~~: Advanced filtering not needed for core functionality
-- ~~**focus**~~: Can be consolidated with subject/notes fields
-- ~~**region/language**~~: Not essential for basic topic generation
-- ~~**is_ymyl**~~: Advanced content sensitivity flag not needed for most users
-- ~~**fresh_vs_evergreen**~~: Advanced preference toggle not required  
-- ~~**safe_vs_original**~~: Advanced preference toggle not required
 
 ## Benefits of Simplification
 
@@ -73,20 +52,19 @@ The following fields were removed to simplify the user experience:
 4. **Easier Maintenance**: Simpler codebase and fewer edge cases
 5. **Mobile Friendly**: Better experience on smaller screens
 
-## Technical Impact
+## Technical Benefits
 
-- **Schemas**: Simplified validation with fewer required fields
-- **UI Components**: Cleaner, more focused step interfaces  
-- **API Payload**: Reduced data transmission and processing
-- **Validation Logic**: Fewer complex validation rules to maintain
+- **Performance**: Streamlined validation and processing
+- **Code Clarity**: Clean, focused codebase
+- **Type Safety**: Strong TypeScript enforcement
+- **User Experience**: TypeForm-like single-question flow
+- **Mobile Optimized**: Excellent experience on all screen sizes
 
-## Future Enhancements
+## TypeForm-Style Experience
 
-Advanced options that were removed can be added back as optional "Pro" features:
-- Advanced filtering (keywords, exclude patterns)
-- Demographic targeting
-- Content sensitivity settings  
-- Regional/language preferences
-- Content timing preferences
-
-This maintains the core simple experience while allowing power users to access advanced features when needed.
+The new wizard provides:
+- **One question per screen** for better focus
+- **Smooth transitions** between questions
+- **Progress indication** showing completion status
+- **Smart navigation** with conditional question flow
+- **Accessibility-first** design with screen reader support

@@ -10,8 +10,10 @@ import {
   getAudienceOptionsForIndustry,
   YMYL_INDUSTRIES,
 } from "@/data/topic-builder-options";
+import { stepValidationSchemas } from "@/types/schemas";
 import type { SelectOption } from "@/types/shared";
 import type {
+  CurrentStep,
   TopicBuilderFormData,
   ValidationResult,
   WizardStep,
@@ -783,4 +785,220 @@ export const logValidationResult = (
     industry: formData.industry,
     contentType: formData.content_type,
   });
+};
+
+// ============================================================================
+// TYPEFORM WIZARD STEP NAVIGATION UTILITIES
+// ============================================================================
+
+/**
+ * Step order definition for TypeForm wizard navigation
+ */
+export const STEP_ORDER: CurrentStep[] = [
+  "wizard-mode",
+  "industry",
+  "subject",
+  "audience",
+  "content-type",
+  "platform",
+  "purpose",
+  "tone",
+  "notes",
+  "num-ideas",
+];
+
+/**
+ * Get the next step in the wizard flow based on form data and current step
+ *
+ * @param currentStep - Current step in the wizard
+ * @param formData - Current form data to determine conditional steps
+ * @returns Next step or null if at the end
+ */
+export const getNextStep = (
+  currentStep: CurrentStep,
+  formData: Partial<TopicBuilderFormData>,
+): CurrentStep | null => {
+  const currentIndex = STEP_ORDER.indexOf(currentStep);
+  if (currentIndex === -1 || currentIndex === STEP_ORDER.length - 1) {
+    return null;
+  }
+
+  let nextIndex = currentIndex + 1;
+  let nextStep = STEP_ORDER[nextIndex];
+
+  // Skip conditional steps based on form data
+  while (nextStep && shouldSkipStep(nextStep, formData)) {
+    nextIndex++;
+    if (nextIndex >= STEP_ORDER.length) {
+      return null;
+    }
+    nextStep = STEP_ORDER[nextIndex];
+  }
+
+  return nextStep;
+};
+
+/**
+ * Get the previous step in the wizard flow
+ *
+ * @param currentStep - Current step in the wizard
+ * @param stepHistory - History of visited steps
+ * @returns Previous step or null if at the beginning
+ */
+export const getPreviousStep = (
+  currentStep: CurrentStep,
+  stepHistory: CurrentStep[],
+): CurrentStep | null => {
+  const currentIndex = stepHistory.indexOf(currentStep);
+  if (currentIndex <= 0) {
+    return null;
+  }
+  return stepHistory[currentIndex - 1];
+};
+
+/**
+ * Determine if a step should be skipped based on form data
+ *
+ * @param step - Step to check
+ * @param formData - Current form data
+ * @returns True if step should be skipped
+ */
+export const shouldSkipStep = (
+  step: CurrentStep,
+  formData: Partial<TopicBuilderFormData>,
+): boolean => {
+  switch (step) {
+    case "subject":
+      // Skip subject step if using industry-first mode
+      return formData.wizardMode === "industry-first";
+
+    case "platform":
+      // Skip platform step unless content type is social-media
+      return formData.content_type !== "social-media";
+
+    case "notes":
+    case "num-ideas":
+      // These are optional steps, never skip
+      return false;
+
+    default:
+      return false;
+  }
+};
+
+/**
+ * Validate a specific step using the step-specific validation schemas
+ *
+ * @param step - Step to validate
+ * @param formData - Current form data
+ * @returns Validation result
+ */
+export const validateStep = (
+  step: CurrentStep,
+  formData: Partial<TopicBuilderFormData>,
+): ValidationResult => {
+  try {
+    const schema = stepValidationSchemas[step];
+    if (!schema) {
+      return { isValid: true, errors: [] };
+    }
+
+    // Extract only the fields relevant to this step
+    const stepData = extractStepData(step, formData);
+    const result = schema.safeParse(stepData);
+
+    if (result.success) {
+      return { isValid: true, errors: [] };
+    }
+
+    const errors = result.error.issues.map((issue) => issue.message);
+    return { isValid: false, errors };
+  } catch (error) {
+    console.error(`Error validating step ${step}:`, error);
+    return { isValid: false, errors: ["Validation error occurred"] };
+  }
+};
+
+/**
+ * Extract data relevant to a specific step from form data
+ *
+ * @param step - Step to extract data for
+ * @param formData - Complete form data
+ * @returns Step-specific data object
+ */
+export const extractStepData = (
+  step: CurrentStep,
+  formData: Partial<TopicBuilderFormData>,
+): Partial<TopicBuilderFormData> => {
+  switch (step) {
+    case "wizard-mode":
+      return { wizardMode: formData.wizardMode };
+
+    case "industry":
+      return {
+        industry: formData.industry,
+        industry_other: formData.industry_other,
+      };
+
+    case "subject":
+      return { subject: formData.subject };
+
+    case "audience":
+      return { audience: formData.audience };
+
+    case "content-type":
+      return {
+        content_type: formData.content_type,
+        content_type_other: formData.content_type_other,
+      };
+
+    case "platform":
+      return {
+        platform: formData.platform,
+        platform_other: formData.platform_other,
+      };
+
+    case "purpose":
+      return {
+        purpose: formData.purpose,
+        purpose_other: formData.purpose_other,
+      };
+
+    case "tone":
+      return {
+        tone: formData.tone,
+        tone_other: formData.tone_other,
+      };
+
+    case "notes":
+      return { notes: formData.notes };
+
+    case "num-ideas":
+      return { num_ideas: formData.num_ideas };
+
+    default:
+      return {};
+  }
+};
+
+/**
+ * Calculate wizard progress based on current step and form completion
+ *
+ * @param currentStep - Current step in the wizard
+ * @param formData - Current form data
+ * @returns Progress information
+ */
+export const calculateWizardProgress = (
+  currentStep: CurrentStep,
+  formData: Partial<TopicBuilderFormData>,
+): { current: number; total: number; percentage: number } => {
+  // Get all applicable steps (excluding skipped ones)
+  const applicableSteps = STEP_ORDER.filter(
+    (step) => !shouldSkipStep(step, formData),
+  );
+  const current = applicableSteps.indexOf(currentStep) + 1;
+  const total = applicableSteps.length;
+  const percentage = Math.round((current / total) * 100);
+
+  return { current, total, percentage };
 };
