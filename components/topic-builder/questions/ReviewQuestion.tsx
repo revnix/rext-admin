@@ -67,14 +67,16 @@ function ReviewCard({
     <Card
       className={`h-fit transition-colors ${hasError ? "border-destructive bg-destructive/5" : ""}`}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="flex justify-between items-start mb-2">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h3 className="font-medium text-sm">{label}</h3>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+            <div className="flex-shrink-0">{icon}</div>
+            <h3 className="font-medium text-sm sm:text-base truncate">
+              {label}
+            </h3>
             {hasError && (
               <AlertCircle
-                className="h-4 w-4 text-destructive"
+                className="h-4 w-4 text-destructive flex-shrink-0"
                 aria-label="Error in this field"
               />
             )}
@@ -85,13 +87,13 @@ function ReviewCard({
               size="sm"
               onClick={onEdit}
               aria-label={ariaLabel}
-              className="h-auto p-1"
+              className="h-auto p-2 min-w-[44px] min-h-[44px] flex-shrink-0 ml-2"
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
             </Button>
           )}
         </div>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm sm:text-base text-muted-foreground break-words">
           {renderValue(value)}
         </div>
       </CardContent>
@@ -104,13 +106,15 @@ function renderValue(
 ): React.ReactNode {
   if (value === undefined || value === null || value === "") {
     return (
-      <span className="italic text-muted-foreground/60">Not specified</span>
+      <span className="italic text-muted-foreground/60 text-xs sm:text-sm">
+        Not specified
+      </span>
     );
   }
 
   if (typeof value === "boolean") {
     return (
-      <Badge variant="outline" className="text-xs">
+      <Badge variant="outline" className="text-xs sm:text-sm">
         {value ? "Yes" : "No"}
       </Badge>
     );
@@ -118,23 +122,27 @@ function renderValue(
 
   if (Array.isArray(value)) {
     return value.length > 0 ? (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 sm:gap-1.5">
         {value.map((item) => (
-          <Badge key={item} variant="secondary" className="text-xs">
+          <Badge key={item} variant="secondary" className="text-xs break-all">
             {item}
           </Badge>
         ))}
       </div>
     ) : (
-      <span className="italic text-muted-foreground/60">None selected</span>
+      <span className="italic text-muted-foreground/60 text-xs sm:text-sm">
+        None selected
+      </span>
     );
   }
 
   if (typeof value === "number") {
-    return <span className="font-medium">{value}</span>;
+    return <span className="font-medium text-sm sm:text-base">{value}</span>;
   }
 
-  return <span>{String(value)}</span>;
+  return (
+    <span className="text-sm sm:text-base break-words">{String(value)}</span>
+  );
 }
 
 export function ReviewQuestion({
@@ -173,25 +181,35 @@ export function ReviewQuestion({
       !!getQuestionError("num_ideas"));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
       {/* Error Summary */}
       {hasErrors && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Please review your selections</AlertTitle>
-          <AlertDescription>
-            Some required information is missing. Use the edit buttons below to
-            fix any issues.
-          </AlertDescription>
+        <Alert variant="destructive" className="mx-auto max-w-2xl">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <AlertTitle className="text-sm sm:text-base">
+              Please review your selections
+            </AlertTitle>
+            <AlertDescription className="text-xs sm:text-sm">
+              Some required information is missing. Use the edit buttons below
+              to fix any issues.
+            </AlertDescription>
+          </div>
         </Alert>
       )}
 
       {/* Summary Section */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-3">
-          <Sparkles className="h-8 w-8 text-primary" />
+      <div className="text-center space-y-2 sm:space-y-3">
+        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-2 sm:mb-3">
+          <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
         </div>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+        <p
+          className="text-muted-foreground max-w-2xl mx-auto px-2"
+          style={{
+            fontSize: "clamp(1rem, 4vw, 1.125rem)",
+            lineHeight: "clamp(1.4, 4vw, 1.6)",
+          }}
+        >
           We'll create{" "}
           <span className="font-semibold text-primary">
             {formData.num_ideas} targeted topic ideas
@@ -201,7 +219,7 @@ export function ReviewQuestion({
       </div>
 
       {/* Configuration Review Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
         <ReviewCard
           icon={<Settings className="h-4 w-4 text-primary" />}
           label="Wizard Mode"
