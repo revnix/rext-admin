@@ -345,8 +345,8 @@ export default function TopicBuilderPage() {
                     {currentStepData.description}
                   </CardDescription>
 
-                  {/* Generation Error Display */}
-                  {generationError && (
+                  {/* Generation Error Display - Only show on Review step (step 6) */}
+                  {generationError && currentStep === 6 && (
                     <div className="mt-4">
                       <ErrorAlert
                         error={generationError}

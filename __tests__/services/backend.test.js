@@ -159,7 +159,7 @@ describe("BackendService", () => {
         subject: "AI Development",
         content_type: "blog-post",
         platform: "linkedin",
-        audience: "developers, tech-leads",
+        audience: ["developers", "tech-leads"],
         purpose: ["educate-inform"],
         tone: ["professional-formal"],
         num_ideas: 5,

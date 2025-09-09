@@ -24,7 +24,7 @@ export interface BackendTopicGenerationPayload {
   content_type_other?: string | null;
   platform?: string | null;
   platform_other?: string | null;
-  audience: string;
+  audience: string[];
   purpose: string[];
   purpose_other?: string | null;
   tone: string[];

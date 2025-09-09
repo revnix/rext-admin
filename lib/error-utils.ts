@@ -301,6 +301,32 @@ export function isOnline(): boolean {
 }
 
 /**
+ * Extract specific validation errors from backend response
+ */
+export function extractValidationErrors(error: BackendError): string[] {
+  if (error.type !== "validation_error" || !error.context?.responseText) {
+    return [];
+  }
+
+  try {
+    const response = JSON.parse(error.context.responseText as string);
+    if (response.detail && Array.isArray(response.detail)) {
+      return response.detail.map((detail: { loc?: string[]; msg?: string }) => {
+        if (detail.loc && detail.msg) {
+          const fieldPath = detail.loc.slice(1).join(".");
+          return `${fieldPath}: ${detail.msg}`;
+        }
+        return detail.msg || "Unknown validation error";
+      });
+    }
+  } catch (_e) {
+    // Failed to parse, return empty array
+  }
+
+  return [];
+}
+
+/**
  * Get contextual error message based on operation
  */
 export function getContextualErrorMessage(
@@ -320,10 +346,20 @@ export function getContextualErrorMessage(
       if (error.type === "server_error") {
         return "Our AI service is temporarily unavailable. Your form data has been saved and you can try again shortly.";
       }
+      if (error.type === "validation_error") {
+        const validationErrors = extractValidationErrors(error);
+        if (validationErrors.length > 0) {
+          return `Missing required fields: ${validationErrors.map((err) => err.split(":")[0]).join(", ")}`;
+        }
+      }
       break;
 
     case "form_validation":
       if (error.type === "validation_error") {
+        const validationErrors = extractValidationErrors(error);
+        if (validationErrors.length > 0) {
+          return `Validation errors: ${validationErrors.join(", ")}`;
+        }
         return "Please review your form entries and make sure all required fields are completed correctly.";
       }
       break;

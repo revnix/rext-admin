@@ -10,7 +10,7 @@ import {
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
-import type { BackendError } from "@/types/backend";
+import type { BackendError, BackendErrorType } from "@/types/backend";
 import type {
   GeneratedTopic,
   TopicBuilderDraft,
@@ -440,11 +440,64 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.error || `HTTP ${response.status}: ${response.statusText}`;
-        throw new Error(
-          `Backend API error: ${response.status} ${errorMessage}`,
-        );
+
+        // If the API returned a structured error, create a BackendError object
+        if (errorData.error_code && errorData.details) {
+          // Try to parse the details field in case it contains a JSON-stringified BackendError
+          let parsedDetails = errorData.details;
+          let actualErrorType = errorData.error_code;
+          let context = {
+            responseStatus: response.status,
+            apiError: errorData,
+          };
+
+          try {
+            const detailsObj = JSON.parse(errorData.details);
+            if (
+              detailsObj &&
+              typeof detailsObj === "object" &&
+              detailsObj.type
+            ) {
+              // The details contain the actual error information
+              actualErrorType = detailsObj.type;
+              parsedDetails = errorData.details; // Keep original for technicalMessage
+
+              // If the parsed details have context, use that too
+              if (detailsObj.context) {
+                context = { ...context, ...detailsObj.context };
+              }
+            }
+          } catch {
+            // Not JSON, use as-is
+          }
+
+          const backendError: BackendError = {
+            type: actualErrorType as BackendErrorType,
+            message: errorData.error,
+            technicalMessage: parsedDetails,
+            statusCode: response.status,
+            severity:
+              response.status >= 500
+                ? "high"
+                : response.status >= 400
+                  ? "medium"
+                  : "low",
+            recoveryActions: ["retry", "contact_support"],
+            isRetryable: response.status >= 500,
+            requestId: errorData.request_id,
+            timestamp: new Date().toISOString(),
+            context: context,
+          };
+          throw backendError;
+        } else {
+          // Fallback for unstructured errors
+          const errorMessage =
+            errorData.error ||
+            `HTTP ${response.status}: ${response.statusText}`;
+          throw new Error(
+            `Backend API error: ${response.status} ${errorMessage}`,
+          );
+        }
       }
 
       const result = await response.json();
@@ -482,7 +535,14 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         // Toast notification handled in cancelGeneration function
         // No additional toast here to avoid double notifications
       } else {
-        const classifiedError = classifyError(error, requestId);
+        // Check if it's already a BackendError, otherwise classify it
+        const classifiedError =
+          error &&
+          typeof error === "object" &&
+          "type" in error &&
+          "message" in error
+            ? (error as BackendError)
+            : classifyError(error, requestId);
         console.error("Topic generation failed:", classifiedError);
 
         // Enhanced error logging

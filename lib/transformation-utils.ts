@@ -807,8 +807,8 @@ export const transformFormDataToBackendEnhanced = (
       audience:
         Array.isArray(processedFormData.audience) &&
         processedFormData.audience.length > 0
-          ? processedFormData.audience.join(", ")
-          : "",
+          ? processedFormData.audience
+          : [],
       purpose: Array.isArray(processedFormData.purpose)
         ? processedFormData.purpose
         : [],

@@ -6,6 +6,7 @@ import {
   calculateRetryDelay,
   classifyError,
   DEFAULT_RETRY_CONFIG,
+  extractValidationErrors,
   generateRequestId,
   getContextualErrorMessage,
   getFallbackBehavior,
@@ -478,6 +479,71 @@ describe("Error Utils", () => {
       };
 
       expect(isBackendUnavailable(clientError)).toBe(false);
+    });
+  });
+
+  describe("extractValidationErrors", () => {
+    it("should extract validation errors from backend response", () => {
+      const validationError: BackendError = {
+        type: "validation_error",
+        message: "Validation failed",
+        isRetryable: false,
+        severity: "low",
+        recoveryActions: ["go_back"],
+        timestamp: new Date().toISOString(),
+        context: {
+          responseText: JSON.stringify({
+            detail: [
+              {
+                type: "missing",
+                loc: ["body", "reader_level"],
+                msg: "Field required",
+              },
+              {
+                type: "missing",
+                loc: ["body", "audience_size"],
+                msg: "Field required",
+              },
+            ],
+          }),
+        },
+      };
+
+      const errors = extractValidationErrors(validationError);
+      expect(errors).toHaveLength(2);
+      expect(errors[0]).toBe("reader_level: Field required");
+      expect(errors[1]).toBe("audience_size: Field required");
+    });
+
+    it("should return empty array for non-validation errors", () => {
+      const networkError: BackendError = {
+        type: "network_error",
+        message: "Network failed",
+        isRetryable: true,
+        severity: "high",
+        recoveryActions: ["retry"],
+        timestamp: new Date().toISOString(),
+      };
+
+      const errors = extractValidationErrors(networkError);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("should handle malformed response text gracefully", () => {
+      const validationError: BackendError = {
+        type: "validation_error",
+        message: "Validation failed",
+        isRetryable: false,
+        severity: "low",
+        recoveryActions: ["go_back"],
+        timestamp: new Date().toISOString(),
+        context: {
+          responseText: "invalid json",
+        },
+      };
+
+      const errors = extractValidationErrors(validationError);
+      expect(errors).toHaveLength(0);
     });
   });
 

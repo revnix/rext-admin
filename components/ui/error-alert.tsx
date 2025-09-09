@@ -14,7 +14,11 @@ import {
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { getContextualErrorMessage, isOnline } from "@/lib/error-utils";
+import {
+  extractValidationErrors,
+  getContextualErrorMessage,
+  isOnline,
+} from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 import type { BackendError, ErrorRecoveryAction } from "@/types/backend";
 
@@ -181,6 +185,28 @@ export function ErrorAlert({
       <AlertDescription className="space-y-3">
         <p>{contextualMessage}</p>
 
+        {/* Detailed validation errors in development - only if contextual message doesn't show field names */}
+        {process.env.NODE_ENV === "development" &&
+          error.type === "validation_error" &&
+          !contextualMessage.includes("Missing required fields:") &&
+          (() => {
+            const validationErrors = extractValidationErrors(error);
+            return validationErrors.length > 0 ? (
+              <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Detailed validation errors:
+                </p>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {validationErrors.map((err) => (
+                    <li key={err} className="font-mono">
+                      • {err}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null;
+          })()}
+
         {/* Retry information */}
         {error.isRetryable && error.retryAttempt && (
           <p className="text-sm text-muted-foreground">
@@ -245,7 +271,7 @@ export function CompactErrorAlert({
 
     setIsRetrying(true);
     try {
-      await onRetry();
+      onRetry();
     } finally {
       setIsRetrying(false);
     }

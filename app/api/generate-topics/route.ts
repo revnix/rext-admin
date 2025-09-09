@@ -31,10 +31,16 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     // Classify and log error safely
-    const classifiedError =
-      error && typeof error === "object" && "type" in error
-        ? (error as BackendError)
-        : classifyError(error);
+    // First, check if it's already a BackendError object with proper validation
+    const isBackendError =
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      "message" in error;
+
+    const classifiedError: BackendError = isBackendError
+      ? (error as BackendError)
+      : classifyError(error);
 
     // Log error for debugging without sensitive data
     const sanitizedError = sanitizeErrorForLogging(classifiedError);
@@ -55,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Map error types to HTTP status codes
     const statusCodeMap: Record<string, number> = {
-      validation_error: 400,
+      validation_error: 422,
       authentication_error: 401,
       rate_limit_error: 429,
       server_error: 503,

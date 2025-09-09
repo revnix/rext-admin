@@ -209,7 +209,7 @@ describe("/api/generate-topics", () => {
       const response = await POST(request as NextRequest);
       const responseData = await response.json();
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(422);
       expect(responseData.error_code).toBe("validation_error");
       expect(responseData.error).toBe("Invalid input parameters");
       expect(responseData.details).toBe("Field validation failed");
@@ -516,7 +516,7 @@ describe("/api/generate-topics", () => {
   describe("Status Code Mapping", () => {
     it("should map error types to correct HTTP status codes", async () => {
       const errorMappings = [
-        { errorType: "validation_error", expectedStatus: 400 },
+        { errorType: "validation_error", expectedStatus: 422 },
         { errorType: "authentication_error", expectedStatus: 401 },
         { errorType: "rate_limit_error", expectedStatus: 429 },
         { errorType: "server_error", expectedStatus: 503 },

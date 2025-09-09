@@ -10,9 +10,12 @@ import { transformTopicsForSavingEnhanced } from "@/lib/transformation-utils";
 import type {
   BackendConfig,
   BackendError,
+  BackendErrorType,
   BackendTopicGenerationPayload,
   BackendTopicGenerationResponse,
   BackendValidationConfig,
+  ErrorRecoveryAction,
+  ErrorSeverity,
   GetTopicsResponse,
   SaveTopicRequest,
   SaveTopicResponse,
@@ -415,8 +418,8 @@ export class BackendService {
       platform_other: formData.platform_other || null,
       audience:
         Array.isArray(formData.audience) && formData.audience.length > 0
-          ? formData.audience.join(", ")
-          : "",
+          ? formData.audience
+          : [],
       purpose: Array.isArray(formData.purpose) ? formData.purpose : [],
       purpose_other: formData.purpose_other || null,
       tone: Array.isArray(formData.tone) ? formData.tone : [],
@@ -438,14 +441,47 @@ export class BackendService {
   ): Promise<BackendTopicGenerationResponse> {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
+
+      // Classify error type based on HTTP status code
+      let errorType: BackendErrorType = "server_error";
+      let severity: ErrorSeverity = "high";
+      let recoveryActions: ErrorRecoveryAction[] = ["check_connection"];
+      let isRetryable = false;
+
+      if (response.status >= 500) {
+        errorType = "server_error";
+        severity = "critical";
+        recoveryActions = ["retry", "check_connection"];
+        isRetryable = true;
+      } else if (response.status === 429) {
+        errorType = "rate_limit_error";
+        severity = "medium";
+        recoveryActions = ["retry"];
+        isRetryable = true;
+      } else if (response.status === 401 || response.status === 403) {
+        errorType = "authentication_error";
+        severity = "medium";
+        recoveryActions = ["reload_page", "contact_support"];
+        isRetryable = false;
+      } else if (response.status === 422) {
+        errorType = "validation_error";
+        severity = "low";
+        recoveryActions = ["go_back", "retry_with_changes"];
+        isRetryable = false;
+      } else if (response.status >= 400) {
+        errorType = "validation_error";
+        severity = "low";
+        recoveryActions = ["go_back", "retry_with_changes"];
+        isRetryable = false;
+      }
+
       const backendError: BackendError = {
-        type: "server_error",
+        type: errorType,
         message: `Backend API error: ${response.status} ${response.statusText}`,
         statusCode: response.status,
-        severity: response.status >= 500 ? "critical" : "high",
-        recoveryActions:
-          response.status === 429 ? ["retry"] : ["check_connection"],
-        isRetryable: response.status >= 500 || response.status === 429,
+        severity,
+        recoveryActions,
+        isRetryable,
         requestId,
         timestamp: new Date().toISOString(),
         originalError: new Error(errorText),
