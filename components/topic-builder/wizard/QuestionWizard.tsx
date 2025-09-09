@@ -73,7 +73,7 @@ export function QuestionWizard({
   getQuestionError,
   isSubmitting = false,
   isLoading = false,
-  onComplete,
+  onComplete: _onComplete,
   className,
   showProgress = true,
   allowBackNavigation = true,
@@ -96,6 +96,11 @@ export function QuestionWizard({
     // Instead, do a simple check based on current question and form data
     if (!currentQuestion)
       return { isValid: false, errors: ["No question found"] };
+
+    // Special case: review step is always valid since it's just displaying information
+    if (currentQuestion.id === "review") {
+      return { isValid: true, errors: [] };
+    }
 
     const field = currentQuestion.id as keyof TopicBuilderFormData;
     const value = formData[field];
@@ -149,12 +154,8 @@ export function QuestionWizard({
     "enter",
     () => {
       if (!isSubmitting && !isLoading) {
-        if (isLastQuestion) {
-          onComplete();
-        } else {
-          setDirection("forward");
-          onNext();
-        }
+        setDirection("forward");
+        onNext();
       }
     },
     { preventDefault: true, enableOnFormTags: true },
@@ -284,7 +285,7 @@ export function QuestionWizard({
                     isLastQuestion={isLastQuestion}
                     isSubmitting={isSubmitting}
                     isLoading={isLoading}
-                    onNext={isLastQuestion ? onComplete : handleNext}
+                    onNext={handleNext}
                     onPrevious={handlePrevious}
                     nextLabel={isLastQuestion ? "Generate Ideas" : "Next"}
                     className="mt-8 p-0 bg-transparent border-0"

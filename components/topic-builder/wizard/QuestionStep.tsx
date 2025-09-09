@@ -26,6 +26,7 @@ import { NotesQuestion } from "../questions/NotesQuestion";
 import { NumIdeasQuestion } from "../questions/NumIdeasQuestion";
 import { PlatformQuestion } from "../questions/PlatformQuestion";
 import { PurposeQuestion } from "../questions/PurposeQuestion";
+import { ReviewQuestion } from "../questions/ReviewQuestion";
 import { SubjectQuestion } from "../questions/SubjectQuestion";
 import { ToneQuestion } from "../questions/ToneQuestion";
 // Question-specific components
@@ -123,6 +124,8 @@ export function QuestionStep({
         return <AudienceQuestion {...baseProps} />;
       case "number-input":
         return <NumIdeasQuestion {...baseProps} />;
+      case "review":
+        return <ReviewQuestion {...baseProps} />;
       default:
         return (
           <div className="p-4 text-muted-foreground text-center">

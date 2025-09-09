@@ -39,12 +39,6 @@ export default function TopicBuilderPage() {
     { label: "Topic Builder" },
   ];
 
-  const handleWizardComplete = async (_completedFormData: typeof formData) => {
-    // The new wizard will pass the completed form data
-    // We need to trigger the topic generation with this data
-    await generateTopics();
-  };
-
   const handleTopicSave = async (topicId: string) => {
     const topic = generatedTopics.find((t) => t.id === topicId);
     if (topic) {
@@ -184,7 +178,6 @@ export default function TopicBuilderPage() {
           <APIErrorBoundary onRetry={retryGeneration}>
             <TopicBuilderWizard
               initialData={undefined} // Don't pass existing formData, let wizard initialize its own
-              onComplete={handleWizardComplete}
               autoAdvance={false}
               showProgress={true}
               allowBackNavigation={true}

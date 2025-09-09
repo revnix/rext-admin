@@ -190,6 +190,14 @@ export function useWizardNavigation({
         helpText:
           "e.g., 'Include data and statistics', 'Make it beginner-friendly', 'Focus on current trends'",
       },
+      {
+        id: "review",
+        type: "review",
+        title: "Ready to generate ideas!",
+        description:
+          "Review your selections below and click Generate to create your topic ideas.",
+        required: true,
+      },
     );
 
     return baseQuestions;
@@ -233,6 +241,11 @@ export function useWizardNavigation({
   const validateCurrentQuestion = useCallback((): ValidationResult => {
     if (!currentQuestion) {
       return { isValid: false, errors: ["Question not found"] };
+    }
+
+    // Special case: review step is always valid since it's just displaying information
+    if (currentQuestion.id === "review") {
+      return { isValid: true, errors: [] };
     }
 
     const field = currentQuestion.id as keyof TopicBuilderFormData;
@@ -307,13 +320,21 @@ export function useWizardNavigation({
 
   // Navigation: Next
   const onNext = useCallback((): boolean => {
+    console.log(
+      "🔄 onNext called, currentQuestionIndex:",
+      currentQuestionIndex,
+      "questions.length:",
+      questions.length,
+    );
     const validation = validateCurrentQuestion();
     if (!validation.isValid) {
+      console.log("❌ Validation failed:", validation.errors);
       return false;
     }
 
     if (currentQuestionIndex >= questions.length - 1) {
       // Complete the wizard
+      console.log("🏁 Last question reached, completing wizard");
       setIsSubmitting(true);
       onComplete(formData);
       return true;

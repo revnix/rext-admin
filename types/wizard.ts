@@ -45,7 +45,8 @@ export type QuestionType =
   | "chip-input" // Chip/tag input
   | "wizard-mode" // Initial wizard mode selection
   | "slider" // Number slider
-  | "conditional"; // Conditional question based on previous answers
+  | "conditional" // Conditional question based on previous answers
+  | "review"; // Review step before completion
 
 /**
  * Validation result for a question or field
