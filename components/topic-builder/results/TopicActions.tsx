@@ -166,6 +166,8 @@ export function TopicActions({
     clearFeedback("saving");
 
     try {
+      // Set transient success early for responsive feedback (auto-clears)
+      setSuccess("saving", `Topic "${topic.title}" saved successfully!`);
       // Use TanStack Query mutation for optimistic updates
       await saveMutation.mutateAsync(topic);
 
@@ -174,7 +176,7 @@ export function TopicActions({
         await onSave(topic.id);
       }
 
-      // Show success confirmation dialog instead of inline message
+      // Show success confirmation dialog instead of only inline message
       console.log(
         `Topic ${topic.id} saved successfully, showing confirmation dialog`,
       );
@@ -184,6 +186,8 @@ export function TopicActions({
 
       // Classify error for user-friendly display
       const classifiedError = classifyError(error);
+      // Clear transient success on failure
+      setSuccess("saving", undefined);
       setError("saving", classifiedError);
     }
   };

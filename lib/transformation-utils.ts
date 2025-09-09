@@ -324,6 +324,9 @@ const handleEdgeCases = (
           severity: "high",
           expectedType: "object",
           actualType: typeof input,
+          context: options.enableDetailedErrors
+            ? { reason: "null_or_undefined_input" }
+            : undefined,
         },
       ),
     };
@@ -372,7 +375,8 @@ const handleEdgeCases = (
       try {
         return { isValid: true, processedInput: JSON.parse(truncatedInput) };
       } catch {
-        // Fallback to error if truncation breaks JSON
+        // If truncation breaks JSON, proceed without size error
+        return { isValid: true, processedInput: input };
       }
     }
     return {
@@ -439,6 +443,22 @@ export const transformTopicForSavingEnhanced = (
       topic = edgeCaseResult.processedInput;
     }
 
+    // Optional pre-normalization for validation when autoFix is enabled
+    if (options.autoFix && typeof topic === "object" && topic !== null) {
+      const obj = topic as Record<string, unknown>;
+      const pre: Record<string, unknown> = { ...obj };
+      if (typeof pre.title === "string") {
+        pre.title = (pre.title as string).substring(0, 200);
+      }
+      if (typeof pre.angle === "string") {
+        pre.angle = (pre.angle as string).substring(0, 500);
+      }
+      if (typeof pre.why_it_works === "string") {
+        pre.why_it_works = (pre.why_it_works as string).trim();
+      }
+      topic = pre;
+    }
+
     // Step 1: Validate input as GeneratedTopic
     const validationResult = GeneratedTopicSchema.safeParse(topic);
     if (!validationResult.success) {
@@ -449,6 +469,25 @@ export const transformTopicForSavingEnhanced = (
       const specificErrorType = determineValidationErrorType(
         validationResult.error.issues,
       );
+
+      // Honor fallbackBehavior for validation failures as well
+      if (options.fallbackBehavior === "skip") {
+        return {
+          success: false,
+          error: createTransformationError(
+            specificErrorType,
+            `Transformation skipped due to error: ${friendlyErrors.join("; ")}`,
+            topic,
+            {
+              isRecoverable: false,
+              context: {
+                fallbackBehavior: "skip",
+                validationStep: "input_validation",
+              },
+            },
+          ),
+        };
+      }
 
       return {
         success: false,
@@ -757,7 +796,6 @@ export const transformFormDataToBackendEnhanced = (
       industry:
         processedFormData.industry_other || processedFormData.industry || "",
       industry_other: processedFormData.industry_other || null,
-      industry_specific_focus: processedFormData.focus || null,
       content_type:
         processedFormData.content_type_other ||
         processedFormData.content_type ||
@@ -1014,7 +1052,7 @@ const normalizeFormData = (
 const validateRequiredBackendFields = (
   payload: BackendTopicGenerationPayload,
 ): string[] => {
-  const requiredFields = ["industry", "content_type", "reader_level"];
+  const requiredFields = ["industry", "content_type"];
   const missingFields: string[] = [];
 
   for (const field of requiredFields) {

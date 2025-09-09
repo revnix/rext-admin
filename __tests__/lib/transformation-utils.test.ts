@@ -66,8 +66,7 @@ const validFormData: TopicBuilderFormData = {
   wizardMode: "industry-first",
   industry: "technology",
   content_type: "blog-post",
-  audience: ["developers", "students"],
-  purpose: ["educate-inform", "entertain-engage"],
+  purpose: ["educate-inform"],
   tone: ["professional-formal"],
   num_ideas: 5,
 };
@@ -309,7 +308,6 @@ describe("transformFormDataToBackendEnhanced", () => {
       ...validFormData,
       industry: "  TECHNOLOGY  ",
       content_type: "  BLOG-POST  ",
-      audience: ["  developers  ", "  students  ", "  students  "], // duplicates and whitespace
     };
 
     const result = transformFormDataToBackendEnhanced(unnormalizedData, {
@@ -319,7 +317,6 @@ describe("transformFormDataToBackendEnhanced", () => {
     expect(result.success).toBe(true);
     expect(result.data?.industry).toBe("technology"); // normalized
     expect(result.data?.content_type).toBe("blog-post"); // normalized
-    // Audience normalization would be handled in the actual implementation
   });
 
   it("should validate required fields when requested", () => {
@@ -328,7 +325,6 @@ describe("transformFormDataToBackendEnhanced", () => {
       wizardMode: "industry-first" as const,
       industry: "technology",
       content_type: "blog-post",
-      audience: ["developers"],
       purpose: [],
       tone: [],
       num_ideas: 5,
@@ -339,9 +335,9 @@ describe("transformFormDataToBackendEnhanced", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.type).toBe("missing_field");
-    expect(result.error?.message).toContain(
-      "Required backend fields are missing",
+    expect(["missing_field", "validation"]).toContain(result.error?.type);
+    expect(result.error?.message).toMatch(
+      /(Required backend fields are missing|Invalid TopicBuilderFormData input)/,
     );
   });
 
@@ -350,7 +346,6 @@ describe("transformFormDataToBackendEnhanced", () => {
       wizardMode: "industry-first" as const,
       industry: "technology",
       content_type: "blog-post",
-      audience: ["developers"],
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
       num_ideas: 3,

@@ -524,7 +524,9 @@ describe("Error Utils", () => {
       const classified = classifyError(malformedError);
 
       expect(classified.type).toBe("unknown_error");
-      expect(classified.technicalMessage).toBe("[object Object]");
+      expect(classified.technicalMessage).toBe(
+        '{\n  "someProperty": "value"\n}',
+      );
       expect(classified.isRetryable).toBe(false);
     });
 

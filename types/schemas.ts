@@ -136,9 +136,8 @@ export const IdeaDataSchema = z.object({
  * Represents the complete form state from the topic builder wizard
  */
 export const TopicBuilderFormDataSchema = z.object({
-  /** Wizard mode selection */
+  // Core
   wizardMode: z.enum(["subject-first", "industry-first"]),
-  /** Industry selection */
   industry: z.enum([
     "technology",
     "healthcare",
@@ -160,28 +159,11 @@ export const TopicBuilderFormDataSchema = z.object({
     "fitness",
     "other",
   ]),
-  /** Custom industry specification (when industry = "Other") */
   industry_other: z.string().optional(),
-  /** Industry-specific focus area */
-  industry_specific_focus: z.string().optional(),
-  /** Content type selection */
-  content_type: z.enum([
-    "blog-post",
-    "social-media",
-    "video-content",
-    "podcast",
-    "infographic",
-    "ebook-guide",
-    "case-study",
-    "whitepaper",
-    "newsletter",
-    "presentation",
-    "press-release",
-    "other",
-  ]),
-  /** Custom content type (when content_type = "Other") */
+
+  // Content type & platform
+  content_type: z.enum(["blog-post", "social-media"]),
   content_type_other: z.string().optional(),
-  /** Platform/channel selection */
   platform: z
     .enum([
       "facebook",
@@ -196,17 +178,12 @@ export const TopicBuilderFormDataSchema = z.object({
       "other",
     ])
     .optional(),
-  /** Custom platform (when platform = "Other") */
   platform_other: z.string().optional(),
-  /** Target audience description */
+
+  // Targeting
   audience: z.array(z.string()).optional(),
-  /** Reader expertise level */
-  reader_level: z.enum(["beginner", "intermediate", "expert"]).optional(),
-  /** Audience size estimate */
-  audience_size: z.enum(["small", "medium", "large", "massive"]).optional(),
-  /** Demographic age groups */
-  demographic_age: z.array(z.string()).default([]),
-  /** Content purpose/goals */
+
+  // Goals & style
   purpose: z
     .array(
       z.enum([
@@ -221,25 +198,7 @@ export const TopicBuilderFormDataSchema = z.object({
       ]),
     )
     .min(1),
-  /** Custom purpose (when purpose includes "Other") */
   purpose_other: z.string().optional(),
-  /** Content goals */
-  content_goal: z
-    .array(
-      z.enum([
-        "tutorial",
-        "explainer",
-        "news-trend",
-        "opinion-leadership",
-        "listicle",
-        "case-study",
-        "comparison",
-        "faq",
-        "other",
-      ]),
-    )
-    .default([]),
-  /** Tone preferences */
   tone: z
     .array(
       z.enum([
@@ -255,57 +214,13 @@ export const TopicBuilderFormDataSchema = z.object({
       ]),
     )
     .min(1),
-  /** Custom tone (when tone includes "Other") */
   tone_other: z.string().optional(),
-  /** Keywords to include/focus on */
-  keywords: z.string().optional(),
-  /** Additional notes from user */
+
+  // Advanced
   notes: z.string().optional(),
-  /** Additional implementation notes */
-  additional_notes: z.string().optional(),
-  /** Number of topic ideas to generate */
-  num_ideas: z.number().min(1).max(50).default(10),
-  /** Regional preferences */
-  region: z
-    .enum([
-      "us",
-      "uk",
-      "canada",
-      "australia",
-      "pakistan",
-      "india",
-      "europe",
-      "global",
-      "other",
-    ])
-    .optional(),
-  /** Language preference */
-  language: z
-    .enum([
-      "english",
-      "urdu",
-      "spanish",
-      "french",
-      "german",
-      "arabic",
-      "chinese",
-      "japanese",
-      "other",
-    ])
-    .optional(),
-  /** Content timing preferences */
-  content_timing_preference: z.string().optional(),
-  /** Content originality preferences */
-  content_originality_preference: z.string().optional(),
-  /** Fresh vs evergreen content preference */
-  fresh_vs_evergreen: z.enum(["fresh", "evergreen", "balanced"]).optional(),
-  /** Safe vs original content preference */
-  safe_vs_original: z.enum(["safe", "original", "balanced"]).optional(),
-  /** Topics/themes to exclude */
-  exclude: z.string().optional(),
-  /** Specific focus areas */
-  focus: z.string().optional(),
-  /** Subject matter specifications */
+  num_ideas: z.number().min(1).max(20).default(5),
+
+  // Subject-first
   subject: z.string().optional(),
 });
 
@@ -364,32 +279,17 @@ export const FORM_TO_BACKEND_MAPPING = {
     "wizardMode",
     "industry",
     "industry_other",
-    "industry_specific_focus",
     "content_type",
     "content_type_other",
     "platform",
     "platform_other",
     "audience",
-    "reader_level",
-    "audience_size",
-    "demographic_age",
     "purpose",
     "purpose_other",
-    "content_goal",
     "tone",
     "tone_other",
-    "keywords",
     "notes",
-    "additional_notes",
     "num_ideas",
-    "region",
-    "language",
-    "content_timing_preference",
-    "content_originality_preference",
-    "fresh_vs_evergreen",
-    "safe_vs_original",
-    "exclude",
-    "focus",
     "subject",
   ] as const,
   /** Fields added during transformation */

@@ -293,7 +293,10 @@ export function SuccessAlert({
   className?: string;
 }) {
   return (
-    <Alert className={cn("border-green-200 bg-green-50", className)}>
+    <Alert
+      data-testid="success-alert"
+      className={cn("border-green-200 bg-green-50", className)}
+    >
       <CheckCircle className="h-4 w-4 text-green-600" />
       {title && <AlertTitle className="text-green-800">{title}</AlertTitle>}
       <AlertDescription className="text-green-700">{message}</AlertDescription>

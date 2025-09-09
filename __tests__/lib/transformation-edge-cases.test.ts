@@ -360,7 +360,7 @@ describe("Edge Cases and Error Handling", () => {
         purpose: ["educate-inform"],
         tone: ["professional-formal"],
         num_ideas: 5,
-        demographic_age: ["adult", "adult", "senior"], // Duplicates
+        audience: ["  developers  ", "developers", "students  "], // Duplicates & whitespace
       };
 
       const result = transformFormDataToBackendEnhanced(messyData, {
