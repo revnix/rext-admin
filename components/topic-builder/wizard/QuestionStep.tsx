@@ -65,6 +65,9 @@ export interface QuestionStepProps {
 
   /** Get question error handler for review step */
   getQuestionError?: (questionId: string) => string | undefined;
+
+  /** Questions array for dynamic mapping in review step */
+  questions?: QuestionConfig[];
 }
 
 export function QuestionStep({
@@ -78,6 +81,7 @@ export function QuestionStep({
   className,
   onGoToQuestion,
   getQuestionError,
+  questions,
 }: QuestionStepProps) {
   const prefersReducedMotion = useReducedMotion();
   const itemVariants = getMotionVariants(
@@ -138,6 +142,7 @@ export function QuestionStep({
             {...baseProps}
             onGoToQuestion={onGoToQuestion}
             getQuestionError={getQuestionError}
+            questions={questions}
           />
         );
       default:
@@ -155,6 +160,7 @@ export function QuestionStep({
     isLoading,
     onGoToQuestion,
     getQuestionError,
+    questions,
   ]);
 
   return (

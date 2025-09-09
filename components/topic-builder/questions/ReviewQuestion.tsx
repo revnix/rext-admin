@@ -16,6 +16,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { useMemo } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -40,9 +41,10 @@ interface ReviewQuestionProps {
   ) => void;
   error?: string;
   isLoading?: boolean;
-  // New props for enhanced functionality
+  // Enhanced props for dynamic navigation
   onGoToQuestion?: (questionIndex: number) => void;
   getQuestionError?: (questionId: string) => string | undefined;
+  questions?: QuestionConfig[];
 }
 
 interface ReviewCardProps {
@@ -149,6 +151,7 @@ export function ReviewQuestion({
   formData,
   onGoToQuestion,
   getQuestionError,
+  questions,
 }: ReviewQuestionProps) {
   const getDisplayValue = (
     options: { label: string; value: string }[],
@@ -157,19 +160,33 @@ export function ReviewQuestion({
     return options.find((opt) => opt.value === value)?.label || value;
   };
 
-  // Question index mapping for navigation
-  const questionMapping: Record<string, number> = {
-    wizardMode: 0,
-    subject: 1,
-    industry: 1,
-    content_type: 2,
-    platform: 3,
-    audience: 4,
-    purpose: 5,
-    tone: 6,
-    num_ideas: 7,
-    notes: 8,
-  };
+  // Dynamic question index mapping based on actual questions array
+  const getQuestionIndex = useMemo(() => {
+    if (!questions) {
+      // Fallback to static mapping if questions not available
+      const staticMapping: Record<string, number> = {
+        wizardMode: 0,
+        subject: 1,
+        industry: 1,
+        content_type: 2,
+        platform: 3,
+        audience: 4,
+        purpose: 5,
+        tone: 6,
+        num_ideas: 7,
+        notes: 8,
+      };
+      return (questionId: string) => staticMapping[questionId] ?? 0;
+    }
+
+    // Create dynamic mapping from questions array
+    const mapping = new Map<string, number>();
+    questions.forEach((q, index) => {
+      mapping.set(q.id, index);
+    });
+
+    return (questionId: string) => mapping.get(questionId) ?? 0;
+  }, [questions]);
 
   const hasErrors =
     getQuestionError &&
@@ -232,7 +249,7 @@ export function ReviewQuestion({
           hasError={getQuestionError?.("wizardMode") !== undefined}
           onEdit={
             onGoToQuestion
-              ? () => onGoToQuestion(questionMapping.wizardMode)
+              ? () => onGoToQuestion(getQuestionIndex("wizardMode"))
               : undefined
           }
           ariaLabel="Edit wizard mode selection"
@@ -247,7 +264,7 @@ export function ReviewQuestion({
             hasError={getQuestionError?.("subject") !== undefined}
             onEdit={
               onGoToQuestion
-                ? () => onGoToQuestion(questionMapping.subject)
+                ? () => onGoToQuestion(getQuestionIndex("subject"))
                 : undefined
             }
             ariaLabel="Edit subject"
@@ -262,7 +279,7 @@ export function ReviewQuestion({
           hasError={getQuestionError?.("industry") !== undefined}
           onEdit={
             onGoToQuestion
-              ? () => onGoToQuestion(questionMapping.industry)
+              ? () => onGoToQuestion(getQuestionIndex("industry"))
               : undefined
           }
           ariaLabel="Edit industry selection"
@@ -276,7 +293,7 @@ export function ReviewQuestion({
           hasError={getQuestionError?.("content_type") !== undefined}
           onEdit={
             onGoToQuestion
-              ? () => onGoToQuestion(questionMapping.content_type)
+              ? () => onGoToQuestion(getQuestionIndex("content_type"))
               : undefined
           }
           ariaLabel="Edit content type selection"
@@ -291,7 +308,7 @@ export function ReviewQuestion({
             hasError={getQuestionError?.("platform") !== undefined}
             onEdit={
               onGoToQuestion
-                ? () => onGoToQuestion(questionMapping.platform)
+                ? () => onGoToQuestion(getQuestionIndex("platform"))
                 : undefined
             }
             ariaLabel="Edit platform selection"
@@ -307,7 +324,7 @@ export function ReviewQuestion({
             hasError={getQuestionError?.("audience") !== undefined}
             onEdit={
               onGoToQuestion
-                ? () => onGoToQuestion(questionMapping.audience)
+                ? () => onGoToQuestion(getQuestionIndex("audience"))
                 : undefined
             }
             ariaLabel="Edit audience selection"
@@ -324,7 +341,7 @@ export function ReviewQuestion({
           hasError={getQuestionError?.("purpose") !== undefined}
           onEdit={
             onGoToQuestion
-              ? () => onGoToQuestion(questionMapping.purpose)
+              ? () => onGoToQuestion(getQuestionIndex("purpose"))
               : undefined
           }
           ariaLabel="Edit purpose selection"
@@ -338,7 +355,7 @@ export function ReviewQuestion({
           hasError={getQuestionError?.("tone") !== undefined}
           onEdit={
             onGoToQuestion
-              ? () => onGoToQuestion(questionMapping.tone)
+              ? () => onGoToQuestion(getQuestionIndex("tone"))
               : undefined
           }
           ariaLabel="Edit tone selection"
@@ -352,7 +369,7 @@ export function ReviewQuestion({
           hasError={getQuestionError?.("num_ideas") !== undefined}
           onEdit={
             onGoToQuestion
-              ? () => onGoToQuestion(questionMapping.num_ideas)
+              ? () => onGoToQuestion(getQuestionIndex("num_ideas"))
               : undefined
           }
           ariaLabel="Edit number of ideas"
@@ -367,7 +384,7 @@ export function ReviewQuestion({
             hasError={getQuestionError?.("notes") !== undefined}
             onEdit={
               onGoToQuestion
-                ? () => onGoToQuestion(questionMapping.notes)
+                ? () => onGoToQuestion(getQuestionIndex("notes"))
                 : undefined
             }
             ariaLabel="Edit additional notes"
