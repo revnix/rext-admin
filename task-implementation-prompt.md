@@ -2,8 +2,8 @@ Task/Subtask Implementation Prompt
 
 Inputs (fill before starting)
 
-- Task ID: 7
-- Subtask ID: 7.6
+- Task ID: 8
+- Subtask ID: 8.1
 - Related plan files: `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md`
 
 Authoritative references

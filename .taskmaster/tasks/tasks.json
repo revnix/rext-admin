@@ -388,8 +388,8 @@
             "title": "Create Base TopicCard Component",
             "description": "Implement the basic structure of the TopicCard component with minimalistic design and proper layout",
             "dependencies": [],
-            "details": "1. Create `components/topic-builder/results/TopicCard.tsx` file\n2. Implement the basic card structure using the Card component from UI library\n3. Add title, description, and keywords display with proper truncation\n4. Implement the selection checkbox functionality when onSelect prop is provided\n5. Style the card with a minimalistic, modern aesthetic using Tailwind CSS\n6. Add relevance and audience fit score displays\n7. Test the component renders correctly with different topic data",
-            "status": "pending",
+            "details": "1. Create `components/topic-builder/results/TopicCard.tsx` file\n2. Implement the basic card structure using the Card component from UI library\n3. Add title, description, and keywords display with proper truncation\n4. Implement the selection checkbox functionality when onSelect prop is provided\n5. Style the card with a minimalistic, modern aesthetic using Tailwind CSS\n6. Add relevance and audience fit score displays\n7. Test the component renders correctly with different topic data\n<info added on 2025-09-09T18:02:20.136Z>\nImplementation completed successfully. The TopicCard component has been fully implemented with the following features:\n\n- Used shadcn/ui Card components for a clean, minimalistic design\n- Implemented title, description, and keywords display with proper truncation\n- Added selection checkbox functionality with onSelect prop support\n- Created badge display for keywords with truncation logic\n- Integrated relevance and audience fit score displays\n- Added \"View Details\" button that opens a modal\n- Integrated TopicActions component in card footer\n- Implemented saved indicator with tooltip states\n\nThe TopicDetailsModal was also implemented with:\n- Full topic information display (description, why_it_works, keywords)\n- Organized metrics display with all scoring components\n- Channel and audience fit information\n- Expanded TopicActions with button variant and labels\n- Responsive 2-column layout\n\nTechnical implementation includes proper TypeScript definitions, accessibility features, Tailwind CSS styling with animations, and high code quality standards.\n</info added on 2025-09-09T18:02:20.136Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -397,8 +397,8 @@
             "title": "Implement Expand/Collapse Functionality",
             "description": "Add the ability to expand and collapse the topic card to show more or less information",
             "dependencies": ["8.1"],
-            "details": "1. Add state management for expanded/collapsed state using useState\n2. Implement the View Details button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both expanded and collapsed states\n5. Test the expand/collapse toggle functionality\n6. Implement proper accessibility attributes for expandable content",
-            "status": "pending",
+            "details": "1. Add state management for expanded/collapsed state using useState\n2. Implement the View Details button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both expanded and collapsed states\n5. Test the expand/collapse toggle functionality\n6. Implement proper accessibility attributes for expandable content\n<info added on 2025-09-09T18:03:43.396Z>\nImplementation completed using a modal-based approach instead of traditional inline expansion. The approach provides a superior user experience with:\n\n1. Modal state management using useState(false) for controlling dialog visibility\n2. View Details button in CardFooter with proper event handling\n3. Content truncation using Tailwind's line-clamp utilities\n4. Consistent card layout with detailed content in modal instead of expanding inline\n5. Clean toggle functionality through state management\n6. Enhanced accessibility with proper ARIA attributes and keyboard navigation\n\nThe implementation leverages shadcn/ui Dialog component for a polished modal experience that prevents layout shifts and works better on mobile devices. This approach exceeds the original requirements by providing improved user experience, better accessibility, and proper focus management.\n</info added on 2025-09-09T18:03:43.396Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -703,7 +703,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-09T17:42:22.647Z",
+      "updated": "2025-09-09T18:03:58.233Z",
       "description": "Tasks for master context"
     }
   }
