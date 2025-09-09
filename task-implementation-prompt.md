@@ -2,8 +2,8 @@ Task/Subtask Implementation Prompt
 
 Inputs (fill before starting)
 
-- Task ID: 5
-- Subtask ID: 5.4
+- Task ID: 7
+- Subtask ID: 7.6
 - Related plan files: `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md`
 
 Authoritative references
@@ -17,7 +17,7 @@ Project guardrails (must follow)
 - TypeScript everywhere; Next.js App Router
 - Always add types/interfaces etc in "types" folder
 - Always use shadcn/ui 3 and Radix UI for components
-- Always use Zustand for global state management
+- Always use Zustand for yesyeglobal state management
 - Always use TanStack Query for server state management
 - Always use React Hook Form for forms
 - Always use Zod for validation

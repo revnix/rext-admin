@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { classifyError, isOnline } from "@/lib/error-utils";
+import { generateSessionId, saveSession } from "@/lib/session-storage";
 import {
   createInitialFormData,
   prepareFormDataForAPI,
@@ -64,9 +66,16 @@ interface UseTopicBuilderReturn {
   loadDraft: () => TopicBuilderDraft | null;
   clearDraft: () => void;
   hasDraft: boolean;
+
+  // Session management
+  saveGeneratedTopicsAsSession: () => string | null;
+  navigateToResults: (sessionId: string) => void;
 }
 
 export const useTopicBuilder = (): UseTopicBuilderReturn => {
+  // Navigation
+  const router = useRouter();
+
   // Core state
   const [formData, setFormData] = useState<TopicBuilderFormData>(
     createInitialFormData(),
@@ -513,6 +522,28 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
         setGeneratedTopics(topicsWithIds);
         setGenerationError(null); // Clear any previous errors
+
+        // Auto-save session and navigate to results page
+        try {
+          const sessionId = generateSessionId();
+          saveSession({
+            id: sessionId,
+            topics: topicsWithIds,
+            formData: formData,
+          });
+
+          console.log(`Session saved successfully: ${sessionId}`, {
+            topicCount: topicsWithIds.length,
+            formData: formData,
+          });
+
+          // Navigate to results page
+          router.push(`/ideas/create/results/${sessionId}`);
+        } catch (sessionError) {
+          console.error("Failed to save session:", sessionError);
+          // Don't throw, just log the error and continue
+          // User will still see results in current page
+        }
       } else {
         throw new Error("Invalid response format from topic generation API");
       }
@@ -577,7 +608,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       setCurrentRequestId(null);
       setAbortController(null);
     }
-  }, [formData, validateStep, connectionStatus]);
+  }, [formData, validateStep, connectionStatus, router]);
 
   const clearTopics = useCallback(() => {
     setGeneratedTopics([]);
@@ -639,6 +670,40 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     });
   }, []);
 
+  // Session management methods
+  const saveGeneratedTopicsAsSession = useCallback((): string | null => {
+    if (generatedTopics.length === 0) {
+      console.warn("No topics to save as session");
+      return null;
+    }
+
+    try {
+      const sessionId = generateSessionId();
+      saveSession({
+        id: sessionId,
+        topics: generatedTopics,
+        formData: formData,
+      });
+
+      console.log(`Manual session save successful: ${sessionId}`, {
+        topicCount: generatedTopics.length,
+      });
+
+      return sessionId;
+    } catch (error) {
+      console.error("Failed to save session manually:", error);
+      return null;
+    }
+  }, [generatedTopics, formData]);
+
+  const navigateToResults = useCallback(
+    (sessionId: string): void => {
+      console.log(`Navigating to results page: ${sessionId}`);
+      router.push(`/ideas/create/results/${sessionId}`);
+    },
+    [router],
+  );
+
   return {
     // Form state
     formData,
@@ -680,5 +745,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     loadDraft,
     clearDraft,
     hasDraft,
+
+    // Session management
+    saveGeneratedTopicsAsSession,
+    navigateToResults,
   };
 };

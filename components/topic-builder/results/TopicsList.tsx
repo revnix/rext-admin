@@ -174,6 +174,43 @@ export function TopicsList({
     [onBulkSave],
   );
 
+  const handleBulkExport = useCallback(
+    async (topics: GeneratedTopic[], format: "json" | "csv") => {
+      if (!onTopicExport) return;
+
+      try {
+        await onTopicExport(topics, format);
+        console.log(
+          `Bulk exported ${topics.length} topics as ${format.toUpperCase()}`,
+        );
+      } catch (error) {
+        console.error(`Bulk export (${format}) failed:`, error);
+        throw error;
+      }
+    },
+    [onTopicExport],
+  );
+
+  const handleBulkDelete = useCallback(
+    async (topicIds: string[]) => {
+      if (!onTopicDelete) return;
+
+      try {
+        // Delete each topic individually since onTopicDelete expects single IDs
+        for (const topicId of topicIds) {
+          await onTopicDelete(topicId);
+        }
+        console.log(`Bulk deleted ${topicIds.length} topics`);
+        // Clear selection after successful delete
+        setSelectedTopicIds([]);
+      } catch (error) {
+        console.error("Bulk delete failed:", error);
+        throw error;
+      }
+    },
+    [onTopicDelete],
+  );
+
   // Empty state - no topics generated
   if (topics.length === 0) {
     return (
@@ -314,6 +351,8 @@ export function TopicsList({
           selectedTopicIds={selectedTopicIds}
           onSelectAll={handleSelectAll}
           onBulkSave={handleBulkSave}
+          onBulkExport={onTopicExport ? handleBulkExport : undefined}
+          onBulkDelete={onTopicDelete ? handleBulkDelete : undefined}
         />
       </div>
 
