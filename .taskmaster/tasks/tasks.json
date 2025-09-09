@@ -177,7 +177,9 @@
             "id": 2,
             "title": "Remove unnecessary fields from AdvancedStep",
             "description": "Remove the Content Language and Target Region fields from the AdvancedStep component.",
-            "dependencies": ["4.1"],
+            "dependencies": [
+              "4.1"
+            ],
             "details": "1. Identify and remove the Content Language field and its associated label\n2. Identify and remove the Target Region field and its associated label\n3. Ensure the removal doesn't break any existing layout or styling\n4. Remove any related state management code for these fields\n5. Test that the form still functions correctly without these fields\n6. Verify that the form data no longer includes these removed fields when submitted",
             "status": "pending",
             "testStrategy": ""
@@ -186,7 +188,9 @@
             "id": 3,
             "title": "Implement topic count slider with live updates",
             "description": "Add a new slider component to control the number of topic ideas with a range of 1-20 and live value display.",
-            "dependencies": ["4.1"],
+            "dependencies": [
+              "4.1"
+            ],
             "details": "1. Import the Slider component from the UI library\n2. Add a new section for the topic count slider with appropriate labeling\n3. Implement the slider with min=1, max=20, step=1 configuration\n4. Add a live display of the current value next to the label\n5. Create a handler function to update formData with the new value when slider changes\n6. Set a default value of 5 if not already defined\n7. Add min/max labels (1 and 20) below the slider\n8. Ensure the slider updates the form state correctly using the updateFormData function",
             "status": "pending",
             "testStrategy": ""
@@ -195,7 +199,10 @@
             "id": 4,
             "title": "Update ReviewStep to reflect AdvancedStep changes",
             "description": "Modify the ReviewStep component to exclude the removed fields and properly display the new topic count setting.",
-            "dependencies": ["4.2", "4.3"],
+            "dependencies": [
+              "4.2",
+              "4.3"
+            ],
             "details": "1. Open `components/topic-builder/steps/ReviewStep.tsx`\n2. Remove any references to Content Language and Target Region fields\n3. Add or update the display of the topic count (num_ideas) value\n4. Ensure the review step correctly displays all remaining fields from the Advanced Options step\n5. Test that the review accurately reflects the current state of the form\n6. Verify that removed fields don't appear in the final submission data\n7. Update any related validation logic if necessary",
             "status": "pending",
             "testStrategy": ""
@@ -209,7 +216,12 @@
         "details": "1. Modify `components/topic-builder/steps/ReviewStep.tsx`\n2. Replace 3-column layout with responsive grid layout using Tailwind CSS\n3. Create a new ReviewFieldCard component with icons, labels, and values\n4. Add edit buttons for quick field modifications that navigate back to specific steps\n5. Improve mobile responsiveness with appropriate grid breakpoints\n\nImplementation example:\n```typescript\n// Create new component: components/topic-builder/ReviewFieldCard.tsx\ninterface ReviewFieldCardProps {\n  icon: React.ReactNode;\n  label: string;\n  value: string | string[] | undefined;\n  onEdit?: () => void;\n}\n\nconst ReviewFieldCard = ({ icon, label, value, onEdit }: ReviewFieldCardProps) => {\n  return (\n    <div className=\"p-4 border rounded-lg bg-card\">\n      <div className=\"flex justify-between items-start mb-2\">\n        <div className=\"flex items-center gap-2\">\n          {icon}\n          <h3 className=\"font-medium\">{label}</h3>\n        </div>\n        {onEdit && (\n          <Button variant=\"ghost\" size=\"sm\" onClick={onEdit}>\n            <PencilIcon className=\"h-4 w-4 mr-1\" />\n            Edit\n          </Button>\n        )}\n      </div>\n      <div className=\"text-sm text-muted-foreground\">\n        {Array.isArray(value) ? (\n          <div className=\"flex flex-wrap gap-1\">\n            {value.map((item, i) => (\n              <Badge key={i} variant=\"secondary\">{item}</Badge>\n            ))}\n          </div>\n        ) : (\n          <p>{value || 'Not specified'}</p>\n        )}\n      </div>\n    </div>\n  );\n};\n\n// In ReviewStep.tsx\nconst ReviewStep = () => {\n  const { formData, goToStep } = useTopicBuilder();\n  \n  return (\n    <div className=\"space-y-6\">\n      <h2 className=\"text-xl font-semibold\">Review Your Selections</h2>\n      \n      <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\">\n        <ReviewFieldCard\n          icon={<BuildingIcon className=\"h-5 w-5\" />}\n          label=\"Industry\"\n          value={formData.industry}\n          onEdit={() => goToStep(0)} // Navigate to industry step\n        />\n        \n        <ReviewFieldCard\n          icon={<UsersIcon className=\"h-5 w-5\" />}\n          label=\"Audience\"\n          value={formData.audience}\n          onEdit={() => goToStep(1)} // Navigate to audience step\n        />\n        \n        {/* Additional ReviewFieldCards for other form fields */}\n      </div>\n    </div>\n  );\n};\n```",
         "testStrategy": "1. Write unit tests for the new ReviewFieldCard component\n2. Create component tests for ReviewStep to verify the grid layout renders correctly\n3. Test that the edit buttons correctly navigate to the appropriate steps\n4. Test the responsive behavior of the grid layout at different screen sizes\n5. Verify that all form data is correctly displayed in the review cards\n6. Test keyboard navigation and accessibility of the edit buttons\n7. Test that the review step correctly handles various data types (strings, arrays, etc.)",
         "priority": "medium",
-        "dependencies": [1, 2, 3, 4],
+        "dependencies": [
+          1,
+          2,
+          3,
+          4
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -225,7 +237,9 @@
             "id": 2,
             "title": "Implement Responsive Grid Layout",
             "description": "Replace the existing 3-column layout with a responsive grid system in the Review Step",
-            "dependencies": ["5.1"],
+            "dependencies": [
+              "5.1"
+            ],
             "details": "1. Modify `components/topic-builder/steps/ReviewStep.tsx`\n2. Remove the existing column layout structure\n3. Implement a responsive grid layout using Tailwind CSS grid classes\n4. Configure appropriate grid breakpoints (1 column on mobile, 2 on medium screens, 3 on large screens)\n5. Ensure proper spacing between grid items\n6. Test the layout at different viewport sizes\n7. Verify that the grid maintains proper alignment and spacing",
             "status": "pending",
             "testStrategy": ""
@@ -234,7 +248,10 @@
             "id": 3,
             "title": "Add Edit Functionality with Step Navigation",
             "description": "Implement edit buttons that navigate users back to specific form steps",
-            "dependencies": ["5.1", "5.2"],
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
             "details": "1. Update the ReviewStep component to use the useTopicBuilder hook for accessing navigation functions\n2. Map each field to its corresponding step index in the wizard\n3. Implement onEdit callbacks that use the goToStep function to navigate to the appropriate step\n4. Ensure navigation preserves the current form data\n5. Add appropriate aria labels and keyboard accessibility for edit buttons\n6. Test that clicking edit buttons correctly navigates to the expected steps",
             "status": "pending",
             "testStrategy": ""
@@ -243,7 +260,11 @@
             "id": 4,
             "title": "Implement Field Type-Specific Display Logic",
             "description": "Add specialized rendering for different field types in the review step",
-            "dependencies": ["5.1", "5.2", "5.3"],
+            "dependencies": [
+              "5.1",
+              "5.2",
+              "5.3"
+            ],
             "details": "1. Enhance the ReviewFieldCard to properly display different data types\n2. Implement Badge components for array values (tags, keywords, etc.)\n3. Add conditional rendering for boolean values\n4. Handle empty states with appropriate placeholder text\n5. Ensure long text values are properly truncated or wrapped\n6. Add appropriate icons for each field type from the icon library\n7. Test the display with various field types and edge cases",
             "status": "pending",
             "testStrategy": ""
@@ -273,7 +294,9 @@
             "id": 2,
             "title": "Create Cancel Button UI in Loading Screen",
             "description": "Add a cancel button to the AILoadingScreen component with proper styling and positioning",
-            "dependencies": ["6.1"],
+            "dependencies": [
+              "6.1"
+            ],
             "details": "1. Modify components/topic-builder/AILoadingScreen.tsx\n2. Add a cancel button with appropriate styling using the Button component\n3. Position the button correctly within the loading screen layout\n4. Connect the button's onClick handler to a local handleCancel function\n5. Import the cancelGeneration function from useTopicBuilder\n6. Ensure the button is only visible when generation is in progress\n<info added on 2025-09-08T14:50:38.950Z>\nImplementation completed successfully. Added cancel button UI to the loading screen with proper styling and functionality. The button is positioned below the status text, centered, and only appears when generation is in progress. It uses the Button component with outline variant and includes both an X icon and \"Cancel Generation\" text. The implementation integrates with the AbortController from subtask 6.1 via the useTopicBuilder hook's cancelGeneration function. Button styling matches the loading screen design with semi-transparent background and appropriate hover effects. All code follows project standards with proper TypeScript typing and no errors.\n</info added on 2025-09-08T14:50:38.950Z>",
             "status": "done",
             "testStrategy": ""
@@ -282,7 +305,9 @@
             "id": 3,
             "title": "Implement Confirmation Dialog for Cancellation",
             "description": "Create a confirmation dialog that appears when the user attempts to cancel generation",
-            "dependencies": ["6.2"],
+            "dependencies": [
+              "6.2"
+            ],
             "details": "1. Add state for managing the confirmation dialog visibility\n2. Implement the Dialog component from the UI library\n3. Create confirmCancel and dismissConfirmation functions\n4. Design the dialog with appropriate title, description, and action buttons\n5. Connect the confirmation action to the cancelGeneration function\n6. Ensure the dialog is accessible and follows design guidelines\n<info added on 2025-09-08T14:58:18.588Z>\n## Implementation Summary\n- Added confirmation dialog using shadcn/ui Dialog components with proper accessibility\n- Implemented state management with showCancelDialog boolean state\n- Created three handler functions:\n  - handleCancelClick(): Shows confirmation dialog\n  - handleConfirmCancel(): Confirms cancellation and calls cancelGeneration()\n  - handleDismissCancel(): Dismisses dialog and continues generation\n- Added modern dialog with futuristic styling matching the loading screen aesthetic\n- Dialog includes clear title, descriptive text, and two action buttons\n\n## Files Changed\n- `/components/topic-builder/AILoadingScreen.tsx`: Added Dialog imports, state management, handlers, and confirmation dialog JSX\n\n## Key Features\n- Prevention of accidental cancellation through confirmation step\n- Clear user communication about consequences of cancellation\n- Accessible keyboard navigation and screen reader support\n- Consistent styling with primary loading screen\n- Proper state management and cleanup\n\n## Verification\n- Build completed successfully with no TypeScript errors\n- Code formatted and linted successfully\n- Dialog integrates seamlessly with existing AbortController functionality from subtask 6.2\n- All acceptance criteria met including accessibility and UX requirements\n</info added on 2025-09-08T14:58:18.588Z>",
             "status": "done",
             "testStrategy": ""
@@ -300,7 +325,10 @@
             "id": 5,
             "title": "Implement Error Handling for Aborted Requests",
             "description": "Add proper error handling for aborted requests and user feedback",
-            "dependencies": ["6.1", "6.3"],
+            "dependencies": [
+              "6.1",
+              "6.3"
+            ],
             "details": "1. Update the catch block in API requests to properly identify and handle AbortError\n2. Add user feedback for successful cancellation (toast notification or message)\n3. Ensure the UI returns to the appropriate state after cancellation\n4. Add logging for cancellation events for analytics purposes\n5. Test error handling with various scenarios (slow network, timeout, etc.)\n6. Ensure cancellation doesn't leave the application in an inconsistent state",
             "status": "pending",
             "testStrategy": ""
@@ -314,7 +342,9 @@
         "details": "1. Create new route file `app/ideas/create/results/[temporaryId]/page.tsx`\n2. Implement session storage for unsaved results using localStorage with expiration\n3. Add session recovery functionality with banner notifications\n4. Create breadcrumb navigation and dedicated layout\n\nImplementation example:\n```typescript\n// Create utility for session storage: lib/session-storage.ts\nconst SESSION_KEY_PREFIX = 'wrext-topic-session-';\nconst SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours\n\nexport interface SessionData {\n  id: string;\n  topics: GeneratedTopic[];\n  formData: TopicBuilderFormData;\n  createdAt: number;\n  expiresAt: number;\n}\n\nexport const saveSession = (data: Omit<SessionData, 'createdAt' | 'expiresAt'>) => {\n  const now = Date.now();\n  const sessionData: SessionData = {\n    ...data,\n    createdAt: now,\n    expiresAt: now + SESSION_EXPIRY\n  };\n  \n  localStorage.setItem(\n    `${SESSION_KEY_PREFIX}${data.id}`,\n    JSON.stringify(sessionData)\n  );\n};\n\nexport const getSession = (id: string): SessionData | null => {\n  const data = localStorage.getItem(`${SESSION_KEY_PREFIX}${id}`);\n  if (!data) return null;\n  \n  const session = JSON.parse(data) as SessionData;\n  \n  // Check if session has expired\n  if (Date.now() > session.expiresAt) {\n    localStorage.removeItem(`${SESSION_KEY_PREFIX}${id}`);\n    return null;\n  }\n  \n  return session;\n};\n\n// Create results page: app/ideas/create/results/[temporaryId]/page.tsx\n'use client';\n\nimport { useEffect, useState } from 'react';\nimport { useParams } from 'next/navigation';\nimport { getSession } from '@/lib/session-storage';\nimport { Breadcrumb } from '@/components/ui/breadcrumb';\nimport { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';\nimport { TopicCard } from '@/components/topic-builder/results/TopicCard';\nimport { BulkActions } from '@/components/topic-builder/results/BulkActions';\n\nexport default function ResultsPage() {\n  const { temporaryId } = useParams();\n  const [session, setSession] = useState<SessionData | null>(null);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState<string | null>(null);\n  \n  useEffect(() => {\n    if (temporaryId) {\n      const sessionData = getSession(temporaryId as string);\n      if (sessionData) {\n        setSession(sessionData);\n      } else {\n        setError('Session not found or expired');\n      }\n    }\n    setLoading(false);\n  }, [temporaryId]);\n  \n  if (loading) {\n    return <div>Loading...</div>;\n  }\n  \n  if (error || !session) {\n    return (\n      <Alert variant=\"destructive\">\n        <AlertTitle>Session Error</AlertTitle>\n        <AlertDescription>\n          {error || 'Unable to load session data. The session may have expired.'}\n        </AlertDescription>\n      </Alert>\n    );\n  }\n  \n  return (\n    <div className=\"space-y-6\">\n      <Breadcrumb items={[\n        { label: 'Dashboard', href: '/' },\n        { label: 'Ideas', href: '/ideas' },\n        { label: 'Create', href: '/ideas/create' },\n        { label: 'Results', href: '#', current: true }\n      ]} />\n      \n      <div className=\"flex justify-between items-center\">\n        <h1 className=\"text-2xl font-bold\">Generated Topic Ideas</h1>\n        <BulkActions topics={session.topics} />\n      </div>\n      \n      <Alert>\n        <AlertTitle>Temporary Session</AlertTitle>\n        <AlertDescription>\n          These results are stored temporarily and will expire in {Math.ceil((session.expiresAt - Date.now()) / (1000 * 60 * 60))} hours. \n          Save your favorite topics to keep them permanently.\n        </AlertDescription>\n      </Alert>\n      \n      <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\">\n        {session.topics.map((topic) => (\n          <TopicCard key={topic.id} topic={topic} />\n        ))}\n      </div>\n    </div>\n  );\n}\n```",
         "testStrategy": "1. Write unit tests for the session storage utility functions\n2. Test session expiration logic to ensure expired sessions are properly cleaned up\n3. Create component tests for the ResultsPage to verify it correctly loads session data\n4. Test error handling for missing or expired sessions\n5. Test the breadcrumb navigation to ensure it correctly links to parent pages\n6. Test the responsive behavior of the grid layout at different screen sizes\n7. Test that the expiration warning correctly calculates and displays remaining time\n8. Test that the page correctly renders all topics from the session",
         "priority": "high",
-        "dependencies": [6],
+        "dependencies": [
+          6
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -380,7 +410,9 @@
         "details": "1. Create `components/topic-builder/results/TopicCard.tsx` component\n2. Design with minimalistic, modern aesthetic\n3. Add expand functionality for detailed view\n4. Create TopicDetailsModal component with full metadata display\n5. Add quick action buttons (save, edit, use for content)\n6. Implement card animations and hover effects\n\nImplementation example:\n```typescript\n// Create TopicCard component: components/topic-builder/results/TopicCard.tsx\nimport { useState } from 'react';\nimport { Card, CardContent, CardFooter } from '@/components/ui/card';\nimport { Badge } from '@/components/ui/badge';\nimport { Button } from '@/components/ui/button';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';\nimport { TopicActions } from '@/components/topic-builder/results/TopicActions';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface TopicCardProps {\n  topic: GeneratedTopic;\n  onSelect?: (id: string, selected: boolean) => void;\n  isSelected?: boolean;\n}\n\nexport const TopicCard = ({ topic, onSelect, isSelected }: TopicCardProps) => {\n  const [showDetails, setShowDetails] = useState(false);\n  \n  return (\n    <>\n      <Card className={`transition-all duration-200 hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''}`}>\n        <CardContent className=\"pt-6\">\n          {onSelect && (\n            <div className=\"absolute top-2 right-2\">\n              <input \n                type=\"checkbox\" \n                checked={isSelected} \n                onChange={(e) => onSelect(topic.id, e.target.checked)}\n                className=\"h-4 w-4\"\n              />\n            </div>\n          )}\n          \n          <h3 className=\"font-semibold text-lg mb-2 line-clamp-2\">{topic.title}</h3>\n          \n          <p className=\"text-muted-foreground text-sm mb-4 line-clamp-3\">{topic.description}</p>\n          \n          <div className=\"flex flex-wrap gap-1 mb-2\">\n            {topic.keywords.slice(0, 3).map((keyword, i) => (\n              <Badge key={i} variant=\"outline\">{keyword}</Badge>\n            ))}\n            {topic.keywords.length > 3 && (\n              <Badge variant=\"outline\">+{topic.keywords.length - 3}</Badge>\n            )}\n          </div>\n          \n          <div className=\"flex items-center gap-4 text-sm\">\n            <div className=\"flex items-center gap-1\">\n              <span className=\"text-muted-foreground\">Relevance:</span>\n              <span className=\"font-medium\">{topic.relevance_score}/10</span>\n            </div>\n            <div className=\"flex items-center gap-1\">\n              <span className=\"text-muted-foreground\">Audience Fit:</span>\n              <span className=\"font-medium\">{topic.audience_fit}/10</span>\n            </div>\n          </div>\n        </CardContent>\n        \n        <CardFooter className=\"flex justify-between border-t pt-4\">\n          <Button variant=\"ghost\" size=\"sm\" onClick={() => setShowDetails(true)}>\n            View Details\n          </Button>\n          \n          <TopicActions topic={topic} />\n        </CardFooter>\n      </Card>\n      \n      {/* Details Modal */}\n      <Dialog open={showDetails} onOpenChange={setShowDetails}>\n        <DialogContent className=\"max-w-2xl\">\n          <DialogHeader>\n            <DialogTitle>{topic.title}</DialogTitle>\n          </DialogHeader>\n          \n          <div className=\"space-y-4\">\n            <div>\n              <h4 className=\"text-sm font-medium mb-1\">Description</h4>\n              <p className=\"text-muted-foreground\">{topic.description}</p>\n            </div>\n            \n            <div>\n              <h4 className=\"text-sm font-medium mb-1\">Why It Works</h4>\n              <p className=\"text-muted-foreground\">{topic.why_it_works}</p>\n            </div>\n            \n            <div>\n              <h4 className=\"text-sm font-medium mb-1\">Keywords</h4>\n              <div className=\"flex flex-wrap gap-1\">\n                {topic.keywords.map((keyword, i) => (\n                  <Badge key={i} variant=\"outline\">{keyword}</Badge>\n                ))}\n              </div>\n            </div>\n            \n            <div className=\"grid grid-cols-2 gap-4\">\n              <div>\n                <h4 className=\"text-sm font-medium mb-1\">Metrics</h4>\n                <ul className=\"text-sm\">\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Relevance Score:</span>\n                    <span>{topic.relevance_score}/10</span>\n                  </li>\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Audience Fit:</span>\n                    <span>{topic.audience_fit}/10</span>\n                  </li>\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Channel Fit:</span>\n                    <span>{topic.channel_fit}/10</span>\n                  </li>\n                </ul>\n              </div>\n              \n              <div>\n                <h4 className=\"text-sm font-medium mb-1\">Details</h4>\n                <ul className=\"text-sm\">\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Platform:</span>\n                    <span>{topic.platform || 'Not specified'}</span>\n                  </li>\n                  <li className=\"flex justify-between\">\n                    <span className=\"text-muted-foreground\">Created:</span>\n                    <span>{new Date(topic.created_at).toLocaleDateString()}</span>\n                  </li>\n                </ul>\n              </div>\n            </div>\n          </div>\n          \n          <div className=\"flex justify-end gap-2 mt-4\">\n            <TopicActions topic={topic} expanded />\n          </div>\n        </DialogContent>\n      </Dialog>\n    </>\n  );\n};\n```",
         "testStrategy": "1. Write unit tests for the TopicCard component to verify it renders correctly with different props\n2. Test the expand functionality and modal display\n3. Test the selection checkbox behavior when onSelect is provided\n4. Test that the card correctly displays truncated content with line-clamp\n5. Test the responsive behavior of the card at different screen sizes\n6. Test keyboard navigation and accessibility of the card and modal\n7. Test that the TopicActions component is correctly integrated\n8. Test animations and hover effects work as expected",
         "priority": "medium",
-        "dependencies": [7],
+        "dependencies": [
+          7
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -396,7 +428,9 @@
             "id": 2,
             "title": "Implement Expand/Collapse Functionality",
             "description": "Add the ability to expand and collapse the topic card to show more or less information",
-            "dependencies": ["8.1"],
+            "dependencies": [
+              "8.1"
+            ],
             "details": "1. Add state management for expanded/collapsed state using useState\n2. Implement the View Details button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both expanded and collapsed states\n5. Test the expand/collapse toggle functionality\n6. Implement proper accessibility attributes for expandable content",
             "status": "pending",
             "testStrategy": ""
@@ -405,7 +439,9 @@
             "id": 3,
             "title": "Create TopicDetailsModal Component",
             "description": "Implement a modal dialog that displays the full details of a topic when expanded",
-            "dependencies": ["8.2"],
+            "dependencies": [
+              "8.2"
+            ],
             "details": "1. Create the Dialog component structure for the details modal\n2. Implement the modal header with topic title\n3. Create sections for description, why it works, and keywords\n4. Add metrics display with relevance score, audience fit, and channel fit\n5. Implement additional details section with platform and creation date\n6. Ensure the modal is responsive and scrollable for large content\n7. Add close functionality and proper focus management",
             "status": "pending",
             "testStrategy": ""
@@ -414,7 +450,9 @@
             "id": 4,
             "title": "Implement Quick Action Buttons",
             "description": "Add action buttons for save, edit, and use for content generation",
-            "dependencies": ["8.1"],
+            "dependencies": [
+              "8.1"
+            ],
             "details": "1. Create `components/topic-builder/results/TopicActions.tsx` component\n2. Implement action buttons with appropriate icons\n3. Add hover and focus states for buttons\n4. Create expanded and collapsed variants of the actions component\n5. Implement proper tooltips for action buttons\n6. Ensure actions are accessible via keyboard\n7. Test that all buttons trigger the correct actions",
             "status": "pending",
             "testStrategy": ""
@@ -423,7 +461,12 @@
             "id": 5,
             "title": "Add Animations and Hover Effects",
             "description": "Implement smooth animations and hover effects to enhance the user experience",
-            "dependencies": ["8.1", "8.2", "8.3", "8.4"],
+            "dependencies": [
+              "8.1",
+              "8.2",
+              "8.3",
+              "8.4"
+            ],
             "details": "1. Add transition effects for card hover state using Tailwind's transition classes\n2. Implement shadow animation on hover\n3. Add subtle scale effect when hovering over action buttons\n4. Implement smooth transitions for the expand/collapse functionality\n5. Add animation for modal opening and closing\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues",
             "status": "pending",
             "testStrategy": ""
@@ -441,7 +484,9 @@
             "id": 7,
             "title": "Implement Expand/Collapse Functionality",
             "description": "Add the ability to expand and collapse the topic card to show more details",
-            "dependencies": ["8.6"],
+            "dependencies": [
+              "8.6"
+            ],
             "details": "1. Add state management for expanded/collapsed state\n2. Implement the 'View Details' button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both states\n5. Add proper accessibility attributes for expand/collapse functionality\n6. Test the expand/collapse behavior works correctly",
             "status": "pending",
             "testStrategy": ""
@@ -450,7 +495,10 @@
             "id": 8,
             "title": "Create TopicDetailsModal Component",
             "description": "Implement a modal dialog that displays the full topic details when a card is expanded",
-            "dependencies": ["8.6", "8.7"],
+            "dependencies": [
+              "8.6",
+              "8.7"
+            ],
             "details": "1. Create the Dialog component structure for the details modal\n2. Implement the modal header with topic title\n3. Create sections for description, why it works, and keywords\n4. Add metrics display with proper formatting\n5. Implement additional details section with platform and creation date\n6. Ensure the modal is responsive on different screen sizes\n7. Test that all topic data is correctly displayed in the modal",
             "status": "pending",
             "testStrategy": ""
@@ -459,7 +507,9 @@
             "id": 9,
             "title": "Implement Quick Action Buttons",
             "description": "Add action buttons for save, edit, and use for content generation",
-            "dependencies": ["8.6"],
+            "dependencies": [
+              "8.6"
+            ],
             "details": "1. Create `components/topic-builder/results/TopicActions.tsx` component\n2. Implement action buttons with proper icons\n3. Add hover states and tooltips for each action\n4. Create expanded and collapsed states for the actions component\n5. Wire up basic click handlers for each action\n6. Ensure actions are accessible via keyboard navigation\n7. Test that all buttons render correctly and respond to interactions",
             "status": "pending",
             "testStrategy": ""
@@ -468,7 +518,12 @@
             "id": 10,
             "title": "Add Animations and Hover Effects",
             "description": "Implement smooth animations and hover effects to enhance the user experience",
-            "dependencies": ["8.6", "8.7", "8.8", "8.9"],
+            "dependencies": [
+              "8.6",
+              "8.7",
+              "8.8",
+              "8.9"
+            ],
             "details": "1. Add transition effects for card hover state\n2. Implement subtle scale animation on hover\n3. Add shadow depth changes on hover and selection\n4. Create smooth transitions for expand/collapse actions\n5. Implement fade-in/fade-out animations for the details modal\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues",
             "status": "pending",
             "testStrategy": ""
@@ -482,7 +537,9 @@
         "details": "1. Create `components/topic-builder/results/BulkActions.tsx` component\n2. Add checkbox selection for multiple topics\n3. Implement selection state management\n4. Create bulk save functionality\n5. Add export options (JSON, CSV formats)\n6. Wire \"Write Content\" navigation to `/flows/create?topicId=<id>`\n\nImplementation example:\n```typescript\n// Create BulkActions component: components/topic-builder/results/BulkActions.tsx\nimport { useState } from 'react';\nimport { Button } from '@/components/ui/button';\nimport { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '@/components/ui/dropdown';\nimport { toast } from '@/components/ui/toast';\nimport { GeneratedTopic } from '@/types/topic-builder';\n\ninterface BulkActionsProps {\n  topics: GeneratedTopic[];\n  selectedIds?: string[];\n  onSelectAll?: (selected: boolean) => void;\n  onClearSelection?: () => void;\n}\n\nexport const BulkActions = ({ \n  topics, \n  selectedIds = [], \n  onSelectAll, \n  onClearSelection \n}: BulkActionsProps) => {\n  const hasSelection = selectedIds.length > 0;\n  \n  const handleSaveAll = async () => {\n    try {\n      // Filter topics by selected IDs\n      const topicsToSave = topics.filter(topic => selectedIds.includes(topic.id));\n      \n      // Call API to save topics\n      const response = await fetch('/api/topics/bulk-save', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ topics: topicsToSave })\n      });\n      \n      if (!response.ok) throw new Error('Failed to save topics');\n      \n      toast({\n        title: 'Topics Saved',\n        description: `Successfully saved ${selectedIds.length} topics.`\n      });\n      \n      // Clear selection after save\n      if (onClearSelection) onClearSelection();\n    } catch (error) {\n      toast({\n        title: 'Error',\n        description: error.message,\n        variant: 'destructive'\n      });\n    }\n  };\n  \n  const handleExport = async (format: 'json' | 'csv') => {\n    try {\n      // Filter topics by selected IDs\n      const topicsToExport = topics.filter(topic => \n        selectedIds.length ? selectedIds.includes(topic.id) : true\n      );\n      \n      let content: string;\n      let filename: string;\n      let type: string;\n      \n      if (format === 'json') {\n        content = JSON.stringify(topicsToExport, null, 2);\n        filename = 'topics-export.json';\n        type = 'application/json';\n      } else {\n        // Convert to CSV\n        const headers = 'Title,Description,Keywords,Relevance Score,Audience Fit\\n';\n        const rows = topicsToExport.map(topic => {\n          return `\"${topic.title.replace(/\"/g, '\"\"')}\",\"${topic.description.replace(/\"/g, '\"\"')}\",\"${topic.keywords.join(', ')}\",${topic.relevance_score},${topic.audience_fit}`;\n        }).join('\\n');\n        \n        content = headers + rows;\n        filename = 'topics-export.csv';\n        type = 'text/csv';\n      }\n      \n      // Create download link\n      const blob = new Blob([content], { type });\n      const url = URL.createObjectURL(blob);\n      const link = document.createElement('a');\n      link.href = url;\n      link.download = filename;\n      document.body.appendChild(link);\n      link.click();\n      document.body.removeChild(link);\n      URL.revokeObjectURL(url);\n      \n      toast({\n        title: 'Export Complete',\n        description: `Successfully exported ${topicsToExport.length} topics as ${format.toUpperCase()}.`\n      });\n    } catch (error) {\n      toast({\n        title: 'Export Error',\n        description: error.message,\n        variant: 'destructive'\n      });\n    }\n  };\n  \n  return (\n    <div className=\"flex items-center gap-2\">\n      {onSelectAll && (\n        <Button \n          variant=\"outline\" \n          size=\"sm\"\n          onClick={() => onSelectAll(true)}\n        >\n          Select All\n        </Button>\n      )}\n      \n      {hasSelection && onClearSelection && (\n        <Button \n          variant=\"ghost\" \n          size=\"sm\"\n          onClick={onClearSelection}\n        >\n          Clear Selection ({selectedIds.length})\n        </Button>\n      )}\n      \n      <Dropdown>\n        <DropdownTrigger asChild>\n          <Button variant=\"outline\" size=\"sm\">\n            Export\n          </Button>\n        </DropdownTrigger>\n        <DropdownContent>\n          <DropdownItem onClick={() => handleExport('json')}>Export as JSON</DropdownItem>\n          <DropdownItem onClick={() => handleExport('csv')}>Export as CSV</DropdownItem>\n        </DropdownContent>\n      </Dropdown>\n      \n      {hasSelection && (\n        <Button \n          variant=\"default\" \n          size=\"sm\"\n          onClick={handleSaveAll}\n        >\n          Save Selected ({selectedIds.length})\n        </Button>\n      )}\n    </div>\n  );\n};\n```",
         "testStrategy": "1. Write unit tests for the BulkActions component to verify it renders correctly with different props\n2. Test the selection state management logic\n3. Test the bulk save functionality with API mocking\n4. Test the export functionality for both JSON and CSV formats\n5. Verify that the exported files contain the correct data\n6. Test error handling for API failures\n7. Test that toast notifications are displayed correctly\n8. Test keyboard navigation and accessibility of the dropdown and buttons",
         "priority": "medium",
-        "dependencies": [8],
+        "dependencies": [
+          8
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -498,7 +555,9 @@
             "id": 2,
             "title": "Create BulkActions Component UI",
             "description": "Develop the BulkActions component with all required UI elements and styling",
-            "dependencies": ["9.1"],
+            "dependencies": [
+              "9.1"
+            ],
             "details": "1. Create the BulkActions.tsx file in components/topic-builder/results/\n2. Implement the component interface with required props\n3. Add Select All and Clear Selection buttons\n4. Create the Export dropdown with JSON and CSV options\n5. Add the Save Selected button with counter\n6. Style the component using Tailwind CSS for responsive design\n7. Add proper disabled states for buttons when no selection is present",
             "status": "pending",
             "testStrategy": ""
@@ -507,7 +566,10 @@
             "id": 3,
             "title": "Implement Bulk Save Functionality",
             "description": "Create the functionality to save multiple selected topics at once",
-            "dependencies": ["9.1", "9.2"],
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
             "details": "1. Create an API endpoint at /api/topics/bulk-save\n2. Implement the handleSaveAll function in BulkActions component\n3. Filter topics based on selected IDs\n4. Add proper error handling with toast notifications\n5. Implement loading states during save operation\n6. Add success feedback with count of saved topics\n7. Clear selection after successful save operation",
             "status": "pending",
             "testStrategy": ""
@@ -516,7 +578,10 @@
             "id": 4,
             "title": "Create JSON Export Functionality",
             "description": "Implement the ability to export selected topics in JSON format",
-            "dependencies": ["9.1", "9.2"],
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
             "details": "1. Create a JSON export handler function in the BulkActions component\n2. Filter topics based on selected IDs (or use all if none selected)\n3. Format the data as properly structured JSON\n4. Generate a downloadable file with proper MIME type\n5. Create the browser download mechanism\n6. Add success notification with export count\n7. Test with various data sizes and special characters",
             "status": "pending",
             "testStrategy": ""
@@ -525,7 +590,10 @@
             "id": 5,
             "title": "Create CSV Export Functionality",
             "description": "Implement the ability to export selected topics in CSV format",
-            "dependencies": ["9.1", "9.2"],
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
             "details": "1. Create a CSV export handler function in the BulkActions component\n2. Filter topics based on selected IDs (or use all if none selected)\n3. Generate CSV headers based on topic properties\n4. Convert topic data to CSV format with proper escaping for special characters\n5. Generate a downloadable file with text/csv MIME type\n6. Create the browser download mechanism\n7. Add success notification with export count",
             "status": "pending",
             "testStrategy": ""
@@ -534,7 +602,9 @@
             "id": 6,
             "title": "Implement Content Creation Navigation",
             "description": "Wire up the \"Write Content\" navigation to the content creation flow",
-            "dependencies": ["9.2"],
+            "dependencies": [
+              "9.2"
+            ],
             "details": "1. Add a \"Write Content\" button to individual topic cards\n2. Create a navigation handler that redirects to /flows/create?topicId=<id>\n3. Implement a bulk content creation option for multiple selected topics\n4. Pass the selected topic IDs as query parameters\n5. Ensure the receiving page can handle both single and multiple topic IDs\n6. Add loading states during navigation\n7. Test navigation with various topic selections",
             "status": "pending",
             "testStrategy": ""
@@ -564,7 +634,9 @@
             "id": 2,
             "title": "Create Advanced Filtering with Array Support",
             "description": "Implement advanced filtering capabilities that support filtering on array fields and multiple filter conditions.",
-            "dependencies": ["10.1"],
+            "dependencies": [
+              "10.1"
+            ],
             "details": "1. Add column-specific filter components for different data types (text, number, date, boolean)\n2. Implement array field filtering logic that can search within array values\n3. Create a FilterPopover component for complex filter configuration\n4. Add support for multiple concurrent filters across different columns\n5. Implement filter operators (equals, contains, greater than, less than, etc.)\n6. Add UI for active filters with ability to remove individual filters\n7. Ensure filters work correctly with pagination and sorting",
             "status": "pending",
             "testStrategy": ""
@@ -591,7 +663,9 @@
             "id": 5,
             "title": "Implement Row-Level Action System",
             "description": "Create a system for adding contextual actions to individual table rows, such as edit, delete, and custom actions.",
-            "dependencies": ["10.4"],
+            "dependencies": [
+              "10.4"
+            ],
             "details": "1. Add a rowActions prop that accepts a function returning action components for each row\n2. Create an ActionsCell component for the last column to display row actions\n3. Implement hover-reveal actions to reduce visual clutter\n4. Add support for action menus with multiple options\n5. Ensure actions receive the full row data for context\n6. Add confirmation dialogs for destructive actions\n7. Test row actions with various screen sizes and interaction methods",
             "status": "pending",
             "testStrategy": ""
@@ -600,7 +674,9 @@
             "id": 6,
             "title": "Create Responsive Mobile Card View",
             "description": "Implement a responsive design that transforms the table into a card-based layout on mobile devices for better usability.",
-            "dependencies": ["10.5"],
+            "dependencies": [
+              "10.5"
+            ],
             "details": "1. Create a mobile card view component that displays each row as a card\n2. Use media queries and conditional rendering to switch between table and card views\n3. Format each cell's data with appropriate labels from column headers\n4. Ensure row actions are accessible in the card view\n5. Implement collapsible sections for cards with many fields\n6. Add touch-friendly interaction patterns for mobile users\n7. Test the responsive behavior across various device sizes and orientations",
             "status": "pending",
             "testStrategy": ""
@@ -615,11 +691,113 @@
             "testStrategy": ""
           }
         ]
+      },
+      {
+        "id": 11,
+        "title": "Revamp Topic Builder Questions UI/UX with TypeForm-like Experience",
+        "description": "Redesign the Topic Builder to reduce questions to only essentials, and overhaul the questions UI/UX to deliver a TypeForm-inspired, intuitive, and engaging experience, updating all related schemas, validation, transformations, and documentation.",
+        "details": "1. Audit the current Topic Builder flow and identify all existing questions; collaborate with stakeholders to determine the minimal set of essential questions required for topic generation, referencing the features-improvements-notes.md requirements.\n\n2. Redesign the UI/UX to follow TypeForm best practices: implement a single-question-per-step flow, clear progress indicators, keyboard navigation (e.g., Enter to advance), and forward/backward navigation controls[1][3]. Use friendly, conversational language and microinteractions to make the experience engaging and reduce abandonment[3].\n\n3. Integrate visually appealing icons and illustrations for each question, leveraging a consistent minimalist design system and color palette for clarity and delight[2][5]. Add fun elements (e.g., subtle animations, celebratory feedback on completion) to enhance user engagement[2].\n\n4. Refactor the Topic Builder's React components to support the new step-based flow, ensuring accessibility (ARIA roles, keyboard support), responsive design, and smooth transitions between steps.\n\n5. Update all related schemas (e.g., question definitions, user responses), validation logic (client and server), and data transformation functions to match the new reduced question set and flow.\n\n6. Revise documentation and developer guides to reflect the new UI/UX, schema changes, and integration patterns.\n\n7. Ensure all changes are compatible with downstream components (e.g., topic cards, results page) and coordinate with related teams as needed.\n\nBest practices to follow include: clear button hierarchy and feedback, consistent iconography, adequate padding, legible typography, and providing estimated completion time at the start[1][4][5].",
+        "testStrategy": "1. Write comprehensive unit and integration tests for the new Topic Builder components, covering step navigation, keyboard controls, and conditional logic.\n\n2. Conduct usability testing with representative users to validate intuitiveness, engagement, and reduction in cognitive load.\n\n3. Verify that only essential questions are presented and that the flow adapts correctly to user input (including conditional logic where applicable).\n\n4. Test accessibility compliance (WCAG 2.1 AA), including screen reader support and keyboard navigation.\n\n5. Validate that all schema, validation, and transformation updates are correctly enforced in both frontend and backend.\n\n6. Review documentation updates for accuracy and completeness.\n\n7. Perform regression testing to ensure compatibility with downstream features such as topic cards and results pages.",
+        "status": "pending",
+        "dependencies": [
+          8
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit and Reduce Topic Builder Questions",
+            "description": "Review the current Topic Builder flow, inventory all existing questions, and collaborate with stakeholders to identify and retain only the essential questions required for core topic generation, referencing features-improvements-notes.md.",
+            "dependencies": [],
+            "details": "Remove unnecessary fields such as demographics, complex goals, and advanced options not needed for core topic creation. Document the rationale for each retained or removed question.\n<info added on 2025-09-09T04:24:06.272Z>\n# Field Removal Specification\n\n## Fields to Remove from Schema\n- audience_size: Not essential for core topic generation\n- demographic_age: Demographic details not necessary for initial topic creation\n- demographic_location: Geographic focus not needed for topic generation\n- reader_level: Can be inferred from content type/platform selection\n- content_goal: Too complex and overlaps with purpose field\n- keywords: Advanced option not essential for initial generation\n- exclude: Advanced filtering option not needed for core functionality\n- focus: Can be consolidated with subject/notes fields\n- region/language: Not essential for basic topic generation\n- is_ymyl: Advanced content sensitivity flag not needed for most users\n- fresh_vs_evergreen: Advanced preference toggle not required\n- safe_vs_original: Advanced preference toggle not required\n\n## Fields to Retain\n- wizardMode: Essential for determining topic creation approach\n- subject: Core field for subject-first mode\n- industry: Primary categorization for industry-first mode\n- content_type: Essential for determining content format\n- platform: Required when social media content type is selected\n- audience: Simplified audience targeting (without demographics)\n- purpose: Core intent behind content creation\n- tone: Essential for voice and style guidance\n- num_ideas: Controls output quantity\n- notes: Optional context for customization\n\n## Implementation Files to Update\n- schemas/topic-builder.ts\n- types/topic-builder.ts\n- lib/topic-builder-utils.ts\n- stores/topic-builder-store.ts\n- All step components in components/topic-builder/steps/\n- topic-questions.jsonc and topic-questions.md documentation\n</info added on 2025-09-09T04:24:06.272Z>",
+            "status": "pending",
+            "testStrategy": "Verify the reduced question set with stakeholders and ensure all removed fields are no longer present in the UI or data models."
+          },
+          {
+            "id": 2,
+            "title": "Define TypeForm-like UI/UX Requirements",
+            "description": "Establish detailed UI/UX requirements inspired by TypeForm, including single-question-per-step flow, progress indicators, keyboard navigation, forward/backward controls, and conversational language.",
+            "dependencies": [
+              "11.1"
+            ],
+            "details": "Specify microinteractions, friendly tone, and visual feedback patterns. Reference TypeForm best practices and relevant UI/UX design patterns.\n<info added on 2025-09-09T04:24:31.943Z>\n# TypeForm-like UI/UX Requirements Specification\n\n## CORE FLOW CHANGES\n- Convert from current multi-question steps to single-question-per-screen approach\n- Implement smooth slide transitions between questions (use Framer Motion or CSS transforms)\n- Add keyboard navigation: Enter to advance, Backspace/Delete to go back\n- Show progress indicator at top (e.g., \"3 of 7 questions\")\n- Add estimated completion time (\"Takes about 2 minutes\")\n\n## VISUAL DESIGN REQUIREMENTS\n- Large, prominent question text (h1/h2 size) with conversational tone\n- Options displayed as large, clickable cards (not small radio buttons)\n- Use soft shadows, rounded corners (8-12px border radius)\n- Color palette: Use current brand colors with softer variations\n- Generous white space and padding (minimum 24px between elements)\n- Mobile-first responsive design\n\n## INTERACTION PATTERNS\n- Hover states on all interactive elements\n- Selected state with visual feedback (border highlight, background color change)\n- Smooth micro-animations on selection (scale transform, color transition)\n- Loading states between questions if needed\n- Clear \"Next\" and \"Back\" buttons (use Ghost/Secondary variants)\n\n## ACCESSIBILITY REQUIREMENTS\n- WCAG 2.1 AA compliance\n- Proper ARIA labels and roles\n- Focus management between steps\n- Screen reader announcements for progress\n- High contrast mode support\n- Keyboard-only navigation support\n\n## CONVERSATIONAL TONE EXAMPLES\n- \"What industry are you creating content for?\" instead of \"Select industry\"\n- \"Tell us about your topic\" instead of \"Enter subject\"  \n- \"Who's your audience?\" instead of \"Target audience selection\"\n- Use second person (\"you\", \"your\") throughout\n\n## COMPONENT STRUCTURE TO CREATE\n- QuestionContainer (layout wrapper)\n- QuestionTitle (large heading)\n- QuestionDescription (optional subtitle)\n- OptionCard (clickable option cards)\n- ProgressBar (top progress indicator)  \n- NavigationControls (Next/Back buttons)\n- QuestionTransition (animation wrapper)\n</info added on 2025-09-09T04:24:31.943Z>",
+            "status": "pending",
+            "testStrategy": "Create wireframes or prototypes and validate requirements with design and product teams."
+          },
+          {
+            "id": 3,
+            "title": "Design Visual Elements and Microinteractions",
+            "description": "Create a consistent minimalist design system with visually appealing icons, illustrations, and subtle animations for each question, ensuring clarity and delight.",
+            "dependencies": [
+              "11.2"
+            ],
+            "details": "Define iconography, color palette, typography, and celebratory feedback for completion. Ensure all elements align with accessibility standards.\n<info added on 2025-09-09T04:25:05.323Z>\n# Icon and Visual Design Specifications\n\n## ICON REQUIREMENTS\n- Use React Icons (react-icons) or Lucide React for consistency\n- Industry icons: Building2 (business), Heart (healthcare), Laptop (technology), etc.\n- Content type icons: FileText (blog), Share2 (social media), Video (video content)\n- Platform icons: Facebook, Instagram, Twitter, Linkedin from react-icons/fa\n- Audience icons: Users, Target, UserCheck\n- Purpose icons: BookOpen (educate), Zap (inspire), TrendingUp (promote)\n- Tone icons: Briefcase (professional), Smile (friendly), Trophy (motivational)\n\n## COLOR PALETTE\n- Primary: Use existing brand colors from globals.css/tailwind config\n- Success: Green variants for positive feedback\n- Neutral: Gray-50 to Gray-900 for backgrounds and text\n- Accent: Soft purple/blue for highlights and selections\n- Warning: Amber for validation messages\n\n## ANIMATION SPECIFICATIONS\n- Question transitions: Transform translateX with 300ms ease-in-out\n- Option selection: Scale 1.02 with 200ms ease\n- Progress bar: Width transition with 400ms ease-out\n- Success feedback: Bounce animation on completion\n- Loading states: Pulse animation for async operations\n\n## VISUAL FEEDBACK PATTERNS\n- Hover: Transform scale(1.02) + box-shadow increase\n- Selected: Border-2 with accent color + background tint\n- Focus: Ring-2 with accent color (for accessibility)\n- Error: Border-red-500 + shake animation\n- Success: Border-green-500 + checkmark icon\n\n## CELEBRATION ELEMENTS\n- Completion screen with confetti animation (use canvas-confetti library)\n- Step completion with subtle checkmark animation\n- Progress milestones with pulse effect\n- Encouraging micro-copy (\"Great choice!\", \"Almost there!\", \"Perfect!\")\n\n## RESPONSIVE BREAKPOINTS\n- Mobile: Single column, full-width cards\n- Tablet: 2-column grid for options where appropriate  \n- Desktop: Max 3 columns, maintain card readability\n- Touch targets: Minimum 44px height for mobile\n\n## CSS FRAMEWORK\n- Use Tailwind CSS classes for styling\n- Create custom component variants with shadcn/ui pattern\n- Implement dark mode support with CSS variables\n</info added on 2025-09-09T04:25:05.323Z>",
+            "status": "pending",
+            "testStrategy": "Review designs with stakeholders and conduct accessibility audits."
+          },
+          {
+            "id": 4,
+            "title": "Refactor React Components for Step-Based Flow",
+            "description": "Refactor Topic Builder React components to implement the new step-based, single-question-per-step flow, ensuring accessibility, responsive design, and smooth transitions.",
+            "dependencies": [
+              "11.3"
+            ],
+            "details": "Implement ARIA roles, keyboard support, and responsive layouts. Integrate visual and interaction patterns from the new design system.\n<info added on 2025-09-09T04:25:32.337Z>\n# React Component Refactoring Specifications\n\n## NEW COMPONENT ARCHITECTURE\n```\ncomponents/topic-builder/wizard/\n├── QuestionWizard.tsx (main container)\n├── QuestionStep.tsx (individual step wrapper)\n├── QuestionTitle.tsx (large heading)\n├── QuestionDescription.tsx (subtitle/helper text)\n├── ProgressBar.tsx (top progress indicator)\n├── NavigationControls.tsx (Next/Back buttons)\n├── OptionCard.tsx (clickable option cards)\n├── TextInput.tsx (custom text input for wizard)\n├── MultiSelect.tsx (custom multi-select component)\n└── WizardTransition.tsx (animation wrapper)\n```\n\n## STEP COMPONENTS TO REFACTOR\n1. IndustryStep.tsx -> Industry + Subject questions (split into 2 steps)\n2. AudienceStep.tsx -> Simplified audience selection (remove demographics)\n3. ContentFormatStep.tsx -> Content type + Platform (conditional)\n4. GoalsStep.tsx -> Split into Purpose and Tone (2 separate steps)\n5. AdvancedStep.tsx -> Notes only (simple text area)\n\n## ACCESSIBILITY IMPLEMENTATION\n- Use useId() hooks for form field associations\n- Implement roving tabindex for option cards\n- Add ARIA live regions for step announcements\n- Include ARIA labels for progress bar\n- Implement focus trapping within steps\n- Add aria-describedby for helper text\n\n## KEYBOARD NAVIGATION\n- Enter key advances to next step (if valid)\n- Escape key goes back to previous step\n- Arrow keys navigate between options\n- Space key selects options\n- Tab key follows logical flow\n\n## STATE MANAGEMENT\n- Extend existing Zustand store (topic-builder-store.ts)\n- Add currentStep, stepHistory, stepValidation properties\n- Implement step navigation methods\n- Add form validation per step\n- Cache step data to prevent loss on back navigation\n\n## ANIMATION FRAMEWORK\n- Use Framer Motion for step transitions\n- Implement slide animations (enter from right, exit to left)\n- Add spring animations for option selections\n- Include loading states with skeleton UI\n- Smooth height transitions between questions\n\n## RESPONSIVE DESIGN\n- Mobile-first approach with Tailwind breakpoints\n- Collapsible progress bar on mobile\n- Stack navigation buttons vertically on small screens\n- Adjust card grid based on screen size\n- Ensure 44px minimum touch targets\n</info added on 2025-09-09T04:25:32.337Z>",
+            "status": "pending",
+            "testStrategy": "Write unit and integration tests for navigation, accessibility, and responsiveness."
+          },
+          {
+            "id": 5,
+            "title": "Update Schemas, Validation, and Data Transformations",
+            "description": "Revise all related schemas (question definitions, user responses), validation logic (client and server), and data transformation functions to match the reduced question set and new flow.",
+            "dependencies": [
+              "11.1",
+              "11.4"
+            ],
+            "details": "Ensure all backend and frontend data models are updated. Remove obsolete fields and update validation rules accordingly.\n<info added on 2025-09-09T04:26:03.610Z>\n## Schema and Data Transformation Updates\n\n### Schema Files to Update:\n\n1. **schemas/topic-builder.ts:**\n   - Remove obsolete fields: audience_size, demographic_age, demographic_location, reader_level, content_goal, keywords, exclude, focus, region, language, is_ymyl, fresh_vs_evergreen, safe_vs_original\n   - Update validation schemas for each step\n   - Create new stepValidationSchemas object with step-specific validation rules\n   - Update backendTopicGenerationPayloadSchema to match new data structure\n\n2. **types/topic-builder.ts:**\n   - Update TopicBuilderFormData interface to remove deprecated fields\n   - Add step navigation types (CurrentStep, StepHistory)\n   - Update form state types to support step-based flow\n\n3. **stores/topic-builder-store.ts:**\n   - Remove deprecated fields from initial state\n   - Add step navigation properties (currentStep, stepHistory)\n   - Implement step validation methods\n   - Update form data transformation logic\n\n4. **lib/topic-builder-utils.ts:**\n   - Update transformToBackendPayload function to handle new data structure\n   - Remove deprecated field mappings\n   - Add step progression logic and validation utilities\n\n### New Validation Schema Structure:\n```typescript\nexport const stepValidationSchemas = {\n  wizardMode: z.object({ wizardMode: wizardModeSchema }),\n  industry: industryStepSchema,\n  subject: z.object({ subject: z.string().min(1) }),\n  audience: z.object({ audience: z.array(z.string()).min(1) }),\n  contentType: contentFormatStepSchema,\n  platform: z.object({ platform: platformSchema }).optional(),\n  purpose: z.object({ purpose: z.array(purposeTypeSchema).min(1) }),\n  tone: z.object({ tone: z.array(toneTypeSchema).min(1) }),\n  notes: z.object({ notes: z.string() }).optional(),\n  numIdeas: z.object({ num_ideas: z.number().min(1).max(20) })\n};\n```\n\n### Backend Payload Transformation:\n- Remove all deprecated fields from payload\n- Ensure proper array-to-string conversion for backend compatibility\n- Add timestamp and wizard_mode to all requests\n- Update demographic_location to be empty array instead of removing field completely\n\n### Data Migration:\n- Provide fallback values for existing saved forms\n- Implement graceful degradation for forms with deprecated fields\n- Create migration utility for existing data\n\n### Validation Updates:\n- Implement per-step validation with real-time feedback\n- Update error messages to be user-friendly and context-specific\n- Add conditional validation based on wizard mode selection\n</info added on 2025-09-09T04:26:03.610Z>",
+            "status": "pending",
+            "testStrategy": "Test data integrity, validation logic, and ensure no deprecated fields are processed."
+          },
+          {
+            "id": 6,
+            "title": "Revise Documentation and Developer Guides",
+            "description": "Update all documentation and developer guides to reflect the new UI/UX, schema changes, and integration patterns.",
+            "dependencies": [
+              "11.5"
+            ],
+            "details": "Include updated API references, component usage, and migration notes for developers.\n<info added on 2025-09-09T04:26:27.125Z>\n# Documentation Updates Required\n\n## FILES TO UPDATE:\n\n1. topic-questions.jsonc:\n   - Remove all deprecated question objects (audience_size, demographic_age, etc.)\n   - Keep only essential questions as identified in subtask 11.1\n   - Update question IDs and dependencies to match new flow\n   - Add new TypeForm-style question properties (icons, animations, etc.)\n   - Update conditional logic for simplified flow\n\n2. topic-questions.md:\n   - Rewrite to reflect simplified question set\n   - Remove detailed descriptions for deprecated fields\n   - Add new section on TypeForm-like UX patterns\n   - Update examples and sample inputs\n   - Document the rationale for question reduction\n\n3. Create new documentation files:\n   - docs/topic-builder-migration.md (migration guide for existing implementations)\n   - docs/topic-builder-components.md (new component architecture)\n   - docs/topic-builder-accessibility.md (accessibility implementation guide)\n\n4. Update existing docs:\n   - README.md sections related to topic builder\n   - API documentation for payload changes\n   - Component storybook documentation\n   - Developer setup guides\n\n## DEVELOPER GUIDES TO CREATE:\n\n1. Migration Guide:\n   - How to update existing forms using deprecated fields\n   - Breaking changes and backward compatibility\n   - Data transformation examples\n   - Timeline for deprecation\n\n2. Component Usage Guide:\n   - New wizard component API\n   - Props and configuration options\n   - Styling and theming guidelines\n   - Animation configuration\n\n3. Accessibility Guide:\n   - WCAG 2.1 AA compliance checklist\n   - Screen reader testing procedures\n   - Keyboard navigation patterns\n   - Focus management best practices\n\n4. Testing Guide:\n   - Unit test examples for new components\n   - Integration test scenarios\n   - Accessibility testing tools and methods\n   - Performance testing considerations\n\n## API DOCUMENTATION UPDATES:\n   - Update OpenAPI specs for backend endpoints\n   - Remove deprecated field descriptions\n   - Add new payload structure examples\n   - Update response schemas\n   - Document backward compatibility handling\n</info added on 2025-09-09T04:26:27.125Z>",
+            "status": "pending",
+            "testStrategy": "Review documentation for completeness and accuracy; solicit feedback from engineering team."
+          },
+          {
+            "id": 7,
+            "title": "Coordinate Backend Field Removal and Downstream Compatibility",
+            "description": "Work with backend and downstream teams to remove deprecated fields and ensure compatibility with topic cards, results page, and other dependent components.",
+            "dependencies": [
+              "11.5"
+            ],
+            "details": "Communicate schema changes, update API contracts, and verify integration points.\n<info added on 2025-09-09T04:26:54.153Z>\n# Backend Field Removal Implementation Plan\n\n## BACKEND FIELDS TO REMOVE\n- audience_size: enum[\"small\", \"medium\", \"large\", \"massive\"]\n- demographic_age: array of age ranges\n- demographic_location: geographic targeting\n- reader_level: enum[\"beginner\", \"intermediate\", \"expert\"]\n- content_goal: array of content goal types\n- keywords: string for SEO keywords\n- exclude: string for exclusion criteria\n- focus: string for industry-specific focus\n- region: enum for target regions\n- language: enum for content language\n- is_ymyl: boolean for YMYL content sensitivity\n- fresh_vs_evergreen: preference toggle\n- safe_vs_original: originality preference\n\n## BACKEND API UPDATES NEEDED\n1. Update request schema validation in FastAPI endpoints\n2. Remove field processing in LangGraph workflows\n3. Update prompt templates to not reference deprecated fields\n4. Maintain backward compatibility during transition period\n5. Update API documentation and OpenAPI schemas\n\n## INTEGRATION COMPATIBILITY\n- Test topic generation with reduced field set\n- Verify topic cards display correctly with new data structure\n- Ensure results page functions with simplified topics\n- Check bulk operations work with new topic format\n- Validate export functionality (JSON/CSV) works properly\n\n## COORDINATION CHECKLIST\n□ Share updated payload schema with backend team\n□ Coordinate deployment timeline for frontend/backend changes\n□ Plan backward compatibility period (suggest 2-week overlap)\n□ Update API contracts and versioning\n□ Test end-to-end flow with backend changes\n□ Document migration path for existing integrations\n□ Plan rollback strategy if issues arise\n\n## DATA VALIDATION\n- Ensure topic generation quality doesn't degrade with fewer fields\n- Test edge cases with minimal required data\n- Validate that essential information is still captured\n- Confirm user experience improves with simplified flow\n\n## DEPLOYMENT STRATEGY\n- Feature flag the new UI to allow gradual rollout\n- Maintain old backend endpoints temporarily\n- Monitor topic generation metrics during transition\n- Collect user feedback on simplified experience\n</info added on 2025-09-09T04:26:54.153Z>",
+            "status": "pending",
+            "testStrategy": "Perform end-to-end tests to confirm downstream components function correctly with the updated data structure."
+          },
+          {
+            "id": 8,
+            "title": "Conduct Usability and Engagement Testing",
+            "description": "Run usability tests with representative users to validate intuitiveness, engagement, and reduction in cognitive load of the new Topic Builder experience.",
+            "dependencies": [
+              "11.4",
+              "11.6"
+            ],
+            "details": "Collect qualitative and quantitative feedback, measure completion rates, and iterate on UI/UX based on findings.\n<info added on 2025-09-09T04:27:22.215Z>\n# TESTING METHODOLOGY:\n1. User Research Setup:\n- Recruit 8-12 representative users across different demographics\n- Include both existing product users and new users\n- Mix of technical and non-technical backgrounds\n- Various device types (mobile, tablet, desktop)\n\n2. Test Scenarios:\n- Task 1: Create topics for a specific subject (subject-first flow)\n- Task 2: Explore topics in a general industry (industry-first flow)\n- Task 3: Navigate back/forth between questions\n- Task 4: Complete flow with minimal vs comprehensive information\n- Task 5: Accessibility testing with screen readers\n\n# METRICS TO MEASURE:\n- Completion rate (target: >85%)\n- Time to completion (target: <3 minutes average)\n- Error rate per step (target: <5%)\n- User satisfaction score (target: >4.5/5)\n- Cognitive load assessment (NASA-TLX scale)\n- Accessibility compliance score\n\n# QUALITATIVE FEEDBACK:\n- Post-task interviews (15-20 minutes each)\n- System Usability Scale (SUS) questionnaire\n- Preference comparison: old vs new flow\n- Emotional response assessment\n- Specific pain points and delighters\n- Suggestions for improvement\n\n# USABILITY TESTING TOOLS:\n- Maze or UserTesting.com for remote testing\n- Screen recording with Loom or similar\n- Accessibility testing with WAVE, axe DevTools\n- Performance monitoring with Lighthouse\n- Heatmap analysis with Hotjar (if available)\n\n# A/B TESTING SETUP:\n- Feature flag implementation for gradual rollout\n- Control group: existing topic builder (20% traffic)\n- Test group: new TypeForm-like experience (20% traffic)  \n- Remaining 60% maintain current experience during testing\n- Duration: 2-3 weeks of data collection\n\n# VALIDATION CRITERIA:\n- Statistical significance: p < 0.05\n- Minimum sample size: 200 completed sessions per variant\n- Success metrics: higher completion rate, lower abandonment\n- Quality check: topic generation results maintain quality\n- User satisfaction: improved NPS and satisfaction scores\n\n# ITERATION PROCESS:\n- Weekly review of metrics and feedback\n- Identify top 3 pain points for immediate fixing\n- Implement quick wins within 48 hours\n- Plan larger UX adjustments for next iteration\n- Document all findings and decisions\n</info added on 2025-09-09T04:27:22.215Z>",
+            "status": "pending",
+            "testStrategy": "Analyze test results, identify pain points, and document actionable improvements."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-08T15:10:39.303Z",
+      "updated": "2025-09-09T04:23:05.136Z",
       "description": "Tasks for master context"
     }
   }
