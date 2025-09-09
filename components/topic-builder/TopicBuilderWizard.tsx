@@ -31,6 +31,17 @@ export interface TopicBuilderWizardProps {
 
   /** Custom class name */
   className?: string;
+
+  /** Shared topic builder hook instance (optional) */
+  topicBuilderHook?: {
+    generateTopics: () => Promise<void>;
+    isGenerating: boolean;
+    updateFormData: (
+      field: keyof TopicBuilderFormData,
+      value: string | string[] | number | boolean,
+    ) => void;
+    formData: TopicBuilderFormData;
+  };
 }
 
 export function TopicBuilderWizard({
@@ -40,38 +51,40 @@ export function TopicBuilderWizard({
   showProgress = true,
   allowBackNavigation = true,
   className,
+  topicBuilderHook,
 }: TopicBuilderWizardProps) {
-  // Use the main topic builder hook for generation logic
-  const { generateTopics, isGenerating, updateFormData } = useTopicBuilder();
+  // Use either the passed hook or create a new instance
+  const internalHook = useTopicBuilder();
+  const { generateTopics, isGenerating, updateFormData } =
+    topicBuilderHook || internalHook;
 
-  // Sync wizard form data with main hook and trigger generation
+  // Sync wizard form data with hook and trigger generation
   const handleGenerateTopics = useCallback(
     async (formData: TopicBuilderFormData): Promise<void> => {
-      console.log("🚀 handleGenerateTopics called with formData:", formData);
+      try {
+        // Sync form data from wizard to the hook
+        Object.entries(formData).forEach(([key, value]) => {
+          updateFormData(key as keyof TopicBuilderFormData, value);
+        });
 
-      // Sync the wizard's form data with the main hook
-      Object.entries(formData).forEach(([key, value]) => {
-        updateFormData(key as keyof TopicBuilderFormData, value);
-      });
+        // Wait for state updates
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Small delay to ensure state is updated
-      setTimeout(async () => {
+        // Generate topics
         await generateTopics();
-      }, 100);
+      } catch (error) {
+        console.error("Error in handleGenerateTopics:", error);
+      }
     },
     [generateTopics, updateFormData],
   );
 
-  // Modified completion handler - generate topics instead of redirecting
+  // Handle wizard completion
   const handleComplete = useCallback(
     async (formData: TopicBuilderFormData) => {
-      console.log("🎯 handleComplete called, onComplete prop:", !!onComplete);
       if (onComplete) {
-        console.log("⚠️ Using external onComplete handler");
         onComplete(formData);
       } else {
-        console.log("✅ Using internal generateTopics");
-        // Generate topics using the main hook
         await handleGenerateTopics(formData);
       }
     },
@@ -87,11 +100,7 @@ export function TopicBuilderWizard({
   });
 
   const handleWizardComplete = useCallback(() => {
-    // This is called by QuestionWizard when the user clicks the final "Generate Ideas" button
-    // The actual completion is handled by the useWizardNavigation hook's onComplete
-    console.log(
-      "🎯 handleWizardComplete called - delegating to wizard navigation",
-    );
+    // Delegated to wizard navigation hook's onComplete
   }, []);
 
   return (

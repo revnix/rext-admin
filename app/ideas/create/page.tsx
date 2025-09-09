@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
-import { AILoadingScreen } from "@/components/topic-builder/AILoadingScreen";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
 import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
@@ -23,6 +22,7 @@ export default function TopicBuilderPage() {
     generateTopics,
     clearTopics,
     retryGeneration,
+    updateFormData,
   } = useTopicBuilder();
 
   const {
@@ -181,13 +181,16 @@ export default function TopicBuilderPage() {
               autoAdvance={false}
               showProgress={true}
               allowBackNavigation={true}
+              topicBuilderHook={{
+                generateTopics,
+                isGenerating,
+                updateFormData, // Pass the actual updateFormData function
+                formData, // Pass for reference
+              }}
             />
           </APIErrorBoundary>
         </div>
       )}
-
-      {/* AI Loading Modal */}
-      {isGenerating && <AILoadingScreen numIdeas={formData.num_ideas} />}
     </PageLayout>
   );
 }
