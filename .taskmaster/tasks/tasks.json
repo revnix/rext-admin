@@ -105,7 +105,7 @@
         "testStrategy": "1. Write unit tests for the custom input state management logic\n2. Create component tests for GoalsStep to verify conditional rendering of custom input fields\n3. Test validation to ensure custom inputs are properly validated when submitted\n4. Test that the form data is correctly updated with custom values when entered\n5. Verify the UI correctly shows/hides custom input fields based on selection\n6. Test form submission with various combinations of standard and custom values\n7. Test keyboard navigation and accessibility of the custom input fields",
         "priority": "medium",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -113,7 +113,7 @@
             "description": "Create separate custom input fields for each question category that has an 'Other' option in the Goals & Style step",
             "dependencies": [],
             "details": "1. Modify `components/topic-builder/steps/GoalsStep.tsx`\n2. Identify all question categories that have 'Other' options (content goal, purpose, tone, etc.)\n3. Add Input components for each 'Other' option\n4. Style the custom input fields to match the design system\n5. Ensure proper labeling for each custom input field\n6. Test rendering of custom input fields",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -122,7 +122,7 @@
             "description": "Create and manage separate state variables for each custom input field",
             "dependencies": [],
             "details": "1. Add useState hooks for each custom input (customGoal, customPurpose, customTone, etc.)\n2. Create handler functions for each custom input change\n3. Implement logic to update the main form data when custom inputs change\n4. Format custom values with prefix (e.g., `custom:${value}`) when updating form data\n5. Ensure state is properly initialized based on existing form data\n6. Test state management with various input scenarios",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -131,7 +131,7 @@
             "description": "Ensure each custom input field is only shown when the corresponding 'Other' option is selected",
             "dependencies": [],
             "details": "1. Add conditional rendering logic for each custom input field\n2. Implement handlers for radio/select changes to show/hide custom inputs\n3. Create logic to detect when a value is a custom value (starts with 'custom:')\n4. Ensure custom inputs are pre-populated when editing existing custom values\n5. Test conditional rendering with different selection scenarios\n6. Verify smooth transitions between standard options and custom inputs",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -140,7 +140,7 @@
             "description": "Add proper validation for custom input fields to ensure they contain valid data",
             "dependencies": [],
             "details": "1. Create validation rules for custom inputs (e.g., minimum length, required when 'Other' is selected)\n2. Implement error state and error messages for invalid custom inputs\n3. Add onBlur handlers to validate inputs when users tab away\n4. Prevent form submission if custom inputs are invalid\n5. Add visual indicators for validation status\n6. Test validation with various input scenarios including edge cases",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -149,7 +149,7 @@
             "description": "Ensure proper form data formatting and integration with the rest of the application",
             "dependencies": [],
             "details": "1. Update the updateFormData calls to properly format custom values\n2. Ensure custom values are properly parsed when displaying existing data\n3. Update any relevant schema validation in the application\n4. Test the entire flow from selecting 'Other' to entering custom value to form submission\n5. Verify that custom values are properly saved and retrieved from the API\n6. Create integration tests to verify the Goals & Style step works correctly with the rest of the application",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -162,7 +162,7 @@
         "testStrategy": "1. Write unit tests for the slider component and its integration with form state\n2. Create component tests for AdvancedStep to verify it renders without the removed fields\n3. Test that the form data is correctly updated when slider value changes\n4. Test that the additional requirements textarea properly updates form state\n5. Verify the UI correctly displays the current slider value\n6. Test keyboard navigation and accessibility of the slider component\n7. Test that the ReviewStep correctly excludes the removed fields",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -170,7 +170,7 @@
             "description": "Update the AdvancedStep component by renaming it from 'Fine Tuning' to 'Advanced Options' and reordering UI elements to place 'Additional requirements' first.",
             "dependencies": [],
             "details": "1. Modify `components/topic-builder/steps/AdvancedStep.tsx`\n2. Change the heading from 'Fine Tuning' to 'Advanced Options'\n3. Update any references to this step in navigation components\n4. Reorder the UI elements to place 'Additional requirements' textarea first\n5. Increase the textarea height for 'Additional requirements' (min-h-[120px])\n6. Ensure proper spacing between elements using Tailwind's space-y classes",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -179,7 +179,7 @@
             "description": "Remove the Content Language and Target Region fields from the AdvancedStep component.",
             "dependencies": ["4.1"],
             "details": "1. Identify and remove the Content Language field and its associated label\n2. Identify and remove the Target Region field and its associated label\n3. Ensure the removal doesn't break any existing layout or styling\n4. Remove any related state management code for these fields\n5. Test that the form still functions correctly without these fields\n6. Verify that the form data no longer includes these removed fields when submitted",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -188,7 +188,7 @@
             "description": "Add a new slider component to control the number of topic ideas with a range of 1-20 and live value display.",
             "dependencies": ["4.1"],
             "details": "1. Import the Slider component from the UI library\n2. Add a new section for the topic count slider with appropriate labeling\n3. Implement the slider with min=1, max=20, step=1 configuration\n4. Add a live display of the current value next to the label\n5. Create a handler function to update formData with the new value when slider changes\n6. Set a default value of 5 if not already defined\n7. Add min/max labels (1 and 20) below the slider\n8. Ensure the slider updates the form state correctly using the updateFormData function",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -197,7 +197,7 @@
             "description": "Modify the ReviewStep component to exclude the removed fields and properly display the new topic count setting.",
             "dependencies": ["4.2", "4.3"],
             "details": "1. Open `components/topic-builder/steps/ReviewStep.tsx`\n2. Remove any references to Content Language and Target Region fields\n3. Add or update the display of the topic count (num_ideas) value\n4. Ensure the review step correctly displays all remaining fields from the Advanced Options step\n5. Test that the review accurately reflects the current state of the form\n6. Verify that removed fields don't appear in the final submission data\n7. Update any related validation logic if necessary",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -206,7 +206,7 @@
         "id": 5,
         "title": "Overhaul Review Step UI",
         "description": "Enhance the existing ReviewQuestion component with improved mobile responsiveness, better visual presentation, quick edit functionality, and accessibility features",
-        "status": "pending",
+        "status": "done",
         "dependencies": [1, 2, 3, 4],
         "priority": "medium",
         "details": "1. Modify `components/topic-builder/questions/ReviewQuestion.tsx`\n2. Enhance the existing card-based layout with improved responsive design\n3. Add edit buttons for quick field modifications that work with the new wizard navigation\n4. Improve accessibility features and error handling\n5. Enhance visual presentation of different data types\n\nImplementation example:\n```typescript\n// Enhance the existing ReviewQuestion component\ninterface ReviewQuestionProps {\n  formData: TopicBuilderFormData;\n  onGoToQuestion: (questionIndex: number) => void;\n  errors: Record<string, string> | null;\n}\n\nconst ReviewQuestion = ({ formData, onGoToQuestion, errors }: ReviewQuestionProps) => {\n  return (\n    <div className=\"space-y-6\">\n      <h2 className=\"text-xl font-semibold\">Review Your Selections</h2>\n      \n      {errors && Object.keys(errors).length > 0 && (\n        <Alert variant=\"destructive\">\n          <AlertCircle className=\"h-4 w-4\" />\n          <AlertTitle>Error</AlertTitle>\n          <AlertDescription>\n            Please review your selections. Some required information is missing.\n          </AlertDescription>\n        </Alert>\n      )}\n      \n      <div className=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n        <ReviewCard\n          icon={<BuildingIcon className=\"h-5 w-5\" />}\n          label=\"Industry\"\n          value={formData.industry}\n          hasError={!!errors?.industry}\n          onEdit={() => onGoToQuestion(0)} // Navigate to industry question\n          ariaLabel=\"Edit industry selection\"\n        />\n        \n        <ReviewCard\n          icon={<UsersIcon className=\"h-5 w-5\" />}\n          label=\"Audience\"\n          value={formData.audience}\n          hasError={!!errors?.audience}\n          onEdit={() => onGoToQuestion(1)} // Navigate to audience question\n          ariaLabel=\"Edit audience selection\"\n        />\n        \n        {/* Additional ReviewCards for other form fields */}\n      </div>\n      \n      <div className=\"mt-8\">\n        <Button type=\"submit\" className=\"w-full sm:w-auto\">Generate Topics</Button>\n      </div>\n    </div>\n  );\n};\n\n// Enhanced ReviewCard component with better accessibility and error handling\ninterface ReviewCardProps {\n  icon: React.ReactNode;\n  label: string;\n  value: string | string[] | boolean | undefined;\n  hasError?: boolean;\n  onEdit: () => void;\n  ariaLabel: string;\n}\n\nconst ReviewCard = ({ icon, label, value, hasError, onEdit, ariaLabel }: ReviewCardProps) => {\n  return (\n    <div className={`p-4 border rounded-lg transition-colors ${hasError ? 'border-red-500 bg-red-50' : 'bg-card'}`}>\n      <div className=\"flex justify-between items-start mb-2\">\n        <div className=\"flex items-center gap-2\">\n          {icon}\n          <h3 className=\"font-medium\">{label}</h3>\n          {hasError && <AlertCircle className=\"h-4 w-4 text-red-500\" aria-label=\"Error in this field\" />}\n        </div>\n        <Button \n          variant=\"ghost\" \n          size=\"sm\" \n          onClick={onEdit}\n          aria-label={ariaLabel}\n        >\n          <PencilIcon className=\"h-4 w-4 mr-1\" />\n          Edit\n        </Button>\n      </div>\n      <div className=\"text-sm text-muted-foreground\">\n        {renderValue(value)}\n      </div>\n    </div>\n  );\n};\n\n// Helper function to render different value types\nconst renderValue = (value: string | string[] | boolean | undefined) => {\n  if (value === undefined || value === '') {\n    return <p className=\"italic text-gray-400\">Not specified</p>;\n  }\n  \n  if (typeof value === 'boolean') {\n    return value ? <Badge variant=\"outline\">Yes</Badge> : <Badge variant=\"outline\">No</Badge>;\n  }\n  \n  if (Array.isArray(value)) {\n    return value.length > 0 ? (\n      <div className=\"flex flex-wrap gap-1\">\n        {value.map((item, i) => (\n          <Badge key={i} variant=\"secondary\">{item}</Badge>\n        ))}\n      </div>\n    ) : (\n      <p className=\"italic text-gray-400\">None selected</p>\n    );\n  }\n  \n  return <p>{value}</p>;\n};\n```",
@@ -258,7 +258,7 @@
         "testStrategy": "1. Write unit tests for the AbortController implementation in useTopicBuilder\n2. Create component tests for AILoadingScreen to verify the cancel button and confirmation dialog\n3. Test the cancellation flow to ensure it properly aborts API requests\n4. Test error handling for aborted requests\n5. Verify the UI correctly shows loading state and animations\n6. Test keyboard navigation and accessibility of the cancel button and dialog\n7. Test that the loading screen is properly removed when generation completes or is cancelled",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -302,7 +302,7 @@
             "description": "Add proper error handling for aborted requests and user feedback",
             "dependencies": ["6.1", "6.3"],
             "details": "1. Update the catch block in API requests to properly identify and handle AbortError\n2. Add user feedback for successful cancellation (toast notification or message)\n3. Ensure the UI returns to the appropriate state after cancellation\n4. Add logging for cancellation events for analytics purposes\n5. Test error handling with various scenarios (slow network, timeout, etc.)\n6. Ensure cancellation doesn't leave the application in an inconsistent state",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -315,7 +315,7 @@
         "testStrategy": "1. Write unit tests for the session storage utility functions\n2. Test session expiration logic to ensure expired sessions are properly cleaned up\n3. Create component tests for the ResultsPage to verify it correctly loads session data\n4. Test error handling for missing or expired sessions\n5. Test the breadcrumb navigation to ensure it correctly links to parent pages\n6. Test the responsive behavior of the grid layout at different screen sizes\n7. Test that the expiration warning correctly calculates and displays remaining time\n8. Test that the page correctly renders all topics from the session",
         "priority": "high",
         "dependencies": [6],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -381,7 +381,7 @@
         "testStrategy": "1. Write unit tests for the TopicCard component to verify it renders correctly with different props\n2. Test the expand functionality and modal display\n3. Test the selection checkbox behavior when onSelect is provided\n4. Test that the card correctly displays truncated content with line-clamp\n5. Test the responsive behavior of the card at different screen sizes\n6. Test keyboard navigation and accessibility of the card and modal\n7. Test that the TopicActions component is correctly integrated\n8. Test animations and hover effects work as expected",
         "priority": "medium",
         "dependencies": [7],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -424,8 +424,8 @@
             "title": "Add Animations and Hover Effects",
             "description": "Implement smooth animations and hover effects to enhance the user experience",
             "dependencies": ["8.1", "8.2", "8.3", "8.4"],
-            "details": "1. Add transition effects for card hover state using Tailwind's transition classes\n2. Implement shadow animation on hover\n3. Add subtle scale effect when hovering over action buttons\n4. Implement smooth transitions for the expand/collapse functionality\n5. Add animation for modal opening and closing\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues",
-            "status": "pending",
+            "details": "1. Add transition effects for card hover state using Tailwind's transition classes\n2. Implement shadow animation on hover\n3. Add subtle scale effect when hovering over action buttons\n4. Implement smooth transitions for the expand/collapse functionality\n5. Add animation for modal opening and closing\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues\n<info added on 2025-09-09T18:10:56.445Z>\n**Implementation Analysis:**\n\n✅ **Card hover transitions** - Implemented with `transition-all duration-200 hover:shadow-md` providing smooth shadow and state changes\n✅ **Shadow animation on hover** - Smooth shadow transition using Tailwind's hover:shadow-md class\n✅ **Action button hover effects** - Built into shadcn/ui Button components with sophisticated hover states and transitions\n✅ **Expand/collapse transitions** - Modal-based approach provides inherently smooth transitions via Dialog component\n✅ **Modal opening/closing animations** - Comprehensive animation system including:\n  - Overlay: `data-[state=open]:animate-in data-[state=closed]:animate-out` with fade effects\n  - Content: `data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95` with `duration-200`\n✅ **Cross-browser compatibility** - shadcn/ui components ensure consistent behavior across browsers\n✅ **Performance optimization** - Uses GPU-accelerated transforms and opacity changes that don't cause layout shifts\n\n**Additional Animation Features:**\n- Loading state animations with `animate-spin` spinners in TopicActions\n- Close button hover effects with `transition-opacity hover:opacity-100`\n- Focus ring animations for accessibility with `focus:ring-2 focus:ring-offset-2`\n- Comprehensive state-based animations via Radix UI data attributes\n\n**Technical Implementation:**\n- Tailwind CSS transitions for smooth state changes\n- Radix UI built-in animations via `data-[state]` attributes\n- GPU-optimized CSS transforms (zoom, fade, translate)\n- Performance-conscious animation choices\n- Accessibility-compliant focus animations\n</info added on 2025-09-09T18:10:56.445Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -434,7 +434,7 @@
             "description": "Implement the basic structure of the TopicCard component with minimalistic design and proper layout",
             "dependencies": [],
             "details": "1. Create `components/topic-builder/results/TopicCard.tsx` file\n2. Implement the basic card structure with title, description, and keywords\n3. Add proper styling using Tailwind CSS classes\n4. Implement the selection checkbox functionality when onSelect is provided\n5. Create the badge display for keywords with truncation logic\n6. Add basic metrics display (relevance score, audience fit)\n7. Test the component renders correctly with different props",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -443,7 +443,7 @@
             "description": "Add the ability to expand and collapse the topic card to show more details",
             "dependencies": ["8.6"],
             "details": "1. Add state management for expanded/collapsed state\n2. Implement the 'View Details' button in CardFooter\n3. Create line-clamp functionality for title and description\n4. Ensure the card maintains proper layout in both states\n5. Add proper accessibility attributes for expand/collapse functionality\n6. Test the expand/collapse behavior works correctly",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -452,7 +452,7 @@
             "description": "Implement a modal dialog that displays the full topic details when a card is expanded",
             "dependencies": ["8.6", "8.7"],
             "details": "1. Create the Dialog component structure for the details modal\n2. Implement the modal header with topic title\n3. Create sections for description, why it works, and keywords\n4. Add metrics display with proper formatting\n5. Implement additional details section with platform and creation date\n6. Ensure the modal is responsive on different screen sizes\n7. Test that all topic data is correctly displayed in the modal",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -461,7 +461,7 @@
             "description": "Add action buttons for save, edit, and use for content generation",
             "dependencies": ["8.6"],
             "details": "1. Create `components/topic-builder/results/TopicActions.tsx` component\n2. Implement action buttons with proper icons\n3. Add hover states and tooltips for each action\n4. Create expanded and collapsed states for the actions component\n5. Wire up basic click handlers for each action\n6. Ensure actions are accessible via keyboard navigation\n7. Test that all buttons render correctly and respond to interactions",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -470,7 +470,7 @@
             "description": "Implement smooth animations and hover effects to enhance the user experience",
             "dependencies": ["8.6", "8.7", "8.8", "8.9"],
             "details": "1. Add transition effects for card hover state\n2. Implement subtle scale animation on hover\n3. Add shadow depth changes on hover and selection\n4. Create smooth transitions for expand/collapse actions\n5. Implement fade-in/fade-out animations for the details modal\n6. Ensure animations work well across different browsers\n7. Test performance to ensure animations don't cause layout shifts or performance issues",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -622,7 +622,7 @@
         "description": "Redesign the Topic Builder to reduce questions to only essentials, and overhaul the questions UI/UX to deliver a TypeForm-inspired, intuitive, and engaging experience, updating all related schemas, validation, transformations, and documentation.",
         "details": "1. Audit the current Topic Builder flow and identify all existing questions; collaborate with stakeholders to determine the minimal set of essential questions required for topic generation, referencing the features-improvements-notes.md requirements.\n\n2. Redesign the UI/UX to follow TypeForm best practices: implement a single-question-per-step flow, clear progress indicators, keyboard navigation (e.g., Enter to advance), and forward/backward navigation controls[1][3]. Use friendly, conversational language and microinteractions to make the experience engaging and reduce abandonment[3].\n\n3. Integrate visually appealing icons and illustrations for each question, leveraging a consistent minimalist design system and color palette for clarity and delight[2][5]. Add fun elements (e.g., subtle animations, celebratory feedback on completion) to enhance user engagement[2].\n\n4. Refactor the Topic Builder's React components to support the new step-based flow, ensuring accessibility (ARIA roles, keyboard support), responsive design, and smooth transitions between steps.\n\n5. Update all related schemas (e.g., question definitions, user responses), validation logic (client and server), and data transformation functions to match the new reduced question set and flow.\n\n6. Revise documentation and developer guides to reflect the new UI/UX, schema changes, and integration patterns.\n\n7. Ensure all changes are compatible with downstream components (e.g., topic cards, results page) and coordinate with related teams as needed.\n\nBest practices to follow include: clear button hierarchy and feedback, consistent iconography, adequate padding, legible typography, and providing estimated completion time at the start[1][4][5].",
         "testStrategy": "1. Write comprehensive unit and integration tests for the new Topic Builder components, covering step navigation, keyboard controls, and conditional logic.\n\n2. Conduct usability testing with representative users to validate intuitiveness, engagement, and reduction in cognitive load.\n\n3. Verify that only essential questions are presented and that the flow adapts correctly to user input (including conditional logic where applicable).\n\n4. Test accessibility compliance (WCAG 2.1 AA), including screen reader support and keyboard navigation.\n\n5. Validate that all schema, validation, and transformation updates are correctly enforced in both frontend and backend.\n\n6. Review documentation updates for accuracy and completeness.\n\n7. Perform regression testing to ensure compatibility with downstream features such as topic cards and results pages.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [8],
         "priority": "medium",
         "subtasks": [
@@ -695,7 +695,7 @@
             "description": "Run usability tests with representative users to validate intuitiveness, engagement, and reduction in cognitive load of the new Topic Builder experience.",
             "dependencies": ["11.4", "11.6"],
             "details": "Collect qualitative and quantitative feedback, measure completion rates, and iterate on UI/UX based on findings.\n<info added on 2025-09-09T04:27:22.215Z>\n# TESTING METHODOLOGY:\n1. User Research Setup:\n- Recruit 8-12 representative users across different demographics\n- Include both existing product users and new users\n- Mix of technical and non-technical backgrounds\n- Various device types (mobile, tablet, desktop)\n\n2. Test Scenarios:\n- Task 1: Create topics for a specific subject (subject-first flow)\n- Task 2: Explore topics in a general industry (industry-first flow)\n- Task 3: Navigate back/forth between questions\n- Task 4: Complete flow with minimal vs comprehensive information\n- Task 5: Accessibility testing with screen readers\n\n# METRICS TO MEASURE:\n- Completion rate (target: >85%)\n- Time to completion (target: <3 minutes average)\n- Error rate per step (target: <5%)\n- User satisfaction score (target: >4.5/5)\n- Cognitive load assessment (NASA-TLX scale)\n- Accessibility compliance score\n\n# QUALITATIVE FEEDBACK:\n- Post-task interviews (15-20 minutes each)\n- System Usability Scale (SUS) questionnaire\n- Preference comparison: old vs new flow\n- Emotional response assessment\n- Specific pain points and delighters\n- Suggestions for improvement\n\n# USABILITY TESTING TOOLS:\n- Maze or UserTesting.com for remote testing\n- Screen recording with Loom or similar\n- Accessibility testing with WAVE, axe DevTools\n- Performance monitoring with Lighthouse\n- Heatmap analysis with Hotjar (if available)\n\n# A/B TESTING SETUP:\n- Feature flag implementation for gradual rollout\n- Control group: existing topic builder (20% traffic)\n- Test group: new TypeForm-like experience (20% traffic)  \n- Remaining 60% maintain current experience during testing\n- Duration: 2-3 weeks of data collection\n\n# VALIDATION CRITERIA:\n- Statistical significance: p < 0.05\n- Minimum sample size: 200 completed sessions per variant\n- Success metrics: higher completion rate, lower abandonment\n- Quality check: topic generation results maintain quality\n- User satisfaction: improved NPS and satisfaction scores\n\n# ITERATION PROCESS:\n- Weekly review of metrics and feedback\n- Identify top 3 pain points for immediate fixing\n- Implement quick wins within 48 hours\n- Plan larger UX adjustments for next iteration\n- Document all findings and decisions\n</info added on 2025-09-09T04:27:22.215Z>",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Analyze test results, identify pain points, and document actionable improvements."
           }
         ]
@@ -703,7 +703,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-09T18:08:57.562Z",
+      "updated": "2025-09-09T18:16:10.618Z",
       "description": "Tasks for master context"
     }
   }
