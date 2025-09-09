@@ -63,7 +63,7 @@ export function TopicBuilderWizard({
     async (formData: TopicBuilderFormData): Promise<void> => {
       try {
         console.log("🚀 Starting topic generation with form data:", formData);
-        
+
         // Pass form data directly to generateTopics to avoid state sync issues
         await generateTopics(formData);
       } catch (error) {

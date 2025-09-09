@@ -392,228 +392,232 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   );
 
   // Topic generation with enhanced error handling
-  const generateTopics = useCallback(async (overrideFormData?: TopicBuilderFormData): Promise<void> => {
-    // Check online status first
-    if (!connectionStatus) {
-      const offlineError = classifyError(new Error("No internet connection"));
-      setGenerationError(offlineError);
-      return;
-    }
-
-    // Final validation before generation
-    // Skip step-based validation if override data is provided (wizard flow)
-    if (!overrideFormData) {
-      const validation = validateStep(6);
-      if (!validation.isValid) {
-        const stepErrors: Record<string, string> = {};
-        validation.errors.forEach((error, index) => {
-          stepErrors[`generation_${index}`] = error;
-        });
-        setErrors(stepErrors);
+  const generateTopics = useCallback(
+    async (overrideFormData?: TopicBuilderFormData): Promise<void> => {
+      // Check online status first
+      if (!connectionStatus) {
+        const offlineError = classifyError(new Error("No internet connection"));
+        setGenerationError(offlineError);
         return;
       }
-    }
 
-    setIsGenerating(true);
-    setErrors({});
-    setGenerationError(null);
+      // Final validation before generation
+      // Skip step-based validation if override data is provided (wizard flow)
+      if (!overrideFormData) {
+        const validation = validateStep(6);
+        if (!validation.isValid) {
+          const stepErrors: Record<string, string> = {};
+          validation.errors.forEach((error, index) => {
+            stepErrors[`generation_${index}`] = error;
+          });
+          setErrors(stepErrors);
+          return;
+        }
+      }
 
-    // Create new AbortController for this request
-    const controller = new AbortController();
-    setAbortController(controller);
+      setIsGenerating(true);
+      setErrors({});
+      setGenerationError(null);
 
-    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    setCurrentRequestId(requestId);
+      // Create new AbortController for this request
+      const controller = new AbortController();
+      setAbortController(controller);
 
-    console.log(`Starting topic generation request: ${requestId}`);
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setCurrentRequestId(requestId);
 
-    try {
-      // Use override data if provided, otherwise use current state
-      const dataToUse = overrideFormData || formData;
-      const apiData = prepareFormDataForAPI(dataToUse);
+      console.log(`Starting topic generation request: ${requestId}`);
 
-      // Debug logging to see what's being sent
-      console.log("Form data being sent:", apiData);
-      console.log("Required fields check:", {
-        wizardMode: apiData.wizardMode,
-        industry: apiData.industry,
-        content_type: apiData.content_type,
-        purpose: apiData.purpose,
-        tone: apiData.tone,
-      });
+      try {
+        // Use override data if provided, otherwise use current state
+        const dataToUse = overrideFormData || formData;
+        const apiData = prepareFormDataForAPI(dataToUse);
 
-      const response = await fetch("/api/generate-topics", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Request-ID": requestId,
-        },
-        body: JSON.stringify({ formData: apiData }),
-        signal: controller.signal,
-      });
+        // Debug logging to see what's being sent
+        console.log("Form data being sent:", apiData);
+        console.log("Required fields check:", {
+          wizardMode: apiData.wizardMode,
+          industry: apiData.industry,
+          content_type: apiData.content_type,
+          purpose: apiData.purpose,
+          tone: apiData.tone,
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const response = await fetch("/api/generate-topics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Request-ID": requestId,
+          },
+          body: JSON.stringify({ formData: apiData }),
+          signal: controller.signal,
+        });
 
-        // If the API returned a structured error, create a BackendError object
-        if (errorData.error_code && errorData.details) {
-          // Try to parse the details field in case it contains a JSON-stringified BackendError
-          let parsedDetails = errorData.details;
-          let actualErrorType = errorData.error_code;
-          let context = {
-            responseStatus: response.status,
-            apiError: errorData,
-          };
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
 
-          try {
-            const detailsObj = JSON.parse(errorData.details);
-            if (
-              detailsObj &&
-              typeof detailsObj === "object" &&
-              detailsObj.type
-            ) {
-              // The details contain the actual error information
-              actualErrorType = detailsObj.type;
-              parsedDetails = errorData.details; // Keep original for technicalMessage
+          // If the API returned a structured error, create a BackendError object
+          if (errorData.error_code && errorData.details) {
+            // Try to parse the details field in case it contains a JSON-stringified BackendError
+            let parsedDetails = errorData.details;
+            let actualErrorType = errorData.error_code;
+            let context = {
+              responseStatus: response.status,
+              apiError: errorData,
+            };
 
-              // If the parsed details have context, use that too
-              if (detailsObj.context) {
-                context = { ...context, ...detailsObj.context };
+            try {
+              const detailsObj = JSON.parse(errorData.details);
+              if (
+                detailsObj &&
+                typeof detailsObj === "object" &&
+                detailsObj.type
+              ) {
+                // The details contain the actual error information
+                actualErrorType = detailsObj.type;
+                parsedDetails = errorData.details; // Keep original for technicalMessage
+
+                // If the parsed details have context, use that too
+                if (detailsObj.context) {
+                  context = { ...context, ...detailsObj.context };
+                }
               }
+            } catch {
+              // Not JSON, use as-is
             }
-          } catch {
-            // Not JSON, use as-is
+
+            const backendError: BackendError = {
+              type: actualErrorType as BackendErrorType,
+              message: errorData.error,
+              technicalMessage: parsedDetails,
+              statusCode: response.status,
+              severity:
+                response.status >= 500
+                  ? "high"
+                  : response.status >= 400
+                    ? "medium"
+                    : "low",
+              recoveryActions: ["retry", "contact_support"],
+              isRetryable: response.status >= 500,
+              requestId: errorData.request_id,
+              timestamp: new Date().toISOString(),
+              context: context,
+            };
+            throw backendError;
+          } else {
+            // Fallback for unstructured errors
+            const errorMessage =
+              errorData.error ||
+              `HTTP ${response.status}: ${response.statusText}`;
+            throw new Error(
+              `Backend API error: ${response.status} ${errorMessage}`,
+            );
           }
+        }
 
-          const backendError: BackendError = {
-            type: actualErrorType as BackendErrorType,
-            message: errorData.error,
-            technicalMessage: parsedDetails,
-            statusCode: response.status,
-            severity:
-              response.status >= 500
-                ? "high"
-                : response.status >= 400
-                  ? "medium"
-                  : "low",
-            recoveryActions: ["retry", "contact_support"],
-            isRetryable: response.status >= 500,
-            requestId: errorData.request_id,
-            timestamp: new Date().toISOString(),
-            context: context,
-          };
-          throw backendError;
-        } else {
-          // Fallback for unstructured errors
-          const errorMessage =
-            errorData.error ||
-            `HTTP ${response.status}: ${response.statusText}`;
-          throw new Error(
-            `Backend API error: ${response.status} ${errorMessage}`,
+        const result = await response.json();
+
+        if (result.topics && Array.isArray(result.topics)) {
+          // Add unique IDs to topics if not present
+          const topicsWithIds = result.topics.map(
+            (topic: unknown, index: number) => ({
+              ...(topic as GeneratedTopic),
+              id:
+                (topic as GeneratedTopic).id || `topic_${Date.now()}_${index}`,
+            }),
           );
+
+          setGeneratedTopics(topicsWithIds);
+          setGenerationError(null); // Clear any previous errors
+
+          // Auto-save session and navigate to results page
+          try {
+            const sessionId = generateSessionId();
+            saveSession({
+              id: sessionId,
+              topics: topicsWithIds,
+              formData: dataToUse,
+            });
+
+            console.log(`Session saved successfully: ${sessionId}`, {
+              topicCount: topicsWithIds.length,
+              formData: dataToUse,
+            });
+
+            // Navigate to results page
+            router.push(`/ideas/create/results/${sessionId}`);
+          } catch (sessionError) {
+            console.error("Failed to save session:", sessionError);
+            // Don't throw, just log the error and continue
+            // User will still see results in current page
+          }
+        } else {
+          throw new Error("Invalid response format from topic generation API");
         }
-      }
+      } catch (error) {
+        // Handle AbortError specifically (user-initiated cancellation)
+        if (error instanceof Error && error.name === "AbortError") {
+          console.log(`Topic generation aborted: ${requestId}`);
 
-      const result = await response.json();
-
-      if (result.topics && Array.isArray(result.topics)) {
-        // Add unique IDs to topics if not present
-        const topicsWithIds = result.topics.map(
-          (topic: unknown, index: number) => ({
-            ...(topic as GeneratedTopic),
-            id: (topic as GeneratedTopic).id || `topic_${Date.now()}_${index}`,
-          }),
-        );
-
-        setGeneratedTopics(topicsWithIds);
-        setGenerationError(null); // Clear any previous errors
-
-        // Auto-save session and navigate to results page
-        try {
-          const sessionId = generateSessionId();
-          saveSession({
-            id: sessionId,
-            topics: topicsWithIds,
-            formData: dataToUse,
+          // Enhanced analytics logging for cancellations
+          console.log("ANALYTICS: AbortError caught in generateTopics", {
+            requestId,
+            timestamp: new Date().toISOString(),
+            source: "fetch_abort",
           });
 
-          console.log(`Session saved successfully: ${sessionId}`, {
-            topicCount: topicsWithIds.length,
-            formData: dataToUse,
+          // Don't set error state for user-initiated cancellations
+          setGenerationError(null);
+          setErrors({});
+
+          // Toast notification handled in cancelGeneration function
+          // No additional toast here to avoid double notifications
+        } else {
+          // Check if it's already a BackendError, otherwise classify it
+          const classifiedError =
+            error &&
+            typeof error === "object" &&
+            "type" in error &&
+            "message" in error
+              ? (error as BackendError)
+              : classifyError(error, requestId);
+          console.error("Topic generation failed:", classifiedError);
+
+          // Enhanced error logging
+          console.log("ANALYTICS: Generation error", {
+            requestId,
+            errorType: classifiedError.type,
+            timestamp: new Date().toISOString(),
+            technicalMessage: classifiedError.technicalMessage,
           });
 
-          // Navigate to results page
-          router.push(`/ideas/create/results/${sessionId}`);
-        } catch (sessionError) {
-          console.error("Failed to save session:", sessionError);
-          // Don't throw, just log the error and continue
-          // User will still see results in current page
+          setGenerationError(classifiedError);
+
+          // Also set legacy error format for backward compatibility
+          setErrors({
+            generation: classifiedError.message,
+          });
+
+          // Error toast notification
+          toast.error("Generation failed", {
+            description: classifiedError.message,
+            action: classifiedError.recoveryActions.includes("retry")
+              ? {
+                  label: "Retry",
+                  onClick: () => generateTopics(),
+                }
+              : undefined,
+            duration: 6000,
+          });
         }
-      } else {
-        throw new Error("Invalid response format from topic generation API");
+      } finally {
+        setIsGenerating(false);
+        setCurrentRequestId(null);
+        setAbortController(null);
       }
-    } catch (error) {
-      // Handle AbortError specifically (user-initiated cancellation)
-      if (error instanceof Error && error.name === "AbortError") {
-        console.log(`Topic generation aborted: ${requestId}`);
-
-        // Enhanced analytics logging for cancellations
-        console.log("ANALYTICS: AbortError caught in generateTopics", {
-          requestId,
-          timestamp: new Date().toISOString(),
-          source: "fetch_abort",
-        });
-
-        // Don't set error state for user-initiated cancellations
-        setGenerationError(null);
-        setErrors({});
-
-        // Toast notification handled in cancelGeneration function
-        // No additional toast here to avoid double notifications
-      } else {
-        // Check if it's already a BackendError, otherwise classify it
-        const classifiedError =
-          error &&
-          typeof error === "object" &&
-          "type" in error &&
-          "message" in error
-            ? (error as BackendError)
-            : classifyError(error, requestId);
-        console.error("Topic generation failed:", classifiedError);
-
-        // Enhanced error logging
-        console.log("ANALYTICS: Generation error", {
-          requestId,
-          errorType: classifiedError.type,
-          timestamp: new Date().toISOString(),
-          technicalMessage: classifiedError.technicalMessage,
-        });
-
-        setGenerationError(classifiedError);
-
-        // Also set legacy error format for backward compatibility
-        setErrors({
-          generation: classifiedError.message,
-        });
-
-        // Error toast notification
-        toast.error("Generation failed", {
-          description: classifiedError.message,
-          action: classifiedError.recoveryActions.includes("retry")
-            ? {
-                label: "Retry",
-                onClick: () => generateTopics(),
-              }
-            : undefined,
-          duration: 6000,
-        });
-      }
-    } finally {
-      setIsGenerating(false);
-      setCurrentRequestId(null);
-      setAbortController(null);
-    }
-  }, [formData, validateStep, connectionStatus, router]);
+    },
+    [formData, validateStep, connectionStatus, router],
+  );
 
   const clearTopics = useCallback(() => {
     setGeneratedTopics([]);
