@@ -277,6 +277,8 @@ export function QuestionWizard({
                 error={getQuestionError(currentQuestion.id)}
                 progress={progress}
                 isLoading={isLoading}
+                onGoToQuestion={handleGoToQuestion}
+                getQuestionError={getQuestionError}
                 navigationControls={
                   <WizardNavigation
                     canGoBack={!isFirstQuestion && allowBackNavigation}

@@ -216,7 +216,7 @@
             "id": 1,
             "title": "Enhance ReviewCard Component",
             "description": "Improve the existing ReviewCard component with better error handling, accessibility, and visual presentation",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "1. Modify the existing ReviewCard component in `components/topic-builder/questions/ReviewQuestion.tsx`\n2. Add error state styling with appropriate visual indicators\n3. Improve accessibility with proper aria labels and roles\n4. Enhance the visual presentation of different data types\n5. Add a helper function to render different value types (strings, arrays, booleans)\n6. Ensure the component handles empty or undefined values gracefully\n7. Add hover and focus states for better user experience\n<info added on 2025-09-09T15:04:29.350Z>\nThe ReviewQuestion component should be enhanced to work within the TypeForm-style wizard implementation. Modifications should focus on:\n\n1. Integrate with the wizard navigation system by using the onGoToQuestion function for edit actions\n2. Ensure the component maintains its card-based layout while supporting the new wizard flow\n3. Add clear visual indicators for fields with errors, including appropriate color coding and icons\n4. Implement proper ARIA attributes (aria-invalid, aria-describedby) for improved screen reader support\n5. Create a renderValue helper function that formats different data types appropriately:\n   - Arrays should display as comma-separated lists or bullet points\n   - Booleans should display as Yes/No or custom icons\n   - Numbers should have appropriate formatting based on context\n6. Add graceful empty state handling with placeholder text or visual indicators\n7. Implement interactive states (hover, focus) that provide visual feedback and improve usability\n8. Ensure all edit actions properly integrate with the wizard navigation system\n</info added on 2025-09-09T15:04:29.350Z>",
             "testStrategy": "1. Test the component renders correctly with different prop combinations\n2. Verify error states are displayed correctly\n3. Test accessibility features with screen readers\n4. Verify different data types are rendered appropriately\n5. Test empty and undefined value handling"
@@ -703,7 +703,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-09T12:02:54.798Z",
+      "updated": "2025-09-09T15:15:02.452Z",
       "description": "Tasks for master context"
     }
   }

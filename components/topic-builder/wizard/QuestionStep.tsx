@@ -59,6 +59,12 @@ export interface QuestionStepProps {
 
   /** Custom class name */
   className?: string;
+
+  /** Go to question handler for review step */
+  onGoToQuestion?: (questionIndex: number) => void;
+
+  /** Get question error handler for review step */
+  getQuestionError?: (questionId: string) => string | undefined;
 }
 
 export function QuestionStep({
@@ -70,6 +76,8 @@ export function QuestionStep({
   isLoading = false,
   navigationControls,
   className,
+  onGoToQuestion,
+  getQuestionError,
 }: QuestionStepProps) {
   const prefersReducedMotion = useReducedMotion();
   const itemVariants = getMotionVariants(
@@ -125,7 +133,13 @@ export function QuestionStep({
       case "number-input":
         return <NumIdeasQuestion {...baseProps} />;
       case "review":
-        return <ReviewQuestion {...baseProps} />;
+        return (
+          <ReviewQuestion
+            {...baseProps}
+            onGoToQuestion={onGoToQuestion}
+            getQuestionError={getQuestionError}
+          />
+        );
       default:
         return (
           <div className="p-4 text-muted-foreground text-center">
@@ -133,7 +147,15 @@ export function QuestionStep({
           </div>
         );
     }
-  }, [question, formData, updateFormData, error, isLoading]);
+  }, [
+    question,
+    formData,
+    updateFormData,
+    error,
+    isLoading,
+    onGoToQuestion,
+    getQuestionError,
+  ]);
 
   return (
     <div className={cn("w-full relative", className)}>
