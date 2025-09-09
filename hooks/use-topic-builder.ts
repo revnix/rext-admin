@@ -392,7 +392,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   );
 
   // Topic generation with enhanced error handling
-  const generateTopics = useCallback(async (): Promise<void> => {
+  const generateTopics = useCallback(async (overrideFormData?: TopicBuilderFormData): Promise<void> => {
     // Check online status first
     if (!connectionStatus) {
       const offlineError = classifyError(new Error("No internet connection"));
@@ -401,14 +401,17 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     }
 
     // Final validation before generation
-    const validation = validateStep(6);
-    if (!validation.isValid) {
-      const stepErrors: Record<string, string> = {};
-      validation.errors.forEach((error, index) => {
-        stepErrors[`generation_${index}`] = error;
-      });
-      setErrors(stepErrors);
-      return;
+    // Skip step-based validation if override data is provided (wizard flow)
+    if (!overrideFormData) {
+      const validation = validateStep(6);
+      if (!validation.isValid) {
+        const stepErrors: Record<string, string> = {};
+        validation.errors.forEach((error, index) => {
+          stepErrors[`generation_${index}`] = error;
+        });
+        setErrors(stepErrors);
+        return;
+      }
     }
 
     setIsGenerating(true);
@@ -425,7 +428,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     console.log(`Starting topic generation request: ${requestId}`);
 
     try {
-      const apiData = prepareFormDataForAPI(formData);
+      // Use override data if provided, otherwise use current state
+      const dataToUse = overrideFormData || formData;
+      const apiData = prepareFormDataForAPI(dataToUse);
 
       // Debug logging to see what's being sent
       console.log("Form data being sent:", apiData);
@@ -529,12 +534,12 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           saveSession({
             id: sessionId,
             topics: topicsWithIds,
-            formData: formData,
+            formData: dataToUse,
           });
 
           console.log(`Session saved successfully: ${sessionId}`, {
             topicCount: topicsWithIds.length,
-            formData: formData,
+            formData: dataToUse,
           });
 
           // Navigate to results page

@@ -34,7 +34,7 @@ export interface TopicBuilderWizardProps {
 
   /** Shared topic builder hook instance (optional) */
   topicBuilderHook?: {
-    generateTopics: () => Promise<void>;
+    generateTopics: (overrideFormData?: TopicBuilderFormData) => Promise<void>;
     isGenerating: boolean;
     updateFormData: (
       field: keyof TopicBuilderFormData,
@@ -58,25 +58,19 @@ export function TopicBuilderWizard({
   const { generateTopics, isGenerating, updateFormData } =
     topicBuilderHook || internalHook;
 
-  // Sync wizard form data with hook and trigger generation
+  // Generate topics with form data directly
   const handleGenerateTopics = useCallback(
     async (formData: TopicBuilderFormData): Promise<void> => {
       try {
-        // Sync form data from wizard to the hook
-        Object.entries(formData).forEach(([key, value]) => {
-          updateFormData(key as keyof TopicBuilderFormData, value);
-        });
-
-        // Wait for state updates
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Generate topics
-        await generateTopics();
+        console.log("🚀 Starting topic generation with form data:", formData);
+        
+        // Pass form data directly to generateTopics to avoid state sync issues
+        await generateTopics(formData);
       } catch (error) {
         console.error("Error in handleGenerateTopics:", error);
       }
     },
-    [generateTopics, updateFormData],
+    [generateTopics],
   );
 
   // Handle wizard completion
