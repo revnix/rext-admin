@@ -6,10 +6,12 @@ import {
   Edit,
   Loader2,
   MoreHorizontal,
+  PenTool,
   RefreshCw,
   Save,
   Trash2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,7 @@ interface TopicActionsProps {
   onDelete?: (topicId: string) => Promise<void> | void;
   onNavigateToIdeas?: () => void;
   onGenerateNew?: () => void;
+  onNavigateToContent?: (topicId: string) => void;
   className?: string;
   variant?: "dropdown" | "buttons";
   showLabels?: boolean;
@@ -77,6 +80,7 @@ export function TopicActions({
   onDelete,
   onNavigateToIdeas,
   onGenerateNew,
+  onNavigateToContent,
   className,
   variant = "dropdown",
   showLabels = false,
@@ -93,6 +97,7 @@ export function TopicActions({
     regenerating: false,
     exporting: false,
     deleting: false,
+    navigatingToContent: false,
   });
 
   const [errorStates, setErrorStates] = useState<{
@@ -101,6 +106,7 @@ export function TopicActions({
     regenerating?: BackendError;
     exporting?: BackendError;
     deleting?: BackendError;
+    navigatingToContent?: BackendError;
   }>({});
 
   const [successStates, setSuccessStates] = useState<{
@@ -109,10 +115,14 @@ export function TopicActions({
     regenerating?: string;
     exporting?: string;
     deleting?: string;
+    navigatingToContent?: string;
   }>({});
 
   // TanStack Query mutation for optimistic saves
   const saveMutation = useTopicSaveMutation();
+
+  // Router for navigation
+  const router = useRouter();
 
   const editForm = useForm<TopicEditFormData>({
     resolver: zodResolver(topicEditFormSchema),
@@ -289,6 +299,48 @@ export function TopicActions({
     }
   };
 
+  const handleNavigateToContent = () => {
+    if (!onNavigateToContent) {
+      // Fallback to direct navigation if no handler provided
+      clearFeedback("navigatingToContent");
+      setLoading("navigatingToContent", true);
+
+      try {
+        console.log(`Navigating to content creation for topic ${topic.id}`);
+        router.push(`/flows/create?topicId=${topic.id}`);
+        setSuccess("navigatingToContent", "Navigating to content creation...");
+      } catch (error) {
+        console.error(
+          `Failed to navigate to content creation for topic ${topic.id}:`,
+          error,
+        );
+        const classifiedError = classifyError(error);
+        setError("navigatingToContent", classifiedError);
+      } finally {
+        setLoading("navigatingToContent", false);
+      }
+    } else {
+      // Use provided handler
+      try {
+        setLoading("navigatingToContent", true);
+        console.log(
+          `Using handler to navigate to content creation for topic ${topic.id}`,
+        );
+        onNavigateToContent(topic.id);
+        setSuccess("navigatingToContent", "Navigating to content creation...");
+      } catch (error) {
+        console.error(
+          `Failed to navigate to content creation for topic ${topic.id}:`,
+          error,
+        );
+        const classifiedError = classifyError(error);
+        setError("navigatingToContent", classifiedError);
+      } finally {
+        setLoading("navigatingToContent", false);
+      }
+    }
+  };
+
   const isAnyLoading =
     Object.values(loadingStates).some(Boolean) || saveMutation.isPending;
 
@@ -309,6 +361,23 @@ export function TopicActions({
               <Save className="h-4 w-4" />
             )}
             {showLabels && "Save"}
+          </Button>
+        )}
+
+        {onNavigateToContent && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleNavigateToContent}
+            disabled={isAnyLoading}
+            className="gap-1.5"
+          >
+            {loadingStates.navigatingToContent ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PenTool className="h-4 w-4" />
+            )}
+            {showLabels && "Write Content"}
           </Button>
         )}
 
@@ -548,6 +617,21 @@ export function TopicActions({
           {successStates.deleting && (
             <SuccessAlert message={successStates.deleting} />
           )}
+
+          {/* Content navigation feedback */}
+          {errorStates.navigatingToContent && (
+            <ErrorAlert
+              error={errorStates.navigatingToContent}
+              operation="data_save"
+              onRetry={() => {
+                setError("navigatingToContent", undefined);
+                handleNavigateToContent();
+              }}
+            />
+          )}
+          {successStates.navigatingToContent && (
+            <SuccessAlert message={successStates.navigatingToContent} />
+          )}
         </div>
 
         {/* Success Confirmation Dialog for buttons variant */}
@@ -585,6 +669,12 @@ export function TopicActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {onNavigateToContent && (
+            <DropdownMenuItem onClick={handleNavigateToContent}>
+              <PenTool className="mr-2 h-4 w-4" />
+              Write Content
+            </DropdownMenuItem>
+          )}
           {onSave && (
             <DropdownMenuItem onClick={handleSave}>
               <Save className="mr-2 h-4 w-4" />
@@ -936,6 +1026,21 @@ export function TopicActions({
         )}
         {successStates.deleting && (
           <SuccessAlert message={successStates.deleting} />
+        )}
+
+        {/* Content navigation feedback */}
+        {errorStates.navigatingToContent && (
+          <ErrorAlert
+            error={errorStates.navigatingToContent}
+            operation="data_save"
+            onRetry={() => {
+              setError("navigatingToContent", undefined);
+              handleNavigateToContent();
+            }}
+          />
+        )}
+        {successStates.navigatingToContent && (
+          <SuccessAlert message={successStates.navigatingToContent} />
         )}
       </div>
 

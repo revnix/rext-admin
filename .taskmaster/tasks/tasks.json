@@ -509,7 +509,7 @@
             "description": "Create the functionality to save multiple selected topics at once",
             "dependencies": ["9.1", "9.2"],
             "details": "1. Create an API endpoint at /api/topics/bulk-save\n2. Implement the handleSaveAll function in BulkActions component\n3. Filter topics based on selected IDs\n4. Add proper error handling with toast notifications\n5. Implement loading states during save operation\n6. Add success feedback with count of saved topics\n7. Clear selection after successful save operation",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -703,7 +703,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T12:04:46.664Z",
-      "updated": "2025-09-10T01:33:13.697Z",
+      "updated": "2025-09-10T01:44:17.172Z",
       "description": "Tasks for master context"
     }
   }

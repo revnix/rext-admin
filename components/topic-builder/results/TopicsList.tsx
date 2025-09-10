@@ -1,9 +1,12 @@
 "use client";
 
 import { ArrowLeft, FileText, RotateCcw, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useBulkTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { BulkActions } from "./BulkActions";
@@ -51,6 +54,9 @@ export function TopicsList({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
   const [minScore, setMinScore] = useState(0);
+
+  const bulkSaveMutation = useBulkTopicSaveMutation();
+  const router = useRouter();
 
   // Get unique tags and audiences for filtering
   const availableTags = useMemo(() => {
@@ -172,18 +178,27 @@ export function TopicsList({
   );
 
   const handleBulkSave = useCallback(
-    (topicIds: string[]) => {
+    async (topicIds: string[]) => {
+      const topicsToSave = topics.filter((topic) =>
+        topicIds.includes(topic.id),
+      );
+
       try {
-        onBulkSave(topicIds);
-        console.log(`Bulk saved ${topicIds.length} topics`);
+        await bulkSaveMutation.mutateAsync(topicsToSave);
+        toast.success(`Successfully saved ${topicsToSave.length} topics`);
         // Clear selection after successful save
         setSelectedTopicIds([]);
+        // Also call the parent callback for any additional handling
+        onBulkSave(topicIds);
       } catch (error) {
         console.error("Bulk save failed:", error);
+        toast.error(
+          `Failed to save topics: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
         throw error;
       }
     },
-    [onBulkSave],
+    [topics, bulkSaveMutation, onBulkSave],
   );
 
   const handleBulkExport = useCallback(
@@ -221,6 +236,48 @@ export function TopicsList({
       }
     },
     [onTopicDelete],
+  );
+
+  const handleNavigateToContent = useCallback(
+    (topicId: string) => {
+      try {
+        console.log(`Navigating to content creation for topic ${topicId}`);
+        router.push(`/flows/create?topicId=${topicId}`);
+        toast.success("Navigating to content creation...");
+      } catch (error) {
+        console.error(
+          `Failed to navigate to content creation for topic ${topicId}:`,
+          error,
+        );
+        toast.error("Failed to navigate to content creation");
+      }
+    },
+    [router],
+  );
+
+  const handleBulkNavigateToContent = useCallback(
+    (topicIds: string[]) => {
+      try {
+        console.log(
+          `Navigating to content creation for ${topicIds.length} topics`,
+        );
+        const queryParam =
+          topicIds.length === 1
+            ? `topicId=${topicIds[0]}`
+            : `topicIds=${topicIds.join(",")}`;
+        router.push(`/flows/create?${queryParam}`);
+        toast.success(
+          `Navigating to content creation for ${topicIds.length} topics...`,
+        );
+      } catch (error) {
+        console.error(
+          `Failed to navigate to content creation for topics:`,
+          error,
+        );
+        toast.error("Failed to navigate to content creation");
+      }
+    },
+    [router],
   );
 
   // Empty state - no topics generated
@@ -365,6 +422,7 @@ export function TopicsList({
           onBulkSave={handleBulkSave}
           onBulkExport={onTopicExport ? handleBulkExport : undefined}
           onBulkDelete={onTopicDelete ? handleBulkDelete : undefined}
+          onBulkNavigateToContent={handleBulkNavigateToContent}
         />
       </div>
 
@@ -390,6 +448,7 @@ export function TopicsList({
             onDelete={onTopicDelete}
             onNavigateToIdeas={onNavigateToIdeas}
             onGenerateNew={onGenerateNew}
+            onNavigateToContent={handleNavigateToContent}
             className={viewMode === "list" ? "max-w-none" : undefined}
           />
         ))}

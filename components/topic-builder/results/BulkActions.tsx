@@ -6,6 +6,7 @@ import {
   Download,
   FileDown,
   HelpCircle,
+  PenTool,
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -44,6 +45,7 @@ interface BulkActionsProps {
   onBulkSave: (topicIds: string[]) => void;
   onBulkExport?: (topics: GeneratedTopic[], format: "json" | "csv") => void;
   onBulkDelete?: (topicIds: string[]) => void;
+  onBulkNavigateToContent?: (topicIds: string[]) => void;
   className?: string;
 }
 
@@ -54,11 +56,13 @@ export function BulkActions({
   onBulkSave,
   onBulkExport,
   onBulkDelete,
+  onBulkNavigateToContent,
   className,
 }: BulkActionsProps) {
-  const [isBulkSaving, setIsBulkSaving] = useState(false);
   const [isBulkExporting, setIsBulkExporting] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isBulkNavigatingToContent, setIsBulkNavigatingToContent] =
+    useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const totalTopics = topics.length;
@@ -69,6 +73,11 @@ export function BulkActions({
   const allSelected = selectedCount === totalTopics && totalTopics > 0;
   const someSelected = selectedCount > 0 && selectedCount < totalTopics;
 
+  // Check if any selected topics are currently being saved
+  const isBulkSaving = topics
+    .filter((topic) => selectedTopicIds.includes(topic.id))
+    .some((topic) => topic._isBeingSaved);
+
   const handleSelectAll = useCallback(() => {
     onSelectAll(!allSelected);
   }, [onSelectAll, allSelected]);
@@ -76,14 +85,10 @@ export function BulkActions({
   const handleBulkSave = useCallback(async () => {
     if (selectedCount === 0) return;
 
-    setIsBulkSaving(true);
     try {
       await onBulkSave(selectedTopicIds);
-      console.log(`Bulk saved ${selectedCount} topics`);
     } catch (error) {
       console.error("Bulk save failed:", error);
-    } finally {
-      setIsBulkSaving(false);
     }
   }, [selectedCount, onBulkSave, selectedTopicIds]);
 
@@ -121,6 +126,22 @@ export function BulkActions({
       console.error("Bulk delete failed:", error);
     } finally {
       setIsBulkDeleting(false);
+    }
+  };
+
+  const handleBulkNavigateToContent = async () => {
+    if (selectedCount === 0 || !onBulkNavigateToContent) return;
+
+    setIsBulkNavigatingToContent(true);
+    try {
+      await onBulkNavigateToContent(selectedTopicIds);
+      console.log(
+        `Bulk navigating to content creation for ${selectedCount} topics`,
+      );
+    } catch (error) {
+      console.error("Bulk navigation to content creation failed:", error);
+    } finally {
+      setIsBulkNavigatingToContent(false);
     }
   };
 
@@ -296,6 +317,22 @@ export function BulkActions({
         <div className="flex items-center gap-2">
           {selectedCount > 0 && (
             <>
+              {/* Write Content Button */}
+              {onBulkNavigateToContent && (
+                <Button
+                  onClick={handleBulkNavigateToContent}
+                  disabled={isBulkNavigatingToContent || selectedCount === 0}
+                  size="sm"
+                  className="gap-1.5 shadow-sm"
+                  title="Create content from selected topics"
+                >
+                  <PenTool className="h-4 w-4" />
+                  {isBulkNavigatingToContent
+                    ? `Creating content...`
+                    : `Write Content (${selectedCount})`}
+                </Button>
+              )}
+
               {/* Save Button */}
               <Button
                 onClick={handleBulkSave}

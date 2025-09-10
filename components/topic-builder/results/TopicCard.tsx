@@ -39,6 +39,7 @@ interface TopicCardProps {
   onDelete?: (topicId: string) => Promise<void> | void;
   onNavigateToIdeas?: () => void;
   onGenerateNew?: () => void;
+  onNavigateToContent?: (topicId: string) => void;
   className?: string;
 }
 
@@ -53,6 +54,7 @@ export function TopicCard({
   onDelete,
   onNavigateToIdeas,
   onGenerateNew,
+  onNavigateToContent,
   className,
 }: TopicCardProps) {
   const [showDetails, setShowDetails] = useState(false);
@@ -166,6 +168,7 @@ export function TopicCard({
             onDelete={onDelete}
             onNavigateToIdeas={onNavigateToIdeas}
             onGenerateNew={onGenerateNew}
+            onNavigateToContent={onNavigateToContent}
             variant="dropdown"
           />
         </CardFooter>
@@ -283,6 +286,7 @@ export function TopicCard({
               onDelete={onDelete}
               onNavigateToIdeas={onNavigateToIdeas}
               onGenerateNew={onGenerateNew}
+              onNavigateToContent={onNavigateToContent}
               variant="buttons"
               showLabels={true}
             />
