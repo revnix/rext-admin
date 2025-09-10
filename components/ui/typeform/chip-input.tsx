@@ -1,13 +1,15 @@
 /**
  * Chip Input Component
  *
- * TypeForm-style chip/tag input for multi-value input.
+ * TypeForm-style chip/tag input for multi-value input with dual enter logic.
+ * First Enter adds chip, second Enter (or Enter on empty input) advances wizard.
  */
 
 "use client";
 
 import { Plus, X } from "lucide-react";
 import * as React from "react";
+import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,18 @@ export interface ChipInputProps {
 
   /** Custom class name */
   className?: string;
+
+  /** Callback for wizard step advancement (dual enter behavior) */
+  onStepAdvance?: () => void;
+
+  /** Whether to enable dual enter behavior (default: false) */
+  enableDualEnter?: boolean;
+}
+
+export interface ControlledChipInputProps
+  extends Omit<ChipInputProps, "value" | "onChange"> {
+  /** React Hook Form field props */
+  field: ControllerRenderProps<FieldValues, string>;
 }
 
 export function ChipInput({
@@ -52,9 +66,15 @@ export function ChipInput({
   icon,
   autoFocus = false,
   className,
+  onStepAdvance,
+  enableDualEnter = false,
 }: ChipInputProps) {
   const [inputValue, setInputValue] = React.useState("");
+  const [lastEnterTime, setLastEnterTime] = React.useState<number | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Dual enter timeout (500ms window for second enter)
+  const DUAL_ENTER_TIMEOUT = 500;
 
   const addChip = React.useCallback(
     (chipValue: string) => {
@@ -66,7 +86,9 @@ export function ChipInput({
       ) {
         onChange([...value, trimmedValue]);
         setInputValue("");
+        return true; // Successfully added chip
       }
+      return false; // Failed to add chip
     },
     [value, onChange, maxItems],
   );
@@ -82,9 +104,44 @@ export function ChipInput({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      addChip(inputValue);
+
+      if (!enableDualEnter) {
+        // Legacy behavior: just add chip
+        addChip(inputValue);
+        return;
+      }
+
+      // Dual enter logic
+      const now = Date.now();
+      const hasContent = inputValue.trim().length > 0;
+
+      if (hasContent) {
+        // First enter with content: add chip and reset timer
+        const chipAdded = addChip(inputValue);
+        if (chipAdded) {
+          setLastEnterTime(now);
+          console.log("🏷️ Chip added, ready for step advance on next enter");
+        }
+      } else {
+        // Enter on empty input: check for dual enter timing
+        if (lastEnterTime && now - lastEnterTime <= DUAL_ENTER_TIMEOUT) {
+          // Second enter within timeout: advance step
+          console.log("⏭️ Dual enter detected, advancing step");
+          setLastEnterTime(null);
+          onStepAdvance?.();
+        } else {
+          // Single enter on empty input: advance step immediately
+          console.log("⏭️ Enter on empty input, advancing step");
+          onStepAdvance?.();
+        }
+      }
     } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
       removeChip(value.length - 1);
+      // Reset dual enter timer when user starts editing
+      setLastEnterTime(null);
+    } else {
+      // Reset dual enter timer when user starts typing
+      setLastEnterTime(null);
     }
   };
 
@@ -95,7 +152,7 @@ export function ChipInput({
   const isAtMax = maxItems && value.length >= maxItems;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-chip-input>
       <div
         className={cn(
           "relative min-h-12 p-3 border-2 rounded-md transition-all duration-200",
@@ -189,9 +246,27 @@ export function ChipInput({
       {/* Help text */}
       {value.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          Type and press Enter to add items
+          {enableDualEnter
+            ? "Type and press Enter to add items, then Enter again to continue"
+            : "Type and press Enter to add items"}
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Controller-compatible ChipInput wrapper for React Hook Form
+ */
+export function ControlledChipInput({
+  field,
+  ...props
+}: ControlledChipInputProps) {
+  return (
+    <ChipInput
+      {...props}
+      value={field.value || []}
+      onChange={(values) => field.onChange(values)}
+    />
   );
 }

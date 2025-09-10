@@ -154,16 +154,33 @@ export function QuestionWizard({
     return () => clearTimeout(timer);
   }, [focusQuestion]);
 
+  // Check if the active element is within a chip input
+  const isChipInputFocused = useCallback(() => {
+    const activeElement = document.activeElement;
+    if (!activeElement) return false;
+
+    // Check if we're focused on an input within a chip input component
+    const chipInputContainer = activeElement.closest("[data-chip-input]");
+    return !!chipInputContainer;
+  }, []);
+
   // Keyboard navigation
   useHotkeys(
     "enter",
-    () => {
+    (_e) => {
+      // Don't handle Enter if we're in a chip input - let the component handle it
+      if (isChipInputFocused()) {
+        console.log("🚫 Enter ignored - chip input is focused");
+        return;
+      }
+
       if (!isSubmitting && !isLoading) {
+        console.log("⏭️ Global Enter hotkey - advancing step");
         setDirection("forward");
         onNext();
       }
     },
-    { preventDefault: true, enableOnFormTags: true },
+    { preventDefault: false, enableOnFormTags: true },
   );
 
   useHotkeys(
@@ -286,6 +303,7 @@ export function QuestionWizard({
                 onGoToQuestion={handleGoToQuestion}
                 getQuestionError={getQuestionError}
                 questions={questions}
+                onStepAdvance={handleNext}
                 navigationControls={
                   <WizardNavigation
                     canGoBack={!isFirstQuestion && allowBackNavigation}

@@ -8,7 +8,7 @@
 
 import { motion } from "framer-motion";
 import { Plus, Users } from "lucide-react";
-import { useCallback } from "react";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { ChipInput } from "@/components/ui/typeform/chip-input";
 import {
   getMotionVariants,
@@ -26,28 +26,25 @@ export interface AudienceQuestionProps {
     field: keyof TopicBuilderFormData,
     value: TopicBuilderFormData[keyof TopicBuilderFormData],
   ) => void;
+  form: UseFormReturn<TopicBuilderFormData>;
   error?: string;
   isLoading?: boolean;
+  onStepAdvance?: () => void;
 }
 
 export function AudienceQuestion({
   question: _question,
-  formData,
+  formData: _formData,
   updateFormData,
+  form,
   error,
   isLoading = false,
+  onStepAdvance,
 }: AudienceQuestionProps) {
   const prefersReducedMotion = useReducedMotion();
   const itemVariants = getMotionVariants(
     questionItemVariants,
     prefersReducedMotion,
-  );
-
-  const handleChange = useCallback(
-    (audiences: string[]) => {
-      updateFormData("audience", audiences);
-    },
-    [updateFormData],
   );
 
   // Predefined audience suggestions
@@ -66,18 +63,20 @@ export function AudienceQuestion({
     "Freelancers",
   ];
 
-  const currentAudiences = formData.audience || [];
+  const currentAudiences = _formData.audience || [];
 
   const addSuggestion = (suggestion: string) => {
     if (!currentAudiences.includes(suggestion)) {
-      handleChange([...currentAudiences, suggestion]);
+      const newAudiences = [...currentAudiences, suggestion];
+      updateFormData("audience", newAudiences);
     }
   };
 
   const removeSuggestion = (suggestion: string) => {
-    handleChange(
-      currentAudiences.filter((audience) => audience !== suggestion),
+    const newAudiences = currentAudiences.filter(
+      (audience) => audience !== suggestion,
     );
+    updateFormData("audience", newAudiences);
   };
 
   return (
@@ -87,14 +86,25 @@ export function AudienceQuestion({
       animate="visible"
       className="space-y-6"
     >
-      <ChipInput
-        value={currentAudiences}
-        onChange={handleChange}
-        placeholder="Type an audience and press Enter..."
-        disabled={isLoading}
-        error={error}
-        maxItems={5}
-        icon={<Users className="w-5 h-5" />}
+      <Controller
+        name="audience"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <ChipInput
+            value={field.value || []}
+            onChange={(values) => {
+              field.onChange(values);
+              updateFormData("audience", values);
+            }}
+            placeholder="Type an audience and press Enter..."
+            disabled={isLoading}
+            error={fieldState.error?.message || error}
+            maxItems={5}
+            icon={<Users className="w-5 h-5" />}
+            enableDualEnter={true}
+            onStepAdvance={onStepAdvance}
+          />
+        )}
       />
 
       {/* Suggestions */}

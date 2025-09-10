@@ -72,6 +72,9 @@ export interface QuestionStepProps {
 
   /** Questions array for dynamic mapping in review step */
   questions?: QuestionConfig[];
+
+  /** Step advancement callback for dual enter behavior */
+  onStepAdvance?: () => void;
 }
 
 export function QuestionStep({
@@ -87,6 +90,7 @@ export function QuestionStep({
   onGoToQuestion,
   getQuestionError,
   questions,
+  onStepAdvance,
 }: QuestionStepProps) {
   const prefersReducedMotion = useReducedMotion();
   const itemVariants = getMotionVariants(
@@ -139,7 +143,9 @@ export function QuestionStep({
         // Default multi select handling
         return <PurposeQuestion {...baseProps} />;
       case "chip-input":
-        return <AudienceQuestion {...baseProps} />;
+        return (
+          <AudienceQuestion {...baseProps} onStepAdvance={onStepAdvance} />
+        );
       case "number-input":
         return <NumTopicsQuestion {...baseProps} />;
       case "review":
@@ -168,6 +174,7 @@ export function QuestionStep({
     onGoToQuestion,
     getQuestionError,
     questions,
+    onStepAdvance,
   ]);
 
   return (

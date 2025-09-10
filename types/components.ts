@@ -475,6 +475,59 @@ export interface MultiSelectProps<T = string>
 }
 
 /**
+ * Enhanced props for chip input components with dual enter behavior
+ */
+export interface ChipInputProps {
+  /** Current value array */
+  value: string[];
+  /** Change handler */
+  onChange: (values: string[]) => void;
+  /** Placeholder text */
+  placeholder?: string;
+  /** Whether input is disabled */
+  disabled?: boolean;
+  /** Error message */
+  error?: string;
+  /** Maximum number of chips */
+  maxItems?: number;
+  /** Icon to display */
+  icon?: React.ReactNode;
+  /** Auto focus */
+  autoFocus?: boolean;
+  /** Custom class name */
+  className?: string;
+  /** Callback for wizard step advancement (dual enter behavior) */
+  onStepAdvance?: () => void;
+  /** Whether to enable dual enter behavior (default: false) */
+  enableDualEnter?: boolean;
+}
+
+/**
+ * Props for Controller-compatible chip input wrapper
+ */
+export interface ControlledChipInputProps
+  extends Omit<ChipInputProps, "value" | "onChange"> {
+  /** React Hook Form field props */
+  field: {
+    value: string[];
+    onChange: (values: string[]) => void;
+    onBlur: () => void;
+    name: string;
+    ref: React.Ref<HTMLInputElement>;
+  };
+}
+
+/**
+ * Props for components that support step advancement (wizard navigation)
+ */
+export interface StepAdvancementProps {
+  /** Callback to advance to next wizard step */
+  onStepAdvance?: () => void;
+  /** Whether component should handle dual enter behavior */
+  enableDualEnter?: boolean;
+}
+
+/**
  * Props for textarea components
  */
 export interface TextareaProps extends React.ComponentProps<"textarea"> {
