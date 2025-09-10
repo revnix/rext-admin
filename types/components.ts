@@ -475,7 +475,7 @@ export interface MultiSelectProps<T = string>
 }
 
 /**
- * Enhanced props for chip input components with dual enter behavior
+ * Enhanced props for chip input components with dual enter behavior and accessibility
  */
 export interface ChipInputProps {
   /** Current value array */
@@ -500,6 +500,14 @@ export interface ChipInputProps {
   onStepAdvance?: () => void;
   /** Whether to enable dual enter behavior (default: false) */
   enableDualEnter?: boolean;
+  /** Accessibility label for the input */
+  ariaLabel?: string;
+  /** Accessibility description for the input */
+  ariaDescription?: string;
+  /** Whether to enable fallback to plain text input */
+  enableFallback?: boolean;
+  /** Callback when fallback is triggered */
+  onFallbackTriggered?: (error: Error) => void;
 }
 
 /**
@@ -798,6 +806,40 @@ export type ErrorStateProps = {
  * Combined state props for components that might have loading/error states
  */
 export type AsyncStateProps = LoadingStateProps & ErrorStateProps;
+
+/**
+ * Accessibility props for interactive components
+ */
+export type AccessibilityProps = {
+  /** ARIA label for screen readers */
+  "aria-label"?: string;
+  /** ARIA described by element ID */
+  "aria-describedby"?: string;
+  /** ARIA expanded state for combobox-like components */
+  "aria-expanded"?: boolean;
+  /** ARIA required state */
+  "aria-required"?: boolean;
+  /** ARIA invalid state */
+  "aria-invalid"?: boolean;
+  /** Role for the component */
+  role?: string;
+  /** Tab index for keyboard navigation */
+  tabIndex?: number;
+};
+
+/**
+ * Keyboard navigation support for multi-select components
+ */
+export type KeyboardNavigationProps = {
+  /** Currently focused chip index (-1 for input, 0+ for chips) */
+  focusedChipIndex?: number;
+  /** Callback when chip focus changes */
+  onChipFocus?: (index: number) => void;
+  /** Callback when chip is deleted via keyboard */
+  onChipDelete?: (index: number) => void;
+  /** Whether keyboard navigation is enabled */
+  enableKeyboardNavigation?: boolean;
+};
 
 // ============================================================================
 // TYPE GUARDS FOR COMPONENT PROPS
