@@ -24,9 +24,7 @@
             "id": 2,
             "title": "Implement Zustand Store with Middleware and Actions",
             "description": "Create the Zustand store using the defined interfaces, integrating middleware for localStorage persistence. Implement actions for step navigation, field updates, and validation logic, ensuring atomic state updates and schema migration support.",
-            "dependencies": [
-              "3.1"
-            ],
+            "dependencies": ["3.1"],
             "details": "Use Zustand's middleware capabilities to persist state to localStorage. Define actions for moving between steps, updating form fields, and validating each step. Ensure all state transitions are atomic and support future schema migrations.",
             "status": "done",
             "testStrategy": ""
@@ -35,9 +33,7 @@
             "id": 3,
             "title": "Test State Transitions, Persistence, and Validation Logic",
             "description": "Develop unit tests to verify correct state transitions, persistence across reloads, and validation logic. Simulate reloads to ensure draft recovery and validate schema migration scenarios.",
-            "dependencies": [
-              "3.2"
-            ],
+            "dependencies": ["3.2"],
             "details": "Write tests for each action in the store, including navigation, updates, and validation. Test localStorage persistence and recovery after reloads. Validate that schema migrations do not break existing drafts.\n<info added on 2025-09-10T16:07:54.909Z>\nImplementation completed successfully. Enhanced the existing test file with comprehensive coverage for all Task 3.3 requirements:\n\n**Changes Made:**\n- Enhanced `/Users/mobeen/Work/Products/wrext-admin/__tests__/stores/topic-builder-store.test.ts` with 15+ new test cases\n- Added TypeForm State Transitions tests (7 tests) - covering setCurrentStep, goToNextStep, goToPreviousStep, step history, and duplicate prevention\n- Added localStorage Persistence tests (6 tests) - covering state persistence, recovery, Set serialization, corrupted data handling, and selective field persistence\n- Added Validation Logic tests (5 tests) - covering step validation state, validation functions, initialization, and warnings\n- Added Schema Migration tests (4 tests) - covering legacy format compatibility, mixed formats, and invalid data handling\n\n**Test Results:**\n- All 33 tests passing ✅\n- Added 22 new tests covering previously missing functionality\n- Maintained backward compatibility with existing 11 tests\n- Applied code formatting with Biome\n\n**Key Coverage Added:**\n- TypeForm-style wizard navigation validation\n- localStorage persistence and recovery across browser reloads\n- Step validation state management\n- Schema migration scenarios for draft compatibility\n- Error handling for corrupted localStorage data\n\nThe implementation fully satisfies Task 3.3 requirements and provides robust test coverage for state transitions, persistence, and validation logic.\n</info added on 2025-09-10T16:07:54.909Z>",
             "status": "done",
             "testStrategy": ""
@@ -51,9 +47,7 @@
         "details": "Use the WIZARD_STEPS array and Zustand state to control navigation. Render each step as a separate component. Implement dynamic branching for subject-first vs industry-first flows. Integrate real-time validation and smart defaults. Use React Hook Form + Zod for step validation.",
         "testStrategy": "Test all navigation paths, including branching logic. Validate that smart defaults are pre-selected and validation errors are shown in real time.",
         "priority": "high",
-        "dependencies": [
-          3
-        ],
+        "dependencies": [3],
         "status": "done",
         "subtasks": [
           {
@@ -69,9 +63,7 @@
             "id": 2,
             "title": "Develop Dynamic Branching Logic for Step Flow",
             "description": "Implement dynamic routing and branching logic to support subject-first and industry-first flows, updating the wizard steps array and navigation based on user selections.",
-            "dependencies": [
-              "4.1"
-            ],
+            "dependencies": ["4.1"],
             "details": "Use user input to determine the branching path and update the steps sequence accordingly. Ensure the wizard can add, remove, or reorder steps dynamically in response to user choices, maintaining correct navigation and state.",
             "status": "done",
             "testStrategy": ""
@@ -80,10 +72,7 @@
             "id": 3,
             "title": "Integrate Real-Time Validation and Smart Defaults",
             "description": "Apply React Hook Form and Zod for step validation, enabling real-time feedback and pre-selecting smart defaults for each step.",
-            "dependencies": [
-              "4.1",
-              "4.2"
-            ],
+            "dependencies": ["4.1", "4.2"],
             "details": "Configure each step component to use React Hook Form controllers and Zod schemas for validation. Implement logic to show validation errors instantly and set default values based on context or previous selections.",
             "status": "done",
             "testStrategy": ""
@@ -97,9 +86,7 @@
         "details": "Develop question card, option selection (radio/checkbox with 3-column grid), progress indicator, and input chip components. Ensure all components meet WCAG 2.1 AA standards, have proper ARIA labels, and support keyboard navigation. Use Framer Motion for micro-interactions.",
         "testStrategy": "Run automated accessibility scans (axe, Lighthouse). Manually test keyboard navigation and screen reader support.",
         "priority": "high",
-        "dependencies": [
-          4
-        ],
+        "dependencies": [4],
         "status": "done",
         "subtasks": [
           {
@@ -115,9 +102,7 @@
             "id": 2,
             "title": "Implement Keyboard Navigation and Micro-Interactions",
             "description": "Enable full keyboard accessibility for all wizard components, including logical tab order, visible focus indicators, and support for keyboard shortcuts. Integrate Framer Motion for accessible micro-interactions.",
-            "dependencies": [
-              "5.1"
-            ],
+            "dependencies": ["5.1"],
             "details": "Test and refine keyboard navigation so every interactive element is reachable and operable via keyboard. Ensure focus states are visually clear and ARIA attributes update dynamically. Use Framer Motion for transitions and feedback, verifying they do not interfere with accessibility.",
             "status": "done",
             "testStrategy": ""
@@ -126,10 +111,7 @@
             "id": 3,
             "title": "Validate Accessibility Compliance and Refine Components",
             "description": "Test all wizard components for WCAG 2.1 AA compliance using automated tools (axe, Lighthouse) and manual testing for screen reader and keyboard support. Refine components based on test results.",
-            "dependencies": [
-              "5.1",
-              "5.2"
-            ],
+            "dependencies": ["5.1", "5.2"],
             "details": "Run accessibility scans and manually test with screen readers and keyboard navigation. Address issues such as color contrast, missing labels, and ARIA attributes. Document compliance and update components as needed.",
             "status": "done",
             "testStrategy": ""
@@ -143,9 +125,7 @@
         "details": "Use React Hook Form Controller for multi-select fields. Implement logic: Enter adds chip, second Enter advances step. Backspace removes last chip. Ensure accessibility and fallback to text input if chip logic fails. Isolate component for unit testing.",
         "testStrategy": "Write unit and integration tests for all keyboard interactions. Test edge cases (empty, max chips, rapid input). Conduct user testing for usability.",
         "priority": "high",
-        "dependencies": [
-          5
-        ],
+        "dependencies": [5],
         "status": "in-progress",
         "subtasks": [
           {
@@ -161,9 +141,7 @@
             "id": 2,
             "title": "Implement Chip Addition and Removal Logic",
             "description": "Develop logic for adding chips when an item is selected or Enter is pressed, and removing chips via Backspace or chip removal controls.",
-            "dependencies": [
-              "6.1"
-            ],
+            "dependencies": ["6.1"],
             "details": "Handle keyboard and mouse interactions for chip addition. Implement Backspace logic to remove the last chip when the input is empty. Ensure state updates correctly reflect chip changes.",
             "status": "pending",
             "testStrategy": ""
@@ -172,9 +150,7 @@
             "id": 3,
             "title": "Implement Dual Enter-Key Behavior",
             "description": "Add logic so that the first Enter adds a chip, and a second consecutive Enter advances the form step.",
-            "dependencies": [
-              "6.2"
-            ],
+            "dependencies": ["6.2"],
             "details": "Track Enter key presses and input state. On first Enter, add the current input as a chip. On second Enter (with input empty), trigger the step advancement callback.",
             "status": "pending",
             "testStrategy": ""
@@ -183,9 +159,7 @@
             "id": 4,
             "title": "Ensure Accessibility and ARIA Roles",
             "description": "Implement ARIA roles, keyboard navigation, and screen reader support for the multi-select input and chips.",
-            "dependencies": [
-              "6.2"
-            ],
+            "dependencies": ["6.2"],
             "details": "Add appropriate ARIA attributes to the input and chip elements. Ensure all interactive elements are keyboard accessible and provide clear focus indicators.",
             "status": "pending",
             "testStrategy": ""
@@ -194,9 +168,7 @@
             "id": 5,
             "title": "Implement Fallback to Text Input",
             "description": "Provide a fallback mechanism to a standard text input if chip logic fails or is unsupported.",
-            "dependencies": [
-              "6.1"
-            ],
+            "dependencies": ["6.1"],
             "details": "Detect chip logic failures and render a plain text input as a fallback. Ensure form integration and value handling remain consistent.",
             "status": "pending",
             "testStrategy": ""
@@ -205,12 +177,7 @@
             "id": 6,
             "title": "Write Isolated Unit Tests for All Behaviors",
             "description": "Develop comprehensive unit tests for chip logic, dual Enter-key behavior, accessibility, and fallback scenarios.",
-            "dependencies": [
-              "6.2",
-              "6.3",
-              "6.4",
-              "6.5"
-            ],
+            "dependencies": ["6.2", "6.3", "6.4", "6.5"],
             "details": "Test all keyboard interactions, edge cases (empty input, max chips, rapid input), accessibility features, and fallback rendering. Use mocking and isolation to ensure test reliability.",
             "status": "pending",
             "testStrategy": ""
@@ -224,9 +191,7 @@
         "details": "On step load, check for applicable defaults (e.g., 'Explore industry' for Q1). Filter audience options by industry, recommend tones by purpose. Use Zustand state and effect hooks to update suggestions dynamically.",
         "testStrategy": "Test that defaults are applied correctly and suggestions update as expected. Track selection rates for A/B testing.",
         "priority": "medium",
-        "dependencies": [
-          6
-        ],
+        "dependencies": [6],
         "status": "pending",
         "subtasks": [
           {
@@ -242,9 +207,7 @@
             "id": 2,
             "title": "Filter and Recommend Contextual Suggestions",
             "description": "Create mechanisms to filter available options (e.g., audience by industry) and recommend contextual suggestions (e.g., tones by purpose) based on previous answers and current step context.",
-            "dependencies": [
-              "7.1"
-            ],
+            "dependencies": ["7.1"],
             "details": "Use effect hooks to monitor changes in relevant fields and update suggestions in real time. Ensure that suggestions are contextually relevant and adapt as the user progresses through the steps.",
             "status": "pending",
             "testStrategy": ""
@@ -253,10 +216,7 @@
             "id": 3,
             "title": "Integrate Dynamic State Management with Zustand",
             "description": "Connect the smart defaults and contextual suggestion logic to Zustand state management, ensuring that updates are reflected across the UI and persist as the user navigates the wizard.",
-            "dependencies": [
-              "7.1",
-              "7.2"
-            ],
+            "dependencies": ["7.1", "7.2"],
             "details": "Implement effect hooks and actions in Zustand to handle dynamic updates, persistence, and synchronization of defaults and suggestions. Test for correct application and update of defaults and suggestions throughout the user flow.",
             "status": "pending",
             "testStrategy": ""
@@ -270,9 +230,7 @@
         "details": "Display all answers as comma-separated text. Allow users to edit any step, then return to review with 'Save & Return' logic. Implement smart step skipping for unchanged data. Add progress bar with 1-2 word step titles.",
         "testStrategy": "Test edit and review flows for all steps. Validate that progress bar updates and navigation is seamless. Conduct screen reader testing for timeline navigation.",
         "priority": "medium",
-        "dependencies": [
-          7
-        ],
+        "dependencies": [7],
         "status": "pending",
         "subtasks": [
           {
@@ -288,9 +246,7 @@
             "id": 2,
             "title": "Implement Edit Navigation and 'Save & Return' Logic",
             "description": "Enable users to edit any previous step from the review screen and return seamlessly to the review step after saving changes.",
-            "dependencies": [
-              "8.1"
-            ],
+            "dependencies": ["8.1"],
             "details": "Add navigation controls to jump from the review step to any previous step. After editing, ensure the user is returned to the review step with updated answers. Maintain state consistency throughout navigation.",
             "status": "pending",
             "testStrategy": ""
@@ -299,9 +255,7 @@
             "id": 3,
             "title": "Develop Smart Step Skipping for Unchanged Data",
             "description": "Implement logic to skip steps that have not been changed during the edit process, streamlining the navigation flow.",
-            "dependencies": [
-              "8.2"
-            ],
+            "dependencies": ["8.2"],
             "details": "Track changes to form data and compare with previous values. If no changes are detected, skip unnecessary steps when returning to the review or progressing through the wizard.",
             "status": "pending",
             "testStrategy": ""
@@ -310,9 +264,7 @@
             "id": 4,
             "title": "Add Progress Bar with Concise Step Titles",
             "description": "Integrate a progress bar that displays the user's current position in the wizard using 1-2 word step titles.",
-            "dependencies": [
-              "8.1"
-            ],
+            "dependencies": ["8.1"],
             "details": "Design and implement a progress bar component. Ensure each step is labeled with a short, descriptive title. Update the progress bar dynamically as the user navigates.",
             "status": "pending",
             "testStrategy": ""
@@ -321,11 +273,7 @@
             "id": 5,
             "title": "Ensure Accessibility and Screen Reader Support",
             "description": "Implement accessibility features for the review and navigation flow, including screen reader compatibility and keyboard navigation.",
-            "dependencies": [
-              "8.1",
-              "8.2",
-              "8.4"
-            ],
+            "dependencies": ["8.1", "8.2", "8.4"],
             "details": "Add ARIA labels, focus management, and semantic HTML to all navigation and review components. Test with screen readers and keyboard-only navigation to ensure compliance with WCAG 2.1 AA.",
             "status": "pending",
             "testStrategy": ""
@@ -339,9 +287,7 @@
         "details": "Implement POST `/api/generate` endpoint using Next.js API routes. Use TanStack Query for mutation and loading state. Mock API responses for local development. Handle API rate limiting and error responses per contract.",
         "testStrategy": "Test successful and failed submissions. Simulate network errors and verify error handling. Confirm request/response schema adherence.",
         "priority": "high",
-        "dependencies": [
-          8
-        ],
+        "dependencies": [8],
         "status": "pending",
         "subtasks": [
           {
@@ -357,9 +303,7 @@
             "id": 2,
             "title": "Integrate TanStack Query Mutation for Form Submission",
             "description": "Connect the wizard frontend to the API endpoint using TanStack Query mutation, managing loading states and error feedback for users.",
-            "dependencies": [
-              "9.1"
-            ],
+            "dependencies": ["9.1"],
             "details": "Configure TanStack Query mutation to submit form data to `/api/generate`, display loading indicators, and handle success/error responses. Ensure mutation logic matches the API contract and supports optimistic UI updates if needed.",
             "status": "pending",
             "testStrategy": ""
@@ -368,10 +312,7 @@
             "id": 3,
             "title": "Mock API Responses and Implement Rate Limiting/Error Handling",
             "description": "Set up local development mocks for the API endpoint and implement logic to handle API rate limiting and error responses as specified in the contract.",
-            "dependencies": [
-              "9.1",
-              "9.2"
-            ],
+            "dependencies": ["9.1", "9.2"],
             "details": "Create mock handlers for `/api/generate` to simulate backend responses during development. Implement frontend and backend logic to detect and respond to rate limiting and error scenarios, ensuring user feedback and contract compliance.",
             "status": "pending",
             "testStrategy": ""
@@ -385,9 +326,7 @@
         "details": "Use shadcn/ui Card components styled with Tailwind. Display circular progress for score, action chips for View/Save/Write/Copy. Implement hover and touch states. Use React.memo for performance. Integrate optimistic UI for save actions.",
         "testStrategy": "Conduct eye-tracking and click-through tests. Validate optimistic updates and rollback on failure. Test mobile touch interactions.",
         "priority": "high",
-        "dependencies": [
-          9
-        ],
+        "dependencies": [9],
         "status": "pending",
         "subtasks": [
           {
@@ -403,9 +342,7 @@
             "id": 2,
             "title": "Implement Progressive Disclosure Interaction",
             "description": "Add interactive elements (e.g., chevron icon, hover/tap area) to reveal additional topic details on user interaction, following progressive disclosure best practices.",
-            "dependencies": [
-              "10.1"
-            ],
+            "dependencies": ["10.1"],
             "details": "Use UI patterns such as accordions or expandable sections to show more information only when requested. Ensure transitions are smooth and maintain user context. Support both mouse and touch interactions.",
             "status": "pending",
             "testStrategy": ""
@@ -414,9 +351,7 @@
             "id": 3,
             "title": "Integrate Action Chips and Optimistic UI",
             "description": "Add action chips for View, Save, Write, and Copy, ensuring they are visually distinct and accessible. Implement optimistic UI updates for save actions and use React.memo for performance.",
-            "dependencies": [
-              "10.1"
-            ],
+            "dependencies": ["10.1"],
             "details": "Design chips with proper icons, hover/touch states, and ARIA labels. Ensure optimistic feedback for save actions and handle rollback on failure. Test for accessibility and responsiveness.",
             "status": "pending",
             "testStrategy": ""
@@ -430,9 +365,7 @@
         "details": "Use Radix UI Sheet/Drawer primitives. Display all topic metadata, scores, and implementation details. Add swipe gesture support for mobile. Animate open/close with Framer Motion. Ensure focus management and ARIA compliance.",
         "testStrategy": "Test drawer open/close on all devices. Validate focus trapping and keyboard navigation. Run performance tests for large content.",
         "priority": "high",
-        "dependencies": [
-          10
-        ],
+        "dependencies": [10],
         "status": "pending",
         "subtasks": [
           {
@@ -448,9 +381,7 @@
             "id": 2,
             "title": "Implement Responsive Layout and Sizing",
             "description": "Ensure the drawer is full-height and occupies 60-70% of the viewport width, adapting seamlessly between desktop and mobile devices.",
-            "dependencies": [
-              "11.1"
-            ],
+            "dependencies": ["11.1"],
             "details": "Apply responsive CSS and media queries. Test layout on various screen sizes. Ensure usability and visual consistency.",
             "status": "pending",
             "testStrategy": ""
@@ -459,10 +390,7 @@
             "id": 3,
             "title": "Render Topic Metadata and Content",
             "description": "Display all relevant topic metadata, scores, and implementation details within the drawer, ensuring clear organization and accessibility.",
-            "dependencies": [
-              "11.1",
-              "11.2"
-            ],
+            "dependencies": ["11.1", "11.2"],
             "details": "Map topic data to UI elements. Structure content for readability. Validate rendering with sample data.",
             "status": "pending",
             "testStrategy": ""
@@ -471,10 +399,7 @@
             "id": 4,
             "title": "Add Swipe Gesture Support for Mobile",
             "description": "Enable swipe-to-dismiss and swipe interactions for mobile users, ensuring smooth and intuitive gesture handling.",
-            "dependencies": [
-              "11.1",
-              "11.2"
-            ],
+            "dependencies": ["11.1", "11.2"],
             "details": "Integrate gesture detection library or custom logic. Test swipe interactions for reliability and performance.",
             "status": "pending",
             "testStrategy": ""
@@ -483,10 +408,7 @@
             "id": 5,
             "title": "Integrate Animation and Transitions with Framer Motion",
             "description": "Animate drawer open/close actions using Framer Motion, providing a polished and responsive user experience.",
-            "dependencies": [
-              "11.1",
-              "11.2"
-            ],
+            "dependencies": ["11.1", "11.2"],
             "details": "Define animation variants for open/close states. Ensure smooth transitions and performance on all devices.",
             "status": "pending",
             "testStrategy": ""
@@ -495,13 +417,7 @@
             "id": 6,
             "title": "Ensure Focus Management and ARIA Compliance",
             "description": "Implement robust focus trapping, keyboard navigation, and ARIA attributes for accessibility compliance.",
-            "dependencies": [
-              "11.1",
-              "11.2",
-              "11.3",
-              "11.4",
-              "11.5"
-            ],
+            "dependencies": ["11.1", "11.2", "11.3", "11.4", "11.5"],
             "details": "Use Radix UI accessibility features. Validate with automated and manual accessibility tests. Address any WCAG 2.1 AA gaps.",
             "status": "pending",
             "testStrategy": ""
@@ -515,9 +431,7 @@
         "details": "Use Zustand middleware and custom hooks for persistence. Compress large datasets before storage. Sync with server state via TanStack Query. Handle schema migrations and data versioning.",
         "testStrategy": "Test saving/loading topics and drafts across reloads and offline mode. Simulate schema changes and verify migration logic.",
         "priority": "medium",
-        "dependencies": [
-          11
-        ],
+        "dependencies": [11],
         "status": "pending",
         "subtasks": [
           {
@@ -533,9 +447,7 @@
             "id": 2,
             "title": "Implement Compression and Schema Versioning for Stored Data",
             "description": "Compress large topic and draft datasets before saving to localStorage and handle schema migrations and data versioning for persistent data.",
-            "dependencies": [
-              "12.1"
-            ],
+            "dependencies": ["12.1"],
             "details": "Integrate a compression library to minimize storage footprint. Design a versioning system for stored data schemas. Implement migration logic to update persisted data when schema changes occur.",
             "status": "pending",
             "testStrategy": ""
@@ -544,9 +456,7 @@
             "id": 3,
             "title": "Sync Local Storage State with Server Using TanStack Query",
             "description": "Ensure localStorage state for topics and drafts is synchronized with server state using TanStack Query, supporting offline mode and conflict resolution.",
-            "dependencies": [
-              "12.2"
-            ],
+            "dependencies": ["12.2"],
             "details": "Implement logic to detect changes and sync local data with server when online. Handle merge conflicts and ensure consistency between local and remote states. Test offline support and data recovery.",
             "status": "pending",
             "testStrategy": ""
@@ -576,9 +486,7 @@
             "id": 2,
             "title": "Implement Bundle Splitting and Lazy Loading",
             "description": "Configure Next.js to optimize bundle splitting according to BUNDLE_STRATEGY. Use React.lazy and dynamic imports to enable lazy loading of components and routes for improved performance.",
-            "dependencies": [
-              "14.1"
-            ],
+            "dependencies": ["14.1"],
             "details": "Analyze application routes and components for bundle splitting opportunities. Apply React.lazy and dynamic imports to defer loading of non-critical components. Adjust Next.js configuration to maximize code splitting and minimize initial bundle size.",
             "status": "pending",
             "testStrategy": ""
@@ -587,10 +495,7 @@
             "id": 3,
             "title": "Optimize Rendering Performance and Prefetching",
             "description": "Memoize expensive renders using React.memo, useMemo, and useCallback where appropriate. Prefetch likely user interactions to further enhance perceived performance.",
-            "dependencies": [
-              "14.1",
-              "14.2"
-            ],
+            "dependencies": ["14.1", "14.2"],
             "details": "Profile components to identify expensive renders. Apply memoization techniques to prevent unnecessary re-renders. Implement prefetching strategies for routes and assets based on user interaction patterns.",
             "status": "pending",
             "testStrategy": ""
@@ -604,9 +509,7 @@
         "details": "Implement error boundaries for state corruption. Add automatic retry logic with exponential backoff. Detect network status and switch to offline mode with localStorage fallback. Sync state when back online.",
         "testStrategy": "Test state recovery after simulated errors. Validate offline/online transitions. Run integration tests for state sync.",
         "priority": "medium",
-        "dependencies": [
-          14
-        ],
+        "dependencies": [14],
         "status": "pending",
         "subtasks": [
           {
@@ -622,9 +525,7 @@
             "id": 2,
             "title": "Add Automatic Retry Logic with Exponential Backoff",
             "description": "Implement automatic retry mechanisms for failed network or state synchronization operations, using exponential backoff to avoid overwhelming the server and improve reliability during transient failures.",
-            "dependencies": [
-              "15.1"
-            ],
+            "dependencies": ["15.1"],
             "details": "Detect recoverable errors (e.g., network timeouts) and automatically retry requests with increasing delays. Ensure retries are logged and capped to prevent infinite loops. Integrate with the centralized error state for visibility.",
             "status": "pending",
             "testStrategy": ""
@@ -633,9 +534,7 @@
             "id": 3,
             "title": "Enable Offline Mode with Local Storage Fallback and State Sync",
             "description": "Detect network status changes and switch to offline mode when connectivity is lost. Persist critical state to localStorage and synchronize changes with the server when the connection is restored.",
-            "dependencies": [
-              "15.2"
-            ],
+            "dependencies": ["15.2"],
             "details": "Monitor online/offline events. When offline, store user actions and state updates locally. On reconnect, merge and sync local changes with the server, resolving conflicts as needed. Provide clear UI feedback for offline/online transitions.",
             "status": "pending",
             "testStrategy": ""
@@ -649,9 +548,7 @@
         "details": "Audit the current wizard UI to identify all areas where vertical spacing can be optimized. Refactor layout components (e.g., using CSS grid/flexbox) to reduce vertical gaps between steps and question content by 40-60%, ensuring the reduction does not compromise readability. Move the 'Question x of y' indicator to the top of each question container, updating component structure and ARIA attributes for accessibility. Implement responsive spacing logic that dynamically adjusts padding/margins based on content length and viewport size, using CSS media queries and utility classes. Standardize heading, subheading, and input styles to maintain a clear visual hierarchy across all question types. Collaborate with design to validate spacing and hierarchy against UX guidelines. Ensure all changes are compatible with accessibility requirements and responsive design patterns.",
         "testStrategy": "Review the UI on multiple devices and screen sizes to confirm vertical spacing is reduced by the target percentage and adapts responsively to content length. Verify the 'Question x of y' indicator appears at the top of each question and is accessible to screen readers. Check that visual hierarchy is consistent across all question types, including headings, subheadings, and inputs. Run automated and manual accessibility tests to ensure compliance. Conduct usability testing to confirm improved completion rates and user satisfaction.",
         "status": "pending",
-        "dependencies": [
-          3
-        ],
+        "dependencies": [3],
         "priority": "high",
         "subtasks": [
           {
@@ -667,9 +564,7 @@
             "id": 2,
             "title": "Reposition and Enhance 'Question x of y' Indicator for Accessibility",
             "description": "Move the 'Question x of y' indicator to the top of each question container. Update the component structure and ARIA attributes to ensure the indicator is accessible to screen readers and visually prominent.",
-            "dependencies": [
-              "26.1"
-            ],
+            "dependencies": ["26.1"],
             "details": "Adjust the layout using flexbox alignment properties to position the indicator at the top. Validate that the indicator is announced correctly by assistive technologies and remains responsive across devices.",
             "status": "pending",
             "testStrategy": ""
@@ -678,9 +573,7 @@
             "id": 3,
             "title": "Implement Responsive Spacing and Standardize Visual Hierarchy",
             "description": "Develop responsive spacing logic that dynamically adjusts padding and margins based on content length and viewport size. Standardize heading, subheading, and input styles to enforce a consistent visual hierarchy across all question types.",
-            "dependencies": [
-              "26.2"
-            ],
+            "dependencies": ["26.2"],
             "details": "Utilize CSS media queries and utility classes to adapt spacing. Collaborate with design to validate the visual hierarchy and spacing against UX guidelines, ensuring all changes are compatible with accessibility and responsive design patterns.",
             "status": "pending",
             "testStrategy": ""
@@ -694,10 +587,7 @@
         "details": "Refactor the option selection components used in wizard steps to improve readability and consistency. \n\n- Update option text styles to use a minimum font size of 16px, ensuring accessibility and legibility across devices.\n- Standardize all option icons (radio/checkbox) to 20px by updating icon components or CSS rules.\n- Implement a responsive grid layout using CSS Grid or Flexbox: display up to 3 options per row on desktop, and 1-2 per row on mobile (using media queries or a responsive utility library).\n- Enable text wrapping for option titles and descriptions, ensuring long text does not overflow or truncate.\n- Redesign checkbox styling so that when selected, only a single rounded border is shown, matching the design spec.\n- Audit and enforce consistent height, width, and padding for all option elements, regardless of content length or type.\n- Ensure all changes are compatible with accessibility requirements (see Task 16), including keyboard navigation and screen reader support.\n- Coordinate with the layout changes from Task 26 to avoid conflicting styles and ensure a unified user experience.",
         "testStrategy": "1. Review the option selection UI on desktop and mobile devices to confirm:\n   - Option text is at least 16px and icons are 20px.\n   - Grid layout displays max 3 options per row on desktop, 1-2 per row on mobile.\n   - Long option titles/descriptions wrap correctly without overflow.\n   - Checkbox styling shows a single rounded border when selected.\n   - All option elements have consistent dimensions and spacing.\n2. Use accessibility tools (axe, Lighthouse) to verify compliance with WCAG 2.1 AA for option selection components.\n3. Test keyboard navigation and screen reader output for all option elements.\n4. Cross-check with the revised wizard question layout (Task 26) to ensure visual and functional consistency.",
         "status": "pending",
-        "dependencies": [
-          4,
-          26
-        ],
+        "dependencies": [4, 26],
         "priority": "high",
         "subtasks": [
           {
@@ -713,9 +603,7 @@
             "id": 2,
             "title": "Implement Responsive Grid Layout and Text Wrapping",
             "description": "Refactor the option selection layout to use a responsive 3-column grid on desktop and 1-2 columns on mobile. Enable text wrapping for option titles and descriptions to prevent overflow or truncation.",
-            "dependencies": [
-              "27.1"
-            ],
+            "dependencies": ["27.1"],
             "details": "Use CSS Grid or Flexbox to create a layout that displays up to 3 options per row on desktop and adjusts to 1-2 per row on mobile using media queries. Ensure long option text wraps appropriately within each grid cell. Validate layout on various screen sizes.",
             "status": "pending",
             "testStrategy": ""
@@ -724,9 +612,7 @@
             "id": 3,
             "title": "Redesign Checkbox Styling and Enforce Consistent Option Dimensions",
             "description": "Redesign the checkbox styling to show only a single rounded border when selected, matching the design spec. Audit and enforce consistent height, width, and padding for all option elements, regardless of content length or type.",
-            "dependencies": [
-              "27.2"
-            ],
+            "dependencies": ["27.2"],
             "details": "Update CSS for checkboxes to apply the new selected state styling. Review and adjust the dimensions and spacing of all option elements to ensure visual consistency. Test for accessibility, keyboard navigation, and screen reader support.",
             "status": "pending",
             "testStrategy": ""
@@ -740,10 +626,7 @@
         "details": "Identify all interactive elements (buttons, options, suggestions) in the UI and apply 'cursor: pointer' via CSS to indicate clickability. Standardize hover states by defining a shared CSS class or utility that applies a 150ms transition for background, border, and text color changes. Ensure hover feedback uses colors and contrasts that meet WCAG AA accessibility standards (minimum 4.5:1 contrast ratio for text and interactive surfaces). For subtle feedback, use effects such as slight elevation, shadow, or color shift, but avoid reducing accessibility. Refactor existing components to use these shared styles, and document the approach for future consistency. Consider using CSS variables or a theme system to centralize hover and active state definitions.",
         "testStrategy": "1. Inspect all interactive elements to confirm 'cursor: pointer' is present on hover. 2. Verify that hover states activate with a 150ms transition and provide clear, accessible visual feedback. 3. Use accessibility tools (e.g., axe, Lighthouse) to check color contrast ratios on hover and active states. 4. Test on multiple devices and browsers to ensure consistency and smoothness of transitions. 5. Confirm that feedback is subtle but noticeable and does not interfere with readability or usability.",
         "status": "pending",
-        "dependencies": [
-          26,
-          27
-        ],
+        "dependencies": [26, 27],
         "priority": "medium",
         "subtasks": [
           {
@@ -759,9 +642,7 @@
             "id": 2,
             "title": "Standardize and Implement Accessible Hover States",
             "description": "Create a shared CSS class or utility that defines consistent hover states for all interactive elements, including a 150ms transition for background, border, and text color changes. Ensure all hover feedback meets WCAG AA color contrast requirements and uses accessible visual cues such as elevation, shadow, or color shift.",
-            "dependencies": [
-              "28.1"
-            ],
+            "dependencies": ["28.1"],
             "details": "Define CSS variables or a theme system for hover and active states. Implement the shared class across all interactive components, verifying that transitions are smooth and visual feedback is both clear and accessible. Use accessibility tools to confirm color contrast ratios meet or exceed 4.5:1.",
             "status": "pending",
             "testStrategy": ""
@@ -770,9 +651,7 @@
             "id": 3,
             "title": "Refactor Components and Document Styling Approach",
             "description": "Refactor existing UI components to use the new shared cursor and hover styles. Document the implementation approach, including usage guidelines and accessibility considerations, to ensure future consistency across the codebase.",
-            "dependencies": [
-              "28.2"
-            ],
+            "dependencies": ["28.2"],
             "details": "Update all relevant components to remove redundant or inconsistent cursor and hover styles, replacing them with the standardized utilities. Create documentation outlining the styling system, accessibility rationale, and instructions for applying these styles to new components.",
             "status": "pending",
             "testStrategy": ""
@@ -786,9 +665,7 @@
         "details": "Update the multi-select input to support advanced keyboard behaviors: (1) On first Enter, add the typed text as a chip; on second Enter or Enter with empty input, trigger advancement to the next wizard step. (2) When the input is empty, pressing Backspace removes the last chip. (3) Display clear placeholder text indicating chip functionality (e.g., 'Type and press Enter to add'). (4) Implement keyboard navigation for chip selection (using arrow keys) and deletion (Delete/Backspace when chip is focused). Use React Hook Form Controller for state management and ensure accessibility (ARIA roles, focus management). Refactor the component for isolated unit testing and maintain compatibility with the wizard flow. Consider edge cases such as rapid input, empty state, and max chips. Document keyboard shortcuts in the UI for discoverability.",
         "testStrategy": "Write comprehensive unit and integration tests for all keyboard interactions: Enter (chip add/advance), Backspace (chip removal), arrow key navigation, and chip deletion. Verify placeholder visibility and accuracy. Test accessibility features (focus management, ARIA roles) and ensure compatibility with screen readers. Simulate edge cases (empty input, max chips, rapid input) and confirm correct behavior. Conduct user testing to validate usability and discoverability of keyboard shortcuts.",
         "status": "pending",
-        "dependencies": [
-          6
-        ],
+        "dependencies": [6],
         "priority": "high",
         "subtasks": [
           {
@@ -804,9 +681,7 @@
             "id": 2,
             "title": "Enhance Visual Cues and Placeholder Text",
             "description": "Add and refine placeholder text to clearly indicate chip functionality (e.g., 'Type and press Enter to add'). Ensure placeholder visibility and accuracy across all input states, including when chips are present or the input is focused.",
-            "dependencies": [
-              "29.1"
-            ],
+            "dependencies": ["29.1"],
             "details": "Design and implement dynamic placeholder logic. Test placeholder behavior in all relevant states. Ensure visual cues are accessible and consistent with design guidelines.",
             "status": "pending",
             "testStrategy": ""
@@ -815,10 +690,7 @@
             "id": 3,
             "title": "Refactor for State Management, Testing, and Documentation",
             "description": "Refactor the multi-select input to use React Hook Form Controller for state management, enable isolated unit testing, and maintain compatibility with the wizard flow. Document all keyboard shortcuts and behaviors in the UI for user discoverability.",
-            "dependencies": [
-              "29.1",
-              "29.2"
-            ],
+            "dependencies": ["29.1", "29.2"],
             "details": "Integrate with React Hook Form Controller. Write comprehensive unit and integration tests for all keyboard and navigation behaviors. Update documentation and UI to clearly present keyboard shortcuts and chip functionality.",
             "status": "pending",
             "testStrategy": ""
@@ -832,9 +704,7 @@
         "details": "Update the review step UI to render all answer values as plain, comma-separated text—removing chip displays or other input-specific formatting. Implement a formatting utility to handle all input types (single-select, multi-select, free text, etc.) for consistent output. Refactor the review step layout to introduce clear section dividers and improve visual hierarchy using spacing, typography, and color contrast. Ensure that when users edit and return to the review step, all formatting rules are preserved and no input-specific artifacts remain. Audit and update the edit navigation logic to maintain formatting consistency regardless of the input type or edit path. Document formatting standards and update relevant style guides. Coordinate with accessibility requirements to ensure all changes remain WCAG 2.1 AA compliant.",
         "testStrategy": "Verify that all answer values in the review step are rendered as comma-separated text, regardless of input type. Check that no chips or input-specific UI elements appear in the review step. Confirm that section dividers are present and visually distinct, and that the visual hierarchy improves readability. Test editing any answer, saving, and returning to the review step to ensure formatting remains consistent. Conduct accessibility testing for screen reader compatibility and color contrast. Perform cross-browser and responsive layout checks. Review code for adherence to documented formatting standards.",
         "status": "pending",
-        "dependencies": [
-          8
-        ],
+        "dependencies": [8],
         "priority": "medium",
         "subtasks": [
           {
@@ -850,9 +720,7 @@
             "id": 2,
             "title": "Enhance Visual Hierarchy and Add Section Dividers",
             "description": "Redesign the review step layout to introduce clear section dividers and improve visual hierarchy using spacing, typography, and color contrast. Ensure that related fields are grouped and visually separated for better readability and accessibility.",
-            "dependencies": [
-              "30.1"
-            ],
+            "dependencies": ["30.1"],
             "details": "Apply best practices for grouping related fields and arranging sections. Use accessible color contrast and spacing to create a clear hierarchy. Validate that the new layout meets WCAG 2.1 AA requirements.",
             "status": "pending",
             "testStrategy": ""
@@ -861,9 +729,7 @@
             "id": 3,
             "title": "Refactor Edit Navigation and Document Formatting Standards",
             "description": "Audit and update the edit navigation logic to ensure formatting consistency is preserved when users edit and return to the review step. Document the new formatting standards and update relevant style guides to reflect these changes.",
-            "dependencies": [
-              "30.2"
-            ],
+            "dependencies": ["30.2"],
             "details": "Test all edit paths for all input types to confirm that formatting remains consistent after edits. Create or update documentation and style guides to include the new formatting rules and visual hierarchy guidelines.",
             "status": "pending",
             "testStrategy": ""
@@ -877,10 +743,7 @@
         "details": "1. **'Save & Return to Review' Option:** In the edit mode of the wizard, add a prominent button that allows users to save their current progress and immediately return to the review screen. This should trigger form validation and persist any changes before navigating.\n\n2. **Smart Navigation (Step Skipping):** Implement logic to detect which steps have been modified during the current edit session. When the user resumes the wizard after editing, automatically skip over subsequent steps that remain unchanged, taking the user directly to the next relevant step or the review screen. Use a comparison of current form state with the original review snapshot to determine which steps are affected.\n\n3. **Breadcrumb Navigation:** Add a breadcrumb navigation component at the top of the wizard and review screens. Each breadcrumb should represent a wizard step and be clickable, allowing users to jump directly to any step for editing. Ensure the current step is visually distinguished and that breadcrumbs are accessible (ARIA roles, keyboard navigation). Follow best practices: keep labels concise, ensure consistent placement, and make all but the current step clickable[1][2][3].\n\n4. **Preserve Review State:** When users edit and return to the review screen, ensure that all review data, including any unsaved changes, is accurately reflected. Maintain the user's scroll position and focus context where possible. Integrate with the existing Zustand state management and local storage persistence to avoid data loss.\n\n5. **Accessibility & Responsiveness:** Ensure all new navigation elements meet WCAG 2.1 AA standards, are keyboard navigable, and render correctly on all device sizes.\n\n6. **Code Integration:** Refactor wizard navigation logic to support these features without breaking existing dynamic routing or validation flows. Update TypeScript types and add unit tests for new navigation utilities.",
         "testStrategy": "1. Edit a step, use 'Save & Return to Review', and verify that changes are saved and the user is returned to the review screen with updated data.\n2. Edit a step, then resume the wizard: confirm that unchanged subsequent steps are skipped and the user is taken to the next relevant step or review.\n3. Use breadcrumb navigation to jump directly to various steps; verify that navigation is accurate, state is preserved, and accessibility requirements are met (keyboard, screen reader).\n4. Confirm that the review state (including scroll and focus) is preserved after edits and navigation.\n5. Test all flows on desktop and mobile devices for responsive layout and usability.\n6. Run automated and manual accessibility tests on all new navigation elements.",
         "status": "pending",
-        "dependencies": [
-          3,
-          4
-        ],
+        "dependencies": [3, 4],
         "priority": "medium",
         "subtasks": [
           {
@@ -896,9 +759,7 @@
             "id": 2,
             "title": "Add Breadcrumb Navigation for Direct Step Access",
             "description": "Introduce a breadcrumb navigation component at the top of the wizard and review screens, allowing users to jump directly to any step for editing. Ensure the current step is visually distinguished, all but the current step are clickable, and the component is accessible and responsive.",
-            "dependencies": [
-              "31.1"
-            ],
+            "dependencies": ["31.1"],
             "details": "Follow best practices for breadcrumb design, including concise labels, consistent placement, ARIA roles, and keyboard navigation. Integrate with the wizard's routing logic to handle direct step access and update TypeScript types as needed.",
             "status": "pending",
             "testStrategy": ""
@@ -907,10 +768,7 @@
             "id": 3,
             "title": "Preserve and Restore Review State During Edit Operations",
             "description": "Ensure that the review state, including unsaved changes, scroll position, and focus context, is accurately preserved and restored when users edit and return to the review screen. Integrate with Zustand state management and local storage to prevent data loss.",
-            "dependencies": [
-              "31.1",
-              "31.2"
-            ],
+            "dependencies": ["31.1", "31.2"],
             "details": "Implement mechanisms to persist review data and UI state across navigation events. Validate that the review screen reflects all recent edits and maintains user context. Add tests for state preservation and restoration scenarios.",
             "status": "pending",
             "testStrategy": ""
@@ -924,10 +782,7 @@
         "details": "1. Refactor the step timeline component to accept and display step titles limited to 1-2 words; update step metadata and translation files as needed to enforce brevity.\n2. Remove all percentage indicators and explicit step numbers from the UI and underlying logic.\n3. Implement a horizontal progress bar that visually fills behind the step circles, creating a timeline effect. Use CSS layering (e.g., z-index, absolute positioning) to ensure the bar sits behind the circles and animates smoothly as the user advances.\n4. Define and apply distinct visual styles for active, completed, and pending steps (e.g., color, opacity, iconography such as checkmarks for completed steps, outlined or muted for pending). Ensure all states are accessible and meet WCAG AA contrast requirements.\n5. Update ARIA attributes and roles for improved accessibility, ensuring screen readers can identify the current step and progress context without relying on numbers or percentages.\n6. Coordinate with the review/edit navigation flow to ensure the redesigned timeline integrates seamlessly with step skipping and review state preservation.\n7. Update documentation and design system references to reflect the new timeline design and usage guidelines.",
         "testStrategy": "- Verify that all step titles are displayed as 1-2 words and that longer titles are truncated or revised in the source data.\n- Confirm that no percentage indicators or step numbers appear anywhere in the step timeline or progress bar.\n- Test the progress bar animation and fill behavior as the user advances through steps, ensuring it sits visually behind the step circles and updates correctly.\n- Check that active, completed, and pending steps are visually distinct and accessible (using color contrast tools and screen readers).\n- Validate that the timeline integrates with the review/edit navigation, including smart step skipping and state preservation.\n- Conduct cross-browser and responsive testing to ensure the timeline renders correctly on all supported devices.",
         "status": "pending",
-        "dependencies": [
-          8,
-          31
-        ],
+        "dependencies": [8, 31],
         "priority": "medium",
         "subtasks": [
           {
@@ -943,9 +798,7 @@
             "id": 2,
             "title": "Integrate Progress Bar Behind Step Circles",
             "description": "Implement a horizontal progress bar that visually fills behind the step circles, creating a timeline effect. Ensure the bar animates smoothly as the user advances through steps and sits behind the circles using CSS layering.",
-            "dependencies": [
-              "32.1"
-            ],
+            "dependencies": ["32.1"],
             "details": "Design and implement the progress bar using CSS (e.g., z-index, absolute positioning). Link progress bar animation to step advancement logic. Test for smooth transitions and correct layering behind step circles.",
             "status": "pending",
             "testStrategy": ""
@@ -954,9 +807,7 @@
             "id": 3,
             "title": "Apply Distinct Visual Styles for Step States",
             "description": "Define and apply clear visual styles for active, completed, and pending steps, ensuring accessibility and WCAG AA contrast compliance. Remove percentage indicators and step numbers from both UI and logic.",
-            "dependencies": [
-              "32.2"
-            ],
+            "dependencies": ["32.2"],
             "details": "Design visual states (color, opacity, iconography) for each step status. Implement styles in the timeline component. Remove all percentage and step number references from UI and code. Validate accessibility and contrast requirements.",
             "status": "pending",
             "testStrategy": ""
@@ -970,10 +821,7 @@
         "details": "Extend the existing wizard state management to include default question selections. On wizard initialization, automatically set \"I want to explore my industry\" as the selected option for Question 1 and \"Who are you creating this for?\" as selected for Question 2. Implement a contextual suggestion engine that dynamically filters options based on previous answers - for example, when a user selects a specific industry in Question 1, filter the target audience suggestions in Question 2 to show only relevant options for that industry. Create a mapping system that associates industries with appropriate audience types (e.g., \"Healthcare\" industry shows \"Patients\", \"Medical professionals\", \"Healthcare administrators\" as audience options). Add smart workflow detection to identify common user patterns and pre-populate subsequent questions accordingly. Use Zustand state management to track user selections and trigger suggestion updates. Implement debounced suggestion loading to avoid excessive API calls. Store suggestion mappings in a configuration file for easy maintenance. Add analytics tracking to measure the impact of defaults and suggestions on completion rates. Ensure all default selections are clearly indicated to users and can be easily changed.",
         "testStrategy": "Test that Question 1 and Question 2 load with correct default selections pre-selected. Verify contextual suggestions update correctly when previous answers change - select different industries and confirm audience options filter appropriately. Test edge cases like clearing previous selections and ensure suggestions reset properly. Validate that smart defaults don't interfere with user's ability to make custom selections. Conduct A/B testing to measure completion rate improvements with and without defaults/suggestions. Test suggestion loading performance and ensure debouncing works correctly. Verify analytics events fire correctly for tracking default usage and suggestion effectiveness. Test accessibility to ensure default selections are announced properly to screen readers.",
         "status": "pending",
-        "dependencies": [
-          7,
-          6
-        ],
+        "dependencies": [7, 6],
         "priority": "high",
         "subtasks": [
           {
@@ -989,9 +837,7 @@
             "id": 2,
             "title": "Develop Contextual Suggestion Engine with Dynamic Filtering",
             "description": "Create a contextual suggestion system that filters available options for each question based on previous answers. For example, when a user selects an industry in Question 1, filter the audience options in Question 2 to show only those relevant to the selected industry.",
-            "dependencies": [
-              "33.1"
-            ],
+            "dependencies": ["33.1"],
             "details": "Design and implement a mapping configuration that associates industries with relevant audience types. Integrate this logic into the wizard so that option lists update in real time as users make selections. Use debounced suggestion loading to minimize unnecessary API calls.",
             "status": "pending",
             "testStrategy": ""
@@ -1000,9 +846,7 @@
             "id": 3,
             "title": "Integrate Smart Workflow Detection and Analytics Tracking",
             "description": "Add logic to detect common user workflows and pre-populate subsequent questions accordingly. Implement analytics tracking to measure the impact of default selections and contextual suggestions on onboarding completion rates.",
-            "dependencies": [
-              "33.2"
-            ],
+            "dependencies": ["33.2"],
             "details": "Analyze user interaction patterns to identify frequent workflows and use this data to inform smart defaults for later questions. Set up analytics events to track changes in completion rates and user engagement with defaults and suggestions.",
             "status": "pending",
             "testStrategy": ""
@@ -1016,9 +860,7 @@
         "details": "Refactor existing topic card components to implement a minimal design approach. Remove or hide by default: score details breakdown, topic description text, keyword lists, and tag displays. Retain only: topic title (prominent typography), circular progress bar showing overall score (with percentage or visual indicator), and action chips (Save, Generate Content, etc.). Implement clean card layout with consistent padding, typography hierarchy, and spacing using Tailwind CSS utilities. Add hover states that provide subtle visual feedback through elevation changes (box-shadow), background color transitions, and border highlighting. Ensure cards maintain uniform dimensions regardless of title length using text truncation with ellipsis for long titles. Use CSS Grid or Flexbox for consistent alignment across different screen sizes. Implement smooth 150ms transitions for all hover effects. Consider adding a subtle expand/collapse mechanism or tooltip for users who need to access hidden details without cluttering the default view.",
         "testStrategy": "Verify that simplified cards display only title, progress bar, and action chips by default. Test hover states activate smoothly with 150ms transitions and provide clear visual feedback. Validate consistent card sizing and alignment across different title lengths and screen sizes. Check that hidden information (scores, descriptions, keywords, tags) is properly removed from default display. Test card responsiveness on mobile and desktop viewports. Conduct usability testing to ensure the simplified design improves scannability without losing essential functionality. Verify action chips remain accessible and functional. Test with screen readers to ensure accessibility is maintained despite design simplification.",
         "status": "pending",
-        "dependencies": [
-          28
-        ],
+        "dependencies": [28],
         "priority": "high",
         "subtasks": [
           {
@@ -1034,9 +876,7 @@
             "id": 2,
             "title": "Implement Interactive Hover States and Visual Feedback",
             "description": "Add interactive hover states to the topic cards that provide subtle visual feedback, such as elevation changes (box-shadow), background color transitions, and border highlighting. Ensure all hover effects use smooth 150ms transitions and maintain accessibility standards.",
-            "dependencies": [
-              "34.1"
-            ],
+            "dependencies": ["34.1"],
             "details": "Use Tailwind CSS transitions and shadow utilities to create responsive and accessible hover feedback. Test for consistent behavior across browsers and devices. Ensure that hover states do not disrupt card alignment or sizing.",
             "status": "pending",
             "testStrategy": ""
@@ -1045,9 +885,7 @@
             "id": 3,
             "title": "Enable Access to Hidden Details via Expand/Collapse or Tooltip",
             "description": "Design and implement a mechanism (such as a subtle expand/collapse control or tooltip) that allows users to access hidden details (score breakdowns, descriptions, keywords, tags) on demand, without cluttering the default minimal card view.",
-            "dependencies": [
-              "34.1"
-            ],
+            "dependencies": ["34.1"],
             "details": "Ensure the expand/collapse or tooltip interaction is discoverable but unobtrusive. Use smooth transitions and maintain card dimensions when collapsed. Validate that the mechanism works well with keyboard and screen reader accessibility.",
             "status": "pending",
             "testStrategy": ""
@@ -1077,9 +915,7 @@
             "id": 2,
             "title": "Design and Implement Chip-Based Action UI",
             "description": "Create a new chip-based interface for topic actions, featuring four core chips: View Topic (eye icon), Save Topic (bookmark icon), Write Content (pen icon), and Copy Topic (copy icon). Ensure chips are visually appealing, accessible, and responsive.",
-            "dependencies": [
-              "35.1"
-            ],
+            "dependencies": ["35.1"],
             "details": "Design chips with proper iconography, hover/focus/loading states, and touch-friendly sizing (minimum 44px). Use semantic HTML and ARIA labels for accessibility. Implement responsive layouts: chips stack vertically on mobile and display horizontally on desktop. Align spacing, typography, and color scheme with the design system.",
             "status": "pending",
             "testStrategy": ""
@@ -1088,9 +924,7 @@
             "id": 3,
             "title": "Integrate Chip Actions and Ensure Accessibility",
             "description": "Connect chip actions to their respective workflows, including seamless integration with the Write Content workflow (Task 22). Ensure all chips support keyboard navigation, screen reader compatibility, and meet accessibility standards.",
-            "dependencies": [
-              "35.2"
-            ],
+            "dependencies": ["35.2"],
             "details": "Wire up each chip to trigger the correct action, including invoking the Write Content workflow. Test and refine keyboard navigation (Tab/Enter/Space), screen reader announcements, and visual feedback for all chip states. Validate touch targets and responsive behavior across devices.",
             "status": "pending",
             "testStrategy": ""
@@ -1120,9 +954,7 @@
             "id": 2,
             "title": "Integrate Smooth Animations and Accessibility Features",
             "description": "Add smooth open/close animations to the drawer using CSS transitions or Framer Motion, targeting a 300ms duration. Implement slide-in animation from the right and backdrop fade. Ensure keyboard navigation support (Escape to close, Tab trapping, focus management) and accessibility compliance.",
-            "dependencies": [
-              "36.1"
-            ],
+            "dependencies": ["36.1"],
             "details": "Use Radix UI's controlled state props and Framer Motion's AnimatePresence for enter/exit animations. Test keyboard interactions and verify accessibility features.",
             "status": "pending",
             "testStrategy": ""
@@ -1131,9 +963,7 @@
             "id": 3,
             "title": "Optimize State Management, Performance, and Mobile Interactions",
             "description": "Connect the drawer to Zustand store for managing open/closed state and selected topic data. Implement lazy loading for heavy content and optimize rendering performance. On mobile, ensure full-screen overlay, swipe-to-close gesture, and responsive touch interactions.",
-            "dependencies": [
-              "36.2"
-            ],
+            "dependencies": ["36.2"],
             "details": "Test drawer state transitions, lazy loading behavior, and mobile gestures. Validate performance optimizations and ensure seamless user experience across devices.",
             "status": "pending",
             "testStrategy": ""
@@ -1147,11 +977,7 @@
         "details": "1. **Make Entire Card Clickable**: Refactor topic card components to wrap the entire card content in a clickable container that opens the TopicDetailDrawer. Use semantic HTML with proper button or link elements, ensuring the click area covers the full card dimensions while maintaining existing action chip functionality through event propagation control (stopPropagation on chip clicks).\n\n2. **Implement Hover States**: Add CSS hover states that change the cursor to pointer on card hover. Implement subtle visual feedback including: slight elevation increase (box-shadow), gentle scale transform (scale(1.02)), and background color shift. Use Tailwind CSS utilities like `hover:shadow-lg hover:scale-[1.02] hover:bg-gray-50 cursor-pointer` with smooth transitions (transition-all duration-150).\n\n3. **Subtle Hover Animations**: Implement smooth micro-interactions using CSS transitions or Framer Motion. Add gentle bounce or lift effects on hover with proper easing curves (ease-out). Ensure animations are performant by using transform properties and avoiding layout-triggering properties. Consider reduced motion preferences with `prefers-reduced-motion` media queries.\n\n4. **Accessibility Implementation**: Ensure keyboard navigation works seamlessly - cards should be focusable with Tab key and open drawer on Enter/Space keypress. Implement proper focus indicators that meet WCAG contrast requirements. Add ARIA labels like `aria-label=\"Open topic details for [topic title]\"` and `role=\"button\"` for screen readers. Ensure focus management transfers correctly to the drawer when opened.\n\n5. **Integration with Existing Components**: Coordinate with the simplified card design (Task 34) and chip-based actions (Task 35) to ensure hover states don't conflict with action chip interactions. Maintain the minimal design approach while adding interactive enhancements.",
         "testStrategy": "Test card clickability across all screen sizes - verify entire card area is clickable and opens the TopicDetailDrawer correctly. Test hover states activate smoothly with proper cursor changes and visual feedback (elevation, scale, background color). Verify hover animations are smooth with 150ms transitions and respect reduced motion preferences. Test keyboard navigation - Tab to focus cards, Enter/Space to open drawer, proper focus indicators visible. Validate screen reader announcements with ARIA labels and role attributes. Test interaction with action chips - ensure chip clicks don't trigger card click (event propagation). Verify accessibility compliance with WCAG guidelines for focus states and contrast ratios. Test on touch devices to ensure hover states don't interfere with touch interactions.",
         "status": "pending",
-        "dependencies": [
-          34,
-          35,
-          36
-        ],
+        "dependencies": [34, 35, 36],
         "priority": "medium",
         "subtasks": [
           {
@@ -1167,9 +993,7 @@
             "id": 2,
             "title": "Implement Hover States and Micro-Interactions for Cards",
             "description": "Add CSS hover states to cards, including pointer cursor, elevation (box-shadow), scale transform, and background color shift. Use Tailwind CSS utilities and smooth transitions (transition-all duration-150). Implement subtle micro-interactions (e.g., bounce or lift) using CSS transitions or Framer Motion, ensuring performance and respecting reduced motion preferences.",
-            "dependencies": [
-              "37.1"
-            ],
+            "dependencies": ["37.1"],
             "details": "Hovering over a card should provide immediate, accessible visual feedback. All animations must be performant (using transform properties) and respect user preferences for reduced motion. Ensure hover states do not conflict with action chip interactions.",
             "status": "pending",
             "testStrategy": ""
@@ -1178,10 +1002,7 @@
             "id": 3,
             "title": "Integrate with Existing Card and Chip Designs, Maintain Accessibility",
             "description": "Coordinate with simplified card design (Task 34) and chip-based actions (Task 35) to ensure new interactive states do not conflict with existing UI patterns. Maintain a minimal design while enhancing interactivity. Verify that all accessibility standards (focus indicators, ARIA, keyboard navigation) are preserved.",
-            "dependencies": [
-              "37.1",
-              "37.2"
-            ],
+            "dependencies": ["37.1", "37.2"],
             "details": "Work closely with related tasks to ensure visual and interaction consistency. Test for accessibility compliance (WCAG focus indicators, ARIA roles, keyboard navigation) and confirm that enhancements do not break existing chip actions or minimal design principles.",
             "status": "pending",
             "testStrategy": ""
@@ -1195,10 +1016,7 @@
         "details": "Remove all existing filter controls, sorting dropdowns, and complex UI elements from the results interface. Implement automatic sorting by overall score in descending order (highest scores first) as the default and only sorting method. Replace any existing score displays with circular progress bars on each topic card, showing the score as a percentage (e.g., 85/100 = 85% fill). Use shadcn/ui Progress component or create custom circular progress using SVG with smooth animations. Ensure the circular progress bars are accessible with proper ARIA labels and color contrast. Focus the interface on the three core functionalities: view topic details, save topics, and generate content. Remove any secondary features like bulk operations, advanced filters, or export options. Maintain the existing card-based layout but streamline the visual hierarchy to emphasize the score and core actions. Implement responsive design ensuring circular progress bars scale appropriately on mobile devices. Use React.memo for performance optimization and ensure smooth animations don't impact performance.",
         "testStrategy": "Verify all filter and sorting controls are completely removed from the UI. Test that topics are automatically sorted by overall score in descending order without user intervention. Validate circular progress bars display correctly across different score ranges (0-100) and animate smoothly. Test accessibility by verifying screen readers announce score percentages correctly and progress bars have proper ARIA labels. Conduct cross-browser testing to ensure circular progress bars render consistently. Test responsive behavior on mobile devices to confirm progress bars scale appropriately. Verify core actions (view, save, generate) remain functional and easily accessible. Perform performance testing to ensure the simplified interface loads faster than the previous version with filters.",
         "status": "pending",
-        "dependencies": [
-          10,
-          35
-        ],
+        "dependencies": [10, 35],
         "priority": "medium",
         "subtasks": [
           {
@@ -1214,9 +1032,7 @@
             "id": 2,
             "title": "Implement Default Score-Based Sorting and Card Layout",
             "description": "Ensure results are automatically sorted by overall score in descending order, with no user option to change sorting. Maintain and streamline the card-based layout to emphasize score and core actions.",
-            "dependencies": [
-              "38.1"
-            ],
+            "dependencies": ["38.1"],
             "details": "Update data-fetching and rendering logic so that topics are always sorted by overall score (highest first). Remove any user-facing sorting controls. Refactor the card layout to visually prioritize the score and main actions (view, save, generate), removing any secondary features or bulk operations.",
             "status": "pending",
             "testStrategy": ""
@@ -1225,9 +1041,7 @@
             "id": 3,
             "title": "Replace Score Displays with Accessible Circular Progress Bars",
             "description": "Replace any existing score displays on topic cards with animated, accessible circular progress bars showing the score as a percentage.",
-            "dependencies": [
-              "38.2"
-            ],
+            "dependencies": ["38.2"],
             "details": "Integrate a circular progress bar component (e.g., shadcn/ui Progress, react-circular-progressbar, or custom SVG) into each topic card. Ensure smooth animations, proper ARIA labeling, and color contrast for accessibility. Make sure progress bars scale responsively for mobile devices and optimize rendering performance using React.memo.",
             "status": "pending",
             "testStrategy": ""
@@ -1241,10 +1055,7 @@
         "details": "Remove the \"Edit Settings\" button component from the generation controls interface, updating any related state management and UI layouts. Update the \"Regenerate\" button text to either \"Start Over\" or \"Generate New Topics\" (choose based on UX testing feedback). Implement complete data clearing functionality that resets all Zustand store state, clears form data, resets wizard progress, and navigates back to the first wizard step. Ensure the regeneration action triggers a fresh workflow by calling store reset methods and router navigation to the wizard beginning. Update button styling to maintain visual consistency with the simplified control interface. Consider adding a confirmation dialog for the regeneration action to prevent accidental data loss. Update any related TypeScript interfaces and remove unused Edit Settings related code and components.",
         "testStrategy": "Verify the \"Edit Settings\" button is completely removed from all generation control interfaces and no related UI elements remain. Test that the \"Regenerate\" button displays the updated text (\"Start Over\" or \"Generate New Topics\"). Confirm clicking the regenerate button completely clears all application state including wizard answers, generated topics, and user selections. Validate that after regeneration, users are redirected to the first wizard step with a clean slate. Test the regeneration flow across different browser states and ensure no residual data persists. If implemented, test the confirmation dialog appears and functions correctly. Verify button styling remains consistent with the overall design system.",
         "status": "pending",
-        "dependencies": [
-          4,
-          26
-        ],
+        "dependencies": [4, 26],
         "priority": "low",
         "subtasks": [
           {
@@ -1260,9 +1071,7 @@
             "id": 2,
             "title": "Update Regenerate Button Text and Styling",
             "description": "Change the 'Regenerate' button text to either 'Start Over' or 'Generate New Topics' based on UX testing feedback, and update its styling to match the simplified control interface.",
-            "dependencies": [
-              "39.1"
-            ],
+            "dependencies": ["39.1"],
             "details": "Consult UX testing results to select the appropriate button label. Update the button text in the UI and ensure its styling is consistent with the revised generation controls. Verify accessibility and visual alignment with the new interface.",
             "status": "pending",
             "testStrategy": ""
@@ -1271,9 +1080,7 @@
             "id": 3,
             "title": "Implement Complete Data Clearing and Workflow Reset",
             "description": "Ensure clicking the updated regenerate button clears all application data, resets Zustand store state, clears form data, resets wizard progress, and navigates back to the first wizard step. Add a confirmation dialog to prevent accidental data loss.",
-            "dependencies": [
-              "39.2"
-            ],
+            "dependencies": ["39.2"],
             "details": "Implement store reset methods using Zustand's recommended patterns. Integrate logic to clear all relevant state and form data, and trigger navigation to the wizard's initial step. Add a confirmation dialog before performing the reset. Test to confirm a fresh workflow is initiated after regeneration.",
             "status": "pending",
             "testStrategy": ""
@@ -1287,11 +1094,7 @@
         "details": "Break down the TopicsList component into smaller, focused sub-components: TopicsListHeader, TopicsListItem, TopicsListFilters, and TopicsListEmpty. Extract business logic into custom hooks (useTopicsFilter, useTopicsSort, useTopicsActions). Implement proper TypeScript interfaces for all props and state. Use React.memo for performance optimization of list items. Replace prop drilling with context providers or Zustand state management for shared data like filters and sorting preferences. Create reusable patterns for list operations (pagination, sorting, filtering) that can be applied to other list components. Ensure each component has a single responsibility and clear API boundaries. Use composition patterns over inheritance for flexibility. Implement proper error boundaries for graceful failure handling.",
         "testStrategy": "Write comprehensive unit tests for each sub-component using React Testing Library, achieving >90% code coverage. Test custom hooks in isolation with renderHook utility. Create integration tests for the complete TopicsList flow including filtering, sorting, and item interactions. Perform visual regression testing with Storybook to ensure UI consistency. Conduct performance testing to verify that memoization and optimization strategies reduce unnecessary re-renders. Test accessibility compliance with screen readers and keyboard navigation. Validate that prop interfaces are correctly typed and enforce expected contracts.",
         "status": "pending",
-        "dependencies": [
-          14,
-          3,
-          12
-        ],
+        "dependencies": [14, 3, 12],
         "priority": "medium",
         "subtasks": [
           {
@@ -1307,9 +1110,7 @@
             "id": 2,
             "title": "Implement TypeScript Interfaces and Optimize State Management",
             "description": "Define proper TypeScript interfaces for all props and state, and replace prop drilling with context providers or Zustand for shared data such as filters and sorting preferences.",
-            "dependencies": [
-              "40.1"
-            ],
+            "dependencies": ["40.1"],
             "details": "Ensure all components and hooks use explicit, well-typed interfaces. Use React Context or Zustand to manage global/shared state, avoiding deep prop passing and improving code clarity.",
             "status": "pending",
             "testStrategy": ""
@@ -1318,9 +1119,7 @@
             "id": 3,
             "title": "Enhance Reusability, Performance, and Test Coverage",
             "description": "Apply React.memo to optimize list item rendering, create reusable patterns for list operations (pagination, sorting, filtering), and implement comprehensive unit and integration tests for all components and hooks.",
-            "dependencies": [
-              "40.2"
-            ],
+            "dependencies": ["40.2"],
             "details": "Ensure each component and hook is covered by tests using React Testing Library and renderHook utility, aiming for >90% code coverage. Implement error boundaries for graceful failure handling and use composition patterns for flexibility.",
             "status": "pending",
             "testStrategy": ""
@@ -1334,9 +1133,7 @@
         "details": "Consolidate state management by creating a unified Zustand store structure with clear separation of concerns (user state, draft state, UI state, error state). Implement enhanced persistence strategies using Zustand middleware with compression for large datasets, schema versioning for migrations, and selective persistence based on data sensitivity. Add optimistic update patterns for all save operations using TanStack Query mutations with automatic rollback on failure, including visual loading states and success/error feedback. Enhance error state handling by implementing a centralized error management system with error classification (network, validation, server, rate limit), user-friendly error messages, recovery actions, and integration with Sentry for tracking. Create reusable hooks for common state operations (useDraftPersistence, useOptimisticSave, useErrorRecovery) and implement state hydration strategies for SSR compatibility. Add state debugging tools for development environment and performance monitoring for state updates.",
         "testStrategy": "Test state consolidation by verifying all stores follow consistent patterns and data flows correctly between components. Validate persistence strategies by testing save/load operations across browser sessions, schema migrations with version changes, and data integrity after compression/decompression. Test optimistic updates by simulating network failures during save operations and confirming UI rollback behavior, success states, and error recovery flows. Verify error handling by triggering all error types (network timeouts, validation failures, server errors, rate limits) and confirming appropriate user feedback and Sentry logging. Conduct performance testing on state updates with large datasets and validate SSR hydration doesn't cause state mismatches. Test state debugging tools in development and monitor state-related performance metrics in production.",
         "status": "pending",
-        "dependencies": [
-          12
-        ],
+        "dependencies": [12],
         "priority": "medium",
         "subtasks": [
           {
@@ -1352,9 +1149,7 @@
             "id": 2,
             "title": "Enhance State Persistence and Hydration Strategies",
             "description": "Implement advanced persistence strategies for user drafts using Zustand middleware, including compression for large datasets, schema versioning for migrations, and selective persistence based on data sensitivity. Ensure compatibility with SSR and provide state hydration mechanisms.",
-            "dependencies": [
-              "41.1"
-            ],
+            "dependencies": ["41.1"],
             "details": "Integrate Zustand middleware for persistence, applying compression algorithms for large data. Implement schema versioning to handle migrations and ensure backward compatibility. Configure selective persistence to avoid storing sensitive or unnecessary data. Add state hydration logic for SSR scenarios and test persistence across browser sessions and version upgrades.",
             "status": "pending",
             "testStrategy": ""
@@ -1363,9 +1158,7 @@
             "id": 3,
             "title": "Implement Optimistic Updates, Rollback, and Centralized Error Handling",
             "description": "Add optimistic update patterns for save operations using TanStack Query mutations with automatic rollback on failure. Develop a centralized error management system with error classification, user-friendly messages, recovery actions, and Sentry integration. Provide reusable hooks for draft persistence, optimistic saves, and error recovery.",
-            "dependencies": [
-              "41.2"
-            ],
+            "dependencies": ["41.2"],
             "details": "Implement optimistic UI updates for all save operations, ensuring immediate feedback and automatic rollback if the operation fails. Create a centralized error state with classification (network, validation, server, rate limit), and integrate Sentry for error tracking. Develop reusable hooks (useDraftPersistence, useOptimisticSave, useErrorRecovery) and ensure visual feedback for loading, success, and error states. Add state debugging tools and performance monitoring for development.",
             "status": "pending",
             "testStrategy": ""
