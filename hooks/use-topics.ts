@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { transformTopicsToIdeasEnhanced } from "@/lib/topic-adapter-utils";
+import { transformTopicsForDisplayEnhanced } from "@/lib/topic-adapter-utils";
 import { backendService } from "@/services";
 import type { ValidationError } from "@/types/backend";
-import type { IdeaData } from "@/types/data-table";
+import type { TopicData } from "@/types/data-table";
 
 /**
  * Custom hook to fetch and transform topics data using TanStack Query v5 with enhanced validation
@@ -21,14 +21,14 @@ import type { IdeaData } from "@/types/data-table";
  * @returns Query result with data, status, error, refetch, and isRefetching
  */
 export function useTopics() {
-  const query = useQuery<IdeaData[]>({
+  const query = useQuery<TopicData[]>({
     queryKey: ["topics"],
     queryFn: async () => {
       try {
         const response = await backendService.getTopics();
 
         // Use enhanced transformation with validation
-        const transformResult = await transformTopicsToIdeasEnhanced(
+        const transformResult = await transformTopicsForDisplayEnhanced(
           response.topics,
           {
             autoFix: true,
@@ -46,9 +46,9 @@ export function useTopics() {
           );
 
           // Try to recover with basic transformation if enhanced fails
-          const { transformTopicsToIdeas } = await import("@/services");
+          const { transformTopicsForDisplay } = await import("@/services");
           console.log("🔄 Falling back to basic transformation");
-          return transformTopicsToIdeas(response.topics);
+          return transformTopicsForDisplay(response.topics);
         }
 
         // Log validation metrics and warnings if available
@@ -83,9 +83,9 @@ export function useTopics() {
               validationError.originalData
             ) {
               console.log("🔄 Attempting recovery with original data");
-              const { transformTopicsToIdeas } = await import("@/services");
+              const { transformTopicsForDisplay } = await import("@/services");
               try {
-                return transformTopicsToIdeas(
+                return transformTopicsForDisplay(
                   // biome-ignore lint/suspicious/noExplicitAny: Recovery fallback with unknown data structure
                   validationError.originalData as any,
                 );

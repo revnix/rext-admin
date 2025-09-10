@@ -38,9 +38,9 @@ The Topic Builder wizard has been streamlined to focus on essential questions on
 
 ### Step 5: Advanced Options (Optional)
 - **notes**: "Any other requirements?" (large text area, moved to top)
-- **num_ideas**: Number of ideas (slider, 1-20, default 5)
+- **num_topics**: Number of topics (slider, 1-20, default 5)
 
-### Step 6: Generate Ideas
+### Step 6: Generate Topics
 - Review and generate (unchanged)
 
 

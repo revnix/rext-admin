@@ -817,7 +817,7 @@ export const transformFormDataToBackendEnhanced = (
       tone: Array.isArray(processedFormData.tone) ? processedFormData.tone : [],
       tone_other: processedFormData.tone_other || null,
       notes: processedFormData.notes || null,
-      num_ideas: processedFormData.num_ideas || 5,
+      num_topics: processedFormData.num_topics || 5,
       subject: processedFormData.subject || null,
       timestamp: new Date().toISOString(),
     };

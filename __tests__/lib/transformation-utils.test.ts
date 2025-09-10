@@ -68,7 +68,7 @@ const validFormData: TopicBuilderFormData = {
   content_type: "blog-post",
   purpose: ["educate-inform"],
   tone: ["professional-formal"],
-  num_ideas: 5,
+  num_topics: 5,
 };
 
 const invalidGeneratedTopic = {
@@ -299,7 +299,7 @@ describe("transformFormDataToBackendEnhanced", () => {
     expect(result.data).toBeDefined();
     expect(result.data?.industry).toBe("technology");
     expect(result.data?.content_type).toBe("blog-post");
-    expect(result.data?.num_ideas).toBe(5);
+    expect(result.data?.num_topics).toBe(5);
     expect(result.data?.timestamp).toBeDefined();
   });
 
@@ -327,7 +327,7 @@ describe("transformFormDataToBackendEnhanced", () => {
       content_type: "blog-post",
       purpose: [],
       tone: [],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const result = transformFormDataToBackendEnhanced(incompleteData, {
@@ -348,7 +348,7 @@ describe("transformFormDataToBackendEnhanced", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 3,
+      num_topics: 3,
     };
 
     const defaultValues = {

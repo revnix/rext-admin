@@ -325,7 +325,7 @@ describe("Edge Cases and Error Handling", () => {
       const malformedData = {
         industry: 123, // Should be string
         content_type: ["array"], // Should be string
-        num_ideas: "five", // Should be number
+        num_topics: "five", // Should be number
       };
 
       const result = transformFormDataToBackendEnhanced(malformedData);
@@ -359,7 +359,7 @@ describe("Edge Cases and Error Handling", () => {
         content_type: "blog-post" as const,
         purpose: ["educate-inform"],
         tone: ["professional-formal"],
-        num_ideas: 5,
+        num_topics: 5,
         audience: ["  developers  ", "developers", "students  "], // Duplicates & whitespace
       };
 

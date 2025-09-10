@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
-import { DataTable, type RowAction } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
-import type { FlowData } from "@/types/data-table";
+import type { FlowData, RowAction } from "@/types/data-table";
 
 export default function FlowsPage() {
   const breadcrumbs = [{ label: "Automation", href: "#" }, { label: "Flows" }];

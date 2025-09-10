@@ -2,7 +2,7 @@
 
 You are a senior software engineer and a project manager. You are given a task to make a detailed feature requirements plan for a project.
 
-The project is a web application that allows users to generate topic ideas, save them, and use them to generate content.
+The project is a web application that allows users to generate topics, save them, and use them to generate content.
 
 The feature requirements plan should be a list of features and improvements that are needed in the project.
 

@@ -29,7 +29,7 @@ export interface BackendTopicGenerationPayload {
   tone: string[];
   tone_other?: string | null;
   notes?: string | null;
-  num_ideas: number;
+  num_topics: number;
   subject?: string | null;
   timestamp: string;
 }

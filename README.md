@@ -1,11 +1,11 @@
 # Wrext Admin
 
-A modern Next.js application for generating, managing, and utilizing AI-powered topic ideas for content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
+A modern Next.js application for generating, managing, and utilizing AI-powered topics for content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
 
 ## 🚀 Features
 
 - **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
-- **AI-Powered Topic Generation**: Generate relevant, targeted topic ideas
+- **AI-Powered Topic Generation**: Generate relevant, targeted topics
 - **Modern UI/UX**: Built with Radix UI and Tailwind CSS 4
 - **Full TypeScript**: End-to-end type safety
 - **Responsive Design**: Optimized for all screen sizes
@@ -81,7 +81,7 @@ The main feature is an AI-powered topic generator with a streamlined wizard:
 3. **Audience**: Define your target audience
 4. **Content Type**: Choose format (blog post, social media, etc.)
 5. **Goals & Style**: Set purpose and tone
-6. **Advanced Options**: Fine-tune with notes and idea count
+6. **Advanced Options**: Fine-tune with notes and topic count
 
 ### Key Features
 - Single question per screen for better focus
@@ -113,8 +113,8 @@ CONTENT_API_KEY=your_api_key
 ```
 
 ### API Endpoints
-- `POST /api/generate-topics` - Generate topic ideas
-- `POST /api/save-topic` - Save topic to library
+- `POST /api/topics/generate` - Generate topics
+- `POST /api/topics/save` - Save topic to library
 - `GET /api/topics` - Retrieve saved topics
 
 ## 🧪 Testing

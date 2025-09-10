@@ -29,7 +29,7 @@ interface TopicsListProps {
   onBulkSave: (topicIds: string[]) => void;
   onBackToWizard: () => void;
   onRegenerateTopics: () => void;
-  onNavigateToIdeas?: () => void;
+  onNavigateToTopics?: () => void;
   onGenerateNew?: () => void;
   className?: string;
 }
@@ -44,7 +44,7 @@ export function TopicsList({
   onBulkSave,
   onBackToWizard,
   onRegenerateTopics,
-  onNavigateToIdeas,
+  onNavigateToTopics,
   onGenerateNew,
   className,
 }: TopicsListProps) {
@@ -446,7 +446,7 @@ export function TopicsList({
             onRegenerate={onTopicRegenerate}
             onExport={onTopicExport}
             onDelete={onTopicDelete}
-            onNavigateToIdeas={onNavigateToIdeas}
+            onNavigateToTopics={onNavigateToTopics}
             onGenerateNew={onGenerateNew}
             onNavigateToContent={handleNavigateToContent}
             className={viewMode === "list" ? "max-w-none" : undefined}

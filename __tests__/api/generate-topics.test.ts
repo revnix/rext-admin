@@ -15,7 +15,7 @@ describe("Generate Topics API Logic", () => {
     content_type: "blog-post",
     purpose: ["educate-inform"],
     tone: ["professional-formal"],
-    num_ideas: 5,
+    num_topics: 5,
   };
 
   describe("BackendService Integration", () => {

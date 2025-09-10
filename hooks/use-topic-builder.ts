@@ -292,7 +292,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         platform_other: ["custom platform"],
         purpose: ["purpose"],
         tone: ["tone"],
-        num_ideas: ["number of ideas"],
+        num_topics: ["number of topics"],
         notes: ["notes"],
       };
 
@@ -443,7 +443,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           tone: apiData.tone,
         });
 
-        const response = await fetch("/api/generate-topics", {
+        const response = await fetch("/api/topics/generate", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -545,7 +545,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             });
 
             // Navigate to results page
-            router.push(`/ideas/create/results/${sessionId}`);
+            router.push(`/topics/create/results/${sessionId}`);
           } catch (sessionError) {
             console.error("Failed to save session:", sessionError);
             // Don't throw, just log the error and continue
@@ -662,7 +662,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         formDataSnapshot: {
           industry: formData.industry,
           content_type: formData.content_type,
-          num_ideas: formData.num_ideas,
+          num_topics: formData.num_topics,
         },
       });
     }
@@ -708,7 +708,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   const navigateToResults = useCallback(
     (sessionId: string): void => {
       console.log(`Navigating to results page: ${sessionId}`);
-      router.push(`/ideas/create/results/${sessionId}`);
+      router.push(`/topics/create/results/${sessionId}`);
     },
     [router],
   );

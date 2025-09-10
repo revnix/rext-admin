@@ -1,30 +1,32 @@
-import type { IdeaData } from "@/types/data-table";
+import type { TopicData } from "@/types/data-table";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 /**
- * Transform GeneratedTopic array from API to IdeaData array for DataTable display
+ * Transform GeneratedTopic array from API to TopicData array for DataTable display
  * Enhanced to properly map all topic fields for comprehensive UI display
  *
  * @see /docs/field-mapping-documentation.md for complete field mapping rules and transformation logic
  * @see /lib/topic-adapter-utils.ts for enhanced transformation utilities with error handling
  * @param topics - Array of GeneratedTopic objects from backend API
- * @returns Array of IdeaData objects ready for DataTable consumption
+ * @returns Array of TopicData objects ready for DataTable consumption
  *
  * @example
  * ```typescript
  * // Basic usage (maintains backward compatibility)
- * const ideas = transformTopicsToIdeas(topics);
+ * const topics = transformTopicsForDisplay(topics);
  *
  * // For enhanced error handling and performance metrics, use:
- * import { transformTopicsToIdeasEnhanced } from '@/lib/topic-adapter-utils';
- * const result = await transformTopicsToIdeasEnhanced(topics, {
+ * import { transformTopicsForDisplayEnhanced } from '@/lib/topic-adapter-utils';
+ * const result = await transformTopicsForDisplayEnhanced(topics, {
  *   autoFix: true,
  *   includeMetrics: true,
  *   continueOnError: true
  * });
  * ```
  */
-export function transformTopicsToIdeas(topics: GeneratedTopic[]): IdeaData[] {
+export function transformTopicsForDisplay(
+  topics: GeneratedTopic[],
+): TopicData[] {
   if (!Array.isArray(topics)) {
     console.warn("Invalid topics data received:", topics);
     return [];
@@ -61,7 +63,7 @@ export function transformTopicsToIdeas(topics: GeneratedTopic[]): IdeaData[] {
       lastModified: new Date().toISOString(),
       assignee: "AI Assistant",
       estimatedEffort: calculateEstimatedEffort(topic.scores),
-      // Enhanced fields for Ideas page compatibility
+      // Enhanced fields for Topicspage compatibility
       score: calculateOverallScore(topic.scores),
       ranking: `#${index + 1}`,
       updated: new Date().toLocaleDateString("en-US", {
@@ -90,7 +92,7 @@ function createEnhancedDescription(topic: GeneratedTopic): string {
   }
 
   if (parts.length === 0) {
-    parts.push("AI-generated topic idea");
+    parts.push("AI-generated topic topic");
   }
 
   return parts.join(" • ");
@@ -257,19 +259,19 @@ function inferContentType(channelFit: string[]): string {
  * @example
  * ```typescript
  * import {
- *   transformTopicToIdeaEnhanced,
- *   transformTopicsToIdeasEnhanced
+ *   transformTopicToDisplayEnhanced,
+ *   transformTopicsForDisplayEnhanced
  * } from '@/lib/topic-adapter-utils';
  *
  * // Single topic transformation with error handling
- * const result = transformTopicToIdeaEnhanced(topic, {
+ * const result = transformTopicToDisplayEnhanced(topic, {
  *   autoFix: true,
  *   includeMetrics: true,
  *   fallbackBehavior: 'lenient'
  * });
  *
  * if (result.success && result.data) {
- *   console.log('Transformed idea:', result.data);
+ *   console.log('Transformed topic:', result.data);
  *   if (result.metrics) {
  *     console.log('Processing time:', result.metrics.durationMs, 'ms');
  *   }
@@ -279,7 +281,7 @@ function inferContentType(channelFit: string[]): string {
  * }
  *
  * // Batch transformation with performance optimization
- * const batchResult = await transformTopicsToIdeasEnhanced(topics, {
+ * const batchResult = await transformTopicsForDisplayEnhanced(topics, {
  *   continueOnError: true,
  *   maxConcurrency: 5,
  *   includeMetrics: true,
@@ -293,6 +295,6 @@ function inferContentType(channelFit: string[]): string {
  * }
  * ```
  *
- * The functions in this file (transformTopicsToIdeas) maintain backward compatibility
+ * The functions in this file (transformTopicsForDisplay) maintain backward compatibility
  * and provide a simple interface for basic transformation needs.
  */

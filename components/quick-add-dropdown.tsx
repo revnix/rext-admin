@@ -23,11 +23,11 @@ export function QuickAddDropdown() {
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
           <Link
-            href="/ideas/create"
+            href="/topics/create"
             className="flex items-center gap-2 cursor-pointer"
           >
             <Lightbulb className="h-4 w-4" />
-            Create Idea
+            Create Topic
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

@@ -63,11 +63,11 @@ export function ReviewStep({
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-4">
             <Sparkles className="h-10 w-10 text-primary" />
           </div>
-          <h3 className="text-2xl font-bold">Ready to Generate Ideas!</h3>
+          <h3 className="text-2xl font-bold">Ready to Generate Topics!</h3>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
             We'll create{" "}
             <span className="font-semibold text-primary">
-              {formData.num_ideas} targeted topic ideas
+              {formData.num_topics} targeted topics
             </span>{" "}
             based on your preferences below. You can start over if you want to
             change your selections.
@@ -221,7 +221,7 @@ export function ReviewStep({
             <Sparkles className="h-5 w-5 mr-3" />
             {isGenerating
               ? "Generating..."
-              : `Generate ${formData.num_ideas} Topic Ideas`}
+              : `Generate ${formData.num_topics} topics`}
           </Button>
           <p className="text-sm text-muted-foreground mt-3">
             This usually takes 10-15 seconds to complete

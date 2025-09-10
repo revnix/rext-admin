@@ -44,7 +44,7 @@ export interface FlowData extends BaseTableRow {
   lastModified: string;
 }
 
-export interface IdeaData extends BaseTableRow {
+export interface TopicData extends BaseTableRow {
   name: string;
   description: string;
   category: string;
@@ -56,7 +56,7 @@ export interface IdeaData extends BaseTableRow {
   lastModified: string;
   assignee: string;
   estimatedEffort: string;
-  // Additional fields for enhanced idea tracking
+  // Additional fields for enhanced topic tracking
   score?: number;
   ranking?: string;
   updated?: string;

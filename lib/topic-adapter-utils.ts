@@ -2,7 +2,7 @@
  * Enhanced TypeScript Adapter Utility Functions
  *
  * This module provides comprehensive transformation utilities for converting backend
- * topic objects (GeneratedTopic) to frontend IdeaData objects with robust error
+ * topic objects (GeneratedTopic) to frontend TopicData objects with robust error
  * handling, Zod validation, and performance optimization.
  *
  * @see /docs/field-mapping-documentation.md for detailed field mapping rules
@@ -11,25 +11,25 @@
  */
 
 import type { ZodIssue } from "zod";
-import type { IdeaData } from "@/types/data-table";
+import type { TopicData } from "@/types/data-table";
 import {
   createUserFriendlyErrors,
   extractValidationErrors,
   GeneratedTopicSchema,
-  IdeaDataSchema,
+  TopicDataSchema,
 } from "@/types/schemas";
 import type {
   BatchTopicAdapterResult,
-  BatchTopicToIdeaOptions,
+  BatchTopicToDisplayOptions,
   BenchmarkConfig,
   BenchmarkResults,
-  IdeaFieldMappings,
   TopicAdapterError,
   TopicAdapterErrorType,
   TopicAdapterMetrics,
   TopicAdapterResult,
   TopicAdapterWarning,
-  TopicToIdeaOptions,
+  TopicFieldMappings,
+  TopicToDisplayOptions,
   TransformationDebugInfo,
 } from "@/types/topic-adapter";
 import type { GeneratedTopic } from "@/types/topic-builder";
@@ -39,7 +39,7 @@ import type { GeneratedTopic } from "@/types/topic-builder";
 // ============================================================================
 
 /**
- * Enhanced transformation from GeneratedTopic to IdeaData with comprehensive error handling
+ * Enhanced transformation from GeneratedTopic to TopicData with comprehensive error handling
  *
  * This function implements the field mapping rules documented in /docs/field-mapping-documentation.md
  * with robust validation, error recovery, and performance metrics.
@@ -50,24 +50,24 @@ import type { GeneratedTopic } from "@/types/topic-builder";
  *
  * @example
  * ```typescript
- * const result = transformTopicToIdeaEnhanced(topic, {
+ * const result = transformTopicToDisplayEnhanced(topic, {
  *   autoFix: true,
  *   includeMetrics: true,
  *   fallbackBehavior: 'lenient'
  * });
  *
  * if (result.success && result.data) {
- *   console.log('Transformed idea:', result.data);
+ *   console.log('Transformed topic:', result.data);
  * } else if (result.error) {
  *   console.error('Transformation failed:', result.error.message);
  *   console.log('Recovery actions:', result.error.recoveryActions);
  * }
  * ```
  */
-export const transformTopicToIdeaEnhanced = (
+export const transformTopicToDisplayEnhanced = (
   topic: unknown,
-  options: TopicToIdeaOptions = {},
-): TopicAdapterResult<IdeaData> => {
+  options: TopicToDisplayOptions = {},
+): TopicAdapterResult<TopicData> => {
   const startTime = performance.now();
   const warnings: TopicAdapterWarning[] = [];
 
@@ -106,7 +106,7 @@ export const transformTopicToIdeaEnhanced = (
     }
 
     // Step 3: Transform fields according to mapping documentation
-    const transformationResult = transformTopicFieldsToIdea(
+    const transformationResult = transformTopicFieldsToTopic(
       processedTopic,
       options,
     );
@@ -126,15 +126,15 @@ export const transformTopicToIdeaEnhanced = (
       };
     }
 
-    const ideaData = transformationResult.data as IdeaData;
+    const topicData = transformationResult.data as TopicData;
 
     // Step 4: Apply default values if provided
-    const finalIdeaData = options.defaultValues
-      ? { ...ideaData, ...options.defaultValues }
-      : ideaData;
+    const finalTopicData = options.defaultValues
+      ? { ...topicData, ...options.defaultValues }
+      : topicData;
 
     // Step 5: Final validation of output
-    const outputValidation = IdeaDataSchema.safeParse(finalIdeaData);
+    const outputValidation = TopicDataSchema.safeParse(finalTopicData);
     if (!outputValidation.success) {
       const fieldErrors = extractValidationErrors(outputValidation.error);
       const friendlyErrors = createUserFriendlyErrors(fieldErrors);
@@ -143,8 +143,8 @@ export const transformTopicToIdeaEnhanced = (
         success: false,
         error: createTopicAdapterError(
           "validation_failed",
-          `Transformed IdeaData validation failed: ${friendlyErrors.join("; ")}`,
-          finalIdeaData,
+          `Transformed TopicData validation failed: ${friendlyErrors.join("; ")}`,
+          finalTopicData,
           {
             validationIssues: outputValidation.error.issues,
             fieldPath: "output",
@@ -155,7 +155,7 @@ export const transformTopicToIdeaEnhanced = (
           ? createSingleTransformationMetrics(
               startTime,
               JSON.stringify(topic).length,
-              JSON.stringify(finalIdeaData).length,
+              JSON.stringify(finalTopicData).length,
             )
           : undefined,
       };
@@ -205,7 +205,7 @@ export const transformTopicToIdeaEnhanced = (
 };
 
 /**
- * Enhanced batch transformation for arrays of GeneratedTopics to IdeaData
+ * Enhanced batch transformation for arrays of GeneratedTopics to TopicData
  *
  * Processes multiple topics with error recovery, performance optimization,
  * and detailed per-item error reporting.
@@ -216,7 +216,7 @@ export const transformTopicToIdeaEnhanced = (
  *
  * @example
  * ```typescript
- * const result = await transformTopicsToIdeasEnhanced(topics, {
+ * const result = await transformTopicsForDisplayEnhanced(topics, {
  *   continueOnError: true,
  *   maxConcurrency: 5,
  *   includeMetrics: true,
@@ -231,13 +231,13 @@ export const transformTopicToIdeaEnhanced = (
  * }
  * ```
  */
-export const transformTopicsToIdeasEnhanced = async (
+export const transformTopicsForDisplayEnhanced = async (
   topics: unknown[],
-  options: BatchTopicToIdeaOptions = {},
-): Promise<BatchTopicAdapterResult<IdeaData>> => {
+  options: BatchTopicToDisplayOptions = {},
+): Promise<BatchTopicAdapterResult<TopicData>> => {
   const startTime = performance.now();
-  const results: IdeaData[] = [];
-  const errors: BatchTopicAdapterResult<IdeaData>["errors"] = [];
+  const results: TopicData[] = [];
+  const errors: BatchTopicAdapterResult<TopicData>["errors"] = [];
   const allWarnings: TopicAdapterWarning[] = [];
 
   // Validate input array
@@ -291,7 +291,7 @@ export const transformTopicsToIdeasEnhanced = async (
       const globalIndex =
         chunks.slice(0, chunks.indexOf(chunk)).flat().length + chunkIndex;
 
-      const result = transformTopicToIdeaEnhanced(topic, {
+      const result = transformTopicToDisplayEnhanced(topic, {
         autoFix: options.autoFix,
         includeMetrics: false, // Metrics handled at batch level
         includeWarnings: options.includeWarnings,
@@ -333,7 +333,7 @@ export const transformTopicsToIdeasEnhanced = async (
   const endTime = performance.now();
   const totalDuration = endTime - startTime;
 
-  const batchResult: BatchTopicAdapterResult<IdeaData> = {
+  const batchResult: BatchTopicAdapterResult<TopicData> = {
     success: errors.length === 0,
     data: results,
     errors,
@@ -362,13 +362,13 @@ export const transformTopicsToIdeasEnhanced = async (
 // ============================================================================
 
 /**
- * Transforms GeneratedTopic fields to IdeaData according to mapping documentation
+ * Transforms GeneratedTopic fields to TopicData according to mapping documentation
  * @private
  */
-const transformTopicFieldsToIdea = (
+const transformTopicFieldsToTopic = (
   topic: GeneratedTopic,
-  options: TopicToIdeaOptions = {},
-): TopicAdapterResult<IdeaData> => {
+  options: TopicToDisplayOptions = {},
+): TopicAdapterResult<TopicData> => {
   try {
     // Use custom mappings if provided, otherwise use default mappings
     const defaultMappings = createDefaultFieldMappings();
@@ -376,7 +376,7 @@ const transformTopicFieldsToIdea = (
       ? { ...defaultMappings, ...options.customFieldMappings }
       : defaultMappings;
 
-    const ideaData: IdeaData = {
+    const topicData: TopicData = {
       // Core fields (direct mappings)
       id: topic.id,
       name: fieldMappings.name(topic),
@@ -407,7 +407,7 @@ const transformTopicFieldsToIdea = (
 
     return {
       success: true,
-      data: ideaData,
+      data: topicData,
     };
   } catch (error) {
     return {
@@ -428,7 +428,7 @@ const transformTopicFieldsToIdea = (
  * Creates default field mapping functions based on documentation
  * @private
  */
-const createDefaultFieldMappings = (): IdeaFieldMappings => {
+const createDefaultFieldMappings = (): TopicFieldMappings => {
   return {
     name: (topic: GeneratedTopic) => topic.title,
 
@@ -444,7 +444,7 @@ const createDefaultFieldMappings = (): IdeaFieldMappings => {
       }
 
       if (parts.length === 0) {
-        parts.push("AI-generated topic idea");
+        parts.push("AI-generated topic topic");
       }
 
       return parts.join(" • ");
@@ -844,7 +844,7 @@ const createSingleTransformationMetrics = (
     durationMs: endTime - startTime,
     inputSize,
     outputSize,
-    fieldsMapped: 16, // Based on IdeaData interface field count
+    fieldsMapped: 16, // Based on TopicData interface field count
     autoFixesApplied,
   };
 };
@@ -874,7 +874,7 @@ const createChunks = <T>(array: T[], chunkSize: number): T[][] => {
  */
 export const createTransformationDebugInfo = (
   topic: GeneratedTopic,
-  result: TopicAdapterResult<IdeaData>,
+  result: TopicAdapterResult<TopicData>,
 ): TransformationDebugInfo => {
   const _fieldMappings = createDefaultFieldMappings();
 
@@ -964,7 +964,7 @@ export const benchmarkTopicTransformations = async (
   for (let i = 0; i < config.iterations; i++) {
     const startTime = performance.now();
 
-    const result = await transformTopicsToIdeasEnhanced(topics, {
+    const result = await transformTopicsForDisplayEnhanced(topics, {
       includeMetrics: true,
       continueOnError: true,
     });
@@ -1016,23 +1016,23 @@ const calculateStandardDeviation = (values: number[]): number => {
 
 /**
  * Legacy wrapper for backward compatibility with existing code
- * @deprecated Use transformTopicToIdeaEnhanced instead
+ * @deprecated Use transformTopicToDisplayEnhanced instead
  */
-export const safeTransformTopicToIdea = (
+export const safeTransformTopicToDisplay = (
   topic: GeneratedTopic,
-): IdeaData | null => {
-  const result = transformTopicToIdeaEnhanced(topic);
+): TopicData | null => {
+  const result = transformTopicToDisplayEnhanced(topic);
   return result.success && result.data ? result.data : null;
 };
 
 /**
  * Legacy wrapper for batch transformations
- * @deprecated Use transformTopicsToIdeasEnhanced instead
+ * @deprecated Use transformTopicsForDisplayEnhanced instead
  */
-export const safeTransformTopicsToIdeas = async (
+export const safeTransformTopicsForDisplay = async (
   topics: GeneratedTopic[],
-): Promise<IdeaData[]> => {
-  const result = await transformTopicsToIdeasEnhanced(topics, {
+): Promise<TopicData[]> => {
+  const result = await transformTopicsForDisplayEnhanced(topics, {
     continueOnError: true,
   });
   return result.data;

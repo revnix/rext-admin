@@ -86,7 +86,7 @@ components/topic-builder/wizard/
 │   ├── PlatformQuestion.tsx         # Platform selection (conditional)
 │   ├── PurposeQuestion.tsx          # Content purpose
 │   ├── ToneQuestion.tsx             # Content tone
-│   ├── NumIdeasQuestion.tsx         # Number of ideas slider
+│   ├── NumTopicsQuestion.tsx         # Number of topics slider
 │   └── NotesQuestion.tsx            # Additional notes (optional)
 │
 └── hooks/                          # Custom hooks

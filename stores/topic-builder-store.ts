@@ -72,7 +72,7 @@ interface TopicBuilderState {
  */
 const initialFormData: Partial<TopicBuilderFormData> = {
   wizardMode: "industry-first",
-  num_ideas: 5,
+  num_topics: 5,
   purpose: [],
   tone: [],
 };
@@ -100,7 +100,7 @@ const initialStepValidation: Record<CurrentStep, ValidationResult> = {
   purpose: { isValid: false, errors: [] },
   tone: { isValid: false, errors: [] },
   notes: { isValid: true, errors: [] }, // Optional step
-  "num-ideas": { isValid: true, errors: [] }, // Has default value
+  "num-topics": { isValid: true, errors: [] }, // Has default value
 };
 
 /**
@@ -165,7 +165,7 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             "purpose",
             "tone",
             "notes",
-            "num-ideas",
+            "num-topics",
           ];
           const currentIndex = stepOrder.indexOf(currentStep);
           if (currentIndex < stepOrder.length - 1) {

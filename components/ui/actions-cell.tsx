@@ -148,6 +148,7 @@ export function ActionsCell<
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        // biome-ignore lint/a11y/useSemanticElements: Group role is appropriate for action buttons
         role="group"
         aria-label="Row actions"
       >
@@ -167,6 +168,7 @@ export function ActionsCell<
       className={cn("flex items-center justify-end", className)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      // biome-ignore lint/a11y/useSemanticElements: Group role is appropriate for dropdown menu
       role="group"
       aria-label="Row actions menu"
     >

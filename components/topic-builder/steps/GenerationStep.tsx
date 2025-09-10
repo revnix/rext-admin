@@ -14,12 +14,12 @@ export function GenerationStep({ formData, onGenerate }: GenerationStepProps) {
         <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
         <h3 className="text-lg font-semibold mb-2">Ready to Generate!</h3>
         <p className="text-muted-foreground mb-4">
-          We'll create {formData.num_ideas} targeted topic ideas based on your
+          We'll create {formData.num_topics} targeted topics based on your
           selections.
         </p>
         <Button onClick={onGenerate} size="lg" className="w-full">
           <Sparkles className="h-4 w-4 mr-2" />
-          Generate Topic Ideas
+          Generate Topics
         </Button>
       </div>
     </div>

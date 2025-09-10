@@ -189,7 +189,7 @@ function getErrorGuidance(field: string, error: string): string | null {
   const guidance: Record<string, Record<string, string>> = {
     subject: {
       required: "Enter a specific topic you want to create content about.",
-      "at least 3": "Provide more detail to help generate better ideas.",
+      "at least 3": "Provide more detail to help generate better topics.",
     },
     purpose: {
       "at least one": "Select what you want to achieve with your content.",
@@ -199,15 +199,15 @@ function getErrorGuidance(field: string, error: string): string | null {
       "at least one": "Choose how you want your content to sound.",
       required: "Select the voice and style that matches your brand.",
     },
-    num_ideas: {
+    num_topics: {
       "between 1 and 20": "Enter a number from 1 to 20.",
-      required: "Specify how many topic ideas you want us to generate.",
+      required: "Specify how many topics you want us to generate.",
     },
     wizardMode: {
       required: "Choose how you want to approach brainstorming.",
     },
     industry: {
-      required: "Select your industry to tailor content ideas to your market.",
+      required: "Select your industry to tailor content topics to your market.",
     },
     content_type: {
       required: "Choose what type of content you want to create.",
@@ -251,7 +251,7 @@ export function ReviewQuestion({
         audience: 4,
         purpose: 5,
         tone: 6,
-        num_ideas: 7,
+        num_topics: 7,
         notes: 8,
       };
       return (questionId: string) => staticMapping[questionId] ?? 0;
@@ -402,7 +402,7 @@ export function ReviewQuestion({
         >
           We'll create{" "}
           <span className="font-semibold text-primary">
-            {formData.num_ideas} targeted topic ideas
+            {formData.num_topics} targeted topics
           </span>{" "}
           based on your selections below.
         </p>
@@ -522,15 +522,15 @@ export function ReviewQuestion({
 
         <ReviewCard
           icon={<Lightbulb className="h-4 w-4 text-primary" />}
-          label="Number of Ideas"
-          value={formData.num_ideas}
-          field="num_ideas"
-          hasError={!!errors.num_ideas}
-          errorMessage={errors.num_ideas}
+          label="Number of Topics"
+          value={formData.num_topics}
+          field="num_topics"
+          hasError={!!errors.num_topics}
+          errorMessage={errors.num_topics}
           onEdit={
-            onGoToQuestion ? () => handleFixError("num_ideas") : undefined
+            onGoToQuestion ? () => handleFixError("num_topics") : undefined
           }
-          ariaLabel="Edit number of ideas"
+          ariaLabel="Edit number of topics"
         />
 
         {formData.notes && (

@@ -85,7 +85,7 @@ export function WizardNavigation({
     prefersReducedMotion,
   );
 
-  const defaultNextLabel = isLastQuestion ? "Generate Ideas" : "Next";
+  const defaultNextLabel = isLastQuestion ? "Generate Topics" : "Next";
   const finalNextLabel = nextLabel || defaultNextLabel;
 
   const isNextDisabled = !canGoForward || isSubmitting || isLoading;

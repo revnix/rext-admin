@@ -233,7 +233,7 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
     expect(validateFormStep(6, validData)).toBe(true);
   });
@@ -245,7 +245,7 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
     expect(validateFormStep(1, validData)).toBe(true);
     expect(validateFormStep(3, validData)).toBe(true);
@@ -340,7 +340,7 @@ describe("validateFormStepDetailed (detailed validation results)", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
     const result = validateFormStepDetailed(6, validData);
     expect(result.isValid).toBe(true);
@@ -353,7 +353,7 @@ describe("validateFormStepDetailed (detailed validation results)", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
     const result = validateFormStepDetailed(6, validData);
     expect(result.isValid).toBe(true);
@@ -411,7 +411,7 @@ describe("updateFormDataForIndustryChange", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const result = updateFormDataForIndustryChange(formData, "technology");
@@ -426,7 +426,7 @@ describe("updateFormDataForIndustryChange", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const result = updateFormDataForIndustryChange(formData, "other");
@@ -444,7 +444,7 @@ describe("updateFormDataForContentTypeChange", () => {
       platform: "facebook",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const result = updateFormDataForContentTypeChange(formData, "blog-post");
@@ -459,7 +459,7 @@ describe("updateFormDataForContentTypeChange", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const result = updateFormDataForContentTypeChange(formData, "social-media");
@@ -509,7 +509,7 @@ describe("buildPromptFromFormData", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const prompt = buildPromptFromFormData(formData);
@@ -527,7 +527,7 @@ describe("buildPromptFromFormData", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     const prompt = buildPromptFromFormData(formData);
@@ -574,7 +574,7 @@ describe("createInitialFormData", () => {
     const initialData = createInitialFormData();
 
     expect(initialData.wizardMode).toBe("industry-first");
-    expect(initialData.num_ideas).toBe(5);
+    expect(initialData.num_topics).toBe(5);
     expect(Array.isArray(initialData.purpose)).toBe(true);
     expect(Array.isArray(initialData.tone)).toBe(true);
   });

@@ -24,7 +24,7 @@ describe("Topic Builder Schemas", () => {
       content_type: "blog-post",
       purpose: ["educate-inform"],
       tone: ["professional-formal"],
-      num_ideas: 5,
+      num_topics: 5,
     };
 
     it("should validate valid form data", () => {
@@ -43,7 +43,7 @@ describe("Topic Builder Schemas", () => {
 
       const result = topicBuilderFormDataSchema.parse(minimalData);
 
-      expect(result.num_ideas).toBe(5);
+      expect(result.num_topics).toBe(5);
     });
 
     it("should reject invalid enum values", () => {
@@ -66,10 +66,10 @@ describe("Topic Builder Schemas", () => {
       );
     });
 
-    it("should validate num_ideas range", () => {
-      const invalidMin = { ...validFormData, num_ideas: 0 };
-      const invalidMax = { ...validFormData, num_ideas: 25 };
-      const validRange = { ...validFormData, num_ideas: 10 };
+    it("should validate num_topics range", () => {
+      const invalidMin = { ...validFormData, num_topics: 0 };
+      const invalidMax = { ...validFormData, num_topics: 25 };
+      const validRange = { ...validFormData, num_topics: 10 };
 
       expect(() => topicBuilderFormDataSchema.parse(invalidMin)).toThrow();
       expect(() => topicBuilderFormDataSchema.parse(invalidMax)).toThrow();

@@ -47,21 +47,21 @@ interface SearchDialogProps {
 
 // Mock search data - in a real app, this would come from an API
 const searchData: SearchResult[] = [
-  // Ideas
+  // Topics
   {
-    id: "ideas-1",
+    id: "topics-1",
     title: "AI-Powered Content Calendar",
     description: "Automated social media content planning using AI",
-    category: "Ideas",
-    url: "/ideas",
+    category: "Topics",
+    url: "/topics",
     icon: <Lightbulb className="h-4 w-4" />,
   },
   {
-    id: "ideas-2",
+    id: "topics-2",
     title: "Weekly Tech Newsletter",
     description: "Curated newsletter featuring latest tech trends",
-    category: "Ideas",
-    url: "/ideas",
+    category: "Topics",
+    url: "/topics",
     icon: <Lightbulb className="h-4 w-4" />,
   },
   // Flows
@@ -238,7 +238,7 @@ const searchData: SearchResult[] = [
 
 const categories = [
   "All",
-  "Ideas",
+  "Topics",
   "Flows",
   "Content",
   "Models",

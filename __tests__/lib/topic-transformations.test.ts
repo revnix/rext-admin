@@ -1,4 +1,4 @@
-import { transformTopicsToIdeas } from "@/lib/topic-transformations";
+import { transformTopicsForDisplay } from "@/lib/topic-transformations";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 describe("Topic Transformations", () => {
@@ -49,9 +49,9 @@ describe("Topic Transformations", () => {
     is_saved: false,
   };
 
-  describe("transformTopicsToIdeas", () => {
+  describe("transformTopicsForDisplay", () => {
     it("should transform a single topic correctly", () => {
-      const result = transformTopicsToIdeas([mockTopic]);
+      const result = transformTopicsForDisplay([mockTopic]);
 
       expect(result).toHaveLength(1);
       const transformedTopic = result[0];
@@ -74,16 +74,16 @@ describe("Topic Transformations", () => {
     });
 
     it("should handle saved topics correctly", () => {
-      const result = transformTopicsToIdeas([mockSavedTopic]);
+      const result = transformTopicsForDisplay([mockSavedTopic]);
 
       expect(result[0].status).toBe("saved");
     });
 
     it("should handle topics with missing data gracefully", () => {
-      const result = transformTopicsToIdeas([mockTopicWithMissingData]);
+      const result = transformTopicsForDisplay([mockTopicWithMissingData]);
 
       const transformedTopic = result[0];
-      expect(transformedTopic.description).toBe("AI-generated topic idea"); // Fallback description
+      expect(transformedTopic.description).toBe("AI-generated topic topic"); // Fallback description
       expect(transformedTopic.category).toBe("General"); // Fallback category
       expect(transformedTopic.priority).toBe("low"); // Lower weighted score: (0.5*0.5 + 0.4*0.3 + 0.3*0.2) = 0.43
       expect(transformedTopic.contentType).toBe("General Content"); // Fallback content type
@@ -92,7 +92,7 @@ describe("Topic Transformations", () => {
 
     it("should handle multiple topics with correct ranking", () => {
       const topics = [mockTopic, mockSavedTopic, mockTopicWithMissingData];
-      const result = transformTopicsToIdeas(topics);
+      const result = transformTopicsForDisplay(topics);
 
       expect(result).toHaveLength(3);
       expect(result[0].ranking).toBe("#1");
@@ -101,7 +101,7 @@ describe("Topic Transformations", () => {
     });
 
     it("should enhance tags correctly", () => {
-      const result = transformTopicsToIdeas([mockTopic]);
+      const result = transformTopicsForDisplay([mockTopic]);
 
       const tags = result[0].tags;
       expect(tags).toContain("AI");
@@ -131,7 +131,7 @@ describe("Topic Transformations", () => {
         scores: { relevance: 0.4, freshness: 0.3, novelty: 0.2 },
       };
 
-      const results = transformTopicsToIdeas([
+      const results = transformTopicsForDisplay([
         highScoreTopic,
         mediumScoreTopic,
         lowScoreTopic,
@@ -158,24 +158,24 @@ describe("Topic Transformations", () => {
 
       testCases.forEach(({ channel_fit, expected }) => {
         const topic = { ...mockTopic, channel_fit };
-        const result = transformTopicsToIdeas([topic]);
+        const result = transformTopicsForDisplay([topic]);
         expect(result[0].contentType).toBe(expected);
       });
     });
 
     it("should handle empty topics array", () => {
-      const result = transformTopicsToIdeas([]);
+      const result = transformTopicsForDisplay([]);
       expect(result).toEqual([]);
     });
 
     it("should handle invalid topics array", () => {
       // biome-ignore lint/suspicious/noExplicitAny: Testing invalid input scenarios
-      const result = transformTopicsToIdeas(null as any);
+      const result = transformTopicsForDisplay(null as any);
       expect(result).toEqual([]);
     });
 
     it("should format dates correctly", () => {
-      const result = transformTopicsToIdeas([mockTopic]);
+      const result = transformTopicsForDisplay([mockTopic]);
 
       expect(result[0].created).toBeDefined();
       expect(result[0].lastModified).toBeDefined();
@@ -196,7 +196,7 @@ describe("Topic Transformations", () => {
         scores: { ...mockTopic.scores, novelty: 0.2 },
       };
 
-      const results = transformTopicsToIdeas([
+      const results = transformTopicsForDisplay([
         highNoveltyTopic,
         mediumNoveltyTopic,
         lowNoveltyTopic,
@@ -218,7 +218,7 @@ describe("Topic Transformations", () => {
         _optimisticSaved: true,
       };
 
-      const results = transformTopicsToIdeas([
+      const results = transformTopicsForDisplay([
         savingTopic,
         optimisticallySavedTopic,
       ]);

@@ -1,8 +1,8 @@
 import {
-  transformTopicsToIdeasEnhanced,
-  transformTopicToIdeaEnhanced,
+  transformTopicsForDisplayEnhanced,
+  transformTopicToDisplayEnhanced,
 } from "@/lib/topic-adapter-utils";
-import { IdeaDataSchema } from "@/types/schemas";
+import { TopicDataSchema } from "@/types/schemas";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 describe("Topic Adapter Validation", () => {
@@ -66,7 +66,7 @@ describe("Topic Adapter Validation", () => {
   describe("Single Topic Validation", () => {
     describe("Valid Data", () => {
       it("should successfully validate and transform valid topic", () => {
-        const result = transformTopicToIdeaEnhanced(validTopic, {
+        const result = transformTopicToDisplayEnhanced(validTopic, {
           includeMetrics: true,
           includeWarnings: true,
         });
@@ -76,15 +76,15 @@ describe("Topic Adapter Validation", () => {
         expect(result.metrics).toBeDefined();
         expect(result.error).toBeUndefined();
 
-        // Verify the transformed data is valid IdeaData
+        // Verify the transformed data is valid TopicData
         if (result.data) {
-          const ideaValidation = IdeaDataSchema.safeParse(result.data);
-          expect(ideaValidation.success).toBe(true);
+          const topicValidation = TopicDataSchema.safeParse(result.data);
+          expect(topicValidation.success).toBe(true);
         }
       });
 
       it("should include performance metrics when requested", () => {
-        const result = transformTopicToIdeaEnhanced(validTopic, {
+        const result = transformTopicToDisplayEnhanced(validTopic, {
           includeMetrics: true,
         });
 
@@ -99,7 +99,7 @@ describe("Topic Adapter Validation", () => {
 
     describe("Invalid Data", () => {
       it("should fail validation for missing required fields", () => {
-        const result = transformTopicToIdeaEnhanced(invalidTopics.missingId);
+        const result = transformTopicToDisplayEnhanced(invalidTopics.missingId);
 
         expect(result.success).toBe(false);
         expect(result.data).toBeUndefined();
@@ -110,7 +110,7 @@ describe("Topic Adapter Validation", () => {
       });
 
       it("should provide descriptive error messages for invalid data", () => {
-        const result = transformTopicToIdeaEnhanced(
+        const result = transformTopicToDisplayEnhanced(
           invalidTopics.invalidScores,
         );
 
@@ -122,7 +122,7 @@ describe("Topic Adapter Validation", () => {
       });
 
       it("should handle type mismatches gracefully", () => {
-        const result = transformTopicToIdeaEnhanced(invalidTopics.wrongType);
+        const result = transformTopicToDisplayEnhanced(invalidTopics.wrongType);
 
         expect(result.success).toBe(false);
         expect(result.error?.type).toBe("validation_failed");
@@ -130,9 +130,12 @@ describe("Topic Adapter Validation", () => {
       });
 
       it("should handle null values appropriately", () => {
-        const result = transformTopicToIdeaEnhanced(invalidTopics.nullValues, {
-          fallbackBehavior: "strict",
-        });
+        const result = transformTopicToDisplayEnhanced(
+          invalidTopics.nullValues,
+          {
+            fallbackBehavior: "strict",
+          },
+        );
 
         expect(result.success).toBe(false);
         expect(result.error?.type).toBe("validation_failed");
@@ -150,7 +153,7 @@ describe("Topic Adapter Validation", () => {
           },
         };
 
-        const result = transformTopicToIdeaEnhanced(topicWithFixableIssues, {
+        const result = transformTopicToDisplayEnhanced(topicWithFixableIssues, {
           autoFix: true,
           includeWarnings: true,
         });
@@ -170,7 +173,7 @@ describe("Topic Adapter Validation", () => {
           description: "",
         };
 
-        const result = transformTopicToIdeaEnhanced(topicWithEmptyStrings, {
+        const result = transformTopicToDisplayEnhanced(topicWithEmptyStrings, {
           autoFix: true,
           includeWarnings: true,
         });
@@ -182,7 +185,7 @@ describe("Topic Adapter Validation", () => {
 
     describe("Fallback Behaviors", () => {
       it("should respect strict fallback behavior", () => {
-        const result = transformTopicToIdeaEnhanced(
+        const result = transformTopicToDisplayEnhanced(
           invalidTopics.missingTitle,
           {
             fallbackBehavior: "strict",
@@ -193,7 +196,7 @@ describe("Topic Adapter Validation", () => {
       });
 
       it("should apply lenient fallback behavior", () => {
-        const result = transformTopicToIdeaEnhanced(
+        const result = transformTopicToDisplayEnhanced(
           invalidTopics.missingTitle,
           {
             fallbackBehavior: "lenient",
@@ -219,7 +222,7 @@ describe("Topic Adapter Validation", () => {
 
     describe("Continue on Error", () => {
       it("should process valid topics and collect errors for invalid ones", async () => {
-        const result = await transformTopicsToIdeasEnhanced(mixedTopics, {
+        const result = await transformTopicsForDisplayEnhanced(mixedTopics, {
           continueOnError: true,
           includeMetrics: true,
         });
@@ -232,7 +235,7 @@ describe("Topic Adapter Validation", () => {
       });
 
       it("should provide detailed error information for failed items", async () => {
-        const result = await transformTopicsToIdeasEnhanced(mixedTopics, {
+        const result = await transformTopicsForDisplayEnhanced(mixedTopics, {
           continueOnError: true,
         });
 
@@ -245,7 +248,7 @@ describe("Topic Adapter Validation", () => {
 
     describe("Fail Fast", () => {
       it("should stop processing on first error when continueOnError is false", async () => {
-        const result = await transformTopicsToIdeasEnhanced(mixedTopics, {
+        const result = await transformTopicsForDisplayEnhanced(mixedTopics, {
           continueOnError: false,
         });
 
@@ -257,7 +260,7 @@ describe("Topic Adapter Validation", () => {
 
     describe("Performance Metrics", () => {
       it("should track batch processing metrics", async () => {
-        const result = await transformTopicsToIdeasEnhanced(
+        const result = await transformTopicsForDisplayEnhanced(
           [validTopic, validTopic],
           {
             includeMetrics: true,
@@ -281,7 +284,7 @@ describe("Topic Adapter Validation", () => {
             id: `topic-${i}`,
           }));
 
-        const result = await transformTopicsToIdeasEnhanced(manyTopics, {
+        const result = await transformTopicsForDisplayEnhanced(manyTopics, {
           maxConcurrency: 3,
           includeMetrics: true,
         });
@@ -294,7 +297,7 @@ describe("Topic Adapter Validation", () => {
 
   describe("Schema Validation Edge Cases", () => {
     it("should handle completely malformed input", () => {
-      const result = transformTopicToIdeaEnhanced(null);
+      const result = transformTopicToDisplayEnhanced(null);
 
       expect(result.success).toBe(false);
       expect(result.error?.type).toBe("validation_failed");
@@ -302,7 +305,7 @@ describe("Topic Adapter Validation", () => {
 
     it("should handle non-object input", () => {
       // biome-ignore lint/suspicious/noExplicitAny: Testing invalid input scenarios
-      const result = transformTopicToIdeaEnhanced("not-an-object" as any);
+      const result = transformTopicToDisplayEnhanced("not-an-object" as any);
 
       expect(result.success).toBe(false);
       expect(result.error?.type).toBe("validation_failed");
@@ -310,7 +313,7 @@ describe("Topic Adapter Validation", () => {
 
     it("should handle empty object", () => {
       // biome-ignore lint/suspicious/noExplicitAny: Testing invalid input scenarios
-      const result = transformTopicToIdeaEnhanced({} as any);
+      const result = transformTopicToDisplayEnhanced({} as any);
 
       expect(result.success).toBe(false);
       expect(result.error?.validationIssues?.length).toBeGreaterThan(0);
@@ -318,7 +321,7 @@ describe("Topic Adapter Validation", () => {
 
     it("should handle array instead of object", () => {
       // biome-ignore lint/suspicious/noExplicitAny: Testing invalid input scenarios
-      const result = transformTopicToIdeaEnhanced([] as any);
+      const result = transformTopicToDisplayEnhanced([] as any);
 
       expect(result.success).toBe(false);
       expect(result.error?.type).toBe("validation_failed");
@@ -326,12 +329,12 @@ describe("Topic Adapter Validation", () => {
   });
 
   describe("Output Validation", () => {
-    it("should validate transformed output against IdeaData schema", () => {
-      const result = transformTopicToIdeaEnhanced(validTopic);
+    it("should validate transformed output against TopicData schema", () => {
+      const result = transformTopicToDisplayEnhanced(validTopic);
 
       expect(result.success).toBe(true);
       if (result.data) {
-        const outputValidation = IdeaDataSchema.safeParse(result.data);
+        const outputValidation = TopicDataSchema.safeParse(result.data);
         expect(outputValidation.success).toBe(true);
 
         // Verify required fields
@@ -343,8 +346,8 @@ describe("Topic Adapter Validation", () => {
       }
     });
 
-    it("should ensure all required IdeaData fields are present", () => {
-      const result = transformTopicToIdeaEnhanced(validTopic);
+    it("should ensure all required TopicData fields are present", () => {
+      const result = transformTopicToDisplayEnhanced(validTopic);
 
       expect(result.success).toBe(true);
       if (result.data) {
@@ -383,14 +386,14 @@ describe("Topic Adapter Validation", () => {
         },
       };
 
-      const result = transformTopicToIdeaEnhanced(topicWithProblematicData, {
+      const result = transformTopicToDisplayEnhanced(topicWithProblematicData, {
         autoFix: true,
       });
 
       // Should either succeed with auto-fix or fail gracefully
       if (result.success) {
         // If it succeeds, the output should still be valid
-        const outputValidation = IdeaDataSchema.safeParse(result.data);
+        const outputValidation = TopicDataSchema.safeParse(result.data);
         expect(outputValidation.success).toBe(true);
       } else {
         // If it fails, ensure we received a structured error
@@ -406,7 +409,7 @@ describe("Topic Adapter Validation", () => {
         description: "x".repeat(10000), // Very large description
       };
 
-      const result = transformTopicToIdeaEnhanced(largeData, {
+      const result = transformTopicToDisplayEnhanced(largeData, {
         maxInputSize: 100, // Very small limit
       });
 
@@ -419,7 +422,7 @@ describe("Topic Adapter Validation", () => {
     });
 
     it("should respect transformation timeout", () => {
-      const result = transformTopicToIdeaEnhanced(validTopic, {
+      const result = transformTopicToDisplayEnhanced(validTopic, {
         transformationTimeout: 1, // 1ms - very short
       });
 
@@ -436,7 +439,7 @@ describe("Topic Adapter Validation", () => {
         category: () => "Custom Category",
       };
 
-      const result = transformTopicToIdeaEnhanced(validTopic, {
+      const result = transformTopicToDisplayEnhanced(validTopic, {
         customFieldMappings: customMappings,
       });
 

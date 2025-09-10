@@ -389,10 +389,10 @@ export const validateFormStepDetailed = (
     case 5: // Advanced Options (all optional)
       // No required validations for advanced options
       if (
-        formData.num_ideas &&
-        (formData.num_ideas < 1 || formData.num_ideas > 20)
+        formData.num_topics &&
+        (formData.num_topics < 1 || formData.num_topics > 20)
       ) {
-        errors.push("Please choose between 1 and 20 topic ideas");
+        errors.push("Please choose between 1 and 20 topics");
       }
       break;
 
@@ -414,8 +414,8 @@ export const validateFormStepDetailed = (
       );
 
       // Additional generation-specific validation
-      if (!formData.num_ideas || formData.num_ideas < 1) {
-        errors.push("Please choose how many topic ideas you need");
+      if (!formData.num_topics || formData.num_topics < 1) {
+        errors.push("Please choose how many topics you need");
       }
       break;
     }
@@ -473,7 +473,7 @@ export const buildPromptFromFormData = (
     purpose_other,
     tone,
     tone_other,
-    num_ideas,
+    num_topics,
     notes,
   } = formData;
 
@@ -484,7 +484,7 @@ export const buildPromptFromFormData = (
   const actualPlatform = platform === "other" ? platform_other : platform;
 
   // Build the prompt sections
-  let prompt = `Generate ${num_ideas} engaging content topic ideas with the following specifications:\n\n`;
+  let prompt = `Generate ${num_topics} engaging content topics with the following specifications:\n\n`;
 
   // Core context
   if (wizardMode === "subject-first" && subject) {
@@ -526,7 +526,7 @@ export const buildPromptFromFormData = (
   }
 
   // Response format instructions
-  prompt += `\nReturn exactly ${num_ideas} topic ideas in the following JSON array format:\n`;
+  prompt += `\nReturn exactly ${num_topics} topics in the following JSON array format:\n`;
   prompt += `[
   {
     "title": "Clear, engaging topic title",
@@ -646,7 +646,7 @@ export const createInitialFormData = (): TopicBuilderFormData => {
     content_type: "blog-post",
     purpose: [],
     tone: [],
-    num_ideas: 5,
+    num_topics: 5,
   };
 };
 
@@ -804,7 +804,7 @@ export const STEP_ORDER: CurrentStep[] = [
   "purpose",
   "tone",
   "notes",
-  "num-ideas",
+  "num-topics",
 ];
 
 /**
@@ -877,7 +877,7 @@ export const shouldSkipStep = (
       return formData.content_type !== "social-media";
 
     case "notes":
-    case "num-ideas":
+    case "num-topics":
       // These are optional steps, never skip
       return false;
 
@@ -973,8 +973,8 @@ export const extractStepData = (
     case "notes":
       return { notes: formData.notes };
 
-    case "num-ideas":
-      return { num_ideas: formData.num_ideas };
+    case "num-topics":
+      return { num_topics: formData.num_topics };
 
     default:
       return {};

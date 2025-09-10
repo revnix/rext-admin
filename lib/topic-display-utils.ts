@@ -3,7 +3,7 @@
  *
  * This module provides utility functions for formatting and displaying topic data
  * in DataTable and other UI components. Includes formatters for dates, scores,
- * arrays, and other IdeaData fields with proper styling and sorting support.
+ * arrays, and other TopicData fields with proper styling and sorting support.
  */
 
 /**

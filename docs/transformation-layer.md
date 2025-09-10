@@ -122,7 +122,7 @@ const result = transformFormDataToBackendEnhanced(formData, {
   normalizeFields: true,
   validateRequired: true,
   defaultValues: {
-    num_ideas: 5
+    num_topics: 5
   }
 });
 ```
@@ -198,7 +198,7 @@ async saveTopics(topics: GeneratedTopic[]): Promise<SaveTopicResponse> {
 ### API Route Integration
 
 ```typescript
-// app/api/topic/save-topic/route.ts
+// app/api/topics/save/route.ts
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const topics = body.topics as GeneratedTopic[];

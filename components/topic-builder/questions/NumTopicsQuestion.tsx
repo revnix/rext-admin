@@ -1,7 +1,7 @@
 /**
- * Number of Ideas Question Component
+ * Number of Topics Question Component
  *
- * Number input for selecting how many topic ideas to generate.
+ * Number input for selecting how many topics to generate.
  */
 
 "use client";
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
 
-export interface NumIdeasQuestionProps {
+export interface NumTopicsQuestionProps {
   question: QuestionConfig;
   formData: TopicBuilderFormData;
   updateFormData: (
@@ -31,13 +31,13 @@ export interface NumIdeasQuestionProps {
   isLoading?: boolean;
 }
 
-export function NumIdeasQuestion({
+export function NumTopicsQuestion({
   question: _question,
   formData,
   updateFormData,
   error,
   isLoading = false,
-}: NumIdeasQuestionProps) {
+}: NumTopicsQuestionProps) {
   const prefersReducedMotion = useReducedMotion();
   const itemVariants = getMotionVariants(
     questionItemVariants,
@@ -46,26 +46,26 @@ export function NumIdeasQuestion({
 
   const handleChange = useCallback(
     (value: number) => {
-      updateFormData("num_ideas", value);
+      updateFormData("num_topics", value);
     },
     [updateFormData],
   );
 
   const handleIncrement = () => {
-    const current = formData.num_ideas || 5;
+    const current = formData.num_topics || 5;
     if (current < 20) {
       handleChange(current + 1);
     }
   };
 
   const handleDecrement = () => {
-    const current = formData.num_ideas || 5;
+    const current = formData.num_topics || 5;
     if (current > 1) {
       handleChange(current - 1);
     }
   };
 
-  const currentValue = formData.num_ideas || 5;
+  const currentValue = formData.num_topics || 5;
 
   // Preset options for quick selection
   const presets = [5, 10, 15, 20];
@@ -136,7 +136,7 @@ export function NumIdeasQuestion({
                   : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground",
               )}
             >
-              {preset} ideas
+              {preset} topics
             </button>
           ))}
         </div>
@@ -156,7 +156,7 @@ export function NumIdeasQuestion({
         </div>
 
         <div className="text-xs text-muted-foreground/80">
-          Each idea includes title, angle, and detailed explanation
+          Each topic includes title, angle, and detailed explanation
         </div>
       </motion.div>
     </motion.div>

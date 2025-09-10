@@ -2,7 +2,7 @@
  * TypeScript type definitions for topic adapter utility functions
  *
  * This module defines comprehensive types for transforming backend topic objects
- * to frontend IdeaData objects with enhanced error handling, validation, and
+ * to frontend TopicData objects with enhanced error handling, validation, and
  * performance optimization.
  *
  * @see /docs/field-mapping-documentation.md for detailed field mapping rules
@@ -10,7 +10,7 @@
  */
 
 import type { ZodIssue } from "zod";
-import type { IdeaData } from "./data-table";
+import type { TopicData } from "./data-table";
 import type { GeneratedTopic } from "./topic-builder";
 
 // ============================================================================
@@ -18,7 +18,7 @@ import type { GeneratedTopic } from "./topic-builder";
 // ============================================================================
 
 /**
- * Result type for topic-to-idea transformations with comprehensive error handling
+ * Result type for topic-to-topic transformations with comprehensive error handling
  */
 export interface TopicAdapterResult<T> {
   success: boolean;
@@ -98,7 +98,7 @@ export interface TopicAdapterWarning {
 /**
  * Options for single topic transformation
  */
-export interface TopicToIdeaOptions {
+export interface TopicToDisplayOptions {
   /** Enable automatic fixes for common data issues */
   autoFix?: boolean;
 
@@ -112,10 +112,10 @@ export interface TopicToIdeaOptions {
   fallbackBehavior?: "strict" | "lenient" | "skip";
 
   /** Custom field mappings to override defaults */
-  customFieldMappings?: Partial<IdeaFieldMappings>;
+  customFieldMappings?: Partial<TopicFieldMappings>;
 
   /** Default values for missing optional fields */
-  defaultValues?: Partial<IdeaData>;
+  defaultValues?: Partial<TopicData>;
 
   /** Maximum allowed input size (bytes) */
   maxInputSize?: number;
@@ -127,7 +127,7 @@ export interface TopicToIdeaOptions {
 /**
  * Options for batch topic transformation
  */
-export interface BatchTopicToIdeaOptions extends TopicToIdeaOptions {
+export interface BatchTopicToDisplayOptions extends TopicToDisplayOptions {
   /** Continue processing on individual item errors */
   continueOnError?: boolean;
 
@@ -141,7 +141,7 @@ export interface BatchTopicToIdeaOptions extends TopicToIdeaOptions {
 /**
  * Custom field mapping configuration
  */
-export interface IdeaFieldMappings {
+export interface TopicFieldMappings {
   name: (topic: GeneratedTopic) => string;
   description: (topic: GeneratedTopic) => string;
   category: (topic: GeneratedTopic) => string;
@@ -298,7 +298,7 @@ export interface TransformationDebugInfo {
   }>;
 
   /** Final transformation result */
-  finalOutput?: IdeaData;
+  finalOutput?: TopicData;
 
   /** Applied field mappings */
   fieldMappings: Record<

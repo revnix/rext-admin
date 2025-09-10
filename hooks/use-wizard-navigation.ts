@@ -69,7 +69,7 @@ const getDefaultFormData = (): TopicBuilderFormData => ({
   content_type: "blog-post",
   purpose: [],
   tone: [],
-  num_ideas: 5,
+  num_topics: 5,
 });
 
 export function useWizardNavigation({
@@ -98,7 +98,7 @@ export function useWizardNavigation({
         type: "wizard-mode",
         title: "How do you want to brainstorm?",
         description:
-          "Choose your preferred approach to generate content ideas.",
+          "Choose your preferred approach to generate content topics.",
         required: true,
       },
     ];
@@ -110,7 +110,7 @@ export function useWizardNavigation({
         type: "text-input",
         title: "What topic do you want to create content about?",
         description:
-          "Be as specific as possible. This will help us generate more targeted ideas.",
+          "Be as specific as possible. This will help us generate more targeted topics.",
         required: true,
         helpText:
           "Example: 'Digital marketing strategies for small restaurants'",
@@ -124,7 +124,7 @@ export function useWizardNavigation({
         type: "single-select",
         title: "What industry are you in?",
         description:
-          "This helps us tailor content ideas to your specific market.",
+          "This helps us tailor content topics to your specific market.",
         required: true,
       },
       {
@@ -174,11 +174,11 @@ export function useWizardNavigation({
         required: true,
       },
       {
-        id: "num_ideas",
+        id: "num_topics",
         type: "number-input",
-        title: "How many topic ideas do you want?",
+        title: "How many topics do you want?",
         description:
-          "We'll generate creative, actionable ideas for you to choose from.",
+          "We'll generate creative, actionable topics for you to choose from.",
         required: true,
       },
       {
@@ -193,9 +193,9 @@ export function useWizardNavigation({
       {
         id: "review",
         type: "review",
-        title: "Ready to generate ideas!",
+        title: "Ready to generate topics!",
         description:
-          "Review your selections below and click Generate to create your topic ideas.",
+          "Review your selections below and click Generate to create your topics.",
         required: true,
       },
     );
@@ -291,9 +291,9 @@ export function useWizardNavigation({
         }
         break;
 
-      case "num_ideas":
+      case "num_topics":
         if (typeof value === "number" && (value < 1 || value > 20)) {
-          const error = "Number of ideas must be between 1 and 20";
+          const error = "Number of topics must be between 1 and 20";
           setErrors((prev) => ({ ...prev, [field]: error }));
           return { isValid: false, errors: [error] };
         }

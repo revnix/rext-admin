@@ -10,7 +10,7 @@ types/
 ├── shared.ts             # Common interfaces used across modules
 ├── data-table.ts         # Data table row interfaces
 ├── topic-builder.ts      # Topic Builder specific types
-├── idea-builder.ts       # Idea Builder specific types
+├── topic-builder.ts       # Topic Builder specific types
 ├── api.ts               # API request/response types
 ├── components.ts        # React component prop types
 └── README.md           # This documentation
@@ -23,13 +23,13 @@ types/
 **Recommended:** Import from the central index file for cleaner imports:
 
 ```typescript
-import type { IdeaData, SelectOption, TopicBuilderFormData } from "@/types";
+import type { TopicData, SelectOption, TopicBuilderFormData } from "@/types";
 ```
 
 **Alternative:** Import directly from specific files when needed:
 
 ```typescript
-import type { IdeaBuilderFormData } from "@/types/idea-builder";
+import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { SelectOption } from "@/types/shared";
 ```
 
@@ -45,15 +45,15 @@ Common interfaces used throughout the application:
 #### 2. Data Table Types (`data-table.ts`)
 Interfaces for data displayed in tables:
 - `ContentData` - Content management data
-- `IdeaData` - Idea/concept data
+- `TopicData` - Topic/concept data
 - `UserData` - User account data
 - `FlowData` - Workflow/automation data
 - And more...
 
-#### 3. Form Types (`topic-builder.ts`, `idea-builder.ts`)
+#### 3. Form Types (`topic-builder.ts`, `topic-builder.ts`)
 Complex form data structures:
 - `TopicBuilderFormData` - Multi-step topic generation form
-- `IdeaBuilderFormData` - Multi-step idea development form
+- `TopicBuilderFormData` - Multi-step topic development form
 - Associated enums and option constants
 
 #### 4. API Types (`api.ts`)
@@ -79,7 +79,7 @@ const data: any = someApiCall();
 
 ✅ **Do** use proper types:
 ```typescript
-const data: IdeaData[] = someApiCall();
+const data: TopicData[] = someApiCall();
 ```
 
 ### 2. Leverage Union Types
@@ -131,10 +131,10 @@ import type { MultiSelectOption } from "@/types/topic-builder";
 import type { SelectOption } from "@/types";
 ```
 
-### IdeaBuilderOption → SelectOption
+### TopicBuilderOption → SelectOption
 ```typescript
 // Old
-const options: IdeaBuilderOption[] = [...];
+const options: TopicBuilderOption[] = [...];
 
 // New  
 const options: SelectOption[] = [...];
@@ -154,7 +154,7 @@ if (isValidPriority(userInput)) {
 ### 2. Form Validation
 Form types include validation utilities:
 ```typescript
-const result = validateIdeaFormData(formData);
+const result = validateTopicFormData(formData);
 if (result.isValid) {
   // Form is valid, proceed
 } else {
@@ -165,9 +165,9 @@ if (result.isValid) {
 ### 3. API Type Safety
 All API calls are typed:
 ```typescript
-const response: ApiResponse<IdeaData[]> = await fetchIdeas();
+const response: ApiResponse<TopicData[]> = await fetchTopics();
 if (response.success) {
-  // response.data is typed as IdeaData[]
+  // response.data is typed as TopicData[]
 }
 ```
 

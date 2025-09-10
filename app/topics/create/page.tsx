@@ -35,7 +35,7 @@ export default function TopicBuilderPage() {
   } = useTopicStorage();
 
   const breadcrumbs = [
-    { label: "Ideas", href: "/ideas" },
+    { label: "Topics", href: "/topics" },
     { label: "Topic Builder" },
   ];
 
@@ -92,8 +92,8 @@ export default function TopicBuilderPage() {
     await generateTopics();
   };
 
-  const handleNavigateToIdeas = () => {
-    router.push("/ideas");
+  const handleNavigateToTopics = () => {
+    router.push("/topics");
   };
 
   const handleGenerateNew = () => {
@@ -106,7 +106,7 @@ export default function TopicBuilderPage() {
   return (
     <PageLayout
       title="Topic Builder"
-      description="Generate AI-powered content topic ideas for your industry"
+      description="Generate AI-powered content topics for your industry"
       breadcrumbs={breadcrumbs}
       className="p-0"
     >
@@ -124,7 +124,7 @@ export default function TopicBuilderPage() {
               onBulkSave={handleBulkSave}
               onBackToWizard={handleBackToWizard}
               onRegenerateTopics={handleRegenerateTopics}
-              onNavigateToIdeas={handleNavigateToIdeas}
+              onNavigateToTopics={handleNavigateToTopics}
               onGenerateNew={handleGenerateNew}
             />
           </div>

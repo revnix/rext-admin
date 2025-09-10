@@ -116,7 +116,7 @@ export const useTopicStorage = (): UseTopicStorageReturn => {
           const dataStr = JSON.stringify(savedTopics, null, 2);
           const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
 
-          const exportFileDefaultName = `topic-ideas-${new Date().toISOString().slice(0, 10)}.json`;
+          const exportFileDefaultName = `topic-topics-${new Date().toISOString().slice(0, 10)}.json`;
 
           const linkElement = document.createElement("a");
           linkElement.setAttribute("href", dataUri);
@@ -153,7 +153,7 @@ export const useTopicStorage = (): UseTopicStorageReturn => {
           ].join("\n");
 
           const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
-          const exportFileDefaultName = `topic-ideas-${new Date().toISOString().slice(0, 10)}.csv`;
+          const exportFileDefaultName = `topic-topics-${new Date().toISOString().slice(0, 10)}.csv`;
 
           const linkElement = document.createElement("a");
           linkElement.setAttribute("href", dataUri);

@@ -10,10 +10,10 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
-import { DataTable, type RowAction } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
-import type { SocialAccountData } from "@/types/data-table";
+import type { RowAction, SocialAccountData } from "@/types/data-table";
 
 export default function SocialAccountsPage() {
   const breadcrumbs = [
@@ -99,7 +99,7 @@ export default function SocialAccountsPage() {
     {
       id: "7",
       platform: "Pinterest",
-      account: "Revnix Design Ideas",
+      account: "Revnix Design Topics",
       status: "Connected",
       connected: "2023-12-20 15:20",
       lastPost: "2024-01-22 09:15",

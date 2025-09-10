@@ -54,8 +54,8 @@ const data = {
       groupLabel: "Manage",
       items: [
         {
-          title: "Ideas",
-          url: "/ideas",
+          title: "Topics",
+          url: "/topics",
           icon: Library,
         },
         {

@@ -1,8 +1,8 @@
 /**
- * Idea Builder Type Definitions
+ * Topic Builder Type Definitions
  *
- * This module defines all TypeScript interfaces and types needed for the Idea Builder
- * wizard component that helps users structure and develop their ideas.
+ * This module defines all TypeScript interfaces and types needed for the Topic Builder
+ * wizard component that helps users structure and develop their topics.
  */
 
 // ============================================================================
@@ -10,14 +10,14 @@
 // ============================================================================
 
 /**
- * Priority levels for ideas
+ * Priority levels for topics
  */
-export type IdeaPriority = "low" | "medium" | "high" | "urgent";
+export type TopicPriority = "low" | "medium" | "high" | "urgent";
 
 /**
- * Idea categories
+ * Topic categories
  */
-export type IdeaCategory =
+export type TopicCategory =
   | "technology"
   | "business"
   | "marketing"
@@ -29,7 +29,7 @@ export type IdeaCategory =
 /**
  * Target audience types
  */
-export type IdeaAudience =
+export type TopicAudience =
   | "consumers"
   | "businesses"
   | "enterprise"
@@ -145,17 +145,17 @@ export type RiskLevel = "low" | "medium" | "high" | "experimental";
 // ============================================================================
 
 /**
- * Complete form data interface for the Idea Builder wizard
+ * Complete form data interface for the Topic Builder wizard
  */
-export interface IdeaBuilderFormData {
-  // Step 1: Idea Basics
-  ideaName: string;
-  ideaDescription: string;
-  category: IdeaCategory[];
-  priority: IdeaPriority;
+export interface TopicBuilderFormData {
+  // Step 1: Topic Basics
+  topicName: string;
+  topicDescription: string;
+  category: TopicCategory[];
+  priority: TopicPriority;
 
   // Step 2: Target Audience
-  targetAudience: IdeaAudience[];
+  targetAudience: TopicAudience[];
   audienceSize: AudienceSize;
   demographicAge: DemographicAge[];
   demographicLocation: GeographicScope[];
@@ -186,33 +186,33 @@ import type { SelectOption } from "./shared";
  * @deprecated Use SelectOption from "./shared" instead
  * Kept for backwards compatibility
  */
-export interface IdeaBuilderOption extends SelectOption {}
+export interface TopicBuilderOption extends SelectOption {}
 
 /**
  * Wizard step configuration
  */
-export interface IdeaBuilderStep {
+export interface TopicBuilderStep {
   id: number;
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   required: boolean;
-  fields: (keyof IdeaBuilderFormData)[];
+  fields: (keyof TopicBuilderFormData)[];
 }
 
 /**
  * Validation result for form steps
  */
-export interface IdeaValidationResult {
+export interface TopicValidationResult {
   isValid: boolean;
   errors: string[];
   warnings?: string[];
 }
 
 /**
- * Enhanced IdeaData interface that extends the basic data table interface
+ * Enhanced TopicData interface that extends the basic data table interface
  */
-export interface EnhancedIdeaData {
+export interface EnhancedTopicData {
   id: string;
   name: string;
   description: string;
@@ -225,7 +225,7 @@ export interface EnhancedIdeaData {
   lastModified: string;
   assignee: string;
   estimatedEffort: string;
-  // Additional fields for enhanced idea tracking
+  // Additional fields for enhanced topic tracking
   score?: number;
   ranking?: string;
   updated?: string;
@@ -237,7 +237,7 @@ export interface EnhancedIdeaData {
 // CONSTANT OPTION ARRAYS
 // ============================================================================
 
-export const IDEA_CATEGORY_OPTIONS: SelectOption[] = [
+export const TOPIC_CATEGORY_OPTIONS: SelectOption[] = [
   { label: "Technology", value: "technology" },
   { label: "Business", value: "business" },
   { label: "Marketing", value: "marketing" },
@@ -247,7 +247,7 @@ export const IDEA_CATEGORY_OPTIONS: SelectOption[] = [
   { label: "Innovation", value: "innovation" },
 ];
 
-export const IDEA_PRIORITY_OPTIONS: SelectOption[] = [
+export const TOPIC_PRIORITY_OPTIONS: SelectOption[] = [
   { label: "Low - Nice to have", value: "low" },
   { label: "Medium - Important", value: "medium" },
   { label: "High - Critical", value: "high" },
@@ -369,17 +369,17 @@ export const RISK_ASSESSMENT_OPTIONS: SelectOption[] = [
 // ============================================================================
 
 /**
- * Type guard to check if a value is a valid IdeaPriority
+ * Type guard to check if a value is a valid TopicPriority
  */
-export const isValidIdeaPriority = (value: string): value is IdeaPriority => {
+export const isValidTopicPriority = (value: string): value is TopicPriority => {
   return ["low", "medium", "high", "urgent"].includes(value);
 };
 
 /**
- * Type guard to check if a value is a valid IdeaCategory
+ * Type guard to check if a value is a valid TopicCategory
  */
-export const isValidIdeaCategory = (value: string): value is IdeaCategory => {
-  return IDEA_CATEGORY_OPTIONS.some((option) => option.value === value);
+export const isValidTopicCategory = (value: string): value is TopicCategory => {
+  return TOPIC_CATEGORY_OPTIONS.some((option) => option.value === value);
 };
 
 /**
@@ -426,9 +426,9 @@ export const isValidRiskLevel = (value: string): value is RiskLevel => {
 /**
  * Create initial form data with proper types
  */
-export const createInitialIdeaFormData = (): IdeaBuilderFormData => ({
-  ideaName: "",
-  ideaDescription: "",
+export const createInitialTopicFormData = (): TopicBuilderFormData => ({
+  topicName: "",
+  topicDescription: "",
   category: [],
   priority: "medium",
   targetAudience: [],
@@ -450,19 +450,19 @@ export const createInitialIdeaFormData = (): IdeaBuilderFormData => ({
 });
 
 /**
- * Validate idea form data
+ * Validate topic form data
  */
-export const validateIdeaFormData = (
-  data: Partial<IdeaBuilderFormData>,
-): IdeaValidationResult => {
+export const validateTopicFormData = (
+  data: Partial<TopicBuilderFormData>,
+): TopicValidationResult => {
   const errors: string[] = [];
 
-  if (!data.ideaName?.trim()) {
-    errors.push("Idea name is required");
+  if (!data.topicName?.trim()) {
+    errors.push("Topic name is required");
   }
 
-  if (!data.ideaDescription?.trim()) {
-    errors.push("Idea description is required");
+  if (!data.topicDescription?.trim()) {
+    errors.push("Topic description is required");
   }
 
   if (!data.category?.length) {

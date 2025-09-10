@@ -28,7 +28,7 @@ export function AdvancedStep({
   return (
     <div className="space-y-6">
       <div className="text-sm text-muted-foreground mb-4">
-        These options are optional but can help generate more targeted ideas.
+        These options are optional but can help generate more targeted topics.
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -49,28 +49,28 @@ export function AdvancedStep({
           </FormField>
         </div>
 
-        {/* Number of Ideas Slider */}
+        {/* Number of TopicsSlider */}
         <div>
           <div className="flex justify-between items-center mb-3">
-            <Label htmlFor="num_ideas">Number of topic ideas</Label>
+            <Label htmlFor="num_topics">Number of topics</Label>
             <span className="text-sm font-medium bg-muted px-2 py-1 rounded">
-              {formData.num_ideas || 5}
+              {formData.num_topics || 5}
             </span>
           </div>
           <Slider
-            id="num_ideas"
+            id="num_topics"
             min={1}
             max={20}
             step={1}
-            value={[formData.num_ideas || 5]}
+            value={[formData.num_topics || 5]}
             onValueChange={(values: number[]) =>
-              updateFormData("num_ideas", values[0])
+              updateFormData("num_topics", values[0])
             }
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>1 idea</span>
-            <span>20 ideas</span>
+            <span>1 topic</span>
+            <span>20 topics</span>
           </div>
         </div>
       </div>

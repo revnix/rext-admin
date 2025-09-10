@@ -33,7 +33,7 @@ All deprecated fields have been **completely removed** from the frontend:
 
 ### Frontend Integration Points - Status
 
-#### ✅ API Layer (`app/api/generate-topics/route.ts`)
+#### ✅ API Layer (`app/api/topics/generate/route.ts`)
 ```typescript
 // CURRENT: Only validates required current fields
 if (!formData || !formData.industry || !formData.industry.trim()) {
@@ -104,7 +104,7 @@ class TopicGenerationRequest(BaseModel):
     content_type: str = Field(..., description="Content format type", regex="^(blog-post|social-media)$")
     purpose: List[str] = Field(..., description="Content purposes (1-3 items)", min_items=1, max_items=3)
     tone: List[str] = Field(..., description="Content tone preferences (1-3 items)", min_items=1, max_items=3)
-    num_ideas: int = Field(..., description="Number of ideas to generate", ge=1, le=20)
+    num_topics: int = Field(..., description="Number of topics to generate", ge=1, le=20)
     timestamp: str = Field(..., description="Request timestamp in ISO format")
     
     # Optional fields
@@ -179,7 +179,7 @@ from datetime import datetime
 @app.post("/api/topic/generate-topic", response_model=TopicGenerationResponse)
 async def generate_topic(request: TopicGenerationRequest):
     """
-    Generate topic ideas based on current schema (deprecated fields removed)
+    Generate topics based on current schema (deprecated fields removed)
     """
     try:
         # Generate request ID for tracking
@@ -217,7 +217,7 @@ async def generate_topic(request: TopicGenerationRequest):
             "tone": request.tone,
             "tone_other": request.tone_other,
             "notes": request.notes,
-            "num_ideas": request.num_ideas,
+            "num_topics": request.num_topics,
             "request_id": request_id
         }
         
@@ -278,7 +278,7 @@ class WorkflowInput(TypedDict):
     tone: List[str]
     tone_other: Optional[str] 
     notes: Optional[str]
-    num_ideas: int
+    num_topics: int
     request_id: str
     
     # ❌ DO NOT include these deprecated fields:
@@ -321,7 +321,7 @@ def topic_generation_node(state: WorkflowInput) -> dict:
     if state['notes']:
         prompt_parts.append(f"Additional Notes: {state['notes']}")
     
-    prompt_parts.append(f"Generate {state['num_ideas']} topic ideas")
+    prompt_parts.append(f"Generate {state['num_topics']} topics")
     
     # Build and execute prompt with LLM
     prompt = "\n".join(prompt_parts)
@@ -468,7 +468,7 @@ CREATE PROCEDURE log_topic_generation_new(
     p_purpose JSON,
     p_tone JSON,
     p_notes TEXT,
-    p_num_ideas INT,
+    p_num_topics INT,
     p_generated_topics JSON,
     p_model_used VARCHAR(100),
     p_generation_time_ms INT
@@ -477,12 +477,12 @@ BEGIN
     INSERT INTO topic_generation_logs (
         request_id, wizard_mode, industry, industry_other, subject,
         audience, content_type, platform, purpose, tone, notes,
-        num_ideas, generated_topics, model_used, generation_time_ms,
+        num_topics, generated_topics, model_used, generation_time_ms,
         created_at
     ) VALUES (
         p_request_id, p_wizard_mode, p_industry, p_industry_other, p_subject,
         p_audience, p_content_type, p_platform, p_purpose, p_tone, p_notes,
-        p_num_ideas, p_generated_topics, p_model_used, p_generation_time_ms,
+        p_num_topics, p_generated_topics, p_model_used, p_generation_time_ms,
         NOW()
     );
 END;
@@ -602,7 +602,7 @@ ORDER BY request_count DESC;
     "tone": ["professional-formal", "technical-analytical"],
     "tone_other": null,
     "notes": "Focus on practical applications and real-world examples",
-    "num_ideas": 3,
+    "num_topics": 3,
     "timestamp": "2024-01-15T10:30:45.000Z"
 }
 ```
@@ -644,7 +644,7 @@ ORDER BY request_count DESC;
     "content_type": "blog-post",
     "purpose": ["educate-inform"],
     "tone": ["professional-formal"],
-    "num_ideas": 5,
+    "num_topics": 5,
     "timestamp": "2024-01-15T10:30:45.000Z"
 }
 
@@ -667,7 +667,7 @@ ORDER BY request_count DESC;
     "content_type": "blog-post", 
     "purpose": ["educate-inform"],
     "tone": ["professional-formal"],
-    "num_ideas": 5,
+    "num_topics": 5,
     "timestamp": "2024-01-15T10:30:45.000Z"
 }
 
@@ -690,7 +690,7 @@ ORDER BY request_count DESC;
     "content_type": "social-media",
     "purpose": ["entertain-engage"],
     "tone": ["casual-conversational"],
-    "num_ideas": 5,
+    "num_topics": 5,
     "timestamp": "2024-01-15T10:30:45.000Z"
 }
 
@@ -754,7 +754,7 @@ if average_relevance_score < 0.8:
 #### ✅ Frontend Ready - Testing Required
 
 **API Integration Tests**:
-- [ ] POST `/api/generate-topics` with current schema ✅ Ready
+- [ ] POST `/api/topics/generate` with current schema ✅ Ready
 - [ ] Response processing with `GeneratedTopic` format ✅ Ready  
 - [ ] Error handling with validation failures ✅ Ready
 - [ ] Timeout and retry logic ✅ Ready

@@ -1,6 +1,6 @@
 # Feature Requirements Plan
 
-This plan is based on a full repo audit and a quick check of current library docs and patterns in use. The project is a Next.js App Router app for generating topic ideas, saving them, and using them to generate content.
+This plan is based on a full repo audit and a quick check of current library docs and patterns in use. The project is a Next.js App Router app for generating topics, saving them, and using them to generate content.
 
 ## Architecture Snapshot (Verified)
 
@@ -44,9 +44,9 @@ Docs‑confirmed notes: TanStack Query v5 options used match current docs (gcTim
   - Rename “Fine Tuning” to “Advanced Options”.
   - Remove Content Language and Target Region from UI.
     - Files: `components/topic-builder/steps/AdvancedStep.tsx:1` (remove UI), `components/topic-builder/steps/ReviewStep.tsx:240` (remove display), `lib/topic-builder-utils.ts` (prompt builder: omit language/region lines), keep optional fields in payload mapping for backward compatibility but unused by UI.
-  - Make “Any other requirements?” first and larger; add slider for number of ideas.
-    - Files: `components/topic-builder/steps/AdvancedStep.tsx:1` (reorder; slider for `num_ideas` with 1–20 and live value).
-  - Acceptance: Step label updated, no Language/Region UI, first control is large notes area, slider controls idea count.
+  - Make “Any other requirements?” first and larger; add slider for number of topics.
+    - Files: `components/topic-builder/steps/AdvancedStep.tsx:1` (reorder; slider for `num_topics` with 1–20 and live value).
+  - Acceptance: Step label updated, no Language/Region UI, first control is large notes area, slider controls topic count.
 
 - Step 6 review: switch from 3 cards to a compact grid summary.
   - Replace current cards in `components/topic-builder/steps/ReviewStep.tsx:1` with a responsive grid of labeled chips/fields with icons.
@@ -60,7 +60,7 @@ Docs‑confirmed notes: TanStack Query v5 options used match current docs (gcTim
 ### M2 — Results Flow Separation, Persistence, and Actions
 
 - Split results into a dedicated page with run IDs.
-  - Route: `app/ideas/create/results/[runId]/page.tsx`.
+  - Route: `app/topics/create/results/[runId]/page.tsx`.
   - On successful generation, persist run to `localStorage` and navigate to results URL.
   - Provide a recovery banner if a run exists for the current session and deep-link to it.
   - Acceptance: Navigating away and back restores results by `runId`.
@@ -131,7 +131,7 @@ Docs‑confirmed notes: TanStack Query v5 options used match current docs (gcTim
   - `lib/topic-builder-utils.ts:~900` — Keep `updateFormDataForContentTypeChange` rules; ensure platform cleared when not Social.
 
 - Step 5 adjustments
-  - `components/topic-builder/steps/AdvancedStep.tsx:1` — Remove Language/Region controls; move Notes first; add `num_ideas` slider.
+  - `components/topic-builder/steps/AdvancedStep.tsx:1` — Remove Language/Region controls; move Notes first; add `num_topics` slider.
   - `components/topic-builder/steps/ReviewStep.tsx:240` — Remove Region/Language display; show new fields ordering.
   - `lib/topic-builder-utils.ts:~560` — Prompt builder: omit language/region lines.
 
@@ -143,8 +143,8 @@ Docs‑confirmed notes: TanStack Query v5 options used match current docs (gcTim
   - `hooks/use-topic-builder.ts:395` — Store an `AbortController` and abort the fetch when canceling; clear state.
 
 - Results page + runId persistence
-  - Add `app/ideas/create/results/[runId]/page.tsx` — Dedicated results view reading from `localStorage` by run ID.
-  - `app/ideas/create/page.tsx:1` — On success, persist run and navigate to the new route.
+  - Add `app/topics/create/results/[runId]/page.tsx` — Dedicated results view reading from `localStorage` by run ID.
+  - `app/topics/create/page.tsx:1` — On success, persist run and navigate to the new route.
 
 - CTA to write content
   - `components/topic-builder/results/TopicActions.tsx:1` — Add action to navigate to `/flows/create?topicId=<id>`.
@@ -201,7 +201,7 @@ Docs‑confirmed notes: TanStack Query v5 options used match current docs (gcTim
 - Remove geographic focus in Audience step — UI + validation updated.
 - Type of Content step options — limited and platform rules implemented.
 - Step 4 “Other” inputs — per‑question inputs validated separately.
-- Step 5 — remove Language/Region, rename step, improve copy, move Notes first, add ideas slider.
+- Step 5 — remove Language/Region, rename step, improve copy, move Notes first, add topics slider.
 - Step 6 — grid summary replacing 3 cards.
 - Generation popup — modernized + cancel + confirm + true abort.
 - Results — separate page, modal details, persistent `runId`, multi/individual save, and “Write Content” CTA.

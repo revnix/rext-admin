@@ -89,7 +89,6 @@ export {
 export type {
   ContentData,
   FlowData,
-  IdeaData,
   MemoryData,
   ModelData,
   NotificationConfiguration,
@@ -99,58 +98,9 @@ export type {
   RuleData,
   SocialAccountData,
   TableAction,
+  TopicData,
   UserData,
 } from "./data-table";
-// ============================================================================
-// IDEA BUILDER TYPES
-// ============================================================================
-export type {
-  BudgetRange,
-  CompetitionLevel,
-  DemographicAge,
-  EnhancedIdeaData,
-  GeographicScope,
-  IdeaAudience,
-  IdeaBuilderFormData,
-  IdeaBuilderStep,
-  IdeaCategory,
-  IdeaPriority,
-  IdeaValidationResult,
-  PrimaryGoal,
-  ResourceRequirement,
-  RiskLevel,
-  SkillCategory,
-  SolutionApproach,
-  SuccessMetric,
-  Timeframe,
-} from "./idea-builder";
-// Export option constants for Idea Builder
-// Export helper functions
-export {
-  AUDIENCE_SIZE_OPTIONS as IDEA_AUDIENCE_SIZE_OPTIONS,
-  BUDGET_OPTIONS,
-  COMPETITION_ANALYSIS_OPTIONS,
-  createInitialIdeaFormData,
-  DEMOGRAPHIC_AGE_OPTIONS,
-  DEMOGRAPHIC_LOCATION_OPTIONS,
-  IDEA_CATEGORY_OPTIONS,
-  IDEA_PRIORITY_OPTIONS,
-  isValidBudgetRange,
-  isValidCompetitionLevel,
-  isValidIdeaCategory,
-  isValidIdeaPriority,
-  isValidRiskLevel,
-  isValidTimeframe,
-  PRIMARY_GOAL_OPTIONS,
-  RESOURCES_OPTIONS,
-  RISK_ASSESSMENT_OPTIONS,
-  SKILLS_REQUIRED_OPTIONS,
-  SOLUTION_APPROACH_OPTIONS,
-  SUCCESS_METRICS_OPTIONS,
-  TARGET_AUDIENCE_OPTIONS,
-  TIMEFRAME_OPTIONS,
-  validateIdeaFormData,
-} from "./idea-builder";
 // ============================================================================
 // SESSION STORAGE TYPES
 // ============================================================================
@@ -159,7 +109,6 @@ export type {
   SessionMetadata,
   SessionStorageAPI,
 } from "./session";
-
 // ============================================================================
 // SHARED TYPES
 // ============================================================================
@@ -188,37 +137,83 @@ export type {
 // ============================================================================
 // TOPIC BUILDER TYPES
 // ============================================================================
+// ============================================================================
+// TOPIC BUILDER TYPES
+// ============================================================================
 export type {
+  BudgetRange,
+  CompetitionLevel,
   ContentType,
+  DemographicAge,
+  EnhancedTopicData,
   GeneratedTopic,
+  GeographicScope,
   Industry,
   Platform,
+  PrimaryGoal,
   PurposeType,
+  ResourceRequirement,
+  RiskLevel,
+  SkillCategory,
+  SolutionApproach,
+  SuccessMetric,
+  Timeframe,
   ToneType,
+  TopicAudience,
   TopicBuilderDraft,
   TopicBuilderFormData,
+  TopicBuilderFormData,
+  TopicBuilderStep,
+  TopicCategory,
   TopicGenerationRequest,
   TopicGenerationResponse,
+  TopicPriority,
+  TopicValidationResult,
   WizardMode,
   WizardStep,
 } from "./topic-builder";
+// Export option constants for Topic Builder
+// Export helper functions
 // Export option constants for Topic Builder
 // ============================================================================
 // TYPE GUARDS
 // ============================================================================
 export {
+  AUDIENCE_SIZE_OPTIONS as TOPIC_AUDIENCE_SIZE_OPTIONS,
+  BUDGET_OPTIONS,
+  COMPETITION_ANALYSIS_OPTIONS,
   CONTENT_TYPE_OPTIONS,
+  createInitialTopicFormData,
+  DEMOGRAPHIC_AGE_OPTIONS,
+  DEMOGRAPHIC_LOCATION_OPTIONS,
   INDUSTRY_OPTIONS,
+  isValidBudgetRange,
+  isValidCompetitionLevel,
   isValidContentType,
   isValidIndustry,
   isValidPlatform,
   isValidPurposeType,
+  isValidRiskLevel,
+  isValidTimeframe,
   isValidToneType,
+  isValidTopicCategory,
+  isValidTopicPriority,
   isValidWizardMode,
   PLATFORM_OPTIONS,
+  PRIMARY_GOAL_OPTIONS,
   PURPOSE_OPTIONS,
+  RESOURCES_OPTIONS,
+  RISK_ASSESSMENT_OPTIONS,
+  SKILLS_REQUIRED_OPTIONS,
+  SOLUTION_APPROACH_OPTIONS,
+  SUCCESS_METRICS_OPTIONS,
+  TARGET_AUDIENCE_OPTIONS,
+  TIMEFRAME_OPTIONS,
   TONE_OPTIONS,
+  TOPIC_CATEGORY_OPTIONS,
+  TOPIC_PRIORITY_OPTIONS,
   validateEnumArray,
+  validateTopicFormData,
   WIZARD_MODE_OPTIONS,
 } from "./topic-builder";
 
@@ -234,4 +229,4 @@ export type { MultiSelectOption } from "./topic-builder";
 /**
  * @deprecated Use SelectOption from shared types instead
  */
-export type IdeaBuilderOption = import("./shared").SelectOption;
+export type TopicBuilderOption = import("./shared").SelectOption;

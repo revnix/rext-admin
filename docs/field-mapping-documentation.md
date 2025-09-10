@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the explicit mapping rules and transformation logic to convert backend topic objects (`GeneratedTopic`) to the frontend `IdeaData` interface for seamless display and management in the Ideas page DataTable.
+This document defines the explicit mapping rules and transformation logic to convert backend topic objects (`GeneratedTopic`) to the frontend `TopicData` interface for seamless display and management in the Topicspage DataTable.
 
 ## Data Flow Architecture
 
@@ -11,7 +11,7 @@ Backend API Response (GeneratedTopic[])
     ↓
 Field Mapping & Transformation Logic 
     ↓
-Frontend Display Format (IdeaData[])
+Frontend Display Format (TopicData[])
     ↓
 DataTable UI Components
 ```
@@ -42,11 +42,11 @@ interface GeneratedTopic {
 }
 ```
 
-### Target: Frontend IdeaData Interface
+### Target: Frontend TopicData Interface
 Located in `/types/data-table.ts`, lines 46-64
 
 ```typescript
-interface IdeaData extends BaseTableRow {
+interface TopicData extends BaseTableRow {
   name: string;
   description: string;
   category: string;
@@ -72,8 +72,8 @@ interface IdeaData extends BaseTableRow {
 | Source Field | Target Field | Transformation Rule | Default Value | Notes |
 |-------------|-------------|-------------------|---------------|-------|
 | `id` | `id` | **Direct mapping** | Required | Unique identifier, no transformation |
-| `title` | `name` | **Direct mapping** | Required | Main topic title becomes idea name |
-| `angle` + `description` | `description` | **Enhanced combination** | "AI-generated topic idea" | Combines with " • " separator if both exist |
+| `title` | `name` | **Direct mapping** | Required | Main topic title becomes topic name |
+| `angle` + `description` | `description` | **Enhanced combination** | "AI-generated topic topic" | Combines with " • " separator if both exist |
 | `tags[0]` | `category` | **First tag extraction** | "General" | Capitalizes first letter, formats nicely |
 | Status flags | `status` | **Status determination** | "generated" | Complex logic based on save state |
 | `scores.*` | `priority` | **Weighted calculation** | "medium" | relevance×0.5 + freshness×0.3 + novelty×0.2 |
@@ -107,7 +107,7 @@ if (topic.description) {
 }
 
 if (parts.length === 0) {
-  parts.push("AI-generated topic idea");
+  parts.push("AI-generated topic topic");
 }
 
 return parts.join(" • ");
@@ -116,7 +116,7 @@ return parts.join(" • ");
 **Examples**:
 - Input: `{angle: "Future prospects", description: "Healthcare innovation"}` → `"Future prospects • Healthcare innovation"`
 - Input: `{angle: "Market trends", description: null}` → `"Market trends"`
-- Input: `{angle: "", description: ""}` → `"AI-generated topic idea"`
+- Input: `{angle: "", description: ""}` → `"AI-generated topic topic"`
 
 ### 2. Status Determination Logic
 **Function**: `determineTopicStatus(topic: GeneratedTopic): string`
@@ -244,7 +244,7 @@ return Math.round(weightedScore × 100);
 
 ### Validation Approach
 - **Non-blocking**: Transformation continues with warnings for minor issues
-- **Defensive**: Always returns valid `IdeaData` objects
+- **Defensive**: Always returns valid `TopicData` objects
 - **Logging**: Records all transformation warnings for debugging
 
 ### Error Recovery Actions
@@ -270,10 +270,10 @@ return Math.round(weightedScore × 100);
 
 ### Primary Integration
 **File**: `/lib/topic-transformations.ts`
-**Function**: `transformTopicsToIdeas(topics: GeneratedTopic[]): IdeaData[]`
+**Function**: `transformTopicsForDisplay(topics: GeneratedTopic[]): TopicData[]`
 
 ### Usage in Application
-1. **Ideas Page**: `/app/ideas/page.tsx` (lines 33-34)
+1. **TopicsPage**: `/app/topics/page.tsx` (lines 33-34)
 2. **Topics Hook**: `/hooks/use-topics.ts` (line 24)
 3. **Testing**: `/__tests__/lib/topic-transformations.test.ts`
 
@@ -294,7 +294,7 @@ return Math.round(weightedScore × 100);
 ### Sample Test Cases
 ```typescript
 describe('Field Mapping Transformation', () => {
-  it('should transform complete GeneratedTopic to IdeaData', () => {
+  it('should transform complete GeneratedTopic to TopicData', () => {
     const input: GeneratedTopic = {
       id: "1",
       title: "AI in Healthcare",
@@ -307,7 +307,7 @@ describe('Field Mapping Transformation', () => {
       tags: ["ai", "healthcare"]
     };
 
-    const result = transformTopicsToIdeas([input])[0];
+    const result = transformTopicsForDisplay([input])[0];
     
     expect(result.name).toBe("AI in Healthcare");
     expect(result.description).toBe("Future prospects • Innovation trends");

@@ -37,7 +37,7 @@ interface TopicCardProps {
     format: "json" | "csv",
   ) => Promise<void> | void;
   onDelete?: (topicId: string) => Promise<void> | void;
-  onNavigateToIdeas?: () => void;
+  onNavigateToTopics?: () => void;
   onGenerateNew?: () => void;
   onNavigateToContent?: (topicId: string) => void;
   className?: string;
@@ -52,7 +52,7 @@ export function TopicCard({
   onRegenerate,
   onExport,
   onDelete,
-  onNavigateToIdeas,
+  onNavigateToTopics,
   onGenerateNew,
   onNavigateToContent,
   className,
@@ -166,7 +166,7 @@ export function TopicCard({
             onRegenerate={onRegenerate}
             onExport={onExport}
             onDelete={onDelete}
-            onNavigateToIdeas={onNavigateToIdeas}
+            onNavigateToTopics={onNavigateToTopics}
             onGenerateNew={onGenerateNew}
             onNavigateToContent={onNavigateToContent}
             variant="dropdown"
@@ -284,7 +284,7 @@ export function TopicCard({
               onRegenerate={onRegenerate}
               onExport={onExport}
               onDelete={onDelete}
-              onNavigateToIdeas={onNavigateToIdeas}
+              onNavigateToTopics={onNavigateToTopics}
               onGenerateNew={onGenerateNew}
               onNavigateToContent={onNavigateToContent}
               variant="buttons"

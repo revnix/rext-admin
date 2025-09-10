@@ -54,7 +54,7 @@ Based on the reduced field set from Task 11.1:
 7. **Platform Selection** (conditional) - "Which platform will you use?"
 8. **Content Purpose** - "What's the goal of your content?"
 9. **Content Tone** - "What tone should your content have?"
-10. **Number of Ideas** - "How many topic ideas would you like?"
+10. **Number of Topics** - "How many topics would you like?"
 11. **Additional Notes** (optional) - "Any other requirements or preferences?"
 
 ### Navigation Flow
@@ -245,7 +245,7 @@ const transition = {
 - **Placeholder**: Conversational and helpful
 
 #### 4. Slider Input
-- **Use for**: Number of ideas
+- **Use for**: Number of topics
 - **Component**: Large slider with live value display
 - **Auto-advance**: No, requires Next button
 - **Range**: 1-20 with step of 1

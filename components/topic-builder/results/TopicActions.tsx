@@ -63,7 +63,7 @@ interface TopicActionsProps {
     format: "json" | "csv",
   ) => Promise<void> | void;
   onDelete?: (topicId: string) => Promise<void> | void;
-  onNavigateToIdeas?: () => void;
+  onNavigateToTopics?: () => void;
   onGenerateNew?: () => void;
   onNavigateToContent?: (topicId: string) => void;
   className?: string;
@@ -78,7 +78,7 @@ export function TopicActions({
   onRegenerate,
   onExport,
   onDelete,
-  onNavigateToIdeas,
+  onNavigateToTopics,
   onGenerateNew,
   onNavigateToContent,
   className,
@@ -639,9 +639,9 @@ export function TopicActions({
           open={isSuccessDialogOpen}
           onOpenChange={setIsSuccessDialogOpen}
           topicTitle={topic.title}
-          onNavigateToIdeas={
-            onNavigateToIdeas ||
-            (() => console.log("Navigate to ideas not implemented"))
+          onNavigateToTopics={
+            onNavigateToTopics ||
+            (() => console.log("Navigate to topics not implemented"))
           }
           onGenerateNew={
             onGenerateNew || (() => console.log("Generate new not implemented"))
@@ -1049,9 +1049,9 @@ export function TopicActions({
         open={isSuccessDialogOpen}
         onOpenChange={setIsSuccessDialogOpen}
         topicTitle={topic.title}
-        onNavigateToIdeas={
-          onNavigateToIdeas ||
-          (() => console.log("Navigate to ideas not implemented"))
+        onNavigateToTopics={
+          onNavigateToTopics ||
+          (() => console.log("Navigate to topics not implemented"))
         }
         onGenerateNew={
           onGenerateNew || (() => console.log("Generate new not implemented"))

@@ -38,7 +38,7 @@ export function useTopicSaveMutation() {
   >({
     mutationFn: async (topic: GeneratedTopic): Promise<SaveTopicResponse> => {
       // Call the Next.js API route which handles backend communication server-side
-      const response = await fetch("/api/topic/save-topic", {
+      const response = await fetch("/api/topics/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export function useBulkTopicSaveMutation() {
       topics: GeneratedTopic[],
     ): Promise<SaveTopicResponse> => {
       // Call the Next.js API route which handles backend communication server-side
-      const response = await fetch("/api/topic/save-topic", {
+      const response = await fetch("/api/topics/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

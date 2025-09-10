@@ -30,7 +30,7 @@ describe("SuccessConfirmationDialog Component", () => {
     open: true,
     onOpenChange: jest.fn(),
     topicTitle: "How to Build React Apps",
-    onNavigateToIdeas: jest.fn(),
+    onNavigateToTopics: jest.fn(),
     onGenerateNew: jest.fn(),
   };
 
@@ -73,7 +73,7 @@ describe("SuccessConfirmationDialog Component", () => {
 
       expect(
         screen.getByText(
-          `"${customTitle}" has been saved to your ideas library. What would you like to do next? Use the Tab key to navigate between options and Enter or Space to select.`,
+          `"${customTitle}" has been saved to your topics library. What would you like to do next? Use the Tab key to navigate between options and Enter or Space to select.`,
         ),
       ).toBeInTheDocument();
     });
@@ -130,24 +130,24 @@ describe("SuccessConfirmationDialog Component", () => {
       expect(mockOnOpenChange).toHaveBeenCalledWith(false);
     });
 
-    it("should call onNavigateToIdeas and close dialog when 'View All Topics' is clicked", async () => {
+    it("should call onNavigateToTopicsand close dialog when 'View All Topics' is clicked", async () => {
       const user = userEvent.setup();
-      const mockOnNavigateToIdeas = jest.fn();
+      const mockOnNavigateToTopics = jest.fn();
       const mockOnOpenChange = jest.fn();
 
       render(
         <SuccessConfirmationDialog
           {...defaultProps}
-          onNavigateToIdeas={mockOnNavigateToIdeas}
+          onNavigateToTopics={mockOnNavigateToTopics}
           onOpenChange={mockOnOpenChange}
         />,
       );
 
       await user.click(screen.getByText("View All Topics"));
 
-      expect(mockOnNavigateToIdeas).toHaveBeenCalled();
+      expect(mockOnNavigateToTopics).toHaveBeenCalled();
       expect(mockOnOpenChange).toHaveBeenCalledWith(false);
-      expect(consoleSpy).toHaveBeenCalledWith("Navigating to ideas page");
+      expect(consoleSpy).toHaveBeenCalledWith("Navigating to topics page");
     });
 
     it("should call onGenerateNew and close dialog when 'Generate New Topics' is clicked", async () => {
@@ -191,13 +191,13 @@ describe("SuccessConfirmationDialog Component", () => {
 
     it("should handle multiple rapid clicks gracefully", async () => {
       const user = userEvent.setup();
-      const mockOnNavigateToIdeas = jest.fn();
+      const mockOnNavigateToTopics = jest.fn();
       const mockOnOpenChange = jest.fn();
 
       render(
         <SuccessConfirmationDialog
           {...defaultProps}
-          onNavigateToIdeas={mockOnNavigateToIdeas}
+          onNavigateToTopics={mockOnNavigateToTopics}
           onOpenChange={mockOnOpenChange}
         />,
       );
@@ -210,7 +210,7 @@ describe("SuccessConfirmationDialog Component", () => {
       await user.click(button);
 
       // Should still work properly
-      expect(mockOnNavigateToIdeas).toHaveBeenCalled();
+      expect(mockOnNavigateToTopics).toHaveBeenCalled();
       expect(mockOnOpenChange).toHaveBeenCalledWith(false);
     });
   });
@@ -250,7 +250,7 @@ describe("SuccessConfirmationDialog Component", () => {
       );
       expect(viewAllButton).toHaveAttribute(
         "aria-describedby",
-        "navigate-to-ideas-description",
+        "navigate-to-topics-description",
       );
       expect(generateNewButton).toHaveAttribute(
         "aria-describedby",
@@ -268,12 +268,12 @@ describe("SuccessConfirmationDialog Component", () => {
       ).toBeInTheDocument();
       expect(
         screen.getByText(
-          "Navigate to the Ideas page to view and manage all your saved topics",
+          "Navigate to the Topicspage to view and manage all your saved topics",
         ),
       ).toBeInTheDocument();
       expect(
         screen.getByText(
-          "Start a new topic generation session to create more content ideas",
+          "Start a new topic generation session to create more content topics",
         ),
       ).toBeInTheDocument();
     });
@@ -317,12 +317,12 @@ describe("SuccessConfirmationDialog Component", () => {
   describe("Keyboard Navigation", () => {
     it("should handle Enter key on buttons", async () => {
       const user = userEvent.setup();
-      const mockOnNavigateToIdeas = jest.fn();
+      const mockOnNavigateToTopics = jest.fn();
 
       render(
         <SuccessConfirmationDialog
           {...defaultProps}
-          onNavigateToIdeas={mockOnNavigateToIdeas}
+          onNavigateToTopics={mockOnNavigateToTopics}
         />,
       );
 
@@ -330,7 +330,7 @@ describe("SuccessConfirmationDialog Component", () => {
       button.focus();
       await user.keyboard("{Enter}");
 
-      expect(mockOnNavigateToIdeas).toHaveBeenCalled();
+      expect(mockOnNavigateToTopics).toHaveBeenCalled();
     });
 
     it("should handle Space key on buttons", async () => {
@@ -406,7 +406,7 @@ describe("SuccessConfirmationDialog Component", () => {
 
       expect(screen.getByText("Topic Saved Successfully!")).toBeInTheDocument();
       expect(
-        screen.getByText(/has been saved to your ideas library/),
+        screen.getByText(/has been saved to your topics library/),
       ).toBeInTheDocument();
     });
 
@@ -420,7 +420,7 @@ describe("SuccessConfirmationDialog Component", () => {
 
       expect(
         screen.getByText(
-          `"${longTitle}" has been saved to your ideas library. What would you like to do next? Use the Tab key to navigate between options and Enter or Space to select.`,
+          `"${longTitle}" has been saved to your topics library. What would you like to do next? Use the Tab key to navigate between options and Enter or Space to select.`,
         ),
       ).toBeInTheDocument();
     });
@@ -437,7 +437,7 @@ describe("SuccessConfirmationDialog Component", () => {
 
       expect(
         screen.getByText(
-          `"${specialTitle}" has been saved to your ideas library. What would you like to do next? Use the Tab key to navigate between options and Enter or Space to select.`,
+          `"${specialTitle}" has been saved to your topics library. What would you like to do next? Use the Tab key to navigate between options and Enter or Space to select.`,
         ),
       ).toBeInTheDocument();
     });
@@ -450,7 +450,7 @@ describe("SuccessConfirmationDialog Component", () => {
           open={true}
           onOpenChange={jest.fn()}
           topicTitle="Test Topic"
-          onNavigateToIdeas={() => {}}
+          onNavigateToTopics={() => {}}
           onGenerateNew={() => {}}
         />,
       );
@@ -506,7 +506,7 @@ describe("SuccessConfirmationDialog Component", () => {
 
       await user.click(screen.getByText("View All Topics"));
 
-      expect(consoleSpy).toHaveBeenCalledWith("Navigating to ideas page");
+      expect(consoleSpy).toHaveBeenCalledWith("Navigating to topics page");
     });
 
     it("should log generate new action", async () => {

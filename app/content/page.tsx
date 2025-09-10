@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
-import { DataTable, type RowAction } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
-import type { ContentData } from "@/types/data-table";
+import type { ContentData, RowAction } from "@/types/data-table";
 
 export default function ContentPage() {
   const breadcrumbs = [
@@ -83,7 +83,7 @@ export default function ContentPage() {
     },
     {
       id: "3",
-      title: "5 LinkedIn Post Ideas for Tech Companies",
+      title: "5 LinkedIn Post Topicsfor Tech Companies",
       type: "Social Media",
       contentType: "Social Post",
       status: "Published",
@@ -107,7 +107,7 @@ export default function ContentPage() {
       lastModified: "2024-01-21 08:45",
       created: "2024-01-21 08:00",
       content:
-        "Here are 5 proven LinkedIn post ideas that drive engagement for tech companies...",
+        "Here are 5 proven LinkedIn post topics that drive engagement for tech companies...",
     },
     {
       id: "4",

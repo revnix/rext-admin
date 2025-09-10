@@ -102,7 +102,7 @@ function CreateFlowContent() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link href="/ideas/create">
+              <Link href="/topics/create">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Topics
               </Link>
@@ -133,11 +133,11 @@ function CreateFlowContent() {
                   No Topics Selected
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Select topics from the idea generation page to create content
+                  Select topics from the topic generation page to create content
                   flows.
                 </p>
                 <Button asChild>
-                  <Link href="/ideas/create">
+                  <Link href="/topics/create">
                     <Sparkles className="h-4 w-4 mr-2" />
                     Browse Topics
                   </Link>

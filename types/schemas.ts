@@ -10,7 +10,7 @@
 
 import { z } from "zod";
 import type { SaveTopicItem } from "./api";
-import type { IdeaData } from "./data-table";
+import type { TopicData } from "./data-table";
 import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
 // ============================================================================
@@ -70,7 +70,7 @@ export const GeneratedTopicSchema = z.object({
 
 /**
  * Zod validation schema for backend SaveTopicItem
- * Represents topics as expected by the save-topic API endpoint
+ * Represents topics as expected by the save topics API endpoint
  */
 export const SaveTopicItemSchema = z.object({
   /** Topic title/headline (required for backend) */
@@ -90,14 +90,14 @@ export const SaveTopicItemSchema = z.object({
 });
 
 /**
- * Zod validation schema for IdeaData
- * Represents ideas as displayed in the DataTable UI components
+ * Zod validation schema for TopicData
+ * Represents topics as displayed in the DataTable UI components
  * @see /docs/field-mapping-documentation.md for transformation rules from GeneratedTopic
  */
-export const IdeaDataSchema = z.object({
-  /** Unique identifier for the idea */
+export const TopicDataSchema = z.object({
+  /** Unique identifier for the topic */
   id: z.string().min(1),
-  /** Main idea title/headline */
+  /** Main topic title/headline */
   name: z.string().min(1).max(200),
   /** Comprehensive description combining multiple topic fields */
   description: z.string().min(1),
@@ -107,15 +107,15 @@ export const IdeaDataSchema = z.object({
   status: z.enum(["generated", "saving", "saved", "published", "archived"]),
   /** Priority level based on scoring algorithm */
   priority: z.enum(["low", "medium", "high"]),
-  /** Source of the idea (always "AI Generated" for topic transformations) */
+  /** Source of the topic (always "AI Generated" for topic transformations) */
   source: z.string().min(1),
   /** Enhanced tags including channel and audience prefixes */
   tags: z.array(z.string()),
-  /** ISO timestamp when idea was created */
+  /** ISO timestamp when topic was created */
   created: z.string().datetime(),
-  /** ISO timestamp when idea was last modified */
+  /** ISO timestamp when topic was last modified */
   lastModified: z.string().datetime(),
-  /** Assignee responsible for the idea */
+  /** Assignee responsible for the topic */
   assignee: z.string().min(1),
   /** Estimated effort level based on novelty score */
   estimatedEffort: z.enum(["Low", "Medium", "High"]),
@@ -220,7 +220,7 @@ export const TopicBuilderFormDataSchema = z.object({
 
   // Advanced options
   notes: z.string().optional(),
-  num_ideas: z.number().min(1).max(20).default(5),
+  num_topics: z.number().min(1).max(20).default(5),
 
   // Subject-first flow specific field
   subject: z.string().optional(),
@@ -375,11 +375,11 @@ export const stepValidationSchemas = {
     notes: z.string().optional(),
   }),
 
-  "num-ideas": z.object({
-    num_ideas: z
+  "num-topics": z.object({
+    num_topics: z
       .number()
-      .min(1, "Please select at least 1 idea")
-      .max(20, "Maximum 20 ideas allowed"),
+      .min(1, "Please select at least 1 topic")
+      .max(20, "Maximum 20 topics allowed"),
   }),
 } as const;
 
@@ -400,7 +400,7 @@ export const backendTopicGenerationPayloadSchema = z.object({
   tone: z.array(z.string()),
   tone_other: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
-  num_ideas: z.number(),
+  num_topics: z.number(),
   subject: z.string().nullable().optional(),
   timestamp: z.string(),
 });
@@ -413,7 +413,7 @@ export const backendTopicGenerationPayloadSchema = z.object({
  * Field mapping between GeneratedTopic (frontend) and SaveTopicItem (backend)
  *
  * This mapping defines how frontend topic data transforms to backend format
- * for the save-topic API endpoint.
+ * for the topics/save API endpoint.
  */
 export const TOPIC_FIELD_MAPPING = {
   /** Direct field mappings (1:1) */
@@ -470,7 +470,7 @@ export const FORM_TO_BACKEND_MAPPING = {
     "tone",
     "tone_other",
     "notes",
-    "num_ideas",
+    "num_topics",
     "subject",
   ] as const,
   /** Fields added during transformation */
@@ -522,11 +522,11 @@ export const isValidTopicBuilderFormData = (
 };
 
 /**
- * Type guard to validate if an object is a valid IdeaData
+ * Type guard to validate if an object is a valid TopicData
  */
-export const isValidIdeaData = (obj: unknown): obj is IdeaData => {
+export const isValidTopicData = (obj: unknown): obj is TopicData => {
   try {
-    IdeaDataSchema.parse(obj);
+    TopicDataSchema.parse(obj);
     return true;
   } catch {
     return false;
@@ -875,7 +875,7 @@ export type ValidatedTopicBuilderFormData = z.infer<
   typeof TopicBuilderFormDataSchema
 >;
 export type ValidatedTopicScores = z.infer<typeof TopicScoresSchema>;
-export type ValidatedIdeaData = z.infer<typeof IdeaDataSchema>;
+export type ValidatedTopicData = z.infer<typeof TopicDataSchema>;
 
 // ============================================================================
 // BACKEND RESPONSE VALIDATION SCHEMAS

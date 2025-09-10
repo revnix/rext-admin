@@ -54,7 +54,7 @@ describe("Zod Validation Integration", () => {
     content_type: "blog-post",
     purpose: ["educate-inform"],
     tone: ["professional-formal"],
-    num_ideas: 5,
+    num_topics: 5,
   };
 
   const validSaveTopicItem: SaveTopicItem = {

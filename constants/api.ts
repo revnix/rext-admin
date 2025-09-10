@@ -6,7 +6,7 @@
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  GENERATE_TOPICS: "/api/generate-topics",
+  GENERATE_TOPICS: "/api/topics/generate",
   TASKS: "/api/tasks",
 } as const;
 

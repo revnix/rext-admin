@@ -23,7 +23,7 @@ import { AudienceQuestion } from "../questions/AudienceQuestion";
 import { ContentTypeQuestion } from "../questions/ContentTypeQuestion";
 import { IndustryQuestion } from "../questions/IndustryQuestion";
 import { NotesQuestion } from "../questions/NotesQuestion";
-import { NumIdeasQuestion } from "../questions/NumIdeasQuestion";
+import { NumTopicsQuestion } from "../questions/NumTopicsQuestion";
 import { PlatformQuestion } from "../questions/PlatformQuestion";
 import { PurposeQuestion } from "../questions/PurposeQuestion";
 import { ReviewQuestion } from "../questions/ReviewQuestion";
@@ -135,7 +135,7 @@ export function QuestionStep({
       case "chip-input":
         return <AudienceQuestion {...baseProps} />;
       case "number-input":
-        return <NumIdeasQuestion {...baseProps} />;
+        return <NumTopicsQuestion {...baseProps} />;
       case "review":
         return (
           <ReviewQuestion

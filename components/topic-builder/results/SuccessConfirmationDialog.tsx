@@ -17,7 +17,7 @@ interface SuccessConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   topicTitle: string;
-  onNavigateToIdeas: () => void;
+  onNavigateToTopics: () => void;
   onGenerateNew: () => void;
   className?: string;
 }
@@ -26,13 +26,13 @@ export function SuccessConfirmationDialog({
   open,
   onOpenChange,
   topicTitle,
-  onNavigateToIdeas,
+  onNavigateToTopics,
   onGenerateNew,
   className,
 }: SuccessConfirmationDialogProps) {
-  const handleNavigateToIdeas = () => {
-    console.log("Navigating to ideas page");
-    onNavigateToIdeas();
+  const handleNavigateToTopics = () => {
+    console.log("Navigating to topics page");
+    onNavigateToTopics();
     onOpenChange(false);
   };
 
@@ -64,7 +64,7 @@ export function SuccessConfirmationDialog({
           </div>
 
           <AlertDialogDescription className="text-left">
-            "{topicTitle}" has been saved to your ideas library. What would you
+            "{topicTitle}" has been saved to your topics library. What would you
             like to do next? Use the Tab key to navigate between options and
             Enter or Space to select.
           </AlertDialogDescription>
@@ -80,9 +80,9 @@ export function SuccessConfirmationDialog({
           </AlertDialogCancel>
 
           <AlertDialogAction
-            onClick={handleNavigateToIdeas}
+            onClick={handleNavigateToTopics}
             className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            aria-describedby="navigate-to-ideas-description"
+            aria-describedby="navigate-to-topics-description"
           >
             <FileText className="w-4 h-4" aria-hidden="true" />
             View All Topics
@@ -103,11 +103,11 @@ export function SuccessConfirmationDialog({
           <div id="stay-here-description">
             Close this dialog and remain on the current topic generation page
           </div>
-          <div id="navigate-to-ideas-description">
-            Navigate to the Ideas page to view and manage all your saved topics
+          <div id="navigate-to-topics-description">
+            Navigate to the Topicspage to view and manage all your saved topics
           </div>
           <div id="generate-new-description">
-            Start a new topic generation session to create more content ideas
+            Start a new topic generation session to create more content topics
           </div>
         </div>
       </AlertDialogContent>

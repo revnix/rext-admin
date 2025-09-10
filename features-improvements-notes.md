@@ -1,6 +1,6 @@
 # Feature Requirements
 
-The basic idea topic generator is done and saving the generated topics is working. However, a lot of work is needed which includes the features as well as improvements in the current implementation.
+The basic topic generator is done and saving the generated topics is working. However, a lot of work is needed which includes the features as well as improvements in the current implementation.
 
 Below are the features and improvements that are needed in a list which is not in any particular order.
 

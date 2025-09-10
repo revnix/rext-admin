@@ -86,7 +86,7 @@ const mockFormData: TopicBuilderFormData = {
   content_type: "blog-post",
   purpose: ["educate-inform"],
   tone: ["professional-formal"],
-  num_ideas: 10,
+  num_topics: 10,
 };
 
 const mockTopic: GeneratedTopic = {
@@ -124,6 +124,7 @@ describe("generateSessionId", () => {
 
   it("should fall back to timestamp-based ID when crypto is not available", () => {
     const originalCrypto = global.crypto;
+    // biome-ignore lint/suspicious/noExplicitAny: Test setup requires deleting global properties
     delete (global as any).crypto;
 
     const id = generateSessionId();
@@ -185,7 +186,9 @@ describe("saveSession", () => {
   it("should not save when not in browser environment", () => {
     const originalWindow = global.window;
     const originalLocalStorage = global.localStorage;
+    // biome-ignore lint/suspicious/noExplicitAny: Test setup requires deleting global properties
     delete (global as any).window;
+    // biome-ignore lint/suspicious/noExplicitAny: Test setup requires deleting global properties
     delete (global as any).localStorage;
 
     // Clear previous calls
@@ -249,7 +252,9 @@ describe("getSession", () => {
   it("should not retrieve when not in browser environment", () => {
     const originalWindow = global.window;
     const originalLocalStorage = global.localStorage;
+    // biome-ignore lint/suspicious/noExplicitAny: Test setup requires deleting global properties
     delete (global as any).window;
+    // biome-ignore lint/suspicious/noExplicitAny: Test setup requires deleting global properties
     delete (global as any).localStorage;
 
     const retrieved = getSession("test-id");
@@ -346,6 +351,7 @@ describe("getAllSessions", () => {
 
   it("should return empty array when not in browser environment", () => {
     const originalWindow = global.window;
+    // biome-ignore lint/suspicious/noExplicitAny: Test setup requires deleting global properties
     delete (global as any).window;
 
     const sessions = getAllSessions();

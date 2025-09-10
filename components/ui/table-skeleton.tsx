@@ -33,6 +33,7 @@ export function TableSkeleton({
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
               {Array.from({ length: columns }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton grid doesn't reorder
                 <Skeleton key={`header-col-${i}`} className="h-4" />
               ))}
             </div>
@@ -46,6 +47,7 @@ export function TableSkeleton({
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
               {Array.from({ length: columns }, (_, colIndex) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton grid doesn't reorder
                 <div key={`row-${rowIndex}-col-${colIndex}`}>
                   {colIndex === 0 ? (
                     <div className="space-y-2">

@@ -6,9 +6,9 @@ This document describes the current API structure for the Topic Builder, includi
 
 ## Topic Generation API
 
-### POST /api/generate-topics
+### POST /api/topics/generate
 
-Generates AI-powered topic ideas based on user preferences.
+Generates AI-powered topics based on user preferences.
 
 #### Request Format
 
@@ -28,7 +28,7 @@ interface TopicGenerationRequest {
   tone: string[];
   tone_other?: string;
   notes?: string;
-  num_ideas: number;
+  num_topics: number;
   timestamp: string;
 }
 ```
@@ -44,7 +44,7 @@ interface TopicGenerationRequest {
   "purpose": ["educate-inform", "thought-leadership"],
   "tone": ["professional-formal", "technical-analytical"],
   "notes": "Focus on emerging AI trends and practical applications",
-  "num_ideas": 5,
+  "num_topics": 5,
   "timestamp": "2024-01-15T10:30:00.000Z"
 }
 ```
@@ -103,7 +103,7 @@ interface GeneratedTopic {
 
 ## Topic Management API
 
-### POST /api/save-topic
+### POST /api/topics/save
 
 Save a generated topic to the user's library.
 
@@ -128,6 +128,90 @@ interface SaveTopicRequest {
 ### GET /api/topics
 
 Retrieve saved topics from the user's library.
+
+#### Query Parameters
+
+None currently supported.
+
+#### Response Format
+
+```typescript
+{
+  topics: TopicData[],
+  total_count: number
+}
+```
+
+### POST /api/topics/save
+
+Save single or multiple topics to the backend. Supports both individual and bulk save operations.
+
+#### Request Format
+
+**Single Topic Save:**
+```typescript
+{
+  topic: {
+    title: string,
+    description: string,
+    category?: string,
+    keywords?: string[],
+    relevance_score?: number,
+    audience_fit?: number
+  }
+}
+```
+
+**Bulk Save:**
+```typescript
+{
+  topics: Array<{
+    title: string,
+    description: string,
+    category?: string,
+    keywords?: string[],
+    relevance_score?: number,
+    audience_fit?: number
+  }>
+}
+```
+
+#### Response Format
+
+**Single Save Response:**
+```typescript
+{
+  success: boolean,
+  bulk_save: false,
+  topic: SavedTopic,
+  message: string,
+  saved_at: string
+}
+```
+
+**Bulk Save Response:**
+```typescript
+{
+  success: boolean,
+  bulk_save: true,
+  total_attempted: number,
+  successful_saves: number,
+  failed_saves: number,
+  results: Array<{
+    index: number,
+    success: boolean,
+    topic: SavedTopic,
+    message: string
+  }>,
+  errors?: Array<{
+    index: number,
+    success: false,
+    error: string,
+    topic: OriginalTopic
+  }>,
+  saved_at: string
+}
+```
 
 #### Query Parameters
 - `limit?: number` - Maximum number of topics to return (default: 20)
@@ -168,7 +252,7 @@ interface SavedTopic {
 - `content_type`: Must be non-empty string
 - `purpose`: Must be non-empty array
 - `tone`: Must be non-empty array
-- `num_ideas`: Must be number between 1-20
+- `num_topics`: Must be number between 1-20
 - `timestamp`: Must be valid ISO date string
 
 #### Conditional Fields
@@ -197,7 +281,7 @@ interface SavedTopic {
 - `audience`: No maximum limit
 
 #### Numeric Fields
-- `num_ideas`: Integer between 1 and 20 (inclusive)
+- `num_topics`: Integer between 1 and 20 (inclusive)
 
 ## Error Responses
 
@@ -212,7 +296,7 @@ interface SavedTopic {
       "message": "Purpose is required"
     },
     {
-      "field": "num_ideas",
+      "field": "num_topics",
       "message": "Must be between 1 and 20"
     }
   ]
@@ -300,7 +384,7 @@ const testPayload = {
   content_type: "blog-post",
   purpose: ["educate-inform"],
   tone: ["professional-formal"],
-  num_ideas: 3,
+  num_topics: 3,
   timestamp: new Date().toISOString()
 };
 
@@ -311,7 +395,7 @@ if (!validation.success) {
 }
 
 // Make API call
-const response = await fetch('/api/generate-topics', {
+const response = await fetch('/api/topics/generate', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

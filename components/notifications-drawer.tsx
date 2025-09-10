@@ -41,9 +41,9 @@ const sampleNotifications: Notification[] = [
   {
     id: "1",
     type: "success",
-    title: "Idea Created Successfully",
+    title: "Topic Created Successfully",
     message:
-      "Your new idea 'AI-Powered Marketing Tool' has been created and is ready for review.",
+      "Your new topic 'AI-Powered Marketing Tool' has been created and is ready for review.",
     time: "2 minutes ago",
     read: false,
   },
@@ -121,7 +121,7 @@ const sampleNotifications: Notification[] = [
     type: "success",
     title: "Export Complete",
     message:
-      "Your ideas export has been completed successfully. Download link expires in 24 hours.",
+      "Your topics export has been completed successfully. Download link expires in 24 hours.",
     time: "5 hours ago",
     read: true,
     actions: [
@@ -211,7 +211,7 @@ const sampleNotifications: Notification[] = [
     type: "warning",
     title: "Inactive Project",
     message:
-      "Project 'Q4 Campaign Ideas' hasn't been updated in 30 days. Archive or continue?",
+      "Project 'Q4 Campaign Topics' hasn't been updated in 30 days. Archive or continue?",
     time: "4 days ago",
     read: true,
     actions: [

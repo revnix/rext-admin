@@ -43,7 +43,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[
             {
-              title: "Total Ideas",
+              title: "Total Topics",
               value: "--",
               change: "+12%",
               icon: BarChart,
@@ -131,7 +131,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-2">
                 {[
-                  "Create New Idea",
+                  "Create New Topic",
                   "Build a Flow",
                   "Add Content",
                   "Invite Team Member",

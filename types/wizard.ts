@@ -646,7 +646,7 @@ export type QuestionId =
   | "purposeOther"
   | "tone"
   | "toneOther"
-  | "numIdeas"
+  | "numTopics"
   | "notes";
 
 // ============================================================================

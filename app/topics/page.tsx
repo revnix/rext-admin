@@ -11,7 +11,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import Link from "next/link";
-import { DataTable, type RowAction } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,14 +27,14 @@ import {
   TitleDisplay,
 } from "@/components/ui/topic-cell-formatters";
 import { useTopics } from "@/hooks/use-topics";
-import type { Column, IdeaData } from "@/types/data-table";
+import type { Column, RowAction, TopicData } from "@/types/data-table";
 
-export default function IdeasPage() {
-  const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Ideas" }];
+export default function TopicsPage() {
+  const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Topics" }];
 
   // Fetch topics data using TanStack Query with enhanced states
   const {
-    data: ideas = [],
+    data: topics = [],
     status,
     error,
     refetch,
@@ -43,8 +43,8 @@ export default function IdeasPage() {
   } = useTopics();
 
   // Log successful data loads for debugging
-  if (status === "success" && ideas.length > 0) {
-    console.log(`Ideas page: Loaded ${ideas.length} topics successfully`);
+  if (status === "success" && topics.length > 0) {
+    console.log(`Topics page: Loaded ${topics.length} topics successfully`);
   }
 
   // Handle retry with proper TanStack Query refetch
@@ -53,7 +53,7 @@ export default function IdeasPage() {
     await refetch();
   };
 
-  const columns: Column<IdeaData>[] = [
+  const columns: Column<TopicData>[] = [
     {
       key: "name",
       header: "Topic Title",
@@ -116,13 +116,13 @@ export default function IdeasPage() {
     {
       label: "Generate Topics",
       icon: <Plus className="h-4 w-4" />,
-      href: "/ideas/create",
+      href: "/topics/create",
     },
   ];
 
   const tableActions = (
     <Button asChild>
-      <Link href="/ideas/create">
+      <Link href="/topics/create">
         <Plus className="h-4 w-4 mr-2" />
         Generate Topics
       </Link>
@@ -130,7 +130,7 @@ export default function IdeasPage() {
   );
 
   // Row click handler for topics
-  const handleRowClick = (row: IdeaData) => {
+  const handleRowClick = (row: TopicData) => {
     console.log("Viewing topic details:", row.name);
     console.log("Topic data:", {
       id: row.id,
@@ -147,11 +147,11 @@ export default function IdeasPage() {
   };
 
   // Row actions specific to topics
-  const rowActions: RowAction<IdeaData>[] = [
+  const rowActions: RowAction<TopicData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: IdeaData) => {
+      onClick: (row: TopicData) => {
         console.log("View topic details:", row);
         // TODO: Open topic details modal or page
       },
@@ -160,7 +160,7 @@ export default function IdeasPage() {
     {
       label: "Use Topic",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row: IdeaData) => {
+      onClick: (row: TopicData) => {
         console.log("Using topic for content creation:", row.name);
         // TODO: Navigate to content creation with topic prefilled
       },
@@ -169,7 +169,7 @@ export default function IdeasPage() {
     {
       label: "Archive Topic",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: IdeaData) => {
+      onClick: (row: TopicData) => {
         console.log("Archive topic:", row.name);
         // TODO: Implement archive/delete functionality
       },
@@ -184,8 +184,8 @@ export default function IdeasPage() {
 
   return (
     <PageLayout
-      title="Topic Ideas"
-      description="Browse AI-generated topic ideas and transform them into compelling content. Generate new topics or explore your saved collection."
+      title="Topic Library"
+      description="Browse AI-generated topics and transform them into compelling content. Generate new topics or explore your saved collection."
       breadcrumbs={breadcrumbs}
     >
       {/* Loading State - Enhanced with skeleton */}
@@ -220,7 +220,7 @@ export default function IdeasPage() {
 
               <div className="text-center">
                 <p className="font-medium text-sm mb-2">
-                  Unable to load your topic ideas
+                  Unable to load your topics
                 </p>
                 <p className="text-sm text-muted-foreground mb-3">
                   {error?.message?.includes("network")
@@ -270,11 +270,11 @@ export default function IdeasPage() {
 
       {/* Data Table - only show when data is successfully loaded */}
       {status === "success" && (
-        <DataTable<IdeaData>
+        <DataTable<TopicData>
           columns={columns}
-          data={ideas}
-          emptyTitle="No topic ideas yet"
-          emptyDescription="Generate your first collection of AI-powered topic ideas. Use the topic builder to create engaging content ideas tailored to your audience."
+          data={topics}
+          emptyTitle="No topics yet"
+          emptyDescription="Generate your first collection of AI-powered topics. Use the topic builder to create engaging content topics tailored to your audience."
           emptyActions={emptyActions}
           emptyIcon={<Lightbulb className="h-8 w-8 text-muted-foreground" />}
           searchPlaceholder="Search topics by title, category, content type..."

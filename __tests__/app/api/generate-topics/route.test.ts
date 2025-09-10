@@ -27,7 +27,7 @@ describe("/api/generate-topics", () => {
     content_type: "blog-post",
     purpose: ["educate-inform"],
     tone: ["professional-formal"],
-    num_ideas: 5,
+    num_topics: 5,
   };
 
   beforeEach(() => {
@@ -93,7 +93,7 @@ describe("/api/generate-topics", () => {
         content_type: "blog-post",
         purpose: ["educate-inform"],
         tone: ["friendly-warm"],
-        num_ideas: 3,
+        num_topics: 3,
       };
 
       const mockResponse: BackendTopicGenerationResponse = {
@@ -567,7 +567,7 @@ describe("/api/generate-topics", () => {
         audience: ["doctors", "healthcare-administrators"],
         purpose: ["educate-inform", "thought-leadership"],
         tone: ["professional-formal", "technical-analytical"],
-        num_ideas: 7,
+        num_topics: 7,
         notes: "Focus on practical applications",
       };
 

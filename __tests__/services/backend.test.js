@@ -16,7 +16,7 @@ describe("BackendService", () => {
     content_type: "blog-post",
     purpose: ["educate-inform"],
     tone: ["professional-formal"],
-    num_ideas: 5,
+    num_topics: 5,
   };
 
   beforeEach(() => {
@@ -162,7 +162,7 @@ describe("BackendService", () => {
         audience: ["developers", "tech-leads"],
         purpose: ["educate-inform"],
         tone: ["professional-formal"],
-        num_ideas: 5,
+        num_topics: 5,
         additional_notes: "Technical depth required",
         wizardMode: "industry-first",
       });
@@ -236,7 +236,7 @@ describe("BackendService", () => {
         content_type: "blog-post",
         purpose: ["educate-inform"],
         tone: ["professional-formal"],
-        num_ideas: 5,
+        num_topics: 5,
       };
 
       await service.generateTopics(minimalFormData);

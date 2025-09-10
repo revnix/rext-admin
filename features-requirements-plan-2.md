@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Wrext Admin** is a Next.js 15 web application designed for generating, managing, and utilizing AI-powered topic ideas for content creation. The application currently features a topic builder wizard, data management through tables, and basic CRUD operations for topics.
+**Wrext Admin** is a Next.js 15 web application designed for generating, managing, and utilizing AI-powered topics for content creation. The application currently features a topic builder wizard, data management through tables, and basic CRUD operations for topics.
 
 ### Current Technology Stack
 - **Framework**: Next.js 15.5.0 with App Router
@@ -17,7 +17,7 @@
 - **Animation**: Tailwind Animate CSS
 
 ### Current Features Analysis
-1. **Topic Builder Wizard**: 6-step wizard for generating AI topic ideas
+1. **Topic Builder Wizard**: 6-step wizard for generating AI topics
 2. **Data Tables**: Reusable table component with search, pagination, and actions
 3. **Task Management**: Task Master integration for project management
 4. **Dashboard**: Basic metrics and quick actions
@@ -246,7 +246,7 @@ const handleCancel = async () => {
 - Missing temporary session management
 
 **Requirements**:
-- Create new results page at `/ideas/create/results/[temporaryId]`
+- Create new results page at `/topics/create/results/[temporaryId]`
 - Implement temporary session storage for unsaved results
 - Create dedicated results layout with better visual hierarchy
 - Add breadcrumb navigation
@@ -254,7 +254,7 @@ const handleCancel = async () => {
 
 **Implementation**:
 ```typescript
-// Create new page: app/ideas/create/results/[temporaryId]/page.tsx
+// Create new page: app/topics/create/results/[temporaryId]/page.tsx
 interface ResultsPageProps {
   params: { temporaryId: string };
 }
@@ -414,7 +414,7 @@ const useTableSearch = <T>(data: T[], searchFields: string[]) => {
 - Add proper TypeScript definitions for each data type
 
 **Pages to Update**:
-- `/ideas` - Topic ideas table (already partially implemented)
+- `/topics` - topics table (already partially implemented)
 - `/content` - Content items table
 - `/tasks` - Task management table
 - `/users` - User management table

@@ -30,7 +30,7 @@ export {
   shouldRetry,
 } from "@/lib/error-utils";
 // Export transformation utilities
-export { transformTopicsToIdeas } from "@/lib/topic-transformations";
+export { transformTopicsForDisplay } from "@/lib/topic-transformations";
 // Re-export all backend-related types for convenience
 export type {
   APIErrorResponse,

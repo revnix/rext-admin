@@ -144,14 +144,14 @@ export interface TopicBuilderFormData {
   tone_other?: string;
 
   /** Advanced options and seed inputs */
-  /** Number of topic ideas to generate */
-  num_ideas: number;
+  /** Number of topics to generate */
+  num_topics: number;
   /** Additional notes or special instructions */
   notes?: string;
 }
 
 /**
- * Interface for individual generated topic ideas
+ * Interface for individual generated topics
  *
  * Represents a single AI-generated topic with metadata and scoring.
  * This is the frontend representation containing UI-specific fields.
@@ -207,7 +207,7 @@ export interface TopicGenerationRequest {
  * Response from topic generation API
  */
 export interface TopicGenerationResponse {
-  /** Array of generated topic ideas */
+  /** Array of generated topics */
   topics: GeneratedTopic[];
   /** Unique identifier for this generation request */
   request_id: string;
@@ -288,7 +288,7 @@ export type CurrentStep =
   | "purpose"
   | "tone"
   | "notes"
-  | "num-ideas";
+  | "num-topics";
 
 /**
  * Step history tracking for navigation

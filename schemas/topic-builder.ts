@@ -100,7 +100,7 @@ export const topicBuilderFormDataSchema = z.object({
   tone_other: z.string().optional(),
 
   // Advanced options
-  num_ideas: z.number().min(1).max(20).default(5),
+  num_topics: z.number().min(1).max(20).default(5),
   notes: z.string().optional(),
 });
 
@@ -145,7 +145,7 @@ export const backendTopicGenerationPayloadSchema = z.object({
   audience: z.array(z.string()).optional(),
   purpose: z.array(z.string()),
   tone: z.array(z.string()),
-  num_ideas: z.number().min(1).max(20),
+  num_topics: z.number().min(1).max(20),
   timestamp: z.string().datetime(),
   wizard_mode: z.string(),
 });

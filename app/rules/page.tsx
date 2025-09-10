@@ -3,10 +3,10 @@
 import { Edit3, Eye, Play, Plus, Settings, Shield, Trash2 } from "lucide-react";
 
 import Link from "next/link";
-import { DataTable, type RowAction } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
-import type { RuleData } from "@/types/data-table";
+import type { RowAction, RuleData } from "@/types/data-table";
 
 export default function RulesPage() {
   const breadcrumbs = [{ label: "Automation", href: "#" }, { label: "Rules" }];

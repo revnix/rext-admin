@@ -290,7 +290,7 @@ export function QuestionWizard({
                     isLoading={isLoading}
                     onNext={handleNext}
                     onPrevious={handlePrevious}
-                    nextLabel={isLastQuestion ? "Generate Ideas" : "Next"}
+                    nextLabel={isLastQuestion ? "Generate Topics" : "Next"}
                     className="mt-8 p-0 bg-transparent border-0"
                   />
                 }

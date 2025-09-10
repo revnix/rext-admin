@@ -145,20 +145,20 @@ export default function ResultsPage() {
   };
 
   const handleBackToWizard = () => {
-    router.push("/ideas/create");
+    router.push("/topics/create");
   };
 
   const handleRegenerateTopics = async () => {
     // Navigate back to wizard with form data pre-filled
-    router.push("/ideas/create");
+    router.push("/topics/create");
   };
 
-  const handleNavigateToIdeas = () => {
-    router.push("/ideas");
+  const handleNavigateToTopics = () => {
+    router.push("/topics");
   };
 
   const handleGenerateNew = () => {
-    router.push("/ideas/create");
+    router.push("/topics/create");
   };
 
   const handleRetryLoad = () => {
@@ -169,7 +169,7 @@ export default function ResultsPage() {
 
   const handleSessionRecover = (sessionId: string) => {
     console.log(`Attempting to recover session: ${sessionId}`);
-    router.push(`/ideas/create/results/${sessionId}`);
+    router.push(`/topics/create/results/${sessionId}`);
   };
 
   // Helper function to format industry name for display
@@ -190,8 +190,8 @@ export default function ResultsPage() {
 
   // Dynamic breadcrumbs configuration based on session data
   const breadcrumbs = [
-    { label: "Ideas", href: "/ideas" },
-    { label: "Topic Builder", href: "/ideas/create" },
+    { label: "Topics", href: "/topics" },
+    { label: "Topic Builder", href: "/topics/create" },
     {
       label: state.session
         ? `Results - ${formatIndustryName(state.session.formData.industry)}`
@@ -206,7 +206,7 @@ export default function ResultsPage() {
 
   const pageDescription = state.session
     ? `${state.session.topics.length} AI-generated topics for ${formatIndustryName(state.session.formData.industry)} industry • ${formatContentType(state.session.formData.content_type)} content`
-    : "View your generated topic ideas";
+    : "View your generated topics";
 
   // Loading state
   if (state.isLoading) {
@@ -312,7 +312,7 @@ export default function ResultsPage() {
               onBulkSave={handleBulkSave}
               onBackToWizard={handleBackToWizard}
               onRegenerateTopics={handleRegenerateTopics}
-              onNavigateToIdeas={handleNavigateToIdeas}
+              onNavigateToTopics={handleNavigateToTopics}
               onGenerateNew={handleGenerateNew}
             />
           </div>

@@ -32,7 +32,7 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
   }, [error]);
 
   const breadcrumbs = [
-    { label: "Ideas", href: "/ideas" },
+    { label: "Topics", href: "/topics" },
     { label: "Topic Builder" },
   ];
 
@@ -48,7 +48,7 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
   return (
     <PageLayout
       title="Topic Builder"
-      description="Generate AI-powered content topic ideas"
+      description="Generate AI-powered content topics"
       breadcrumbs={breadcrumbs}
     >
       <div className="flex items-center justify-center min-h-[60vh] p-6">
@@ -137,13 +137,13 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
 
                 <Button
                   onClick={() => {
-                    window.location.href = "/ideas";
+                    window.location.href = "/topics";
                   }}
                   variant="secondary"
                   className="flex-1"
                 >
                   <Home className="h-4 w-4 mr-2" />
-                  Back to Ideas
+                  Back to Topics
                 </Button>
               </div>
             </div>

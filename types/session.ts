@@ -16,7 +16,7 @@ import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 export interface SessionData {
   /** Unique identifier for this session */
   id: string;
-  /** Generated topic ideas from this session */
+  /** Generated topics from this session */
   topics: GeneratedTopic[];
   /** Form data used to generate these topics */
   formData: TopicBuilderFormData;

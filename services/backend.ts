@@ -83,7 +83,7 @@ export class BackendService {
   }
 
   /**
-   * Generate topic ideas using the backend AI API with comprehensive retry logic and deduplication.
+   * Generate topics using the backend AI API with comprehensive retry logic and deduplication.
    *
    * @param formData - Complete topic builder form data containing all user preferences
    * @returns Promise resolving to generated topics with metadata
@@ -94,7 +94,7 @@ export class BackendService {
    * const formData: TopicBuilderFormData = {
    *   industry: "technology",
    *   content_type: "blog-post",
-   *   num_ideas: 5,
+   *   num_topics: 5,
    *   // ... other required fields
    * };
    * const result = await backendService.generateTopics(formData);
@@ -190,7 +190,7 @@ export class BackendService {
     const payload: SaveTopicRequest = { topics: transformationResult.data };
 
     return this.executeWithRetryGeneric(
-      "/api/topic/save-topic",
+      "/api/topics/save",
       payload,
       requestId,
       "POST",
@@ -424,7 +424,7 @@ export class BackendService {
       tone: Array.isArray(formData.tone) ? formData.tone : [],
       tone_other: formData.tone_other || null,
       notes: formData.notes || null,
-      num_ideas: formData.num_ideas || 5,
+      num_topics: formData.num_topics || 5,
       subject: formData.subject || null,
       timestamp: new Date().toISOString(),
     };
@@ -760,7 +760,7 @@ export class BackendService {
       industry: payload.industry,
       subject: payload.subject,
       content_type: payload.content_type,
-      num_ideas: payload.num_ideas,
+      num_topics: payload.num_topics,
       purpose: payload.purpose,
       tone: payload.tone,
     };

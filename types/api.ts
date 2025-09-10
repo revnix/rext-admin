@@ -59,7 +59,7 @@ export interface TopicGenerationRequest extends TopicBuilderFormData {
  * Contains generated topics and comprehensive metadata
  */
 export interface TopicGenerationResponse {
-  /** Array of AI-generated topic ideas */
+  /** Array of AI-generated topics */
   topics: GeneratedTopic[];
   /** Metadata about the generation process */
   metadata: {

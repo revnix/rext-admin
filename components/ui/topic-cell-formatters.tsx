@@ -1,7 +1,7 @@
 /**
  * Topic Cell Formatters
  *
- * Custom cell rendering components for IdeaData fields in DataTable.
+ * Custom cell rendering components for TopicData fields in DataTable.
  * Provides proper styling, formatting, and display logic for different
  * data types including status, priority, tags, scores, and dates.
  */
@@ -26,7 +26,7 @@ import {
   getScoreColorClass,
   truncateText,
 } from "@/lib/topic-display-utils";
-import type { IdeaData } from "@/types/data-table";
+import type { TopicData } from "@/types/data-table";
 
 /**
  * Status Badge Cell Formatter
@@ -93,7 +93,7 @@ export function TagsList({
   value,
 }: {
   value: unknown;
-  row?: IdeaData;
+  row?: TopicData;
 }): ReactNode {
   const tags = formatTagsArray(value as string[]);
 
@@ -237,7 +237,7 @@ export function TitleDisplay({
   value,
 }: {
   value: unknown;
-  row?: IdeaData;
+  row?: TopicData;
 }): ReactNode {
   const title = String(value || "");
   const truncatedTitle = truncateText(title, 60);
