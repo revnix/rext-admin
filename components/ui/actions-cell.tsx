@@ -138,9 +138,9 @@ export function ActionsCell<
   // For 1-2 actions, show inline buttons
   if (availableActions.length <= 2) {
     return (
-      <div
+      <fieldset
         className={cn(
-          "flex items-center justify-end gap-1",
+          "flex items-center justify-end gap-1 border-none p-0 m-0",
           showOnHover && !alwaysShowTrigger && "group-hover:opacity-100",
           showOnHover && !alwaysShowTrigger && !isHovered && "opacity-0",
           "transition-opacity duration-200",
@@ -148,14 +148,13 @@ export function ActionsCell<
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        role="group"
-        aria-label="Row actions"
       >
+        <legend className="sr-only">Row actions</legend>
         {availableActions.map((action, index) =>
           createActionButton(action, `inline-${index}`),
         )}
         {ConfirmationComponent}
-      </div>
+      </fieldset>
     );
   }
 
@@ -163,13 +162,15 @@ export function ActionsCell<
   const shouldShow = alwaysShowTrigger || !showOnHover || isHovered;
 
   return (
-    <div
-      className={cn("flex items-center justify-end", className)}
+    <fieldset
+      className={cn(
+        "flex items-center justify-end border-none p-0 m-0",
+        className,
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      role="group"
-      aria-label="Row actions menu"
     >
+      <legend className="sr-only">Row actions menu</legend>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -203,7 +204,7 @@ export function ActionsCell<
         </DropdownMenuContent>
       </DropdownMenu>
       {ConfirmationComponent}
-    </div>
+    </fieldset>
   );
 }
 
