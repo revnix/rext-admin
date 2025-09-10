@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, FileText, RotateCcw, Sparkles } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -139,12 +139,24 @@ export function TopicsList({
 
   const handleSelectAll = useCallback(
     (selected: boolean) => {
-      setSelectedTopicIds(
-        selected ? filteredAndSortedTopics.map((topic) => topic.id) : [],
-      );
+      if (selected) {
+        // When selecting all, only select currently visible topics
+        setSelectedTopicIds(filteredAndSortedTopics.map((topic) => topic.id));
+      } else {
+        // When deselecting all, clear all selections (including hidden ones)
+        setSelectedTopicIds([]);
+      }
     },
     [filteredAndSortedTopics],
   );
+
+  // Clean up selection when topics are no longer available
+  useEffect(() => {
+    const availableTopicIds = new Set(topics.map((topic) => topic.id));
+    setSelectedTopicIds((prev) =>
+      prev.filter((id) => availableTopicIds.has(id)),
+    );
+  }, [topics]);
 
   const handleTopicSave = useCallback(
     (topicId: string) => {

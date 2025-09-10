@@ -55,8 +55,7 @@ export function TopicBuilderWizard({
 }: TopicBuilderWizardProps) {
   // Use either the passed hook or create a new instance
   const internalHook = useTopicBuilder();
-  const { generateTopics, isGenerating, updateFormData } =
-    topicBuilderHook || internalHook;
+  const { generateTopics, isGenerating } = topicBuilderHook || internalHook;
 
   // Generate topics with form data directly
   const handleGenerateTopics = useCallback(
