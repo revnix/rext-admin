@@ -155,6 +155,7 @@ export default function IdeasPage() {
         console.log("View topic details:", row);
         // TODO: Open topic details modal or page
       },
+      tooltip: "View topic details",
     },
     {
       label: "Use Topic",
@@ -163,6 +164,7 @@ export default function IdeasPage() {
         console.log("Using topic for content creation:", row.name);
         // TODO: Navigate to content creation with topic prefilled
       },
+      tooltip: "Use this topic to create content",
     },
     {
       label: "Archive Topic",
@@ -172,6 +174,11 @@ export default function IdeasPage() {
         // TODO: Implement archive/delete functionality
       },
       variant: "destructive" as const,
+      requiresConfirmation: true,
+      confirmationTitle: "Archive Topic",
+      confirmationDescription:
+        "Are you sure you want to archive this topic? It will be removed from the active list.",
+      tooltip: "Archive this topic",
     },
   ];
 

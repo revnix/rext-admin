@@ -200,6 +200,11 @@ export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
   icon?: React.ReactNode;
   onClick: (row: T) => void;
   variant?: "default" | "destructive";
+  requiresConfirmation?: boolean;
+  confirmationTitle?: string;
+  confirmationDescription?: string;
+  tooltip?: string;
+  disabled?: boolean | ((row: T) => boolean);
 }
 
 // Legacy alias for backwards compatibility
@@ -215,4 +220,75 @@ export interface Column<
   width?: string;
   cell?: (value: unknown, row: T) => ReactNode;
   searchable?: boolean;
+  filterable?: boolean;
+  filterType?: "text" | "number" | "date" | "boolean" | "array" | "select";
+  filterOptions?: string[]; // For select type filters
+}
+
+// Filter operator types
+export type FilterOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "greater_than"
+  | "greater_than_equal"
+  | "less_than"
+  | "less_than_equal"
+  | "is_empty"
+  | "is_not_empty"
+  | "array_contains"
+  | "array_not_contains";
+
+// Filter value types
+export type FilterValue = string | number | boolean | Date | string[] | null;
+
+// Individual column filter
+export interface ColumnFilter {
+  columnKey: string;
+  operator: FilterOperator;
+  value: FilterValue;
+  label: string; // Human readable filter description
+}
+
+// Filter state management
+export interface FilterState {
+  activeFilters: ColumnFilter[];
+  isFiltering: boolean;
+}
+
+// Table-level action types for standardized action system
+export interface TableLevelAction {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  onClick: () => void;
+  variant?: "default" | "outline" | "secondary" | "ghost" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
+  disabled?: boolean;
+  tooltip?: string;
+  href?: string; // For link actions
+  shortcut?: string; // Keyboard shortcut display
+}
+
+// Table action group for dropdown menus
+export interface TableActionGroup {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  actions: TableLevelAction[];
+  variant?: "default" | "outline" | "secondary" | "ghost";
+  size?: "default" | "sm" | "lg";
+  disabled?: boolean;
+}
+
+// Export configuration options
+export interface ExportOptions {
+  filename?: string;
+  includeHeaders?: boolean;
+  dateFormat?: string;
+  delimiter?: string;
+  columns?: string[]; // Specify which columns to export
 }

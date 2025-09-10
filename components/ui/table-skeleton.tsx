@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface TableSkeletonProps {
   rows?: number;
+  columns?: number;
   showHeader?: boolean;
 }
 
@@ -11,6 +12,7 @@ interface TableSkeletonProps {
  */
 export function TableSkeleton({
   rows = 5,
+  columns = 8,
   showHeader = true,
 }: TableSkeletonProps) {
   return (
@@ -26,15 +28,13 @@ export function TableSkeleton({
         <div className="p-4 space-y-3">
           {/* Header skeleton */}
           {showHeader && (
-            <div className="grid grid-cols-8 gap-4 pb-2 border-b">
-              <Skeleton className="h-4" /> {/* Idea Name */}
-              <Skeleton className="h-4" /> {/* Category */}
-              <Skeleton className="h-4" /> {/* Content Type */}
-              <Skeleton className="h-4" /> {/* Status */}
-              <Skeleton className="h-4" /> {/* Score */}
-              <Skeleton className="h-4" /> {/* Priority */}
-              <Skeleton className="h-4" /> {/* Rank */}
-              <Skeleton className="h-4" /> {/* Updated */}
+            <div
+              className={`grid gap-4 pb-2 border-b`}
+              style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+            >
+              {Array.from({ length: columns }, (_, i) => (
+                <Skeleton key={`header-col-${i}`} className="h-4" />
+              ))}
             </div>
           )}
 
@@ -42,19 +42,23 @@ export function TableSkeleton({
           {Array.from({ length: rows }, (_, i) => i).map((rowIndex) => (
             <div
               key={`skeleton-row-${rowIndex}`}
-              className="grid grid-cols-8 gap-4 py-3"
+              className={`grid gap-4 py-3`}
+              style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-3/4" />
-              </div>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-6 w-full rounded-full" />
-              <Skeleton className="h-6 w-full rounded-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-6 w-full rounded-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
+              {Array.from({ length: columns }, (_, colIndex) => (
+                <div key={`row-${rowIndex}-col-${colIndex}`}>
+                  {colIndex === 0 ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-3/4" />
+                    </div>
+                  ) : (
+                    <Skeleton
+                      className={`h-4 w-full ${colIndex % 3 === 0 ? "rounded-full" : ""}`}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           ))}
         </div>

@@ -201,6 +201,11 @@ export default function FlowsPage() {
       icon: <Trash2 className="h-4 w-4" />,
       onClick: (row: FlowData) => console.log("Delete flow:", row.name),
       variant: "destructive" as const,
+      requiresConfirmation: true,
+      confirmationTitle: "Delete Flow",
+      confirmationDescription:
+        "Are you sure you want to delete this flow? This action cannot be undone and will stop all associated automations.",
+      tooltip: "Delete this flow",
     },
   ];
 

@@ -212,28 +212,36 @@ export default function ContentPage() {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: ContentData) => console.log("View content:", row.title),
+      tooltip: "View content details",
     },
     {
       label: "Edit",
       icon: <Edit3 className="h-4 w-4" />,
       onClick: (row: ContentData) => console.log("Edit content:", row.title),
+      tooltip: "Edit this content",
     },
     {
       label: "Copy",
       icon: <Copy className="h-4 w-4" />,
       onClick: (row: ContentData) => console.log("Copy content:", row.title),
+      tooltip: "Duplicate this content",
     },
     {
       label: "Schedule",
       icon: <Calendar className="h-4 w-4" />,
       onClick: (row: ContentData) =>
         console.log("Schedule content:", row.title),
+      tooltip: "Schedule for publication",
     },
     {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
       onClick: (row: ContentData) => console.log("Delete content:", row.title),
       variant: "destructive" as const,
+      requiresConfirmation: true,
+      confirmationTitle: "Delete Content",
+      confirmationDescription:
+        "Are you sure you want to delete this content? This action cannot be undone.",
     },
   ];
 
