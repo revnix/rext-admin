@@ -4,6 +4,7 @@ import type {
   CurrentStep,
   GeneratedTopic,
   StepHistory,
+  ToneType,
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
@@ -36,6 +37,12 @@ interface TopicBuilderState {
   generatedTopics: GeneratedTopic[];
   selectedTopicIds: string[];
 
+  // Contextual suggestions state (Task 7.3)
+  contextualSuggestions: {
+    audienceByIndustry: string[];
+    tonesByPurpose: ToneType[];
+  };
+
   // TypeForm wizard actions
   setCurrentStep: (step: CurrentStep) => void;
   goToNextStep: () => void;
@@ -65,6 +72,12 @@ interface TopicBuilderState {
   optimisticallyMarkTopicSaved: (topicId: string) => void;
   revertOptimisticSave: (topicId: string) => void;
   updateTopicSaveState: (topicId: string, isBeingSaved: boolean) => void;
+
+  // Contextual suggestions actions (Task 7.3)
+  setAudienceSuggestions: (suggestions: string[]) => void;
+  setToneRecommendations: (recommendations: ToneType[]) => void;
+  updateContextualSuggestions: () => void;
+  resetContextualSuggestions: () => void;
 }
 
 /**
@@ -135,6 +148,12 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         // Results state
         generatedTopics: [],
         selectedTopicIds: [],
+
+        // Contextual suggestions state (Task 7.3)
+        contextualSuggestions: {
+          audienceByIndustry: [],
+          tonesByPurpose: [],
+        },
 
         // TypeForm wizard actions
         setCurrentStep: (step: CurrentStep) => {
@@ -278,6 +297,12 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             showValidation: false,
             generatedTopics: [],
             selectedTopicIds: [],
+
+            // Reset contextual suggestions (Task 7.3)
+            contextualSuggestions: {
+              audienceByIndustry: [],
+              tonesByPurpose: [],
+            },
           });
         },
 
@@ -310,6 +335,44 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
                 : topic,
             ),
           }));
+        },
+
+        // Contextual suggestions actions (Task 7.3)
+        setAudienceSuggestions: (suggestions) => {
+          set((state) => ({
+            contextualSuggestions: {
+              ...state.contextualSuggestions,
+              audienceByIndustry: suggestions,
+            },
+          }));
+        },
+
+        setToneRecommendations: (recommendations) => {
+          set((state) => ({
+            contextualSuggestions: {
+              ...state.contextualSuggestions,
+              tonesByPurpose: recommendations,
+            },
+          }));
+        },
+
+        updateContextualSuggestions: () => {
+          const { formData } = get();
+          // This method can be used to trigger updates based on current form data
+          // The actual suggestion logic is handled by the useContextualSuggestions hook
+          console.log("🔄 Contextual suggestions updated for:", {
+            industry: formData.industry,
+            purpose: formData.purpose,
+          });
+        },
+
+        resetContextualSuggestions: () => {
+          set({
+            contextualSuggestions: {
+              audienceByIndustry: [],
+              tonesByPurpose: [],
+            },
+          });
         },
       }),
       {

@@ -84,23 +84,30 @@ export function WizardModeQuestion({
                 {fieldState.error.message}
               </div>
             )}
-            {WIZARD_MODE_OPTIONS.map((option, index) => (
-              <SingleSelectCard
-                key={option.value}
-                label={option.label}
-                description={getDescription(option.value)}
-                value={option.value}
-                selected={field.value === option.value}
-                onSelect={() => {
-                  field.onChange(option.value);
-                  updateFormData("wizardMode", option.value as WizardMode);
-                }}
-                icon={getIcon(option.value)}
-                disabled={isLoading}
-                className="transition-all duration-200"
-                delay={index * 0.1}
-              />
-            ))}
+            {WIZARD_MODE_OPTIONS.map((option, index) => {
+              const isRecommended = option.value === "industry-first";
+              return (
+                <SingleSelectCard
+                  key={option.value}
+                  label={option.label}
+                  description={getDescription(option.value)}
+                  value={option.value}
+                  selected={field.value === option.value}
+                  onSelect={() => {
+                    field.onChange(option.value);
+                    updateFormData("wizardMode", option.value as WizardMode);
+                  }}
+                  icon={getIcon(option.value)}
+                  disabled={isLoading}
+                  className={`transition-all duration-200 ${
+                    isRecommended
+                      ? "ring-2 ring-primary/20 bg-primary/5 border-primary/30"
+                      : ""
+                  }`}
+                  delay={index * 0.1}
+                />
+              );
+            })}
           </div>
         )}
       />

@@ -128,24 +128,32 @@ export function PurposeQuestion({
       className="space-y-4"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {PURPOSE_OPTIONS.map((option, index) => (
-          <MultiSelectCard
-            key={`purpose-${option.value}-${index}`}
-            label={option.label}
-            description={getDescription(option.value)}
-            value={option.value}
-            selected={currentPurposes.includes(option.value as PurposeType)}
-            onToggle={() => handleToggle(option.value as PurposeType)}
-            icon={getIcon(option.value)}
-            disabled={isLoading}
-            className={cn(
-              "transition-all duration-200 h-auto p-4",
-              currentPurposes.includes(option.value as PurposeType) &&
-                "ring-2 ring-primary shadow-lg",
-            )}
-            delay={index * 0.1}
-          />
-        ))}
+        {PURPOSE_OPTIONS.map((option, index) => {
+          const isRecommended = option.value === "educate-inform";
+          const isSelected = currentPurposes.includes(
+            option.value as PurposeType,
+          );
+          return (
+            <MultiSelectCard
+              key={`purpose-${option.value}-${index}`}
+              label={option.label}
+              description={getDescription(option.value)}
+              value={option.value}
+              selected={isSelected}
+              onToggle={() => handleToggle(option.value as PurposeType)}
+              icon={getIcon(option.value)}
+              disabled={isLoading}
+              className={cn(
+                "transition-all duration-200 h-auto p-4",
+                isSelected && "ring-2 ring-primary shadow-lg",
+                isRecommended &&
+                  !isSelected &&
+                  "ring-1 ring-primary/30 bg-primary/5 border-primary/20",
+              )}
+              delay={index * 0.1}
+            />
+          );
+        })}
       </div>
 
       {/* Custom Purpose Input */}

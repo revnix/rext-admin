@@ -10,6 +10,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
+import { useContextualSuggestions } from "@/hooks/use-contextual-suggestions";
 import { announceToScreenReader } from "@/lib/typeform-utils";
 import {
   STEP_VALIDATION_SCHEMAS,
@@ -104,6 +105,12 @@ export function useWizardNavigation({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, _setIsLoading] = useState(false);
+
+  // Integrate contextual suggestions (Task 7.3)
+  const contextualSuggestions = useContextualSuggestions({
+    formData,
+    enableAutoUpdate: true,
+  });
 
   // Define question sequence based on wizard mode
   const questions = useMemo((): QuestionConfig[] => {
@@ -351,6 +358,26 @@ export function useWizardNavigation({
       announceToScreenReader(announcement);
     }
   }, [currentQuestion, progress.current, progress.total]);
+
+  // Log contextual suggestions updates for debugging (Task 7.3)
+  useEffect(() => {
+    if (
+      contextualSuggestions.audienceSuggestions.length > 0 ||
+      contextualSuggestions.toneRecommendations.length > 0
+    ) {
+      console.log("🎯 Contextual suggestions updated:", {
+        audienceSuggestions: contextualSuggestions.audienceSuggestions,
+        toneRecommendations: contextualSuggestions.toneRecommendations,
+        industry: formData.industry,
+        purpose: formData.purpose,
+      });
+    }
+  }, [
+    contextualSuggestions.audienceSuggestions,
+    contextualSuggestions.toneRecommendations,
+    formData.industry,
+    formData.purpose,
+  ]);
 
   return {
     // Form state

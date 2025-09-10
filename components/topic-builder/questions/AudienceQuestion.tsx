@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { Plus, Users } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { ChipInput } from "@/components/ui/typeform/chip-input";
+import { useAudienceSuggestions } from "@/hooks/use-contextual-suggestions";
 import {
   getMotionVariants,
   questionItemVariants,
@@ -47,8 +48,16 @@ export function AudienceQuestion({
     prefersReducedMotion,
   );
 
-  // Predefined audience suggestions
-  const suggestions = [
+  const currentAudiences = _formData.audience || [];
+
+  // Get contextual audience suggestions based on selected industry (Task 7.2)
+  const contextualSuggestions = useAudienceSuggestions(
+    _formData.industry,
+    currentAudiences,
+  );
+
+  // Fallback to generic suggestions if no industry selected
+  const fallbackSuggestions = [
     "Small business owners",
     "Marketing professionals",
     "Students",
@@ -63,7 +72,11 @@ export function AudienceQuestion({
     "Freelancers",
   ];
 
-  const currentAudiences = _formData.audience || [];
+  // Use contextual suggestions if available, otherwise fallback
+  const suggestions =
+    contextualSuggestions.length > 0
+      ? contextualSuggestions
+      : fallbackSuggestions;
 
   const addSuggestion = (suggestion: string) => {
     if (!currentAudiences.includes(suggestion)) {
@@ -111,7 +124,9 @@ export function AudienceQuestion({
       {suggestions.length > 0 && (
         <motion.div variants={itemVariants} className="space-y-3">
           <div className="text-sm font-medium text-muted-foreground">
-            Popular audiences (click to add):
+            {contextualSuggestions.length > 0 && _formData.industry
+              ? `Audiences for ${_formData.industry} industry (click to add):`
+              : "Popular audiences (click to add):"}
           </div>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((suggestion) => {
