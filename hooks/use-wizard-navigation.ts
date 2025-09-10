@@ -7,8 +7,14 @@
 
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { type UseFormReturn, useForm } from "react-hook-form";
 import { announceToScreenReader } from "@/lib/typeform-utils";
+import {
+  STEP_VALIDATION_SCHEMAS,
+  TopicBuilderFormDataSchema,
+} from "@/types/schemas";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type {
   QuestionConfig,
@@ -38,6 +44,9 @@ export interface UseWizardNavigationReturn {
     value: TopicBuilderFormData[keyof TopicBuilderFormData],
   ) => void;
 
+  // React Hook Form integration
+  form: UseFormReturn<TopicBuilderFormData>;
+
   // Navigation state
   currentQuestionIndex: number;
   questions: QuestionConfig[];
@@ -62,13 +71,13 @@ export interface UseWizardNavigationReturn {
   allowBackNavigation: boolean;
 }
 
-// Default form data with proper typing
+// Default form data with smart defaults per requirements
 const getDefaultFormData = (): TopicBuilderFormData => ({
-  wizardMode: "subject-first",
-  industry: "technology",
-  content_type: "blog-post",
-  purpose: [],
-  tone: [],
+  wizardMode: "industry-first", // Default: "I want to explore my industry"
+  industry: "business", // Smart default for broad applicability
+  content_type: "blog-post", // Most common content type
+  purpose: ["educate-inform"], // Smart default: "Who are you creating this for?" equivalent
+  tone: ["professional-formal"], // Smart default for professional content
   num_topics: 5,
 });
 
@@ -78,15 +87,21 @@ export function useWizardNavigation({
   allowBackNavigation = true,
   onComplete,
 }: UseWizardNavigationProps): UseWizardNavigationReturn {
-  // Form data state
-  const [formData, setFormData] = useState<TopicBuilderFormData>(() => ({
-    ...getDefaultFormData(),
-    ...initialFormData,
-  }));
+  // Initialize React Hook Form with Zod validation
+  const form = useForm<TopicBuilderFormData>({
+    resolver: zodResolver(TopicBuilderFormDataSchema) as any,
+    defaultValues: {
+      ...getDefaultFormData(),
+      ...initialFormData,
+    },
+    mode: "onChange", // Real-time validation
+  });
+
+  // Watch form data for reactivity
+  const formData = form.watch();
 
   // Navigation state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, _setIsLoading] = useState(false);
 
@@ -216,28 +231,22 @@ export function useWizardNavigation({
     [currentQuestionIndex, questions.length],
   );
 
-  // Update form data
+  // Update form data using React Hook Form
   const updateFormData = useCallback(
     (
       field: keyof TopicBuilderFormData,
       value: TopicBuilderFormData[keyof TopicBuilderFormData],
     ) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-
-      // Clear field error when user updates
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
+      form.setValue(field, value, {
+        shouldValidate: true, // Trigger validation immediately
+        shouldDirty: true,
+        shouldTouch: true,
       });
     },
-    [],
+    [form],
   );
 
-  // Validation logic
+  // Validation logic using React Hook Form and step-level schemas
   const validateCurrentQuestion = useCallback((): ValidationResult => {
     if (!currentQuestion) {
       return { isValid: false, errors: ["Question not found"] };
@@ -248,74 +257,37 @@ export function useWizardNavigation({
       return { isValid: true, errors: [] };
     }
 
-    const field = currentQuestion.id as keyof TopicBuilderFormData;
-    const value = formData[field];
-
-    // Required field validation
-    if (currentQuestion.required) {
-      if (
-        value === undefined ||
-        value === null ||
-        value === "" ||
-        (Array.isArray(value) && value.length === 0)
-      ) {
-        const error = "This field is required";
-        setErrors((prev) => ({ ...prev, [field]: error }));
-        return { isValid: false, errors: [error] };
-      }
+    // Get the appropriate step validation schema
+    const stepSchema =
+      STEP_VALIDATION_SCHEMAS[
+        currentQuestion.id as keyof typeof STEP_VALIDATION_SCHEMAS
+      ];
+    if (!stepSchema) {
+      return { isValid: true, errors: [] }; // No schema defined, assume valid
     }
 
-    // Specific field validations
-    switch (field) {
-      case "subject":
-        if (typeof value === "string" && value.trim().length < 3) {
-          const error = "Please enter at least 3 characters";
-          setErrors((prev) => ({ ...prev, [field]: error }));
-          return { isValid: false, errors: [error] };
-        }
-        break;
-
-      case "purpose":
-        if (Array.isArray(value) && value.length === 0) {
-          const error = "Please select at least one purpose";
-          setErrors((prev) => ({ ...prev, [field]: error }));
-          return { isValid: false, errors: [error] };
-        }
-        break;
-
-      case "tone":
-        if (Array.isArray(value) && value.length === 0) {
-          const error = "Please select at least one tone";
-          setErrors((prev) => ({ ...prev, [field]: error }));
-          return { isValid: false, errors: [error] };
-        }
-        break;
-
-      case "num_topics":
-        if (typeof value === "number" && (value < 1 || value > 20)) {
-          const error = "Number of topics must be between 1 and 20";
-          setErrors((prev) => ({ ...prev, [field]: error }));
-          return { isValid: false, errors: [error] };
-        }
-        break;
+    // Validate using Zod schema
+    const result = stepSchema.safeParse(formData);
+    if (!result.success) {
+      const errors = result.error.issues.map((issue) => {
+        const fieldName = issue.path.join(".");
+        return `${fieldName}: ${issue.message}`;
+      });
+      return { isValid: false, errors };
     }
-
-    // Clear any existing error for this field
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[field];
-      return newErrors;
-    });
 
     return { isValid: true, errors: [] };
   }, [currentQuestion, formData]);
 
-  // Get error for a specific question
+  // Get error for a specific question using React Hook Form
   const getQuestionError = useCallback(
     (questionId: string): string | undefined => {
-      return errors[questionId];
+      const fieldState = form.getFieldState(
+        questionId as keyof TopicBuilderFormData,
+      );
+      return fieldState.error?.message;
     },
-    [errors],
+    [form],
   );
 
   // Navigation: Next
@@ -384,6 +356,9 @@ export function useWizardNavigation({
     // Form state
     formData,
     updateFormData,
+
+    // React Hook Form integration
+    form,
 
     // Navigation state
     currentQuestionIndex,

@@ -164,7 +164,20 @@ export const TopicBuilderFormDataSchema = z.object({
   industry_other: z.string().optional(),
 
   // Content type & platform (platform only required for social-media)
-  content_type: z.enum(["blog-post", "social-media"]),
+  content_type: z.enum([
+    "blog-post",
+    "social-media",
+    "video-content",
+    "podcast",
+    "infographic",
+    "ebook-guide",
+    "case-study",
+    "whitepaper",
+    "newsletter",
+    "presentation",
+    "press-release",
+    "other",
+  ]),
   content_type_other: z.string().optional(),
   platform: z
     .enum([
@@ -282,7 +295,20 @@ export const stepValidationSchemas = {
   }),
 
   "content-type": z.object({
-    content_type: z.enum(["blog-post", "social-media"]),
+    content_type: z.enum([
+      "blog-post",
+      "social-media",
+      "video-content",
+      "podcast",
+      "infographic",
+      "ebook-guide",
+      "case-study",
+      "whitepaper",
+      "newsletter",
+      "presentation",
+      "press-release",
+      "other",
+    ]),
     content_type_other: z.string().optional(),
   }),
 
@@ -876,6 +902,81 @@ export type ValidatedTopicBuilderFormData = z.infer<
 >;
 export type ValidatedTopicScores = z.infer<typeof TopicScoresSchema>;
 export type ValidatedTopicData = z.infer<typeof TopicDataSchema>;
+
+// ============================================================================
+// STEP-LEVEL VALIDATION SCHEMAS FOR REAL-TIME FEEDBACK
+// ============================================================================
+
+/**
+ * Step-level validation schemas for React Hook Form integration
+ * Allows real-time validation of individual wizard steps
+ */
+export const WizardModeStepSchema = TopicBuilderFormDataSchema.pick({
+  wizardMode: true,
+});
+
+export const IndustryStepSchema = TopicBuilderFormDataSchema.pick({
+  industry: true,
+  industry_other: true,
+});
+
+export const SubjectStepSchema = TopicBuilderFormDataSchema.pick({
+  subject: true,
+});
+
+export const ContentTypeStepSchema = TopicBuilderFormDataSchema.pick({
+  content_type: true,
+  content_type_other: true,
+});
+
+export const PlatformStepSchema = TopicBuilderFormDataSchema.pick({
+  platform: true,
+  platform_other: true,
+});
+
+export const AudienceStepSchema = TopicBuilderFormDataSchema.pick({
+  audience: true,
+});
+
+export const PurposeStepSchema = TopicBuilderFormDataSchema.pick({
+  purpose: true,
+  purpose_other: true,
+});
+
+export const ToneStepSchema = TopicBuilderFormDataSchema.pick({
+  tone: true,
+  tone_other: true,
+});
+
+export const NotesStepSchema = TopicBuilderFormDataSchema.pick({
+  notes: true,
+});
+
+export const NumTopicsStepSchema = TopicBuilderFormDataSchema.pick({
+  num_topics: true,
+});
+
+/**
+ * Step schema mapping for dynamic validation
+ * Maps wizard step IDs to their corresponding Zod schemas
+ */
+export const STEP_VALIDATION_SCHEMAS = {
+  "wizard-mode": WizardModeStepSchema,
+  industry: IndustryStepSchema,
+  subject: SubjectStepSchema,
+  "content-type": ContentTypeStepSchema,
+  platform: PlatformStepSchema,
+  audience: AudienceStepSchema,
+  purpose: PurposeStepSchema,
+  tone: ToneStepSchema,
+  notes: NotesStepSchema,
+  "num-topics": NumTopicsStepSchema,
+} as const;
+
+/**
+ * Type for step validation schema keys
+ */
+export type StepValidationKey = keyof typeof STEP_VALIDATION_SCHEMAS;
 
 // ============================================================================
 // BACKEND RESPONSE VALIDATION SCHEMAS

@@ -8,6 +8,7 @@
 
 import { motion } from "framer-motion";
 import { BookOpen, Building2 } from "lucide-react";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";
 import {
   getMotionVariants,
@@ -25,14 +26,16 @@ export interface WizardModeQuestionProps {
     field: keyof TopicBuilderFormData,
     value: TopicBuilderFormData[keyof TopicBuilderFormData],
   ) => void;
+  form: UseFormReturn<TopicBuilderFormData>;
   error?: string;
   isLoading?: boolean;
 }
 
 export function WizardModeQuestion({
   question: _question,
-  formData,
+  formData: _formData,
   updateFormData,
+  form,
   error: _error,
   isLoading = false,
 }: WizardModeQuestionProps) {
@@ -41,10 +44,6 @@ export function WizardModeQuestion({
     questionItemVariants,
     prefersReducedMotion,
   );
-
-  const handleSelect = (value: WizardMode) => {
-    updateFormData("wizardMode", value);
-  };
 
   const getIcon = (value: string) => {
     switch (value) {
@@ -75,20 +74,36 @@ export function WizardModeQuestion({
       animate="visible"
       className="space-y-4"
     >
-      {WIZARD_MODE_OPTIONS.map((option, index) => (
-        <SingleSelectCard
-          key={option.value}
-          label={option.label}
-          description={getDescription(option.value)}
-          value={option.value}
-          selected={formData.wizardMode === option.value}
-          onSelect={() => handleSelect(option.value as WizardMode)}
-          icon={getIcon(option.value)}
-          disabled={isLoading}
-          className="transition-all duration-200"
-          delay={index * 0.1}
-        />
-      ))}
+      <Controller
+        name="wizardMode"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-4">
+            {fieldState.error && (
+              <div className="text-destructive text-sm mb-4">
+                {fieldState.error.message}
+              </div>
+            )}
+            {WIZARD_MODE_OPTIONS.map((option, index) => (
+              <SingleSelectCard
+                key={option.value}
+                label={option.label}
+                description={getDescription(option.value)}
+                value={option.value}
+                selected={field.value === option.value}
+                onSelect={() => {
+                  field.onChange(option.value);
+                  updateFormData("wizardMode", option.value as WizardMode);
+                }}
+                icon={getIcon(option.value)}
+                disabled={isLoading}
+                className="transition-all duration-200"
+                delay={index * 0.1}
+              />
+            ))}
+          </div>
+        )}
+      />
     </motion.div>
   );
 }

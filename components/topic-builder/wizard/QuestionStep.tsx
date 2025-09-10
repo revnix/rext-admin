@@ -10,6 +10,7 @@
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
+import type { UseFormReturn } from "react-hook-form";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import {
   getMotionVariants,
@@ -45,6 +46,9 @@ export interface QuestionStepProps {
     value: TopicBuilderFormData[keyof TopicBuilderFormData],
   ) => void;
 
+  /** React Hook Form instance */
+  form: UseFormReturn<TopicBuilderFormData>;
+
   /** Validation error message */
   error?: string;
 
@@ -74,6 +78,7 @@ export function QuestionStep({
   question,
   formData,
   updateFormData,
+  form,
   error,
   progress,
   isLoading = false,
@@ -95,6 +100,7 @@ export function QuestionStep({
       question,
       formData,
       updateFormData,
+      form,
       error,
       isLoading,
     };
@@ -156,6 +162,7 @@ export function QuestionStep({
     question,
     formData,
     updateFormData,
+    form,
     error,
     isLoading,
     onGoToQuestion,

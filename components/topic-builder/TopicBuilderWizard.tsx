@@ -102,6 +102,7 @@ export function TopicBuilderWizard({
       currentQuestionIndex={wizardProps.currentQuestionIndex}
       formData={wizardProps.formData}
       updateFormData={wizardProps.updateFormData}
+      form={wizardProps.form}
       onNext={wizardProps.onNext}
       onPrevious={wizardProps.onPrevious}
       onGoToQuestion={wizardProps.onGoToQuestion}

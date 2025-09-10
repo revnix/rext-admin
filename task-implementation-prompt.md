@@ -2,14 +2,14 @@ Task/Subtask Implementation Prompt
 
 Inputs (fill before starting)
 
-- Task ID: 10
-- Subtask ID: 10.5
-- Related plan files: `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md`
+- Task ID: 6
+- Subtask ID: 6.1
+- Related plan files: `@features-requirements-plan.md`
 
 Authoritative references
 
 - Codebase: `src/app/**` 
-- Plan, Context and Questions: `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md`
+- Plan, Context and Questions: `@features-requirements-plan.md`
 - Latest official docs (read before each implementation): Next.js App Router, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form
 
 Project guardrails (must follow)
@@ -26,7 +26,7 @@ Workflow
 
 1. Discovery (read-only)
    - Retrieve the task/subtask details from Taskmaster and read any linked context.
-   - Read the relevant `@features-requirements-plan-1.md`, `@features-requirements-plan-2.md` plan(s) to confirm constraints and acceptance criteria.
+   - Read the relevant `@features-requirements-plan.md` plan to confirm constraints and acceptance criteria.
    - Explore the exact files to be changed (APIs, services, db schema/migrations, auth, types). Quote small snippets and line ranges where helpful.
    - Consult latest docs (Next.js, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form) to validate patterns and APIs you will use.
 
@@ -37,11 +37,13 @@ Workflow
    - Exact edits (per file): what to add/remove/replace;
    - Observability: key logs and error handling approach
    - Acceptance criteria: binary, verifiable checks
+   - Make sure to check if the task is already done or not.
    - Answers to these questions:
      - Is this must-have or nice-to-have?
      - Which files/modules/folders are impacted?
      - When should this be done (now vs later) and why?
      - What are this task’s dependencies?
+     - Is this task already done or not?
 
 3. Implementation (after approval)
    - Apply edits per plan; 

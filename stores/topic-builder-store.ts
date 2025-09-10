@@ -68,13 +68,16 @@ interface TopicBuilderState {
 }
 
 /**
- * Default form data for the topic builder - clean, no deprecated fields
+ * Default form data for the topic builder with smart defaults per requirements
+ * Based on features-requirements-plan.md Section 2.2: Question Defaults & Smart Suggestions
  */
 const initialFormData: Partial<TopicBuilderFormData> = {
-  wizardMode: "industry-first",
+  wizardMode: "industry-first", // Default: "I want to explore my industry"
   num_topics: 5,
-  purpose: [],
-  tone: [],
+  purpose: ["educate-inform"], // Smart default: "Who are you creating this for?" equivalent
+  tone: ["professional-formal"], // Smart default for professional content
+  content_type: "blog-post", // Most common content type
+  industry: "business", // Smart default for broad applicability
 };
 
 /**

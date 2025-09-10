@@ -9,6 +9,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { UseFormReturn } from "react-hook-form";
 import { useHotkeys } from "react-hotkeys-hook";
 import {
   getMotionVariants,
@@ -40,6 +41,9 @@ export interface QuestionWizardProps {
     value: TopicBuilderFormData[keyof TopicBuilderFormData],
   ) => void;
 
+  /** React Hook Form instance */
+  form: UseFormReturn<TopicBuilderFormData>;
+
   /** Navigation handlers */
   onNext: () => boolean;
   onPrevious: () => boolean;
@@ -67,6 +71,7 @@ export function QuestionWizard({
   currentQuestionIndex,
   formData,
   updateFormData,
+  form,
   onNext,
   onPrevious,
   onGoToQuestion,
@@ -274,6 +279,7 @@ export function QuestionWizard({
                 question={currentQuestion}
                 formData={formData}
                 updateFormData={handleQuestionChange}
+                form={form}
                 error={getQuestionError(currentQuestion.id)}
                 progress={progress}
                 isLoading={isLoading}
