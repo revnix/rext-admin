@@ -61,6 +61,12 @@ export interface WizardNavigationProps {
 
   /** Compact mode for mobile */
   compact?: boolean;
+
+  /** Enhanced navigation: Whether wizard is in edit mode (Task 8.2) */
+  isInEditMode?: boolean;
+
+  /** Enhanced navigation: Save and return to review handler (Task 8.2) */
+  onSaveAndReturn?: () => void;
 }
 
 export function WizardNavigation({
@@ -78,6 +84,8 @@ export function WizardNavigation({
   onSkip,
   className,
   compact = false,
+  isInEditMode = false,
+  onSaveAndReturn,
 }: WizardNavigationProps) {
   const prefersReducedMotion = useReducedMotion();
   const motionVariants = getMotionVariants(
@@ -108,6 +116,12 @@ export function WizardNavigation({
       onSkip();
     }
   }, [onSkip, isSubmitting, isLoading]);
+
+  const handleSaveAndReturn = useCallback(() => {
+    if (onSaveAndReturn && !isSubmitting && !isLoading) {
+      onSaveAndReturn();
+    }
+  }, [onSaveAndReturn, isSubmitting, isLoading]);
 
   if (compact) {
     return (
@@ -163,6 +177,21 @@ export function WizardNavigation({
           )}
           <span className="sr-only">{finalNextLabel}</span>
         </Button>
+
+        {/* Save & Return Button (Edit Mode - Task 8.2) */}
+        {isInEditMode && onSaveAndReturn && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSaveAndReturn}
+            disabled={isSubmitting || isLoading}
+            className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30"
+            aria-label="Save changes and return to review step"
+            title="Save your changes and return to the review step"
+          >
+            Save
+          </Button>
+        )}
       </motion.div>
     );
   }
@@ -204,53 +233,90 @@ export function WizardNavigation({
 
       {/* Center - Help Text */}
       <div className="flex-1 text-center">
-        <div className="text-sm text-muted-foreground">
-          Press{" "}
-          <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
-            Enter
-          </kbd>{" "}
-          to continue
-          {!isFirstQuestion && (
-            <>
-              {" or "}
+        <output className="text-sm text-muted-foreground" aria-live="polite">
+          {isInEditMode ? (
+            <span>
+              Edit mode: Press{" "}
               <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
-                Esc
+                Enter
               </kbd>{" "}
-              to go back
-            </>
+              to continue or use Save
+              {!isFirstQuestion && (
+                <>
+                  {" · "}
+                  <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+                    Esc
+                  </kbd>{" "}
+                  to go back
+                </>
+              )}
+            </span>
+          ) : (
+            <span>
+              Press{" "}
+              <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+                Enter
+              </kbd>{" "}
+              to continue
+              {!isFirstQuestion && (
+                <>
+                  {" or "}
+                  <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+                    Esc
+                  </kbd>{" "}
+                  to go back
+                </>
+              )}
+            </span>
           )}
-        </div>
+        </output>
       </div>
 
-      {/* Next Button */}
-      <Button
-        onClick={handleNext}
-        disabled={isNextDisabled}
-        className={cn(
-          "gap-2 px-6 h-11 min-w-[120px] font-medium",
-          isLastQuestion && [
-            "bg-gradient-to-r from-primary via-primary to-primary/80",
-            "hover:from-primary/90 hover:via-primary/90 hover:to-primary/70",
-            "shadow-lg hover:shadow-xl transition-all duration-200",
-          ],
+      <div className="flex items-center gap-3">
+        {/* Next Button */}
+        <Button
+          onClick={handleNext}
+          disabled={isNextDisabled}
+          className={cn(
+            "gap-2 px-6 h-11 min-w-[120px] font-medium",
+            isLastQuestion && [
+              "bg-gradient-to-r from-primary via-primary to-primary/80",
+              "hover:from-primary/90 hover:via-primary/90 hover:to-primary/70",
+              "shadow-lg hover:shadow-xl transition-all duration-200",
+            ],
+          )}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{isLastQuestion ? "Generating..." : "Loading..."}</span>
+            </>
+          ) : (
+            <>
+              <span>{finalNextLabel}</span>
+              {isLastQuestion ? (
+                <Sparkles className="w-4 h-4" />
+              ) : (
+                <ArrowRight className="w-4 h-4" />
+              )}
+            </>
+          )}
+        </Button>
+
+        {/* Save & Return Button (Edit Mode - Task 8.2) */}
+        {isInEditMode && onSaveAndReturn && (
+          <Button
+            variant="outline"
+            onClick={handleSaveAndReturn}
+            disabled={isSubmitting || isLoading}
+            className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30 px-4 h-11"
+            aria-label="Save changes and return to review step"
+            title="Save your changes and return to the review step"
+          >
+            Save
+          </Button>
         )}
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>{isLastQuestion ? "Generating..." : "Loading..."}</span>
-          </>
-        ) : (
-          <>
-            <span>{finalNextLabel}</span>
-            {isLastQuestion ? (
-              <Sparkles className="w-4 h-4" />
-            ) : (
-              <ArrowRight className="w-4 h-4" />
-            )}
-          </>
-        )}
-      </Button>
+      </div>
     </motion.div>
   );
 }

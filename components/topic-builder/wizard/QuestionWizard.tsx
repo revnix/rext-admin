@@ -49,6 +49,11 @@ export interface QuestionWizardProps {
   onPrevious: () => boolean;
   onGoToQuestion: (index: number) => boolean;
 
+  /** Enhanced navigation handlers (Task 8.2) */
+  enterEditMode?: (questionIndex: number) => void;
+  isInEditMode?: boolean;
+  saveAndReturnToReview?: () => boolean;
+
   /** Validation */
   getQuestionError: (questionId: string) => string | undefined;
 
@@ -75,6 +80,9 @@ export function QuestionWizard({
   onNext,
   onPrevious,
   onGoToQuestion,
+  enterEditMode,
+  isInEditMode = false,
+  saveAndReturnToReview,
   getQuestionError,
   isSubmitting = false,
   isLoading = false,
@@ -301,6 +309,7 @@ export function QuestionWizard({
                 progress={progress}
                 isLoading={isLoading}
                 onGoToQuestion={handleGoToQuestion}
+                enterEditMode={enterEditMode}
                 getQuestionError={getQuestionError}
                 questions={questions}
                 onStepAdvance={handleNext}
@@ -316,6 +325,8 @@ export function QuestionWizard({
                     onPrevious={handlePrevious}
                     nextLabel={isLastQuestion ? "Generate Topics" : "Next"}
                     className="mt-8 p-0 bg-transparent border-0"
+                    isInEditMode={isInEditMode}
+                    onSaveAndReturn={saveAndReturnToReview}
                   />
                 }
               />

@@ -135,6 +135,11 @@ export interface NavigationHistoryEntry {
 }
 
 /**
+ * Navigation mode for enhanced edit flow
+ */
+export type NavigationMode = "normal" | "editing";
+
+/**
  * Current wizard state
  */
 export interface WizardState {
@@ -146,6 +151,8 @@ export interface WizardState {
   questionSequence: string[];
   navigationHistory: NavigationHistoryEntry[];
   direction: NavigationDirection;
+  navigationMode: NavigationMode;
+  returnToReviewIndex?: number; // Index to return to after editing
 
   // Validation state
   fieldErrors: Record<string, string>;
@@ -221,6 +228,9 @@ export type WizardAction =
   | { type: "GO_TO_PREVIOUS_QUESTION" }
   | { type: "GO_TO_QUESTION"; questionIndex: number }
   | { type: "SKIP_QUESTION" }
+  | { type: "ENTER_EDIT_MODE"; returnToIndex: number }
+  | { type: "EXIT_EDIT_MODE" }
+  | { type: "SAVE_AND_RETURN_TO_REVIEW" }
   | { type: "SET_FIELD_ERROR"; field: string; error: string }
   | { type: "CLEAR_FIELD_ERROR"; field: string }
   | { type: "SET_FIELD_WARNING"; field: string; warnings: string[] }

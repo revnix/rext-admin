@@ -59,6 +59,13 @@ export interface UseWizardNavigationReturn {
   onPrevious: () => boolean;
   onGoToQuestion: (index: number) => boolean;
 
+  // Enhanced navigation actions (Task 8.2)
+  enterEditMode: (questionIndex: number) => void;
+  saveAndReturnToReview: () => boolean;
+  exitEditMode: () => void;
+  navigationMode: "normal" | "editing";
+  isInEditMode: boolean;
+
   // Validation
   validateCurrentQuestion: () => ValidationResult;
   getQuestionError: (questionId: string) => string | undefined;
@@ -105,6 +112,17 @@ export function useWizardNavigation({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, _setIsLoading] = useState(false);
+
+  // Enhanced navigation state for edit mode (Task 8.2)
+  const [navigationMode, setNavigationMode] = useState<"normal" | "editing">(
+    "normal",
+  );
+  const [returnToReviewIndex, setReturnToReviewIndex] = useState<
+    number | undefined
+  >();
+  const [originalFormData, setOriginalFormData] = useState<
+    TopicBuilderFormData | undefined
+  >();
 
   // Integrate contextual suggestions (Task 7.3)
   const contextualSuggestions = useContextualSuggestions({
@@ -351,6 +369,57 @@ export function useWizardNavigation({
     [questions.length],
   );
 
+  // Enhanced navigation: Enter edit mode from review (Task 8.2)
+  const enterEditMode = useCallback(
+    (questionIndex: number) => {
+      const reviewIndex = questions.findIndex((q) => q.id === "review");
+      if (reviewIndex !== -1) {
+        setNavigationMode("editing");
+        setReturnToReviewIndex(reviewIndex);
+        setOriginalFormData(structuredClone(formData)); // Deep clone for comparison
+        setCurrentQuestionIndex(questionIndex);
+        console.log(
+          "🔄 Entered edit mode, returning to review index:",
+          reviewIndex,
+        );
+      }
+    },
+    [questions, formData],
+  );
+
+  // Enhanced navigation: Save and return to review (Task 8.2 & 8.3)
+  const saveAndReturnToReview = useCallback(() => {
+    if (navigationMode === "editing" && returnToReviewIndex !== undefined) {
+      // Task 8.3: Smart step skipping - compare current data with original
+      const hasChanges = originalFormData
+        ? JSON.stringify(formData) !== JSON.stringify(originalFormData)
+        : false;
+
+      console.log("💾 Save and return - hasChanges:", hasChanges);
+
+      setNavigationMode("normal");
+      setCurrentQuestionIndex(returnToReviewIndex);
+      setReturnToReviewIndex(undefined);
+      setOriginalFormData(undefined);
+
+      if (hasChanges) {
+        announceToScreenReader("Changes saved. Returned to review step.");
+      } else {
+        announceToScreenReader("No changes detected. Returned to review step.");
+      }
+
+      return true;
+    }
+    return false;
+  }, [navigationMode, returnToReviewIndex, formData, originalFormData]);
+
+  // Enhanced navigation: Exit edit mode (Task 8.2)
+  const exitEditMode = useCallback(() => {
+    setNavigationMode("normal");
+    setReturnToReviewIndex(undefined);
+    setOriginalFormData(undefined);
+  }, []);
+
   // Announce question changes for accessibility
   useEffect(() => {
     if (currentQuestion) {
@@ -385,7 +454,7 @@ export function useWizardNavigation({
     updateFormData,
 
     // React Hook Form integration
-    form,
+    form: form as UseFormReturn<TopicBuilderFormData>,
 
     // Navigation state
     currentQuestionIndex,
@@ -397,6 +466,13 @@ export function useWizardNavigation({
     onNext,
     onPrevious,
     onGoToQuestion,
+
+    // Enhanced navigation actions (Task 8.2)
+    enterEditMode,
+    saveAndReturnToReview,
+    exitEditMode,
+    navigationMode,
+    isInEditMode: navigationMode === "editing",
 
     // Validation
     validateCurrentQuestion,

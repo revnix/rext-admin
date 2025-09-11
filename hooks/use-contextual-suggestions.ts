@@ -12,7 +12,6 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   getContextualAudienceSuggestions,
   getContextualToneRecommendations,
-  shouldUpdateSuggestions,
 } from "@/lib/contextual-suggestions";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type {
@@ -58,17 +57,17 @@ export function useContextualSuggestions({
   enableAutoUpdate = true,
 }: UseContextualSuggestionsProps): UseContextualSuggestionsReturn {
   // Get contextual suggestion state and actions from store
-  const {
-    contextualSuggestions,
-    setAudienceSuggestions,
-    setToneRecommendations,
-    updateContextualSuggestions,
-  } = useTopicBuilderStore((state) => ({
-    contextualSuggestions: state.contextualSuggestions,
-    setAudienceSuggestions: state.setAudienceSuggestions,
-    setToneRecommendations: state.setToneRecommendations,
-    updateContextualSuggestions: state.updateContextualSuggestions,
-  }));
+  // Use separate selectors to avoid object recreation
+  const contextualSuggestions = useTopicBuilderStore(
+    (state) => state.contextualSuggestions,
+  );
+  const setAudienceSuggestions = useTopicBuilderStore(
+    (state) => state.setAudienceSuggestions,
+  );
+  const setToneRecommendations = useTopicBuilderStore(
+    (state) => state.setToneRecommendations,
+  );
+  // Removed unused updateContextualSuggestions
 
   // Track previous form data to detect changes
   const previousFormDataRef = useRef<Partial<TopicBuilderFormData>>(formData);
@@ -135,54 +134,61 @@ export function useContextualSuggestions({
     if (!enableAutoUpdate) return;
 
     const previousFormData = previousFormDataRef.current;
-    const hasChanges = shouldUpdateSuggestions(previousFormData, formData);
 
-    if (hasChanges) {
+    // Only check for specific field changes to avoid infinite loops
+    const industryChanged = previousFormData?.industry !== formData?.industry;
+    const purposeChanged =
+      JSON.stringify(previousFormData?.purpose) !==
+      JSON.stringify(formData?.purpose);
+
+    if (industryChanged || purposeChanged) {
       console.log(
         "🔄 Contextual suggestions updating due to form data changes",
       );
 
       // Update audience suggestions if industry changed
-      if (
-        previousFormData?.industry !== formData?.industry &&
-        formData.industry
-      ) {
+      if (industryChanged && formData.industry) {
         updateAudienceSuggestions(formData.industry);
       }
 
       // Update tone recommendations if purpose changed
-      if (
-        JSON.stringify(previousFormData?.purpose) !==
-          JSON.stringify(formData?.purpose) &&
-        formData.purpose
-      ) {
+      if (purposeChanged && formData.purpose) {
         updateToneRecommendations(formData.purpose);
       }
 
-      // Update the store's updateContextualSuggestions if needed
-      updateContextualSuggestions();
+      // Update the ref only after processing changes
+      previousFormDataRef.current = {
+        ...previousFormData,
+        industry: formData.industry,
+        purpose: formData.purpose,
+        audience: formData.audience,
+        tone: formData.tone,
+      };
     }
-
-    // Update the ref for next comparison
-    previousFormDataRef.current = formData;
   }, [
-    formData,
+    formData?.industry,
+    formData?.purpose,
+    formData?.audience,
+    formData?.tone,
     enableAutoUpdate,
     updateAudienceSuggestions,
     updateToneRecommendations,
-    updateContextualSuggestions,
   ]);
 
   // Initialize suggestions on mount if form data is available
   useEffect(() => {
-    if (
-      formData.industry &&
-      contextualSuggestions.audienceByIndustry.length === 0
-    ) {
-      updateAudienceSuggestions(formData.industry);
+    const industry = formData.industry;
+    const purpose = formData.purpose;
+    const hasAudienceSuggestions =
+      contextualSuggestions.audienceByIndustry.length > 0;
+    const hasToneSuggestions = contextualSuggestions.tonesByPurpose.length > 0;
+
+    if (industry && !hasAudienceSuggestions) {
+      updateAudienceSuggestions(industry);
     }
-    if (formData.purpose && contextualSuggestions.tonesByPurpose.length === 0) {
-      updateToneRecommendations(formData.purpose);
+
+    if (purpose && !hasToneSuggestions) {
+      updateToneRecommendations(purpose);
     }
   }, [
     formData.industry,

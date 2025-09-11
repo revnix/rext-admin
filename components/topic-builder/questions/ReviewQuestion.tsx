@@ -19,7 +19,6 @@ import {
 import { useCallback, useEffect, useMemo } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -42,8 +41,9 @@ interface ReviewQuestionProps {
   ) => void;
   error?: string;
   isLoading?: boolean;
-  // Enhanced props for dynamic navigation
+  // Enhanced props for dynamic navigation (Task 8.2)
   onGoToQuestion?: (questionIndex: number) => void;
+  enterEditMode?: (questionIndex: number) => void; // New edit mode function
   getQuestionError?: (questionId: string) => string | undefined;
   questions?: QuestionConfig[];
 }
@@ -121,6 +121,7 @@ function ReviewCard({
               size="sm"
               onClick={onEdit}
               aria-label={ariaLabel}
+              title={hasError ? `Fix error in ${label}` : `Edit ${label}`}
               className={cn(
                 "h-auto p-2 min-w-[44px] min-h-[44px] flex-shrink-0 ml-2",
                 hasError &&
@@ -153,21 +154,17 @@ function renderValue(
 
   if (typeof value === "boolean") {
     return (
-      <Badge variant="outline" className="text-xs sm:text-sm">
+      <span className="text-sm sm:text-base font-medium">
         {value ? "Yes" : "No"}
-      </Badge>
+      </span>
     );
   }
 
   if (Array.isArray(value)) {
     return value.length > 0 ? (
-      <div className="flex flex-wrap gap-1 sm:gap-1.5">
-        {value.map((item) => (
-          <Badge key={item} variant="secondary" className="text-xs break-all">
-            {item}
-          </Badge>
-        ))}
-      </div>
+      <span className="text-sm sm:text-base break-words">
+        {value.join(", ")}
+      </span>
     ) : (
       <span className="italic text-muted-foreground/60 text-xs sm:text-sm">
         None selected
@@ -228,6 +225,7 @@ function getErrorGuidance(field: string, error: string): string | null {
 export function ReviewQuestion({
   formData,
   onGoToQuestion,
+  enterEditMode,
   getQuestionError,
   questions,
 }: ReviewQuestionProps) {
@@ -296,20 +294,28 @@ export function ReviewQuestion({
   // Navigation functions for error fixing
   const handleFixFirstError = useCallback(() => {
     const firstErrorField = Object.keys(errors)[0];
-    if (firstErrorField && onGoToQuestion) {
+    if (firstErrorField) {
       const questionIndex = getQuestionIndex(firstErrorField);
-      onGoToQuestion(questionIndex);
+      // Task 8.2: Use enhanced edit mode when available
+      if (enterEditMode) {
+        enterEditMode(questionIndex);
+      } else if (onGoToQuestion) {
+        onGoToQuestion(questionIndex);
+      }
     }
-  }, [errors, onGoToQuestion, getQuestionIndex]);
+  }, [errors, onGoToQuestion, enterEditMode, getQuestionIndex]);
 
   const handleFixError = useCallback(
     (field: string) => {
-      if (onGoToQuestion) {
-        const questionIndex = getQuestionIndex(field);
+      const questionIndex = getQuestionIndex(field);
+      // Task 8.2: Use enhanced edit mode when available
+      if (enterEditMode) {
+        enterEditMode(questionIndex);
+      } else if (onGoToQuestion) {
         onGoToQuestion(questionIndex);
       }
     },
-    [onGoToQuestion, getQuestionIndex],
+    [onGoToQuestion, enterEditMode, getQuestionIndex],
   );
 
   // Keyboard navigation for accessibility
@@ -422,7 +428,9 @@ export function ReviewQuestion({
           hasError={!!errors.wizardMode}
           errorMessage={errors.wizardMode}
           onEdit={
-            onGoToQuestion ? () => handleFixError("wizardMode") : undefined
+            onGoToQuestion || enterEditMode
+              ? () => handleFixError("wizardMode")
+              : undefined
           }
           ariaLabel="Edit wizard mode selection"
         />
@@ -436,7 +444,9 @@ export function ReviewQuestion({
             hasError={!!errors.subject}
             errorMessage={errors.subject}
             onEdit={
-              onGoToQuestion ? () => handleFixError("subject") : undefined
+              onGoToQuestion || enterEditMode
+                ? () => handleFixError("subject")
+                : undefined
             }
             ariaLabel="Edit subject"
           />
@@ -449,7 +459,11 @@ export function ReviewQuestion({
           field="industry"
           hasError={!!errors.industry}
           errorMessage={errors.industry}
-          onEdit={onGoToQuestion ? () => handleFixError("industry") : undefined}
+          onEdit={
+            onGoToQuestion || enterEditMode
+              ? () => handleFixError("industry")
+              : undefined
+          }
           ariaLabel="Edit industry selection"
         />
 
@@ -461,7 +475,9 @@ export function ReviewQuestion({
           hasError={!!errors.content_type}
           errorMessage={errors.content_type}
           onEdit={
-            onGoToQuestion ? () => handleFixError("content_type") : undefined
+            onGoToQuestion || enterEditMode
+              ? () => handleFixError("content_type")
+              : undefined
           }
           ariaLabel="Edit content type selection"
         />
@@ -475,7 +491,9 @@ export function ReviewQuestion({
             hasError={!!errors.platform}
             errorMessage={errors.platform}
             onEdit={
-              onGoToQuestion ? () => handleFixError("platform") : undefined
+              onGoToQuestion || enterEditMode
+                ? () => handleFixError("platform")
+                : undefined
             }
             ariaLabel="Edit platform selection"
           />
@@ -490,7 +508,9 @@ export function ReviewQuestion({
             hasError={!!errors.audience}
             errorMessage={errors.audience}
             onEdit={
-              onGoToQuestion ? () => handleFixError("audience") : undefined
+              onGoToQuestion || enterEditMode
+                ? () => handleFixError("audience")
+                : undefined
             }
             ariaLabel="Edit audience selection"
           />
@@ -505,7 +525,11 @@ export function ReviewQuestion({
           field="purpose"
           hasError={!!errors.purpose}
           errorMessage={errors.purpose}
-          onEdit={onGoToQuestion ? () => handleFixError("purpose") : undefined}
+          onEdit={
+            onGoToQuestion || enterEditMode
+              ? () => handleFixError("purpose")
+              : undefined
+          }
           ariaLabel="Edit purpose selection"
         />
 
@@ -516,7 +540,11 @@ export function ReviewQuestion({
           field="tone"
           hasError={!!errors.tone}
           errorMessage={errors.tone}
-          onEdit={onGoToQuestion ? () => handleFixError("tone") : undefined}
+          onEdit={
+            onGoToQuestion || enterEditMode
+              ? () => handleFixError("tone")
+              : undefined
+          }
           ariaLabel="Edit tone selection"
         />
 
@@ -528,7 +556,9 @@ export function ReviewQuestion({
           hasError={!!errors.num_topics}
           errorMessage={errors.num_topics}
           onEdit={
-            onGoToQuestion ? () => handleFixError("num_topics") : undefined
+            onGoToQuestion || enterEditMode
+              ? () => handleFixError("num_topics")
+              : undefined
           }
           ariaLabel="Edit number of topics"
         />
@@ -541,7 +571,11 @@ export function ReviewQuestion({
             field="notes"
             hasError={!!errors.notes}
             errorMessage={errors.notes}
-            onEdit={onGoToQuestion ? () => handleFixError("notes") : undefined}
+            onEdit={
+              onGoToQuestion || enterEditMode
+                ? () => handleFixError("notes")
+                : undefined
+            }
             ariaLabel="Edit additional notes"
           />
         )}

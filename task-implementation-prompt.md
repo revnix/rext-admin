@@ -1,7 +1,7 @@
 Task Implementation
 
-- Task ID: 7
-- Subtask ID: 7.1, 7.2 and 7.3
+- Task ID: 8
+- Subtask ID: 8.1, 8.2, 8.3, 8.4, 8.5
 - Related plan files: `@features-requirements-plan.md`
 
 Authoritative references

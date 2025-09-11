@@ -67,6 +67,9 @@ export interface QuestionStepProps {
   /** Go to question handler for review step */
   onGoToQuestion?: (questionIndex: number) => void;
 
+  /** Enhanced navigation: Enter edit mode (Task 8.2) */
+  enterEditMode?: (questionIndex: number) => void;
+
   /** Get question error handler for review step */
   getQuestionError?: (questionId: string) => string | undefined;
 
@@ -88,6 +91,7 @@ export function QuestionStep({
   navigationControls,
   className,
   onGoToQuestion,
+  enterEditMode,
   getQuestionError,
   questions,
   onStepAdvance,
@@ -153,6 +157,7 @@ export function QuestionStep({
           <ReviewQuestion
             {...baseProps}
             onGoToQuestion={onGoToQuestion}
+            enterEditMode={enterEditMode}
             getQuestionError={getQuestionError}
             questions={questions}
           />
@@ -172,6 +177,7 @@ export function QuestionStep({
     error,
     isLoading,
     onGoToQuestion,
+    enterEditMode,
     getQuestionError,
     questions,
     onStepAdvance,

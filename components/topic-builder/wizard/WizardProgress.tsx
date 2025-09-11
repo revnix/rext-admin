@@ -77,7 +77,27 @@ export function WizardProgress({
 
   const getStepLabel = (stepIndex: number) => {
     const question = questions[stepIndex];
-    return question ? question.title : `Step ${stepIndex + 1}`;
+    if (!question) return `Step ${stepIndex + 1}`;
+
+    // Task 8.4: Concise 1-2 word step titles per Phase 2.1 requirements
+    const stepTitleMap: Record<string, string> = {
+      wizardMode: "Mode",
+      subject: "Topic",
+      industry: "Industry",
+      content_type: "Format",
+      platform: "Platform",
+      audience: "Audience",
+      purpose: "Purpose",
+      tone: "Tone",
+      num_topics: "Count",
+      notes: "Notes",
+      review: "Review",
+    };
+
+    return (
+      stepTitleMap[question.id] ||
+      question.title.split(" ").slice(0, 2).join(" ")
+    );
   };
 
   if (compact) {

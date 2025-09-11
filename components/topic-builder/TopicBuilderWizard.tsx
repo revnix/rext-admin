@@ -106,6 +106,9 @@ export function TopicBuilderWizard({
       onNext={wizardProps.onNext}
       onPrevious={wizardProps.onPrevious}
       onGoToQuestion={wizardProps.onGoToQuestion}
+      enterEditMode={wizardProps.enterEditMode}
+      isInEditMode={wizardProps.isInEditMode}
+      saveAndReturnToReview={wizardProps.saveAndReturnToReview}
       getQuestionError={wizardProps.getQuestionError}
       isSubmitting={isGenerating || wizardProps.isSubmitting}
       isLoading={wizardProps.isLoading}
