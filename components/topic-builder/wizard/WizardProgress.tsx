@@ -77,7 +77,7 @@ export function WizardProgress({
 
   const getStepLabel = (stepIndex: number) => {
     const question = questions[stepIndex];
-    if (!question) return `Step ${stepIndex + 1}`;
+    if (!question) return `Question ${stepIndex + 1}`;
 
     // Task 8.4: Concise 1-2 word step titles per Phase 2.1 requirements
     const stepTitleMap: Record<string, string> = {
@@ -111,7 +111,7 @@ export function WizardProgress({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>
-              Step {current} of {total}
+              Question {current} of {total}
             </span>
           </div>
 

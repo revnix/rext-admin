@@ -103,7 +103,7 @@ export function ContentTypeQuestion({
       animate="visible"
       className="space-y-4"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {CONTENT_TYPE_OPTIONS.map((option, index) => (
           <SingleSelectCard
             key={`content-type-${option.value}-${index}`}
@@ -114,7 +114,7 @@ export function ContentTypeQuestion({
             onSelect={() => handleSelect(option.value as ContentType)}
             icon={getIcon(option.value)}
             disabled={isLoading}
-            className="transition-all duration-150 h-auto p-4"
+            className="transition-all duration-150 h-auto"
             delay={index * 0.1}
           />
         ))}
