@@ -5,9 +5,8 @@
 
 import type { GeneratedTopic } from "./topic-builder";
 
-// View and Sort Options
+// View Mode (simplified - only grid used now)
 export type ViewMode = "grid" | "list";
-export type SortOption = "relevance" | "freshness" | "novelty" | "overall";
 
 // Topics List
 export interface TopicsListProps {
@@ -86,25 +85,6 @@ export interface EmptyStatesProps {
   onClearFilters?: () => void;
 }
 
-// Topic Filters
-export interface TopicFiltersProps {
-  sortBy: SortOption;
-  onSortChange: (sortBy: SortOption) => void;
-  viewMode: ViewMode;
-  onViewModeChange: (viewMode: ViewMode) => void;
-  availableTags: string[];
-  selectedTags: string[];
-  onTagsChange: (tags: string[]) => void;
-  availableAudiences: string[];
-  selectedAudiences: string[];
-  onAudiencesChange?: (audiences: string[]) => void;
-  minScore: number;
-  onMinScoreChange: (score: number) => void;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  className?: string;
-}
-
 // Topic Detail Drawer
 export interface TopicDetailDrawerProps {
   topic: GeneratedTopic | null;
@@ -113,20 +93,6 @@ export interface TopicDetailDrawerProps {
   onSave?: (topicId: string) => Promise<void> | void;
   onNavigateToContent?: (topicId: string) => void;
   onCopy?: (topicId: string) => void;
-}
-
-// Bulk Actions
-export interface BulkActionsProps {
-  topics: GeneratedTopic[];
-  selectedTopicIds: string[];
-  onSelectAll: (selected: boolean) => void;
-  onBulkSave: (topicIds: string[]) => Promise<void>;
-  onBulkExport?: (
-    topics: GeneratedTopic[],
-    format: "json" | "csv",
-  ) => Promise<void>;
-  onBulkDelete?: (topicIds: string[]) => Promise<void>;
-  onBulkNavigateToContent: (topicIds: string[]) => void;
 }
 
 // Topic Actions
