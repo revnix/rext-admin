@@ -9,6 +9,7 @@ export const TopicsGrid = memo(function TopicsGrid({
   topics,
   selectedTopicIds,
   viewMode,
+  newlyAddedTopicIds = [],
   onTopicSelect,
   onTopicSave,
   onNavigateToContent,
@@ -33,6 +34,7 @@ export const TopicsGrid = memo(function TopicsGrid({
           key={topic.id}
           topic={topic}
           isSelected={selectedTopicIds.includes(topic.id)}
+          isHighlighted={newlyAddedTopicIds.includes(topic.id)}
           onSelect={onTopicSelect}
           onSave={onTopicSave}
           onNavigateToContent={onNavigateToContent}

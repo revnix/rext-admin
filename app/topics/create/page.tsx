@@ -18,6 +18,7 @@ import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
+import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -37,7 +38,15 @@ export default function TopicBuilderPage() {
     updateFormData,
   } = useTopicBuilder();
 
-  const { resetWizard } = useTopicBuilderStore();
+  const {
+    resetWizard,
+    appendGeneratedTopics,
+    isGeneratingMore,
+    setIsGeneratingMore,
+    newlyAddedTopicIds,
+    clearNewlyAddedHighlights,
+  } = useTopicBuilderStore();
+  const generateMoreMutation = useTopicGenerationMutation();
 
   const {
     saveTopic,
@@ -97,13 +106,46 @@ export default function TopicBuilderPage() {
     console.log("Topic deleted from localStorage:", topicId);
   };
 
-  const handleGenerateMore = async () => {
+  const handleGenerateMore = async (additionalCount: number) => {
     try {
+      setIsGeneratingMore(true);
+      clearNewlyAddedHighlights(); // Clear any existing highlights
+
       // Generate more topics without clearing existing ones
-      console.log("🔄 Generating more topics with current settings");
-      await generateTopics();
+      console.log(
+        `🔄 Generating ${additionalCount} more topics with current settings`,
+      );
+
+      // Create modified form data with the requested number of additional topics
+      const modifiedFormData = {
+        ...formData,
+        num_topics: additionalCount,
+      };
+
+      // Use the mutation directly to generate topics without navigation
+      const result = await generateMoreMutation.mutateAsync({
+        formData: modifiedFormData,
+      });
+
+      if (result.topics && Array.isArray(result.topics)) {
+        // Append the new topics to existing ones (this will set newlyAddedTopicIds)
+        appendGeneratedTopics(result.topics);
+        console.log(
+          `✅ Successfully generated and added ${result.topics.length} more topics`,
+        );
+
+        // Clear highlights after 3 seconds
+        setTimeout(() => {
+          clearNewlyAddedHighlights();
+        }, 3000);
+      } else {
+        throw new Error("Invalid response format from topic generation API");
+      }
     } catch (error) {
       console.error("❌ Error generating more topics:", error);
+      // The mutation already handles error toasts
+    } finally {
+      setIsGeneratingMore(false);
     }
   };
 
@@ -148,6 +190,8 @@ export default function TopicBuilderPage() {
           <div className="flex-1 p-6">
             <TopicsList
               topics={generatedTopics}
+              isGeneratingMore={isGeneratingMore}
+              newlyAddedTopicIds={newlyAddedTopicIds}
               onTopicSave={handleTopicSave}
               onTopicEdit={handleTopicEdit}
               onTopicRegenerate={handleTopicRegenerate}

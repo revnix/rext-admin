@@ -1,8 +1,14 @@
 "use client";
 
-import { Plus, RotateCcw, Sparkles } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RotateCcw, Sparkles } from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import type { TopicsHeaderProps } from "@/types/topic-builder-results";
 
@@ -10,6 +16,7 @@ export const TopicsHeader = memo(function TopicsHeader({
   filteredCount,
   totalCount,
   hasActiveFilters,
+  isGeneratingMore = false,
   onRegenerateTopics,
   onBackToWizard,
 }: TopicsHeaderProps) {
@@ -28,15 +35,37 @@ export const TopicsHeader = memo(function TopicsHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            onClick={onRegenerateTopics}
-            variant="default"
-            size="sm"
-            className="gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            Generate More
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-1.5"
+                disabled={isGeneratingMore}
+              >
+                {isGeneratingMore ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {isGeneratingMore ? "Generating..." : "Generate More"}
+                {!isGeneratingMore && <ChevronDown className="h-3 w-3" />}
+              </Button>
+            </DropdownMenuTrigger>
+            {!isGeneratingMore && (
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onRegenerateTopics(5)}>
+                  Generate 5 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRegenerateTopics(10)}>
+                  Generate 10 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRegenerateTopics(15)}>
+                  Generate 15 more topics
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            )}
+          </DropdownMenu>
           <Button
             onClick={onBackToWizard}
             variant="outline"

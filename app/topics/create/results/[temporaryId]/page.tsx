@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RotateCcw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
@@ -15,9 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ErrorAlert } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
+import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
 import { getSession } from "@/lib/session-storage";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { SessionData } from "@/types/session";
@@ -41,7 +48,15 @@ export default function ResultsPage() {
     error: null,
   });
 
-  const { resetWizard } = useTopicBuilderStore();
+  const {
+    resetWizard,
+    appendGeneratedTopics,
+    isGeneratingMore,
+    setIsGeneratingMore,
+    newlyAddedTopicIds,
+    clearNewlyAddedHighlights,
+  } = useTopicBuilderStore();
+  const generateMoreMutation = useTopicGenerationMutation();
 
   const {
     saveTopic,
@@ -156,11 +171,64 @@ export default function ResultsPage() {
     console.log("Topic deleted from localStorage:", topicId);
   };
 
-  const handleGenerateMore = () => {
-    // Navigate back to create page to generate more topics
-    // The form data will be preserved for generating additional topics
-    console.log("🔄 Navigating to generate more topics with current settings");
-    router.push("/topics/create");
+  const handleGenerateMore = async (additionalCount: number) => {
+    if (!state.session?.formData) {
+      console.error("❌ No form data available for generating more topics");
+      return;
+    }
+
+    try {
+      setIsGeneratingMore(true);
+      clearNewlyAddedHighlights(); // Clear any existing highlights
+
+      // Generate more topics using the stored form data
+      console.log(
+        `🔄 Generating ${additionalCount} more topics with session settings`,
+      );
+
+      // Create modified form data with the requested number of additional topics
+      const modifiedFormData = {
+        ...state.session.formData,
+        num_topics: additionalCount,
+      };
+
+      // Use the mutation directly to generate topics
+      const result = await generateMoreMutation.mutateAsync({
+        formData: modifiedFormData,
+      });
+
+      if (result.topics && Array.isArray(result.topics)) {
+        // Append the new topics to existing ones (in store and session)
+        appendGeneratedTopics(result.topics);
+
+        // Also update the session state to reflect the new topics
+        setState((prev) => ({
+          ...prev,
+          session: prev.session
+            ? {
+                ...prev.session,
+                topics: [...prev.session.topics, ...result.topics],
+              }
+            : null,
+        }));
+
+        console.log(
+          `✅ Successfully generated and added ${result.topics.length} more topics`,
+        );
+
+        // Clear highlights after 3 seconds
+        setTimeout(() => {
+          clearNewlyAddedHighlights();
+        }, 3000);
+      } else {
+        throw new Error("Invalid response format from topic generation API");
+      }
+    } catch (error) {
+      console.error("❌ Error generating more topics:", error);
+      // The mutation already handles error toasts
+    } finally {
+      setIsGeneratingMore(false);
+    }
   };
 
   const handleStartOver = () => {
@@ -275,14 +343,26 @@ export default function ResultsPage() {
 
           {/* Additional action buttons */}
           <div className="flex justify-center gap-4">
-            <Button
-              onClick={handleGenerateMore}
-              variant="default"
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Generate More
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Generate More
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                <DropdownMenuItem onClick={() => handleGenerateMore(5)}>
+                  Generate 5 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGenerateMore(10)}>
+                  Generate 10 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGenerateMore(15)}>
+                  Generate 15 more topics
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               onClick={handleStartOver}
               variant="outline"
@@ -341,6 +421,8 @@ export default function ResultsPage() {
 
             <TopicsList
               topics={state.session.topics}
+              isGeneratingMore={isGeneratingMore}
+              newlyAddedTopicIds={newlyAddedTopicIds}
               onTopicSave={handleTopicSave}
               onTopicEdit={handleTopicEdit}
               onTopicRegenerate={handleTopicRegenerate}
@@ -371,10 +453,26 @@ export default function ResultsPage() {
           No topics found in this session.
         </p>
         <div className="flex gap-4">
-          <Button onClick={handleGenerateMore} variant="default">
-            <Plus className="h-4 w-4 mr-2" />
-            Generate More
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Generate More
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => handleGenerateMore(5)}>
+                Generate 5 more topics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleGenerateMore(10)}>
+                Generate 10 more topics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleGenerateMore(15)}>
+                Generate 15 more topics
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={handleStartOver} variant="outline">
             <RotateCcw className="h-4 w-4 mr-2" />
             Start Over

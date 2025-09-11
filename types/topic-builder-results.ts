@@ -24,7 +24,7 @@ export interface TopicsListProps {
   onTopicDelete?: (topicId: string) => Promise<void> | void;
   onBulkSave: (topicIds: string[]) => void;
   onBackToWizard: () => void;
-  onRegenerateTopics: () => void;
+  onRegenerateTopics: (count: number) => void;
   onNavigateToTopics?: () => void;
   onGenerateNew?: () => void;
   className?: string;
@@ -35,6 +35,7 @@ export interface TopicCardProps {
   topic: GeneratedTopic;
   onSelect?: (id: string, selected: boolean) => void;
   isSelected?: boolean;
+  isHighlighted?: boolean;
   onSave?: (topicId: string) => Promise<void> | void;
   onNavigateToContent?: (topicId: string) => void;
   onViewDetails?: (topicId: string) => void;
@@ -61,7 +62,8 @@ export interface TopicsHeaderProps {
   filteredCount: number;
   totalCount: number;
   hasActiveFilters: boolean;
-  onRegenerateTopics: () => void;
+  isGeneratingMore?: boolean;
+  onRegenerateTopics: (count: number) => void;
   onBackToWizard: () => void;
 }
 
@@ -70,6 +72,7 @@ export interface TopicsGridProps {
   topics: GeneratedTopic[];
   selectedTopicIds: string[];
   viewMode: ViewMode;
+  newlyAddedTopicIds?: string[];
   onTopicSelect: (topicId: string, selected: boolean) => void;
   onTopicSave: (topicId: string) => void;
   onNavigateToContent: (topicId: string) => void;

@@ -1,10 +1,16 @@
 "use client";
 
-import { Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { lazy, memo, Suspense, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
@@ -20,6 +26,8 @@ const TopicDetailDrawer = lazy(() =>
 
 interface TopicsListProps {
   topics: GeneratedTopic[];
+  isGeneratingMore?: boolean;
+  newlyAddedTopicIds?: string[];
   onTopicSave: (topicId: string) => void;
   onTopicEdit?: (
     topicId: string,
@@ -33,14 +41,16 @@ interface TopicsListProps {
   onTopicDelete?: (topicId: string) => Promise<void> | void;
   onBulkSave: (topicIds: string[]) => void;
   onBackToWizard: () => void;
-  onRegenerateTopics: () => void;
+  onRegenerateTopics: (count: number) => void;
   onNavigateToTopics?: () => void;
-  onGenerateNew?: () => void;
+  onGenerateNew?: (count: number) => void;
   className?: string;
 }
 
 export const TopicsList = memo(function TopicsList({
   topics,
+  isGeneratingMore = false,
+  newlyAddedTopicIds = [],
   onTopicSave,
   onTopicEdit: _onTopicEdit,
   onTopicRegenerate: _onTopicRegenerate,
@@ -145,6 +155,7 @@ export const TopicsList = memo(function TopicsList({
         filteredCount={sortedTopics.length}
         totalCount={topics.length}
         hasActiveFilters={false}
+        isGeneratingMore={isGeneratingMore}
         onRegenerateTopics={onRegenerateTopics}
         onBackToWizard={onBackToWizard}
       />
@@ -154,6 +165,7 @@ export const TopicsList = memo(function TopicsList({
         topics={sortedTopics}
         selectedTopicIds={[]}
         viewMode="grid"
+        newlyAddedTopicIds={newlyAddedTopicIds}
         onTopicSelect={() => {}}
         onTopicSave={handleTopicSave}
         onNavigateToContent={handleNavigateToContent}
@@ -164,14 +176,36 @@ export const TopicsList = memo(function TopicsList({
       {/* Footer Actions */}
       <div className="pt-6 border-t">
         <div className="flex items-center justify-center gap-4">
-          <Button
-            onClick={onRegenerateTopics}
-            variant="default"
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Generate More
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                className="gap-2"
+                disabled={isGeneratingMore}
+              >
+                {isGeneratingMore ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {isGeneratingMore ? "Generating..." : "Generate More"}
+                {!isGeneratingMore && <ChevronDown className="h-3 w-3" />}
+              </Button>
+            </DropdownMenuTrigger>
+            {!isGeneratingMore && (
+              <DropdownMenuContent align="center">
+                <DropdownMenuItem onClick={() => onRegenerateTopics(5)}>
+                  Generate 5 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRegenerateTopics(10)}>
+                  Generate 10 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRegenerateTopics(15)}>
+                  Generate 15 more topics
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            )}
+          </DropdownMenu>
           <Button onClick={onBackToWizard} variant="outline" className="gap-2">
             <RotateCcw className="h-4 w-4" />
             Start Over
