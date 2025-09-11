@@ -109,38 +109,24 @@ export const selectionIndicatorVariants: Variants = {
 // ============================================================================
 
 export const questionTransitionVariants: Variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 300 : -300,
+  enter: () => ({
     opacity: 0,
-    scale: 0.95,
   }),
 
   center: {
     zIndex: 1,
-    x: 0,
     opacity: 1,
-    scale: 1,
   },
 
-  exit: (direction: number) => ({
+  exit: () => ({
     zIndex: 0,
-    x: direction < 0 ? 300 : -300,
     opacity: 0,
-    scale: 0.95,
   }),
 };
 
 export const questionTransition: Transition = {
-  x: {
-    type: "spring",
-    stiffness: 400,
-    damping: 35,
-  },
   opacity: {
-    duration: ANIMATION_TIMING.fast,
-  },
-  scale: {
-    duration: ANIMATION_TIMING.fast,
+    duration: ANIMATION_TIMING.normal,
     ease: EASING.easeInOut,
   },
 };
