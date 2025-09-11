@@ -66,8 +66,23 @@ export const TopicsList = memo(function TopicsList({
   const [selectedTopicForDrawer, setSelectedTopicForDrawer] =
     useState<GeneratedTopic | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
 
   const router = useRouter();
+
+  // Handler for topic selection
+  const handleTopicSelect = useCallback(
+    (topicId: string, isSelected: boolean) => {
+      setSelectedTopicIds((prev) => {
+        if (isSelected) {
+          return [...prev, topicId];
+        } else {
+          return prev.filter((id) => id !== topicId);
+        }
+      });
+    },
+    [],
+  );
 
   // Sort topics by overall score (highest first) - no filters
   const sortedTopics = useMemo(() => {
@@ -163,10 +178,10 @@ export const TopicsList = memo(function TopicsList({
       {/* Topics Display */}
       <TopicsGrid
         topics={sortedTopics}
-        selectedTopicIds={[]}
+        selectedTopicIds={selectedTopicIds}
         viewMode="grid"
         newlyAddedTopicIds={newlyAddedTopicIds}
-        onTopicSelect={() => {}}
+        onTopicSelect={handleTopicSelect}
         onTopicSave={handleTopicSave}
         onNavigateToContent={handleNavigateToContent}
         onViewDetails={handleViewDetails}

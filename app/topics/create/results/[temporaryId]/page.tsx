@@ -232,10 +232,21 @@ export default function ResultsPage() {
   };
 
   const handleStartOver = () => {
-    setShowStartOverDialog(true);
+    console.log("🔄 Start Over button clicked - opening dialog");
+    console.log("Current dialog state:", showStartOverDialog);
+    // Temporarily skip dialog for testing
+    if (
+      confirm(
+        "Start Over? This will clear all your current progress and return to the beginning of the topic builder.",
+      )
+    ) {
+      handleConfirmStartOver();
+    }
+    // setShowStartOverDialog(true);
   };
 
   const handleConfirmStartOver = () => {
+    console.log("✅ Confirm Start Over clicked - executing reset");
     try {
       // Reset wizard state and navigate to create page
       resetWizard();
@@ -243,7 +254,12 @@ export default function ResultsPage() {
         "🔄 Starting over: Wizard reset, navigating to topic builder",
       );
       setShowStartOverDialog(false);
+      // Navigate to create page and force a full refresh to ensure clean state
       router.push("/topics/create");
+      // Small delay then refresh to ensure the store state is applied
+      setTimeout(() => {
+        window.location.href = "/topics/create";
+      }, 100);
     } catch (error) {
       console.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
@@ -481,7 +497,13 @@ export default function ResultsPage() {
       </div>
 
       {/* Start Over Confirmation Dialog */}
-      <Dialog open={showStartOverDialog} onOpenChange={setShowStartOverDialog}>
+      <Dialog
+        open={showStartOverDialog}
+        onOpenChange={(open) => {
+          console.log("🔄 Dialog state changed:", open);
+          setShowStartOverDialog(open);
+        }}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Start Over?</DialogTitle>

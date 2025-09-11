@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { MultiSelectCard } from "@/components/ui/typeform/multi-select-card";
 import { TextInput } from "@/components/ui/typeform/text-input";
-import { useToneRecommendations } from "@/hooks/use-contextual-suggestions";
 import {
   getMotionVariants,
   questionItemVariants,
@@ -124,12 +123,6 @@ export function ToneQuestion({
   };
 
   const currentTones = formData.tone || [];
-
-  // Get contextual tone recommendations based on selected purposes (Task 7.2)
-  const contextualRecommendations = useToneRecommendations(
-    formData.purpose,
-    currentTones,
-  );
   const hasOtherSelected = currentTones.includes("other");
 
   return (
@@ -139,76 +132,28 @@ export function ToneQuestion({
       animate="visible"
       className="space-y-4"
     >
-      {/* Show contextual recommendations first if available */}
-      {contextualRecommendations.length > 0 && (
-        <motion.div variants={itemVariants} className="space-y-3 mb-6">
-          <div className="text-sm font-medium text-muted-foreground">
-            Recommended tones for your content purpose:
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {contextualRecommendations.map((toneValue) => {
-              const option = TONE_OPTIONS.find(
-                (opt) => opt.value === toneValue,
-              );
-              if (!option) return null;
-
-              const isSelected = currentTones.includes(toneValue);
-              return (
-                <MultiSelectCard
-                  key={`recommended-tone-${toneValue}`}
-                  label={option.label}
-                  description={getDescription(toneValue)}
-                  value={toneValue}
-                  selected={isSelected}
-                  onToggle={() => handleToggle(toneValue)}
-                  icon={getIcon(toneValue)}
-                  disabled={isLoading}
-                  className={cn(
-                    "transition-all duration-200 h-auto p-4 border-primary/40",
-                    isSelected && "ring-2 ring-primary shadow-lg",
-                    !isSelected && "bg-primary/5 ring-1 ring-primary/20",
-                  )}
-                  delay={0.1}
-                />
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
       {/* All tone options */}
-      <div className="space-y-3">
-        {contextualRecommendations.length > 0 && (
-          <div className="text-sm font-medium text-muted-foreground">
-            All tone options:
-          </div>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {TONE_OPTIONS.map((option, index) => {
-            const isRecommended = contextualRecommendations.includes(
-              option.value as ToneType,
-            );
-            const isSelected = currentTones.includes(option.value as ToneType);
-            return (
-              <MultiSelectCard
-                key={`tone-${option.value}-${index}`}
-                label={option.label}
-                description={getDescription(option.value)}
-                value={option.value}
-                selected={isSelected}
-                onToggle={() => handleToggle(option.value as ToneType)}
-                icon={getIcon(option.value)}
-                disabled={isLoading}
-                className={cn(
-                  "transition-all duration-200 h-auto p-4",
-                  isSelected && "ring-2 ring-primary shadow-lg",
-                  isRecommended && "opacity-50", // Dim recommended items in full list
-                )}
-                delay={index * 0.1}
-              />
-            );
-          })}
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {TONE_OPTIONS.map((option, index) => {
+          const isSelected = currentTones.includes(option.value as ToneType);
+          return (
+            <MultiSelectCard
+              key={`tone-${option.value}-${index}`}
+              label={option.label}
+              description={getDescription(option.value)}
+              value={option.value}
+              selected={isSelected}
+              onToggle={() => handleToggle(option.value as ToneType)}
+              icon={getIcon(option.value)}
+              disabled={isLoading}
+              className={cn(
+                "transition-all duration-200 h-auto p-4",
+                isSelected && "ring-2 ring-primary shadow-lg",
+              )}
+              delay={index * 0.1}
+            />
+          );
+        })}
       </div>
 
       {/* Custom Tone Input */}
