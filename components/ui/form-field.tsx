@@ -1,16 +1,6 @@
 import { AlertCircle, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface FormFieldProps {
-  children: React.ReactNode;
-  label?: string;
-  error?: string;
-  warning?: string;
-  isValid?: boolean;
-  required?: boolean;
-  className?: string;
-  htmlFor?: string;
-}
+import type { FormFieldProps } from "@/types/ui-components";
 
 export function FormField({
   children,

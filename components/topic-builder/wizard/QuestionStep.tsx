@@ -9,7 +9,7 @@
 
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import {
@@ -20,18 +20,70 @@ import {
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig, WizardProgress } from "@/types/wizard";
-import { AudienceQuestion } from "../questions/AudienceQuestion";
-import { ContentTypeQuestion } from "../questions/ContentTypeQuestion";
-import { IndustryQuestion } from "../questions/IndustryQuestion";
-import { NotesQuestion } from "../questions/NotesQuestion";
-import { NumTopicsQuestion } from "../questions/NumTopicsQuestion";
-import { PlatformQuestion } from "../questions/PlatformQuestion";
-import { PurposeQuestion } from "../questions/PurposeQuestion";
-import { ReviewQuestion } from "../questions/ReviewQuestion";
-import { SubjectQuestion } from "../questions/SubjectQuestion";
-import { ToneQuestion } from "../questions/ToneQuestion";
-// Question-specific components
-import { WizardModeQuestion } from "../questions/WizardModeQuestion";
+
+// Dynamic imports for question components
+const AudienceQuestion = lazy(() =>
+  import("../questions/AudienceQuestion").then((m) => ({
+    default: m.AudienceQuestion,
+  })),
+);
+const ContentTypeQuestion = lazy(() =>
+  import("../questions/ContentTypeQuestion").then((m) => ({
+    default: m.ContentTypeQuestion,
+  })),
+);
+const IndustryQuestion = lazy(() =>
+  import("../questions/IndustryQuestion").then((m) => ({
+    default: m.IndustryQuestion,
+  })),
+);
+const NotesQuestion = lazy(() =>
+  import("../questions/NotesQuestion").then((m) => ({
+    default: m.NotesQuestion,
+  })),
+);
+const NumTopicsQuestion = lazy(() =>
+  import("../questions/NumTopicsQuestion").then((m) => ({
+    default: m.NumTopicsQuestion,
+  })),
+);
+const PlatformQuestion = lazy(() =>
+  import("../questions/PlatformQuestion").then((m) => ({
+    default: m.PlatformQuestion,
+  })),
+);
+const PurposeQuestion = lazy(() =>
+  import("../questions/PurposeQuestion").then((m) => ({
+    default: m.PurposeQuestion,
+  })),
+);
+const ReviewQuestion = lazy(() =>
+  import("../questions/ReviewQuestion").then((m) => ({
+    default: m.ReviewQuestion,
+  })),
+);
+const SubjectQuestion = lazy(() =>
+  import("../questions/SubjectQuestion").then((m) => ({
+    default: m.SubjectQuestion,
+  })),
+);
+const ToneQuestion = lazy(() =>
+  import("../questions/ToneQuestion").then((m) => ({
+    default: m.ToneQuestion,
+  })),
+);
+const WizardModeQuestion = lazy(() =>
+  import("../questions/WizardModeQuestion").then((m) => ({
+    default: m.WizardModeQuestion,
+  })),
+);
+
+// Loading fallback component
+const QuestionLoadingFallback = () => (
+  <div className="flex items-center justify-center p-8">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 export interface QuestionStepProps {
   /** Question configuration */
@@ -218,7 +270,9 @@ export function QuestionStep({
           isLoading ? "opacity-75 pointer-events-none" : "opacity-100",
         )}
       >
-        {questionComponent}
+        <Suspense fallback={<QuestionLoadingFallback />}>
+          {questionComponent}
+        </Suspense>
         {navigationControls}
       </QuestionCard>
     </div>

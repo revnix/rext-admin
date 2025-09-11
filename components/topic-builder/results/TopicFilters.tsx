@@ -24,39 +24,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-
-export type ViewMode = "grid" | "list";
-export type SortOption = "relevance" | "freshness" | "novelty" | "overall";
-
-interface TopicFiltersProps {
-  // Sorting
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
-
-  // View mode
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-
-  // Tag filtering
-  availableTags: string[];
-  selectedTags: string[];
-  onTagsChange: (tags: string[]) => void;
-
-  // Audience filtering
-  availableAudiences?: string[];
-  selectedAudiences?: string[];
-  onAudiencesChange?: (audiences: string[]) => void;
-
-  // Score filtering
-  minScore?: number;
-  onMinScoreChange?: (score: number) => void;
-
-  // Filter state
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-
-  className?: string;
-}
+import type {
+  SortOption,
+  TopicFiltersProps,
+} from "@/types/topic-builder-results";
 
 export function TopicFilters({
   sortBy,

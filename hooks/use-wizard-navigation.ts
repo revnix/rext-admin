@@ -454,7 +454,7 @@ export function useWizardNavigation({
     updateFormData,
 
     // React Hook Form integration
-    form: form as UseFormReturn<TopicBuilderFormData>,
+    form: form as any,
 
     // Navigation state
     currentQuestionIndex,

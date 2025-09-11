@@ -1,18 +1,34 @@
 "use client";
 
-import { ArrowLeft, FileText, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useBulkTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import type { SortOption, ViewMode } from "@/types/topic-builder-results";
 import { BulkActions } from "./BulkActions";
-import { TopicCard } from "./TopicCard";
-import { TopicDetailDrawer } from "./TopicDetailDrawer";
-import { type SortOption, TopicFilters, type ViewMode } from "./TopicFilters";
+import { EmptyStates } from "./EmptyStates";
+import { TopicFilters } from "./TopicFilters";
+import { TopicsGrid } from "./TopicsGrid";
+import { TopicsHeader } from "./TopicsHeader";
+
+// Lazy load TopicDetailDrawer for better performance
+const TopicDetailDrawer = lazy(() =>
+  import("./TopicDetailDrawer").then((module) => ({
+    default: module.TopicDetailDrawer,
+  })),
+);
 
 interface TopicsListProps {
   topics: GeneratedTopic[];
@@ -35,18 +51,18 @@ interface TopicsListProps {
   className?: string;
 }
 
-export function TopicsList({
+export const TopicsList = memo(function TopicsList({
   topics,
   onTopicSave,
-  onTopicEdit,
-  onTopicRegenerate,
-  onTopicExport,
-  onTopicDelete,
+  onTopicEdit: _onTopicEdit,
+  onTopicRegenerate: _onTopicRegenerate,
+  onTopicExport: _onTopicExport,
+  onTopicDelete: _onTopicDelete,
   onBulkSave,
   onBackToWizard,
   onRegenerateTopics,
-  onNavigateToTopics,
-  onGenerateNew,
+  onNavigateToTopics: _onNavigateToTopics,
+  onGenerateNew: _onGenerateNew,
   className,
 }: TopicsListProps) {
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
@@ -207,10 +223,10 @@ export function TopicsList({
 
   const handleBulkExport = useCallback(
     async (topics: GeneratedTopic[], format: "json" | "csv") => {
-      if (!onTopicExport) return;
+      if (!_onTopicExport) return;
 
       try {
-        await onTopicExport(topics, format);
+        await _onTopicExport(topics, format);
         console.log(
           `Bulk exported ${topics.length} topics as ${format.toUpperCase()}`,
         );
@@ -219,17 +235,17 @@ export function TopicsList({
         throw error;
       }
     },
-    [onTopicExport],
+    [_onTopicExport],
   );
 
   const handleBulkDelete = useCallback(
     async (topicIds: string[]) => {
-      if (!onTopicDelete) return;
+      if (!_onTopicDelete) return;
 
       try {
         // Delete each topic individually since onTopicDelete expects single IDs
         for (const topicId of topicIds) {
-          await onTopicDelete(topicId);
+          await _onTopicDelete(topicId);
         }
         console.log(`Bulk deleted ${topicIds.length} topics`);
         // Clear selection after successful delete
@@ -239,7 +255,7 @@ export function TopicsList({
         throw error;
       }
     },
-    [onTopicDelete],
+    [_onTopicDelete],
   );
 
   const handleNavigateToContent = useCallback(
@@ -317,17 +333,7 @@ export function TopicsList({
   if (topics.length === 0) {
     return (
       <div className={cn("space-y-6", className)}>
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Topics Generated</h3>
-          <p className="text-muted-foreground mb-4">
-            Something went wrong during topic generation.
-          </p>
-          <Button onClick={onBackToWizard} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Topic Builder
-          </Button>
-        </div>
+        <EmptyStates variant="no-topics" onBackToWizard={onBackToWizard} />
       </div>
     );
   }
@@ -337,20 +343,13 @@ export function TopicsList({
     return (
       <div className={cn("space-y-6", className)}>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" />
-                Generated Topics
-              </h2>
-              <p className="text-muted-foreground">
-                {topics.length} topic{topics.length !== 1 ? "s" : ""} generated,
-                0 match your filters
-              </p>
-            </div>
-          </div>
-
-          <Separator />
+          <TopicsHeader
+            filteredCount={0}
+            totalCount={topics.length}
+            hasActiveFilters={hasActiveFilters}
+            onRegenerateTopics={onRegenerateTopics}
+            onBackToWizard={onBackToWizard}
+          />
 
           <TopicFilters
             sortBy={sortBy}
@@ -370,18 +369,12 @@ export function TopicsList({
           />
         </div>
 
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">
-            No Topics Match Your Filters
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            Try adjusting your filter criteria to see more topics.
-          </p>
-          <Button onClick={handleClearFilters} variant="outline">
-            Clear All Filters
-          </Button>
-        </div>
+        <EmptyStates
+          variant="no-matches"
+          totalTopics={topics.length}
+          onBackToWizard={onBackToWizard}
+          onClearFilters={handleClearFilters}
+        />
       </div>
     );
   }
@@ -390,44 +383,13 @@ export function TopicsList({
     <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
-              Generated Topics
-            </h2>
-            <p className="text-muted-foreground">
-              {filteredAndSortedTopics.length} of {topics.length} topic
-              {topics.length !== 1 ? "s" : ""}{" "}
-              {hasActiveFilters
-                ? "match your filters"
-                : "ready for your content"}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={onRegenerateTopics}
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Regenerate
-            </Button>
-            <Button
-              onClick={onBackToWizard}
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Edit Settings
-            </Button>
-          </div>
-        </div>
-
-        <Separator />
+        <TopicsHeader
+          filteredCount={filteredAndSortedTopics.length}
+          totalCount={topics.length}
+          hasActiveFilters={hasActiveFilters}
+          onRegenerateTopics={onRegenerateTopics}
+          onBackToWizard={onBackToWizard}
+        />
 
         {/* Filter Controls */}
         <TopicFilters
@@ -453,35 +415,23 @@ export function TopicsList({
           selectedTopicIds={selectedTopicIds}
           onSelectAll={handleSelectAll}
           onBulkSave={handleBulkSave}
-          onBulkExport={onTopicExport ? handleBulkExport : undefined}
-          onBulkDelete={onTopicDelete ? handleBulkDelete : undefined}
+          onBulkExport={_onTopicExport ? handleBulkExport : undefined}
+          onBulkDelete={_onTopicDelete ? handleBulkDelete : undefined}
           onBulkNavigateToContent={handleBulkNavigateToContent}
         />
       </div>
 
       {/* Topics Display */}
-      <div
-        className={cn(
-          "gap-4",
-          viewMode === "grid"
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            : "flex flex-col space-y-4",
-        )}
-      >
-        {filteredAndSortedTopics.map((topic) => (
-          <TopicCard
-            key={topic.id}
-            topic={topic}
-            isSelected={selectedTopicIds.includes(topic.id)}
-            onSelect={handleTopicSelect}
-            onSave={handleTopicSave}
-            onNavigateToContent={handleNavigateToContent}
-            onViewDetails={handleViewDetails}
-            onCopy={handleCopyTopic}
-            className={viewMode === "list" ? "max-w-none" : undefined}
-          />
-        ))}
-      </div>
+      <TopicsGrid
+        topics={filteredAndSortedTopics}
+        selectedTopicIds={selectedTopicIds}
+        viewMode={viewMode}
+        onTopicSelect={handleTopicSelect}
+        onTopicSave={handleTopicSave}
+        onNavigateToContent={handleNavigateToContent}
+        onViewDetails={handleViewDetails}
+        onCopyTopic={handleCopyTopic}
+      />
 
       {/* Footer Actions */}
       <div className="pt-6 border-t">
@@ -502,14 +452,22 @@ export function TopicsList({
       </div>
 
       {/* Topic Detail Drawer */}
-      <TopicDetailDrawer
-        topic={selectedTopicForDrawer}
-        isOpen={isDrawerOpen}
-        onClose={handleCloseDrawer}
-        onSave={handleTopicSave}
-        onNavigateToContent={handleNavigateToContent}
-        onCopy={handleCopyTopic}
-      />
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+            Loading...
+          </div>
+        }
+      >
+        <TopicDetailDrawer
+          topic={selectedTopicForDrawer}
+          isOpen={isDrawerOpen}
+          onClose={handleCloseDrawer}
+          onSave={handleTopicSave}
+          onNavigateToContent={handleNavigateToContent}
+          onCopy={handleCopyTopic}
+        />
+      </Suspense>
     </div>
   );
-}
+});

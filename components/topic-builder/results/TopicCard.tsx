@@ -1,32 +1,15 @@
 "use client";
 
-import { Check, Copy, Eye, PenTool, Save } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { memo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CircularProgress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { GeneratedTopic } from "@/types/topic-builder";
+import type { TopicCardProps } from "@/types/topic-builder-results";
+import { TopicCardActions } from "./TopicCardActions";
+import { TopicScoreDisplay } from "./TopicScoreDisplay";
 
-interface TopicCardProps {
-  topic: GeneratedTopic;
-  onSelect?: (id: string, selected: boolean) => void;
-  isSelected?: boolean;
-  onSave?: (topicId: string) => Promise<void> | void;
-  onNavigateToContent?: (topicId: string) => void;
-  onViewDetails?: (topicId: string) => void;
-  onCopy?: (topicId: string) => void;
-  className?: string;
-}
-
-export function TopicCard({
+export const TopicCard = memo(function TopicCard({
   topic,
   onSelect,
   isSelected = false,
@@ -38,42 +21,9 @@ export function TopicCard({
 }: TopicCardProps) {
   const [_isHovered, setIsHovered] = useState(false);
 
-  // Calculate overall score for circular progress
-  const overallScore = Math.round(
-    ((topic.scores.relevance + topic.scores.freshness + topic.scores.novelty) /
-      3) *
-      100,
-  );
-
   const handleCardClick = () => {
     if (onViewDetails) {
       onViewDetails(topic.id);
-    }
-  };
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onSave) {
-      await onSave(topic.id);
-    }
-  };
-
-  const handleWriteContent = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onNavigateToContent) {
-      onNavigateToContent(topic.id);
-    }
-  };
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onCopy) {
-      onCopy(topic.id);
-    } else {
-      // Default copy behavior
-      await navigator.clipboard.writeText(
-        `${topic.title}\n${topic.description || topic.angle}`,
-      );
     }
   };
 
@@ -105,130 +55,20 @@ export function TopicCard({
           )}
 
           {/* Main Content Area */}
-          <div className="flex items-start gap-4">
-            {/* Circular Progress Score */}
-            <div className="flex-shrink-0 mt-1">
-              <CircularProgress
-                value={overallScore}
-                size="md"
-                className="text-primary"
-              />
-            </div>
+          <TopicScoreDisplay topic={topic} />
 
-            {/* Title and Basic Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-lg line-clamp-2 pr-2 group-hover:text-primary transition-colors">
-                  {topic.title}
-                </h3>
-
-                {/* Saved Indicator */}
-                {(topic._optimisticSaved || topic.is_saved) && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "inline-flex h-5 w-5 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm flex-shrink-0",
-                          topic._optimisticSaved && !topic.is_saved
-                            ? "bg-amber-500"
-                            : "bg-green-500",
-                        )}
-                      >
-                        <Check className="h-3 w-3" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">
-                        {topic._optimisticSaved && !topic.is_saved
-                          ? "Saving..."
-                          : "Saved"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-
-              {/* Action Chips */}
-              <div className="flex items-center gap-2 mb-3">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="h-7 px-2 gap-1 text-xs"
-                      onClick={handleCardClick}
-                    >
-                      <Eye className="h-3 w-3" />
-                      View
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>View topic details</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {onSave && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="h-7 px-2 gap-1 text-xs"
-                        onClick={handleSave}
-                        disabled={topic._isBeingSaved || topic.is_saved}
-                      >
-                        <Save className="h-3 w-3" />
-                        {topic.is_saved ? "Saved" : "Save"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {topic.is_saved ? "Already saved" : "Save to library"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                {onNavigateToContent && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="h-7 px-2 gap-1 text-xs"
-                        onClick={handleWriteContent}
-                      >
-                        <PenTool className="h-3 w-3" />
-                        Write
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Create content for this topic</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="h-7 px-2 gap-1 text-xs"
-                      onClick={handleCopy}
-                    >
-                      <Copy className="h-3 w-3" />
-                      Copy
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy topic to clipboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
+          {/* Action Chips */}
+          <div className="flex-1 min-w-0">
+            <TopicCardActions
+              topic={topic}
+              onSave={onSave}
+              onNavigateToContent={onNavigateToContent}
+              onViewDetails={onViewDetails}
+              onCopy={onCopy}
+            />
           </div>
         </CardContent>
       </Card>
     </TooltipProvider>
   );
-}
+});

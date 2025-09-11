@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 import { useWizardNavigation } from "@/hooks/use-wizard-navigation";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
@@ -44,7 +44,7 @@ export interface TopicBuilderWizardProps {
   };
 }
 
-export function TopicBuilderWizard({
+export const TopicBuilderWizard = memo(function TopicBuilderWizard({
   initialData,
   onComplete,
   autoAdvance = false,
@@ -119,4 +119,4 @@ export function TopicBuilderWizard({
       autoAdvance={wizardProps.autoAdvance}
     />
   );
-}
+});

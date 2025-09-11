@@ -13,9 +13,9 @@ import type { AnimationTiming } from "@/types/typeform";
 // ============================================================================
 
 export const ANIMATION_TIMING: AnimationTiming = {
-  fast: 0.15,
-  normal: 0.25,
-  slow: 0.35,
+  fast: 0.1,
+  normal: 0.15,
+  slow: 0.25,
   celebration: 1.0,
 } as const;
 
@@ -133,14 +133,14 @@ export const questionTransitionVariants: Variants = {
 export const questionTransition: Transition = {
   x: {
     type: "spring",
-    stiffness: 300,
-    damping: 30,
+    stiffness: 400,
+    damping: 35,
   },
   opacity: {
     duration: ANIMATION_TIMING.fast,
   },
   scale: {
-    duration: ANIMATION_TIMING.normal,
+    duration: ANIMATION_TIMING.fast,
     ease: EASING.easeInOut,
   },
 };
