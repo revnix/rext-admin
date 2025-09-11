@@ -442,12 +442,6 @@ export function TopicsList({
             isSelected={selectedTopicIds.includes(topic.id)}
             onSelect={handleTopicSelect}
             onSave={handleTopicSave}
-            onEdit={onTopicEdit}
-            onRegenerate={onTopicRegenerate}
-            onExport={onTopicExport}
-            onDelete={onTopicDelete}
-            onNavigateToTopics={onNavigateToTopics}
-            onGenerateNew={onGenerateNew}
             onNavigateToContent={handleNavigateToContent}
             className={viewMode === "list" ? "max-w-none" : undefined}
           />

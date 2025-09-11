@@ -336,7 +336,7 @@
         "testStrategy": "Conduct eye-tracking and click-through tests. Validate optimistic updates and rollback on failure. Test mobile touch interactions.",
         "priority": "high",
         "dependencies": [9],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -344,7 +344,7 @@
             "description": "Create a card layout that displays only the essential information by default: topic title, circular progress score, and action chips. Ensure the design is visually clean and uses shadcn/ui Card components styled with Tailwind.",
             "dependencies": [],
             "details": "Focus on clear hierarchy and spacing. Remove or hide detailed information, descriptions, and tags by default. Ensure the card is responsive and accessible.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -353,7 +353,7 @@
             "description": "Add interactive elements (e.g., chevron icon, hover/tap area) to reveal additional topic details on user interaction, following progressive disclosure best practices.",
             "dependencies": ["10.1"],
             "details": "Use UI patterns such as accordions or expandable sections to show more information only when requested. Ensure transitions are smooth and maintain user context. Support both mouse and touch interactions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -362,7 +362,7 @@
             "description": "Add action chips for View, Save, Write, and Copy, ensuring they are visually distinct and accessible. Implement optimistic UI updates for save actions and use React.memo for performance.",
             "dependencies": ["10.1"],
             "details": "Design chips with proper icons, hover/touch states, and ARIA labels. Ensure optimistic feedback for save actions and handle rollback on failure. Test for accessibility and responsiveness.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1177,7 +1177,7 @@
     ],
     "metadata": {
       "created": "2025-09-10T15:13:13.831Z",
-      "updated": "2025-09-11T01:41:17.497Z",
+      "updated": "2025-09-11T02:05:17.858Z",
       "description": "Tasks for master context"
     }
   }
