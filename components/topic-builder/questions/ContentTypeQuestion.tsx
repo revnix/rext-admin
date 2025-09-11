@@ -114,7 +114,7 @@ export function ContentTypeQuestion({
             onSelect={() => handleSelect(option.value as ContentType)}
             icon={getIcon(option.value)}
             disabled={isLoading}
-            className="transition-all duration-200 h-auto p-4"
+            className="transition-all duration-150 h-auto p-4"
             delay={index * 0.1}
           />
         ))}

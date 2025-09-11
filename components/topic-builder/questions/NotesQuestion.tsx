@@ -102,7 +102,7 @@ export function NotesQuestion({
                 disabled={isLoading}
                 className={cn(
                   "px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg",
-                  "transition-colors duration-200 text-left",
+                  "transition-colors duration-150 text-left cursor-pointer",
                   "hover:text-foreground text-muted-foreground",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}

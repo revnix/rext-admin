@@ -85,7 +85,7 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
         type="button"
         className={cn(
           // Base styles
-          "relative w-full rounded-lg border-2 bg-card text-card-foreground transition-colors",
+          "relative w-full rounded-lg border-2 bg-card text-card-foreground transition-all duration-150",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-60",
           // Touch-friendly minimum height with consistent sizing

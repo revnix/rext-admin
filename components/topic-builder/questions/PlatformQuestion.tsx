@@ -129,7 +129,7 @@ export function PlatformQuestion({
             icon={getIcon(option.value)}
             disabled={isLoading}
             className={cn(
-              "transition-all duration-200 h-auto p-4",
+              "transition-all duration-150 h-auto p-4",
               formData.platform === option.value &&
                 "ring-2 ring-primary shadow-lg",
             )}

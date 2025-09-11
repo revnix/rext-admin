@@ -31,7 +31,7 @@ export const TopicCard = memo(function TopicCard({
     <TooltipProvider>
       <Card
         className={cn(
-          "transition-all duration-200 cursor-pointer group relative",
+          "transition-all duration-150 cursor-pointer group relative",
           "hover:shadow-lg hover:shadow-primary/10 hover:border-primary/20",
           isSelected && "ring-2 ring-primary",
           className,

@@ -127,7 +127,7 @@ export function WizardProgress({
                   onClick={() => handleStepClick(stepNumber)}
                   disabled={stepNumber > current}
                   className={cn(
-                    "w-2 h-2 rounded-full transition-all duration-200",
+                    "w-2 h-2 rounded-full transition-all duration-150",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
                     state === "completed" && "bg-primary",
                     state === "current" && "bg-primary scale-125",
@@ -205,7 +205,7 @@ export function WizardProgress({
                   onClick={() => isClickable && handleStepClick(stepNumber)}
                   disabled={!isClickable}
                   className={cn(
-                    "relative flex items-center justify-center rounded-full transition-all duration-200",
+                    "relative flex items-center justify-center rounded-full transition-all duration-150",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
                     showStepNumbers ? "w-8 h-8 text-sm font-medium" : "w-3 h-3",
                     state === "completed" && [

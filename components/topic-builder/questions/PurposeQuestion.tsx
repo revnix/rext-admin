@@ -144,7 +144,7 @@ export function PurposeQuestion({
               icon={getIcon(option.value)}
               disabled={isLoading}
               className={cn(
-                "transition-all duration-200 h-auto p-4",
+                "transition-all duration-150 h-auto p-4",
                 isSelected && "ring-2 ring-primary shadow-lg",
                 isRecommended &&
                   !isSelected &&

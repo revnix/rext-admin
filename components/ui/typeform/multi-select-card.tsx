@@ -77,8 +77,8 @@ export function MultiSelectCard({
         disabled={disabled}
         className={cn(
           "w-full h-auto min-h-[80px] p-4 text-left justify-start relative",
-          "border-2 transition-all duration-200",
-          "hover:shadow-md hover:border-primary/50 hover:cursor-pointer",
+          "border-2 transition-all duration-150",
+          "hover:shadow-md hover:border-primary/50",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
           selected && [
