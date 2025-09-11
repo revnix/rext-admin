@@ -65,6 +65,12 @@ export interface TopicsHeaderProps {
   isGeneratingMore?: boolean;
   onRegenerateTopics: (count: number) => void;
   onBackToWizard: () => void;
+  // Bulk save functionality
+  selectedTopicIds?: string[];
+  selectedTopics?: GeneratedTopic[];
+  isBulkSaving?: boolean;
+  onBulkSave?: (topicIds: string[]) => void;
+  onClearSelection?: () => void;
 }
 
 // Topics Grid

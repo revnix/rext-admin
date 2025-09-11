@@ -30,7 +30,7 @@ import {
   useBulkTopicSaveMutation,
   useTopicSaveMutation,
 } from "@/hooks/useTopicMutations";
-import { getSession } from "@/lib/session-storage";
+import { getSession, updateSession } from "@/lib/session-storage";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { SessionData } from "@/types/session";
 import type { GeneratedTopic } from "@/types/topic-builder";
@@ -305,20 +305,39 @@ export default function ResultsPage() {
         // Append the new topics to existing ones (in store and session)
         appendGeneratedTopics(result.topics);
 
-        // Also update the session state to reflect the new topics
-        setState((prev) => ({
-          ...prev,
-          session: prev.session
-            ? {
-                ...prev.session,
-                topics: [...prev.session.topics, ...result.topics],
-              }
-            : null,
-        }));
+        // Update session storage to persist the new topics
+        const updatedSession = updateSession(temporaryId, result.topics, true);
 
-        console.log(
-          `✅ Successfully generated and added ${result.topics.length} more topics`,
-        );
+        if (updatedSession) {
+          // Update the local state with the persisted session data
+          setState((prev) => ({
+            ...prev,
+            session: updatedSession,
+          }));
+
+          console.log(
+            `✅ Successfully generated and persisted ${result.topics.length} more topics`,
+            {
+              totalTopicsNow: updatedSession.topics.length,
+              newTopicsAdded: result.topics.length,
+            },
+          );
+        } else {
+          // Fallback: update local state only (session might have expired)
+          setState((prev) => ({
+            ...prev,
+            session: prev.session
+              ? {
+                  ...prev.session,
+                  topics: [...prev.session.topics, ...result.topics],
+                }
+              : null,
+          }));
+
+          console.warn(
+            `⚠️ Could not persist to session storage, updated local state only`,
+          );
+        }
 
         // Clear highlights after 3 seconds
         setTimeout(() => {

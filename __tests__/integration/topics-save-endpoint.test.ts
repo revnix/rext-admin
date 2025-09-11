@@ -95,11 +95,11 @@ describe("/api/topics/save endpoint", () => {
 
     // Single save validation
     expect(content).toContain("topic.title");
-    expect(content).toContain("topic.description");
+    expect(content).toContain("title is required");
 
     // Bulk save validation with index tracking
     expect(content).toContain("Topic at index");
-    expect(content).toContain("title and description are required");
+    expect(content).toContain("title is required");
   });
 
   it("should use backendService.saveTopics for both single and bulk saves", () => {

@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronDown, Loader2, Plus, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  Plus,
+  RotateCcw,
+  Save,
+  Sparkles,
+} from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +26,11 @@ export const TopicsHeader = memo(function TopicsHeader({
   isGeneratingMore = false,
   onRegenerateTopics,
   onBackToWizard,
+  selectedTopicIds = [],
+  selectedTopics = [],
+  isBulkSaving = false,
+  onBulkSave,
+  onClearSelection,
 }: TopicsHeaderProps) {
   return (
     <div className="space-y-4">
@@ -66,6 +78,52 @@ export const TopicsHeader = memo(function TopicsHeader({
               </DropdownMenuContent>
             )}
           </DropdownMenu>
+
+          {/* Save Selected Topics Button - Show when topics are selected */}
+          {selectedTopicIds.length > 0 && onBulkSave && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                onBulkSave(selectedTopicIds);
+              }}
+              disabled={(() => {
+                const unsaved = selectedTopics.filter(
+                  (topic) => !topic.is_saved && !topic._optimisticSaved,
+                );
+                return (
+                  isBulkSaving ||
+                  selectedTopicIds.length === 0 ||
+                  unsaved.length === 0
+                );
+              })()}
+              className="gap-1.5"
+            >
+              {isBulkSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {(() => {
+                if (isBulkSaving) return "Saving...";
+
+                const unsaved = selectedTopics.filter(
+                  (topic) => !topic.is_saved && !topic._optimisticSaved,
+                );
+
+                if (unsaved.length === 0 && selectedTopics.length > 0) {
+                  return "Already Saved";
+                }
+
+                if (unsaved.length === selectedTopics.length) {
+                  return `Save ${selectedTopicIds.length} Topic${selectedTopicIds.length !== 1 ? "s" : ""}`;
+                }
+
+                return `Save ${unsaved.length} Topic${unsaved.length !== 1 ? "s" : ""}`;
+              })()}
+            </Button>
+          )}
+
           <Button
             onClick={onBackToWizard}
             variant="outline"

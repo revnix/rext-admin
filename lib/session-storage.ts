@@ -156,6 +156,61 @@ export const getSession = (id: string): SessionData | null => {
 };
 
 /**
+ * Update an existing session with new topics (append or replace)
+ *
+ * @param id Session ID to update
+ * @param newTopics New topics to add/replace
+ * @param append If true, append to existing topics; if false, replace all topics
+ * @returns Updated session data or null if session not found
+ */
+export const updateSession = (
+  id: string,
+  newTopics: SessionData["topics"],
+  append: boolean = true,
+): SessionData | null => {
+  if (!isBrowser()) {
+    console.warn("Session storage not available: not in browser environment");
+    return null;
+  }
+
+  try {
+    const existingSession = getSession(id);
+    if (!existingSession) {
+      console.warn(`Session not found for update: ${id}`);
+      return null;
+    }
+
+    const updatedTopics = append
+      ? [...existingSession.topics, ...newTopics]
+      : newTopics;
+
+    const updatedSession: SessionData = {
+      ...existingSession,
+      topics: updatedTopics,
+      // Keep the original createdAt but extend expiration
+      expiresAt: Date.now() + SESSION_EXPIRY,
+    };
+
+    const key = getSessionKey(id);
+    localStorage.setItem(key, JSON.stringify(updatedSession));
+
+    console.log(`Session updated: ${id}`, {
+      previousTopicsCount: existingSession.topics.length,
+      newTopicsCount: newTopics.length,
+      totalTopicsCount: updatedTopics.length,
+      operation: append ? "append" : "replace",
+    });
+
+    return updatedSession;
+  } catch (error) {
+    console.error("Failed to update session:", error);
+    throw new Error(
+      "Unable to update session. Storage may be full or unavailable.",
+    );
+  }
+};
+
+/**
  * Remove a specific session from storage
  */
 export const removeSession = (id: string): void => {

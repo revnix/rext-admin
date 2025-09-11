@@ -71,13 +71,40 @@ export async function POST(request: NextRequest) {
         const result = await backendService.saveTopics(topics);
 
         // Process the bulk result
-        if (result.saved_count > 0) {
-          topics.forEach((topic: unknown, i: number) => {
+        if (result.success && result.saved_count > 0) {
+          // Mark the number of topics as successfully saved according to the API response
+          for (
+            let i = 0;
+            i < Math.min(result.saved_count, topics.length);
+            i++
+          ) {
             results.push({
               index: i,
               success: true,
-              topic: topic, // Backend doesn't return individual saved topics
+              topic: topics[i],
               message: "Saved successfully",
+            });
+          }
+
+          // Mark any remaining topics as failed if not all were saved
+          if (result.saved_count < topics.length) {
+            for (let i = result.saved_count; i < topics.length; i++) {
+              errors.push({
+                index: i,
+                success: false,
+                error: "Topic was not saved by the backend",
+                topic: topics[i],
+              });
+            }
+          }
+        } else {
+          // All topics failed if the operation wasn't successful
+          topics.forEach((topic: unknown, i: number) => {
+            errors.push({
+              index: i,
+              success: false,
+              error: result.message || "Save operation failed",
+              topic: topic,
             });
           });
         }
@@ -121,13 +148,14 @@ export async function POST(request: NextRequest) {
       const result = await backendService.saveTopics([topic]);
 
       return Response.json({
-        success: true,
+        success: result.success && result.saved_count > 0,
         bulk_save: false,
         topic: topic, // Backend doesn't return individual saved topics
         message:
-          result.saved_count > 0
+          result.success && result.saved_count > 0
             ? "Topic saved successfully"
-            : "Failed to save topic",
+            : result.message || "Failed to save topic",
+        saved_count: result.saved_count,
         saved_at: new Date().toISOString(),
       });
     }

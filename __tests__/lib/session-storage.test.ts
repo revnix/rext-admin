@@ -15,6 +15,7 @@ import {
   removeSession,
   saveSession,
   sessionStorageAPI,
+  updateSession,
 } from "@/lib/session-storage";
 import type { SessionData } from "@/types/session";
 import type {
@@ -104,6 +105,40 @@ const mockTopic: GeneratedTopic = {
   },
   tags: ["technology", "testing"],
 };
+
+const mockTopic2: GeneratedTopic = {
+  id: "topic-2",
+  title: "Test Topic 2",
+  angle: "Second test angle",
+  description: "Second test description",
+  channel_fit: ["blog"],
+  audience_fit: ["designers"],
+  why_it_works: "Second test explanation",
+  scores: {
+    relevance: 0.9,
+    freshness: 0.6,
+    novelty: 0.8,
+  },
+  tags: ["design", "testing"],
+};
+
+const mockTopic3: GeneratedTopic = {
+  id: "topic-3",
+  title: "Test Topic 3",
+  angle: "Third test angle",
+  description: "Third test description",
+  channel_fit: ["social"],
+  audience_fit: ["marketers"],
+  why_it_works: "Third test explanation",
+  scores: {
+    relevance: 0.7,
+    freshness: 0.8,
+    novelty: 0.7,
+  },
+  tags: ["marketing", "testing"],
+};
+
+const mockTopics = [mockTopic, mockTopic2, mockTopic3];
 
 const mockSessionData = {
   id: "test-session-123",
@@ -449,6 +484,126 @@ describe("getAllSessionMetadata", () => {
     expect(allMetadata).toHaveLength(2);
     expect(allMetadata.every((m) => m.industry === "technology")).toBe(true);
     expect(allMetadata.every((m) => m.contentType === "blog-post")).toBe(true);
+  });
+});
+
+// ============================================================================
+// UPDATE SESSION TESTS
+// ============================================================================
+
+describe("updateSession", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jest.clearAllMocks();
+  });
+
+  it("should append new topics to existing session", () => {
+    const sessionId = generateSessionId();
+    const originalTopics = [mockTopics[0]];
+    const originalSession = {
+      ...mockSessionData,
+      id: sessionId,
+      topics: originalTopics,
+    };
+
+    // Save original session
+    saveSession(originalSession);
+
+    // New topics to append
+    const newTopics = [mockTopics[1], mockTopics[2]];
+
+    // Update session with append=true (default)
+    const updatedSession = updateSession(sessionId, newTopics, true);
+
+    expect(updatedSession).not.toBeNull();
+    expect(updatedSession?.topics).toHaveLength(3);
+    expect(updatedSession?.topics).toEqual([...originalTopics, ...newTopics]);
+
+    // Verify it was persisted
+    const retrieved = getSession(sessionId);
+    expect(retrieved?.topics).toHaveLength(3);
+  });
+
+  it("should replace topics when append=false", () => {
+    const sessionId = generateSessionId();
+    const originalTopics = [mockTopics[0], mockTopics[1]];
+    const originalSession = {
+      ...mockSessionData,
+      id: sessionId,
+      topics: originalTopics,
+    };
+
+    // Save original session
+    saveSession(originalSession);
+
+    // New topics to replace with
+    const newTopics = [mockTopics[2]];
+
+    // Update session with append=false
+    const updatedSession = updateSession(sessionId, newTopics, false);
+
+    expect(updatedSession).not.toBeNull();
+    expect(updatedSession?.topics).toHaveLength(1);
+    expect(updatedSession?.topics).toEqual(newTopics);
+
+    // Verify it was persisted
+    const retrieved = getSession(sessionId);
+    expect(retrieved?.topics).toHaveLength(1);
+  });
+
+  it("should extend expiration time when updating", () => {
+    const sessionId = generateSessionId();
+    const originalSession = { ...mockSessionData, id: sessionId };
+
+    // Save original session
+    saveSession(originalSession);
+    const original = getSession(sessionId);
+    const originalExpiration = original?.expiresAt;
+
+    // Wait a bit then update
+    jest.advanceTimersByTime(1000);
+
+    const updatedSession = updateSession(sessionId, [mockTopics[0]]);
+
+    expect(updatedSession).not.toBeNull();
+    expect(updatedSession?.expiresAt).toBeGreaterThan(originalExpiration!);
+  });
+
+  it("should return null for non-existent session", () => {
+    const nonExistentId = generateSessionId();
+    const result = updateSession(nonExistentId, [mockTopics[0]]);
+
+    expect(result).toBeNull();
+  });
+
+  it("should handle empty topics array", () => {
+    const sessionId = generateSessionId();
+    const originalSession = {
+      ...mockSessionData,
+      id: sessionId,
+      topics: mockTopics,
+    };
+
+    saveSession(originalSession);
+
+    // Update with empty array and replace
+    const updatedSession = updateSession(sessionId, [], false);
+
+    expect(updatedSession).not.toBeNull();
+    expect(updatedSession?.topics).toHaveLength(0);
+  });
+
+  it("should not update when not in browser environment", () => {
+    const originalWindow = global.window;
+    // @ts-ignore
+    delete global.window;
+
+    const sessionId = generateSessionId();
+    const result = updateSession(sessionId, [mockTopics[0]]);
+
+    expect(result).toBeNull();
+
+    global.window = originalWindow;
   });
 });
 

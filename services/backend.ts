@@ -190,7 +190,7 @@ export class BackendService {
     const payload: SaveTopicRequest = { topics: transformationResult.data };
 
     return this.executeWithRetryGeneric(
-      "/api/topics/save",
+      "/api/topic/save-topic",
       payload,
       requestId,
       "POST",
@@ -704,7 +704,7 @@ export class BackendService {
   }
 
   /**
-   * Validate generic backend response
+   * Validate generic backend response and transform external API format
    */
   private async validateGenericResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
@@ -715,6 +715,42 @@ export class BackendService {
     }
 
     const result = await response.json();
+
+    // Transform external API response format to internal SaveTopicResponse format
+    if (
+      result &&
+      typeof result === "object" &&
+      "status" in result &&
+      "message" in result
+    ) {
+      const isSuccess = result.status === "success";
+
+      // Extract saved count from message like "2 topics saved successfully."
+      let savedCount = 0;
+      if (isSuccess && result.message && typeof result.message === "string") {
+        const match = result.message.match(/(\d+)\s+topics?\s+saved/i);
+        if (match) {
+          savedCount = parseInt(match[1], 10);
+        }
+      }
+
+      // Transform to internal format
+      const transformedResult = {
+        success: isSuccess,
+        saved_count: savedCount,
+        message:
+          result.message ||
+          (isSuccess ? "Topics saved successfully" : "Failed to save topics"),
+      };
+
+      console.log("Transformed external API response:", {
+        original: result,
+        transformed: transformedResult,
+      });
+
+      return transformedResult as T;
+    }
+
     return result as T;
   }
 

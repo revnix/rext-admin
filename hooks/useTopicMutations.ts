@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getQueryClient } from "@/lib/query-client";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { SaveTopicResponse } from "@/types/backend";
@@ -44,7 +45,7 @@ export function useTopicSaveMutation() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          topics: [topic],
+          topic: topic,
         }),
       });
 
@@ -76,11 +77,21 @@ export function useTopicSaveMutation() {
       if (context?.topicId) {
         revertOptimisticSave(context.topicId);
       }
+
+      // Show error toast
+      toast.error(`Failed to save topic "${topic.title}": ${error.message}`);
     },
     onSuccess: (data, topic) => {
       console.log(
         `Topic ${topic.id} saved successfully - ${data.saved_count} topics saved`,
       );
+
+      // Show success toast
+      if (data.success && data.saved_count > 0) {
+        toast.success(`Topic "${topic.title}" saved successfully!`);
+      } else {
+        toast.error(`Failed to save topic "${topic.title}"`);
+      }
     },
     onSettled: (_data, _error, topic) => {
       // Always clear loading state
@@ -176,11 +187,27 @@ export function useBulkTopicSaveMutation() {
           revertOptimisticSave(id);
         }
       }
+
+      // Show error toast
+      toast.error(`Failed to save ${topics.length} topics: ${error.message}`);
     },
     onSuccess: (data, topics) => {
       console.log(
         `Bulk save completed - ${data.saved_count} of ${topics.length} topics saved`,
       );
+
+      // Show success toast
+      if (data.success && data.saved_count > 0) {
+        if (data.saved_count === topics.length) {
+          toast.success(`Successfully saved all ${topics.length} topics!`);
+        } else {
+          toast.success(
+            `Saved ${data.saved_count} of ${topics.length} topics successfully`,
+          );
+        }
+      } else {
+        toast.error(`Failed to save topics`);
+      }
     },
     onSettled: (_data, _error, topics) => {
       // Clear loading state for all topics
