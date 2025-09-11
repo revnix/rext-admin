@@ -1,0 +1,183 @@
+// JSON Representation of the Simplified Topic Builder Wizard
+
+// The wizard has been simplified to focus on essential questions only.
+// All deprecated fields (audience_size, demographic_age, demographic_location, reader_level,
+// content_goal, keywords, exclude, focus, region, language, is_ymyl, fresh_vs_evergreen,
+// safe_vs_original, industry_specific_focus, additional_notes) have been completely removed.
+// This creates a TypeForm-like single-question-per-screen experience.
+
+// Current Questions (TypeForm-style flow):
+
+[
+  {
+    "id": "wizardMode",
+    "text": "How would you like to start?",
+    "type": "radio",
+    "required": true,
+    "options": [
+      "I have a specific topic in mind",
+      "I want to explore my industry"
+    ]
+  },
+  {
+    "id": "industry",
+    "text": "Select your industry or domain",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "Technology",
+      "Healthcare",
+      "Finance",
+      "Education",
+      "Travel",
+      "Food",
+      "Fashion",
+      "Business",
+      "Marketing",
+      "Science",
+      "Sports",
+      "Lifestyle",
+      "Government",
+      "Real Estate",
+      "E-commerce",
+      "HR",
+      "Legal",
+      "Fitness",
+      "Other"
+    ]
+  },
+  {
+    "id": "industry_other",
+    "text": "Please specify the industry",
+    "type": "text",
+    "required": true,
+    "dependsOn": { "id": "industry", "value": "Other" }
+  },
+  {
+    "id": "subject",
+    "text": "What is the main topic or subject you want content topics for?",
+    "type": "text",
+    "required": true,
+    "dependsOn": { "id": "wizardMode", "value": "subject-first" },
+    "sampleAnswers": [
+      "Artificial Intelligence in healthcare",
+      "Budget travel tips for students",
+      "Sustainable fashion trends"
+    ]
+  },
+  {
+    "id": "audience",
+    "text": "Who are you creating this for?",
+    "type": "multiselect",
+    "required": true,
+    "maxSelections": 5,
+    "sampleAnswers": [
+      "Small business owners",
+      "College students",
+      "Working professionals",
+      "New parents"
+    ]
+  },
+  {
+    "id": "content_type",
+    "text": "What type of content will this be?",
+    "type": "radio",
+    "required": true,
+    "options": ["Blog Post or Article", "Social Media Post"]
+  },
+  {
+    "id": "platform",
+    "text": "Where will you publish this?",
+    "type": "radio",
+    "required": true,
+    "options": [
+      "Facebook",
+      "Instagram",
+      "Twitter",
+      "LinkedIn",
+      "TikTok",
+      "YouTube"
+    ],
+    "dependsOn": { "id": "content_type", "value": "Social Media Post" }
+  },
+  {
+    "id": "purpose",
+    "text": "What do you want to achieve?",
+    "type": "multiselect",
+    "required": true,
+    "maxSelections": 3,
+    "options": [
+      "Educate/Inform",
+      "Entertain/Engage",
+      "Inspire/Motivate",
+      "Persuade/Convince",
+      "Promote a Product/Service",
+      "Drive SEO Traffic",
+      "Establish Thought Leadership",
+      "Other"
+    ]
+  },
+  {
+    "id": "purpose_other",
+    "text": "Please specify your purpose",
+    "type": "text",
+    "required": true,
+    "dependsOn": { "id": "purpose", "value": "Other" }
+  },
+  {
+    "id": "tone",
+    "text": "What tone should the content have?",
+    "type": "multiselect",
+    "required": true,
+    "maxSelections": 3,
+    "options": [
+      "Professional/Formal",
+      "Casual/Conversational",
+      "Friendly/Warm",
+      "Humorous/Playful",
+      "Serious/Academic",
+      "Technical/Analytical",
+      "Simple/Accessible",
+      "Inspirational/Uplifting",
+      "Other"
+    ]
+  },
+  {
+    "id": "tone_other",
+    "text": "Please specify your preferred tone",
+    "type": "text",
+    "required": true,
+    "dependsOn": { "id": "tone", "value": "Other" }
+  },
+  {
+    "id": "notes",
+    "text": "Any other requirements?",
+    "type": "textarea",
+    "required": false,
+    "advanced": true,
+    "sampleAnswers": [
+      "Focus on beginner-friendly content",
+      "Include practical examples",
+      "Keep it action-oriented"
+    ]
+  },
+  {
+    "id": "num_topics",
+    "text": "How many topics do you need?",
+    "type": "slider",
+    "required": false,
+    "advanced": true,
+    "min": 1,
+    "max": 20,
+    "default": 5
+  }
+]
+
+// DEPRECATED FIELDS COMPLETELY REMOVED:
+// All the following fields have been completely removed from schemas, validation, and transformations:
+// - audience_size, demographic_age, demographic_location, reader_level
+// - content_goal, keywords, exclude, focus, region, language
+// - is_ymyl, fresh_vs_evergreen, safe_vs_original
+// - industry_specific_focus, additional_notes
+//
+// These fields are no longer supported and will cause validation errors if used.

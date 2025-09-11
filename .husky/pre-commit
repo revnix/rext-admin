@@ -1,0 +1,9 @@
+#!/bin/sh
+# Run formatting first
+npm run format
+
+# Then run linting 
+npm run lint
+
+# Finally run type checking
+npx tsc --noEmit
