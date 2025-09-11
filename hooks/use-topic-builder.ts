@@ -7,18 +7,18 @@ import { classifyError, isOnline } from "@/lib/error-utils";
 import { generateSessionId, saveSession } from "@/lib/session-storage";
 import {
   createInitialFormData,
-  prepareFormDataForAPI,
   updateFormDataForContentTypeChange,
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
-import type { BackendError, BackendErrorType } from "@/types/backend";
+import type { BackendError } from "@/types/backend";
 import type {
   GeneratedTopic,
   TopicBuilderDraft,
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
+import { useTopicGenerationMutation } from "./useTopicGenerationMutation";
 
 const STORAGE_KEY = "topic-builder-draft";
 
@@ -55,7 +55,7 @@ interface UseTopicBuilderReturn {
   getFieldError: (field: keyof TopicBuilderFormData) => string | undefined;
 
   // Topic generation
-  generateTopics: () => Promise<void>;
+  generateTopics: (overrideFormData?: TopicBuilderFormData) => Promise<void>;
   clearTopics: () => void;
   retryGeneration: () => Promise<void>;
   cancelGeneration: () => void;
@@ -75,6 +75,9 @@ interface UseTopicBuilderReturn {
 export const useTopicBuilder = (): UseTopicBuilderReturn => {
   // Navigation
   const router = useRouter();
+
+  // TanStack Query mutation for topic generation
+  const generateMutation = useTopicGenerationMutation();
 
   // Core state
   const [formData, setFormData] = useState<TopicBuilderFormData>(
@@ -391,7 +394,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     [currentStep, validateStep],
   );
 
-  // Topic generation with enhanced error handling
+  // Topic generation using TanStack Query mutation
   const generateTopics = useCallback(
     async (overrideFormData?: TopicBuilderFormData): Promise<void> => {
       // Check online status first
@@ -415,119 +418,21 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         }
       }
 
-      setIsGenerating(true);
+      // Clear previous errors
       setErrors({});
       setGenerationError(null);
 
-      // Create new AbortController for this request
-      const controller = new AbortController();
-      setAbortController(controller);
-
-      const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      setCurrentRequestId(requestId);
-
-      console.log(`Starting topic generation request: ${requestId}`);
+      // Use override data if provided, otherwise use current state
+      const dataToUse = overrideFormData || formData;
 
       try {
-        // Use override data if provided, otherwise use current state
-        const dataToUse = overrideFormData || formData;
-        const apiData = prepareFormDataForAPI(dataToUse);
-
-        // Debug logging to see what's being sent
-        console.log("Form data being sent:", apiData);
-        console.log("Required fields check:", {
-          wizardMode: apiData.wizardMode,
-          industry: apiData.industry,
-          content_type: apiData.content_type,
-          purpose: apiData.purpose,
-          tone: apiData.tone,
+        // Use the TanStack Query mutation
+        const result = await generateMutation.mutateAsync({
+          formData: dataToUse,
         });
-
-        const response = await fetch("/api/topics/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Request-ID": requestId,
-          },
-          body: JSON.stringify({ formData: apiData }),
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-
-          // If the API returned a structured error, create a BackendError object
-          if (errorData.error_code && errorData.details) {
-            // Try to parse the details field in case it contains a JSON-stringified BackendError
-            let parsedDetails = errorData.details;
-            let actualErrorType = errorData.error_code;
-            let context = {
-              responseStatus: response.status,
-              apiError: errorData,
-            };
-
-            try {
-              const detailsObj = JSON.parse(errorData.details);
-              if (
-                detailsObj &&
-                typeof detailsObj === "object" &&
-                detailsObj.type
-              ) {
-                // The details contain the actual error information
-                actualErrorType = detailsObj.type;
-                parsedDetails = errorData.details; // Keep original for technicalMessage
-
-                // If the parsed details have context, use that too
-                if (detailsObj.context) {
-                  context = { ...context, ...detailsObj.context };
-                }
-              }
-            } catch {
-              // Not JSON, use as-is
-            }
-
-            const backendError: BackendError = {
-              type: actualErrorType as BackendErrorType,
-              message: errorData.error,
-              technicalMessage: parsedDetails,
-              statusCode: response.status,
-              severity:
-                response.status >= 500
-                  ? "high"
-                  : response.status >= 400
-                    ? "medium"
-                    : "low",
-              recoveryActions: ["retry", "contact_support"],
-              isRetryable: response.status >= 500,
-              requestId: errorData.request_id,
-              timestamp: new Date().toISOString(),
-              context: context,
-            };
-            throw backendError;
-          } else {
-            // Fallback for unstructured errors
-            const errorMessage =
-              errorData.error ||
-              `HTTP ${response.status}: ${response.statusText}`;
-            throw new Error(
-              `Backend API error: ${response.status} ${errorMessage}`,
-            );
-          }
-        }
-
-        const result = await response.json();
 
         if (result.topics && Array.isArray(result.topics)) {
-          // Add unique IDs to topics if not present
-          const topicsWithIds = result.topics.map(
-            (topic: unknown, index: number) => ({
-              ...(topic as GeneratedTopic),
-              id:
-                (topic as GeneratedTopic).id || `topic_${Date.now()}_${index}`,
-            }),
-          );
-
-          setGeneratedTopics(topicsWithIds);
+          setGeneratedTopics(result.topics);
           setGenerationError(null); // Clear any previous errors
 
           // Auto-save session and navigate to results page
@@ -535,12 +440,12 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             const sessionId = generateSessionId();
             saveSession({
               id: sessionId,
-              topics: topicsWithIds,
+              topics: result.topics,
               formData: dataToUse,
             });
 
             console.log(`Session saved successfully: ${sessionId}`, {
-              topicCount: topicsWithIds.length,
+              topicCount: result.topics.length,
               formData: dataToUse,
             });
 
@@ -555,68 +460,26 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           throw new Error("Invalid response format from topic generation API");
         }
       } catch (error) {
-        // Handle AbortError specifically (user-initiated cancellation)
-        if (error instanceof Error && error.name === "AbortError") {
-          console.log(`Topic generation aborted: ${requestId}`);
+        // The mutation hook handles error toasts, but we need to update local state
+        const classifiedError =
+          error &&
+          typeof error === "object" &&
+          "type" in error &&
+          "message" in error
+            ? (error as BackendError)
+            : classifyError(error);
 
-          // Enhanced analytics logging for cancellations
-          console.log("ANALYTICS: AbortError caught in generateTopics", {
-            requestId,
-            timestamp: new Date().toISOString(),
-            source: "fetch_abort",
-          });
+        console.error("Topic generation failed:", classifiedError);
 
-          // Don't set error state for user-initiated cancellations
-          setGenerationError(null);
-          setErrors({});
+        setGenerationError(classifiedError);
 
-          // Toast notification handled in cancelGeneration function
-          // No additional toast here to avoid double notifications
-        } else {
-          // Check if it's already a BackendError, otherwise classify it
-          const classifiedError =
-            error &&
-            typeof error === "object" &&
-            "type" in error &&
-            "message" in error
-              ? (error as BackendError)
-              : classifyError(error, requestId);
-          console.error("Topic generation failed:", classifiedError);
-
-          // Enhanced error logging
-          console.log("ANALYTICS: Generation error", {
-            requestId,
-            errorType: classifiedError.type,
-            timestamp: new Date().toISOString(),
-            technicalMessage: classifiedError.technicalMessage,
-          });
-
-          setGenerationError(classifiedError);
-
-          // Also set legacy error format for backward compatibility
-          setErrors({
-            generation: classifiedError.message,
-          });
-
-          // Error toast notification
-          toast.error("Generation failed", {
-            description: classifiedError.message,
-            action: classifiedError.recoveryActions.includes("retry")
-              ? {
-                  label: "Retry",
-                  onClick: () => generateTopics(),
-                }
-              : undefined,
-            duration: 6000,
-          });
-        }
-      } finally {
-        setIsGenerating(false);
-        setCurrentRequestId(null);
-        setAbortController(null);
+        // Also set legacy error format for backward compatibility
+        setErrors({
+          generation: classifiedError.message,
+        });
       }
     },
-    [formData, validateStep, connectionStatus, router],
+    [formData, validateStep, connectionStatus, router, generateMutation],
   );
 
   const clearTopics = useCallback(() => {
@@ -630,17 +493,13 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     await generateTopics();
   }, [generateTopics]);
 
-  // Cancel current generation
+  // Cancel current generation (legacy support for existing components)
   const cancelGeneration = useCallback(() => {
-    if (abortController && currentRequestId) {
-      console.log(`Cancelling topic generation request: ${currentRequestId}`);
-      // Abort the in-flight request
-      abortController.abort();
+    if (generateMutation.isPending) {
+      // The mutation doesn't have a built-in cancel method, but we can handle it gracefully
+      console.log("Generation cancellation requested (mutation will complete)");
 
-      // Clear states immediately for better UX
-      setIsGenerating(false);
-      setCurrentRequestId(null);
-      setAbortController(null);
+      // Clear local states for UX
       setGenerationError(null);
       setErrors({});
 
@@ -653,7 +512,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
       // Enhanced logging for analytics
       console.log("ANALYTICS: Topic generation cancelled", {
-        requestId: currentRequestId,
         timestamp: new Date().toISOString(),
         userAgent:
           typeof window !== "undefined"
@@ -666,7 +524,16 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         },
       });
     }
-  }, [abortController, currentRequestId, formData]);
+
+    // Legacy support: also handle direct fetch cancellation if still active
+    if (abortController && currentRequestId) {
+      console.log(`Cancelling direct fetch request: ${currentRequestId}`);
+      abortController.abort();
+      setIsGenerating(false);
+      setCurrentRequestId(null);
+      setAbortController(null);
+    }
+  }, [generateMutation.isPending, abortController, currentRequestId, formData]);
 
   // Clear generation error
   const clearGenerationError = useCallback(() => {
@@ -721,7 +588,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
     // Generated topics state
     generatedTopics,
-    isGenerating,
+    isGenerating: generateMutation.isPending || isGenerating,
     generationError,
     isOnline: connectionStatus,
 
