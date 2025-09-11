@@ -64,9 +64,20 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
         ref={ref}
         className={cn(
           "w-full max-w-5xl mx-auto",
-          "px-6 py-8 md:px-8 md:py-12",
+          // Responsive spacing with content-aware adjustments
+          "px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6",
+          // Dynamic spacing based on content length
+          description && description.length > 100 ? "lg:py-8" : "lg:py-6",
           className,
         )}
+        style={
+          {
+            // CSS custom properties for responsive spacing
+            "--question-spacing-base": "1rem",
+            "--question-spacing-md": "1.5rem",
+            "--question-spacing-lg": "2rem",
+          } as React.CSSProperties
+        }
         variants={contentVariants}
         initial="hidden"
         animate="visible"
@@ -75,21 +86,16 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
         aria-describedby={ariaDescribedBy}
         {...props}
       >
-        {/* Progress indicator (if provided) */}
-        {progress && (
-          <motion.div
-            className="mb-8 text-sm text-muted-foreground"
-            variants={itemVariants}
-          >
-            Question {progress.current} of {progress.total}
-          </motion.div>
-        )}
+        {/* Progress indicator moved to top in QuestionRenderer */}
 
         {/* Question Title */}
         <motion.legend
           id={titleId}
           className={cn(
-            "text-3xl md:text-4xl font-bold leading-tight mb-4",
+            // Standardized heading hierarchy with responsive sizing
+            "text-2xl sm:text-3xl md:text-4xl font-bold leading-tight",
+            // Responsive margin using spacing scale
+            "mb-1 sm:mb-2 md:mb-3",
             "text-foreground",
             error ? "text-destructive" : "",
           )}
@@ -110,7 +116,10 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
           <motion.p
             id={descriptionId}
             className={cn(
-              "text-lg text-muted-foreground mb-8 leading-relaxed",
+              // Standardized description typography
+              "text-base sm:text-lg text-muted-foreground leading-relaxed",
+              // Responsive margin based on content length
+              "mb-2 sm:mb-3 md:mb-4",
               "max-w-prose",
             )}
             variants={itemVariants}
@@ -126,8 +135,10 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
             role="alert"
             aria-live="polite"
             className={cn(
-              "mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20",
-              "text-destructive font-medium",
+              // Responsive error spacing
+              "mb-2 sm:mb-3 md:mb-4 p-3 sm:p-4 rounded-lg",
+              "bg-destructive/10 border border-destructive/20",
+              "text-sm sm:text-base text-destructive font-medium",
             )}
             variants={itemVariants}
           >
@@ -137,7 +148,15 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
         )}
 
         {/* Question Content */}
-        <motion.div className="mb-8" variants={itemVariants}>
+        <motion.div
+          className={cn(
+            // Responsive content spacing
+            "mb-2 sm:mb-3 md:mb-4",
+            // Consistent spacing across all question types
+            "[&>*]:mb-3 [&>*:last-child]:mb-0",
+          )}
+          variants={itemVariants}
+        >
           {children}
         </motion.div>
 

@@ -69,15 +69,23 @@ export const QuestionRenderer = memo(function QuestionRenderer({
 
   return (
     <>
-      {/* Progress Indicator */}
+      {/* Progress Indicator moved to top with enhanced visibility */}
       {showProgress && (
-        <WizardProgress
-          current={progress.current}
-          total={progress.total}
-          percentage={progress.percentage}
-          onStepClick={handleGoToQuestion}
-          questions={questions}
-        />
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="max-w-5xl mx-auto px-6 py-3">
+            <div className="mb-2 text-sm font-medium text-foreground">
+              Question {progress.current} of {progress.total}
+            </div>
+            <WizardProgress
+              current={progress.current}
+              total={progress.total}
+              percentage={progress.percentage}
+              onStepClick={handleGoToQuestion}
+              questions={questions}
+              compact={true}
+            />
+          </div>
+        </div>
       )}
 
       {/* Question Container */}
