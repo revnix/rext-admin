@@ -198,6 +198,72 @@ export class BackendService {
   }
 
   /**
+   * Delete topics from the backend API via Next.js API route
+   *
+   * @param topicIds - Array of topic IDs to delete from the backend
+   * @returns Promise resolving to delete operation results including success status and count
+   * @throws {BackendError} When the delete operation fails after all retry attempts
+   *
+   * @example
+   * ```typescript
+   * const topicIds = ["topic_1", "topic_2"];
+   * const result = await backendService.deleteTopics(topicIds);
+   * console.log(`Deleted ${result.deleted_count} topics successfully`);
+   * ```
+   */
+  async deleteTopics(topicIds: string[]): Promise<{
+    success: boolean;
+    deleted_count: number;
+    message: string;
+    topic_ids: string[];
+  }> {
+    if (!topicIds || topicIds.length === 0) {
+      throw new Error("No topic IDs provided for deletion");
+    }
+
+    const requestId = generateRequestId();
+
+    try {
+      const response = await fetch("/api/topics/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": requestId,
+        },
+        body: JSON.stringify({ topic_ids: topicIds }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        throw new Error(
+          errorData.error ||
+            `API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      console.log(
+        `✅ Successfully deleted ${result.deleted_count || topicIds.length} topics via Next.js API`,
+      );
+
+      return {
+        success: result.success || true,
+        deleted_count: result.deleted_count || topicIds.length,
+        message:
+          result.message || `Deleted ${topicIds.length} topics successfully`,
+        topic_ids: result.topic_ids || topicIds,
+      };
+    } catch (error) {
+      const classifiedError = classifyError(error, requestId);
+      this.logError(`Failed to delete topics via Next.js API`, classifiedError);
+      throw classifiedError;
+    }
+  }
+
+  /**
    * Retrieve all saved topics from the Next.js API route (which proxies to backend)
    *
    * @returns Promise resolving to all saved topics and total count

@@ -27,6 +27,7 @@ import {
   TitleDisplay,
 } from "@/components/ui/topic-cell-formatters";
 import { useTopics } from "@/hooks/use-topics";
+import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
 
 export default function TopicsPage() {
@@ -42,6 +43,9 @@ export default function TopicsPage() {
     isBackgroundRefetching,
   } = useTopics();
 
+  // Delete mutation
+  const deleteMutation = useTopicDeleteMutation();
+
   // Log successful data loads for debugging
   if (status === "success" && topics.length > 0) {
     console.log(`Topics page: Loaded ${topics.length} topics successfully`);
@@ -51,6 +55,17 @@ export default function TopicsPage() {
   const handleRetry = async () => {
     console.log("Retrying topics fetch...");
     await refetch();
+  };
+
+  // Handle topic deletion
+  const handleTopicDelete = async (topicId: string, topicName: string) => {
+    try {
+      console.log("Deleting topic:", topicId, topicName);
+      await deleteMutation.mutateAsync([topicId]);
+    } catch (error) {
+      console.error("Failed to delete topic:", error);
+      // Error toast is handled by the mutation hook
+    }
   };
 
   const columns: Column<TopicData>[] = [
@@ -167,18 +182,18 @@ export default function TopicsPage() {
       tooltip: "Use this topic to create content",
     },
     {
-      label: "Archive Topic",
+      label: "Delete Topic",
       icon: <Trash2 className="h-4 w-4" />,
       onClick: (row: TopicData) => {
-        console.log("Archive topic:", row.name);
-        // TODO: Implement archive/delete functionality
+        handleTopicDelete(row.id, row.name);
       },
       variant: "destructive" as const,
       requiresConfirmation: true,
-      confirmationTitle: "Archive Topic",
+      confirmationTitle: "Delete Topic",
       confirmationDescription:
-        "Are you sure you want to archive this topic? It will be removed from the active list.",
-      tooltip: "Archive this topic",
+        "Are you sure you want to delete this topic? This action cannot be undone.",
+      tooltip: "Delete this topic permanently",
+      disabled: deleteMutation.isPending,
     },
   ];
 

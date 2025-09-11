@@ -6,6 +6,16 @@ import type { SaveTopicResponse } from "@/types/backend";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 /**
+ * Response type for topic deletion operations
+ */
+interface DeleteTopicResponse {
+  success: boolean;
+  deleted_count: number;
+  message: string;
+  topic_ids: string[];
+}
+
+/**
  * TanStack Query mutation hook for saving topics with optimistic updates
  *
  * Provides:
@@ -218,6 +228,137 @@ export function useBulkTopicSaveMutation() {
       // Invalidate queries that might list saved topics
       queryClient.invalidateQueries({
         queryKey: ["saved-topics"],
+      });
+    },
+  });
+}
+
+/**
+ * TanStack Query mutation hook for deleting topics with optimistic updates
+ *
+ * Provides:
+ * - Optimistic UI updates (topics disappear immediately)
+ * - Automatic rollback on API errors
+ * - Cache invalidation for saved topics
+ * - Support for single or multiple topic deletion
+ *
+ * @example
+ * ```tsx
+ * const deleteMutation = useTopicDeleteMutation();
+ *
+ * const handleDelete = async (topicIds) => {
+ *   try {
+ *     await deleteMutation.mutateAsync(topicIds);
+ *     toast.success(`Deleted ${topicIds.length} topics`);
+ *   } catch (error) {
+ *     toast.error(`Failed to delete topics: ${error.message}`);
+ *   }
+ * };
+ * ```
+ */
+export function useTopicDeleteMutation() {
+  const queryClient = getQueryClient();
+
+  return useMutation<
+    DeleteTopicResponse,
+    Error,
+    string[],
+    { originalTopics?: unknown[] }
+  >({
+    mutationFn: async (topicIds: string[]): Promise<DeleteTopicResponse> => {
+      // Call the Next.js API route which handles backend communication server-side
+      const response = await fetch("/api/topics/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic_ids: topicIds,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          error: `HTTP ${response.status}`,
+        }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    },
+    onMutate: async (topicIds) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["topics"] });
+
+      // Snapshot the previous value
+      const previousTopics = queryClient.getQueryData(["topics"]);
+
+      // Optimistically update by removing deleted topics from cache
+      queryClient.setQueryData(["topics"], (old: unknown) => {
+        if (!old || typeof old !== "object" || !("topics" in old)) return old;
+        const typedOld = old as {
+          topics: Array<{ id: string }>;
+          total_count?: number;
+        };
+        if (!typedOld.topics) return old;
+        return {
+          ...typedOld,
+          topics: typedOld.topics.filter(
+            (topic) => !topicIds.includes(topic.id),
+          ),
+          total_count: Math.max(
+            0,
+            (typedOld.total_count || 0) - topicIds.length,
+          ),
+        };
+      });
+
+      console.log(
+        `Starting optimistic delete for ${topicIds.length} topics:`,
+        topicIds,
+      );
+
+      return { originalTopics: previousTopics as unknown[] };
+    },
+    onError: (error, topicIds, context) => {
+      console.error(`Delete failed for ${topicIds.length} topics:`, error);
+
+      // Rollback optimistic changes
+      if (context?.originalTopics) {
+        queryClient.setQueryData(["topics"], context.originalTopics);
+      }
+
+      // Show error toast
+      const topicsText = topicIds.length === 1 ? "topic" : "topics";
+      toast.error(
+        `Failed to delete ${topicIds.length} ${topicsText}: ${error.message}`,
+      );
+    },
+    onSuccess: (data, topicIds) => {
+      console.log(
+        `Successfully deleted ${data.deleted_count} of ${topicIds.length} topics`,
+      );
+
+      // Show success toast
+      if (data.success && data.deleted_count > 0) {
+        const topicsText = data.deleted_count === 1 ? "topic" : "topics";
+        if (data.deleted_count === topicIds.length) {
+          toast.success(
+            `Successfully deleted ${data.deleted_count} ${topicsText}!`,
+          );
+        } else {
+          toast.success(
+            `Deleted ${data.deleted_count} of ${topicIds.length} topics`,
+          );
+        }
+      } else {
+        toast.error(`Failed to delete topics`);
+      }
+    },
+    onSettled: () => {
+      // Invalidate and refetch topics to ensure UI is in sync
+      queryClient.invalidateQueries({
+        queryKey: ["topics"],
       });
     },
   });
