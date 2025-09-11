@@ -1,16 +1,25 @@
 "use client";
 
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2, Plus, RotateCcw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { SessionNotifications } from "@/components/session-notifications";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ErrorAlert } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
 import { getSession } from "@/lib/session-storage";
+import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { SessionData } from "@/types/session";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -24,12 +33,15 @@ export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
   const temporaryId = params.temporaryId as string;
+  const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   const [state, setState] = useState<ResultsPageState>({
     session: null,
     isLoading: true,
     error: null,
   });
+
+  const { resetWizard } = useTopicBuilderStore();
 
   const {
     saveTopic,
@@ -144,21 +156,38 @@ export default function ResultsPage() {
     console.log("Topic deleted from localStorage:", topicId);
   };
 
-  const handleBackToWizard = () => {
+  const handleGenerateMore = () => {
+    // Navigate back to create page to generate more topics
+    // The form data will be preserved for generating additional topics
+    console.log("🔄 Navigating to generate more topics with current settings");
     router.push("/topics/create");
   };
 
-  const handleRegenerateTopics = async () => {
-    // Navigate back to wizard with form data pre-filled
-    router.push("/topics/create");
+  const handleStartOver = () => {
+    setShowStartOverDialog(true);
+  };
+
+  const handleConfirmStartOver = () => {
+    try {
+      // Reset wizard state and navigate to create page
+      resetWizard();
+      console.log(
+        "🔄 Starting over: Wizard reset, navigating to topic builder",
+      );
+      setShowStartOverDialog(false);
+      router.push("/topics/create");
+    } catch (error) {
+      console.error("❌ Error resetting wizard:", error);
+      setShowStartOverDialog(false);
+    }
+  };
+
+  const handleCancelStartOver = () => {
+    setShowStartOverDialog(false);
   };
 
   const handleNavigateToTopics = () => {
     router.push("/topics");
-  };
-
-  const handleGenerateNew = () => {
-    router.push("/topics/create");
   };
 
   const handleRetryLoad = () => {
@@ -245,14 +274,22 @@ export default function ResultsPage() {
           />
 
           {/* Additional action buttons */}
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
             <Button
-              onClick={handleBackToWizard}
+              onClick={handleGenerateMore}
               variant="default"
               className="gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Topic Builder
+              <Plus className="h-4 w-4" />
+              Generate More
+            </Button>
+            <Button
+              onClick={handleStartOver}
+              variant="outline"
+              className="gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Start Over
             </Button>
           </div>
         </div>
@@ -310,10 +347,10 @@ export default function ResultsPage() {
               onTopicExport={handleTopicExport}
               onTopicDelete={handleTopicDelete}
               onBulkSave={handleBulkSave}
-              onBackToWizard={handleBackToWizard}
-              onRegenerateTopics={handleRegenerateTopics}
+              onBackToWizard={handleStartOver}
+              onRegenerateTopics={handleGenerateMore}
               onNavigateToTopics={handleNavigateToTopics}
-              onGenerateNew={handleGenerateNew}
+              onGenerateNew={handleGenerateMore}
             />
           </div>
         </APIErrorBoundary>
@@ -333,11 +370,37 @@ export default function ResultsPage() {
         <p className="text-muted-foreground">
           No topics found in this session.
         </p>
-        <Button onClick={handleBackToWizard} variant="outline">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Topic Builder
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={handleGenerateMore} variant="default">
+            <Plus className="h-4 w-4 mr-2" />
+            Generate More
+          </Button>
+          <Button onClick={handleStartOver} variant="outline">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Start Over
+          </Button>
+        </div>
       </div>
+
+      {/* Start Over Confirmation Dialog */}
+      <Dialog open={showStartOverDialog} onOpenChange={setShowStartOverDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Start Over?</DialogTitle>
+            <DialogDescription>
+              This will clear all your current progress, including your
+              generated topics and wizard answers. You'll return to the
+              beginning of the topic builder. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelStartOver}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmStartOver}>Start Over</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }

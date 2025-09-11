@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { Plus, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { lazy, memo, Suspense, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -166,15 +166,15 @@ export const TopicsList = memo(function TopicsList({
         <div className="flex items-center justify-center gap-4">
           <Button
             onClick={onRegenerateTopics}
-            variant="outline"
+            variant="default"
             className="gap-2"
           >
-            <RotateCcw className="h-4 w-4" />
-            Generate More Topics
+            <Plus className="h-4 w-4" />
+            Generate More
           </Button>
           <Button onClick={onBackToWizard} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Topic Builder
+            <RotateCcw className="h-4 w-4" />
+            Start Over
           </Button>
         </div>
       </div>

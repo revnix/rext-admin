@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, RotateCcw, Sparkles } from "lucide-react";
+import { Plus, RotateCcw, Sparkles } from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,12 +30,12 @@ export const TopicsHeader = memo(function TopicsHeader({
         <div className="flex items-center gap-2">
           <Button
             onClick={onRegenerateTopics}
-            variant="outline"
+            variant="default"
             size="sm"
             className="gap-1.5"
           >
-            <RotateCcw className="h-4 w-4" />
-            Regenerate
+            <Plus className="h-4 w-4" />
+            Generate More
           </Button>
           <Button
             onClick={onBackToWizard}
@@ -43,8 +43,8 @@ export const TopicsHeader = memo(function TopicsHeader({
             size="sm"
             className="gap-1.5"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Edit Settings
+            <RotateCcw className="h-4 w-4" />
+            Start Over
           </Button>
         </div>
       </div>

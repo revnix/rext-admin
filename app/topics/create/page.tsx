@@ -1,17 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
+import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 export default function TopicBuilderPage() {
   const router = useRouter();
+  const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   const {
     formData,
@@ -24,6 +36,8 @@ export default function TopicBuilderPage() {
     retryGeneration,
     updateFormData,
   } = useTopicBuilder();
+
+  const { resetWizard } = useTopicBuilderStore();
 
   const {
     saveTopic,
@@ -83,21 +97,39 @@ export default function TopicBuilderPage() {
     console.log("Topic deleted from localStorage:", topicId);
   };
 
-  const handleBackToWizard = () => {
-    clearTopics();
+  const handleGenerateMore = async () => {
+    try {
+      // Generate more topics without clearing existing ones
+      console.log("🔄 Generating more topics with current settings");
+      await generateTopics();
+    } catch (error) {
+      console.error("❌ Error generating more topics:", error);
+    }
   };
 
-  const handleRegenerateTopics = async () => {
-    clearTopics();
-    await generateTopics();
+  const handleStartOver = () => {
+    setShowStartOverDialog(true);
+  };
+
+  const handleConfirmStartOver = () => {
+    try {
+      // Clear all topic data and reset wizard state
+      clearTopics();
+      resetWizard();
+      console.log("🔄 Starting over: All data cleared and wizard reset");
+      setShowStartOverDialog(false);
+    } catch (error) {
+      console.error("❌ Error resetting wizard:", error);
+      setShowStartOverDialog(false);
+    }
+  };
+
+  const handleCancelStartOver = () => {
+    setShowStartOverDialog(false);
   };
 
   const handleNavigateToTopics = () => {
     router.push("/topics");
-  };
-
-  const handleGenerateNew = () => {
-    clearTopics();
   };
 
   // Show results if we have generated topics
@@ -122,10 +154,10 @@ export default function TopicBuilderPage() {
               onTopicExport={handleTopicExport}
               onTopicDelete={handleTopicDelete}
               onBulkSave={handleBulkSave}
-              onBackToWizard={handleBackToWizard}
-              onRegenerateTopics={handleRegenerateTopics}
+              onBackToWizard={handleStartOver}
+              onRegenerateTopics={handleGenerateMore}
               onNavigateToTopics={handleNavigateToTopics}
-              onGenerateNew={handleGenerateNew}
+              onGenerateNew={handleGenerateMore}
             />
           </div>
         </APIErrorBoundary>
@@ -191,6 +223,26 @@ export default function TopicBuilderPage() {
           </APIErrorBoundary>
         </div>
       )}
+
+      {/* Start Over Confirmation Dialog */}
+      <Dialog open={showStartOverDialog} onOpenChange={setShowStartOverDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Start Over?</DialogTitle>
+            <DialogDescription>
+              This will clear all your current progress, including your
+              generated topics and wizard answers. You'll return to the
+              beginning of the topic builder. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelStartOver}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmStartOver}>Start Over</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }
