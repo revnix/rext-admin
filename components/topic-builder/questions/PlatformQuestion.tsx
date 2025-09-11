@@ -130,8 +130,7 @@ export function PlatformQuestion({
             disabled={isLoading}
             className={cn(
               "transition-all duration-150 h-auto",
-              formData.platform === option.value &&
-                "shadow-lg",
+              formData.platform === option.value && "shadow-lg",
             )}
             delay={index * 0.05}
           />
