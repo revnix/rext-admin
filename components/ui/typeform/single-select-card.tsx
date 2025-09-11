@@ -76,9 +76,9 @@ export function SingleSelectCard({
         onClick={onSelect}
         disabled={disabled}
         className={cn(
-          "w-full h-auto p-4 text-left justify-start relative",
+          "w-full h-auto min-h-[80px] p-4 text-left justify-start relative",
           "border-2 transition-all duration-200",
-          "hover:shadow-md hover:border-primary/50",
+          "hover:shadow-md hover:border-primary/50 hover:cursor-pointer",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
           selected && [
@@ -90,13 +90,13 @@ export function SingleSelectCard({
         {/* Selection indicator */}
         <div
           className={cn(
-            "absolute top-3 right-3 w-5 h-5 rounded-full border-2 transition-all",
+            "absolute top-3 right-3 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center",
             selected
               ? "border-primary bg-primary text-primary-foreground"
               : "border-muted-foreground/30",
           )}
         >
-          {selected && <Check className="w-3 h-3 m-auto mt-0.5" />}
+          {selected && <Check className="w-3 h-3" />}
         </div>
 
         {/* Content */}
@@ -104,7 +104,7 @@ export function SingleSelectCard({
           {icon && (
             <div
               className={cn(
-                "flex-shrink-0 mt-0.5",
+                "flex-shrink-0 mt-0.5 w-5 h-5",
                 selected ? "text-primary" : "text-muted-foreground",
               )}
             >
@@ -115,7 +115,7 @@ export function SingleSelectCard({
           <div className="flex-1 min-w-0">
             <div
               className={cn(
-                "font-medium text-sm mb-1",
+                "font-medium text-base mb-1",
                 selected ? "text-foreground" : "text-foreground",
               )}
             >
@@ -125,7 +125,7 @@ export function SingleSelectCard({
             {description && (
               <div
                 className={cn(
-                  "text-xs leading-relaxed",
+                  "text-sm leading-relaxed break-words",
                   selected
                     ? "text-muted-foreground"
                     : "text-muted-foreground/80",

@@ -88,8 +88,10 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
           "relative w-full rounded-lg border-2 bg-card text-card-foreground transition-colors",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-60",
-          // Touch-friendly minimum height
-          "min-h-[44px]",
+          // Touch-friendly minimum height with consistent sizing
+          "min-h-[80px]",
+          // Cursor pointer for better UX
+          "hover:cursor-pointer",
           // Layout based on variant
           variantClasses[variant],
           // Size-based padding and text
@@ -142,7 +144,7 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
               "font-medium",
               selected ? "text-foreground" : "text-foreground",
               size === "sm"
-                ? "text-sm"
+                ? "text-base"
                 : size === "lg"
                   ? "text-lg"
                   : "text-base",
@@ -154,11 +156,11 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
           {description && variant !== "compact" && (
             <div
               className={cn(
-                "text-muted-foreground mt-1",
+                "text-muted-foreground mt-1 break-words",
                 size === "sm"
-                  ? "text-xs"
+                  ? "text-sm"
                   : size === "lg"
-                    ? "text-sm"
+                    ? "text-base"
                     : "text-sm",
               )}
             >

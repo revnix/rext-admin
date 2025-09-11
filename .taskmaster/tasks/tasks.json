@@ -595,7 +595,7 @@
         "description": "Increase option text size to at least 16px, standardize icon sizes to 20px, implement a responsive 3-column grid for radio/checkbox options, enable text wrapping, fix checkbox styling, and ensure consistent option element dimensions.",
         "details": "Refactor the option selection components used in wizard steps to improve readability and consistency. \n\n- Update option text styles to use a minimum font size of 16px, ensuring accessibility and legibility across devices.\n- Standardize all option icons (radio/checkbox) to 20px by updating icon components or CSS rules.\n- Implement a responsive grid layout using CSS Grid or Flexbox: display up to 3 options per row on desktop, and 1-2 per row on mobile (using media queries or a responsive utility library).\n- Enable text wrapping for option titles and descriptions, ensuring long text does not overflow or truncate.\n- Redesign checkbox styling so that when selected, only a single rounded border is shown, matching the design spec.\n- Audit and enforce consistent height, width, and padding for all option elements, regardless of content length or type.\n- Ensure all changes are compatible with accessibility requirements (see Task 16), including keyboard navigation and screen reader support.\n- Coordinate with the layout changes from Task 26 to avoid conflicting styles and ensure a unified user experience.",
         "testStrategy": "1. Review the option selection UI on desktop and mobile devices to confirm:\n   - Option text is at least 16px and icons are 20px.\n   - Grid layout displays max 3 options per row on desktop, 1-2 per row on mobile.\n   - Long option titles/descriptions wrap correctly without overflow.\n   - Checkbox styling shows a single rounded border when selected.\n   - All option elements have consistent dimensions and spacing.\n2. Use accessibility tools (axe, Lighthouse) to verify compliance with WCAG 2.1 AA for option selection components.\n3. Test keyboard navigation and screen reader output for all option elements.\n4. Cross-check with the revised wizard question layout (Task 26) to ensure visual and functional consistency.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [4, 26],
         "priority": "high",
         "subtasks": [
@@ -605,7 +605,7 @@
             "description": "Update the option selection components to ensure all option text uses a minimum font size of 16px for accessibility and legibility. Standardize all radio and checkbox icons to 20px by updating icon components or CSS rules.",
             "dependencies": [],
             "details": "Review and refactor CSS for option text and icon elements. Ensure font size is set to at least 16px across devices. Update icon components or CSS to enforce a consistent 20px size for all radio and checkbox icons. Test for accessibility compliance.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -614,7 +614,7 @@
             "description": "Refactor the option selection layout to use a responsive 3-column grid on desktop and 1-2 columns on mobile. Enable text wrapping for option titles and descriptions to prevent overflow or truncation.",
             "dependencies": ["27.1"],
             "details": "Use CSS Grid or Flexbox to create a layout that displays up to 3 options per row on desktop and adjusts to 1-2 per row on mobile using media queries. Ensure long option text wraps appropriately within each grid cell. Validate layout on various screen sizes.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -623,7 +623,7 @@
             "description": "Redesign the checkbox styling to show only a single rounded border when selected, matching the design spec. Audit and enforce consistent height, width, and padding for all option elements, regardless of content length or type.",
             "dependencies": ["27.2"],
             "details": "Update CSS for checkboxes to apply the new selected state styling. Review and adjust the dimensions and spacing of all option elements to ensure visual consistency. Test for accessibility, keyboard navigation, and screen reader support.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1177,7 +1177,7 @@
     ],
     "metadata": {
       "created": "2025-09-10T15:13:13.831Z",
-      "updated": "2025-09-11T06:02:25.401Z",
+      "updated": "2025-09-11T06:11:48.195Z",
       "description": "Tasks for master context"
     }
   }
