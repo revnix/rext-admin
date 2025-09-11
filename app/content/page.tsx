@@ -205,13 +205,18 @@ export default function ContentPage() {
 
   const handleRowClick = (row: ContentData) => {
     console.log("Clicked content:", row);
+    // Navigate to content detail page
+    window.location.href = `/content/${row.id}`;
   };
 
   const rowActions: RowAction<ContentData>[] = [
     {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("View content:", row.title),
+      onClick: (row: ContentData) => {
+        console.log("View content:", row.title);
+        window.location.href = `/content/${row.id}`;
+      },
       tooltip: "View content details",
     },
     {

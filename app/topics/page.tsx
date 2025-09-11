@@ -11,6 +11,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
 
 export default function TopicsPage() {
+  const router = useRouter();
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Topics" }];
 
   // Fetch topics data using TanStack Query with enhanced states
@@ -147,18 +149,7 @@ export default function TopicsPage() {
   // Row click handler for topics
   const handleRowClick = (row: TopicData) => {
     console.log("Viewing topic details:", row.name);
-    console.log("Topic data:", {
-      id: row.id,
-      title: row.name,
-      description: row.description,
-      category: row.category,
-      contentType: row.contentType,
-      score: row.score,
-      priority: row.priority,
-      status: row.status,
-      tags: row.tags,
-    });
-    // TODO: Navigate to topic detail page when implemented
+    router.push(`/topics/${row.id}`);
   };
 
   // Row actions specific to topics
@@ -167,8 +158,7 @@ export default function TopicsPage() {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: TopicData) => {
-        console.log("View topic details:", row);
-        // TODO: Open topic details modal or page
+        router.push(`/topics/${row.id}`);
       },
       tooltip: "View topic details",
     },

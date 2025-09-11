@@ -31,7 +31,7 @@ export function ActionsCell<
   showOnHover = true,
   alwaysShowTrigger = false,
 }: ActionsCellProps<T>) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [_isHovered, _setIsHovered] = useState(false);
   const { confirm, ConfirmationComponent } = useConfirmation();
 
   // Filter out disabled actions

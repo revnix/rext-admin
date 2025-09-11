@@ -595,7 +595,7 @@ describe("updateSession", () => {
 
   it("should not update when not in browser environment", () => {
     const originalWindow = global.window;
-    // @ts-ignore
+    // @ts-expect-error
     delete global.window;
 
     const sessionId = generateSessionId();

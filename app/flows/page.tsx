@@ -168,13 +168,18 @@ export default function FlowsPage() {
 
   const handleRowClick = (row: FlowData) => {
     console.log("Clicked flow:", row);
+    // Navigate to flow detail page
+    window.location.href = `/flows/${row.id}`;
   };
 
   const rowActions: RowAction<FlowData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: FlowData) => console.log("View flow:", row.name),
+      onClick: (row: FlowData) => {
+        console.log("View flow:", row.name);
+        window.location.href = `/flows/${row.id}`;
+      },
     },
     {
       label: "Run Flow",
