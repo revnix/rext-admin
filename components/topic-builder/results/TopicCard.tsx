@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Eye,
-  PenTool,
-  Save,
-} from "lucide-react";
+import { Check, Copy, Eye, PenTool, Save } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,7 +36,6 @@ export function TopicCard({
   onCopy,
   className,
 }: TopicCardProps) {
-  const [showDetails, setShowDetails] = useState(false);
   const [_isHovered, setIsHovered] = useState(false);
 
   // Calculate overall score for circular progress
@@ -58,8 +48,6 @@ export function TopicCard({
   const handleCardClick = () => {
     if (onViewDetails) {
       onViewDetails(topic.id);
-    } else {
-      setShowDetails(true);
     }
   };
 
@@ -87,11 +75,6 @@ export function TopicCard({
         `${topic.title}\n${topic.description || topic.angle}`,
       );
     }
-  };
-
-  const handleToggleDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowDetails(!showDetails);
   };
 
   return (
@@ -242,125 +225,8 @@ export function TopicCard({
                   </TooltipContent>
                 </Tooltip>
               </div>
-
-              {/* Progressive Disclosure Toggle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                onClick={handleToggleDetails}
-              >
-                {showDetails ? (
-                  <>
-                    <ChevronUp className="h-3 w-3" />
-                    Hide details
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3" />
-                    Show details
-                  </>
-                )}
-              </Button>
             </div>
           </div>
-
-          {/* Progressive Disclosure Content */}
-          {showDetails && (
-            <div className="mt-4 pt-4 border-t space-y-3 animate-in fade-in duration-200">
-              {/* Description */}
-              <div>
-                <h4 className="text-sm font-medium mb-1 text-muted-foreground">
-                  Description
-                </h4>
-                <p className="text-sm">{topic.description || topic.angle}</p>
-              </div>
-
-              {/* Why It Works */}
-              {topic.why_it_works && (
-                <div>
-                  <h4 className="text-sm font-medium mb-1 text-muted-foreground">
-                    Why It Works
-                  </h4>
-                  <p className="text-sm">{topic.why_it_works}</p>
-                </div>
-              )}
-
-              {/* Tags */}
-              {topic.tags && topic.tags.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2 text-muted-foreground">
-                    Keywords
-                  </h4>
-                  <div className="flex flex-wrap gap-1">
-                    {topic.tags.map((keyword) => (
-                      <Badge
-                        key={keyword}
-                        variant="outline"
-                        className="text-xs"
-                      >
-                        {keyword}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Detailed Scores */}
-              <div>
-                <h4 className="text-sm font-medium mb-2 text-muted-foreground">
-                  Detailed Scores
-                </h4>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="font-medium">
-                      {Math.round(topic.scores.relevance * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Relevance
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-medium">
-                      {Math.round(topic.scores.freshness * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Freshness
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-medium">
-                      {Math.round(topic.scores.novelty * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Novelty</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Channel and Audience Fit */}
-              {(topic.channel_fit?.length > 0 ||
-                topic.audience_fit?.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {topic.channel_fit?.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-1 text-muted-foreground">
-                        Best Channels
-                      </h4>
-                      <p className="text-sm">{topic.channel_fit.join(", ")}</p>
-                    </div>
-                  )}
-                  {topic.audience_fit?.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-1 text-muted-foreground">
-                        Target Audience
-                      </h4>
-                      <p className="text-sm">{topic.audience_fit.join(", ")}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
     </TooltipProvider>

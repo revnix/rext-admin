@@ -1,7 +1,7 @@
 Task Implementation
 
-- Task ID: 10
-- Subtask ID: 10.1, 10.2, 10.3
+- Task ID: 11
+- Subtask ID: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
 - Related plan files: `@features-requirements-plan.md`
 
 Authoritative references

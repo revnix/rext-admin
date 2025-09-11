@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { BulkActions } from "./BulkActions";
 import { TopicCard } from "./TopicCard";
+import { TopicDetailDrawer } from "./TopicDetailDrawer";
 import { type SortOption, TopicFilters, type ViewMode } from "./TopicFilters";
 
 interface TopicsListProps {
@@ -54,6 +55,9 @@ export function TopicsList({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
   const [minScore, setMinScore] = useState(0);
+  const [selectedTopicForDrawer, setSelectedTopicForDrawer] =
+    useState<GeneratedTopic | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const bulkSaveMutation = useBulkTopicSaveMutation();
   const router = useRouter();
@@ -280,6 +284,35 @@ export function TopicsList({
     [router],
   );
 
+  const handleViewDetails = useCallback(
+    (topicId: string) => {
+      const topic = topics.find((t) => t.id === topicId);
+      if (topic) {
+        setSelectedTopicForDrawer(topic);
+        setIsDrawerOpen(true);
+      }
+    },
+    [topics],
+  );
+
+  const handleCloseDrawer = useCallback(() => {
+    setIsDrawerOpen(false);
+    setSelectedTopicForDrawer(null);
+  }, []);
+
+  const handleCopyTopic = useCallback(
+    async (topicId: string) => {
+      const topic = topics.find((t) => t.id === topicId);
+      if (topic) {
+        await navigator.clipboard.writeText(
+          `${topic.title}\n${topic.description || topic.angle}`,
+        );
+        toast.success("Topic copied to clipboard");
+      }
+    },
+    [topics],
+  );
+
   // Empty state - no topics generated
   if (topics.length === 0) {
     return (
@@ -443,6 +476,8 @@ export function TopicsList({
             onSelect={handleTopicSelect}
             onSave={handleTopicSave}
             onNavigateToContent={handleNavigateToContent}
+            onViewDetails={handleViewDetails}
+            onCopy={handleCopyTopic}
             className={viewMode === "list" ? "max-w-none" : undefined}
           />
         ))}
@@ -465,6 +500,16 @@ export function TopicsList({
           </Button>
         </div>
       </div>
+
+      {/* Topic Detail Drawer */}
+      <TopicDetailDrawer
+        topic={selectedTopicForDrawer}
+        isOpen={isDrawerOpen}
+        onClose={handleCloseDrawer}
+        onSave={handleTopicSave}
+        onNavigateToContent={handleNavigateToContent}
+        onCopy={handleCopyTopic}
+      />
     </div>
   );
 }
