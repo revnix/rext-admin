@@ -1,16 +1,37 @@
 "use client";
 
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RotateCcw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { SessionNotifications } from "@/components/session-notifications";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ErrorAlert } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
+import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
+import {
+  useBulkTopicSaveMutation,
+  useTopicSaveMutation,
+} from "@/hooks/useTopicMutations";
 import { getSession } from "@/lib/session-storage";
+import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { SessionData } from "@/types/session";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -24,12 +45,25 @@ export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
   const temporaryId = params.temporaryId as string;
+  const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   const [state, setState] = useState<ResultsPageState>({
     session: null,
     isLoading: true,
     error: null,
   });
+
+  const {
+    resetWizard,
+    appendGeneratedTopics,
+    isGeneratingMore,
+    setIsGeneratingMore,
+    newlyAddedTopicIds,
+    clearNewlyAddedHighlights,
+  } = useTopicBuilderStore();
+  const generateMoreMutation = useTopicGenerationMutation();
+  const bulkSaveMutation = useBulkTopicSaveMutation();
+  const topicSaveMutation = useTopicSaveMutation();
 
   const {
     saveTopic,
@@ -97,23 +131,120 @@ export default function ResultsPage() {
 
   // Event handlers for topic operations
   const handleTopicSave = async (topicId: string) => {
-    if (!state.session) return;
+    if (!state.session) {
+      console.error("No session available for topic save");
+      return;
+    }
 
     const topic = state.session.topics.find((t) => t.id === topicId);
-    if (topic) {
+    if (!topic) {
+      console.error("Topic not found:", topicId);
+      return;
+    }
+
+    // Check if topic is already saved to prevent duplicates
+    if (topic.is_saved || topic._optimisticSaved) {
+      console.log("Topic already saved, skipping:", topicId);
+      toast.info("This topic is already saved to your library");
+      return;
+    }
+
+    try {
+      console.log("Saving topic to API:", { id: topicId, title: topic.title });
+
+      // Use the proper API mutation
+      await topicSaveMutation.mutateAsync(topic);
+
+      // Also save to localStorage as backup
       saveTopic(topic);
-      console.log("Topic saved to localStorage:", topicId);
+
+      console.log("Topic saved successfully:", topicId);
+    } catch (error) {
+      console.error("Error saving topic:", error);
+      // Fallback to localStorage save if API fails
+      try {
+        saveTopic(topic);
+        console.log("Fallback: Topic saved to localStorage only:", topicId);
+      } catch (fallbackError) {
+        console.error("Fallback save also failed:", fallbackError);
+      }
     }
   };
 
   const handleBulkSave = async (topicIds: string[]) => {
-    if (!state.session) return;
+    if (!state.session) {
+      console.error("No session available for bulk save");
+      return;
+    }
 
-    const topicsToSave = state.session.topics.filter((topic) =>
-      topicIds.includes(topic.id),
-    );
-    saveTopics(topicsToSave);
-    console.log("Bulk saved topics to localStorage:", topicIds);
+    try {
+      const allTopicsToConsider = state.session.topics.filter((topic) =>
+        topicIds.includes(topic.id),
+      );
+
+      // Filter out already saved topics to prevent duplicates
+      const unsavedTopics = allTopicsToConsider.filter(
+        (topic) => !topic.is_saved && !topic._optimisticSaved,
+      );
+
+      if (allTopicsToConsider.length === 0) {
+        console.warn("No topics found to save");
+        return;
+      }
+
+      if (unsavedTopics.length === 0) {
+        console.log("All selected topics are already saved");
+        toast.info("All selected topics are already saved to your library");
+        return;
+      }
+
+      const alreadySavedCount =
+        allTopicsToConsider.length - unsavedTopics.length;
+      if (alreadySavedCount > 0) {
+        console.log(`Skipping ${alreadySavedCount} already saved topics`);
+        toast.info(
+          `Skipping ${alreadySavedCount} topic${alreadySavedCount !== 1 ? "s" : ""} already saved. Saving ${unsavedTopics.length} new topic${unsavedTopics.length !== 1 ? "s" : ""}.`,
+        );
+      }
+
+      console.log("Starting bulk save to API:", {
+        requestedIds: topicIds,
+        totalRequested: allTopicsToConsider.length,
+        alreadySaved: alreadySavedCount,
+        willSave: unsavedTopics.length,
+        topics: unsavedTopics.map((t) => ({
+          id: t.id,
+          title: t.title,
+          is_saved: t.is_saved,
+          _optimisticSaved: t._optimisticSaved,
+        })),
+      });
+
+      // Use the proper API mutation instead of localStorage only
+      await bulkSaveMutation.mutateAsync(unsavedTopics);
+
+      // Also save to localStorage as backup
+      saveTopics(unsavedTopics);
+
+      console.log("Bulk save completed successfully");
+    } catch (error) {
+      console.error("Error during bulk save:", error);
+      // Fallback to localStorage save if API fails
+      try {
+        const allTopicsToConsider = state.session.topics.filter((topic) =>
+          topicIds.includes(topic.id),
+        );
+        const unsavedTopics = allTopicsToConsider.filter(
+          (topic) => !topic.is_saved && !topic._optimisticSaved,
+        );
+        if (unsavedTopics.length > 0) {
+          saveTopics(unsavedTopics);
+          console.log("Fallback: Saved unsaved topics to localStorage only");
+        }
+      } catch (fallbackError) {
+        console.error("Fallback save also failed:", fallbackError);
+      }
+    }
   };
 
   const handleTopicEdit = async (
@@ -144,21 +275,107 @@ export default function ResultsPage() {
     console.log("Topic deleted from localStorage:", topicId);
   };
 
-  const handleBackToWizard = () => {
-    router.push("/topics/create");
+  const handleGenerateMore = async (additionalCount: number) => {
+    if (!state.session?.formData) {
+      console.error("❌ No form data available for generating more topics");
+      return;
+    }
+
+    try {
+      setIsGeneratingMore(true);
+      clearNewlyAddedHighlights(); // Clear any existing highlights
+
+      // Generate more topics using the stored form data
+      console.log(
+        `🔄 Generating ${additionalCount} more topics with session settings`,
+      );
+
+      // Create modified form data with the requested number of additional topics
+      const modifiedFormData = {
+        ...state.session.formData,
+        num_topics: additionalCount,
+      };
+
+      // Use the mutation directly to generate topics
+      const result = await generateMoreMutation.mutateAsync({
+        formData: modifiedFormData,
+      });
+
+      if (result.topics && Array.isArray(result.topics)) {
+        // Append the new topics to existing ones (in store and session)
+        appendGeneratedTopics(result.topics);
+
+        // Also update the session state to reflect the new topics
+        setState((prev) => ({
+          ...prev,
+          session: prev.session
+            ? {
+                ...prev.session,
+                topics: [...prev.session.topics, ...result.topics],
+              }
+            : null,
+        }));
+
+        console.log(
+          `✅ Successfully generated and added ${result.topics.length} more topics`,
+        );
+
+        // Clear highlights after 3 seconds
+        setTimeout(() => {
+          clearNewlyAddedHighlights();
+        }, 3000);
+      } else {
+        throw new Error("Invalid response format from topic generation API");
+      }
+    } catch (error) {
+      console.error("❌ Error generating more topics:", error);
+      // The mutation already handles error toasts
+    } finally {
+      setIsGeneratingMore(false);
+    }
   };
 
-  const handleRegenerateTopics = async () => {
-    // Navigate back to wizard with form data pre-filled
-    router.push("/topics/create");
+  const handleStartOver = () => {
+    console.log("🔄 Start Over button clicked - opening dialog");
+    console.log("Current dialog state:", showStartOverDialog);
+    // Temporarily skip dialog for testing
+    if (
+      confirm(
+        "Start Over? This will clear all your current progress and return to the beginning of the topic builder.",
+      )
+    ) {
+      handleConfirmStartOver();
+    }
+    // setShowStartOverDialog(true);
+  };
+
+  const handleConfirmStartOver = () => {
+    console.log("✅ Confirm Start Over clicked - executing reset");
+    try {
+      // Reset wizard state and navigate to create page
+      resetWizard();
+      console.log(
+        "🔄 Starting over: Wizard reset, navigating to topic builder",
+      );
+      setShowStartOverDialog(false);
+      // Navigate to create page and force a full refresh to ensure clean state
+      router.push("/topics/create");
+      // Small delay then refresh to ensure the store state is applied
+      setTimeout(() => {
+        window.location.href = "/topics/create";
+      }, 100);
+    } catch (error) {
+      console.error("❌ Error resetting wizard:", error);
+      setShowStartOverDialog(false);
+    }
+  };
+
+  const handleCancelStartOver = () => {
+    setShowStartOverDialog(false);
   };
 
   const handleNavigateToTopics = () => {
     router.push("/topics");
-  };
-
-  const handleGenerateNew = () => {
-    router.push("/topics/create");
   };
 
   const handleRetryLoad = () => {
@@ -245,14 +462,34 @@ export default function ResultsPage() {
           />
 
           {/* Additional action buttons */}
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Generate More
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                <DropdownMenuItem onClick={() => handleGenerateMore(5)}>
+                  Generate 5 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGenerateMore(10)}>
+                  Generate 10 more topics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGenerateMore(15)}>
+                  Generate 15 more topics
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
-              onClick={handleBackToWizard}
-              variant="default"
+              onClick={handleStartOver}
+              variant="outline"
               className="gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Topic Builder
+              <RotateCcw className="h-4 w-4" />
+              Start Over
             </Button>
           </div>
         </div>
@@ -304,16 +541,19 @@ export default function ResultsPage() {
 
             <TopicsList
               topics={state.session.topics}
+              isGeneratingMore={isGeneratingMore}
+              newlyAddedTopicIds={newlyAddedTopicIds}
               onTopicSave={handleTopicSave}
               onTopicEdit={handleTopicEdit}
               onTopicRegenerate={handleTopicRegenerate}
               onTopicExport={handleTopicExport}
               onTopicDelete={handleTopicDelete}
               onBulkSave={handleBulkSave}
-              onBackToWizard={handleBackToWizard}
-              onRegenerateTopics={handleRegenerateTopics}
+              onBackToWizard={handleStartOver}
+              onRegenerateTopics={handleGenerateMore}
               onNavigateToTopics={handleNavigateToTopics}
-              onGenerateNew={handleGenerateNew}
+              onGenerateNew={handleGenerateMore}
+              isBulkSaving={bulkSaveMutation.isPending}
             />
           </div>
         </APIErrorBoundary>
@@ -333,11 +573,59 @@ export default function ResultsPage() {
         <p className="text-muted-foreground">
           No topics found in this session.
         </p>
-        <Button onClick={handleBackToWizard} variant="outline">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Topic Builder
-        </Button>
+        <div className="flex gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Generate More
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => handleGenerateMore(5)}>
+                Generate 5 more topics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleGenerateMore(10)}>
+                Generate 10 more topics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleGenerateMore(15)}>
+                Generate 15 more topics
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={handleStartOver} variant="outline">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Start Over
+          </Button>
+        </div>
       </div>
+
+      {/* Start Over Confirmation Dialog */}
+      <Dialog
+        open={showStartOverDialog}
+        onOpenChange={(open) => {
+          console.log("🔄 Dialog state changed:", open);
+          setShowStartOverDialog(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Start Over?</DialogTitle>
+            <DialogDescription>
+              This will clear all your current progress, including your
+              generated topics and wizard answers. You'll return to the
+              beginning of the topic builder. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelStartOver}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmStartOver}>Start Over</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }

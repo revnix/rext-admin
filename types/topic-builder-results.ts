@@ -5,9 +5,8 @@
 
 import type { GeneratedTopic } from "./topic-builder";
 
-// View and Sort Options
+// View Mode (simplified - only grid used now)
 export type ViewMode = "grid" | "list";
-export type SortOption = "relevance" | "freshness" | "novelty" | "overall";
 
 // Topics List
 export interface TopicsListProps {
@@ -25,7 +24,7 @@ export interface TopicsListProps {
   onTopicDelete?: (topicId: string) => Promise<void> | void;
   onBulkSave: (topicIds: string[]) => void;
   onBackToWizard: () => void;
-  onRegenerateTopics: () => void;
+  onRegenerateTopics: (count: number) => void;
   onNavigateToTopics?: () => void;
   onGenerateNew?: () => void;
   className?: string;
@@ -36,6 +35,7 @@ export interface TopicCardProps {
   topic: GeneratedTopic;
   onSelect?: (id: string, selected: boolean) => void;
   isSelected?: boolean;
+  isHighlighted?: boolean;
   onSave?: (topicId: string) => Promise<void> | void;
   onNavigateToContent?: (topicId: string) => void;
   onViewDetails?: (topicId: string) => void;
@@ -62,7 +62,8 @@ export interface TopicsHeaderProps {
   filteredCount: number;
   totalCount: number;
   hasActiveFilters: boolean;
-  onRegenerateTopics: () => void;
+  isGeneratingMore?: boolean;
+  onRegenerateTopics: (count: number) => void;
   onBackToWizard: () => void;
 }
 
@@ -71,6 +72,7 @@ export interface TopicsGridProps {
   topics: GeneratedTopic[];
   selectedTopicIds: string[];
   viewMode: ViewMode;
+  newlyAddedTopicIds?: string[];
   onTopicSelect: (topicId: string, selected: boolean) => void;
   onTopicSave: (topicId: string) => void;
   onNavigateToContent: (topicId: string) => void;
@@ -86,25 +88,6 @@ export interface EmptyStatesProps {
   onClearFilters?: () => void;
 }
 
-// Topic Filters
-export interface TopicFiltersProps {
-  sortBy: SortOption;
-  onSortChange: (sortBy: SortOption) => void;
-  viewMode: ViewMode;
-  onViewModeChange: (viewMode: ViewMode) => void;
-  availableTags: string[];
-  selectedTags: string[];
-  onTagsChange: (tags: string[]) => void;
-  availableAudiences: string[];
-  selectedAudiences: string[];
-  onAudiencesChange?: (audiences: string[]) => void;
-  minScore: number;
-  onMinScoreChange: (score: number) => void;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  className?: string;
-}
-
 // Topic Detail Drawer
 export interface TopicDetailDrawerProps {
   topic: GeneratedTopic | null;
@@ -113,20 +96,6 @@ export interface TopicDetailDrawerProps {
   onSave?: (topicId: string) => Promise<void> | void;
   onNavigateToContent?: (topicId: string) => void;
   onCopy?: (topicId: string) => void;
-}
-
-// Bulk Actions
-export interface BulkActionsProps {
-  topics: GeneratedTopic[];
-  selectedTopicIds: string[];
-  onSelectAll: (selected: boolean) => void;
-  onBulkSave: (topicIds: string[]) => Promise<void>;
-  onBulkExport?: (
-    topics: GeneratedTopic[],
-    format: "json" | "csv",
-  ) => Promise<void>;
-  onBulkDelete?: (topicIds: string[]) => Promise<void>;
-  onBulkNavigateToContent: (topicIds: string[]) => void;
 }
 
 // Topic Actions

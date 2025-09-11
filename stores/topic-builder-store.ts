@@ -31,11 +31,13 @@ interface TopicBuilderState {
 
   // UI state
   isGenerating: boolean;
+  isGeneratingMore: boolean;
   showValidation: boolean;
 
   // Results state
   generatedTopics: GeneratedTopic[];
   selectedTopicIds: string[];
+  newlyAddedTopicIds: string[];
 
   // Contextual suggestions state (Task 7.3)
   contextualSuggestions: {
@@ -59,10 +61,13 @@ interface TopicBuilderState {
 
   // UI state actions
   setIsGenerating: (generating: boolean) => void;
+  setIsGeneratingMore: (generating: boolean) => void;
   setShowValidation: (show: boolean) => void;
 
   // Results actions
   setGeneratedTopics: (topics: GeneratedTopic[]) => void;
+  appendGeneratedTopics: (newTopics: GeneratedTopic[]) => void;
+  clearNewlyAddedHighlights: () => void;
   toggleTopicSelection: (topicId: string) => void;
   selectAllTopics: () => void;
   deselectAllTopics: () => void;
@@ -143,11 +148,13 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
 
         // UI state
         isGenerating: false,
+        isGeneratingMore: false,
         showValidation: false,
 
         // Results state
         generatedTopics: [],
         selectedTopicIds: [],
+        newlyAddedTopicIds: [],
 
         // Contextual suggestions state (Task 7.3)
         contextualSuggestions: {
@@ -250,6 +257,10 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
           set({ isGenerating: generating });
         },
 
+        setIsGeneratingMore: (generating) => {
+          set({ isGeneratingMore: generating });
+        },
+
         setShowValidation: (show) => {
           set({ showValidation: show });
         },
@@ -259,6 +270,18 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             generatedTopics: topics,
             selectedTopicIds: [], // Reset selection when new topics are generated
           });
+        },
+
+        appendGeneratedTopics: (newTopics) => {
+          set((state) => ({
+            generatedTopics: [...state.generatedTopics, ...newTopics],
+            newlyAddedTopicIds: newTopics.map((topic) => topic.id),
+            // Don't reset selection when appending topics
+          }));
+        },
+
+        clearNewlyAddedHighlights: () => {
+          set({ newlyAddedTopicIds: [] });
         },
 
         toggleTopicSelection: (topicId) => {
@@ -294,9 +317,11 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             // Form and UI state reset
             formData: initialFormData,
             isGenerating: false,
+            isGeneratingMore: false,
             showValidation: false,
             generatedTopics: [],
             selectedTopicIds: [],
+            newlyAddedTopicIds: [],
 
             // Reset contextual suggestions (Task 7.3)
             contextualSuggestions: {

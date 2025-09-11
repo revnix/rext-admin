@@ -98,7 +98,7 @@ export function IndustryQuestion({
             onSelect={() => handleSelect(option.value as Industry)}
             icon={getIcon(option.value)}
             disabled={isLoading}
-            className="transition-all duration-150 h-auto p-4"
+            className="transition-all duration-150 h-auto"
             delay={index * 0.05}
           />
         ))}

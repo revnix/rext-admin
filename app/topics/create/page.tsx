@@ -1,17 +1,32 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ErrorAlert, NetworkStatus } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
+import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
+import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
+import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 export default function TopicBuilderPage() {
   const router = useRouter();
+  const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   const {
     formData,
@@ -24,6 +39,17 @@ export default function TopicBuilderPage() {
     retryGeneration,
     updateFormData,
   } = useTopicBuilder();
+
+  const {
+    resetWizard,
+    appendGeneratedTopics,
+    isGeneratingMore,
+    setIsGeneratingMore,
+    newlyAddedTopicIds,
+    clearNewlyAddedHighlights,
+  } = useTopicBuilderStore();
+  const generateMoreMutation = useTopicGenerationMutation();
+  const topicSaveMutation = useTopicSaveMutation();
 
   const {
     saveTopic,
@@ -41,9 +67,37 @@ export default function TopicBuilderPage() {
 
   const handleTopicSave = async (topicId: string) => {
     const topic = generatedTopics.find((t) => t.id === topicId);
-    if (topic) {
+    if (!topic) {
+      console.error("Topic not found:", topicId);
+      return;
+    }
+
+    // Check if topic is already saved to prevent duplicates
+    if (topic.is_saved || topic._optimisticSaved) {
+      console.log("Topic already saved, skipping:", topicId);
+      toast.info("This topic is already saved to your library");
+      return;
+    }
+
+    try {
+      console.log("Saving topic to API:", { id: topicId, title: topic.title });
+
+      // Use the proper API mutation
+      await topicSaveMutation.mutateAsync(topic);
+
+      // Also save to localStorage as backup
       saveTopic(topic);
-      console.log("Topic saved to localStorage:", topicId);
+
+      console.log("Topic saved successfully:", topicId);
+    } catch (error) {
+      console.error("Error saving topic:", error);
+      // Fallback to localStorage save if API fails
+      try {
+        saveTopic(topic);
+        console.log("Fallback: Topic saved to localStorage only:", topicId);
+      } catch (fallbackError) {
+        console.error("Fallback save also failed:", fallbackError);
+      }
     }
   };
 
@@ -83,21 +137,72 @@ export default function TopicBuilderPage() {
     console.log("Topic deleted from localStorage:", topicId);
   };
 
-  const handleBackToWizard = () => {
-    clearTopics();
+  const handleGenerateMore = async (additionalCount: number) => {
+    try {
+      setIsGeneratingMore(true);
+      clearNewlyAddedHighlights(); // Clear any existing highlights
+
+      // Generate more topics without clearing existing ones
+      console.log(
+        `🔄 Generating ${additionalCount} more topics with current settings`,
+      );
+
+      // Create modified form data with the requested number of additional topics
+      const modifiedFormData = {
+        ...formData,
+        num_topics: additionalCount,
+      };
+
+      // Use the mutation directly to generate topics without navigation
+      const result = await generateMoreMutation.mutateAsync({
+        formData: modifiedFormData,
+      });
+
+      if (result.topics && Array.isArray(result.topics)) {
+        // Append the new topics to existing ones (this will set newlyAddedTopicIds)
+        appendGeneratedTopics(result.topics);
+        console.log(
+          `✅ Successfully generated and added ${result.topics.length} more topics`,
+        );
+
+        // Clear highlights after 3 seconds
+        setTimeout(() => {
+          clearNewlyAddedHighlights();
+        }, 3000);
+      } else {
+        throw new Error("Invalid response format from topic generation API");
+      }
+    } catch (error) {
+      console.error("❌ Error generating more topics:", error);
+      // The mutation already handles error toasts
+    } finally {
+      setIsGeneratingMore(false);
+    }
   };
 
-  const handleRegenerateTopics = async () => {
-    clearTopics();
-    await generateTopics();
+  const handleStartOver = () => {
+    setShowStartOverDialog(true);
+  };
+
+  const handleConfirmStartOver = () => {
+    try {
+      // Clear all topic data and reset wizard state
+      clearTopics();
+      resetWizard();
+      console.log("🔄 Starting over: All data cleared and wizard reset");
+      setShowStartOverDialog(false);
+    } catch (error) {
+      console.error("❌ Error resetting wizard:", error);
+      setShowStartOverDialog(false);
+    }
+  };
+
+  const handleCancelStartOver = () => {
+    setShowStartOverDialog(false);
   };
 
   const handleNavigateToTopics = () => {
     router.push("/topics");
-  };
-
-  const handleGenerateNew = () => {
-    clearTopics();
   };
 
   // Show results if we have generated topics
@@ -116,16 +221,18 @@ export default function TopicBuilderPage() {
           <div className="flex-1 p-6">
             <TopicsList
               topics={generatedTopics}
+              isGeneratingMore={isGeneratingMore}
+              newlyAddedTopicIds={newlyAddedTopicIds}
               onTopicSave={handleTopicSave}
               onTopicEdit={handleTopicEdit}
               onTopicRegenerate={handleTopicRegenerate}
               onTopicExport={handleTopicExport}
               onTopicDelete={handleTopicDelete}
               onBulkSave={handleBulkSave}
-              onBackToWizard={handleBackToWizard}
-              onRegenerateTopics={handleRegenerateTopics}
+              onBackToWizard={handleStartOver}
+              onRegenerateTopics={handleGenerateMore}
               onNavigateToTopics={handleNavigateToTopics}
-              onGenerateNew={handleGenerateNew}
+              onGenerateNew={handleGenerateMore}
             />
           </div>
         </APIErrorBoundary>
@@ -191,6 +298,26 @@ export default function TopicBuilderPage() {
           </APIErrorBoundary>
         </div>
       )}
+
+      {/* Start Over Confirmation Dialog */}
+      <Dialog open={showStartOverDialog} onOpenChange={setShowStartOverDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Start Over?</DialogTitle>
+            <DialogDescription>
+              This will clear all your current progress, including your
+              generated topics and wizard answers. You'll return to the
+              beginning of the topic builder. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelStartOver}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmStartOver}>Start Over</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }
