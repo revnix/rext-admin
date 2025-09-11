@@ -3,6 +3,7 @@
 import { ChevronDown, Loader2, Plus, RotateCcw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { SessionNotifications } from "@/components/session-notifications";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
@@ -25,6 +26,10 @@ import { ErrorAlert } from "@/components/ui/error-alert";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
 import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
+import {
+  useBulkTopicSaveMutation,
+  useTopicSaveMutation,
+} from "@/hooks/useTopicMutations";
 import { getSession } from "@/lib/session-storage";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { SessionData } from "@/types/session";
@@ -57,6 +62,8 @@ export default function ResultsPage() {
     clearNewlyAddedHighlights,
   } = useTopicBuilderStore();
   const generateMoreMutation = useTopicGenerationMutation();
+  const bulkSaveMutation = useBulkTopicSaveMutation();
+  const topicSaveMutation = useTopicSaveMutation();
 
   const {
     saveTopic,
@@ -124,23 +131,120 @@ export default function ResultsPage() {
 
   // Event handlers for topic operations
   const handleTopicSave = async (topicId: string) => {
-    if (!state.session) return;
+    if (!state.session) {
+      console.error("No session available for topic save");
+      return;
+    }
 
     const topic = state.session.topics.find((t) => t.id === topicId);
-    if (topic) {
+    if (!topic) {
+      console.error("Topic not found:", topicId);
+      return;
+    }
+
+    // Check if topic is already saved to prevent duplicates
+    if (topic.is_saved || topic._optimisticSaved) {
+      console.log("Topic already saved, skipping:", topicId);
+      toast.info("This topic is already saved to your library");
+      return;
+    }
+
+    try {
+      console.log("Saving topic to API:", { id: topicId, title: topic.title });
+
+      // Use the proper API mutation
+      await topicSaveMutation.mutateAsync(topic);
+
+      // Also save to localStorage as backup
       saveTopic(topic);
-      console.log("Topic saved to localStorage:", topicId);
+
+      console.log("Topic saved successfully:", topicId);
+    } catch (error) {
+      console.error("Error saving topic:", error);
+      // Fallback to localStorage save if API fails
+      try {
+        saveTopic(topic);
+        console.log("Fallback: Topic saved to localStorage only:", topicId);
+      } catch (fallbackError) {
+        console.error("Fallback save also failed:", fallbackError);
+      }
     }
   };
 
   const handleBulkSave = async (topicIds: string[]) => {
-    if (!state.session) return;
+    if (!state.session) {
+      console.error("No session available for bulk save");
+      return;
+    }
 
-    const topicsToSave = state.session.topics.filter((topic) =>
-      topicIds.includes(topic.id),
-    );
-    saveTopics(topicsToSave);
-    console.log("Bulk saved topics to localStorage:", topicIds);
+    try {
+      const allTopicsToConsider = state.session.topics.filter((topic) =>
+        topicIds.includes(topic.id),
+      );
+
+      // Filter out already saved topics to prevent duplicates
+      const unsavedTopics = allTopicsToConsider.filter(
+        (topic) => !topic.is_saved && !topic._optimisticSaved,
+      );
+
+      if (allTopicsToConsider.length === 0) {
+        console.warn("No topics found to save");
+        return;
+      }
+
+      if (unsavedTopics.length === 0) {
+        console.log("All selected topics are already saved");
+        toast.info("All selected topics are already saved to your library");
+        return;
+      }
+
+      const alreadySavedCount =
+        allTopicsToConsider.length - unsavedTopics.length;
+      if (alreadySavedCount > 0) {
+        console.log(`Skipping ${alreadySavedCount} already saved topics`);
+        toast.info(
+          `Skipping ${alreadySavedCount} topic${alreadySavedCount !== 1 ? "s" : ""} already saved. Saving ${unsavedTopics.length} new topic${unsavedTopics.length !== 1 ? "s" : ""}.`,
+        );
+      }
+
+      console.log("Starting bulk save to API:", {
+        requestedIds: topicIds,
+        totalRequested: allTopicsToConsider.length,
+        alreadySaved: alreadySavedCount,
+        willSave: unsavedTopics.length,
+        topics: unsavedTopics.map((t) => ({
+          id: t.id,
+          title: t.title,
+          is_saved: t.is_saved,
+          _optimisticSaved: t._optimisticSaved,
+        })),
+      });
+
+      // Use the proper API mutation instead of localStorage only
+      await bulkSaveMutation.mutateAsync(unsavedTopics);
+
+      // Also save to localStorage as backup
+      saveTopics(unsavedTopics);
+
+      console.log("Bulk save completed successfully");
+    } catch (error) {
+      console.error("Error during bulk save:", error);
+      // Fallback to localStorage save if API fails
+      try {
+        const allTopicsToConsider = state.session.topics.filter((topic) =>
+          topicIds.includes(topic.id),
+        );
+        const unsavedTopics = allTopicsToConsider.filter(
+          (topic) => !topic.is_saved && !topic._optimisticSaved,
+        );
+        if (unsavedTopics.length > 0) {
+          saveTopics(unsavedTopics);
+          console.log("Fallback: Saved unsaved topics to localStorage only");
+        }
+      } catch (fallbackError) {
+        console.error("Fallback save also failed:", fallbackError);
+      }
+    }
   };
 
   const handleTopicEdit = async (
@@ -449,6 +553,7 @@ export default function ResultsPage() {
               onRegenerateTopics={handleGenerateMore}
               onNavigateToTopics={handleNavigateToTopics}
               onGenerateNew={handleGenerateMore}
+              isBulkSaving={bulkSaveMutation.isPending}
             />
           </div>
         </APIErrorBoundary>

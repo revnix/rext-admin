@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Loader2, Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RotateCcw, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { lazy, memo, Suspense, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -44,6 +44,7 @@ interface TopicsListProps {
   onRegenerateTopics: (count: number) => void;
   onNavigateToTopics?: () => void;
   onGenerateNew?: (count: number) => void;
+  isBulkSaving?: boolean;
   className?: string;
 }
 
@@ -61,6 +62,7 @@ export const TopicsList = memo(function TopicsList({
   onRegenerateTopics,
   onNavigateToTopics: _onNavigateToTopics,
   onGenerateNew: _onGenerateNew,
+  isBulkSaving = false,
   className,
 }: TopicsListProps) {
   const [selectedTopicForDrawer, setSelectedTopicForDrawer] =
@@ -174,6 +176,133 @@ export const TopicsList = memo(function TopicsList({
         onRegenerateTopics={onRegenerateTopics}
         onBackToWizard={onBackToWizard}
       />
+
+      {/* Bulk Actions Bar - Show when topics are selected */}
+      {selectedTopicIds.length > 0 && (
+        <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-foreground">
+                  {selectedTopicIds.length} topic
+                  {selectedTopicIds.length !== 1 ? "s" : ""} selected
+                </span>
+                {(() => {
+                  const selectedTopics = sortedTopics.filter((topic) =>
+                    selectedTopicIds.includes(topic.id),
+                  );
+                  const alreadySaved = selectedTopics.filter(
+                    (topic) => topic.is_saved || topic._optimisticSaved,
+                  );
+                  const unsaved = selectedTopics.filter(
+                    (topic) => !topic.is_saved && !topic._optimisticSaved,
+                  );
+
+                  if (alreadySaved.length > 0) {
+                    return (
+                      <span className="text-xs text-muted-foreground">
+                        {unsaved.length} new • {alreadySaved.length} already
+                        saved
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedTopicIds([])}
+                className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear selection
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  const selectedTopics = sortedTopics.filter((topic) =>
+                    selectedTopicIds.includes(topic.id),
+                  );
+                  const unsaved = selectedTopics.filter(
+                    (topic) => !topic.is_saved && !topic._optimisticSaved,
+                  );
+
+                  console.log("Bulk saving topics:", {
+                    requested: selectedTopicIds,
+                    totalSelected: selectedTopics.length,
+                    unsaved: unsaved.length,
+                  });
+
+                  _onBulkSave(selectedTopicIds);
+
+                  if (unsaved.length > 0) {
+                    toast.success(
+                      `Saving ${unsaved.length} topic${unsaved.length !== 1 ? "s" : ""} to your library`,
+                    );
+                  }
+
+                  // Clear selection after save
+                  setSelectedTopicIds([]);
+                }}
+                disabled={(() => {
+                  const selectedTopics = sortedTopics.filter((topic) =>
+                    selectedTopicIds.includes(topic.id),
+                  );
+                  const unsaved = selectedTopics.filter(
+                    (topic) => !topic.is_saved && !topic._optimisticSaved,
+                  );
+                  return (
+                    isBulkSaving ||
+                    selectedTopicIds.length === 0 ||
+                    unsaved.length === 0
+                  );
+                })()}
+                className="gap-2"
+              >
+                {isBulkSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {(() => {
+                  if (isBulkSaving) return "Saving...";
+
+                  const selectedTopics = sortedTopics.filter((topic) =>
+                    selectedTopicIds.includes(topic.id),
+                  );
+                  const unsaved = selectedTopics.filter(
+                    (topic) => !topic.is_saved && !topic._optimisticSaved,
+                  );
+
+                  if (unsaved.length === 0 && selectedTopics.length > 0) {
+                    return "Already Saved";
+                  }
+
+                  if (unsaved.length === selectedTopics.length) {
+                    return "Save Selected Topics";
+                  }
+
+                  return `Save ${unsaved.length} Topic${unsaved.length !== 1 ? "s" : ""}`;
+                })()}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Select all topics
+                  setSelectedTopicIds(topics.map((topic) => topic.id));
+                }}
+                className="gap-2"
+              >
+                Select All
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Topics Display */}
       <TopicsGrid
