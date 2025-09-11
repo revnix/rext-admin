@@ -64,10 +64,10 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
         ref={ref}
         className={cn(
           "w-full max-w-5xl mx-auto",
-          // Responsive spacing with content-aware adjustments
-          "px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6",
-          // Dynamic spacing based on content length
-          description && description.length > 100 ? "lg:py-8" : "lg:py-6",
+          // Responsive spacing with content-aware adjustments (further reduced)
+          "px-4 py-1 sm:px-6 sm:py-2 md:px-8 md:py-3",
+          // Dynamic spacing based on content length (reduced)
+          description && description.length > 100 ? "lg:py-4" : "lg:py-3",
           className,
         )}
         style={

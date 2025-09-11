@@ -89,7 +89,7 @@ export const QuestionRenderer = memo(function QuestionRenderer({
       )}
 
       {/* Question Container */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-start justify-center pt-24 px-4 pb-4">
         <div className="w-full max-w-6xl">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
