@@ -77,13 +77,9 @@ export function ActionsCell<
     <fieldset
       className={cn(
         "flex items-center justify-end gap-1 border-none p-0 m-0",
-        showOnHover && !alwaysShowTrigger && "group-hover:opacity-100",
-        showOnHover && !alwaysShowTrigger && !isHovered && "opacity-0",
-        "transition-opacity duration-200",
+        "opacity-100", // Always show buttons
         className,
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <legend className="sr-only">Row actions</legend>
       {availableActions.map((action, index) => {
