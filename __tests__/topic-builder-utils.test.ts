@@ -120,10 +120,9 @@ describe("getAudienceOptions", () => {
     expect(options).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "Patients", value: "patients" }),
-        expect.objectContaining({
-          label: "Healthcare Professionals",
-          value: "healthcare-professionals",
-        }),
+        expect.objectContaining({ label: "Caregivers", value: "caregivers" }),
+        expect.objectContaining({ label: "Doctors", value: "doctors" }),
+        expect.objectContaining({ label: "Nurses", value: "nurses" }),
       ]),
     );
   });
@@ -132,11 +131,15 @@ describe("getAudienceOptions", () => {
     const options = getAudienceOptions("finance");
     expect(options).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ label: "Investors", value: "investors" }),
+        expect.objectContaining({
+          label: "Retail Investors",
+          value: "retail-investors",
+        }),
         expect.objectContaining({
           label: "Financial Advisors",
           value: "financial-advisors",
         }),
+        expect.objectContaining({ label: "Accountants", value: "accountants" }),
       ]),
     );
   });
@@ -160,46 +163,43 @@ describe("getAudienceOptions", () => {
 // ============================================================================
 
 describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
-  test("step 1 validation - requires wizard mode", () => {
+  test("step 1 validation - requires industry", () => {
     const invalidData: Partial<TopicBuilderFormData> = {};
     expect(validateFormStep(1, invalidData as TopicBuilderFormData)).toBe(
       false,
     );
   });
 
-  test("step 1 validation - requires industry and wizard mode", () => {
+  test("step 1 validation - industry selection passes", () => {
     const validData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
       industry: "technology",
     };
     expect(validateFormStep(1, validData as TopicBuilderFormData)).toBe(true);
   });
 
-  test("step 1 validation - subject-first requires subject", () => {
+  test("step 2 validation - requires wizard mode", () => {
     const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "subject-first",
       industry: "technology",
     };
     const validData: Partial<TopicBuilderFormData> = {
-      wizardMode: "subject-first",
       industry: "technology",
-      subject: "AI Development",
+      wizardMode: "industry-first",
     };
-    expect(validateFormStep(1, invalidData as TopicBuilderFormData)).toBe(
+    expect(validateFormStep(2, invalidData as TopicBuilderFormData)).toBe(
       false,
     );
-    expect(validateFormStep(1, validData as TopicBuilderFormData)).toBe(true);
+    expect(validateFormStep(2, validData as TopicBuilderFormData)).toBe(true);
   });
 
-  test("step 3 validation - requires content type", () => {
+  test("step 3 validation - subject-first requires subject", () => {
     const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
       industry: "technology",
+      wizardMode: "subject-first",
     };
     const validData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "subject-first",
+      subject: "AI Development",
     };
     expect(validateFormStep(3, invalidData as TopicBuilderFormData)).toBe(
       false,
@@ -207,18 +207,23 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
     expect(validateFormStep(3, validData as TopicBuilderFormData)).toBe(true);
   });
 
-  test("step 4 validation - requires purpose and tone", () => {
-    const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
+  test("step 3 validation - industry-first mode doesn't require subject", () => {
+    const validData: Partial<TopicBuilderFormData> = {
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "industry-first",
+    };
+    expect(validateFormStep(3, validData as TopicBuilderFormData)).toBe(true);
+  });
+
+  test("step 4 validation - requires audience", () => {
+    const invalidData: Partial<TopicBuilderFormData> = {
+      industry: "technology",
+      wizardMode: "industry-first",
     };
     const validData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
-      purpose: ["educate-inform"],
-      tone: ["professional-formal"],
+      wizardMode: "industry-first",
+      audience: ["developers", "tech professionals"],
     };
     expect(validateFormStep(4, invalidData as TopicBuilderFormData)).toBe(
       false,
@@ -226,13 +231,30 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
     expect(validateFormStep(4, validData as TopicBuilderFormData)).toBe(true);
   });
 
+  test("step 5 validation - requires purpose", () => {
+    const invalidData: Partial<TopicBuilderFormData> = {
+      industry: "technology",
+      wizardMode: "industry-first",
+      audience: ["developers"],
+    };
+    const validData: Partial<TopicBuilderFormData> = {
+      industry: "technology",
+      wizardMode: "industry-first",
+      audience: ["developers"],
+      purpose: ["educate-inform"],
+    };
+    expect(validateFormStep(5, invalidData as TopicBuilderFormData)).toBe(
+      false,
+    );
+    expect(validateFormStep(5, validData as TopicBuilderFormData)).toBe(true);
+  });
+
   test("step 6 validation - final generation step", () => {
     const validData: TopicBuilderFormData = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "industry-first",
+      audience: ["developers"],
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
     expect(validateFormStep(6, validData)).toBe(true);
@@ -240,106 +262,111 @@ describe("validateFormStep (boolean function - Task 2.3 requirement)", () => {
 
   test("valid form data passes validation", () => {
     const validData: TopicBuilderFormData = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "industry-first",
+      audience: ["developers"],
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
     expect(validateFormStep(1, validData)).toBe(true);
-    expect(validateFormStep(3, validData)).toBe(true);
+    expect(validateFormStep(2, validData)).toBe(true);
     expect(validateFormStep(4, validData)).toBe(true);
+    expect(validateFormStep(5, validData)).toBe(true);
     expect(validateFormStep(6, validData)).toBe(true);
   });
 });
 
 describe("validateFormStepDetailed (detailed validation results)", () => {
-  test("step 1 validation - requires wizard mode", () => {
+  test("step 1 validation - requires industry", () => {
     const invalidData: Partial<TopicBuilderFormData> = {};
     const result = validateFormStepDetailed(
       1,
       invalidData as TopicBuilderFormData,
     );
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain("Please select how you'd like to start");
+    expect(result.errors).toContain(
+      "Please select your field or industry to continue",
+    );
   });
 
-  test("step 1 validation - requires industry", () => {
+  test("step 2 validation - requires wizard mode", () => {
     const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
+      industry: "technology",
     };
     const result = validateFormStepDetailed(
-      1,
+      2,
       invalidData as TopicBuilderFormData,
     );
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.includes("industry"))).toBe(
-      true,
+    expect(result.errors).toContain(
+      "Please choose how you'd like to approach topic generation",
     );
   });
 
-  test("step 1 validation - subject-first requires subject", () => {
+  test("step 3 validation - subject-first requires subject", () => {
     const invalidData: Partial<TopicBuilderFormData> = {
+      industry: "technology",
       wizardMode: "subject-first",
-      industry: "technology",
-    };
-    const result = validateFormStepDetailed(
-      1,
-      invalidData as TopicBuilderFormData,
-    );
-    expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.includes("subject"))).toBe(true);
-  });
-
-  test("step 3 validation - requires content type", () => {
-    const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
-      industry: "technology",
     };
     const result = validateFormStepDetailed(
       3,
       invalidData as TopicBuilderFormData,
     );
     expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Please enter the topic you want to explore",
+    );
   });
 
-  test("step 3 validation - social media requires platform", () => {
-    const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
+  test("step 3 validation - industry-first mode passes without subject", () => {
+    const validData: Partial<TopicBuilderFormData> = {
       industry: "technology",
-      content_type: "social-media",
+      wizardMode: "industry-first",
     };
     const result = validateFormStepDetailed(
       3,
-      invalidData as TopicBuilderFormData,
+      validData as TopicBuilderFormData,
     );
-    expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.includes("platform"))).toBe(
-      true,
-    );
+    expect(result.isValid).toBe(true);
   });
 
-  test("step 4 validation - requires purpose and tone", () => {
+  test("step 4 validation - requires audience", () => {
     const invalidData: Partial<TopicBuilderFormData> = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "industry-first",
     };
     const result = validateFormStepDetailed(
       4,
       invalidData as TopicBuilderFormData,
     );
     expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Please tell us who you're creating content for",
+    );
+  });
+
+  test("step 5 validation - requires purpose", () => {
+    const invalidData: Partial<TopicBuilderFormData> = {
+      industry: "technology",
+      wizardMode: "industry-first",
+      audience: ["developers"],
+    };
+    const result = validateFormStepDetailed(
+      5,
+      invalidData as TopicBuilderFormData,
+    );
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Please choose what you want to achieve with this content",
+    );
   });
 
   test("step 6 validation - final generation step", () => {
     const validData: TopicBuilderFormData = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "industry-first",
+      audience: ["developers"],
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
     const result = validateFormStepDetailed(6, validData);
@@ -348,11 +375,10 @@ describe("validateFormStepDetailed (detailed validation results)", () => {
 
   test("valid form data passes validation", () => {
     const validData: TopicBuilderFormData = {
-      wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
+      wizardMode: "industry-first",
+      audience: ["developers"],
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
     const result = validateFormStepDetailed(6, validData);

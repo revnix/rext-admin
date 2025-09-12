@@ -308,16 +308,24 @@ export const validateFormStepDetailed = (
   const warnings: string[] = [];
 
   switch (step) {
-    case 1: // Industry/Domain + Approach Selection (merged step)
-      if (!formData.wizardMode) {
-        errors.push("Please choose how you'd like to start creating topics");
-      }
+    case 1: // Industry selection (first in new flow)
       if (!formData.industry) {
         errors.push("Please select your field or industry to continue");
       }
       if (formData.industry === "other" && !formData.industry_other?.trim()) {
         errors.push("Please tell us what industry you're in");
       }
+      break;
+
+    case 2: // Wizard mode selection (now has industry context)
+      if (!formData.wizardMode) {
+        errors.push(
+          "Please choose how you'd like to approach topic generation",
+        );
+      }
+      break;
+
+    case 3: // Subject input (conditional - only for subject-first mode)
       if (
         formData.wizardMode === "subject-first" &&
         !formData.subject?.trim()
@@ -345,7 +353,7 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 2: // Audience & Targeting
+    case 4: // Audience & Targeting (moved to step 4 in new flow)
       if (!formData.audience || formData.audience.length === 0) {
         errors.push("Please tell us who you're creating content for");
       }
@@ -367,19 +375,9 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 3: // Content Goals & Style
+    case 5: // Content Goals & Style (moved to step 5 in new flow)
       if (!formData.purpose || formData.purpose.length === 0) {
         errors.push("Please choose what you want to achieve with this content");
-      }
-      break;
-
-    case 5: // Advanced Options (all optional)
-      // No required validations for advanced options
-      if (
-        formData.num_topics &&
-        (formData.num_topics < 1 || formData.num_topics > 20)
-      ) {
-        errors.push("Please choose between 1 and 20 topics");
       }
       break;
 
@@ -846,7 +844,7 @@ export const validateStep = (
       return { isValid: true, errors: [] };
     }
 
-    const errors = result.error.issues.map((issue: any) => issue.message);
+    const errors = result.error.issues.map((issue) => issue.message);
     return { isValid: false, errors };
   } catch (error) {
     console.error(`Error validating step ${step}:`, error);

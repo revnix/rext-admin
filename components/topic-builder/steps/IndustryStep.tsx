@@ -46,7 +46,7 @@ export function IndustryStep({
         {/* Approach Selection - Full width */}
         <div className="md:col-span-2">
           <FormField
-            label="How would you like to start?"
+            label="How would you like to approach topic generation?"
             error={getFieldError?.("wizardMode") || errors?.wizardMode}
             required
           >
