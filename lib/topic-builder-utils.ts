@@ -10,7 +10,7 @@ import {
   getAudienceOptionsForIndustry,
   YMYL_INDUSTRIES,
 } from "@/data/topic-builder-options";
-import { stepValidationSchemas } from "@/types/schemas";
+import { STEP_VALIDATION_SCHEMAS } from "@/types/schemas";
 import type { SelectOption } from "@/types/shared";
 import type {
   CurrentStep,
@@ -367,22 +367,9 @@ export const validateFormStepDetailed = (
       }
       break;
 
-    case 3: // Content Format & Platform
-      if (!formData.content_type) {
-        errors.push("Please choose what type of content you'll create");
-      }
-      // Platform required only for social media content
-      if (formData.content_type === "social-media" && !formData.platform) {
-        errors.push("Please choose where you'll publish this content");
-      }
-      break;
-
-    case 4: // Content Goals & Style
+    case 3: // Content Goals & Style
       if (!formData.purpose || formData.purpose.length === 0) {
         errors.push("Please choose what you want to achieve with this content");
-      }
-      if (!formData.tone || formData.tone.length === 0) {
-        warnings.push("Consider choosing a tone to help us match your style");
       }
       break;
 
@@ -464,24 +451,14 @@ export const buildPromptFromFormData = (
     subject,
     industry,
     industry_other,
-    content_type,
-    content_type_other,
-    platform,
-    platform_other,
     audience,
     purpose,
     purpose_other,
-    tone,
-    tone_other,
     num_topics,
-    notes,
   } = formData;
 
-  // Determine the actual industry and content type
+  // Determine the actual industry
   const actualIndustry = industry === "other" ? industry_other : industry;
-  const actualContentType =
-    content_type === "other" ? content_type_other : content_type;
-  const actualPlatform = platform === "other" ? platform_other : platform;
 
   // Build the prompt sections
   let prompt = `Generate ${num_topics} engaging content topics with the following specifications:\n\n`;
@@ -497,11 +474,7 @@ export const buildPromptFromFormData = (
     prompt += `TARGET AUDIENCE: ${audience.join(", ")}\n`;
   }
 
-  // Content specifications
-  prompt += `CONTENT TYPE: ${actualContentType}\n`;
-  if (actualPlatform) {
-    prompt += `PLATFORM: ${actualPlatform}\n`;
-  }
+  // Content specifications removed (content_type and platform fields deprecated)
 
   // Goals and style
   if (purpose.length > 0) {
@@ -510,20 +483,13 @@ export const buildPromptFromFormData = (
       .join(", ");
     prompt += `CONTENT PURPOSE: ${purposeList}\n`;
   }
-  if (tone.length > 0) {
-    const toneList = tone
-      .map((t) => (t === "other" ? tone_other : t))
-      .join(", ");
-    prompt += `TONE: ${toneList}\n`;
-  }
+  // Tone specification removed (tone field deprecated)
+  // Note: Original code had: tone.filter((t: string) => t !== "other")
 
   // Advanced options (simplified)
   // Only include additional notes if provided
 
-  // Additional context
-  if (notes) {
-    prompt += `\nADDITIONAL CONTEXT: ${notes}\n`;
-  }
+  // Additional context removed (notes field deprecated)
 
   // Response format instructions
   prompt += `\nReturn exactly ${num_topics} topics in the following JSON array format:\n`;
@@ -643,9 +609,7 @@ export const createInitialFormData = (): TopicBuilderFormData => {
   return {
     wizardMode: "industry-first",
     industry: "technology",
-    content_type: "blog-post",
     purpose: [],
-    tone: [],
     num_topics: 5,
   };
 };
@@ -689,22 +653,8 @@ export const updateFormDataForIndustryChange = (
  * @param newContentType - New content type value
  * @returns Updated form data with dependent fields reset
  */
-export const updateFormDataForContentTypeChange = (
-  formData: TopicBuilderFormData,
-  newContentType: string,
-): TopicBuilderFormData => {
-  const needsPlatform = newContentType === "social-media";
-
-  return {
-    ...formData,
-    content_type: newContentType as TopicBuilderFormData["content_type"],
-    content_type_other:
-      newContentType === "other" ? formData.content_type_other : undefined,
-    // Reset platform if not needed
-    platform: needsPlatform ? formData.platform : undefined,
-    platform_other: needsPlatform ? formData.platform_other : undefined,
-  };
-};
+// updateFormDataForContentTypeChange removed - content_type field deprecated
+// This function is no longer needed as content_type and platform fields have been removed
 
 // ============================================================================
 // DATA PROCESSING HELPERS
@@ -783,7 +733,6 @@ export const logValidationResult = (
     warnings: result.warnings,
     wizardMode: formData.wizardMode,
     industry: formData.industry,
-    contentType: formData.content_type,
   });
 };
 
@@ -799,12 +748,7 @@ export const STEP_ORDER: CurrentStep[] = [
   "industry",
   "subject",
   "audience",
-  "content-type",
-  "platform",
   "purpose",
-  "tone",
-  "notes",
-  "num-topics",
 ];
 
 /**
@@ -872,15 +816,6 @@ export const shouldSkipStep = (
       // Skip subject step if using industry-first mode
       return formData.wizardMode === "industry-first";
 
-    case "platform":
-      // Skip platform step unless content type is social-media
-      return formData.content_type !== "social-media";
-
-    case "notes":
-    case "num-topics":
-      // These are optional steps, never skip
-      return false;
-
     default:
       return false;
   }
@@ -898,7 +833,7 @@ export const validateStep = (
   formData: Partial<TopicBuilderFormData>,
 ): ValidationResult => {
   try {
-    const schema = stepValidationSchemas[step];
+    const schema = STEP_VALIDATION_SCHEMAS[step];
     if (!schema) {
       return { isValid: true, errors: [] };
     }
@@ -911,7 +846,7 @@ export const validateStep = (
       return { isValid: true, errors: [] };
     }
 
-    const errors = result.error.issues.map((issue) => issue.message);
+    const errors = result.error.issues.map((issue: any) => issue.message);
     return { isValid: false, errors };
   } catch (error) {
     console.error(`Error validating step ${step}:`, error);
@@ -946,35 +881,11 @@ export const extractStepData = (
     case "audience":
       return { audience: formData.audience };
 
-    case "content-type":
-      return {
-        content_type: formData.content_type,
-        content_type_other: formData.content_type_other,
-      };
-
-    case "platform":
-      return {
-        platform: formData.platform,
-        platform_other: formData.platform_other,
-      };
-
     case "purpose":
       return {
         purpose: formData.purpose,
         purpose_other: formData.purpose_other,
       };
-
-    case "tone":
-      return {
-        tone: formData.tone,
-        tone_other: formData.tone_other,
-      };
-
-    case "notes":
-      return { notes: formData.notes };
-
-    case "num-topics":
-      return { num_topics: formData.num_topics };
 
     default:
       return {};

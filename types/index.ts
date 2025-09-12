@@ -141,14 +141,11 @@ export type {
 // TOPIC BUILDER TYPES
 // ============================================================================
 export type {
-  ContentType,
   CurrentStep,
   GeneratedTopic,
   Industry,
-  Platform,
   PurposeType,
   StepHistory,
-  ToneType,
   TopicBuilderDraft,
   TopicBuilderFormData,
   TopicGenerationRequest,
@@ -164,17 +161,11 @@ export type {
 // TYPE GUARDS
 // ============================================================================
 export {
-  CONTENT_TYPE_OPTIONS,
   INDUSTRY_OPTIONS,
-  isValidContentType,
   isValidIndustry,
-  isValidPlatform,
   isValidPurposeType,
-  isValidToneType,
   isValidWizardMode,
-  PLATFORM_OPTIONS,
   PURPOSE_OPTIONS,
-  TONE_OPTIONS,
   validateEnumArray,
   WIZARD_MODE_OPTIONS,
 } from "./topic-builder";

@@ -67,7 +67,7 @@ WREXT Admin is a Next.js web application that enables users to generate AI-power
 
 ### Primary Flow: Topic Generation
 1. **Wizard Entry:** User selects generation approach (subject-first vs industry-first)
-2. **Parameter Collection:** Step-by-step collection of context (industry, audience, content type, etc.)
+2. **Parameter Collection:** Step-by-step collection of context (industry, audience, purpose, etc.)
 3. **Smart Suggestions:** Dynamic option presentation based on previous selections
 4. **Generation:** AI processes inputs and returns scored topic suggestions
 5. **Results Evaluation:** User reviews topics in simplified card interface
@@ -116,8 +116,7 @@ interface TopicBuilderState {
 // Step flow management
 const WIZARD_STEPS: CurrentStep[] = [
   'wizard-mode', 'industry', 'subject', 'audience', 
-  'content-type', 'platform', 'purpose', 'tone', 
-  'notes', 'num-topics'
+  'purpose', 'review'
 ];
 ```
 
@@ -165,13 +164,11 @@ interface TopicBuilderFormData {
   wizardMode: 'subject-first' | 'industry-first';
   subject?: string;
   industry: Industry;
-  content_type: ContentType;
-  platform?: Platform;
+  industry_other?: string;
   audience?: string[];
   purpose: PurposeType[];
-  tone: ToneType[];
+  purpose_other?: string;
   num_topics: number;
-  notes?: string;
 }
 ```
 
@@ -260,7 +257,7 @@ interface BackendError {
 
 ### 1.3 Smart Defaults Implementation  
 - **Pre-selection Logic:** "Explore industry" default for Q1, "Who creating for" default for Q2
-- **Contextual Suggestions:** Industry-based audience filtering, purpose-based tone recommendations
+- **Contextual Suggestions:** Industry-based audience filtering, purpose-based recommendations
 - **Completion Rate Optimization:** Track and optimize default selection impact
 
 **Testing Strategy:**

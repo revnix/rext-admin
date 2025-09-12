@@ -7,7 +7,7 @@ import type {
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
-import { PURPOSE_OPTIONS, TONE_OPTIONS } from "@/types/topic-builder";
+import { PURPOSE_OPTIONS } from "@/types/topic-builder";
 
 interface GoalsStepProps {
   formData: TopicBuilderFormData;
@@ -32,12 +32,6 @@ export function GoalsStep({
     label: option.label,
     value: option.value,
     description: getPurposeDescription(option.value),
-  }));
-
-  const toneOptions: CheckboxOption[] = TONE_OPTIONS.map((option) => ({
-    label: option.label,
-    value: option.value,
-    description: getToneDescription(option.value),
   }));
 
   return (
@@ -92,51 +86,6 @@ export function GoalsStep({
             </FormField>
           </div>
         )}
-
-        {/* Tone & Style */}
-        <div className="md:col-span-2">
-          <FormField
-            label="What tone should we use?"
-            error={getFieldError?.("tone") || errors?.tone}
-            isValid={formData.tone.length > 0 && !getFieldError?.("tone")}
-            required
-          >
-            <CheckboxGroup
-              options={toneOptions}
-              value={formData.tone}
-              onValueChange={(selected) => updateFormData("tone", selected)}
-              columns={4}
-              maxSelections={3}
-            />
-          </FormField>
-        </div>
-
-        {/* Tone Other */}
-        {formData.tone.includes("other") && (
-          <div className="md:col-span-1">
-            <FormField
-              label="Specify Tone"
-              error={getFieldError?.("tone_other") || errors?.tone_other}
-              isValid={
-                !!formData.tone_other?.trim() && !getFieldError?.("tone_other")
-              }
-              required
-              htmlFor="tone_other"
-            >
-              <ValidationInput
-                id="tone_other"
-                placeholder="Please specify your preferred tone"
-                value={formData.tone_other || ""}
-                onChange={(e) => updateFormData("tone_other", e.target.value)}
-                error={getFieldError?.("tone_other") || errors?.tone_other}
-                isValid={
-                  !!formData.tone_other?.trim() &&
-                  !getFieldError?.("tone_other")
-                }
-              />
-            </FormField>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -159,27 +108,6 @@ function getPurposeDescription(value: string): string {
       return "Improve search engine visibility";
     case "thought-leadership":
       return "Establish expertise and authority";
-    default:
-      return "";
-  }
-}
-
-function getToneDescription(value: string): string {
-  switch (value) {
-    case "professional-formal":
-      return "Business-appropriate and polished";
-    case "casual-conversational":
-      return "Relaxed and approachable";
-    case "friendly-warm":
-      return "Welcoming and personable";
-    case "humorous-playful":
-      return "Light-hearted and entertaining";
-    case "serious-academic":
-      return "Scholarly and authoritative";
-    case "inspirational":
-      return "Uplifting and motivational";
-    case "urgent-action":
-      return "Compelling and action-oriented";
     default:
       return "";
   }

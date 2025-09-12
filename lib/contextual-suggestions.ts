@@ -9,7 +9,6 @@
 import type {
   Industry,
   PurposeType,
-  ToneType,
   TopicBuilderFormData,
 } from "@/types/topic-builder";
 
@@ -209,61 +208,6 @@ export const INDUSTRY_AUDIENCE_MAP: Record<Industry, string[]> = {
 };
 
 /**
- * Purpose-specific tone recommendations mapping
- * Based on what tones work best for different content purposes
- */
-export const PURPOSE_TONE_MAP: Record<PurposeType, ToneType[]> = {
-  "educate-inform": [
-    "professional-formal",
-    "technical-analytical",
-    "simple-accessible",
-    "serious-academic",
-  ],
-  "entertain-engage": [
-    "casual-conversational",
-    "humorous-playful",
-    "friendly-warm",
-    "inspirational-uplifting",
-  ],
-  "inspire-motivate": [
-    "inspirational-uplifting",
-    "friendly-warm",
-    "professional-formal",
-    "casual-conversational",
-  ],
-  "persuade-convince": [
-    "professional-formal",
-    "friendly-warm",
-    "inspirational-uplifting",
-    "casual-conversational",
-  ],
-  "promote-product": [
-    "professional-formal",
-    "casual-conversational",
-    "friendly-warm",
-    "humorous-playful",
-  ],
-  "drive-seo": [
-    "professional-formal",
-    "simple-accessible",
-    "technical-analytical",
-    "casual-conversational",
-  ],
-  "thought-leadership": [
-    "professional-formal",
-    "serious-academic",
-    "technical-analytical",
-    "inspirational-uplifting",
-  ],
-  other: [
-    "professional-formal",
-    "casual-conversational",
-    "friendly-warm",
-    "simple-accessible",
-  ],
-};
-
-/**
  * Get contextual audience suggestions based on selected industry
  */
 export function getContextualAudienceSuggestions(
@@ -282,35 +226,6 @@ export function getContextualAudienceSuggestions(
 }
 
 /**
- * Get contextual tone recommendations based on selected purposes
- */
-export function getContextualToneRecommendations(
-  purposes: PurposeType[],
-  existingTones: ToneType[] = [],
-): ToneType[] {
-  if (!purposes || purposes.length === 0) {
-    return PURPOSE_TONE_MAP["educate-inform"]; // Default fallback
-  }
-
-  // Aggregate tone recommendations from all selected purposes
-  const recommendedTones = new Set<ToneType>();
-
-  for (const purpose of purposes) {
-    const tonesForPurpose = PURPOSE_TONE_MAP[purpose] || PURPOSE_TONE_MAP.other;
-    for (const tone of tonesForPurpose) {
-      recommendedTones.add(tone);
-    }
-  }
-
-  // Filter out already selected tones and return as array
-  const filteredTones = Array.from(recommendedTones)
-    .filter((tone) => !existingTones.includes(tone))
-    .slice(0, 6); // Limit to 6 recommendations for UI space
-
-  return filteredTones;
-}
-
-/**
  * Get smart default suggestions for first-time users
  */
 export function getSmartDefaults() {
@@ -318,8 +233,6 @@ export function getSmartDefaults() {
     wizardMode: "industry-first" as const,
     industry: "business" as Industry,
     purpose: ["educate-inform"] as PurposeType[],
-    tone: ["professional-formal"] as ToneType[],
-    content_type: "blog-post" as const,
     num_topics: 5,
   };
 }

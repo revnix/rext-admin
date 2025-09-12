@@ -712,7 +712,7 @@ export interface AudienceSelectionProps {
 }
 
 /**
- * Props for preference toggle components (fresh vs evergreen, etc.)
+ * Props for preference toggle components
  */
 export interface PreferenceToggleProps {
   /** Toggle label */

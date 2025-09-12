@@ -14,19 +14,31 @@ Below are the requirements for the flow related functionality in detail.
     - We need to create the UI of the create flow page. It'll be a wizard-style flow with steps and questions.
     - The questions should be asked in a sequential manner.
     - I think we should ask these questions one by one:
+
+
+
         <!-- Core Flow Configuration -->
         - Select Topic: topicId
         - Select Project: projectId. If enabled, user should be able to select a project from the dropdown.
         - Select Platform: platform. Options: Website, Social Media. This should be pre-filled based on the topic's meta data but user can always override it.
         - Industry: industry. This should be pre-filled based on the topic's meta data but user can always override it.
+
+
+
         <!-- if platform is Social Media -->
         - Select Content Type: contentType. Options: Thread, Carousel, Post, Poll, Video Script. Content Type options should be based on the Platform. 
         - Flow Name: flowName. This can be auto generated based on the Project, Platform, Content Type and Topic Title. Example: "Thread - Topic Title - Project Name". User can always override the auto generated name.
+
+
+
         <!-- Audience and Goals -->
         - Audience Size: audienceSize. Options: Small, Medium, Large, Massive
         - Audience Type: audienceType. Options: Array of audience type values from existing AudienceType. Example: Consumers, Businesses, Enterprises, Students, Professionals, Seniors, Teens, Parents. This should be based on the Industry.
         - Reading Level: readingLevel. Options: Array of reading level values from existing ReadingLevelType. Example: Beginner, Intermediate, Advanced.
         - Goals/Purpose: goals. Options: Array of goals/purpose values. Example: Educate, Entertain, Inspire, Persuade, Promote, Drive SEO, Thought Leadership.
+
+
+        
         <!-- Localse & Voice -->
         - Tone: tone. Options: Array of tone values. Example: Professional, Casual, Friendly, Humorous, Serious, Technical, Simple, Inspirational.
         - Region: region. Options: Array of region values. Example: International/Global or Options to choose a country from the dropdown.

@@ -4,7 +4,6 @@ import type {
   CurrentStep,
   GeneratedTopic,
   StepHistory,
-  ToneType,
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
@@ -42,7 +41,7 @@ interface TopicBuilderState {
   // Contextual suggestions state (Task 7.3)
   contextualSuggestions: {
     audienceByIndustry: string[];
-    tonesByPurpose: ToneType[];
+    // tonesByPurpose removed as ToneType is deprecated
   };
 
   // TypeForm wizard actions
@@ -80,7 +79,7 @@ interface TopicBuilderState {
 
   // Contextual suggestions actions (Task 7.3)
   setAudienceSuggestions: (suggestions: string[]) => void;
-  setToneRecommendations: (recommendations: ToneType[]) => void;
+  // setToneRecommendations removed as ToneType is deprecated
   updateContextualSuggestions: () => void;
   resetContextualSuggestions: () => void;
 }
@@ -93,8 +92,6 @@ const initialFormData: Partial<TopicBuilderFormData> = {
   wizardMode: "industry-first", // Default: "I want to explore my industry"
   num_topics: 5,
   purpose: ["educate-inform"], // Smart default: "Who are you creating this for?" equivalent
-  tone: ["professional-formal"], // Smart default for professional content
-  content_type: "blog-post", // Most common content type
   industry: "business", // Smart default for broad applicability
 };
 
@@ -116,12 +113,7 @@ const initialStepValidation: Record<CurrentStep, ValidationResult> = {
   industry: { isValid: false, errors: [] },
   subject: { isValid: false, errors: [] },
   audience: { isValid: false, errors: [] },
-  "content-type": { isValid: false, errors: [] },
-  platform: { isValid: true, errors: [] }, // Optional step
   purpose: { isValid: false, errors: [] },
-  tone: { isValid: false, errors: [] },
-  notes: { isValid: true, errors: [] }, // Optional step
-  "num-topics": { isValid: true, errors: [] }, // Has default value
 };
 
 /**
@@ -159,7 +151,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         // Contextual suggestions state (Task 7.3)
         contextualSuggestions: {
           audienceByIndustry: [],
-          tonesByPurpose: [],
         },
 
         // TypeForm wizard actions
@@ -189,12 +180,7 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             "industry",
             "subject",
             "audience",
-            "content-type",
-            "platform",
             "purpose",
-            "tone",
-            "notes",
-            "num-topics",
           ];
           const currentIndex = stepOrder.indexOf(currentStep);
           if (currentIndex < stepOrder.length - 1) {
@@ -326,7 +312,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             // Reset contextual suggestions (Task 7.3)
             contextualSuggestions: {
               audienceByIndustry: [],
-              tonesByPurpose: [],
             },
           });
         },
@@ -372,14 +357,7 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
           }));
         },
 
-        setToneRecommendations: (recommendations) => {
-          set((state) => ({
-            contextualSuggestions: {
-              ...state.contextualSuggestions,
-              tonesByPurpose: recommendations,
-            },
-          }));
-        },
+        // setToneRecommendations removed as ToneType is deprecated
 
         updateContextualSuggestions: () => {
           const { formData } = get();
@@ -395,7 +373,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
           set({
             contextualSuggestions: {
               audienceByIndustry: [],
-              tonesByPurpose: [],
             },
           });
         },

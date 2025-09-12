@@ -1,7 +1,5 @@
-import { FormField } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
 import type {
   TopicBuilderFormData,
   ValidationResult,
@@ -32,23 +30,6 @@ export function AdvancedStep({
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* Additional Notes - First and larger */}
-        <div>
-          <FormField
-            label="Any other requirements?"
-            error={getFieldError?.("notes") || errors?.notes}
-            htmlFor="notes"
-          >
-            <Textarea
-              id="notes"
-              placeholder="Any additional context, requirements, or special instructions..."
-              value={formData.notes || ""}
-              onChange={(e) => updateFormData("notes", e.target.value)}
-              className="min-h-[120px] resize-none"
-            />
-          </FormField>
-        </div>
-
         {/* Number of TopicsSlider */}
         <div>
           <div className="flex justify-between items-center mb-3">

@@ -378,7 +378,7 @@ export const getSessionMetadata = (id: string): SessionMetadata | null => {
       createdAt: sessionData.createdAt,
       expiresAt: sessionData.expiresAt,
       industry: sessionData.formData.industry,
-      contentType: sessionData.formData.content_type,
+      contentType: "unknown", // content_type field removed from interface
     };
   } catch (error) {
     console.error("Failed to retrieve session metadata:", error);
@@ -423,7 +423,7 @@ export const getAllSessionMetadata = (): SessionMetadata[] => {
           createdAt: sessionData.createdAt,
           expiresAt: sessionData.expiresAt,
           industry: sessionData.formData.industry,
-          contentType: sessionData.formData.content_type,
+          contentType: "unknown", // content_type field removed from interface
         });
       } catch (_parseError) {
         keysToRemove.push(key);

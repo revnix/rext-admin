@@ -416,14 +416,6 @@ export default function ResultsPage() {
       .join(" ");
   };
 
-  // Helper function to format content type for display
-  const formatContentType = (contentType: string): string => {
-    return contentType
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
   // Dynamic breadcrumbs configuration based on session data
   const breadcrumbs = [
     { label: "Topics", href: "/topics" },
@@ -441,7 +433,7 @@ export default function ResultsPage() {
     : "Topic Results";
 
   const pageDescription = state.session
-    ? `${state.session.topics.length} AI-generated topics for ${formatIndustryName(state.session.formData.industry)} industry • ${formatContentType(state.session.formData.content_type)} content`
+    ? `${state.session.topics.length} AI-generated topics for ${formatIndustryName(state.session.formData.industry)} industry`
     : "View your generated topics";
 
   // Loading state

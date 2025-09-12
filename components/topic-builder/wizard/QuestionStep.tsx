@@ -27,29 +27,9 @@ const AudienceQuestion = lazy(() =>
     default: m.AudienceQuestion,
   })),
 );
-const ContentTypeQuestion = lazy(() =>
-  import("../questions/ContentTypeQuestion").then((m) => ({
-    default: m.ContentTypeQuestion,
-  })),
-);
 const IndustryQuestion = lazy(() =>
   import("../questions/IndustryQuestion").then((m) => ({
     default: m.IndustryQuestion,
-  })),
-);
-const NotesQuestion = lazy(() =>
-  import("../questions/NotesQuestion").then((m) => ({
-    default: m.NotesQuestion,
-  })),
-);
-const NumTopicsQuestion = lazy(() =>
-  import("../questions/NumTopicsQuestion").then((m) => ({
-    default: m.NumTopicsQuestion,
-  })),
-);
-const PlatformQuestion = lazy(() =>
-  import("../questions/PlatformQuestion").then((m) => ({
-    default: m.PlatformQuestion,
   })),
 );
 const PurposeQuestion = lazy(() =>
@@ -65,11 +45,6 @@ const ReviewQuestion = lazy(() =>
 const SubjectQuestion = lazy(() =>
   import("../questions/SubjectQuestion").then((m) => ({
     default: m.SubjectQuestion,
-  })),
-);
-const ToneQuestion = lazy(() =>
-  import("../questions/ToneQuestion").then((m) => ({
-    default: m.ToneQuestion,
   })),
 );
 const WizardModeQuestion = lazy(() =>
@@ -172,20 +147,11 @@ export function QuestionStep({
         if (question.id === "subject") {
           return <SubjectQuestion {...baseProps} />;
         }
-        if (question.id === "notes") {
-          return <NotesQuestion {...baseProps} />;
-        }
         // Default text input handling
         return <SubjectQuestion {...baseProps} />;
       case "single-select":
         if (question.id === "industry") {
           return <IndustryQuestion {...baseProps} />;
-        }
-        if (question.id === "content_type") {
-          return <ContentTypeQuestion {...baseProps} />;
-        }
-        if (question.id === "platform") {
-          return <PlatformQuestion {...baseProps} />;
         }
         // Default single select handling
         return <IndustryQuestion {...baseProps} />;
@@ -193,17 +159,12 @@ export function QuestionStep({
         if (question.id === "purpose") {
           return <PurposeQuestion {...baseProps} />;
         }
-        if (question.id === "tone") {
-          return <ToneQuestion {...baseProps} />;
-        }
         // Default multi select handling
         return <PurposeQuestion {...baseProps} />;
       case "chip-input":
         return (
           <AudienceQuestion {...baseProps} onStepAdvance={onStepAdvance} />
         );
-      case "number-input":
-        return <NumTopicsQuestion {...baseProps} />;
       case "review":
         return (
           <ReviewQuestion

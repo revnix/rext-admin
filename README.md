@@ -78,10 +78,9 @@ The main feature is an AI-powered topic generator with a streamlined wizard:
 ### Wizard Flow
 1. **Getting Started**: Choose your approach (topic-first or industry-first)
 2. **Industry & Subject**: Select domain and specific topic (if applicable)
-3. **Audience**: Define your target audience
-4. **Content Type**: Choose format (blog post, social media, etc.)
-5. **Goals & Style**: Set purpose and tone
-6. **Advanced Options**: Fine-tune with notes and topic count
+3. **Audience**: Define your target audience (optional)
+4. **Goals**: Set content purpose
+5. **Review & Generate**: Set topic count and generate topics
 
 ### Key Features
 - Single question per screen for better focus

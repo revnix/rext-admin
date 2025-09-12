@@ -163,22 +163,23 @@ export const TopicBuilderFormDataSchema = z.object({
   ]),
   industry_other: z.string().optional(),
 
-  // Content type & platform (platform only required for social-media)
-  content_type: z.enum([
-    "blog-post",
-    "social-media",
-    "video-content",
-    "podcast",
-    "infographic",
-    "ebook-guide",
-    "case-study",
-    "whitepaper",
-    "newsletter",
-    "presentation",
-    "press-release",
-    "other",
-  ]),
-  content_type_other: z.string().optional(),
+  // Content type & platform (now optional - set in Flow)
+  content_type: z
+    .enum([
+      "blog-post",
+      "social-media",
+      "video-content",
+      "podcast",
+      "infographic",
+      "ebook-guide",
+      "case-study",
+      "whitepaper",
+      "newsletter",
+      "presentation",
+      "press-release",
+      "other",
+    ])
+    .optional(),
   platform: z
     .enum([
       "facebook",
@@ -193,7 +194,6 @@ export const TopicBuilderFormDataSchema = z.object({
       "other",
     ])
     .optional(),
-  platform_other: z.string().optional(),
 
   // Audience targeting
   audience: z.array(z.string()).optional(),
@@ -228,8 +228,7 @@ export const TopicBuilderFormDataSchema = z.object({
         "other",
       ]),
     )
-    .min(1),
-  tone_other: z.string().optional(),
+    .optional(),
 
   // Advanced options
   notes: z.string().optional(),
@@ -294,52 +293,6 @@ export const stepValidationSchemas = {
     audience: z.array(z.string()).min(1, "Please select at least one audience"),
   }),
 
-  "content-type": z.object({
-    content_type: z.enum([
-      "blog-post",
-      "social-media",
-      "video-content",
-      "podcast",
-      "infographic",
-      "ebook-guide",
-      "case-study",
-      "whitepaper",
-      "newsletter",
-      "presentation",
-      "press-release",
-      "other",
-    ]),
-    content_type_other: z.string().optional(),
-  }),
-
-  platform: z
-    .object({
-      platform: z
-        .enum([
-          "facebook",
-          "instagram",
-          "twitter",
-          "linkedin",
-          "tiktok",
-          "youtube",
-          "website",
-          "blog",
-          "vimeo",
-          "other",
-        ])
-        .optional(),
-      platform_other: z.string().optional(),
-    })
-    .refine(
-      (data) =>
-        data.platform !== "other" ||
-        (data.platform_other && data.platform_other.length > 0),
-      {
-        message: "Please specify your platform when selecting 'Other'",
-        path: ["platform_other"],
-      },
-    ),
-
   purpose: z
     .object({
       purpose: z
@@ -367,46 +320,6 @@ export const stepValidationSchemas = {
         path: ["purpose_other"],
       },
     ),
-
-  tone: z
-    .object({
-      tone: z
-        .array(
-          z.enum([
-            "professional-formal",
-            "casual-conversational",
-            "friendly-warm",
-            "humorous-playful",
-            "serious-academic",
-            "technical-analytical",
-            "simple-accessible",
-            "inspirational-uplifting",
-            "other",
-          ]),
-        )
-        .min(1, "Please select at least one tone"),
-      tone_other: z.string().optional(),
-    })
-    .refine(
-      (data) =>
-        !data.tone.includes("other") ||
-        (data.tone_other && data.tone_other.length > 0),
-      {
-        message: "Please specify your tone when selecting 'Other'",
-        path: ["tone_other"],
-      },
-    ),
-
-  notes: z.object({
-    notes: z.string().optional(),
-  }),
-
-  "num-topics": z.object({
-    num_topics: z
-      .number()
-      .min(1, "Please select at least 1 topic")
-      .max(20, "Maximum 20 topics allowed"),
-  }),
 } as const;
 
 /**
@@ -416,15 +329,12 @@ export const backendTopicGenerationPayloadSchema = z.object({
   wizardMode: z.string(),
   industry: z.string(),
   industry_other: z.string().nullable().optional(),
-  content_type: z.string(),
-  content_type_other: z.string().nullable().optional(),
+  content_type: z.string().nullable().optional(),
   platform: z.string().nullable().optional(),
-  platform_other: z.string().nullable().optional(),
   audience: z.array(z.string()),
   purpose: z.array(z.string()),
   purpose_other: z.string().nullable().optional(),
-  tone: z.array(z.string()),
-  tone_other: z.string().nullable().optional(),
+  tone: z.array(z.string()).nullable().optional(),
   notes: z.string().nullable().optional(),
   num_topics: z.number(),
   subject: z.string().nullable().optional(),
@@ -487,14 +397,11 @@ export const FORM_TO_BACKEND_MAPPING = {
     "industry",
     "industry_other",
     "content_type",
-    "content_type_other",
     "platform",
-    "platform_other",
     "audience",
     "purpose",
     "purpose_other",
     "tone",
-    "tone_other",
     "notes",
     "num_topics",
     "subject",
@@ -924,16 +831,6 @@ export const SubjectStepSchema = TopicBuilderFormDataSchema.pick({
   subject: true,
 });
 
-export const ContentTypeStepSchema = TopicBuilderFormDataSchema.pick({
-  content_type: true,
-  content_type_other: true,
-});
-
-export const PlatformStepSchema = TopicBuilderFormDataSchema.pick({
-  platform: true,
-  platform_other: true,
-});
-
 export const AudienceStepSchema = TopicBuilderFormDataSchema.pick({
   audience: true,
 });
@@ -941,19 +838,6 @@ export const AudienceStepSchema = TopicBuilderFormDataSchema.pick({
 export const PurposeStepSchema = TopicBuilderFormDataSchema.pick({
   purpose: true,
   purpose_other: true,
-});
-
-export const ToneStepSchema = TopicBuilderFormDataSchema.pick({
-  tone: true,
-  tone_other: true,
-});
-
-export const NotesStepSchema = TopicBuilderFormDataSchema.pick({
-  notes: true,
-});
-
-export const NumTopicsStepSchema = TopicBuilderFormDataSchema.pick({
-  num_topics: true,
 });
 
 /**
@@ -964,13 +848,8 @@ export const STEP_VALIDATION_SCHEMAS = {
   "wizard-mode": WizardModeStepSchema,
   industry: IndustryStepSchema,
   subject: SubjectStepSchema,
-  "content-type": ContentTypeStepSchema,
-  platform: PlatformStepSchema,
   audience: AudienceStepSchema,
   purpose: PurposeStepSchema,
-  tone: ToneStepSchema,
-  notes: NotesStepSchema,
-  "num-topics": NumTopicsStepSchema,
 } as const;
 
 /**

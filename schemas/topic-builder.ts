@@ -32,21 +32,6 @@ export const industrySchema = z.enum([
   "other",
 ]);
 
-export const contentTypeSchema = z.enum(["blog-post", "social-media"]);
-
-export const platformSchema = z.enum([
-  "facebook",
-  "instagram",
-  "twitter",
-  "linkedin",
-  "tiktok",
-  "youtube",
-  "website",
-  "blog",
-  "vimeo",
-  "other",
-]);
-
 export const purposeTypeSchema = z.enum([
   "educate-inform",
   "entertain-engage",
@@ -55,18 +40,6 @@ export const purposeTypeSchema = z.enum([
   "promote-product",
   "drive-seo",
   "thought-leadership",
-  "other",
-]);
-
-export const toneTypeSchema = z.enum([
-  "professional-formal",
-  "casual-conversational",
-  "friendly-warm",
-  "humorous-playful",
-  "serious-academic",
-  "technical-analytical",
-  "simple-accessible",
-  "inspirational-uplifting",
   "other",
 ]);
 
@@ -82,12 +55,6 @@ export const topicBuilderFormDataSchema = z.object({
   industry: industrySchema,
   industry_other: z.string().optional(),
 
-  // Content type and platform
-  content_type: contentTypeSchema,
-  content_type_other: z.string().optional(),
-  platform: platformSchema.optional(),
-  platform_other: z.string().optional(),
-
   // Audience and targeting
   audience: z.array(z.string()).optional(),
 
@@ -96,12 +63,9 @@ export const topicBuilderFormDataSchema = z.object({
     .array(purposeTypeSchema)
     .min(1, "Please select at least one purpose"),
   purpose_other: z.string().optional(),
-  tone: z.array(toneTypeSchema).min(1, "Please select at least one tone"),
-  tone_other: z.string().optional(),
 
   // Advanced options
   num_topics: z.number().min(1).max(20).default(5),
-  notes: z.string().optional(),
 });
 
 // Generated topic schema
@@ -140,11 +104,8 @@ export const topicGenerationResponseSchema = z.object({
 export const backendTopicGenerationPayloadSchema = z.object({
   industry: z.string(),
   subject: z.string().optional(),
-  content_type: z.string(),
-  platform: z.string().optional(),
   audience: z.array(z.string()).optional(),
   purpose: z.array(z.string()),
-  tone: z.array(z.string()),
   num_topics: z.number().min(1).max(20),
   timestamp: z.string().datetime(),
   wizard_mode: z.string(),
@@ -180,30 +141,9 @@ export const audienceStepSchema = z.object({
     .min(1, "Please select at least one audience type"),
 });
 
-export const contentFormatStepSchema = z
-  .object({
-    content_type: contentTypeSchema,
-    platform: platformSchema.optional(),
-  })
-  .refine(
-    (data) => {
-      // Platform is required only when content_type is 'social-media'
-      if (data.content_type === "social-media" && !data.platform) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Platform selection is required for social media posts",
-      path: ["platform"],
-    },
-  );
-
 export const goalsStepSchema = z.object({
   purpose: z
     .array(purposeTypeSchema)
     .min(1, "Please select at least one purpose"),
   purpose_other: z.string().optional(),
-  tone: z.array(toneTypeSchema).min(1, "Please select at least one tone"),
-  tone_other: z.string().optional(),
 });

@@ -13,9 +13,7 @@ describe("BackendService", () => {
   const mockFormData = {
     wizardMode: "industry-first",
     industry: "technology",
-    content_type: "blog-post",
     purpose: ["educate-inform"],
-    tone: ["professional-formal"],
     num_topics: 5,
   };
 
@@ -157,13 +155,9 @@ describe("BackendService", () => {
       expect(requestBody).toMatchObject({
         industry: "technology",
         subject: "AI Development",
-        content_type: "blog-post",
-        platform: "linkedin",
         audience: ["developers", "tech-leads"],
         purpose: ["educate-inform"],
-        tone: ["professional-formal"],
         num_topics: 5,
-        additional_notes: "Technical depth required",
         wizardMode: "industry-first",
       });
     });
@@ -248,13 +242,12 @@ describe("BackendService", () => {
       expect(requestBody.notes).toBeNull();
     });
 
-    it("should handle custom industry and content type", async () => {
+    it("should handle custom industry", async () => {
       const customFormData = {
         ...mockFormData,
         industry: "other",
         industry_other: "Cryptocurrency",
-        content_type: "other",
-        content_type_other: "Interactive Tutorial",
+        content_type: "blog-post",
       };
 
       await service.generateTopics(customFormData);
@@ -264,8 +257,7 @@ describe("BackendService", () => {
 
       expect(requestBody.industry).toBe("Cryptocurrency");
       expect(requestBody.industry_other).toBe("Cryptocurrency");
-      expect(requestBody.content_type).toBe("Interactive Tutorial");
-      expect(requestBody.content_type_other).toBe("Interactive Tutorial");
+      expect(requestBody.content_type).toBe("blog-post");
     });
 
     // removed demographic filtering test as demographics are no longer part of payload

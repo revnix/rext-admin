@@ -5,9 +5,9 @@
 The Topic Builder wizard has been streamlined to focus on essential questions only, creating a more TypeForm-like experience while maintaining all functionality needed for quality topic generation.
 
 **Before**: ~20+ complex fields including demographics, advanced options, and overlapping configurations  
-**After**: 10 essential fields that capture all core requirements
+**After**: 6 essential fields that capture all core requirements
 
-## Essential Questions (Retained)
+## Essential Questions (Current)
 
 ### Step 1: Getting Started
 - **wizardMode**: "How would you like to start?"
@@ -18,47 +18,35 @@ The Topic Builder wizard has been streamlined to focus on essential questions on
 - **subject**: Specific topic (conditional for subject-first mode)
 
 ### Step 2: Your Audience  
-- **audience**: "Who are you creating this for?" (multi-select)
+- **audience**: "Who are you creating this for?" (chip input, optional)
   - Examples: Small business owners, College students, Working professionals
 
-### Step 3: Content Type
-- **content_type**: "What type of content will this be?"
-  - Blog Post or Article
-  - Social Media Post
-- **platform**: "Where will you publish this?" (conditional)
-  - Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube
-
-### Step 4: Goals & Style
+### Step 3: Goals
 - **purpose**: "What do you want to achieve?" (multi-select, max 3)
   - Educate/Inform, Entertain/Engage, Inspire/Motivate, Persuade/Convince, Promote Product/Service, Drive SEO, Thought Leadership, Other
 - **purpose_other**: Custom purpose (conditional)
-- **tone**: "What tone should the content have?" (multi-select, max 3)  
-  - Professional/Formal, Casual/Conversational, Friendly/Warm, Humorous/Playful, Serious/Academic, Technical/Analytical, Simple/Accessible, Inspirational/Uplifting, Other
-- **tone_other**: Custom tone (conditional)
 
-### Step 5: Advanced Options (Optional)
-- **notes**: "Any other requirements?" (large text area, moved to top)
-- **num_topics**: Number of topics (slider, 1-20, default 5)
-
-### Step 6: Generate Topics
-- Review and generate (unchanged)
-
+### Step 4: Review & Generate
+- **num_topics**: Number of topics (input on review screen, 1-20, default 5)
+- Review selections and generate topics
 
 ## Benefits of Simplification
 
-1. **Faster Completion**: Reduces form completion time by ~50%
+1. **Faster Completion**: Reduces form completion time by ~60%
 2. **Better UX**: Creates TypeForm-like focused experience
 3. **Higher Completion Rates**: Fewer fields = less abandonment
 4. **Easier Maintenance**: Simpler codebase and fewer edge cases
 5. **Mobile Friendly**: Better experience on smaller screens
+6. **Cleaner Flow**: Streamlined wizard with only essential questions
 
 ## Technical Benefits
 
 - **Performance**: Streamlined validation and processing
-- **Code Clarity**: Clean, focused codebase
-- **Type Safety**: Strong TypeScript enforcement
+- **Code Clarity**: Clean, focused codebase with minimal complexity
+- **Type Safety**: Strong TypeScript enforcement with simplified schemas
 - **User Experience**: TypeForm-like single-question flow
 - **Mobile Optimized**: Excellent experience on all screen sizes
+- **Reduced Complexity**: No overlapping or redundant fields
 
 ## TypeForm-Style Experience
 
@@ -68,3 +56,4 @@ The new wizard provides:
 - **Progress indication** showing completion status
 - **Smart navigation** with conditional question flow
 - **Accessibility-first** design with screen reader support
+- **Review screen integration** with number of topics selection

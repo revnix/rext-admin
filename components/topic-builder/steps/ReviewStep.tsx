@@ -11,13 +11,7 @@ import {
 } from "@/components/ui/card";
 import type { BackendError } from "@/types/backend";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
-import {
-  CONTENT_TYPE_OPTIONS,
-  INDUSTRY_OPTIONS,
-  PLATFORM_OPTIONS,
-  PURPOSE_OPTIONS,
-  TONE_OPTIONS,
-} from "@/types/topic-builder";
+import { INDUSTRY_OPTIONS, PURPOSE_OPTIONS } from "@/types/topic-builder";
 
 interface ReviewStepProps {
   formData: TopicBuilderFormData;
@@ -113,22 +107,6 @@ export function ReviewStep({
                 {getDisplayValue(INDUSTRY_OPTIONS, formData.industry)}
               </Badge>
             </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Content Type</span>
-              <Badge variant="outline" className="text-xs">
-                {getDisplayValue(CONTENT_TYPE_OPTIONS, formData.content_type)}
-              </Badge>
-            </div>
-
-            {formData.platform && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Platform</span>
-                <Badge variant="outline" className="text-xs">
-                  {getDisplayValue(PLATFORM_OPTIONS, formData.platform)}
-                </Badge>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -169,19 +147,6 @@ export function ReviewStep({
                 </div>
               </div>
             )}
-
-            {formData.tone.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Tone</span>
-                <div className="flex flex-wrap gap-1">
-                  {formData.tone.map((t) => (
-                    <Badge key={t} variant="secondary" className="text-xs">
-                      {getDisplayValue(TONE_OPTIONS, t)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -196,16 +161,7 @@ export function ReviewStep({
               Specific requirements and customizations
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.notes && (
-              <div className="space-y-1">
-                <span className="text-sm font-medium">Additional Notes</span>
-                <p className="text-sm text-muted-foreground break-words">
-                  {formData.notes}
-                </p>
-              </div>
-            )}
-          </CardContent>
+          <CardContent className="space-y-4"></CardContent>
         </Card>
       </div>
 

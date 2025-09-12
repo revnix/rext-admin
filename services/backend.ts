@@ -93,7 +93,6 @@ export class BackendService {
    * ```typescript
    * const formData: TopicBuilderFormData = {
    *   industry: "technology",
-   *   content_type: "blog-post",
    *   num_topics: 5,
    *   // ... other required fields
    * };
@@ -477,19 +476,12 @@ export class BackendService {
       wizardMode: formData.wizardMode || "industry-first",
       industry: formData.industry_other || formData.industry || "",
       industry_other: formData.industry_other || null,
-      content_type: formData.content_type_other || formData.content_type || "",
-      content_type_other: formData.content_type_other || null,
-      platform: formData.platform_other || formData.platform || null,
-      platform_other: formData.platform_other || null,
       audience:
         Array.isArray(formData.audience) && formData.audience.length > 0
           ? formData.audience
           : [],
       purpose: Array.isArray(formData.purpose) ? formData.purpose : [],
       purpose_other: formData.purpose_other || null,
-      tone: Array.isArray(formData.tone) ? formData.tone : [],
-      tone_other: formData.tone_other || null,
-      notes: formData.notes || null,
       num_topics: formData.num_topics || 5,
       subject: formData.subject || null,
       timestamp: new Date().toISOString(),
@@ -861,10 +853,8 @@ export class BackendService {
     const keyData = {
       industry: payload.industry,
       subject: payload.subject,
-      content_type: payload.content_type,
       num_topics: payload.num_topics,
       purpose: payload.purpose,
-      tone: payload.tone,
     };
     return btoa(JSON.stringify(keyData)).slice(0, 16);
   }

@@ -10,7 +10,7 @@
 
 import {
   AlertCircle,
-  Lightbulb,
+  Hash,
   Pencil,
   Settings,
   Sparkles,
@@ -21,15 +21,11 @@ import { useCallback, useEffect, useMemo } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
-import {
-  CONTENT_TYPE_OPTIONS,
-  INDUSTRY_OPTIONS,
-  PLATFORM_OPTIONS,
-  PURPOSE_OPTIONS,
-  TONE_OPTIONS,
-} from "@/types/topic-builder";
+import { INDUSTRY_OPTIONS, PURPOSE_OPTIONS } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
 
 interface ReviewQuestionProps {
@@ -192,10 +188,6 @@ function getErrorGuidance(field: string, error: string): string | null {
       "at least one": "Select what you want to achieve with your content.",
       required: "Choose your main content goal from the available options.",
     },
-    tone: {
-      "at least one": "Choose how you want your content to sound.",
-      required: "Select the voice and style that matches your brand.",
-    },
     num_topics: {
       "between 1 and 20": "Enter a number from 1 to 20.",
       required: "Specify how many topics you want us to generate.",
@@ -205,9 +197,6 @@ function getErrorGuidance(field: string, error: string): string | null {
     },
     industry: {
       required: "Select your industry to tailor content topics to your market.",
-    },
-    content_type: {
-      required: "Choose what type of content you want to create.",
     },
   };
 
@@ -224,6 +213,7 @@ function getErrorGuidance(field: string, error: string): string | null {
 
 export function ReviewQuestion({
   formData,
+  updateFormData,
   onGoToQuestion,
   enterEditMode,
   getQuestionError,
@@ -244,13 +234,9 @@ export function ReviewQuestion({
         wizardMode: 0,
         subject: 1,
         industry: 1,
-        content_type: 2,
-        platform: 3,
-        audience: 4,
-        purpose: 5,
-        tone: 6,
-        num_topics: 7,
-        notes: 8,
+        audience: 2,
+        purpose: 3,
+        review: 4,
       };
       return (questionId: string) => staticMapping[questionId] ?? 0;
     }
@@ -394,11 +380,66 @@ export function ReviewQuestion({
         </Alert>
       )}
 
-      {/* Summary Section */}
-      <div className="text-center space-y-2 sm:space-y-3">
+      {/* Summary Section with Number of Topics Input */}
+      <div className="text-center space-y-4 sm:space-y-6">
         <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-2 sm:mb-3">
           <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
         </div>
+
+        {/* Number of Topics Input */}
+        <div className="max-w-xs mx-auto">
+          <Label
+            htmlFor="num_topics"
+            className="text-sm font-medium text-muted-foreground mb-2 block"
+          >
+            How many topics do you want?
+          </Label>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 flex-1">
+              <Hash className="h-4 w-4 text-primary flex-shrink-0" />
+              <Input
+                id="num_topics"
+                type="number"
+                min="1"
+                max="20"
+                value={formData.num_topics}
+                onChange={(e) => {
+                  const value = Math.max(
+                    1,
+                    Math.min(20, parseInt(e.target.value, 10) || 1),
+                  );
+                  updateFormData("num_topics", value);
+                }}
+                className={cn(
+                  "border-0 bg-transparent p-0 h-auto text-center font-semibold text-lg focus-visible:ring-0 focus-visible:ring-offset-0",
+                  !!errors.num_topics && "text-destructive",
+                )}
+                aria-describedby={
+                  errors.num_topics ? "num-topics-error" : "num-topics-help"
+                }
+                aria-invalid={!!errors.num_topics}
+              />
+              <span className="text-sm text-muted-foreground">topics</span>
+            </div>
+          </div>
+
+          {errors.num_topics ? (
+            <p
+              id="num-topics-error"
+              className="text-xs text-destructive mt-2 text-center"
+            >
+              {errors.num_topics}
+            </p>
+          ) : (
+            <p
+              id="num-topics-help"
+              className="text-xs text-muted-foreground mt-2 text-center"
+            >
+              We'll generate creative, actionable topics for you to choose from
+            </p>
+          )}
+        </div>
+
         <p
           className="text-muted-foreground max-w-2xl mx-auto px-2"
           style={{
@@ -406,11 +447,8 @@ export function ReviewQuestion({
             lineHeight: "clamp(1.4, 4vw, 1.6)",
           }}
         >
-          We'll create{" "}
-          <span className="font-semibold text-primary">
-            {formData.num_topics} targeted topics
-          </span>{" "}
-          based on your selections below.
+          Based on your selections below, we'll create targeted topics for your
+          content strategy.
         </p>
       </div>
 
@@ -467,38 +505,6 @@ export function ReviewQuestion({
           ariaLabel="Edit industry selection"
         />
 
-        <ReviewCard
-          icon={<Settings className="h-4 w-4 text-primary" />}
-          label="Content Type"
-          value={getDisplayValue(CONTENT_TYPE_OPTIONS, formData.content_type)}
-          field="content_type"
-          hasError={!!errors.content_type}
-          errorMessage={errors.content_type}
-          onEdit={
-            onGoToQuestion || enterEditMode
-              ? () => handleFixError("content_type")
-              : undefined
-          }
-          ariaLabel="Edit content type selection"
-        />
-
-        {formData.platform && (
-          <ReviewCard
-            icon={<Settings className="h-4 w-4 text-primary" />}
-            label="Platform"
-            value={getDisplayValue(PLATFORM_OPTIONS, formData.platform)}
-            field="platform"
-            hasError={!!errors.platform}
-            errorMessage={errors.platform}
-            onEdit={
-              onGoToQuestion || enterEditMode
-                ? () => handleFixError("platform")
-                : undefined
-            }
-            ariaLabel="Edit platform selection"
-          />
-        )}
-
         {formData.audience && formData.audience.length > 0 && (
           <ReviewCard
             icon={<Target className="h-4 w-4 text-primary" />}
@@ -532,53 +538,6 @@ export function ReviewQuestion({
           }
           ariaLabel="Edit purpose selection"
         />
-
-        <ReviewCard
-          icon={<Target className="h-4 w-4 text-primary" />}
-          label="Tone"
-          value={formData.tone.map((t) => getDisplayValue(TONE_OPTIONS, t))}
-          field="tone"
-          hasError={!!errors.tone}
-          errorMessage={errors.tone}
-          onEdit={
-            onGoToQuestion || enterEditMode
-              ? () => handleFixError("tone")
-              : undefined
-          }
-          ariaLabel="Edit tone selection"
-        />
-
-        <ReviewCard
-          icon={<Lightbulb className="h-4 w-4 text-primary" />}
-          label="Number of Topics"
-          value={formData.num_topics}
-          field="num_topics"
-          hasError={!!errors.num_topics}
-          errorMessage={errors.num_topics}
-          onEdit={
-            onGoToQuestion || enterEditMode
-              ? () => handleFixError("num_topics")
-              : undefined
-          }
-          ariaLabel="Edit number of topics"
-        />
-
-        {formData.notes && (
-          <ReviewCard
-            icon={<Lightbulb className="h-4 w-4 text-primary" />}
-            label="Additional Notes"
-            value={formData.notes}
-            field="notes"
-            hasError={!!errors.notes}
-            errorMessage={errors.notes}
-            onEdit={
-              onGoToQuestion || enterEditMode
-                ? () => handleFixError("notes")
-                : undefined
-            }
-            ariaLabel="Edit additional notes"
-          />
-        )}
       </div>
     </div>
   );

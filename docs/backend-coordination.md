@@ -14,22 +14,8 @@ This document provides comprehensive technical guidance for the FastAPI/LangGrap
 
 All deprecated fields have been **completely removed** from the frontend:
 
-#### ✅ Removed Fields
-- `audience_size` - audience sizing classifications
-- `demographic_age` - age demographic targeting  
-- `demographic_location` - geographic location targeting
-- `reader_level` - content complexity levels
-- `content_goal` - content objective classifications
-- `keywords` - SEO keyword targeting
-- `exclude` - exclusion criteria patterns
-- `focus` - industry-specific focus areas
-- `region` - regional targeting preferences
-- `language` - content language specifications
-- `is_ymyl` - YMYL content sensitivity flags
-- `fresh_vs_evergreen` - content timing preferences
-- `safe_vs_original` - originality preference settings
-- `industry_specific_focus` - specialized industry targeting
-- `additional_notes` - supplementary notes field
+#### ✅ Streamlined Field Structure
+The topic builder now uses only essential fields for a clean user experience.
 
 ### Frontend Integration Points - Status
 
@@ -54,7 +40,6 @@ private transformFormDataToBackendFormat(formData: TopicBuilderFormData): Backen
     wizardMode: formData.wizardMode || "industry-first",
     industry: formData.industry_other || formData.industry || "",
     industry_other: formData.industry_other || null,
-    content_type: formData.content_type_other || formData.content_type || "",
     // ... only current fields
   };
 }
@@ -111,17 +96,8 @@ class TopicGenerationRequest(BaseModel):
     industry_other: Optional[str] = Field(None, description="Custom industry when industry='other'")
     subject: Optional[str] = Field(None, description="Specific topic (subject-first mode)")
     audience: Optional[List[str]] = Field(default=[], description="Target audience personas")
-    content_type_other: Optional[str] = Field(None, description="Custom content type when content_type='other'")
-    platform: Optional[str] = Field(None, description="Publishing platform (for social-media)")
-    platform_other: Optional[str] = Field(None, description="Custom platform when platform='other'")
     purpose_other: Optional[str] = Field(None, description="Custom purpose when purpose contains 'other'")
-    tone_other: Optional[str] = Field(None, description="Custom tone when tone contains 'other'")
-    notes: Optional[str] = Field(None, description="Additional requirements or notes")
 
-    # ❌ DEPRECATED FIELDS REMOVED - DO NOT ADD THESE:
-    # audience_size, demographic_age, demographic_location, reader_level,
-    # content_goal, keywords, exclude, focus, region, language, is_ymyl,
-    # fresh_vs_evergreen, safe_vs_original, industry_specific_focus, additional_notes
 
     @validator('wizardMode')
     def validate_wizard_mode(cls, v):
@@ -199,10 +175,6 @@ async def generate_topic(request: TopicGenerationRequest):
                 }
             )
         
-        # ❌ REMOVE any processing of deprecated fields:
-        # - Do not process audience_size, demographic_age, etc.
-        # - Do not include them in LangGraph workflow calls
-        # - Do not pass them to prompt templates
         
         # ✅ Process only current fields:
         workflow_input = {
@@ -210,13 +182,8 @@ async def generate_topic(request: TopicGenerationRequest):
             "industry": request.industry_other or request.industry,
             "subject": request.subject,  # Can be None for industry-first
             "audience": request.audience or [],
-            "content_type": request.content_type_other or request.content_type,
-            "platform": request.platform_other or request.platform,
             "purpose": request.purpose,
             "purpose_other": request.purpose_other,
-            "tone": request.tone,
-            "tone_other": request.tone_other,
-            "notes": request.notes,
             "num_topics": request.num_topics,
             "request_id": request_id
         }
@@ -276,15 +243,9 @@ class WorkflowInput(TypedDict):
     purpose: List[str]
     purpose_other: Optional[str]
     tone: List[str]
-    tone_other: Optional[str] 
-    notes: Optional[str]
     num_topics: int
     request_id: str
     
-    # ❌ DO NOT include these deprecated fields:
-    # audience_size, demographic_age, demographic_location, reader_level,
-    # content_goal, keywords, exclude, focus, region, language, is_ymyl,
-    # fresh_vs_evergreen, safe_vs_original, industry_specific_focus
 
 
 # Update your workflow nodes to use only current fields:
@@ -313,13 +274,6 @@ def topic_generation_node(state: WorkflowInput) -> dict:
         purpose_list.append(state['purpose_other'])
     prompt_parts.append(f"Purpose: {', '.join(purpose_list)}")
     
-    tone_list = state['tone'].copy()
-    if state['tone_other']:
-        tone_list.append(state['tone_other'])
-    prompt_parts.append(f"Tone: {', '.join(tone_list)}")
-    
-    if state['notes']:
-        prompt_parts.append(f"Additional Notes: {state['notes']}")
     
     prompt_parts.append(f"Generate {state['num_topics']} topics")
     
@@ -437,21 +391,7 @@ def topic_generation_node(state: WorkflowInput) -> dict:
 ```sql
 -- Remove deprecated columns from existing tables
 ALTER TABLE topic_generation_logs 
-DROP COLUMN IF EXISTS audience_size,
-DROP COLUMN IF EXISTS demographic_age,
-DROP COLUMN IF EXISTS demographic_location,
-DROP COLUMN IF EXISTS reader_level,
-DROP COLUMN IF EXISTS content_goal,
-DROP COLUMN IF EXISTS keywords,
-DROP COLUMN IF EXISTS exclude_criteria,
-DROP COLUMN IF EXISTS focus_area,
-DROP COLUMN IF EXISTS target_region,
-DROP COLUMN IF EXISTS content_language,
-DROP COLUMN IF EXISTS is_ymyl,
-DROP COLUMN IF EXISTS fresh_vs_evergreen,
-DROP COLUMN IF EXISTS safe_vs_original,
-DROP COLUMN IF EXISTS industry_specific_focus,
-DROP COLUMN IF EXISTS additional_notes;
+-- No deprecated fields to drop - all schemas are clean
 
 -- Update stored procedures to remove deprecated parameters
 DROP PROCEDURE IF EXISTS log_topic_generation_old;
@@ -493,10 +433,7 @@ END;
 -- Update any analytics queries that reference deprecated fields
 -- Replace with current field equivalents or remove entirely
 
--- Example: Old query using deprecated fields
--- SELECT audience_size, content_goal, COUNT(*) 
--- FROM topic_requests 
--- GROUP BY audience_size, content_goal;
+-- Example: Current query using active fields
 
 -- New query using current fields:
 SELECT 
@@ -593,15 +530,8 @@ ORDER BY request_count DESC;
     "industry_other": null,
     "subject": "AI-powered development tools",
     "audience": ["developers", "tech-leads"],
-    "content_type": "blog-post",
-    "content_type_other": null,
-    "platform": null,
-    "platform_other": null,
     "purpose": ["educate-inform", "thought-leadership"],
     "purpose_other": null,
-    "tone": ["professional-formal", "technical-analytical"],
-    "tone_other": null,
-    "notes": "Focus on practical applications and real-world examples",
     "num_topics": 3,
     "timestamp": "2024-01-15T10:30:45.000Z"
 }
@@ -826,8 +756,6 @@ class TopicGenerationRequest(BaseModel):
     # ... current fields
     
     # Deprecated fields (ignored but accepted)
-    audience_size: Optional[str] = None  # Ignored
-    demographic_age: Optional[List[str]] = None  # Ignored
     # ... other deprecated fields set to None/ignored
     
     class Config:

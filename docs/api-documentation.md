@@ -19,14 +19,11 @@ interface TopicGenerationRequest {
   industry_other?: string;
   subject?: string;
   audience?: string[];
-  content_type: string;
-  content_type_other?: string;
+  content_type?: string;
   platform?: string;
-  platform_other?: string;
   purpose: string[];
   purpose_other?: string;
-  tone: string[];
-  tone_other?: string;
+  tone?: string[];
   notes?: string;
   num_topics: number;
   timestamp: string;
@@ -259,9 +256,7 @@ interface SavedTopic {
 - `subject`: Required when `wizardMode` is "subject-first"
 - `platform`: Required when `content_type` is "social-media"
 - `industry_other`: Required when `industry` is "other"
-- `content_type_other`: Required when `content_type` is "other"
 - `purpose_other`: Required when `purpose` includes "other"
-- `tone_other`: Required when `tone` includes "other"
 
 #### Optional Fields
 - `audience`: Array of audience types

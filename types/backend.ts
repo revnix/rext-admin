@@ -19,16 +19,9 @@ export interface BackendTopicGenerationPayload {
   wizardMode: string;
   industry: string;
   industry_other?: string | null;
-  content_type: string;
-  content_type_other?: string | null;
-  platform?: string | null;
-  platform_other?: string | null;
   audience: string[];
   purpose: string[];
   purpose_other?: string | null;
-  tone: string[];
-  tone_other?: string | null;
-  notes?: string | null;
   num_topics: number;
   subject?: string | null;
   timestamp: string;

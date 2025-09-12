@@ -18,38 +18,6 @@
 export type WizardMode = "subject-first" | "industry-first";
 
 /**
- * Content type/format options
- */
-export type ContentType =
-  | "blog-post"
-  | "social-media"
-  | "video-content"
-  | "podcast"
-  | "infographic"
-  | "ebook-guide"
-  | "case-study"
-  | "whitepaper"
-  | "newsletter"
-  | "presentation"
-  | "press-release"
-  | "other";
-
-/**
- * Platform/channel options for content distribution
- */
-export type Platform =
-  | "facebook"
-  | "instagram"
-  | "twitter"
-  | "linkedin"
-  | "tiktok"
-  | "youtube"
-  | "website"
-  | "blog"
-  | "vimeo"
-  | "other";
-
-/**
  * Industry/domain categories
  */
 export type Industry =
@@ -87,20 +55,6 @@ export type PurposeType =
   | "other";
 
 /**
- * Tone and voice options
- */
-export type ToneType =
-  | "professional-formal"
-  | "casual-conversational"
-  | "friendly-warm"
-  | "humorous-playful"
-  | "serious-academic"
-  | "technical-analytical"
-  | "simple-accessible"
-  | "inspirational-uplifting"
-  | "other";
-
-/**
  * Main form data interface for the Topic Builder wizard
  *
  * Updated for TypeForm-style single-question-per-screen flow.
@@ -120,15 +74,6 @@ export interface TopicBuilderFormData {
   /** Custom industry specification when "Other" is selected */
   industry_other?: string;
 
-  /** Content type and platform configuration */
-  content_type: ContentType;
-  /** Custom content type when "Other" is selected */
-  content_type_other?: string;
-  /** Platform/channel for publication (conditional on content type) */
-  platform?: Platform;
-  /** Custom platform when "Other" is selected */
-  platform_other?: string;
-
   /** Audience and targeting configuration */
   /** Target audience description or persona chips */
   audience?: string[];
@@ -138,16 +83,10 @@ export interface TopicBuilderFormData {
   purpose: PurposeType[];
   /** Custom purpose when "Other" is selected */
   purpose_other?: string;
-  /** Tone and voice preferences */
-  tone: ToneType[];
-  /** Custom tone when "Other" is selected */
-  tone_other?: string;
 
   /** Advanced options and seed inputs */
   /** Number of topics to generate */
   num_topics: number;
-  /** Additional notes or special instructions */
-  notes?: string;
 }
 
 /**
@@ -283,12 +222,7 @@ export type CurrentStep =
   | "industry"
   | "subject"
   | "audience"
-  | "content-type"
-  | "platform"
-  | "purpose"
-  | "tone"
-  | "notes"
-  | "num-topics";
+  | "purpose";
 
 /**
  * Step history tracking for navigation
@@ -337,26 +271,6 @@ export const WIZARD_MODE_OPTIONS: SelectOption[] = [
 ];
 
 /**
- * Content type/format options
- */
-export const CONTENT_TYPE_OPTIONS: SelectOption[] = [
-  { label: "Blog Post or Article", value: "blog-post" },
-  { label: "Social Media Post", value: "social-media" },
-];
-
-/**
- * Platform/channel options (shown for social media content only)
- */
-export const PLATFORM_OPTIONS: SelectOption[] = [
-  { label: "Facebook", value: "facebook" },
-  { label: "Instagram", value: "instagram" },
-  { label: "Twitter (X)", value: "twitter" },
-  { label: "LinkedIn", value: "linkedin" },
-  { label: "TikTok", value: "tiktok" },
-  { label: "YouTube", value: "youtube" },
-];
-
-/**
  * Industry/domain options
  */
 export const INDUSTRY_OPTIONS: SelectOption[] = [
@@ -395,21 +309,6 @@ export const PURPOSE_OPTIONS: SelectOption[] = [
   { label: "Other", value: "other" },
 ];
 
-/**
- * Tone and voice options
- */
-export const TONE_OPTIONS: SelectOption[] = [
-  { label: "Professional & Formal", value: "professional-formal" },
-  { label: "Casual & Conversational", value: "casual-conversational" },
-  { label: "Friendly & Warm", value: "friendly-warm" },
-  { label: "Humorous & Playful", value: "humorous-playful" },
-  { label: "Serious & Academic", value: "serious-academic" },
-  { label: "Technical & Analytical", value: "technical-analytical" },
-  { label: "Simple & Accessible", value: "simple-accessible" },
-  { label: "Inspirational & Uplifting", value: "inspirational-uplifting" },
-  { label: "Other", value: "other" },
-];
-
 // ============================================================================
 // TYPE GUARDS FOR RUNTIME CHECKING
 // ============================================================================
@@ -419,20 +318,6 @@ export const TONE_OPTIONS: SelectOption[] = [
  */
 export const isValidWizardMode = (value: string): value is WizardMode => {
   return value === "subject-first" || value === "industry-first";
-};
-
-/**
- * Type guard to check if a value is a valid ContentType
- */
-export const isValidContentType = (value: string): value is ContentType => {
-  return CONTENT_TYPE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid Platform
- */
-export const isValidPlatform = (value: string): value is Platform => {
-  return PLATFORM_OPTIONS.some((option) => option.value === value);
 };
 
 /**
@@ -447,13 +332,6 @@ export const isValidIndustry = (value: string): value is Industry => {
  */
 export const isValidPurposeType = (value: string): value is PurposeType => {
   return PURPOSE_OPTIONS.some((option) => option.value === value);
-};
-
-/**
- * Type guard to check if a value is a valid ToneType
- */
-export const isValidToneType = (value: string): value is ToneType => {
-  return TONE_OPTIONS.some((option) => option.value === value);
 };
 
 // YMYL detection function moved to /lib/topic-builder-utils.ts

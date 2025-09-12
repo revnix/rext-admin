@@ -797,14 +797,6 @@ export const transformFormDataToBackendEnhanced = (
       industry:
         processedFormData.industry_other || processedFormData.industry || "",
       industry_other: processedFormData.industry_other || null,
-      content_type:
-        processedFormData.content_type_other ||
-        processedFormData.content_type ||
-        "",
-      content_type_other: processedFormData.content_type_other || null,
-      platform:
-        processedFormData.platform_other || processedFormData.platform || null,
-      platform_other: processedFormData.platform_other || null,
       audience:
         Array.isArray(processedFormData.audience) &&
         processedFormData.audience.length > 0
@@ -814,9 +806,6 @@ export const transformFormDataToBackendEnhanced = (
         ? processedFormData.purpose
         : [],
       purpose_other: processedFormData.purpose_other || null,
-      tone: Array.isArray(processedFormData.tone) ? processedFormData.tone : [],
-      tone_other: processedFormData.tone_other || null,
-      notes: processedFormData.notes || null,
       num_topics: processedFormData.num_topics || 5,
       subject: processedFormData.subject || null,
       timestamp: new Date().toISOString(),
@@ -1029,18 +1018,12 @@ const normalizeFormData = (
       .trim()
       .toLowerCase() as TopicBuilderFormData["industry"];
   }
-  if (normalized.content_type) {
-    normalized.content_type = normalized.content_type
-      .trim()
-      .toLowerCase() as TopicBuilderFormData["content_type"];
-  }
   if (normalized.audience) {
     normalized.audience = normalized.audience.map((a) => a.trim());
   }
 
   // Normalize array fields - remove empty strings and duplicates
   normalized.purpose = Array.from(new Set(normalized.purpose.filter(Boolean)));
-  normalized.tone = Array.from(new Set(normalized.tone.filter(Boolean)));
 
   return normalized;
 };
@@ -1052,7 +1035,7 @@ const normalizeFormData = (
 const validateRequiredBackendFields = (
   payload: BackendTopicGenerationPayload,
 ): string[] => {
-  const requiredFields = ["industry", "content_type"];
+  const requiredFields = ["industry"];
   const missingFields: string[] = [];
 
   for (const field of requiredFields) {

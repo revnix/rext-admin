@@ -7,7 +7,6 @@ import { classifyError, isOnline } from "@/lib/error-utils";
 import { generateSessionId, saveSession } from "@/lib/session-storage";
 import {
   createInitialFormData,
-  updateFormDataForContentTypeChange,
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
@@ -216,9 +215,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         }
 
         // Handle content type change - reset platform if not needed
-        else if (field === "content_type" && typeof value === "string") {
-          updated = updateFormDataForContentTypeChange(prev, value);
-        }
+        // Note: content_type field has been removed from the interface
 
         return updated;
       });
@@ -289,14 +286,8 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         industry_other: ["custom industry", "specify"],
         subject: ["subject", "topic"],
         audience: ["audience"],
-        content_type: ["content type"],
-        content_type_other: ["custom content type"],
-        platform: ["platform"],
-        platform_other: ["custom platform"],
         purpose: ["purpose"],
-        tone: ["tone"],
         num_topics: ["number of topics"],
-        notes: ["notes"],
       };
 
       const keywords = fieldKeywords[field] || [field];
@@ -519,7 +510,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             : "unknown",
         formDataSnapshot: {
           industry: formData.industry,
-          content_type: formData.content_type,
           num_topics: formData.num_topics,
         },
       });

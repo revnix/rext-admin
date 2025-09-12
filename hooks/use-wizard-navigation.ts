@@ -83,9 +83,7 @@ export interface UseWizardNavigationReturn {
 const getDefaultFormData = (): TopicBuilderFormData => ({
   wizardMode: "industry-first", // Default: "I want to explore my industry"
   industry: "business", // Smart default for broad applicability
-  content_type: "blog-post", // Most common content type
   purpose: ["educate-inform"], // Smart default: "Who are you creating this for?" equivalent
-  tone: ["professional-formal"], // Smart default for professional content
   num_topics: 5,
 });
 
@@ -168,29 +166,6 @@ export function useWizardNavigation({
         required: true,
       },
       {
-        id: "content_type",
-        type: "single-select",
-        title: "What type of content are you creating?",
-        description: "Different formats work better for different purposes.",
-        required: true,
-      },
-    );
-
-    // Platform question (conditional on content type)
-    if (formData.content_type === "social-media") {
-      baseQuestions.push({
-        id: "platform",
-        type: "single-select",
-        title: "Which platform will you publish on?",
-        description:
-          "Each platform has its own style and audience preferences.",
-        required: true,
-      });
-    }
-
-    // Remaining questions
-    baseQuestions.push(
-      {
         id: "audience",
         type: "chip-input",
         title: "Who is your target audience?",
@@ -207,30 +182,6 @@ export function useWizardNavigation({
         required: true,
       },
       {
-        id: "tone",
-        type: "multi-select",
-        title: "What tone should your content have?",
-        description: "Choose the voice and style that matches your brand.",
-        required: true,
-      },
-      {
-        id: "num_topics",
-        type: "number-input",
-        title: "How many topics do you want?",
-        description:
-          "We'll generate creative, actionable topics for you to choose from.",
-        required: true,
-      },
-      {
-        id: "notes",
-        type: "text-input",
-        title: "Any special requirements?",
-        description: "Optional: Add any specific instructions or preferences.",
-        required: false,
-        helpText:
-          "e.g., 'Include data and statistics', 'Make it beginner-friendly', 'Focus on current trends'",
-      },
-      {
         id: "review",
         type: "review",
         title: "Ready to generate topics!",
@@ -241,7 +192,7 @@ export function useWizardNavigation({
     );
 
     return baseQuestions;
-  }, [formData.wizardMode, formData.content_type]);
+  }, [formData.wizardMode]);
 
   // Current question
   const currentQuestion = questions[currentQuestionIndex] || questions[0];
@@ -430,20 +381,15 @@ export function useWizardNavigation({
 
   // Log contextual suggestions updates for debugging (Task 7.3)
   useEffect(() => {
-    if (
-      contextualSuggestions.audienceSuggestions.length > 0 ||
-      contextualSuggestions.toneRecommendations.length > 0
-    ) {
+    if (contextualSuggestions.audienceSuggestions.length > 0) {
       console.log("🎯 Contextual suggestions updated:", {
         audienceSuggestions: contextualSuggestions.audienceSuggestions,
-        toneRecommendations: contextualSuggestions.toneRecommendations,
         industry: formData.industry,
         purpose: formData.purpose,
       });
     }
   }, [
     contextualSuggestions.audienceSuggestions,
-    contextualSuggestions.toneRecommendations,
     formData.industry,
     formData.purpose,
   ]);
