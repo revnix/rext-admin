@@ -89,10 +89,10 @@ interface TopicBuilderState {
  * Based on features-requirements-plan.md Section 2.2: Question Defaults & Smart Suggestions
  */
 const initialFormData: Partial<TopicBuilderFormData> = {
+  industry: "business", // Smart default for broad applicability - now first
   wizardMode: "industry-first", // Default: "I want to explore my industry"
   num_topics: 5,
-  purpose: ["educate-inform"], // Smart default: "Who are you creating this for?" equivalent
-  industry: "business", // Smart default for broad applicability
+  purpose: ["educate-inform"], // Smart default
 };
 
 /**

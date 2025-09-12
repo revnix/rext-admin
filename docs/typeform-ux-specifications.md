@@ -43,15 +43,15 @@ Transform the current multi-field wizard into a TypeForm-inspired single-questio
 **New**: 10+ individual questions in sequence
 
 #### Question Sequence
-Based on the reduced field set from Task 11.1:
+Updated for industry-first approach to improve user experience:
 
-1. **Wizard Mode Selection** - "How would you like to start?"
-2. **Industry Selection** - "What industry are you creating content for?"
-3. **Subject Input** (conditional) - "Tell us about your topic"
-4. **Industry Other** (conditional) - "What industry would you like to focus on?"
-5. **Audience Selection** - "Who's your audience?"
-6. **Content Type** - "What type of content are you creating?"
-7. **Platform Selection** (conditional) - "Which platform will you use?"
+1. **Industry Selection** - "What industry are you in?" (provides context for all subsequent questions)
+2. **Wizard Mode Selection** - "How would you like to approach topic generation for [Industry]?"
+3. **Subject Input** (conditional) - "What specific topic in [Industry] do you want content for?"
+4. **Industry Other** (conditional) - "Please specify your industry" 
+5. **Audience Selection** - "Who is your target audience in [Industry]?"
+6. **Content Goals** - "What do you want to achieve?"
+7. **Review & Generate** - Final step with topic count selection
 8. **Content Purpose** - "What's the goal of your content?"
 9. **Content Tone** - "What tone should your content have?"
 10. **Number of Topics** - "How many topics would you like?"

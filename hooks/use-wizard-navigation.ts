@@ -11,12 +11,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { useContextualSuggestions } from "@/hooks/use-contextual-suggestions";
+import { getContextualTopicSuggestions } from "@/lib/contextual-suggestions";
 import { announceToScreenReader } from "@/lib/typeform-utils";
 import {
   STEP_VALIDATION_SCHEMAS,
   TopicBuilderFormDataSchema,
 } from "@/types/schemas";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
+import { INDUSTRY_OPTIONS } from "@/types/topic-builder";
 import type {
   QuestionConfig,
   ValidationResult,
@@ -81,9 +83,9 @@ export interface UseWizardNavigationReturn {
 
 // Default form data with smart defaults per requirements
 const getDefaultFormData = (): TopicBuilderFormData => ({
+  industry: "business", // Smart default for broad applicability - now first
   wizardMode: "industry-first", // Default: "I want to explore my industry"
-  industry: "business", // Smart default for broad applicability
-  purpose: ["educate-inform"], // Smart default: "Who are you creating this for?" equivalent
+  purpose: ["educate-inform"], // Smart default
   num_topics: 5,
 });
 
@@ -128,47 +130,64 @@ export function useWizardNavigation({
     enableAutoUpdate: true,
   });
 
-  // Define question sequence based on wizard mode
+  // Define question sequence with industry-first approach
   const questions = useMemo((): QuestionConfig[] => {
+    const industryLabel = formData.industry
+      ? INDUSTRY_OPTIONS.find((opt) => opt.value === formData.industry)
+          ?.label || formData.industry
+      : "your industry";
+
     const baseQuestions: QuestionConfig[] = [
+      {
+        id: "industry",
+        type: "single-select",
+        title: "What industry are you in?",
+        description:
+          "This helps us tailor all suggestions and content topics to your specific market.",
+        required: true,
+      },
       {
         id: "wizardMode",
         type: "wizard-mode",
-        title: "How do you want to brainstorm?",
+        title: `How would you like to approach topic generation for ${industryLabel}?`,
         description:
-          "Choose your preferred approach to generate content topics.",
+          "Choose your preferred brainstorming approach based on your current needs.",
         required: true,
       },
     ];
 
     // Subject-first flow
     if (formData.wizardMode === "subject-first") {
+      const topicSuggestions = formData.industry
+        ? getContextualTopicSuggestions(formData.industry, 3)
+        : [
+            "Industry best practices analysis",
+            "Professional development strategies",
+            "Customer service excellence",
+          ];
+
+      const exampleText =
+        topicSuggestions.length > 0
+          ? `Examples: "${topicSuggestions[0]}", "${topicSuggestions[1]}", "${topicSuggestions[2]}"`
+          : "Example: 'Digital marketing strategies for small restaurants'";
+
       baseQuestions.push({
         id: "subject",
         type: "text-input",
-        title: "What topic do you want to create content about?",
+        title: `What specific topic in ${industryLabel} do you want content for?`,
         description:
           "Be as specific as possible. This will help us generate more targeted topics.",
         required: true,
-        helpText:
-          "Example: 'Digital marketing strategies for small restaurants'",
+        helpText: exampleText,
       });
     }
 
     // Common questions for both flows
     baseQuestions.push(
       {
-        id: "industry",
-        type: "single-select",
-        title: "What industry are you in?",
-        description:
-          "This helps us tailor content topics to your specific market.",
-        required: true,
-      },
-      {
         id: "audience",
         type: "chip-input",
-        title: "Who is your target audience?",
+        title: `Who is your target audience in ${industryLabel}?`,
         description: "Describe the people you want to reach with your content.",
         required: false,
         helpText:
@@ -192,7 +211,7 @@ export function useWizardNavigation({
     );
 
     return baseQuestions;
-  }, [formData.wizardMode]);
+  }, [formData.wizardMode, formData.industry]);
 
   // Current question
   const currentQuestion = questions[currentQuestionIndex] || questions[0];

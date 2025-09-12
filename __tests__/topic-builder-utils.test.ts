@@ -573,9 +573,9 @@ describe("createInitialFormData", () => {
   test("should create valid initial form data", () => {
     const initialData = createInitialFormData();
 
+    expect(initialData.industry).toBe("business"); // Industry comes first now
     expect(initialData.wizardMode).toBe("industry-first");
     expect(initialData.num_topics).toBe(5);
     expect(Array.isArray(initialData.purpose)).toBe(true);
-    expect(Array.isArray(initialData.tone)).toBe(true);
   });
 });

@@ -607,8 +607,8 @@ export const getPreviousValidStep = (
  */
 export const createInitialFormData = (): TopicBuilderFormData => {
   return {
+    industry: "business", // Smart default - now first to match new flow
     wizardMode: "industry-first",
-    industry: "technology",
     purpose: [],
     num_topics: 5,
   };

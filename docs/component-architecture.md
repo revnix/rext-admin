@@ -332,9 +332,10 @@ export const QUESTION_DEFINITIONS: Record<string, QuestionDefinition> = {
     config: {
       id: 'wizardMode',
       type: 'single-select',
-      title: 'How would you like to start?',
+      title: 'How would you like to approach topic generation for [Industry]?',
       required: true,
-      autoAdvance: true
+      autoAdvance: true,
+      description: 'Choose your preferred brainstorming approach based on your current needs.'
     }
   },
   industry: {

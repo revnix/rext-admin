@@ -5,20 +5,11 @@
 
 [
   {
-    "id": "wizardMode",
-    "text": "How would you like to start?",
-    "type": "radio",
-    "required": true,
-    "options": [
-      "I have a specific topic in mind",
-      "I want to explore my industry"
-    ]
-  },
-  {
     "id": "industry",
-    "text": "Select your industry or domain",
+    "text": "What industry are you in?",
     "type": "dropdown",
     "required": true,
+    "description": "This helps us tailor all suggestions and content topics to your specific market.",
     "options": [
       "Technology",
       "Healthcare",
@@ -42,6 +33,17 @@
     ]
   },
   {
+    "id": "wizardMode",
+    "text": "How would you like to approach topic generation?",
+    "type": "radio",
+    "required": true,
+    "description": "Choose your preferred brainstorming approach based on your current needs.",
+    "options": [
+      "I have a specific topic in mind",
+      "I want to explore my industry"
+    ]
+  },
+  {
     "id": "industry_other",
     "text": "Please specify the industry",
     "type": "text",
@@ -50,27 +52,29 @@
   },
   {
     "id": "subject",
-    "text": "What is the main topic or subject you want content topics for?",
+    "text": "What specific topic do you want content for?",
     "type": "text",
     "required": true,
+    "description": "Be as specific as possible. This will help us generate more targeted topics.",
     "dependsOn": { "id": "wizardMode", "value": "subject-first" },
     "sampleAnswers": [
-      "Artificial Intelligence in healthcare",
-      "Budget travel tips for students",
-      "Sustainable fashion trends"
+      "AI implementation strategies for small businesses",
+      "Telemedicine adoption best practices",
+      "Digital marketing strategies for small restaurants"
     ]
   },
   {
     "id": "audience",
-    "text": "Who are you creating this for?",
+    "text": "Who is your target audience?",
     "type": "multiselect",
     "required": false,
+    "description": "Describe the people you want to reach with your content.",
     "maxSelections": 5,
     "sampleAnswers": [
       "Small business owners",
-      "College students",
-      "Working professionals",
-      "New parents"
+      "Marketing professionals",
+      "Healthcare administrators",
+      "Technology decision makers"
     ]
   },
   {

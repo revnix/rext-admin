@@ -241,86 +241,9 @@ export const TopicBuilderFormDataSchema = z.object({
 /**
  * Step-specific validation schemas for TypeForm wizard flow
  * Each step has its own validation requirements for better UX
+ *
+ * Updated to reflect the new industry-first flow order.
  */
-export const stepValidationSchemas = {
-  "wizard-mode": z.object({
-    wizardMode: z.enum(["subject-first", "industry-first"]),
-  }),
-
-  industry: z
-    .object({
-      industry: z.enum([
-        "technology",
-        "healthcare",
-        "finance",
-        "education",
-        "travel",
-        "food",
-        "fashion",
-        "business",
-        "marketing",
-        "science",
-        "sports",
-        "lifestyle",
-        "government",
-        "real-estate",
-        "ecommerce",
-        "hr",
-        "legal",
-        "fitness",
-        "other",
-      ]),
-      industry_other: z
-        .string()
-        .min(1, "Please specify your industry")
-        .optional(),
-    })
-    .refine(
-      (data) =>
-        data.industry !== "other" ||
-        (data.industry_other && data.industry_other.length > 0),
-      {
-        message: "Please specify your industry when selecting 'Other'",
-        path: ["industry_other"],
-      },
-    ),
-
-  subject: z.object({
-    subject: z.string().min(1, "Please enter a subject or topic"),
-  }),
-
-  audience: z.object({
-    audience: z.array(z.string()).min(1, "Please select at least one audience"),
-  }),
-
-  purpose: z
-    .object({
-      purpose: z
-        .array(
-          z.enum([
-            "educate-inform",
-            "entertain-engage",
-            "inspire-motivate",
-            "persuade-convince",
-            "promote-product",
-            "drive-seo",
-            "thought-leadership",
-            "other",
-          ]),
-        )
-        .min(1, "Please select at least one purpose"),
-      purpose_other: z.string().optional(),
-    })
-    .refine(
-      (data) =>
-        !data.purpose.includes("other") ||
-        (data.purpose_other && data.purpose_other.length > 0),
-      {
-        message: "Please specify your purpose when selecting 'Other'",
-        path: ["purpose_other"],
-      },
-    ),
-} as const;
 
 /**
  * Backend payload transformation schema - Updated for clean data structure
