@@ -103,7 +103,7 @@ export function WizardProgress({
   if (compact) {
     return (
       <motion.div
-        className={cn("px-4 py-3 bg-card border-b border-border", className)}
+        className={cn("px-4 py-3 bg-card", className)}
         variants={motionVariants}
         initial="hidden"
         animate="visible"
