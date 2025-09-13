@@ -89,7 +89,7 @@ export function SubjectQuestion({
       {!formData.subject && (
         <motion.div variants={itemVariants} className="space-y-3">
           <div className="text-sm font-medium text-muted-foreground">
-            Popular topics:
+            Popular topics (click to use):
           </div>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((suggestion) => (
@@ -99,13 +99,18 @@ export function SubjectQuestion({
                 onClick={() => handleChange(suggestion)}
                 disabled={isLoading}
                 className={cn(
-                  "px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg",
-                  "transition-colors duration-150 text-left cursor-pointer",
-                  "hover:text-foreground text-muted-foreground",
+                  "px-3 py-2 text-sm rounded-lg border transition-all duration-200",
+                  "border-border hover:border-primary/50 cursor-pointer",
+                  "bg-background hover:bg-primary/5 text-foreground",
+                  "hover:text-primary shadow-sm hover:shadow-md",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
                 )}
               >
-                {suggestion}
+                <span className="flex items-center gap-1">
+                  <span className="text-primary">+</span>
+                  {suggestion}
+                </span>
               </button>
             ))}
           </div>

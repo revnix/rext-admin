@@ -416,9 +416,10 @@ export function ChipInput({
           {value.map((chip, index) => (
             <Badge
               key={chip}
-              variant="secondary"
+              variant="default"
               className={cn(
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
+                "bg-primary text-primary-foreground hover:bg-primary/90",
                 focusedChipIndex === index &&
                   "ring-2 ring-primary ring-offset-1",
               )}

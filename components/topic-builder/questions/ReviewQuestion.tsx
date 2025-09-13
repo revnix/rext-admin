@@ -218,6 +218,7 @@ export function ReviewQuestion({
   enterEditMode,
   getQuestionError,
   questions,
+  isLoading = false,
 }: ReviewQuestionProps) {
   const getDisplayValue = (
     options: { label: string; value: string }[],
@@ -387,16 +388,18 @@ export function ReviewQuestion({
         </div>
 
         {/* Number of Topics Input */}
-        <div className="max-w-xs mx-auto">
+        <div className="max-w-lg mx-auto space-y-6">
           <Label
             htmlFor="num_topics"
-            className="text-sm font-medium text-muted-foreground mb-2 block"
+            className="text-lg font-semibold text-foreground mb-4 block"
           >
             How many topics do you want?
           </Label>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 flex-1">
-              <Hash className="h-4 w-4 text-primary flex-shrink-0" />
+
+          {/* Enhanced Number Input - Bigger */}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-4 bg-muted/50 rounded-2xl px-6 py-4 border border-border/50 hover:border-primary/30 transition-all duration-200 shadow-sm">
+              <Hash className="h-6 w-6 text-primary flex-shrink-0" />
               <Input
                 id="num_topics"
                 type="number"
@@ -411,7 +414,7 @@ export function ReviewQuestion({
                   updateFormData("num_topics", value);
                 }}
                 className={cn(
-                  "border-0 bg-transparent p-0 h-auto text-center font-semibold text-lg focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "border-0 bg-transparent p-0 h-auto text-center font-bold text-4xl w-20 focus-visible:ring-0 focus-visible:ring-offset-0",
                   !!errors.num_topics && "text-destructive",
                 )}
                 aria-describedby={
@@ -419,21 +422,46 @@ export function ReviewQuestion({
                 }
                 aria-invalid={!!errors.num_topics}
               />
-              <span className="text-sm text-muted-foreground">topics</span>
+              <span className="text-lg font-medium text-muted-foreground">
+                topics
+              </span>
             </div>
+          </div>
+
+          {/* Quick Selection Chips - Moved Below */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {[5, 10, 15, 20].map((count) => (
+              <button
+                key={`topic-count-${count}`}
+                type="button"
+                onClick={() => updateFormData("num_topics", count)}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer",
+                  "border hover:border-primary/50 shadow-sm hover:shadow-md",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
+                  formData.num_topics === count
+                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                    : "bg-background hover:bg-primary/5 text-foreground border-border hover:text-primary",
+                )}
+                disabled={isLoading}
+              >
+                {count} topics
+              </button>
+            ))}
           </div>
 
           {errors.num_topics ? (
             <p
               id="num-topics-error"
-              className="text-xs text-destructive mt-2 text-center"
+              className="text-sm text-destructive mt-3 text-center"
             >
               {errors.num_topics}
             </p>
           ) : (
             <p
               id="num-topics-help"
-              className="text-xs text-muted-foreground mt-2 text-center"
+              className="text-sm text-muted-foreground mt-3 text-center"
             >
               We'll generate creative, actionable topics for you to choose from
             </p>
