@@ -188,6 +188,8 @@ export function ContentCreationWizard({
   // Auto-save timer ref and form data tracking
   const lastFormDataRef = useRef<PartialContentCreationFormData>(initialData);
   const isInitializedRef = useRef(false);
+  // Track last validation errors for the current step to avoid loops
+  const lastStepErrorsRef = useRef<Record<string, string | undefined>>({});
 
   // Update dependency engine when form data changes
   useEffect(() => {
@@ -271,47 +273,82 @@ export function ContentCreationWizard({
     }
   }, [state.formData, dependencyEngine]);
 
+  // Keep a snapshot of current step's errors to compare on next validation
+  useEffect(() => {
+    const currentStepConfig = WIZARD_CONFIG.steps[state.currentStep];
+    if (!currentStepConfig) {
+      lastStepErrorsRef.current = {};
+      return;
+    }
+    const visibleFields = dependencyEngine.getVisibleFields(currentStepConfig);
+    const snapshot: Record<string, string | undefined> = {};
+    for (const field of visibleFields) {
+      snapshot[field.id] = state.errors[field.id];
+    }
+    lastStepErrorsRef.current = snapshot;
+  }, [state.currentStep, state.errors, dependencyEngine]);
+
   // Validate current step and update state with enhanced validation
   useEffect(() => {
     const currentStepConfig = WIZARD_CONFIG.steps[state.currentStep];
-    if (currentStepConfig) {
-      const validation = dependencyEngine.validateStep(currentStepConfig);
+    if (!currentStepConfig) return;
 
-      // Clear previous step errors first
-      const visibleFields =
-        dependencyEngine.getVisibleFields(currentStepConfig);
+    const validation = dependencyEngine.validateStep(currentStepConfig);
+
+    const visibleFields = dependencyEngine.getVisibleFields(currentStepConfig);
+    const nextErrors = validation.errors as Record<string, string | undefined>;
+
+    // Diff with last snapshot to avoid redundant dispatches and loops
+    let hasDiff = false;
+    for (const field of visibleFields) {
+      if (
+        (lastStepErrorsRef.current[field.id] || undefined) !==
+        (nextErrors[field.id] || undefined)
+      ) {
+        hasDiff = true;
+        break;
+      }
+    }
+
+    if (hasDiff) {
       for (const field of visibleFields) {
-        if (state.errors[field.id]) {
+        const prev = lastStepErrorsRef.current[field.id];
+        const next = nextErrors[field.id];
+        if (prev && !next) {
           dispatch({ type: "CLEAR_ERROR", payload: field.id });
+        } else if (next && prev !== next) {
+          dispatch({
+            type: "SET_ERROR",
+            payload: {
+              field: field.id as keyof PartialContentCreationFormData,
+              error: next,
+            },
+          });
         }
       }
 
-      // Add new validation errors
-      Object.entries(validation.errors).forEach(([fieldId, error]) => {
-        dispatch({
-          type: "SET_ERROR",
-          payload: {
-            field: fieldId as keyof PartialContentCreationFormData,
-            error,
-          },
-        });
-      });
-
-      // Show warnings as toast notifications for improved UX
-      if (validation.warnings) {
-        Object.entries(validation.warnings).forEach(([fieldId, warnings]) => {
-          if (
-            warnings.length > 0 &&
-            state.touched[fieldId as keyof PartialContentCreationFormData]
-          ) {
-            toast.info(`Suggestion for ${fieldId}: ${warnings[0]}`, {
-              duration: 3000,
-            });
-          }
-        });
+      // Update snapshot to the latest
+      const snapshot: Record<string, string | undefined> = {};
+      for (const field of visibleFields) {
+        snapshot[field.id] = nextErrors[field.id];
       }
+      lastStepErrorsRef.current = snapshot;
     }
-  }, [state.currentStep, state.touched, dependencyEngine, state.errors]);
+
+    // Show warnings as toast notifications for improved UX
+    if (validation.warnings) {
+      Object.entries(validation.warnings).forEach(([fieldId, warnings]) => {
+        if (
+          warnings.length > 0 &&
+          state.touched[fieldId as keyof PartialContentCreationFormData]
+        ) {
+          toast.info(`Suggestion for ${fieldId}: ${warnings[0]}`, {
+            duration: 3000,
+          });
+        }
+      });
+    }
+  }, [state.currentStep, state.touched, dependencyEngine]);
 
   // Field change handler
   const handleFieldChange = useCallback(
