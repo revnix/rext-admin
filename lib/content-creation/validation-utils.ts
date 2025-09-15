@@ -12,7 +12,7 @@ import type {
   WizardField,
 } from "@/types/content-creation";
 import type { FormFieldValue } from "@/types/shared";
-import { ContentCreationValidator } from "./validation";
+import { validateField } from "./validation";
 
 // ============================================================================
 // VALIDATION HOOK
@@ -28,7 +28,7 @@ export function useFieldValidation(
   isTouched: boolean = false,
 ) {
   const validationResult = useMemo(() => {
-    return ContentCreationValidator.validateField(
+    return validateField(
       field.id as keyof ContentCreationFormData,
       value,
       formData,
@@ -137,7 +137,7 @@ export function getFieldCompletionStatus(
   isValid: boolean;
   completionPercentage: number;
 } {
-  const validationResult = ContentCreationValidator.validateField(
+  const validationResult = validateField(
     field.id as keyof ContentCreationFormData,
     value,
     formData,
@@ -221,7 +221,7 @@ export function getFieldGroupValidationSummary(
 
   fields.forEach((field) => {
     const value = formData[field.id as keyof PartialContentCreationFormData];
-    const validationResult = ContentCreationValidator.validateField(
+    const validationResult = validateField(
       field.id as keyof ContentCreationFormData,
       value,
       formData,
@@ -334,7 +334,7 @@ export function useDebouncedValidation(
 ) {
   const _debouncedValidation = useMemo(() => {
     const timeoutId = setTimeout(() => {
-      return ContentCreationValidator.validateField(
+      return validateField(
         field.id as keyof ContentCreationFormData,
         value,
         formData,

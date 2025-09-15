@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2, FileText, Globe, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -108,6 +108,16 @@ export function TopicContentStep({
   const [filteredTopics, setFilteredTopics] = useState(MOCK_TOPICS);
   const [isLoadingTopics, _setIsLoadingTopics] = useState(false);
 
+  // Create stable references for callbacks to avoid dependency loops
+  const onFieldChangeRef = useRef(onFieldChange);
+  const onFieldTouchRef = useRef(onFieldTouch);
+
+  // Keep refs updated
+  useEffect(() => {
+    onFieldChangeRef.current = onFieldChange;
+    onFieldTouchRef.current = onFieldTouch;
+  });
+
   // Get visible fields for this step
   const visibleFields = dependencyEngine.getVisibleFields(step);
   const topicField = visibleFields.find((f) => f.id === "topicId");
@@ -141,14 +151,14 @@ export function TopicContentStep({
         (topic) => topic.id === formData.topicId,
       );
       if (selectedTopic) {
-        onFieldChange("industry", selectedTopic.industry);
+        onFieldChangeRef.current("industry", selectedTopic.industry);
         // Also suggest platform based on topic
         if (!formData.platform) {
-          onFieldChange("platform", selectedTopic.platform);
+          onFieldChangeRef.current("platform", selectedTopic.platform);
         }
       }
     }
-  }, [formData.topicId, formData.industry, formData.platform, onFieldChange]);
+  }, [formData.topicId, formData.industry, formData.platform]);
 
   // Get content type options based on selected platform
   const contentTypeOptions = useMemo(() => {
@@ -160,44 +170,42 @@ export function TopicContentStep({
   // Handle topic selection
   const handleTopicSelect = useCallback(
     (topicId: string) => {
-      onFieldChange("topicId", topicId);
-      onFieldTouch("topicId");
+      onFieldChangeRef.current("topicId", topicId);
+      onFieldTouchRef.current("topicId");
 
       // Auto-fill related fields
       const selectedTopic = MOCK_TOPICS.find((topic) => topic.id === topicId);
       if (selectedTopic) {
         // Pre-fill industry
-        onFieldChange("industry", selectedTopic.industry);
+        onFieldChangeRef.current("industry", selectedTopic.industry);
         // Pre-fill platform if not already set
         if (!formData.platform) {
-          onFieldChange("platform", selectedTopic.platform);
+          onFieldChangeRef.current("platform", selectedTopic.platform);
         }
       }
     },
-    [onFieldChange, onFieldTouch, formData.platform],
+    [formData.platform],
   );
 
   // Handle platform change
   const handlePlatformChange = useCallback(
     (platform: string) => {
-      onFieldChange("platform", platform);
-      onFieldTouch("platform");
+      onFieldChangeRef.current("platform", platform);
+      onFieldTouchRef.current("platform");
 
       // Clear content type if platform changed
-      if (formData.contentType) {
-        const newContentTypeOptions = getContentTypeOptions(
-          platform as "Website" | "Social Media",
-        );
-        const isCurrentTypeValid = newContentTypeOptions.some(
-          (option) => option.value === formData.contentType,
-        );
+      const newContentTypeOptions = getContentTypeOptions(
+        platform as "Website" | "Social Media",
+      );
+      const isCurrentTypeValid = newContentTypeOptions.some(
+        (option) => option.value === formData.contentType,
+      );
 
-        if (!isCurrentTypeValid) {
-          onFieldChange("contentType", "");
-        }
+      if (!isCurrentTypeValid) {
+        onFieldChangeRef.current("contentType", "");
       }
     },
-    [onFieldChange, onFieldTouch, formData.contentType],
+    [formData.contentType], // Keep contentType dependency as it's used in comparison
   );
 
   const selectedTopic = formData.topicId
@@ -242,9 +250,9 @@ export function TopicContentStep({
               {/* Topic list */}
               {isLoadingTopics ? (
                 <div className="space-y-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                  ))}
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
                 </div>
               ) : (
                 <div className="space-y-3 max-h-64 overflow-y-auto">

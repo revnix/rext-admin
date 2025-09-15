@@ -271,7 +271,7 @@ export function WizardFlowController({
   dependencyEngine,
   hasUnsavedChanges,
   onStepChange,
-  onSaveDraft,
+  onSaveDraft: _onSaveDraft,
   mode = "full",
   showGuidance = true,
   enableSmartNavigation = true,

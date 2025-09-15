@@ -14,7 +14,13 @@ import type {
   WizardStep,
 } from "@/types/content-creation";
 import type { FormFieldValue, SelectOption } from "@/types/shared";
-import { ContentCreationValidator } from "./validation";
+import {
+  canCompleteStep,
+  getNextIncompleteStep,
+  validateField,
+  validateStep,
+  validateWizard,
+} from "./validation";
 
 // ============================================================================
 // DEPENDENCY ENGINE CLASS
@@ -168,7 +174,7 @@ export class WizardDependencyEngine {
     }
 
     const value = this.formData[field.id];
-    const validationResult = ContentCreationValidator.validateField(
+    const validationResult = validateField(
       field.id as keyof ContentCreationFormData,
       value,
       this.formData,
@@ -195,7 +201,7 @@ export class WizardDependencyEngine {
     completionPercentage: number;
   } {
     const visibleFields = this.getVisibleFields(step);
-    const stepValidationResult = ContentCreationValidator.validateStep(
+    const stepValidationResult = validateStep(
       step,
       this.formData,
       visibleFields,
@@ -244,7 +250,7 @@ export class WizardDependencyEngine {
     readyForDraft: boolean;
     readyForSubmission: boolean;
   } {
-    const wizardValidationResult = ContentCreationValidator.validateWizard(
+    const wizardValidationResult = validateWizard(
       this.steps,
       this.formData,
       (step) => this.getVisibleFields(step),
@@ -473,16 +479,17 @@ export class WizardDependencyEngine {
           dependency.field === "audienceType" &&
           Array.isArray(dependentValue)
         ) {
-          if (dependentValue.includes("Enterprises")) {
+          const audienceTypes = dependentValue as string[];
+          if (audienceTypes.includes("Enterprises")) {
             suggestions.push("Professional", "Technical");
           }
           if (
-            dependentValue.includes("Students") ||
-            dependentValue.includes("Teens")
+            audienceTypes.includes("Students") ||
+            audienceTypes.includes("Teens")
           ) {
             suggestions.push("Casual", "Friendly");
           }
-          if (dependentValue.includes("Seniors")) {
+          if (audienceTypes.includes("Seniors")) {
             suggestions.push("Simple", "Friendly");
           }
         }
@@ -594,21 +601,15 @@ export class WizardDependencyEngine {
    */
   canCompleteStep(step: WizardStep): boolean {
     const visibleFields = this.getVisibleFields(step);
-    return ContentCreationValidator.canCompleteStep(
-      step,
-      this.formData,
-      visibleFields,
-    );
+    return canCompleteStep(step, this.formData, visibleFields);
   }
 
   /**
    * Get the next incomplete step that needs attention
    */
   getNextIncompleteStep(): WizardStep | null {
-    return ContentCreationValidator.getNextIncompleteStep(
-      this.steps,
-      this.formData,
-      (step) => this.getVisibleFields(step),
+    return getNextIncompleteStep(this.steps, this.formData, (step) =>
+      this.getVisibleFields(step),
     );
   }
 }
@@ -730,7 +731,7 @@ export const applyCascadingUpdates = (
           newOptions.some((option) => option.value === val),
         );
         if (validValues.length !== currentValue.length) {
-          (formData as any)[field.id] = validValues;
+          (formData as Record<string, unknown>)[field.id] = validValues;
         }
       } else if (
         currentValue &&

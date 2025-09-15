@@ -115,8 +115,8 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
 } {
   const {
     autoSave = true,
-    autoSaveInterval = 30000,
-    minCompletionForAutoSave = 25,
+    autoSaveInterval: _autoSaveInterval = 30000,
+    minCompletionForAutoSave: _minCompletionForAutoSave = 25,
     showToasts = true,
     debug = false,
   } = options;

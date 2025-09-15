@@ -200,9 +200,9 @@ export function VoiceStyleStep({
                   <AlertDescription>
                     <strong>AI Suggestions:</strong>
                     <ul className="mt-2 space-y-1">
-                      {smartSuggestions.map((suggestion, index) => (
+                      {smartSuggestions.map((suggestion) => (
                         <li
-                          key={index}
+                          key={suggestion}
                           className="text-sm text-muted-foreground"
                         >
                           • {suggestion}

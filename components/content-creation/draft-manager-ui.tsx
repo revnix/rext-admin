@@ -89,7 +89,7 @@ interface SaveDraftDialogProps {
   /** Called when dialog state changes */
   onOpenChange: (open: boolean) => void;
   /** Called when draft should be saved */
-  onSave: (title: string, metadata?: any) => void;
+  onSave: (title: string, metadata?: Record<string, unknown>) => void;
   /** Whether save is in progress */
   isSaving?: boolean;
   /** Default draft title */
@@ -370,7 +370,7 @@ export const DraftManagerUI = memo<DraftManagerUIProps>(
 
     // Handle manual save
     const handleManualSave = useCallback(
-      async (title: string, metadata?: any) => {
+      async (title: string, metadata?: Record<string, unknown>) => {
         const draft = await actions.saveDraft(
           formData,
           currentStep,

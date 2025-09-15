@@ -313,7 +313,7 @@ export class DraftManager {
     const draft = await this.storage.loadDraft(draftId);
     if (!draft) return null;
 
-    const { formData, ...info } = draft;
+    const { formData: _formData, ...info } = draft;
     return info;
   }
 

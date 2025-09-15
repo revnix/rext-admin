@@ -251,12 +251,12 @@ interface FieldValidationWrapperProps {
   /**
    * Field value
    */
-  value: any;
+  value: unknown;
 
   /**
    * Form data for context
    */
-  formData: any;
+  formData: Record<string, unknown>;
 
   /**
    * Whether field has been touched
@@ -291,7 +291,7 @@ export const FieldValidationWrapper = memo<FieldValidationWrapperProps>(
   ({
     field,
     value,
-    formData,
+    formData: _formData,
     isTouched = false,
     errors = [],
     warnings = [],

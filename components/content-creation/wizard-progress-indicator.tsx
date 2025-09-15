@@ -133,7 +133,7 @@ export function WizardProgressIndicator({
   onStepClick,
   stepCompletions = {},
   stepValidations = {},
-  showDetails = false,
+  showDetails: _showDetails = false,
   compact = false,
   timeSpentPerStep = {},
 }: EnhancedWizardProgressIndicatorProps) {
@@ -253,7 +253,9 @@ export function WizardProgressIndicator({
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div
+                            <button
+                              type="button"
+                              tabIndex={isClickable ? 0 : -1}
                               className={cn(
                                 "p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer",
                                 status === "current" &&
@@ -272,6 +274,11 @@ export function WizardProgressIndicator({
                               )}
                               onClick={() =>
                                 isClickable && onStepClick?.(index)
+                              }
+                              onKeyDown={(e) =>
+                                (e.key === "Enter" || e.key === " ") &&
+                                isClickable &&
+                                onStepClick?.(index)
                               }
                             >
                               {/* Step header */}
@@ -353,7 +360,7 @@ export function WizardProgressIndicator({
                                   />
                                 </div>
                               )}
-                            </div>
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
                             <div className="space-y-1">

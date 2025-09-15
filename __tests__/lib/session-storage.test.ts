@@ -566,7 +566,7 @@ describe("updateSession", () => {
     const updatedSession = updateSession(sessionId, [mockTopics[0]]);
 
     expect(updatedSession).not.toBeNull();
-    expect(updatedSession?.expiresAt).toBeGreaterThan(originalExpiration!);
+    expect(updatedSession?.expiresAt).toBeGreaterThan(originalExpiration || 0);
   });
 
   it("should return null for non-existent session", () => {

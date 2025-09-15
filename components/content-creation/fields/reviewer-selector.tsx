@@ -294,8 +294,10 @@ export function ReviewerSelector({
                       !isSelected && selectedReviewers.length >= maxReviewers;
 
                     return (
-                      <div
+                      <button
                         key={reviewer.id}
+                        type="button"
+                        tabIndex={isDisabled ? -1 : 0}
                         className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                           isSelected
                             ? "border-primary bg-primary/5"
@@ -304,6 +306,11 @@ export function ReviewerSelector({
                               : "hover:bg-accent border-border"
                         }`}
                         onClick={() =>
+                          !isDisabled &&
+                          handleReviewerToggle(reviewer.id, !isSelected)
+                        }
+                        onKeyDown={(e) =>
+                          (e.key === "Enter" || e.key === " ") &&
                           !isDisabled &&
                           handleReviewerToggle(reviewer.id, !isSelected)
                         }
@@ -365,7 +372,7 @@ export function ReviewerSelector({
                             <Plus className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>

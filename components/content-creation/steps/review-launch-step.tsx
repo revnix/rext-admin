@@ -501,8 +501,8 @@ export function ReviewLaunchStep({
                   Search Intent
                 </Label>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.searchIntent?.map((intent, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
+                  {formData.searchIntent?.map((intent) => (
+                    <Badge key={intent} variant="outline" className="text-xs">
                       {intent}
                     </Badge>
                   )) || (
@@ -515,8 +515,8 @@ export function ReviewLaunchStep({
                   Keywords
                 </Label>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.primaryKeywords?.map((keyword, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
+                  {formData.primaryKeywords?.map((keyword) => (
+                    <Badge key={keyword} variant="outline" className="text-xs">
                       {keyword}
                     </Badge>
                   )) || (

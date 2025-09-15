@@ -28,8 +28,8 @@ export function ActionsCell<
   actions,
   row,
   className,
-  showOnHover = true,
-  alwaysShowTrigger = false,
+  showOnHover: _showOnHover = true,
+  alwaysShowTrigger: _alwaysShowTrigger = false,
 }: ActionsCellProps<T>) {
   const [_isHovered, _setIsHovered] = useState(false);
   const { confirm, ConfirmationComponent } = useConfirmation();

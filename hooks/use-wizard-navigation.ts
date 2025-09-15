@@ -9,7 +9,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { type UseFormReturn, useForm } from "react-hook-form";
+import { type Resolver, type UseFormReturn, useForm } from "react-hook-form";
 import { useContextualSuggestions } from "@/hooks/use-contextual-suggestions";
 import { getContextualTopicSuggestions } from "@/lib/contextual-suggestions";
 import { announceToScreenReader } from "@/lib/typeform-utils";
@@ -97,7 +97,9 @@ export function useWizardNavigation({
 }: UseWizardNavigationProps): UseWizardNavigationReturn {
   // Initialize React Hook Form with Zod validation
   const form = useForm<TopicBuilderFormData>({
-    resolver: zodResolver(TopicBuilderFormDataSchema) as any,
+    resolver: zodResolver(
+      TopicBuilderFormDataSchema,
+    ) as Resolver<TopicBuilderFormData>,
     defaultValues: {
       ...getDefaultFormData(),
       ...initialFormData,
@@ -419,7 +421,7 @@ export function useWizardNavigation({
     updateFormData,
 
     // React Hook Form integration
-    form: form as any,
+    form: form as UseFormReturn<TopicBuilderFormData>,
 
     // Navigation state
     currentQuestionIndex,
