@@ -84,6 +84,37 @@ export {
   isErrorResponse as isComponentErrorResponse,
 } from "./components";
 // ============================================================================
+// CONTENT CREATION TYPES
+// ============================================================================
+export type {
+  AudienceSize,
+  ContentCreationFormData,
+  ContentCreationWizardProps,
+  ContentFreshness,
+  ContentLengthOption,
+  ContentTypeForPlatform,
+  ContentTypeOptions,
+  CreateContentRequest,
+  CreateContentResponse,
+  FactCheckingLevel,
+  FieldDependency,
+  PartialContentCreationFormData,
+  Platform,
+  ReadingLevel,
+  ResearchLevel,
+  WizardAction,
+  WizardConfig,
+  WizardField,
+  WizardProgressProps,
+  WizardState,
+  WizardStep,
+  WizardStepProps,
+} from "./content-creation";
+export {
+  getDefaultFormData,
+  isCompleteFormData,
+} from "./content-creation";
+// ============================================================================
 // DATA TABLE TYPES
 // ============================================================================
 export type {
@@ -152,7 +183,7 @@ export type {
   TopicGenerationResponse,
   TypeFormWizardState,
   WizardMode,
-  WizardStep,
+  WizardStep as TopicBuilderWizardStep,
 } from "./topic-builder";
 // Export option constants for Topic Builder
 // Export helper functions

@@ -163,6 +163,7 @@ export type FormFieldValue =
   | string[]
   | number[]
   | Date
+  | Record<string, any> // For complex objects like ContentLengthOption
   | null
   | undefined;
 
@@ -172,3 +173,12 @@ export type FormFieldValue =
 export type FieldValue<T, K extends keyof T> = T[K] extends FormFieldValue
   ? T[K]
   : FormFieldValue;
+
+/**
+ * Validation result interface for form validation
+ */
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings?: string[];
+}
