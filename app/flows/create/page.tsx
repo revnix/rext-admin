@@ -41,8 +41,13 @@ function CreateFlowContent() {
           tags: [`tag${index + 1}`, `content`, `topic-${id}`],
           scores: {
             relevance: 0.8 + index * 0.05,
-            freshness: 0.7 + index * 0.03,
-            novelty: 0.9 - index * 0.02,
+            seo_potential: 0.75 + index * 0.02,
+            trend_level: 0.7 + index * 0.03,
+            uniqueness: 0.9 - index * 0.02,
+            reader_interest: 0.85 + index * 0.01,
+            actionable_potential: 0.8 + index * 0.03,
+            brand_alignment: 0.82 + index * 0.02,
+            controversy: 0.15 - index * 0.01,
           },
           audience_fit: [`audience-${index + 1}`, `target-group-${id}`],
           channel_fit: [`blog`, `social-media`],
@@ -184,7 +189,8 @@ function CreateFlowContent() {
                         Relevance: {Math.round(topic.scores.relevance * 10)}/10
                       </span>
                       <span>
-                        Novelty: {Math.round(topic.scores.novelty * 10)}/10
+                        Uniqueness: {Math.round(topic.scores.uniqueness * 10)}
+                        /10
                       </span>
                     </div>
                   </CardContent>

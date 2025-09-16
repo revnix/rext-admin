@@ -22,12 +22,22 @@ import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
  * Used in both frontend and backend topic structures
  */
 export const TopicScoresSchema = z.object({
-  /** Relevance score (0-100): How well the topic matches user criteria */
-  relevance: z.number().min(0).max(100),
-  /** Freshness score (0-100): How current/timely the topic is */
-  freshness: z.number().min(0).max(100),
-  /** Novelty score (0-100): How unique/original the topic approach is */
-  novelty: z.number().min(0).max(100),
+  /** Relevance score (0-1): How well the topic matches user criteria */
+  relevance: z.number().min(0).max(1),
+  /** SEO potential score (0-1): SEO ranking potential */
+  seo_potential: z.number().min(0).max(1),
+  /** Trend level score (0-1): How current/timely the topic is */
+  trend_level: z.number().min(0).max(1),
+  /** Uniqueness score (0-1): How unique/original the topic approach is */
+  uniqueness: z.number().min(0).max(1),
+  /** Reader interest score (0-1): Expected reader engagement potential */
+  reader_interest: z.number().min(0).max(1),
+  /** Actionable potential score (0-1): How actionable/practical the content can be */
+  actionable_potential: z.number().min(0).max(1),
+  /** Brand alignment score (0-1): How well it aligns with brand values */
+  brand_alignment: z.number().min(0).max(1),
+  /** Controversy score (0-1): Potential for controversy (lower = safer) */
+  controversy: z.number().min(0).max(1),
 });
 
 /**

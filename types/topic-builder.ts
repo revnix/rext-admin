@@ -117,10 +117,20 @@ export interface GeneratedTopic {
   scores: {
     /** How relevant the topic is to the input criteria (0-1) */
     relevance: number;
-    /** How fresh/trending the topic is (0-1) */
-    freshness: number;
-    /** How novel/unique the topic approach is (0-1) */
-    novelty: number;
+    /** SEO ranking potential (0-1) */
+    seo_potential: number;
+    /** How trending/current the topic is (0-1) */
+    trend_level: number;
+    /** How unique/original the topic approach is (0-1) */
+    uniqueness: number;
+    /** Expected reader engagement potential (0-1) */
+    reader_interest: number;
+    /** How actionable/practical the content can be (0-1) */
+    actionable_potential: number;
+    /** How well it aligns with brand values (0-1) */
+    brand_alignment: number;
+    /** Potential for controversy/polarization (0-1, lower = safer) */
+    controversy: number;
   };
   /** Categorization tags for the topic */
   tags: string[];

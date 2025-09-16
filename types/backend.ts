@@ -203,6 +203,37 @@ export interface SaveTopicRequest {
 }
 
 /**
+ * Payload format for the Python backend SaveTopicRequestList
+ *
+ * This interface matches the exact format expected by the Python backend's
+ * SaveTopicRequestList schema with individual SaveTopicRequest items.
+ */
+export interface BackendSaveTopicRequestList {
+  topics: Array<{
+    id: string;
+    title: string;
+    angle: string;
+    description: string; // Required by backend validation
+    channel_fit: string[];
+    audience_fit: string[];
+    why_it_works: string;
+    tags: string[];
+    scores: {
+      relevance: number;
+      seo_potential: number;
+      trend_level: number;
+      uniqueness: number;
+      reader_interest: number;
+      actionable_potential: number;
+      brand_alignment: number;
+      controversy: number;
+    };
+    suggested_defaults: Record<string, unknown>;
+    input_params?: Record<string, unknown>;
+  }>;
+}
+
+/**
  * Response from the backend after attempting to save topics.
  *
  * @property success - Whether the save operation completed successfully

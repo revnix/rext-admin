@@ -487,7 +487,7 @@ describe("Edge Cases and Error Handling", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.scores.relevance).toBeLessThanOrEqual(100);
-      expect(result.data?.scores.freshness).toBeGreaterThanOrEqual(0);
+      expect(result.data?.scores.trend_level).toBeGreaterThanOrEqual(0);
       expect(result.data?.channel_fit.length).toBeGreaterThan(0);
       expect(result.data?.audience_fit.length).toBeGreaterThan(0);
       expect(result.data?.tags.length).toBeGreaterThan(0);

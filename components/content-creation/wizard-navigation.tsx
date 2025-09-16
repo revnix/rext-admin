@@ -29,7 +29,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { WIZARD_STEPS } from "@/lib/content-creation/wizard-config";
 import { cn } from "@/lib/utils";
 
 interface EnhancedWizardNavigationProps {
@@ -37,6 +36,8 @@ interface EnhancedWizardNavigationProps {
   currentStep: number;
   /** Total number of steps */
   totalSteps: number;
+  /** Current step title for display */
+  currentStepTitle?: string;
   /** Whether can navigate to next step */
   canGoNext: boolean;
   /** Whether can navigate to previous step */
@@ -83,6 +84,7 @@ interface EnhancedWizardNavigationProps {
 export function WizardNavigation({
   currentStep,
   totalSteps,
+  currentStepTitle,
   canGoNext,
   canGoBack,
   canSubmit,
@@ -110,7 +112,6 @@ export function WizardNavigation({
 }: EnhancedWizardNavigationProps) {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const isLastStep = currentStep === totalSteps - 1;
-  const currentStepConfig = WIZARD_STEPS[currentStep];
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -198,9 +199,9 @@ export function WizardNavigation({
             <div className="text-sm text-muted-foreground">
               Step {currentStep + 1} of {totalSteps}
             </div>
-            {currentStepConfig && (
+            {currentStepTitle && (
               <div className="text-xs font-medium text-muted-foreground">
-                {currentStepConfig.title}
+                {currentStepTitle}
               </div>
             )}
             {hasErrors && (

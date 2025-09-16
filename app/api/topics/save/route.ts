@@ -9,9 +9,9 @@ import type { APIErrorResponse, BackendError } from "@/types/backend";
  * This API route acts as a proxy to the backend service, handling authentication
  * server-side to keep the CONTENT_API_KEY secure.
  *
- * Supports both single topic and bulk save operations:
- * - Single: { topic: { title, description, ... } }
- * - Multiple: { topics: [{ title, description, ... }, ...] }
+ * Always uses the topics array format for backend consistency:
+ * - Single: { topic: { title, description, ... } } -> converted to [topic]
+ * - Multiple: { topics: [{ title, description, ... }, ...] } -> used directly
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,132 +33,111 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (isBulkSave) {
-      // Bulk save operation
-      const topics = body.topics;
+    // Always use topics array format - convert single topic to array
+    const topics = isBulkSave ? body.topics : [body.topic];
+    const wasSingleSave = isSingleSave;
 
-      // Validate each topic
-      for (let i = 0; i < topics.length; i++) {
-        const topic = topics[i];
-        if (!topic.title) {
-          return Response.json(
-            {
-              error: "Invalid request data",
-              error_code: "validation_failed",
-              details: `Topic at index ${i} is missing required field: title is required`,
-            },
-            { status: 400 },
-          );
-        }
-      }
-
-      // Save all topics (assuming backend service supports bulk save)
-      const results: Array<{
-        index: number;
-        success: boolean;
-        topic: unknown;
-        message: string;
-      }> = [];
-      const errors: Array<{
-        index: number;
-        success: boolean;
-        error: string;
-        topic: unknown;
-      }> = [];
-
-      // Use bulk save method for better performance
-      try {
-        const result = await backendService.saveTopics(topics);
-
-        // Process the bulk result
-        if (result.success && result.saved_count > 0) {
-          // Mark the number of topics as successfully saved according to the API response
-          for (
-            let i = 0;
-            i < Math.min(result.saved_count, topics.length);
-            i++
-          ) {
-            results.push({
-              index: i,
-              success: true,
-              topic: topics[i],
-              message: "Saved successfully",
-            });
-          }
-
-          // Mark any remaining topics as failed if not all were saved
-          if (result.saved_count < topics.length) {
-            for (let i = result.saved_count; i < topics.length; i++) {
-              errors.push({
-                index: i,
-                success: false,
-                error: "Topic was not saved by the backend",
-                topic: topics[i],
-              });
-            }
-          }
-        } else {
-          // All topics failed if the operation wasn't successful
-          topics.forEach((topic: unknown, i: number) => {
-            errors.push({
-              index: i,
-              success: false,
-              error: result.message || "Save operation failed",
-              topic: topic,
-            });
-          });
-        }
-      } catch (error) {
-        // If bulk save fails, mark all as failed
-        topics.forEach((topic: unknown, i: number) => {
-          errors.push({
-            index: i,
-            success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
-            topic: topic,
-          });
-        });
-      }
-
-      return Response.json({
-        success: errors.length === 0,
-        bulk_save: true,
-        total_attempted: topics.length,
-        successful_saves: results.length,
-        failed_saves: errors.length,
-        results: results,
-        errors: errors.length > 0 ? errors : undefined,
-        saved_at: new Date().toISOString(),
-      });
-    } else {
-      // Single save operation
-      const topic = body.topic;
-
+    // Validate each topic
+    for (let i = 0; i < topics.length; i++) {
+      const topic = topics[i];
       if (!topic.title) {
         return Response.json(
           {
             error: "Invalid request data",
             error_code: "validation_failed",
-            details: "Missing required field: topic.title is required",
+            details: wasSingleSave
+              ? "Missing required field: topic.title is required"
+              : `Topic at index ${i} is missing required field: title is required`,
           },
           { status: 400 },
         );
       }
+    }
 
-      const result = await backendService.saveTopics([topic]);
+    // Save all topics using consistent bulk save method
+    const results: Array<{
+      index: number;
+      success: boolean;
+      topic: unknown;
+      message: string;
+    }> = [];
+    const errors: Array<{
+      index: number;
+      success: boolean;
+      error: string;
+      topic: unknown;
+    }> = [];
 
-      return Response.json({
-        success: result.success && result.saved_count > 0,
-        bulk_save: false,
-        topic: topic, // Backend doesn't return individual saved topics
-        message:
-          result.success && result.saved_count > 0
-            ? "Topic saved successfully"
-            : result.message || "Failed to save topic",
-        saved_count: result.saved_count,
-        saved_at: new Date().toISOString(),
+    try {
+      const result = await backendService.saveTopics(topics);
+
+      // Process the bulk result
+      if (result.success && result.saved_count > 0) {
+        // Mark the number of topics as successfully saved according to the API response
+        for (let i = 0; i < Math.min(result.saved_count, topics.length); i++) {
+          results.push({
+            index: i,
+            success: true,
+            topic: topics[i],
+            message: "Saved successfully",
+          });
+        }
+
+        // Mark any remaining topics as failed if not all were saved
+        if (result.saved_count < topics.length) {
+          for (let i = result.saved_count; i < topics.length; i++) {
+            errors.push({
+              index: i,
+              success: false,
+              error: "Topic was not saved by the backend",
+              topic: topics[i],
+            });
+          }
+        }
+      } else {
+        // All topics failed if the operation wasn't successful
+        topics.forEach((topic: unknown, i: number) => {
+          errors.push({
+            index: i,
+            success: false,
+            error: result.message || "Save operation failed",
+            topic: topic,
+          });
+        });
+      }
+    } catch (error) {
+      // If bulk save fails, mark all as failed
+      topics.forEach((topic: unknown, i: number) => {
+        errors.push({
+          index: i,
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+          topic: topic,
+        });
       });
     }
+
+    // Return consistent response format, with single save indicator
+    return Response.json({
+      success: errors.length === 0,
+      bulk_save: !wasSingleSave,
+      single_save: wasSingleSave,
+      total_attempted: topics.length,
+      successful_saves: results.length,
+      failed_saves: errors.length,
+      results: results,
+      errors: errors.length > 0 ? errors : undefined,
+      // For single save compatibility, include topic and message
+      ...(wasSingleSave && {
+        topic: topics[0],
+        message:
+          results.length > 0
+            ? "Topic saved successfully"
+            : errors[0]?.error || "Failed to save topic",
+        saved_count: results.length,
+      }),
+      saved_at: new Date().toISOString(),
+    });
   } catch (error) {
     // Classify and log error safely
     const isBackendError =

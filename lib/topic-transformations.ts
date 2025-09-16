@@ -113,10 +113,10 @@ function determineTopicStatus(topic: GeneratedTopic): string {
 function calculatePriority(scores: GeneratedTopic["scores"]): string {
   if (!scores || typeof scores !== "object") return "medium";
 
-  const { relevance = 0, freshness = 0, novelty = 0 } = scores;
+  const { relevance = 0, trend_level = 0, uniqueness = 0 } = scores;
 
   // Weighted priority calculation - relevance is most important
-  const weightedScore = relevance * 0.5 + freshness * 0.3 + novelty * 0.2;
+  const weightedScore = relevance * 0.5 + trend_level * 0.3 + uniqueness * 0.2;
 
   if (weightedScore >= 0.8) return "high";
   if (weightedScore >= 0.6) return "medium";
@@ -181,11 +181,11 @@ function enhanceTags(topic: GeneratedTopic): string[] {
 function calculateEstimatedEffort(scores: GeneratedTopic["scores"]): string {
   if (!scores || typeof scores !== "object") return "Medium";
 
-  const { novelty = 0.5 } = scores;
+  const { uniqueness = 0.5 } = scores;
 
-  // Higher novelty = more effort required
-  if (novelty >= 0.8) return "High";
-  if (novelty >= 0.4) return "Medium";
+  // Higher uniqueness = more effort required
+  if (uniqueness >= 0.8) return "High";
+  if (uniqueness >= 0.4) return "Medium";
   return "Low";
 }
 
@@ -195,10 +195,10 @@ function calculateEstimatedEffort(scores: GeneratedTopic["scores"]): string {
 function calculateOverallScore(scores: GeneratedTopic["scores"]): number {
   if (!scores || typeof scores !== "object") return 50;
 
-  const { relevance = 0, freshness = 0, novelty = 0 } = scores;
+  const { relevance = 0, trend_level = 0, uniqueness = 0 } = scores;
 
   // Weighted scoring - relevance is most important
-  const weightedScore = relevance * 0.5 + freshness * 0.3 + novelty * 0.2;
+  const weightedScore = relevance * 0.5 + trend_level * 0.3 + uniqueness * 0.2;
 
   return Math.round(weightedScore * 100);
 }

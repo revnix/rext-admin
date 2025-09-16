@@ -57,9 +57,14 @@ export function TopicDetailDrawer({
   const overallScore = topic
     ? Math.round(
         ((topic.scores.relevance +
-          topic.scores.freshness +
-          topic.scores.novelty) /
-          3) *
+          topic.scores.seo_potential +
+          topic.scores.trend_level +
+          topic.scores.uniqueness +
+          topic.scores.reader_interest +
+          topic.scores.actionable_potential +
+          topic.scores.brand_alignment +
+          topic.scores.controversy) /
+          8) *
           100,
       )
     : 0;
@@ -212,38 +217,93 @@ export function TopicDetailDrawer({
                     Based on your configuration
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
                     <div className="flex items-center justify-center mb-2">
-                      <Target className="w-6 h-6 text-primary mr-2" />
-                      <div className="text-3xl font-bold text-primary">
+                      <Target className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
                         {Math.round(topic.scores.relevance * 100)}%
                       </div>
                     </div>
-                    <div className="text-sm font-medium text-muted-foreground">
+                    <div className="text-xs font-medium text-muted-foreground">
                       Relevance
                     </div>
                   </div>
-                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
                     <div className="flex items-center justify-center mb-2">
-                      <Zap className="w-6 h-6 text-primary mr-2" />
-                      <div className="text-3xl font-bold text-primary">
-                        {Math.round(topic.scores.freshness * 100)}%
+                      <TrendingUp className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round(topic.scores.seo_potential * 100)}%
                       </div>
                     </div>
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Freshness
+                    <div className="text-xs font-medium text-muted-foreground">
+                      SEO
                     </div>
                   </div>
-                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
                     <div className="flex items-center justify-center mb-2">
-                      <Sparkles className="w-6 h-6 text-primary mr-2" />
-                      <div className="text-3xl font-bold text-primary">
-                        {Math.round(topic.scores.novelty * 100)}%
+                      <Zap className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round(topic.scores.trend_level * 100)}%
                       </div>
                     </div>
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Novelty
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Trending
+                    </div>
+                  </div>
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                    <div className="flex items-center justify-center mb-2">
+                      <Sparkles className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round(topic.scores.uniqueness * 100)}%
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Unique
+                    </div>
+                  </div>
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                    <div className="flex items-center justify-center mb-2">
+                      <Users className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round(topic.scores.reader_interest * 100)}%
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Interest
+                    </div>
+                  </div>
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                    <div className="flex items-center justify-center mb-2">
+                      <PenTool className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round(topic.scores.actionable_potential * 100)}%
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Actionable
+                    </div>
+                  </div>
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                    <div className="flex items-center justify-center mb-2">
+                      <Check className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round(topic.scores.brand_alignment * 100)}%
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Brand Fit
+                    </div>
+                  </div>
+                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+                    <div className="flex items-center justify-center mb-2">
+                      <Globe className="w-5 h-5 text-primary mr-1" />
+                      <div className="text-2xl font-bold text-primary">
+                        {Math.round((1 - topic.scores.controversy) * 100)}%
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Safe
                     </div>
                   </div>
                 </div>

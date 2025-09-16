@@ -196,9 +196,9 @@ export function ContentCreationWizard({
     dependencyEngine.updateFormData(state.formData);
   }, [state.formData, dependencyEngine]);
 
-  // Calculate progress and validation data
-  const progress = dependencyEngine.calculateProgress();
+  // Calculate validation data
   const fullValidation = dependencyEngine.validateAll();
+  const progress = dependencyEngine.calculateProgress();
 
   // Enhanced progress data
   const enhancedProgress = {
@@ -568,14 +568,7 @@ export function ContentCreationWizard({
     onCancel?.();
   }, [state.hasUnsavedChanges, onCancel]);
 
-  // Calculate progress with enhanced validation data
-  const _stepCompletionStatus = dependencyEngine.getStepCompletionStatus();
   const currentStepConfig = WIZARD_CONFIG.steps[state.currentStep];
-
-  // Get visible fields for current step
-  const _visibleFields = currentStepConfig
-    ? dependencyEngine.getVisibleFields(currentStepConfig)
-    : [];
 
   return (
     <div className="wizard-container w-full">
@@ -673,6 +666,7 @@ export function ContentCreationWizard({
                     {/* Enhanced Step Progress */}
                     <WizardSidebarProgress
                       currentStep={state.currentStep}
+                      steps={WIZARD_CONFIG.steps}
                       stepStatuses={WIZARD_CONFIG.steps.map((_, index) => {
                         if (index < state.currentStep) return "completed";
                         if (index === state.currentStep) return "current";
@@ -718,64 +712,6 @@ export function ContentCreationWizard({
 
                     <Separator />
 
-                    <Separator />
-
-                    {/* Additional Progress Details */}
-                    <div>
-                      <h3 className="font-semibold mb-3">Field Details</h3>
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Required Fields
-                          </span>
-                          <span className="font-medium">
-                            {progress.requiredFieldsCompleted} /{" "}
-                            {progress.totalRequiredFields}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Total Fields
-                          </span>
-                          <span className="font-medium">
-                            {progress.completedFields} / {progress.totalFields}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Ready for Draft
-                          </span>
-                          <Badge
-                            variant={
-                              enhancedProgress.readyForDraft
-                                ? "default"
-                                : "outline"
-                            }
-                            className="text-xs"
-                          >
-                            {enhancedProgress.readyForDraft ? "Yes" : "No"}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Ready to Submit
-                          </span>
-                          <Badge
-                            variant={
-                              enhancedProgress.readyForSubmission
-                                ? "default"
-                                : "outline"
-                            }
-                            className="text-xs"
-                          >
-                            {enhancedProgress.readyForSubmission ? "Yes" : "No"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
                     {/* Draft Management */}
                     <DraftManagerUI
                       formData={state.formData}
@@ -796,6 +732,7 @@ export function ContentCreationWizard({
         <WizardNavigation
           currentStep={state.currentStep}
           totalSteps={WIZARD_CONFIG.steps.length}
+          currentStepTitle={currentStepConfig?.title}
           canGoNext={!Object.values(state.errors).some((error) => error)}
           canGoBack={state.currentStep > 0}
           canSubmit={enhancedProgress.readyForSubmission}

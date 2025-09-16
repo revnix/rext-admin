@@ -32,9 +32,14 @@ const validGeneratedTopic: GeneratedTopic = {
   angle: "Focus on developer experience and maintainability",
   description: "A comprehensive guide to API development",
   scores: {
-    relevance: 85,
-    freshness: 70,
-    novelty: 60,
+    relevance: 0.85,
+    seo_potential: 0.75,
+    trend_level: 0.7,
+    uniqueness: 0.6,
+    reader_interest: 0.8,
+    actionable_potential: 0.9,
+    brand_alignment: 0.85,
+    controversy: 0.15,
   },
   channel_fit: ["blog", "documentation"],
   audience_fit: ["developers", "technical-leads"],
@@ -54,9 +59,14 @@ const validSaveTopicItem: SaveTopicItem = {
   channel_fit: ["blog", "documentation"],
   audience_fit: ["developers", "technical-leads"],
   scores: {
-    relevance: 85,
-    freshness: 70,
-    novelty: 60,
+    relevance: 0.85,
+    seo_potential: 0.75,
+    trend_level: 0.7,
+    uniqueness: 0.6,
+    reader_interest: 0.8,
+    actionable_potential: 0.9,
+    brand_alignment: 0.85,
+    controversy: 0.15,
   },
   why_it_works: "Addresses common pain points in API development",
   tags: ["api", "development", "best-practices"],
@@ -77,9 +87,14 @@ const invalidGeneratedTopic = {
   angle: "Some angle",
   // Missing required fields
   scores: {
-    relevance: 150, // Invalid - out of range
-    freshness: -10, // Invalid - out of range
-    novelty: 50,
+    relevance: 1.5, // Invalid - out of range
+    seo_potential: -0.1, // Invalid - out of range
+    trend_level: 0.5,
+    uniqueness: 0.6,
+    reader_interest: 0.8,
+    actionable_potential: 0.9,
+    brand_alignment: 0.85,
+    controversy: 0.15,
   },
   channel_fit: [], // Invalid - empty array
   audience_fit: ["developers"],

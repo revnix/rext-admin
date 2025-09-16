@@ -477,10 +477,11 @@ const createDefaultFieldMappings = (): TopicFieldMappings => {
     priority: (topic: GeneratedTopic) => {
       if (!topic.scores || typeof topic.scores !== "object") return "medium";
 
-      const { relevance = 0, freshness = 0, novelty = 0 } = topic.scores;
+      const { relevance = 0, trend_level = 0, uniqueness = 0 } = topic.scores;
 
       // Weighted priority calculation - relevance is most important
-      const weightedScore = relevance * 0.5 + freshness * 0.3 + novelty * 0.2;
+      const weightedScore =
+        relevance * 0.5 + trend_level * 0.3 + uniqueness * 0.2;
 
       if (weightedScore >= 0.8) return "high";
       if (weightedScore >= 0.6) return "medium";
@@ -517,21 +518,22 @@ const createDefaultFieldMappings = (): TopicFieldMappings => {
     estimatedEffort: (topic: GeneratedTopic) => {
       if (!topic.scores || typeof topic.scores !== "object") return "Medium";
 
-      const { novelty = 0.5 } = topic.scores;
+      const { uniqueness = 0.5 } = topic.scores;
 
-      // Higher novelty = more effort required
-      if (novelty >= 0.8) return "High";
-      if (novelty >= 0.4) return "Medium";
+      // Higher uniqueness = more effort required
+      if (uniqueness >= 0.8) return "High";
+      if (uniqueness >= 0.4) return "Medium";
       return "Low";
     },
 
     score: (topic: GeneratedTopic) => {
       if (!topic.scores || typeof topic.scores !== "object") return 50;
 
-      const { relevance = 0, freshness = 0, novelty = 0 } = topic.scores;
+      const { relevance = 0, trend_level = 0, uniqueness = 0 } = topic.scores;
 
       // Weighted scoring - relevance is most important
-      const weightedScore = relevance * 0.5 + freshness * 0.3 + novelty * 0.2;
+      const weightedScore =
+        relevance * 0.5 + trend_level * 0.3 + uniqueness * 0.2;
 
       return Math.round(weightedScore * 100);
     },
@@ -635,16 +637,29 @@ const applyAutoFixesToTopic = (
   // Ensure scores are within valid range (0-100)
   const originalScores = { ...fixed.scores };
   fixed.scores = {
-    relevance: Math.max(0, Math.min(100, fixed.scores.relevance)),
-    freshness: Math.max(0, Math.min(100, fixed.scores.freshness)),
-    novelty: Math.max(0, Math.min(100, fixed.scores.novelty)),
+    relevance: Math.max(0, Math.min(1, fixed.scores.relevance)),
+    seo_potential: Math.max(0, Math.min(1, fixed.scores.seo_potential)),
+    trend_level: Math.max(0, Math.min(1, fixed.scores.trend_level)),
+    uniqueness: Math.max(0, Math.min(1, fixed.scores.uniqueness)),
+    reader_interest: Math.max(0, Math.min(1, fixed.scores.reader_interest)),
+    actionable_potential: Math.max(
+      0,
+      Math.min(1, fixed.scores.actionable_potential),
+    ),
+    brand_alignment: Math.max(0, Math.min(1, fixed.scores.brand_alignment)),
+    controversy: Math.max(0, Math.min(1, fixed.scores.controversy)),
   };
 
   // Check if scores were clamped
   if (
     originalScores.relevance !== fixed.scores.relevance ||
-    originalScores.freshness !== fixed.scores.freshness ||
-    originalScores.novelty !== fixed.scores.novelty
+    originalScores.seo_potential !== fixed.scores.seo_potential ||
+    originalScores.trend_level !== fixed.scores.trend_level ||
+    originalScores.uniqueness !== fixed.scores.uniqueness ||
+    originalScores.reader_interest !== fixed.scores.reader_interest ||
+    originalScores.actionable_potential !== fixed.scores.actionable_potential ||
+    originalScores.brand_alignment !== fixed.scores.brand_alignment ||
+    originalScores.controversy !== fixed.scores.controversy
   ) {
     warnings.push(
       createTopicAdapterWarning(

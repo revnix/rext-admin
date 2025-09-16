@@ -90,9 +90,9 @@ export const TopicsList = memo(function TopicsList({
   const sortedTopics = useMemo(() => {
     return [...topics].sort((a, b) => {
       const aOverall =
-        (a.scores.relevance + a.scores.freshness + a.scores.novelty) / 3;
+        (a.scores.relevance + a.scores.trend_level + a.scores.uniqueness) / 3;
       const bOverall =
-        (b.scores.relevance + b.scores.freshness + b.scores.novelty) / 3;
+        (b.scores.relevance + b.scores.trend_level + b.scores.uniqueness) / 3;
       return bOverall - aOverall;
     });
   }, [topics]);

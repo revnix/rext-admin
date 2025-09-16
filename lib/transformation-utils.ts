@@ -11,7 +11,10 @@
  */
 
 import type { SaveTopicItem } from "@/types/api";
-import type { BackendTopicGenerationPayload } from "@/types/backend";
+import type {
+  BackendSaveTopicRequestList,
+  BackendTopicGenerationPayload,
+} from "@/types/backend";
 import {
   createUserFriendlyErrors,
   extractValidationErrors,
@@ -159,9 +162,17 @@ const createFallbackSaveTopicItem = (input: unknown): SaveTopicItem | null => {
         "general-audience",
       ],
       scores: {
-        relevance: extractNumberValue(input, "scores.relevance") || 50,
-        freshness: extractNumberValue(input, "scores.freshness") || 50,
-        novelty: extractNumberValue(input, "scores.novelty") || 50,
+        relevance: extractNumberValue(input, "scores.relevance") || 0.5,
+        seo_potential: extractNumberValue(input, "scores.seo_potential") || 0.5,
+        trend_level: extractNumberValue(input, "scores.trend_level") || 0.5,
+        uniqueness: extractNumberValue(input, "scores.uniqueness") || 0.5,
+        reader_interest:
+          extractNumberValue(input, "scores.reader_interest") || 0.5,
+        actionable_potential:
+          extractNumberValue(input, "scores.actionable_potential") || 0.5,
+        brand_alignment:
+          extractNumberValue(input, "scores.brand_alignment") || 0.5,
+        controversy: extractNumberValue(input, "scores.controversy") || 0.2,
       },
       why_it_works:
         extractStringValue(input, "why_it_works") ||
@@ -971,11 +982,19 @@ const applyTopicAutoFixes = (topic: GeneratedTopic): GeneratedTopic => {
     fixed.tags = ["content", "topic"];
   }
 
-  // Ensure scores are within valid range
+  // Ensure scores are within valid range (0-1)
   fixed.scores = {
-    relevance: Math.max(0, Math.min(100, fixed.scores.relevance)),
-    freshness: Math.max(0, Math.min(100, fixed.scores.freshness)),
-    novelty: Math.max(0, Math.min(100, fixed.scores.novelty)),
+    relevance: Math.max(0, Math.min(1, fixed.scores.relevance)),
+    seo_potential: Math.max(0, Math.min(1, fixed.scores.seo_potential)),
+    trend_level: Math.max(0, Math.min(1, fixed.scores.trend_level)),
+    uniqueness: Math.max(0, Math.min(1, fixed.scores.uniqueness)),
+    reader_interest: Math.max(0, Math.min(1, fixed.scores.reader_interest)),
+    actionable_potential: Math.max(
+      0,
+      Math.min(1, fixed.scores.actionable_potential),
+    ),
+    brand_alignment: Math.max(0, Math.min(1, fixed.scores.brand_alignment)),
+    controversy: Math.max(0, Math.min(1, fixed.scores.controversy)),
   };
 
   // Trim and limit text fields
@@ -1159,4 +1178,73 @@ export const safeTransformTopicsForSaving = async (
     continueOnError: true,
   });
   return result.data;
+};
+
+/**
+ * Backend SaveTopicRequest format (matches Python backend schema)
+ */
+interface BackendSaveTopicRequest {
+  id: string;
+  title: string;
+  angle: string;
+  description: string; // Required by backend validation, even if database doesn't store it
+  channel_fit: string[];
+  audience_fit: string[];
+  why_it_works: string;
+  tags: string[];
+  scores: {
+    relevance: number;
+    seo_potential: number;
+    trend_level: number;
+    uniqueness: number;
+    reader_interest: number;
+    actionable_potential: number;
+    brand_alignment: number;
+    controversy: number;
+  };
+  suggested_defaults: Record<string, unknown>;
+  input_params?: Record<string, unknown>;
+}
+
+/**
+ * Transform GeneratedTopic to backend SaveTopicRequest format
+ *
+ * This function converts frontend GeneratedTopic objects to the exact format
+ * expected by the Python backend's SaveTopicRequest schema.
+ *
+ * @param topic - Frontend GeneratedTopic object
+ * @returns Backend SaveTopicRequest format
+ */
+export const transformTopicForBackend = (
+  topic: GeneratedTopic,
+): BackendSaveTopicRequest => {
+  const backendTopic: BackendSaveTopicRequest = {
+    id: topic.id,
+    title: topic.title,
+    angle: topic.angle,
+    description: topic.description || topic.title, // Required by backend - use title as fallback
+    channel_fit: topic.channel_fit,
+    audience_fit: topic.audience_fit,
+    why_it_works: topic.why_it_works,
+    tags: topic.tags,
+    scores: topic.scores,
+    suggested_defaults: {}, // Empty object for now - can be enhanced later
+    input_params: undefined, // Optional field
+  };
+
+  return backendTopic;
+};
+
+/**
+ * Transform multiple GeneratedTopics to backend SaveTopicRequestList format
+ *
+ * @param topics - Array of frontend GeneratedTopic objects
+ * @returns Object in format expected by backend: { topics: BackendSaveTopicRequest[] }
+ */
+export const transformTopicsForBackend = (
+  topics: GeneratedTopic[],
+): BackendSaveTopicRequestList => {
+  return {
+    topics: topics.map(transformTopicForBackend),
+  };
 };

@@ -310,8 +310,8 @@ export interface TopicSortProps {
     field:
       | keyof GeneratedTopic
       | "scores.relevance"
-      | "scores.freshness"
-      | "scores.novelty";
+      | "scores.trend_level"
+      | "scores.uniqueness";
     direction?: "asc" | "desc";
   }>;
   /** Current sort configuration */

@@ -72,8 +72,13 @@ export default function TopicDetailPage() {
         "This topic combines high engagement potential with practical value, making it perfect for building thought leadership while driving meaningful discussions with your target audience.",
       scores: {
         relevance: topicData.score || 0.85,
-        freshness: 0.78,
-        novelty: 0.82,
+        seo_potential: 0.78,
+        trend_level: 0.82,
+        uniqueness: 0.8,
+        reader_interest: 0.88,
+        actionable_potential: 0.75,
+        brand_alignment: 0.83,
+        controversy: 0.25,
       },
       tags: topicData.tags || [
         "content marketing",
@@ -94,9 +99,14 @@ export default function TopicDetailPage() {
   const overallScore = generatedTopic
     ? Math.round(
         ((generatedTopic.scores.relevance +
-          generatedTopic.scores.freshness +
-          generatedTopic.scores.novelty) /
-          3) *
+          generatedTopic.scores.seo_potential +
+          generatedTopic.scores.trend_level +
+          generatedTopic.scores.uniqueness +
+          generatedTopic.scores.reader_interest +
+          generatedTopic.scores.actionable_potential +
+          generatedTopic.scores.brand_alignment +
+          generatedTopic.scores.controversy) /
+          8) *
           100,
       )
     : 0;
@@ -360,38 +370,105 @@ export default function TopicDetailPage() {
               Based on your configuration
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
               <div className="flex items-center justify-center mb-2">
-                <Target className="w-6 h-6 text-primary mr-2" />
-                <div className="text-3xl font-bold text-primary">
+                <Target className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
                   {Math.round((generatedTopic?.scores.relevance || 0) * 100)}%
                 </div>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
+              <div className="text-xs font-medium text-muted-foreground">
                 Relevance
               </div>
             </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
               <div className="flex items-center justify-center mb-2">
-                <Zap className="w-6 h-6 text-primary mr-2" />
-                <div className="text-3xl font-bold text-primary">
-                  {Math.round((generatedTopic?.scores.freshness || 0) * 100)}%
+                <TrendingUp className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round(
+                    (generatedTopic?.scores.seo_potential || 0) * 100,
+                  )}
+                  %
                 </div>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                Freshness
+              <div className="text-xs font-medium text-muted-foreground">
+                SEO Potential
               </div>
             </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
               <div className="flex items-center justify-center mb-2">
-                <Sparkles className="w-6 h-6 text-primary mr-2" />
-                <div className="text-3xl font-bold text-primary">
-                  {Math.round((generatedTopic?.scores.novelty || 0) * 100)}%
+                <Zap className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round((generatedTopic?.scores.trend_level || 0) * 100)}%
                 </div>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                Novelty
+              <div className="text-xs font-medium text-muted-foreground">
+                Trend Level
+              </div>
+            </div>
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+              <div className="flex items-center justify-center mb-2">
+                <Sparkles className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round((generatedTopic?.scores.uniqueness || 0) * 100)}%
+                </div>
+              </div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Uniqueness
+              </div>
+            </div>
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+              <div className="flex items-center justify-center mb-2">
+                <Users className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round(
+                    (generatedTopic?.scores.reader_interest || 0) * 100,
+                  )}
+                  %
+                </div>
+              </div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Reader Interest
+              </div>
+            </div>
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+              <div className="flex items-center justify-center mb-2">
+                <PenTool className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round(
+                    (generatedTopic?.scores.actionable_potential || 0) * 100,
+                  )}
+                  %
+                </div>
+              </div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Actionable Potential
+              </div>
+            </div>
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+              <div className="flex items-center justify-center mb-2">
+                <Globe className="w-5 h-5 text-primary mr-1" />
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round(
+                    (generatedTopic?.scores.brand_alignment || 0) * 100,
+                  )}
+                  %
+                </div>
+              </div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Brand Alignment
+              </div>
+            </div>
+            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
+              <div className="flex items-center justify-center mb-2">
+                <Zap className="w-5 h-5 text-orange-500 mr-1" />
+                <div className="text-2xl font-bold text-orange-500">
+                  {Math.round((generatedTopic?.scores.controversy || 0) * 100)}%
+                </div>
+              </div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Controversy
               </div>
             </div>
           </div>

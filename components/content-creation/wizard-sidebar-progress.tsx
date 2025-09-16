@@ -18,12 +18,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { WIZARD_STEPS } from "@/lib/content-creation/wizard-config";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+interface WizardStep {
+  id: string;
+  title: string;
+  description: string;
+  optional?: boolean;
+  requiredFieldCount?: number;
+}
 
 interface WizardSidebarProgressProps {
   /** Current active step index */
@@ -52,10 +59,12 @@ interface WizardSidebarProgressProps {
   onStepClick?: (stepIndex: number) => void;
   /** Whether current step can be skipped */
   canSkipCurrentStep?: boolean;
+  /** Wizard steps data */
+  steps: WizardStep[];
 }
 
 interface SidebarStepItemProps {
-  step: (typeof WIZARD_STEPS)[0];
+  step: WizardStep;
   stepIndex: number;
   status: "completed" | "current" | "pending";
   completion: number;
@@ -255,6 +264,7 @@ export function WizardSidebarProgress({
   totalFields,
   onStepClick,
   canSkipCurrentStep = false,
+  steps,
 }: WizardSidebarProgressProps) {
   return (
     <div className="space-y-4">
@@ -298,7 +308,7 @@ export function WizardSidebarProgress({
 
       {/* Step list */}
       <div className="space-y-2">
-        {WIZARD_STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const status = stepStatuses[index];
           const completion = stepCompletions[step.id] || 0;
           const validation = stepValidations[step.id] || {

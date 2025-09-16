@@ -570,8 +570,13 @@ export interface SaveTopicItem {
   /** AI-generated quality scores */
   scores: {
     relevance: number;
-    freshness: number;
-    novelty: number;
+    seo_potential: number;
+    trend_level: number;
+    uniqueness: number;
+    reader_interest: number;
+    actionable_potential: number;
+    brand_alignment: number;
+    controversy: number;
   };
   /** Explanation of why this topic works well */
   why_it_works: string;
@@ -625,14 +630,29 @@ export interface GetTopicsRequest {
     /** Filter by minimum score thresholds */
     min_scores?: {
       relevance?: number;
-      freshness?: number;
-      novelty?: number;
+      seo_potential?: number;
+      trend_level?: number;
+      uniqueness?: number;
+      reader_interest?: number;
+      actionable_potential?: number;
+      brand_alignment?: number;
+      controversy?: number;
     };
   };
   /** Sort options */
   sort?: {
     /** Field to sort by */
-    field: "created_at" | "title" | "relevance" | "freshness" | "novelty";
+    field:
+      | "created_at"
+      | "title"
+      | "relevance"
+      | "seo_potential"
+      | "trend_level"
+      | "uniqueness"
+      | "reader_interest"
+      | "actionable_potential"
+      | "brand_alignment"
+      | "controversy";
     /** Sort direction */
     direction: "asc" | "desc";
   };
