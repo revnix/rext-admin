@@ -1,5 +1,18 @@
 import type { ZodIssue } from "zod";
 import type { SaveTopicItem } from "./api";
+import type {
+  BackendErrorCode,
+  ConsistentApiResponse,
+  ConsistentErrorResponse,
+  ConsistentSuccessResponse,
+  ErrorSeverity,
+  extractProcessingTime,
+  extractRequestId,
+  isErrorResponse,
+  isSuccessResponse,
+  ResponseMeta,
+  unwrapResponseData,
+} from "./consistent-response";
 import type { GeneratedTopic } from "./topic-builder";
 
 /**
@@ -75,10 +88,7 @@ export type BackendErrorType =
   | "abort_error"
   | "unknown_error";
 
-/**
- * Error severity levels for user messaging
- */
-export type ErrorSeverity = "low" | "medium" | "high" | "critical";
+// ErrorSeverity is imported from consistent-response.ts
 
 /**
  * User recovery actions available for different error types
@@ -263,4 +273,310 @@ export interface SaveTopicResponse {
 export interface GetTopicsResponse {
   topics: GeneratedTopic[];
   total_count: number;
+}
+
+// ============================================================================
+// CONSISTENT RESPONSE FORMAT INTEGRATION
+// ============================================================================
+
+/**
+ * Backend service responses in consistent format
+ */
+export type ConsistentBackendTopicGenerationResponse =
+  ConsistentApiResponse<BackendTopicGenerationResponse>;
+/**
+ * Response from backend for topic deletion
+ */
+export interface BackendDeleteTopicsResponse {
+  deleted_count: number;
+  failed_deletions?: Array<{
+    topic_id: string;
+    error: string;
+  }>;
+  deleted_topic_ids: string[];
+}
+
+/**
+ * Response from backend for topic saving
+ */
+export interface BackendSaveTopicsResponse {
+  success: boolean;
+  saved_count: number;
+  message: string;
+}
+
+export type ConsistentBackendDeleteTopicsResponse =
+  ConsistentApiResponse<BackendDeleteTopicsResponse>;
+export type ConsistentBackendSaveTopicsResponse =
+  ConsistentApiResponse<BackendSaveTopicsResponse>;
+export type ConsistentBackendGetTopicsResponse =
+  ConsistentApiResponse<GetTopicsResponse>;
+
+/**
+ * Enhanced backend service configuration with consistent response support
+ */
+export interface EnhancedBackendConfig extends BackendConfig {
+  /** Enable consistent response format handling */
+  enableConsistentResponse: boolean;
+  /** Request correlation configuration */
+  requestCorrelation: {
+    /** Include request ID in all requests */
+    includeRequestId: boolean;
+    /** Custom header name for request ID */
+    requestIdHeader: string;
+    /** Generate request ID if not provided */
+    generateRequestId: boolean;
+  };
+  /** Response metadata handling */
+  responseMetadata: {
+    /** Extract and store processing time */
+    trackProcessingTime: boolean;
+    /** Log response metadata */
+    logMetadata: boolean;
+    /** Include metadata in error logs */
+    includeMetadataInErrors: boolean;
+  };
+}
+
+/**
+ * Backend service error context with consistent response information
+ */
+export interface BackendServiceError extends Error {
+  /** Backend error code */
+  code: BackendErrorCode;
+  /** Error severity */
+  severity: ErrorSeverity;
+  /** HTTP status code */
+  statusCode: number;
+  /** Request ID for correlation */
+  requestId?: string;
+  /** Processing time when error occurred */
+  processingTime?: number;
+  /** Original backend response */
+  originalResponse?: ConsistentErrorResponse;
+  /** Additional error context */
+  context?: Record<string, any>;
+  /** Whether this error is retryable */
+  retryable: boolean;
+  /** Suggested retry delay in milliseconds */
+  retryDelay?: number;
+}
+
+/**
+ * Backend service response metadata
+ */
+export interface BackendServiceResponseMetadata {
+  /** Request ID for correlation */
+  requestId: string;
+  /** Response timestamp */
+  timestamp: string;
+  /** Processing time in milliseconds */
+  processingTime?: number;
+  /** API version */
+  version: string;
+  /** Whether response came from cache */
+  fromCache?: boolean;
+  /** Backend service identifier */
+  serviceId?: string;
+}
+
+/**
+ * Backend service request configuration
+ */
+export interface BackendServiceRequestConfig {
+  /** Custom request ID */
+  requestId?: string;
+  /** Request timeout in milliseconds */
+  timeout?: number;
+  /** Number of retry attempts */
+  retries?: number;
+  /** Custom headers */
+  headers?: Record<string, string>;
+  /** Include request metadata */
+  includeMetadata?: boolean;
+  /** Enable response validation */
+  validateResponse?: boolean;
+}
+
+/**
+ * Backend service response wrapper with metadata
+ */
+export interface BackendServiceResponse<T> {
+  /** Response data */
+  data: T;
+  /** Response metadata */
+  metadata: BackendServiceResponseMetadata;
+  /** Original consistent response */
+  originalResponse: ConsistentSuccessResponse<T>;
+}
+
+/**
+ * Request/Response interceptor for backend service
+ */
+export interface BackendServiceInterceptor {
+  /** Intercept requests before sending */
+  onRequest?: (
+    config: BackendServiceRequestConfig,
+  ) => BackendServiceRequestConfig | Promise<BackendServiceRequestConfig>;
+  /** Intercept successful responses */
+  onResponse?: <T>(
+    response: BackendServiceResponse<T>,
+  ) => BackendServiceResponse<T> | Promise<BackendServiceResponse<T>>;
+  /** Intercept error responses */
+  onError?: (
+    error: BackendServiceError,
+  ) => BackendServiceError | Promise<BackendServiceError>;
+}
+
+/**
+ * Backend service analytics data
+ */
+export interface BackendServiceAnalytics {
+  /** Total requests made */
+  totalRequests: number;
+  /** Successful requests */
+  successfulRequests: number;
+  /** Failed requests */
+  failedRequests: number;
+  /** Average processing time */
+  averageProcessingTime: number;
+  /** Error distribution by code */
+  errorDistribution: Record<BackendErrorCode, number>;
+  /** Request distribution by endpoint */
+  endpointDistribution: Record<string, number>;
+  /** Last request timestamp */
+  lastRequestTimestamp: string;
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS FOR BACKEND SERVICE INTEGRATION
+// ============================================================================
+
+/**
+ * Creates a BackendServiceError from a consistent error response
+ * @param response - Consistent error response
+ * @returns Structured backend service error
+ */
+export function createBackendServiceError(
+  response: ConsistentErrorResponse,
+): BackendServiceError {
+  const error = new Error(response.error.message) as BackendServiceError;
+
+  error.name = "BackendServiceError";
+  error.code = response.error.code;
+  error.severity = response.error.severity;
+  error.statusCode = response.error.status_code;
+  error.requestId = response.meta.request_id;
+  error.processingTime = response.meta.processing_time_ms;
+  error.originalResponse = response;
+  error.context = response.error.context;
+  error.retryable = isRetryableError(response.error);
+  error.retryDelay = getSuggestedRetryDelay(response.error);
+
+  return error;
+}
+
+/**
+ * Helper function to determine if an error is retryable
+ */
+function isRetryableError(error: {
+  code: BackendErrorCode;
+  severity: ErrorSeverity;
+}): boolean {
+  const retryableErrors: BackendErrorCode[] = [
+    "service_unavailable",
+    "external_service_unavailable",
+    "timeout_error",
+    "network_error",
+    "api_rate_limit_exceeded",
+    "database_error",
+  ];
+
+  return retryableErrors.includes(error.code) || error.severity === "low";
+}
+
+/**
+ * Helper function to get suggested retry delay
+ */
+function getSuggestedRetryDelay(error: { code: BackendErrorCode }): number {
+  switch (error.code) {
+    case "api_rate_limit_exceeded":
+      return 60000; // 1 minute
+    case "service_unavailable":
+    case "external_service_unavailable":
+      return 30000; // 30 seconds
+    case "timeout_error":
+    case "network_error":
+      return 5000; // 5 seconds
+    default:
+      return 1000; // 1 second
+  }
+}
+
+/**
+ * Wraps backend service response data with metadata
+ * @param response - Consistent success response
+ * @returns Backend service response with metadata
+ */
+export function wrapBackendServiceResponse<T>(
+  response: ConsistentSuccessResponse<T>,
+): BackendServiceResponse<T> {
+  return {
+    data: response.data,
+    metadata: {
+      requestId: response.meta.request_id,
+      timestamp: response.meta.timestamp,
+      processingTime: response.meta.processing_time_ms,
+      version: response.meta.version,
+    },
+    originalResponse: response,
+  };
+}
+
+/**
+ * Validates that a response follows the consistent format
+ * @param response - Response to validate
+ * @returns Whether response is valid
+ */
+export function validateConsistentResponse(
+  response: any,
+): response is ConsistentApiResponse {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    typeof response.success === "boolean" &&
+    typeof response.meta === "object" &&
+    response.meta !== null &&
+    typeof response.meta.request_id === "string" &&
+    typeof response.meta.timestamp === "string"
+  );
+}
+
+/**
+ * Extracts error information from any error object
+ * @param error - Error object
+ * @returns Structured error information
+ */
+export function extractErrorInfo(error: any): {
+  code: BackendErrorCode;
+  message: string;
+  severity: ErrorSeverity;
+  retryable: boolean;
+} {
+  if (error instanceof Error && "code" in error) {
+    const backendError = error as BackendServiceError;
+    return {
+      code: backendError.code || "unknown_error",
+      message: backendError.message,
+      severity: backendError.severity || "medium",
+      retryable: backendError.retryable || false,
+    };
+  }
+
+  return {
+    code: "unknown_error",
+    message: error?.message || "An unknown error occurred",
+    severity: "medium",
+    retryable: true,
+  };
 }

@@ -1,218 +1,196 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { classifyError, sanitizeErrorForLogging } from "@/lib/error-utils";
-import type { APIErrorResponse, BackendError } from "@/types/backend";
+import { generateRequestId } from "@/lib/response-utils";
+import type { BackendErrorCode } from "@/types/consistent-response";
 
 /**
  * DELETE /api/topics/delete - Delete topics from backend
  *
- * This API route acts as a proxy to the backend service, handling authentication
- * server-side to keep the CONTENT_API_KEY secure.
+ * Pure consistent response implementation - no legacy compatibility
+ * Uses the new backend consistent response format throughout
  *
  * Expected request body:
  * { "topic_ids": ["topic_id_1", "topic_id_2", ...] }
  */
 export async function DELETE(request: NextRequest) {
+  // Generate request ID for correlation
+  const correlationId = generateRequestId("api_topics_delete");
+
   try {
     const body = await request.json();
 
     // Validate request structure
     if (!body.topic_ids || !Array.isArray(body.topic_ids)) {
-      return NextResponse.json(
-        {
-          error: "Invalid request data",
-          error_code: "validation_failed",
-          details:
-            "Request must contain 'topic_ids' array with topic IDs to delete",
-        },
-        { status: 400 },
-      );
-    }
+      const errorResponse = {
+        error: "Please provide an array of topic IDs to delete",
+        error_code: "validation_failed" as BackendErrorCode,
+        details:
+          "Request must contain 'topic_ids' array with topic IDs to delete",
+        request_id: correlationId,
+      };
 
-    if (body.topic_ids.length === 0) {
-      return NextResponse.json(
-        {
-          error: "Invalid request data",
-          error_code: "validation_failed",
-          details: "topic_ids array cannot be empty",
-        },
-        { status: 400 },
-      );
-    }
-
-    // Validate each topic_id is a string
-    for (let i = 0; i < body.topic_ids.length; i++) {
-      const topicId = body.topic_ids[i];
-      if (!topicId || typeof topicId !== "string") {
-        return NextResponse.json(
-          {
-            error: "Invalid request data",
-            error_code: "validation_failed",
-            details: `Invalid topic ID at index ${i}. All topic IDs must be non-empty strings.`,
-          },
-          { status: 400 },
-        );
-      }
-    }
-
-    const contentApiKey = process.env.CONTENT_API_KEY;
-    const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:2024";
-
-    if (!contentApiKey) {
-      console.error("CONTENT_API_KEY environment variable is not set");
-      return NextResponse.json(
-        {
-          error: "Server configuration error",
-          error_code: "configuration_error",
-          details: "API key not configured",
-        },
-        { status: 500 },
-      );
-    }
-
-    if (!backendUrl) {
-      console.error("BACKEND_API_URL environment variable is not set");
-      return NextResponse.json(
-        {
-          error: "Server configuration error",
-          error_code: "configuration_error",
-          details: "Backend URL not configured",
-        },
-        { status: 500 },
-      );
-    }
-
-    // Use the same backend URL pattern as other working endpoints
-    const deleteEndpoint = `${backendUrl}/api/topic/delete-topic`;
-
-    console.log(
-      "Deleting topics from backend:",
-      deleteEndpoint,
-      "Topic IDs:",
-      body.topic_ids,
-      "Backend URL:",
-      backendUrl,
-    );
-
-    let response = await fetch(deleteEndpoint, {
-      method: "DELETE", // Try DELETE method first
-      headers: {
-        "Content-Type": "application/json",
-        "content-api-key": contentApiKey,
-        "X-Request-ID": `req_${Date.now()}`,
-      },
-      body: JSON.stringify({
-        topic_ids: body.topic_ids,
-      }),
-    });
-
-    // If DELETE method returns 404, try POST method as fallback
-    if (!response.ok && response.status === 404) {
-      console.log("DELETE method failed with 404, trying POST method...");
-      response = await fetch(deleteEndpoint, {
-        method: "POST",
+      return NextResponse.json(errorResponse, {
+        status: 422,
         headers: {
+          "X-Request-ID": correlationId,
           "Content-Type": "application/json",
-          "content-api-key": contentApiKey,
-          "X-Request-ID": `req_${Date.now()}`,
         },
-        body: JSON.stringify({
-          topic_ids: body.topic_ids,
-        }),
       });
     }
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error");
-      console.error(
-        "Backend API error:",
-        response.status,
-        response.statusText,
-        errorText,
-      );
+    // Validate topic IDs
+    if (body.topic_ids.length === 0) {
+      const errorResponse = {
+        error: "At least one topic ID is required for deletion",
+        error_code: "validation_failed" as BackendErrorCode,
+        details: "The 'topic_ids' array cannot be empty",
+        request_id: correlationId,
+      };
 
-      return NextResponse.json(
-        {
-          error: `Backend API error: ${response.status} ${response.statusText}`,
-          error_code: "backend_error",
-          details: errorText,
+      return NextResponse.json(errorResponse, {
+        status: 422,
+        headers: {
+          "X-Request-ID": correlationId,
+          "Content-Type": "application/json",
         },
-        { status: response.status },
-      );
+      });
     }
 
-    const data = await response.json();
+    // Validate each topic ID
+    for (let i = 0; i < body.topic_ids.length; i++) {
+      const topicId = body.topic_ids[i];
+      if (!topicId || typeof topicId !== "string" || !topicId.trim()) {
+        const errorResponse = {
+          error: `Invalid topic ID at position ${i + 1}`,
+          error_code: "invalid_value" as BackendErrorCode,
+          details: `Topic ID at index ${i} must be a non-empty string`,
+          request_id: correlationId,
+        };
 
-    console.log("Successfully deleted topics:", {
-      requested_ids: body.topic_ids,
-      response: data,
-    });
+        return NextResponse.json(errorResponse, {
+          status: 422,
+          headers: {
+            "X-Request-ID": correlationId,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+    }
 
-    return NextResponse.json({
+    // Call actual backend API directly
+    const backendApiUrl =
+      process.env.BACKEND_API_URL || "http://localhost:2024";
+
+    const backendResponse = await fetch(
+      `${backendApiUrl}/api/topic/delete-topic`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": correlationId,
+          "Content-API-Key": process.env.CONTENT_API_KEY || "supersecretapikey",
+        },
+        body: JSON.stringify({ topic_ids: body.topic_ids }),
+      },
+    );
+
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json().catch(() => ({}));
+      const errorResponse = {
+        error:
+          errorData.error ||
+          `Backend API error: ${backendResponse.status} ${backendResponse.statusText}`,
+        error_code: "external_service_error" as BackendErrorCode,
+        details: errorData.details || `HTTP ${backendResponse.status}`,
+        request_id: correlationId,
+      };
+
+      return NextResponse.json(errorResponse, {
+        status: backendResponse.status,
+        headers: {
+          "X-Request-ID": correlationId,
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    const deleteData = await backendResponse.json();
+
+    // Extract data from backend consistent response format
+    const backendData = deleteData.data || {};
+
+    // Create frontend response maintaining the expected API contract
+    const response = {
       success: true,
-      message:
-        data.message ||
-        `Successfully deleted ${body.topic_ids.length} topic(s)`,
-      deleted_count: body.topic_ids.length,
-      topic_ids: body.topic_ids,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    // Classify and log error safely
-    const isBackendError =
-      error &&
-      typeof error === "object" &&
-      "type" in error &&
-      "message" in error;
+      total_requested: body.topic_ids.length,
+      deleted_count: backendData.deleted_count || 0,
+      failed_count: backendData.failed_deletions?.length || 0,
+      deleted_topic_ids: backendData.deleted_topic_ids || [],
+      failed_deletions: backendData.failed_deletions || [],
 
-    const classifiedError: BackendError = isBackendError
-      ? (error as BackendError)
-      : classifyError(error);
-
-    // Log error for debugging without sensitive data
-    const sanitizedError = sanitizeErrorForLogging(classifiedError);
-    const userAgent =
-      request.headers.get("user-agent") || request.headers.get("User-Agent");
-    const requestId =
-      request.headers.get("x-request-id") ||
-      request.headers.get("X-Request-ID");
-
-    console.error("Topics delete API error:", {
-      ...sanitizedError,
-      endpoint: "/api/topics/delete",
-      userAgent,
-      requestId,
-    });
-
-    // Map error types to HTTP status codes
-    const statusCodeMap: Record<string, number> = {
-      validation_error: 422,
-      authentication_error: 401,
-      rate_limit_error: 429,
-      server_error: 503,
-      configuration_error: 500,
-      parsing_error: 502,
-      timeout_error: 504,
-      network_error: 503,
-      cors_error: 500,
-      abort_error: 499,
-      unknown_error: 500,
+      // Metadata
+      deleted_at: new Date().toISOString(),
+      request_id: correlationId,
+      processing_time_ms: undefined,
     };
 
-    const statusCode = statusCodeMap[classifiedError.type] || 500;
+    return NextResponse.json(response, {
+      headers: {
+        "X-Request-ID": correlationId,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    // Enhanced error handling for consistent response format
+    let errorCode: BackendErrorCode = "unknown_error";
+    let errorMessage = "An unexpected error occurred while deleting topics";
+    let statusCode = 500;
+    let errorRequestId = correlationId;
 
-    // Add retry-after header for rate limit errors
-    const headers: Record<string, string> = {};
-    if (classifiedError.type === "rate_limit_error") {
-      headers["Retry-After"] = "60"; // Suggest waiting 60 seconds
+    // Handle various error types
+    if (error instanceof Error && "code" in error) {
+      const backendError = error as any;
+      errorCode = backendError.code;
+      errorMessage = backendError.message;
+      statusCode = backendError.statusCode || 500;
+      errorRequestId = backendError.requestId || correlationId;
+
+      console.error("Topics delete API error:", {
+        error_code: errorCode,
+        message: errorMessage,
+        endpoint: "/api/topics/delete",
+        correlation_id: correlationId,
+      });
+    } else {
+      // Handle unexpected errors
+      console.error("Topics delete API error (Unexpected):", {
+        error: error instanceof Error ? error.message : String(error),
+        endpoint: "/api/topics/delete",
+        user_agent: request.headers.get("user-agent"),
+        correlation_id: correlationId,
+      });
     }
 
-    const errorResponse: APIErrorResponse = {
-      error: classifiedError.message,
-      error_code: classifiedError.type,
-      details: classifiedError.technicalMessage,
+    // Return error response
+
+    // Prepare response headers
+    const headers: Record<string, string> = {
+      "X-Request-ID": errorRequestId,
+      "Content-Type": "application/json",
+    };
+
+    // Add retry-after header for rate limit errors
+    if (errorCode === "api_rate_limit_exceeded") {
+      headers["Retry-After"] = "60";
+    }
+
+    // Create consistent error response
+    const errorResponse = {
+      error: errorMessage,
+      error_code: errorCode,
+      details: "An error occurred while deleting topics",
       fallback_available: false,
-      retry_after: classifiedError.type === "rate_limit_error" ? 60 : undefined,
-      request_id: classifiedError.requestId,
+      retry_after: errorCode === "api_rate_limit_exceeded" ? 60 : undefined,
+      request_id: errorRequestId,
     };
 
     return NextResponse.json(errorResponse, {

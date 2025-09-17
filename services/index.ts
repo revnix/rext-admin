@@ -43,12 +43,13 @@ export type {
   BackendTopicGenerationPayload,
   BackendTopicGenerationResponse,
   ErrorRecoveryAction,
-  ErrorSeverity,
   GetTopicsResponse,
   RetryConfig,
   SaveTopicRequest,
   SaveTopicResponse,
 } from "@/types/backend";
+// Re-export ErrorSeverity from consistent-response
+export type { ErrorSeverity } from "@/types/consistent-response";
 // Re-export topic builder types that are commonly used with services
 export type {
   GeneratedTopic,

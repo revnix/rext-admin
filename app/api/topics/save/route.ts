@@ -1,19 +1,22 @@
-import type { NextRequest } from "next/server";
-import { classifyError, sanitizeErrorForLogging } from "@/lib/error-utils";
-import { backendService } from "@/services/backend";
-import type { APIErrorResponse, BackendError } from "@/types/backend";
+import { type NextRequest, NextResponse } from "next/server";
+import { generateRequestId } from "@/lib/response-utils";
+import type { BackendErrorCode } from "@/types/consistent-response";
+import { transformTopicsForSaving } from "@/types/schemas";
 
 /**
  * POST /api/topics/save - Save single or multiple topics to the backend
  *
- * This API route acts as a proxy to the backend service, handling authentication
- * server-side to keep the CONTENT_API_KEY secure.
+ * Pure consistent response implementation - no legacy compatibility
+ * Uses the new backend consistent response format throughout
  *
- * Always uses the topics array format for backend consistency:
- * - Single: { topic: { title, description, ... } } -> converted to [topic]
- * - Multiple: { topics: [{ title, description, ... }, ...] } -> used directly
+ * Request formats:
+ * - Single: { topic: { title, description, ... } }
+ * - Multiple: { topics: [{ title, description, ... }, ...] }
  */
 export async function POST(request: NextRequest) {
+  // Generate request ID for correlation
+  const correlationId = generateRequestId("api_topics_save");
+
   try {
     const body = await request.json();
 
@@ -22,179 +25,188 @@ export async function POST(request: NextRequest) {
     const isSingleSave = body.topic && typeof body.topic === "object";
 
     if (!isBulkSave && !isSingleSave) {
-      return Response.json(
-        {
-          error: "Invalid request data",
-          error_code: "validation_failed",
-          details:
-            "Request must contain either 'topic' (single save) or 'topics' array (bulk save)",
+      // Return consistent error format
+      const errorResponse = {
+        error:
+          "Please provide either 'topic' for single save or 'topics' array for bulk save",
+        error_code: "validation_failed" as BackendErrorCode,
+        details:
+          "Request must contain either 'topic' (single save) or 'topics' array (bulk save)",
+        request_id: correlationId,
+      };
+
+      return Response.json(errorResponse, {
+        status: 422,
+        headers: {
+          "X-Request-ID": correlationId,
+          "Content-Type": "application/json",
         },
-        { status: 400 },
-      );
-    }
-
-    // Always use topics array format - convert single topic to array
-    const topics = isBulkSave ? body.topics : [body.topic];
-    const wasSingleSave = isSingleSave;
-
-    // Validate each topic
-    for (let i = 0; i < topics.length; i++) {
-      const topic = topics[i];
-      if (!topic.title) {
-        return Response.json(
-          {
-            error: "Invalid request data",
-            error_code: "validation_failed",
-            details: wasSingleSave
-              ? "Missing required field: topic.title is required"
-              : `Topic at index ${i} is missing required field: title is required`,
-          },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Save all topics using consistent bulk save method
-    const results: Array<{
-      index: number;
-      success: boolean;
-      topic: unknown;
-      message: string;
-    }> = [];
-    const errors: Array<{
-      index: number;
-      success: boolean;
-      error: string;
-      topic: unknown;
-    }> = [];
-
-    try {
-      const result = await backendService.saveTopics(topics);
-
-      // Process the bulk result
-      if (result.success && result.saved_count > 0) {
-        // Mark the number of topics as successfully saved according to the API response
-        for (let i = 0; i < Math.min(result.saved_count, topics.length); i++) {
-          results.push({
-            index: i,
-            success: true,
-            topic: topics[i],
-            message: "Saved successfully",
-          });
-        }
-
-        // Mark any remaining topics as failed if not all were saved
-        if (result.saved_count < topics.length) {
-          for (let i = result.saved_count; i < topics.length; i++) {
-            errors.push({
-              index: i,
-              success: false,
-              error: "Topic was not saved by the backend",
-              topic: topics[i],
-            });
-          }
-        }
-      } else {
-        // All topics failed if the operation wasn't successful
-        topics.forEach((topic: unknown, i: number) => {
-          errors.push({
-            index: i,
-            success: false,
-            error: result.message || "Save operation failed",
-            topic: topic,
-          });
-        });
-      }
-    } catch (error) {
-      // If bulk save fails, mark all as failed
-      topics.forEach((topic: unknown, i: number) => {
-        errors.push({
-          index: i,
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          topic: topic,
-        });
       });
     }
 
-    // Return consistent response format, with single save indicator
-    return Response.json({
-      success: errors.length === 0,
-      bulk_save: !wasSingleSave,
-      single_save: wasSingleSave,
-      total_attempted: topics.length,
-      successful_saves: results.length,
-      failed_saves: errors.length,
-      results: results,
-      errors: errors.length > 0 ? errors : undefined,
-      // For single save compatibility, include topic and message
-      ...(wasSingleSave && {
-        topic: topics[0],
-        message:
-          results.length > 0
-            ? "Topic saved successfully"
-            : errors[0]?.error || "Failed to save topic",
-        saved_count: results.length,
-      }),
-      saved_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    // Classify and log error safely
-    const isBackendError =
-      error &&
-      typeof error === "object" &&
-      "type" in error &&
-      "message" in error;
+    // Convert to consistent array format for backend
+    const topics = isBulkSave ? body.topics : [body.topic];
 
-    const classifiedError: BackendError = isBackendError
-      ? (error as BackendError)
-      : classifyError(error);
+    // Validate each topic structure
+    for (let i = 0; i < topics.length; i++) {
+      const topic = topics[i];
+      if (
+        !topic.title ||
+        typeof topic.title !== "string" ||
+        !topic.title.trim()
+      ) {
+        const errorResponse = {
+          error: isSingleSave
+            ? "Topic title is required and cannot be empty"
+            : `Topic at position ${i + 1} is missing a valid title`,
+          error_code: "missing_required_field" as BackendErrorCode,
+          details: isSingleSave
+            ? "The 'title' field is required for topic save"
+            : `Topic at index ${i} is missing required field: title`,
+          request_id: correlationId,
+        };
 
-    // Log error for debugging without sensitive data
-    const sanitizedError = sanitizeErrorForLogging(classifiedError);
-    const userAgent =
-      request.headers.get("user-agent") || request.headers.get("User-Agent");
-    const requestId =
-      request.headers.get("x-request-id") ||
-      request.headers.get("X-Request-ID");
-
-    console.error("Topics save API error:", {
-      ...sanitizedError,
-      endpoint: "/api/topics/save",
-      userAgent,
-      requestId,
-    });
-
-    // Map error types to HTTP status codes
-    const statusCodeMap: Record<string, number> = {
-      validation_error: 422,
-      authentication_error: 401,
-      rate_limit_error: 429,
-      server_error: 503,
-      configuration_error: 500,
-      parsing_error: 502,
-      timeout_error: 504,
-      network_error: 503,
-      cors_error: 500,
-      abort_error: 499,
-      unknown_error: 500,
-    };
-
-    const statusCode = statusCodeMap[classifiedError.type] || 500;
-
-    // Add retry-after header for rate limit errors
-    const headers: Record<string, string> = {};
-    if (classifiedError.type === "rate_limit_error") {
-      headers["Retry-After"] = "60"; // Suggest waiting 60 seconds
+        return Response.json(errorResponse, {
+          status: 422,
+          headers: {
+            "X-Request-ID": correlationId,
+            "Content-Type": "application/json",
+          },
+        });
+      }
     }
 
-    const errorResponse: APIErrorResponse = {
-      error: classifiedError.message,
-      error_code: classifiedError.type,
-      details: classifiedError.technicalMessage,
+    // Transform topics for backend format
+    const backendTopics = transformTopicsForSaving(topics);
+
+    // Call actual backend API directly
+    const backendApiUrl =
+      process.env.BACKEND_API_URL || "http://localhost:2024";
+
+    const backendResponse = await fetch(
+      `${backendApiUrl}/api/topic/save-topic`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": correlationId,
+          "Content-API-Key": process.env.CONTENT_API_KEY || "supersecretapikey",
+        },
+        body: JSON.stringify({ topics: backendTopics }),
+      },
+    );
+
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json().catch(() => ({}));
+      const errorResponse = {
+        error:
+          errorData.error ||
+          `Backend API error: ${backendResponse.status} ${backendResponse.statusText}`,
+        error_code: "external_service_error" as BackendErrorCode,
+        details: errorData.details || `HTTP ${backendResponse.status}`,
+        request_id: correlationId,
+      };
+
+      return NextResponse.json(errorResponse, {
+        status: backendResponse.status,
+        headers: {
+          "X-Request-ID": correlationId,
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    const saveData = await backendResponse.json();
+
+    // Extract data from backend consistent response format
+    const backendData = saveData.data || {};
+
+    // Create frontend response maintaining the expected API contract
+    const response = {
+      success: true,
+      bulk_save: isBulkSave,
+      single_save: isSingleSave,
+      total_attempted: topics.length,
+      successful_saves: backendData.saved_count || topics.length,
+      failed_saves: backendData.failed_topics?.length || 0,
+      saved_topic_ids: backendData.saved_topic_ids || [],
+      failed_topics: backendData.failed_topics || [],
+
+      // Include single save compatibility fields
+      ...(isSingleSave && {
+        topic: topics[0],
+        message: "Topic saved successfully",
+        saved_count: 1,
+      }),
+
+      // Metadata
+      saved_at: new Date().toISOString(),
+      request_id: correlationId,
+      processing_time_ms: undefined,
+    };
+
+    return Response.json(response, {
+      headers: {
+        "X-Request-ID": correlationId,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    // Enhanced error handling for consistent response format
+    let errorCode: BackendErrorCode = "unknown_error";
+    let errorMessage = "An unexpected error occurred while saving topics";
+    let statusCode = 500;
+    let errorRequestId = correlationId;
+
+    // Handle various error types
+    if (error instanceof Error && "code" in error) {
+      const backendError = error as Error & {
+        code: BackendErrorCode;
+        statusCode?: number;
+        requestId?: string;
+      };
+      errorCode = backendError.code;
+      errorMessage = backendError.message;
+      statusCode = backendError.statusCode || 500;
+      errorRequestId = backendError.requestId || correlationId;
+
+      console.error("Topics save API error:", {
+        error_code: errorCode,
+        message: errorMessage,
+        endpoint: "/api/topics/save",
+        correlation_id: correlationId,
+      });
+    } else {
+      // Handle unexpected errors
+      console.error("Topics save API error (Unexpected):", {
+        error: error instanceof Error ? error.message : String(error),
+        endpoint: "/api/topics/save",
+        user_agent: request.headers.get("user-agent"),
+        correlation_id: correlationId,
+      });
+    }
+
+    // Return error response
+
+    // Prepare response headers
+    const headers: Record<string, string> = {
+      "X-Request-ID": errorRequestId,
+      "Content-Type": "application/json",
+    };
+
+    // Add retry-after header for rate limit errors
+    if (errorCode === "api_rate_limit_exceeded") {
+      headers["Retry-After"] = "60";
+    }
+
+    // Create consistent error response
+    const errorResponse = {
+      error: errorMessage,
+      error_code: errorCode,
+      details: errorMessage,
       fallback_available: false,
-      retry_after: classifiedError.type === "rate_limit_error" ? 60 : undefined,
-      request_id: classifiedError.requestId,
+      retry_after: errorCode === "api_rate_limit_exceeded" ? 60 : undefined,
+      request_id: errorRequestId,
     };
 
     return Response.json(errorResponse, {

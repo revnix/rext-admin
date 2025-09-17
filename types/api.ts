@@ -8,8 +8,17 @@
  * @see /types/schemas.ts for validation schemas and transformation helpers
  * @see /types/backend.ts for backend service interfaces
  * @see /types/topic-builder.ts for core data structures
+ * @see /types/consistent-response.ts for new consistent response format
  */
 
+import {
+  type BackendErrorCode,
+  type ConsistentApiResponse,
+  type ConsistentErrorResponse,
+  type ConsistentSuccessResponse,
+  createLegacyAdapter,
+  type ErrorSeverity,
+} from "./consistent-response";
 import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
 // ============================================================================
@@ -755,3 +764,442 @@ export const isValidGetTopicsRequest = (
   // Add more specific validation as needed
   return true;
 };
+
+// ============================================================================
+// CONSISTENT RESPONSE FORMAT INTEGRATION
+// ============================================================================
+
+/**
+ * Topic Generation API Response in consistent format
+ */
+export type ConsistentTopicGenerationResponse =
+  ConsistentApiResponse<TopicGenerationResponse>;
+
+/**
+ * Topic Regeneration API Response in consistent format
+ */
+export type ConsistentTopicRegenerationResponse =
+  ConsistentApiResponse<TopicRegenerationResponse>;
+
+/**
+ * Topic Save API Response in consistent format
+ */
+export type ConsistentTopicSaveResponse = ConsistentApiResponse<{
+  /** Number of topics successfully saved */
+  saved_count: number;
+  /** IDs of saved topics */
+  saved_topic_ids: string[];
+  /** Any topics that failed to save */
+  failed_topics?: Array<{
+    topic_id: string;
+    reason: string;
+  }>;
+}>;
+
+/**
+ * Topic Delete API Response in consistent format
+ */
+export type ConsistentTopicDeleteResponse = ConsistentApiResponse<{
+  /** Number of topics successfully deleted */
+  deleted_count: number;
+  /** IDs of deleted topics */
+  deleted_topic_ids: string[];
+  /** Any topics that failed to delete */
+  failed_deletions?: Array<{
+    topic_id: string;
+    reason: string;
+  }>;
+}>;
+
+/**
+ * Get Topics API Response in consistent format
+ */
+export type ConsistentGetTopicsResponse = ConsistentApiResponse<{
+  /** Array of saved topics */
+  topics: GeneratedTopic[];
+  /** Total count of topics (for pagination) */
+  total_count: number;
+  /** Pagination metadata */
+  pagination?: {
+    page: number;
+    per_page: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
+}>;
+
+// ============================================================================
+// LEGACY COMPATIBILITY ADAPTERS
+// ============================================================================
+
+/**
+ * Creates a legacy adapter for Topic Generation responses
+ * Maintains backward compatibility during migration period
+ */
+export const topicGenerationLegacyAdapter = createLegacyAdapter<
+  TopicGenerationResponse,
+  TopicGenerationResponse
+>({
+  toLegacy: (data) => data,
+  fromLegacy: (legacy) => legacy,
+});
+
+/**
+ * Creates a legacy adapter for Topic Save responses
+ * Maps from consistent format to current frontend expectations
+ */
+export const topicSaveLegacyAdapter = createLegacyAdapter<
+  { saved_count: number; saved_topic_ids: string[] },
+  { success: boolean; message: string; saved_topics: number }
+>({
+  toLegacy: (data) => ({
+    success: true,
+    message: `Successfully saved ${data.saved_count} topics`,
+    saved_topics: data.saved_count,
+  }),
+  fromLegacy: (legacy) => ({
+    saved_count: legacy.saved_topics || 0,
+    saved_topic_ids: [],
+  }),
+});
+
+// ============================================================================
+// ERROR CODE MAPPING
+// ============================================================================
+
+/**
+ * Maps backend error codes to frontend-friendly error categories
+ * for better user experience and error handling
+ */
+export const ERROR_CODE_MAPPING: Record<
+  BackendErrorCode,
+  {
+    category: string;
+    userMessage: string;
+    retryable: boolean;
+    severity: ErrorSeverity;
+  }
+> = {
+  // Validation Errors
+  validation_failed: {
+    category: "validation",
+    userMessage: "Please check your input and try again",
+    retryable: false,
+    severity: "medium",
+  },
+  missing_field: {
+    category: "validation",
+    userMessage: "Some required fields are missing",
+    retryable: false,
+    severity: "medium",
+  },
+  invalid_format: {
+    category: "validation",
+    userMessage: "The format of your input is not valid",
+    retryable: false,
+    severity: "medium",
+  },
+  invalid_value: {
+    category: "validation",
+    userMessage: "One or more values are not valid",
+    retryable: false,
+    severity: "medium",
+  },
+  field_too_long: {
+    category: "validation",
+    userMessage: "Some fields are too long",
+    retryable: false,
+    severity: "low",
+  },
+  field_too_short: {
+    category: "validation",
+    userMessage: "Some fields are too short",
+    retryable: false,
+    severity: "low",
+  },
+  invalid_email_format: {
+    category: "validation",
+    userMessage: "Email format is not valid",
+    retryable: false,
+    severity: "medium",
+  },
+  invalid_phone_format: {
+    category: "validation",
+    userMessage: "Phone number format is not valid",
+    retryable: false,
+    severity: "medium",
+  },
+  invalid_url_format: {
+    category: "validation",
+    userMessage: "URL format is not valid",
+    retryable: false,
+    severity: "medium",
+  },
+  invalid_date_format: {
+    category: "validation",
+    userMessage: "Date format is not valid",
+    retryable: false,
+    severity: "medium",
+  },
+  duplicate_value: {
+    category: "validation",
+    userMessage: "This value already exists",
+    retryable: false,
+    severity: "medium",
+  },
+  value_out_of_range: {
+    category: "validation",
+    userMessage: "Value is outside the allowed range",
+    retryable: false,
+    severity: "medium",
+  },
+  invalid_file_type: {
+    category: "validation",
+    userMessage: "File type is not supported",
+    retryable: false,
+    severity: "medium",
+  },
+  file_too_large: {
+    category: "validation",
+    userMessage: "File is too large",
+    retryable: false,
+    severity: "medium",
+  },
+  missing_required_field: {
+    category: "validation",
+    userMessage: "Please fill in all required fields",
+    retryable: false,
+    severity: "medium",
+  },
+
+  // Authentication & Authorization Errors
+  unauthorized: {
+    category: "auth",
+    userMessage: "Please log in to continue",
+    retryable: false,
+    severity: "high",
+  },
+  forbidden: {
+    category: "auth",
+    userMessage: "You don't have permission to perform this action",
+    retryable: false,
+    severity: "high",
+  },
+  token_expired: {
+    category: "auth",
+    userMessage: "Your session has expired. Please log in again",
+    retryable: false,
+    severity: "high",
+  },
+  token_invalid: {
+    category: "auth",
+    userMessage: "Authentication failed. Please log in again",
+    retryable: false,
+    severity: "high",
+  },
+  insufficient_permissions: {
+    category: "auth",
+    userMessage: "You don't have sufficient permissions",
+    retryable: false,
+    severity: "high",
+  },
+  account_locked: {
+    category: "auth",
+    userMessage: "Your account has been locked. Please contact support",
+    retryable: false,
+    severity: "critical",
+  },
+  account_suspended: {
+    category: "auth",
+    userMessage: "Your account has been suspended. Please contact support",
+    retryable: false,
+    severity: "critical",
+  },
+  authentication_required: {
+    category: "auth",
+    userMessage: "Authentication is required for this action",
+    retryable: false,
+    severity: "high",
+  },
+  invalid_credentials: {
+    category: "auth",
+    userMessage: "Invalid username or password",
+    retryable: false,
+    severity: "high",
+  },
+  session_expired: {
+    category: "auth",
+    userMessage: "Your session has expired. Please log in again",
+    retryable: false,
+    severity: "high",
+  },
+
+  // Resource Errors
+  resource_not_found: {
+    category: "resource",
+    userMessage: "The requested item could not be found",
+    retryable: false,
+    severity: "medium",
+  },
+  duplicate_resource: {
+    category: "resource",
+    userMessage: "This item already exists",
+    retryable: false,
+    severity: "medium",
+  },
+  resource_conflict: {
+    category: "resource",
+    userMessage: "There was a conflict with this resource",
+    retryable: false,
+    severity: "medium",
+  },
+  resource_locked: {
+    category: "resource",
+    userMessage: "This resource is currently locked",
+    retryable: true,
+    severity: "medium",
+  },
+  resource_unavailable: {
+    category: "resource",
+    userMessage: "This resource is temporarily unavailable",
+    retryable: true,
+    severity: "medium",
+  },
+  resource_limit_exceeded: {
+    category: "resource",
+    userMessage: "You have exceeded the limit for this resource",
+    retryable: false,
+    severity: "high",
+  },
+
+  // Business Logic Errors
+  business_rule_violation: {
+    category: "business",
+    userMessage: "This action violates business rules",
+    retryable: false,
+    severity: "medium",
+  },
+  operation_not_allowed: {
+    category: "business",
+    userMessage: "This operation is not allowed",
+    retryable: false,
+    severity: "medium",
+  },
+  workflow_violation: {
+    category: "business",
+    userMessage: "This action violates the workflow",
+    retryable: false,
+    severity: "medium",
+  },
+  dependency_violation: {
+    category: "business",
+    userMessage: "Dependencies prevent this action",
+    retryable: false,
+    severity: "medium",
+  },
+  state_transition_error: {
+    category: "business",
+    userMessage: "Invalid state transition",
+    retryable: false,
+    severity: "medium",
+  },
+
+  // External Service Errors
+  external_service_error: {
+    category: "external",
+    userMessage:
+      "External service is experiencing issues. Please try again later",
+    retryable: true,
+    severity: "high",
+  },
+  external_service_unavailable: {
+    category: "external",
+    userMessage: "External service is currently unavailable",
+    retryable: true,
+    severity: "high",
+  },
+  api_rate_limit_exceeded: {
+    category: "external",
+    userMessage: "Rate limit exceeded. Please wait before trying again",
+    retryable: true,
+    severity: "medium",
+  },
+  third_party_service_error: {
+    category: "external",
+    userMessage: "Third-party service error. Please try again later",
+    retryable: true,
+    severity: "high",
+  },
+
+  // System Errors
+  internal_server_error: {
+    category: "system",
+    userMessage: "An internal server error occurred. Please try again later",
+    retryable: true,
+    severity: "critical",
+  },
+  service_unavailable: {
+    category: "system",
+    userMessage: "Service is temporarily unavailable. Please try again later",
+    retryable: true,
+    severity: "high",
+  },
+  database_error: {
+    category: "system",
+    userMessage: "Database error. Please try again later",
+    retryable: true,
+    severity: "critical",
+  },
+  configuration_error: {
+    category: "system",
+    userMessage: "Configuration error. Please contact support",
+    retryable: false,
+    severity: "critical",
+  },
+  timeout_error: {
+    category: "network",
+    userMessage: "Request timed out. Please try again",
+    retryable: true,
+    severity: "medium",
+  },
+  network_error: {
+    category: "network",
+    userMessage: "Network error. Please check your connection and try again",
+    retryable: true,
+    severity: "medium",
+  },
+  storage_error: {
+    category: "system",
+    userMessage: "Storage error. Please try again later",
+    retryable: true,
+    severity: "high",
+  },
+  memory_error: {
+    category: "system",
+    userMessage: "Memory error. Please try again later",
+    retryable: true,
+    severity: "critical",
+  },
+  unknown_error: {
+    category: "system",
+    userMessage: "An unknown error occurred. Please try again later",
+    retryable: true,
+    severity: "medium",
+  },
+  invalid_response_format: {
+    category: "system",
+    userMessage: "Received unexpected response format. Please try again",
+    retryable: true,
+    severity: "medium",
+  },
+};
+
+/**
+ * Gets user-friendly error information for a backend error code
+ * @param errorCode - Backend error code
+ * @returns User-friendly error information
+ */
+export function getErrorInfo(errorCode: BackendErrorCode) {
+  return ERROR_CODE_MAPPING[errorCode] || ERROR_CODE_MAPPING.unknown_error;
+}

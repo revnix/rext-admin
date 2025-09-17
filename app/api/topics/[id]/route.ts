@@ -3,22 +3,47 @@ import { generateRequestId } from "@/lib/response-utils";
 import type { BackendErrorCode } from "@/types/consistent-response";
 
 /**
- * GET /api/topics - Fetch all topics from backend
+ * GET /api/topics/[id] - Get single topic details from backend
  *
- * Pure consistent response implementation - no legacy compatibility
- * Uses the new backend consistent response format throughout
+ * Pure consistent response implementation for single topic retrieval
+ * Proxies requests to backend GET /api/topic/get-topic/{topic_id}
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   // Generate request ID for correlation
   const correlationId = generateRequestId("api_topics_get");
+  let topicId: string | undefined;
 
   try {
-    // Call actual backend API directly
+    const resolvedParams = await params;
+    topicId = resolvedParams.id;
+
+    // Validate topic ID parameter
+    if (!topicId || typeof topicId !== "string" || !topicId.trim()) {
+      const errorResponse = {
+        error: "Topic ID is required and cannot be empty",
+        error_code: "missing_required_field" as BackendErrorCode,
+        details: "The topic ID parameter is required for topic retrieval",
+        request_id: correlationId,
+      };
+
+      return Response.json(errorResponse, {
+        status: 422,
+        headers: {
+          "X-Request-ID": correlationId,
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    // Call backend API directly
     const backendApiUrl =
       process.env.BACKEND_API_URL || "http://localhost:2024";
 
     const backendResponse = await fetch(
-      `${backendApiUrl}/api/topic/get-topics`,
+      `${backendApiUrl}/api/topic/get-topic/${encodeURIComponent(topicId)}`,
       {
         method: "GET",
         headers: {
@@ -31,11 +56,25 @@ export async function GET(request: NextRequest) {
 
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json().catch(() => ({}));
+
+      // Handle specific error codes from backend
+      let frontendErrorCode: BackendErrorCode = "external_service_error";
+      if (backendResponse.status === 404) {
+        frontendErrorCode = "resource_not_found";
+      } else if (
+        backendResponse.status === 401 ||
+        backendResponse.status === 403
+      ) {
+        frontendErrorCode = "authentication_required";
+      } else if (backendResponse.status >= 500) {
+        frontendErrorCode = "external_service_error";
+      }
+
       const errorResponse = {
         error:
           errorData.error ||
           `Backend API error: ${backendResponse.status} ${backendResponse.statusText}`,
-        error_code: "external_service_error" as BackendErrorCode,
+        error_code: frontendErrorCode,
         details: errorData.details || `HTTP ${backendResponse.status}`,
         request_id: correlationId,
       };
@@ -49,28 +88,20 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const topicsData = await backendResponse.json();
+    const topicData = await backendResponse.json();
 
     // Extract data from backend consistent response format
-    const backendData = topicsData.data || {};
+    const backendTopicData = topicData.data || {};
 
-    // Create frontend response maintaining the expected API contract
+    // Return the topic data in consistent response format
     const response = {
-      topics: backendData.topics || [],
-      total_count: backendData.total_count || 0,
-
-      // Add pagination metadata if available
-      ...(backendData.pagination && {
-        pagination: backendData.pagination,
-      }),
-
-      // Metadata
-      fetched_at: new Date().toISOString(),
+      success: true,
+      topic: backendTopicData,
       request_id: correlationId,
       processing_time_ms: undefined,
     };
 
-    return NextResponse.json(response, {
+    return Response.json(response, {
       headers: {
         "X-Request-ID": correlationId,
         "Content-Type": "application/json",
@@ -79,62 +110,55 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // Enhanced error handling for consistent response format
     let errorCode: BackendErrorCode = "unknown_error";
-    let errorMessage = "An unexpected error occurred while fetching topics";
+    let errorMessage = "An unexpected error occurred while retrieving topic";
     let statusCode = 500;
     let errorRequestId = correlationId;
 
     // Handle various error types
     if (error instanceof Error && "code" in error) {
-      const backendError = error as any;
+      const backendError = error as Error & {
+        code: BackendErrorCode;
+        statusCode?: number;
+        requestId?: string;
+      };
       errorCode = backendError.code;
       errorMessage = backendError.message;
       statusCode = backendError.statusCode || 500;
       errorRequestId = backendError.requestId || correlationId;
 
-      console.error("Topics get API error:", {
+      console.error("Topic get API error:", {
         error_code: errorCode,
         message: errorMessage,
-        endpoint: "/api/topics",
+        endpoint: "/api/topics/[id]",
+        topic_id: topicId,
         correlation_id: correlationId,
       });
     } else {
       // Handle unexpected errors
-      console.error("Topics get API error (Unexpected):", {
+      console.error("Topic get API error (Unexpected):", {
         error: error instanceof Error ? error.message : String(error),
-        endpoint: "/api/topics",
+        endpoint: "/api/topics/[id]",
+        topic_id: topicId,
         user_agent: request.headers.get("user-agent"),
         correlation_id: correlationId,
       });
     }
 
-    // Return error response
-
-    // Prepare response headers
-    const headers: Record<string, string> = {
-      "X-Request-ID": errorRequestId,
-      "Content-Type": "application/json",
-    };
-
-    // Add retry-after header for rate limit errors
-    if (errorCode === "api_rate_limit_exceeded") {
-      headers["Retry-After"] = "60";
-    }
-
-    // Create consistent error response with fallback data
+    // Create consistent error response
     const errorResponse = {
       error: errorMessage,
       error_code: errorCode,
       details: errorMessage,
-      topics: [], // Provide empty array as fallback
-      total_count: 0, // Provide 0 as fallback
       fallback_available: false,
-      retry_after: errorCode === "api_rate_limit_exceeded" ? 60 : undefined,
       request_id: errorRequestId,
     };
 
-    return NextResponse.json(errorResponse, {
+    return Response.json(errorResponse, {
       status: statusCode,
-      headers,
+      headers: {
+        "X-Request-ID": errorRequestId,
+        "Content-Type": "application/json",
+      },
     });
   }
 }

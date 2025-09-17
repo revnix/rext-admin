@@ -566,9 +566,7 @@ export const createValidationReport = <T>(
  * }
  * ```
  */
-export const transformTopicForSaving = (
-  topic: GeneratedTopic,
-): SaveTopicItem => {
+export const transformTopicForSaving = (topic: GeneratedTopic): any => {
   // Validate input
   if (!isValidGeneratedTopic(topic)) {
     throw new Error("Invalid GeneratedTopic provided for transformation");
@@ -585,22 +583,34 @@ export const transformTopicForSaving = (
     throw new Error("tags array cannot be empty for backend save");
   }
 
-  // Transform to backend format (remove frontend-only fields)
-  const backendTopic: SaveTopicItem = {
+  // Transform to backend format (match SaveTopicRequest schema)
+  const backendTopic: any = {
+    id: topic.id,
     title: topic.title,
     angle: topic.angle,
+    description: topic.description || topic.angle, // Use angle as fallback if no description
     channel_fit: topic.channel_fit,
     audience_fit: topic.audience_fit,
-    scores: topic.scores,
     why_it_works: topic.why_it_works,
     tags: topic.tags,
+    scores: topic.scores,
+    suggested_defaults: {
+      platform: "blog",
+      industry: "general",
+      audienceType: topic.audience_fit,
+      readingLevel: ["intermediate"],
+      goals: ["educate-inform"],
+      tone: ["professional-formal"],
+      region: "global",
+      contentLength: "medium",
+      primaryKeywords: topic.tags,
+      secondaryKeywords: [],
+      includeTOC: false,
+    },
+    input_params: null,
   };
 
-  // Validate output
-  if (!isValidSaveTopicItem(backendTopic)) {
-    throw new Error("Transformed topic failed backend validation");
-  }
-
+  // Return the backend-compatible topic
   return backendTopic;
 };
 
@@ -615,9 +625,7 @@ export const transformTopicForSaving = (
  * @returns Array of SaveTopicItem formatted for backend API
  * @throws Error if any topic transformation fails
  */
-export const transformTopicsForSaving = (
-  topics: GeneratedTopic[],
-): SaveTopicItem[] => {
+export const transformTopicsForSaving = (topics: GeneratedTopic[]): any[] => {
   return topics.map((topic, index) => {
     try {
       return transformTopicForSaving(topic);

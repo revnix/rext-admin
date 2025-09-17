@@ -3,7 +3,7 @@
  */
 
 import type { NextRequest } from "next/server";
-import { POST } from "@/app/api/generate-topics/route";
+import { POST } from "@/app/api/topics/generate/route";
 import { backendService } from "@/services/backend";
 import type {
   BackendError,
@@ -50,8 +50,13 @@ describe("/api/generate-topics", () => {
               "Addresses common pain points when learning TypeScript",
             scores: {
               relevance: 0.9,
-              freshness: 0.7,
-              novelty: 0.6,
+              seo_potential: 0.7,
+              trend_level: 0.6,
+              uniqueness: 0.8,
+              reader_interest: 0.85,
+              actionable_potential: 0.75,
+              brand_alignment: 0.88,
+              controversy: 0.2,
             },
             tags: ["typescript", "react", "javascript", "tutorial"],
           },
@@ -409,8 +414,13 @@ describe("/api/generate-topics", () => {
             why_it_works: "Test reason",
             scores: {
               relevance: 0.8,
-              freshness: 0.7,
-              novelty: 0.6,
+              seo_potential: 0.7,
+              trend_level: 0.6,
+              uniqueness: 0.7,
+              reader_interest: 0.82,
+              actionable_potential: 0.78,
+              brand_alignment: 0.86,
+              controversy: 0.15,
             },
             tags: ["test"],
           },
@@ -590,8 +600,13 @@ describe("/api/generate-topics", () => {
               "Addresses current needs in healthcare AI adoption with practical focus",
             scores: {
               relevance: 0.95,
-              freshness: 0.85,
-              novelty: 0.75,
+              seo_potential: 0.85,
+              trend_level: 0.75,
+              uniqueness: 0.82,
+              reader_interest: 0.91,
+              actionable_potential: 0.88,
+              brand_alignment: 0.93,
+              controversy: 0.1,
             },
             tags: ["ai", "healthcare", "diagnostics", "machine-learning"],
           },

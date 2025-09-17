@@ -30,10 +30,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/progress";
-import { useTopics } from "@/hooks/use-topics";
+import { useTopic } from "@/hooks/use-topics";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
-import type { TopicData } from "@/types/data-table";
-import type { GeneratedTopic } from "@/types/topic-builder";
 
 export default function TopicDetailPage() {
   const params = useParams();
@@ -42,58 +40,19 @@ export default function TopicDetailPage() {
 
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch topics data to find the specific topic
-  const { data: topics = [], status, error, isInitialLoading } = useTopics();
+  // Fetch single topic data using the new endpoint
+  const {
+    data: topic,
+    status,
+    error,
+    isLoading: isInitialLoading,
+  } = useTopic(topicId);
 
   // Delete mutation
   const deleteMutation = useTopicDeleteMutation();
 
-  // Find the current topic
-  const topic = topics.find((t: TopicData) => t.id === topicId);
-
-  // Transform topic data to match GeneratedTopic structure from drawer
-  const generateTopicFromData = (
-    topicData: TopicData,
-  ): GeneratedTopic | null => {
-    if (!topicData) return null;
-    return {
-      id: topicData.id,
-      title: topicData.name,
-      angle: topicData.description || topicData.name,
-      description: topicData.description,
-      channel_fit: ["Blog", "Social Media", "Email", "Newsletter"],
-      audience_fit: [
-        "Content Creators",
-        "Marketers",
-        "Business Owners",
-        "Entrepreneurs",
-      ],
-      why_it_works:
-        "This topic combines high engagement potential with practical value, making it perfect for building thought leadership while driving meaningful discussions with your target audience.",
-      scores: {
-        relevance: topicData.score || 0.85,
-        seo_potential: 0.78,
-        trend_level: 0.82,
-        uniqueness: 0.8,
-        reader_interest: 0.88,
-        actionable_potential: 0.75,
-        brand_alignment: 0.83,
-        controversy: 0.25,
-      },
-      tags: topicData.tags || [
-        "content marketing",
-        "strategy",
-        "engagement",
-        "audience",
-        "growth",
-      ],
-      is_saved: true,
-      _optimisticSaved: false,
-      _isBeingSaved: false,
-    };
-  };
-
-  const generatedTopic = topic ? generateTopicFromData(topic) : null;
+  // The topic data is already in the correct GeneratedTopic format
+  const generatedTopic = topic;
 
   // Calculate overall score
   const overallScore = generatedTopic
@@ -124,15 +83,15 @@ export default function TopicDetailPage() {
   };
 
   const handleUseTopic = () => {
-    console.log("Using topic for content creation:", topic?.name);
+    console.log("Using topic for content creation:", generatedTopic?.title);
     // TODO: Navigate to content creation with topic prefilled
   };
 
   const handleDeleteTopic = async () => {
-    if (!topic) return;
+    if (!generatedTopic) return;
     setIsDeleting(true);
     try {
-      await deleteMutation.mutateAsync([topic.id]);
+      await deleteMutation.mutateAsync([generatedTopic.id]);
       router.push("/topics");
     } catch (error) {
       console.error("Failed to delete topic:", error);
@@ -145,54 +104,61 @@ export default function TopicDetailPage() {
   const breadcrumbs = [
     { label: "Library", href: "#" },
     { label: "Topics", href: "/topics" },
-    { label: topic?.name || "Topic Detail" },
+    { label: generatedTopic?.title || "Topic Detail" },
   ];
 
-  // Build metadata for the wrapper
-  const metadata: MetadataItem[] = topic
+  // Build metadata for the wrapper using GeneratedTopic structure
+  const metadata: MetadataItem[] = generatedTopic
     ? [
         {
-          label: "Category",
-          value: <Badge variant="secondary">{topic.category}</Badge>,
+          label: "Tags",
+          value: (
+            <div className="flex flex-wrap gap-1">
+              {generatedTopic.tags?.slice(0, 2).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {(generatedTopic.tags?.length || 0) > 2 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(generatedTopic.tags?.length || 0) - 2} more
+                </Badge>
+              )}
+            </div>
+          ),
           icon: <Hash className="h-4 w-4" />,
         },
         {
-          label: "Content Type",
-          value: <Badge variant="outline">{topic.contentType}</Badge>,
+          label: "Channel Fit",
+          value: (
+            <div className="flex flex-wrap gap-1">
+              {generatedTopic.channel_fit?.slice(0, 2).map((channel) => (
+                <Badge key={channel} variant="outline" className="text-xs">
+                  {channel}
+                </Badge>
+              ))}
+              {(generatedTopic.channel_fit?.length || 0) > 2 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(generatedTopic.channel_fit?.length || 0) - 2} more
+                </Badge>
+              )}
+            </div>
+          ),
           icon: <Globe className="h-4 w-4" />,
         },
         {
-          label: "Priority",
-          value: topic.priority ? (
-            <Badge
-              variant={
-                topic.priority === "high"
-                  ? "destructive"
-                  : topic.priority === "medium"
-                    ? "default"
-                    : "secondary"
-              }
-              className="capitalize"
-            >
-              {topic.priority}
-            </Badge>
-          ) : (
-            <span className="text-muted-foreground">Not set</span>
-          ),
-          icon: <Target className="h-4 w-4" />,
-        },
-        {
-          label: "Score",
-          value: `${Math.round((topic.score || 0) * 100)}%`,
+          label: "Overall Score",
+          value: `${overallScore}%`,
           icon: <TrendingUp className="h-4 w-4" />,
         },
         {
-          label: "Created",
-          value: new Date(topic.updated || Date.now()).toLocaleDateString(),
-        },
-        {
-          label: "Ranking",
-          value: `#${topic.ranking || "N/A"}`,
+          label: "Saved Status",
+          value: (
+            <Badge variant={generatedTopic.is_saved ? "default" : "secondary"}>
+              {generatedTopic.is_saved ? "Saved" : "Not Saved"}
+            </Badge>
+          ),
+          icon: <Target className="h-4 w-4" />,
         },
       ]
     : [];
@@ -280,29 +246,31 @@ export default function TopicDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Created</span>
-            <span className="text-sm font-medium">
-              {new Date(topic?.updated || Date.now()).toLocaleDateString()}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Ranking</span>
-            <Badge variant="outline">#{topic?.ranking || "N/A"}</Badge>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Used in Content
-            </span>
-            <span className="text-sm font-medium">0 times</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Category</span>
-            <Badge variant="secondary" className="text-xs">
-              {topic?.category}
+            <span className="text-sm text-muted-foreground">Status</span>
+            <Badge variant={generatedTopic?.is_saved ? "default" : "secondary"}>
+              {generatedTopic?.is_saved ? "Saved" : "Not Saved"}
             </Badge>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Tags</span>
+            <span className="text-sm font-medium">
+              {generatedTopic?.tags?.length || 0} tags
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Channels</span>
+            <span className="text-sm font-medium">
+              {generatedTopic?.channel_fit?.length || 0} channels
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Audiences</span>
+            <span className="text-sm font-medium">
+              {generatedTopic?.audience_fit?.length || 0} audiences
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -311,25 +279,25 @@ export default function TopicDetailPage() {
 
   return (
     <DetailPageWrapper
-      title={topic?.name || "Topic Detail"}
+      title={generatedTopic?.title || "Topic Detail"}
       subtitle={generatedTopic?.angle}
       description="View and manage this topic's details, or use it to create new content."
       breadcrumbs={breadcrumbs}
       backUrl="/topics"
       backLabel="Back to Topics"
-      status={topic?.status}
-      statusVariant={
-        topic?.status === "published"
-          ? "default"
-          : topic?.status === "draft"
-            ? "secondary"
-            : "outline"
-      }
+      status={generatedTopic?.is_saved ? "saved" : "not_saved"}
+      statusVariant={generatedTopic?.is_saved ? "default" : "secondary"}
       metadata={metadata}
       quickActions={quickActions}
       sidebar={sidebarContent}
       isLoading={isInitialLoading}
-      error={status === "error" ? error : topic ? undefined : "Topic not found"}
+      error={
+        status === "error"
+          ? error?.error || "Unknown error"
+          : generatedTopic
+            ? undefined
+            : "Topic not found"
+      }
     >
       {/* Main Content - Only the core sections from drawer */}
       <div className="space-y-8">

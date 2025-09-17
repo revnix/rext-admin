@@ -4,11 +4,13 @@ import { AlertTriangle, RefreshCw, RotateCcw } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { generateRequestId } from "@/lib/response-utils";
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   errorId: string | null;
+  requestId: string | null;
 }
 
 interface ErrorBoundaryProps {
@@ -23,6 +25,7 @@ interface ErrorFallbackProps {
   error: Error;
   resetError: () => void;
   errorId: string;
+  requestId?: string;
 }
 
 /**
@@ -32,6 +35,7 @@ export function DefaultErrorFallback({
   error,
   resetError,
   errorId,
+  requestId,
 }: ErrorFallbackProps) {
   return (
     <Card className="border-red-200 bg-red-50/50">
@@ -73,7 +77,10 @@ export function DefaultErrorFallback({
           </Button>
         </div>
 
-        <p className="text-xs text-gray-500">Error ID: {errorId}</p>
+        <div className="text-xs text-gray-500 space-y-1">
+          <p>Error ID: {errorId}</p>
+          {requestId && <p>Request ID: {requestId}</p>}
+        </div>
       </CardContent>
     </Card>
   );
@@ -97,29 +104,36 @@ export class ErrorBoundary extends React.Component<
       hasError: false,
       error: null,
       errorId: null,
+      requestId: null,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     // Generate unique error ID for tracking
     const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate request ID for consistent correlation
+    const requestId = generateRequestId("error_boundary");
 
     return {
       hasError: true,
       error,
       errorId,
+      requestId,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error for debugging without sensitive data
     const errorId = this.state.errorId || "unknown";
+    const requestId = this.state.requestId || "unknown";
 
     console.error("ErrorBoundary caught an error:", {
       errorId,
+      requestId,
       message: error.message,
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
+      severity: "critical", // Error boundaries catch critical errors
     });
 
     // Call optional error reporting callback
@@ -162,11 +176,12 @@ export class ErrorBoundary extends React.Component<
       hasError: false,
       error: null,
       errorId: null,
+      requestId: null,
     });
   };
 
   render() {
-    const { hasError, error, errorId } = this.state;
+    const { hasError, error, errorId, requestId } = this.state;
     const { children, fallback: FallbackComponent } = this.props;
 
     if (hasError && error && errorId) {
@@ -178,6 +193,7 @@ export class ErrorBoundary extends React.Component<
           error={error}
           resetError={this.resetError}
           errorId={errorId}
+          requestId={requestId || undefined}
         />
       );
     }
@@ -218,6 +234,7 @@ export function APIErrorBoundary({
     error: _error,
     resetError,
     errorId,
+    requestId,
   }) => (
     <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
       <AlertTriangle className="h-12 w-12 text-red-500" />
@@ -247,7 +264,10 @@ export function APIErrorBoundary({
         </Button>
       </div>
       {process.env.NODE_ENV === "development" && (
-        <p className="text-xs text-gray-400">Error ID: {errorId}</p>
+        <div className="text-xs text-gray-400 space-y-1">
+          <p>Error ID: {errorId}</p>
+          {requestId && <p>Request ID: {requestId}</p>}
+        </div>
       )}
     </div>
   );

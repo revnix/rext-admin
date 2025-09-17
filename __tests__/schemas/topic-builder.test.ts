@@ -21,9 +21,7 @@ describe("Topic Builder Schemas", () => {
     const validFormData: TopicBuilderFormData = {
       wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
 
