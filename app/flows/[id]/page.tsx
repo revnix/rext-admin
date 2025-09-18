@@ -17,14 +17,18 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type {
-  ActionButton,
-  MetadataItem,
-} from "@/components/detail-page-wrapper";
+import type { MetadataItem } from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { usePageTitle } from "@/hooks/use-page-title";
 import type { FlowData } from "@/types/data-table";
 
 // Mock flow data - in real app this would come from API
@@ -202,18 +206,23 @@ export default function FlowDetailPage() {
   // Find the current flow
   const flow = getFlowDetail(flowId);
 
+  // Update page title and description dynamically
+  usePageTitle(
+    flow?.name || "Flow Detail",
+    flow
+      ? `${flow.category} automation flow: ${flow.name}. ${flow.totalRuns} total runs with ${flow.successRate} success rate.`
+      : "Automation flow details and management",
+  );
+
   if (!flow) {
     return (
       <DetailPageWrapper
         title="Flow Not Found"
-        description="The requested flow could not be found"
         breadcrumbs={[
           { label: "Automation", href: "#" },
           { label: "Flows", href: "/flows" },
           { label: "Flow Detail" },
         ]}
-        backUrl="/flows"
-        backLabel="Back to Flows"
         error="Flow not found"
       >
         <div />
@@ -327,65 +336,101 @@ export default function FlowDetailPage() {
   ];
 
   // Build quick actions for sidebar - Flow specific actions
-  const quickActions: ActionButton[] = [
-    {
-      label: isRunning ? "Running..." : "Run Flow",
-      icon: isRunning ? undefined : <Play className="h-4 w-4" />,
-      onClick: handleRunFlow,
-      variant: "default",
-      disabled: flow.status === "Paused" || isRunning,
-      loading: isRunning,
-      tooltip: flow.status === "Paused" ? "Flow is paused" : "Execute flow now",
-    },
-    {
-      label: isToggling
-        ? "Updating..."
-        : flow.status === "Active"
-          ? "Pause Flow"
-          : "Activate Flow",
-      icon: isToggling ? undefined : flow.status === "Active" ? (
-        <Pause className="h-4 w-4" />
-      ) : (
-        <Play className="h-4 w-4" />
-      ),
-      onClick: handleToggleStatus,
-      variant: flow.status === "Active" ? "outline" : "default",
-      disabled: isToggling,
-      loading: isToggling,
-      tooltip:
-        flow.status === "Active" ? "Pause this flow" : "Activate this flow",
-    },
-    {
-      label: "Edit Flow",
-      icon: <Edit3 className="h-4 w-4" />,
-      onClick: handleEditFlow,
-      variant: "outline",
-      tooltip: "Edit flow configuration",
-    },
-    {
-      label: "Copy Flow",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: handleCopyFlow,
-      variant: "outline",
-      tooltip: "Duplicate this flow",
-    },
-    {
-      label: "Share Flow",
-      icon: <Share2 className="h-4 w-4" />,
-      onClick: handleShareFlow,
-      variant: "outline",
-      tooltip: "Share this flow",
-    },
-    {
-      label: isDeleting ? "Deleting..." : "Delete Flow",
-      icon: isDeleting ? undefined : <Trash2 className="h-4 w-4" />,
-      onClick: handleDeleteFlow,
-      variant: "destructive",
-      disabled: isDeleting,
-      loading: isDeleting,
-      tooltip: "Permanently delete this flow",
-    },
-  ];
+  // Build header actions for page header
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleRunFlow}
+            disabled={flow.status === "Paused" || isRunning}
+            className="gap-2"
+          >
+            {isRunning ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+            {isRunning ? "Running..." : "Run Flow"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Execute this flow immediately</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleToggleStatus}
+            disabled={isToggling}
+            variant={flow.status === "Active" ? "outline" : "default"}
+            className="gap-2"
+          >
+            {isToggling ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : flow.status === "Active" ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+            {isToggling
+              ? "Updating..."
+              : flow.status === "Active"
+                ? "Pause"
+                : "Activate"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {flow.status === "Active" ? "Pause this flow" : "Activate this flow"}
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleEditFlow} variant="outline" className="gap-2">
+            <Edit3 className="h-4 w-4" />
+            Edit
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit flow configuration</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleCopyFlow} variant="outline" size="sm">
+            <Copy className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Copy flow</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleShareFlow} variant="outline" size="sm">
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Share flow</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleDeleteFlow}
+            disabled={isDeleting}
+            variant="destructive"
+            size="sm"
+          >
+            {isDeleting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Delete this flow</TooltipContent>
+      </Tooltip>
+    </div>
+  );
 
   // Parse success rate for progress bar
   const successRateValue = parseFloat(flow.successRate.replace("%", ""));
@@ -524,11 +569,7 @@ export default function FlowDetailPage() {
   return (
     <DetailPageWrapper
       title={flow.name}
-      subtitle={`${flow.category} • ${flow.trigger} Trigger`}
-      description="Monitor, configure, and manage this automated workflow."
       breadcrumbs={breadcrumbs}
-      backUrl="/flows"
-      backLabel="Back to Flows"
       status={flow.status}
       statusVariant={
         flow.status === "Active"
@@ -538,7 +579,7 @@ export default function FlowDetailPage() {
             : "outline"
       }
       metadata={metadata}
-      quickActions={quickActions}
+      headerActions={headerActions}
       sidebar={sidebarContent}
     >
       {/* Main Content */}

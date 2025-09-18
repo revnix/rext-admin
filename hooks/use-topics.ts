@@ -152,16 +152,6 @@ export function useTopics() {
 }
 
 /**
- * Enhanced response type for single topic retrieval with consistent format
- */
-interface SingleTopicResponse {
-  success: boolean;
-  topic: GeneratedTopic;
-  request_id: string;
-  processing_time_ms?: number;
-}
-
-/**
  * Enhanced error response type for single topic operations
  */
 interface SingleTopicError {
@@ -195,7 +185,7 @@ interface SingleTopicError {
  * ```
  */
 export function useTopic(topicId: string | undefined) {
-  return useQuery<GeneratedTopic, SingleTopicError>({
+  const query = useQuery<GeneratedTopic, SingleTopicError>({
     queryKey: ["topic", topicId],
     queryFn: async (): Promise<GeneratedTopic> => {
       if (!topicId) {
@@ -285,4 +275,11 @@ export function useTopic(topicId: string | undefined) {
       return Math.min(baseDelay * 2 ** attemptIndex, 15000);
     },
   });
+
+  return {
+    ...query,
+    // Expose additional states for enhanced UI handling
+    isInitialLoading: query.status === "pending" && query.isFetching,
+    isBackgroundRefetching: query.status === "success" && query.isFetching,
+  };
 }

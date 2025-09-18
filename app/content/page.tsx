@@ -15,6 +15,7 @@ import Link from "next/link";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/use-page-title";
 import type { ContentData, RowAction } from "@/types/data-table";
 
 export default function ContentPage() {
@@ -22,6 +23,12 @@ export default function ContentPage() {
     { label: "Content", href: "#" },
     { label: "Generated Content" },
   ];
+
+  // Update page title and description
+  usePageTitle(
+    "Content Library",
+    "Manage your published and scheduled content. View performance metrics, edit content, and organize your content pipeline.",
+  );
 
   // Content data matching ContentData interface
   const contentData: ContentData[] = [

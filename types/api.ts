@@ -14,8 +14,6 @@
 import {
   type BackendErrorCode,
   type ConsistentApiResponse,
-  type ConsistentErrorResponse,
-  type ConsistentSuccessResponse,
   createLegacyAdapter,
   type ErrorSeverity,
 } from "./consistent-response";

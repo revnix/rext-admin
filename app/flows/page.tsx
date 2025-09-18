@@ -15,10 +15,17 @@ import Link from "next/link";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/use-page-title";
 import type { FlowData, RowAction } from "@/types/data-table";
 
 export default function FlowsPage() {
   const breadcrumbs = [{ label: "Automation", href: "#" }, { label: "Flows" }];
+
+  // Update page title and description
+  usePageTitle(
+    "Automation Flows",
+    "Manage your content automation workflows. Create, monitor, and optimize AI-powered flows for content generation, social media, and more.",
+  );
 
   // Flow data matching FlowData interface
   const flowsData: FlowData[] = [

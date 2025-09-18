@@ -27,6 +27,7 @@ import {
   StatusBadge,
   TitleDisplay,
 } from "@/components/ui/topic-cell-formatters";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useTopics } from "@/hooks/use-topics";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
@@ -34,6 +35,12 @@ import type { Column, RowAction, TopicData } from "@/types/data-table";
 export default function TopicsPage() {
   const router = useRouter();
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Topics" }];
+
+  // Update page title and description
+  usePageTitle(
+    "Topics Library",
+    "Browse, manage, and analyze your AI-generated topics. Create new content ideas, view performance metrics, and organize your topic collection.",
+  );
 
   // Fetch topics data using TanStack Query with enhanced states
   const {

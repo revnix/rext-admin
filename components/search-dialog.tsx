@@ -3,11 +3,9 @@
 import {
   Archive,
   Bell,
-  Bot,
   FileText,
   Lightbulb,
   Link,
-  MessageSquare,
   Settings,
   Share2,
   Users,
@@ -97,40 +95,6 @@ const searchData: SearchResult[] = [
     category: "Content",
     url: "/content",
     icon: <FileText className="h-4 w-4" />,
-  },
-  // Models
-  {
-    id: "models-1",
-    title: "GPT-4 Configuration",
-    description: "OpenAI GPT-4 model settings and parameters",
-    category: "Models",
-    url: "/models",
-    icon: <Bot className="h-4 w-4" />,
-  },
-  {
-    id: "models-2",
-    title: "Claude 3 Integration",
-    description: "Anthropic Claude 3 model configuration",
-    category: "Models",
-    url: "/models",
-    icon: <Bot className="h-4 w-4" />,
-  },
-  // Templates
-  {
-    id: "templates-1",
-    title: "Blog Post Template",
-    description: "Standard template for blog content generation",
-    category: "Templates",
-    url: "/prompt-templates",
-    icon: <MessageSquare className="h-4 w-4" />,
-  },
-  {
-    id: "templates-2",
-    title: "Social Media Template",
-    description: "Template for social media post creation",
-    category: "Templates",
-    url: "/prompt-templates",
-    icon: <MessageSquare className="h-4 w-4" />,
   },
   // Memories
   {

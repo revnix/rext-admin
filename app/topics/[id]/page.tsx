@@ -16,12 +16,10 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type {
-  ActionButton,
-  MetadataItem,
-} from "@/components/detail-page-wrapper";
+import type { MetadataItem } from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -30,6 +28,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useTopic } from "@/hooks/use-topics";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 
@@ -53,6 +57,14 @@ export default function TopicDetailPage() {
 
   // The topic data is already in the correct GeneratedTopic format
   const generatedTopic = topic;
+
+  // Update page title and description dynamically
+  usePageTitle(
+    generatedTopic?.title || "Topic Detail",
+    generatedTopic?.description ||
+      generatedTopic?.angle ||
+      `Topic details and analytics for ${generatedTopic?.title || "selected topic"}`,
+  );
 
   // Calculate overall score
   const overallScore = generatedTopic
@@ -114,7 +126,7 @@ export default function TopicDetailPage() {
           label: "Tags",
           value: (
             <div className="flex flex-wrap gap-1">
-              {generatedTopic.tags?.slice(0, 2).map((tag) => (
+              {generatedTopic.tags?.slice(0, 2).map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
@@ -132,11 +144,13 @@ export default function TopicDetailPage() {
           label: "Channel Fit",
           value: (
             <div className="flex flex-wrap gap-1">
-              {generatedTopic.channel_fit?.slice(0, 2).map((channel) => (
-                <Badge key={channel} variant="outline" className="text-xs">
-                  {channel}
-                </Badge>
-              ))}
+              {generatedTopic.channel_fit
+                ?.slice(0, 2)
+                .map((channel: string) => (
+                  <Badge key={channel} variant="outline" className="text-xs">
+                    {channel}
+                  </Badge>
+                ))}
               {(generatedTopic.channel_fit?.length || 0) > 2 && (
                 <Badge variant="outline" className="text-xs">
                   +{(generatedTopic.channel_fit?.length || 0) - 2} more
@@ -163,46 +177,75 @@ export default function TopicDetailPage() {
       ]
     : [];
 
-  // Build quick actions for sidebar
-  const quickActions: ActionButton[] = [
-    {
-      label: "Write Content",
-      icon: <PenTool className="h-4 w-4" />,
-      onClick: handleUseTopic,
-      variant: "default",
-      tooltip: "Create content with this topic",
-    },
-    {
-      label: "Save to Collection",
-      icon: <Save className="h-4 w-4" />,
-      onClick: () => console.log("Save to collection"),
-      variant: "outline",
-      tooltip: "Add to a content collection",
-    },
-    {
-      label: "Copy Topic",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: handleCopyTopic,
-      variant: "outline",
-      tooltip: "Copy topic details to clipboard",
-    },
-    {
-      label: "Edit Topic",
-      icon: <Edit2 className="h-4 w-4" />,
-      onClick: () => console.log("Edit topic"),
-      variant: "outline",
-      tooltip: "Edit topic details",
-    },
-    {
-      label: isDeleting ? "Deleting..." : "Delete Topic",
-      icon: isDeleting ? undefined : <Zap className="h-4 w-4" />,
-      onClick: handleDeleteTopic,
-      variant: "destructive",
-      disabled: isDeleting || deleteMutation.isPending,
-      loading: isDeleting,
-      tooltip: "Permanently delete this topic",
-    },
-  ];
+  // Build header actions for page header
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleUseTopic} className="gap-2">
+            <PenTool className="h-4 w-4" />
+            Write Content
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Use this topic to create new content</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleCopyTopic} variant="outline" className="gap-2">
+            <Copy className="h-4 w-4" />
+            Copy
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Copy topic to clipboard</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => console.log("Save to collection")}
+            variant="outline"
+            className="gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Save topic to collection</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => console.log("Edit topic")}
+            variant="outline"
+            size="sm"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit topic details</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleDeleteTopic}
+            disabled={isDeleting || deleteMutation.isPending}
+            variant="destructive"
+            size="sm"
+          >
+            {isDeleting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Zap className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Delete this topic</TooltipContent>
+      </Tooltip>
+    </div>
+  );
 
   // Build sidebar content
   const sidebarContent = (
@@ -280,23 +323,19 @@ export default function TopicDetailPage() {
   return (
     <DetailPageWrapper
       title={generatedTopic?.title || "Topic Detail"}
-      subtitle={generatedTopic?.angle}
-      description="View and manage this topic's details, or use it to create new content."
       breadcrumbs={breadcrumbs}
-      backUrl="/topics"
-      backLabel="Back to Topics"
       status={generatedTopic?.is_saved ? "saved" : "not_saved"}
       statusVariant={generatedTopic?.is_saved ? "default" : "secondary"}
       metadata={metadata}
-      quickActions={quickActions}
+      headerActions={headerActions}
       sidebar={sidebarContent}
       isLoading={isInitialLoading}
       error={
         status === "error"
           ? error?.error || "Unknown error"
-          : generatedTopic
-            ? undefined
-            : "Topic not found"
+          : !isInitialLoading && !generatedTopic
+            ? "Topic not found"
+            : undefined
       }
     >
       {/* Main Content - Only the core sections from drawer */}
@@ -450,7 +489,7 @@ export default function TopicDetailPage() {
               Keywords & Tags
             </h3>
             <div className="flex flex-wrap gap-3">
-              {generatedTopic.tags.map((keyword) => (
+              {generatedTopic.tags.map((keyword: string) => (
                 <Badge
                   key={keyword}
                   variant="secondary"
@@ -476,7 +515,7 @@ export default function TopicDetailPage() {
                     Best Channels
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {generatedTopic?.channel_fit?.map((channel) => (
+                    {generatedTopic?.channel_fit?.map((channel: string) => (
                       <div
                         key={channel}
                         className="bg-white/90 dark:bg-background/90 rounded-lg px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
@@ -495,7 +534,7 @@ export default function TopicDetailPage() {
                     Target Audience
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {generatedTopic?.audience_fit?.map((audience) => (
+                    {generatedTopic?.audience_fit?.map((audience: string) => (
                       <div
                         key={audience}
                         className="bg-white/90 dark:bg-background/90 rounded-lg px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowUpRight,
   BarChart,
@@ -16,9 +18,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
+
+  // Update page title and description
+  usePageTitle(
+    "Dashboard",
+    "Overview of your content performance, automation flows, and key metrics. Monitor your AI-powered content strategy at a glance.",
+  );
 
   return (
     <PageLayout

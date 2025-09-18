@@ -329,7 +329,7 @@ export function useBulkTopicSaveMutation() {
       });
     },
 
-    onSuccess: (data, topics, context) => {
+    onSuccess: (data, _topics, context) => {
       // Update save states for successful topics
       data.saved_topic_ids.forEach((topicId) => {
         updateTopicSaveState(topicId, false);
@@ -464,7 +464,7 @@ export function useTopicDeleteMutation() {
       });
     },
 
-    onSuccess: (data, topicIds, context) => {
+    onSuccess: (data, _topicIds, context) => {
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["topics"] });
 

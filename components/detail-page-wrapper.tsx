@@ -7,8 +7,8 @@ import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailPageSkeleton } from "@/components/ui/detail-page-skeleton";
 import { Separator } from "@/components/ui/separator";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -48,8 +48,6 @@ interface ActionButton {
 interface DetailPageWrapperProps {
   // Page metadata
   title: string;
-  subtitle?: string;
-  description?: string;
   breadcrumbs?: BreadcrumbItem[];
 
   // Navigation
@@ -86,8 +84,6 @@ interface DetailPageWrapperProps {
 
 export function DetailPageWrapper({
   title,
-  subtitle,
-  description,
   breadcrumbs = [],
   backUrl,
   backLabel = "Back",
@@ -148,9 +144,10 @@ export function DetailPageWrapper({
         description="Please wait while we load the details..."
         breadcrumbs={breadcrumbs}
       >
-        <div className="space-y-8">
-          <TableSkeleton rows={3} />
-        </div>
+        <DetailPageSkeleton
+          showSidebar={layout !== "no-sidebar"}
+          sections={3}
+        />
       </PageLayout>
     );
   }
@@ -232,7 +229,7 @@ export function DetailPageWrapper({
     }
   };
 
-  // Build enhanced title with subtitle and status
+  // Build enhanced title with status
   const enhancedTitle = (
     <div className="space-y-1">
       <div className="flex items-center gap-3">
@@ -243,46 +240,19 @@ export function DetailPageWrapper({
           </Badge>
         )}
       </div>
-      {subtitle && (
-        <p className="text-lg text-muted-foreground font-medium">{subtitle}</p>
-      )}
     </div>
   );
 
   return (
     <TooltipProvider>
-      <PageLayout
-        title=""
-        breadcrumbs={breadcrumbs}
-        actions={pageActions}
-        className={className}
-      >
+      <PageLayout title="" breadcrumbs={breadcrumbs} className={className}>
         {/* Custom header with enhanced title and metadata */}
         <div className="space-y-6">
           {/* Enhanced title section */}
           <div className="flex items-start justify-between">
-            <div className="space-y-1 flex-1">
-              {enhancedTitle}
-              {description && (
-                <p className="text-muted-foreground max-w-3xl">{description}</p>
-              )}
-            </div>
+            <div className="space-y-1 flex-1">{enhancedTitle}</div>
+            <div className="flex items-start gap-2 mt-2">{pageActions}</div>
           </div>
-
-          {/* Metadata section */}
-          {metadata.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-4 border-y bg-muted/30 rounded-lg px-4">
-              {metadata.map((item, index) => (
-                <div key={`${item.label}-${index}`} className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {item.icon}
-                    {item.label}
-                  </div>
-                  <div className="font-medium text-sm">{item.value}</div>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Main content area */}
           <div
@@ -318,10 +288,35 @@ export function DetailPageWrapper({
                     sidebarClassName,
                   )}
                 >
+                  {/* Metadata Card */}
+                  {metadata.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg">Details</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {metadata.map((item, index) => (
+                          <div
+                            key={`${item.label}-${index}`}
+                            className="flex items-start justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground min-w-0 flex-shrink-0">
+                              {item.icon}
+                              {item.label}
+                            </div>
+                            <div className="text-sm font-semibold text-foreground text-right min-w-0">
+                              {item.value}
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Quick Actions Card */}
                   {quickActions.length > 0 && (
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="pb-3">
                         <CardTitle className="text-lg">Quick Actions</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">

@@ -6,59 +6,25 @@ import {
   sanitizeErrorForLogging,
   shouldRetry,
 } from "@/lib/error-utils";
-import {
-  createUserFriendlyErrorMessage,
-  extractCorrelationInfo,
-  formatErrorForLogging,
-  generateRequestId as generateConsistentRequestId,
-  getErrorAction,
-  processConsistentResponse,
-  processConsistentResponseToResult,
-  safeProcessConsistentResponse,
-  trackResponseMetrics,
-  transformFromLegacyFormat,
-  transformToLegacyFormat,
-  validateAndProcessResponse,
-  validateResponseStructure,
-} from "@/lib/response-utils";
 import { transformTopicsForBackend } from "@/lib/transformation-utils";
-import {
-  type BackendConfig,
-  type BackendError,
-  type BackendErrorType,
-  type BackendServiceAnalytics,
-  type BackendServiceError,
-  type BackendServiceInterceptor,
-  type BackendServiceRequestConfig,
-  type BackendServiceResponse,
-  type BackendServiceResponseMetadata,
-  type BackendTopicGenerationPayload,
-  type BackendTopicGenerationResponse,
-  type BackendValidationConfig,
-  type ConsistentBackendDeleteTopicsResponse,
-  type ConsistentBackendGetTopicsResponse,
-  type ConsistentBackendSaveTopicsResponse,
-  type ConsistentBackendTopicGenerationResponse,
-  createBackendServiceError,
-  type EnhancedBackendConfig,
-  type ErrorRecoveryAction,
-  extractErrorInfo,
-  type GetTopicsResponse,
-  type SaveTopicResponse,
-  type ValidationError,
-  validateConsistentResponse,
-  wrapBackendServiceResponse,
+import type {
+  BackendConfig,
+  BackendError,
+  BackendErrorType,
+  BackendServiceAnalytics,
+  BackendServiceInterceptor,
+  BackendTopicGenerationPayload,
+  BackendTopicGenerationResponse,
+  BackendValidationConfig,
+  EnhancedBackendConfig,
+  ErrorRecoveryAction,
+  GetTopicsResponse,
+  SaveTopicResponse,
+  ValidationError,
 } from "@/types/backend";
-import {
-  type BackendErrorCode,
-  type ConsistentApiResponse,
-  type ConsistentErrorResponse,
-  type ConsistentSuccessResponse,
-  type ErrorSeverity,
-  isConsistentResponse,
-  isErrorResponse,
-  isSuccessResponse,
-  type ResponseMeta,
+import type {
+  BackendErrorCode,
+  ErrorSeverity,
 } from "@/types/consistent-response";
 import {
   BackendTopicGenerationResponseSchema,
@@ -181,237 +147,6 @@ export class BackendService {
     this.analytics.errorDistribution = {} as Record<BackendErrorCode, number>;
     this.analytics.endpointDistribution = {} as Record<string, number>;
     this.analytics.lastRequestTimestamp = new Date().toISOString();
-  }
-
-  /**
-   * Processes a consistent API response and handles analytics
-   * @param response - Raw response from fetch
-   * @param endpoint - Endpoint name for analytics
-   * @returns Processed consistent response
-   */
-  private async processConsistentApiResponse<T>(
-    response: Response,
-    endpoint: string,
-  ): Promise<ConsistentApiResponse<T>> {
-    this.analytics.totalRequests++;
-    this.analytics.endpointDistribution[endpoint] =
-      (this.analytics.endpointDistribution[endpoint] || 0) + 1;
-    this.analytics.lastRequestTimestamp = new Date().toISOString();
-
-    let responseData: any;
-    try {
-      responseData = await response.json();
-    } catch (error) {
-      // Handle non-JSON responses
-      const errorResponse: ConsistentErrorResponse = {
-        success: false,
-        data: null,
-        error: {
-          code: "invalid_response_format",
-          message: "Response is not valid JSON",
-          severity: "high",
-          status_code: response.status,
-        },
-        meta: {
-          request_id: generateConsistentRequestId(),
-          timestamp: new Date().toISOString(),
-          version: "1.0",
-        },
-      };
-      this.analytics.failedRequests++;
-      return errorResponse;
-    }
-
-    // Validate consistent response format
-    if (!isConsistentResponse(responseData)) {
-      // Try to transform legacy response to consistent format
-      if (response.ok) {
-        const transformedResponse: ConsistentSuccessResponse<T> = {
-          success: true,
-          data: responseData,
-          error: null,
-          meta: {
-            request_id:
-              responseData.request_id || generateConsistentRequestId(),
-            timestamp: responseData.timestamp || new Date().toISOString(),
-            processing_time_ms:
-              responseData.generation_time || responseData.processing_time_ms,
-            version: "1.0",
-          },
-        };
-        this.analytics.successfulRequests++;
-        return transformedResponse;
-      } else {
-        // Transform legacy error to consistent format
-        const transformedError: ConsistentErrorResponse = {
-          success: false,
-          data: null,
-          error: {
-            code: responseData.error_code || "unknown_error",
-            message:
-              responseData.error || responseData.message || "An error occurred",
-            severity: "medium",
-            status_code: response.status,
-            details: responseData.details,
-          },
-          meta: {
-            request_id:
-              responseData.request_id || generateConsistentRequestId(),
-            timestamp: new Date().toISOString(),
-            version: "1.0",
-          },
-        };
-        this.analytics.failedRequests++;
-        return transformedError;
-      }
-    }
-
-    // Handle consistent response format
-    const consistentResponse = responseData as ConsistentApiResponse<T>;
-
-    if (isSuccessResponse(consistentResponse)) {
-      this.analytics.successfulRequests++;
-
-      // Track processing time
-      const processingTime = consistentResponse.meta.processing_time_ms;
-      if (processingTime) {
-        const currentAvg = this.analytics.averageProcessingTime;
-        const totalSuccess = this.analytics.successfulRequests;
-        this.analytics.averageProcessingTime =
-          (currentAvg * (totalSuccess - 1) + processingTime) / totalSuccess;
-      }
-    } else {
-      this.analytics.failedRequests++;
-
-      // Track error distribution
-      const errorCode = consistentResponse.error.code;
-      this.analytics.errorDistribution[errorCode] =
-        (this.analytics.errorDistribution[errorCode] || 0) + 1;
-    }
-
-    return consistentResponse;
-  }
-
-  /**
-   * Makes a consistent API request with enhanced error handling
-   * @param endpoint - API endpoint
-   * @param options - Fetch options
-   * @param requestConfig - Backend service request configuration
-   * @returns Consistent API response
-   */
-  private async makeConsistentRequest<T>(
-    endpoint: string,
-    options: RequestInit,
-    requestConfig?: BackendServiceRequestConfig,
-  ): Promise<ConsistentApiResponse<T>> {
-    // Apply request interceptors
-    let finalConfig = requestConfig || {};
-    for (const interceptor of this.interceptors) {
-      if (interceptor.onRequest) {
-        finalConfig = await interceptor.onRequest(finalConfig);
-      }
-    }
-
-    // Prepare request headers
-    const headers = new Headers(options.headers);
-
-    // Add request ID if configured
-    if (this.enhancedConfig.requestCorrelation.includeRequestId) {
-      const requestId =
-        finalConfig.requestId ||
-        (this.enhancedConfig.requestCorrelation.generateRequestId
-          ? generateConsistentRequestId()
-          : undefined);
-
-      if (requestId) {
-        headers.set(
-          this.enhancedConfig.requestCorrelation.requestIdHeader,
-          requestId,
-        );
-      }
-    }
-
-    // Add custom headers
-    if (finalConfig.headers) {
-      Object.entries(finalConfig.headers).forEach(([key, value]) => {
-        headers.set(key, value);
-      });
-    }
-
-    const finalOptions: RequestInit = {
-      ...options,
-      headers,
-      signal: finalConfig.timeout
-        ? AbortSignal.timeout(finalConfig.timeout)
-        : options.signal,
-    };
-
-    try {
-      const response = await fetch(
-        `${this.config.baseUrl}${endpoint}`,
-        finalOptions,
-      );
-      const consistentResponse = await this.processConsistentApiResponse<T>(
-        response,
-        endpoint,
-      );
-
-      // Apply response interceptors
-      if (isSuccessResponse(consistentResponse)) {
-        let wrappedResponse = wrapBackendServiceResponse(consistentResponse);
-
-        for (const interceptor of this.interceptors) {
-          if (interceptor.onResponse) {
-            wrappedResponse = await interceptor.onResponse(wrappedResponse);
-          }
-        }
-
-        return wrappedResponse.originalResponse;
-      } else {
-        let serviceError = createBackendServiceError(consistentResponse);
-
-        for (const interceptor of this.interceptors) {
-          if (interceptor.onError) {
-            serviceError = await interceptor.onError(serviceError);
-          }
-        }
-
-        return consistentResponse;
-      }
-    } catch (error) {
-      this.analytics.failedRequests++;
-
-      // Handle network errors and timeouts
-      const errorResponse: ConsistentErrorResponse = {
-        success: false,
-        data: null,
-        error: {
-          code:
-            error instanceof Error && error.name === "TimeoutError"
-              ? "timeout_error"
-              : "network_error",
-          message:
-            error instanceof Error ? error.message : "Network error occurred",
-          severity: "high",
-          status_code: 0,
-        },
-        meta: {
-          request_id: finalConfig.requestId || generateConsistentRequestId(),
-          timestamp: new Date().toISOString(),
-          version: "1.0",
-        },
-      };
-
-      let serviceError = createBackendServiceError(errorResponse);
-
-      for (const interceptor of this.interceptors) {
-        if (interceptor.onError) {
-          serviceError = await interceptor.onError(serviceError);
-        }
-      }
-
-      return errorResponse;
-    }
   }
 
   /**

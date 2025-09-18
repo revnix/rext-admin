@@ -283,7 +283,7 @@ export function ErrorAlert({
                 ? `Attempt ${error.retryAttempt} of maximum retries`
                 : "retryDelay" in error &&
                     (error as BackendServiceError).retryDelay
-                  ? `Retry available in ${Math.ceil((error as BackendServiceError).retryDelay! / 1000)}s`
+                  ? `Retry available in ${Math.ceil(((error as BackendServiceError).retryDelay || 0) / 1000)}s`
                   : "Retry available"}
             </p>
           )}

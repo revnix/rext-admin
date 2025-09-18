@@ -2,14 +2,12 @@
 
 import {
   Bell,
-  Bot,
   BotMessageSquare,
   Brain,
   Database,
   FileText,
   LayoutDashboard,
   Library,
-  MessageSquare,
   Puzzle,
   Settings2,
   Share2,
@@ -73,23 +71,6 @@ const data = {
     {
       groupLabel: "Configuration",
       items: [
-        {
-          title: "AI & Prompts",
-          url: "/ai-prompts",
-          icon: Bot,
-          items: [
-            {
-              title: "Models",
-              url: "/models",
-              icon: Bot,
-            },
-            {
-              title: "Prompt Templates",
-              url: "/prompt-templates",
-              icon: MessageSquare,
-            },
-          ],
-        },
         {
           title: "Knowledge",
           url: "/knowledge",

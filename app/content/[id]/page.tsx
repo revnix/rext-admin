@@ -17,14 +17,18 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type {
-  ActionButton,
-  MetadataItem,
-} from "@/components/detail-page-wrapper";
+import type { MetadataItem } from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { usePageTitle } from "@/hooks/use-page-title";
 import type { ContentData } from "@/types/data-table";
 
 // Mock content data - in real app this would come from API
@@ -122,17 +126,22 @@ export default function ContentDetailPage() {
   // Find the current content
   const content = contentData.find((c: ContentData) => c.id === contentId);
 
+  // Update page title and description dynamically
+  usePageTitle(
+    content?.title || "Content Detail",
+    content
+      ? `${content.type} content: ${content.title}. ${content.wordCount} words, ${content.readTime} read time.`
+      : "Content details and management",
+  );
+
   if (!content) {
     return (
       <DetailPageWrapper
         title="Content Not Found"
-        description="The requested content could not be found"
         breadcrumbs={[
           { label: "Content", href: "/content" },
           { label: "Content Detail" },
         ]}
-        backUrl="/content"
-        backLabel="Back to Content"
         error="Content not found"
       >
         <div />
@@ -243,58 +252,92 @@ export default function ContentDetailPage() {
     },
   ];
 
-  // Build quick actions for sidebar - Content specific actions
-  const quickActions: ActionButton[] = [
-    {
-      label: "Edit Content",
-      icon: <Edit3 className="h-4 w-4" />,
-      onClick: handleEditContent,
-      variant: "default",
-      tooltip: "Edit this content",
-    },
-    {
-      label: isPublishing ? "Publishing..." : "Publish Now",
-      icon: isPublishing ? undefined : <Zap className="h-4 w-4" />,
-      onClick: handlePublishNow,
-      variant: "default",
-      disabled: content.status === "Published" || isPublishing,
-      loading: isPublishing,
-      tooltip:
-        content.status === "Published"
-          ? "Already published"
-          : "Publish immediately",
-    },
-    {
-      label: "Share Content",
-      icon: <Share2 className="h-4 w-4" />,
-      onClick: handleShareContent,
-      variant: "outline",
-      tooltip: "Share this content",
-    },
-    {
-      label: "Copy Content",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: handleCopyContent,
-      variant: "outline",
-      tooltip: "Copy content to clipboard",
-    },
-    {
-      label: "Download",
-      icon: <Download className="h-4 w-4" />,
-      onClick: handleDownloadContent,
-      variant: "outline",
-      tooltip: "Download as text file",
-    },
-    {
-      label: isDeleting ? "Deleting..." : "Delete Content",
-      icon: isDeleting ? undefined : <Trash2 className="h-4 w-4" />,
-      onClick: handleDeleteContent,
-      variant: "destructive",
-      disabled: isDeleting,
-      loading: isDeleting,
-      tooltip: "Permanently delete this content",
-    },
-  ];
+  // Build header actions for page header
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleEditContent} className="gap-2">
+            <Edit3 className="h-4 w-4" />
+            Edit Content
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit this content</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handlePublishNow}
+            disabled={content.status === "Published" || isPublishing}
+            className="gap-2"
+          >
+            {isPublishing ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Zap className="h-4 w-4" />
+            )}
+            {isPublishing ? "Publishing..." : "Publish"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {content.status === "Published"
+            ? "Already published"
+            : "Publish content now"}
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleShareContent}
+            variant="outline"
+            className="gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Share content</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleCopyContent} variant="outline" size="sm">
+            <Copy className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Copy content</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleDownloadContent} variant="outline" size="sm">
+            <Download className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Download content</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleDeleteContent}
+            disabled={isDeleting}
+            variant="destructive"
+            size="sm"
+          >
+            {isDeleting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Delete this content</TooltipContent>
+      </Tooltip>
+    </div>
+  );
 
   // Build sidebar content
   const sidebarContent = (
@@ -412,11 +455,7 @@ export default function ContentDetailPage() {
   return (
     <DetailPageWrapper
       title={content.title}
-      subtitle={`${content.type} • ${content.readTime}`}
-      description="View, edit, and manage this piece of content."
       breadcrumbs={breadcrumbs}
-      backUrl="/content"
-      backLabel="Back to Content"
       status={content.status}
       statusVariant={
         content.status === "Published"
@@ -426,7 +465,7 @@ export default function ContentDetailPage() {
             : "outline"
       }
       metadata={metadata}
-      quickActions={quickActions}
+      headerActions={headerActions}
       sidebar={sidebarContent}
     >
       {/* Main Content */}

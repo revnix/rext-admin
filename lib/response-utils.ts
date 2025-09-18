@@ -11,32 +11,19 @@
 
 import {
   type BackendServiceError,
-  type BackendServiceResponse,
-  type BackendServiceResponseMetadata,
   createBackendServiceError,
-  extractErrorInfo,
-  validateConsistentResponse,
-  wrapBackendServiceResponse,
 } from "@/types/backend";
 import {
   type BackendErrorCode,
   type ConsistentApiResponse,
-  type ConsistentErrorResponse,
-  type ConsistentSuccessResponse,
-  type ErrorInfo,
-  type ErrorSeverity,
   extractProcessingTime,
   extractRequestId,
   extractTimestamp,
-  getSuggestedRetryDelay,
   isConsistentResponse,
   isErrorResponse,
-  isRetryableError,
   isSuccessResponse,
   mapErrorCodeToCategory,
   type ResponseMeta,
-  unwrapResponseData,
-  unwrapResponseDataWithFallback,
 } from "@/types/consistent-response";
 
 // ============================================================================

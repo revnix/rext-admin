@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -93,6 +94,12 @@ export default function TasksPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Update page title and description
+  usePageTitle(
+    "Task Master",
+    "Manage and track your development tasks. View task details, dependencies, and progress across all your projects."
+  );
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
