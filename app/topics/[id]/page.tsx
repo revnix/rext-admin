@@ -16,18 +16,16 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { MetadataItem } from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DetailCard } from "@/components/ui/detail-card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { CircularProgress } from "@/components/ui/progress";
+  DetailGrid,
+  DetailGridItem,
+  FourColumnGrid,
+} from "@/components/ui/detail-grid";
+import { SectionHeader } from "@/components/ui/section-header";
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +34,7 @@ import {
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useTopic } from "@/hooks/use-topics";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
+import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
 
 export default function TopicDetailPage() {
   const params = useParams();
@@ -247,78 +246,69 @@ export default function TopicDetailPage() {
     </div>
   );
 
-  // Build sidebar content
-  const sidebarContent = (
-    <>
-      {/* Overall Score Card */}
-      <Card>
-        <CardHeader className="text-center pb-4">
-          <div className="flex items-center justify-center mb-4">
-            <CircularProgress
-              value={overallScore}
-              size="lg"
-              className="text-primary"
-            />
-          </div>
-          <CardTitle className="text-lg">Overall Score</CardTitle>
-          <CardDescription>
-            <div className="text-2xl font-bold text-primary mt-1">
-              {overallScore}%
+  // Build new flexible sidebar configuration
+  const sidebarConfig: SidebarConfig = {
+    cards: [
+      // Score Card
+      {
+        type: "score",
+        config: {
+          score: overallScore,
+          title: "Overall Score",
+          description: "Quality Assessment",
+          variant:
+            overallScore >= 80
+              ? "success"
+              : overallScore >= 60
+                ? "default"
+                : "warning",
+          content: (
+            <div className="flex items-center justify-center gap-2">
+              <div className="inline-flex h-5 w-5 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm bg-green-500">
+                <FileText className="h-3 w-3" />
+              </div>
+              <span className="text-sm text-muted-foreground">
+                Saved to library
+              </span>
             </div>
-            <div className="text-sm text-muted-foreground">
-              Quality Assessment
-            </div>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <div className="inline-flex h-5 w-5 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm bg-green-500">
-              <FileText className="h-3 w-3" />
-            </div>
-            <span className="text-sm text-muted-foreground">
-              Saved to library
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Topic Statistics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Topic Stats</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Badge variant={generatedTopic?.is_saved ? "default" : "secondary"}>
-              {generatedTopic?.is_saved ? "Saved" : "Not Saved"}
-            </Badge>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Tags</span>
-            <span className="text-sm font-medium">
-              {generatedTopic?.tags?.length || 0} tags
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Channels</span>
-            <span className="text-sm font-medium">
-              {generatedTopic?.channel_fit?.length || 0} channels
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Audiences</span>
-            <span className="text-sm font-medium">
-              {generatedTopic?.audience_fit?.length || 0} audiences
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </>
-  );
+          ),
+        },
+      },
+      // Stats Card
+      {
+        type: "stats",
+        config: {
+          title: "Topic Stats",
+          items: [
+            {
+              label: "Status",
+              value: (
+                <Badge
+                  variant={generatedTopic?.is_saved ? "default" : "secondary"}
+                >
+                  {generatedTopic?.is_saved ? "Saved" : "Not Saved"}
+                </Badge>
+              ),
+              highlight: true,
+            },
+            {
+              label: "Tags",
+              value: `${generatedTopic?.tags?.length || 0} tags`,
+            },
+            {
+              label: "Channels",
+              value: `${generatedTopic?.channel_fit?.length || 0} channels`,
+            },
+            {
+              label: "Audiences",
+              value: `${generatedTopic?.audience_fit?.length || 0} audiences`,
+            },
+          ],
+        },
+      },
+    ],
+    order: ["cards", "metadata", "quickActions"], // Custom order
+  };
 
   return (
     <DetailPageWrapper
@@ -328,7 +318,7 @@ export default function TopicDetailPage() {
       statusVariant={generatedTopic?.is_saved ? "default" : "secondary"}
       metadata={metadata}
       headerActions={headerActions}
-      sidebar={sidebarContent}
+      sidebarConfig={sidebarConfig}
       isLoading={isInitialLoading}
       error={
         status === "error"
@@ -338,215 +328,332 @@ export default function TopicDetailPage() {
             : undefined
       }
     >
-      {/* Main Content - Only the core sections from drawer */}
+      {/* Main Content - Enhanced Visual Layout */}
       <div className="space-y-8">
-        {/* Topic Overview - From drawer */}
-        <div className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60">
-          <h3 className="text-xl font-semibold text-foreground flex items-center gap-3 mb-4">
-            <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Topic Overview
-          </h3>
-          <p className="text-base leading-relaxed text-muted-foreground">
-            {generatedTopic?.description ||
-              generatedTopic?.angle ||
-              "No description available for this topic."}
-          </p>
-        </div>
+        {/* Hero Section - Topic Overview with Angle */}
+        <DetailGrid columns={12} gap="lg" responsive={{ sm: 1, lg: 12 }}>
+          {/* Topic Overview - Takes 8 columns on large screens */}
+          <DetailGridItem span={12} responsive={{ lg: 8 }} className="flex">
+            <DetailCard
+              variant="highlight"
+              gradient
+              className="flex-1 flex flex-col"
+            >
+              <SectionHeader
+                title="Topic Overview"
+                icon={<FileText className="w-5 h-5" />}
+                variant="spacious"
+                className="mb-4"
+              />
+              <div className="flex-1 flex items-start">
+                <p className="text-base leading-relaxed text-muted-foreground">
+                  {generatedTopic?.description ||
+                    "No description available for this topic."}
+                </p>
+              </div>
+            </DetailCard>
+          </DetailGridItem>
 
-        {/* Why It Works - From drawer */}
+          {/* Topic Angle - Takes 4 columns, acts as sidebar */}
+          {generatedTopic?.angle && (
+            <DetailGridItem span={12} responsive={{ lg: 4 }} className="flex">
+              <DetailCard
+                variant="info"
+                gradient
+                className="flex-1 flex flex-col"
+              >
+                <SectionHeader
+                  title="Topic Angle"
+                  icon={<Sparkles className="w-5 h-5" />}
+                  variant="compact"
+                  className="mb-4"
+                />
+                <div className="flex-1 flex items-start">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {generatedTopic.angle}
+                  </p>
+                </div>
+              </DetailCard>
+            </DetailGridItem>
+          )}
+        </DetailGrid>
+
+        {/* Why It Works - Full Width Emphasis */}
         {generatedTopic?.why_it_works && (
-          <div className="bg-green-50/50 dark:bg-green-950/20 rounded-xl p-6 border border-green-200/50 dark:border-green-800/50">
-            <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-              <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
-              Why This Topic Works
-            </h3>
+          <DetailCard variant="success" gradient>
+            <SectionHeader
+              title="Why This Topic Works"
+              icon={<Target className="w-5 h-5" />}
+              variant="spacious"
+              className="mb-4"
+            />
             <p className="text-base leading-relaxed text-muted-foreground">
               {generatedTopic.why_it_works}
             </p>
-          </div>
+          </DetailCard>
         )}
 
-        {/* Performance Scores - From drawer */}
-        <div className="bg-blue-50/30 dark:bg-blue-950/20 rounded-xl p-6 border border-blue-200/50 dark:border-blue-800/50">
+        {/* Performance Scores - Prominent Full Width */}
+        <DetailCard variant="info" gradient>
           <div className="flex items-start justify-between mb-6">
-            <h3 className="text-xl font-semibold text-foreground flex items-center gap-3">
-              <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              Performance Scores
-            </h3>
+            <SectionHeader
+              title="Performance Scores"
+              icon={<TrendingUp className="w-5 h-5" />}
+              variant="spacious"
+            />
             <div className="text-xs text-muted-foreground bg-white/60 dark:bg-background/60 px-2 py-1 rounded-md border border-blue-200/40 dark:border-blue-700/40">
               Based on your configuration
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <Target className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round((generatedTopic?.scores.relevance || 0) * 100)}%
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Relevance
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round(
-                    (generatedTopic?.scores.seo_potential || 0) * 100,
-                  )}
-                  %
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                SEO Potential
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <Zap className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round((generatedTopic?.scores.trend_level || 0) * 100)}%
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Trend Level
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <Sparkles className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round((generatedTopic?.scores.uniqueness || 0) * 100)}%
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Uniqueness
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round(
-                    (generatedTopic?.scores.reader_interest || 0) * 100,
-                  )}
-                  %
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Reader Interest
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <PenTool className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round(
-                    (generatedTopic?.scores.actionable_potential || 0) * 100,
-                  )}
-                  %
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Actionable Potential
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <Globe className="w-5 h-5 text-primary mr-1" />
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round(
-                    (generatedTopic?.scores.brand_alignment || 0) * 100,
-                  )}
-                  %
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Brand Alignment
-              </div>
-            </div>
-            <div className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-              <div className="flex items-center justify-center mb-2">
-                <Zap className="w-5 h-5 text-orange-500 mr-1" />
-                <div className="text-2xl font-bold text-orange-500">
-                  {Math.round((generatedTopic?.scores.controversy || 0) * 100)}%
-                </div>
-              </div>
-              <div className="text-xs font-medium text-muted-foreground">
-                Controversy
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Keywords & Tags - From drawer */}
-        {generatedTopic?.tags && generatedTopic.tags.length > 0 && (
-          <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-xl p-6 border border-purple-200/50 dark:border-purple-800/50">
-            <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-              <Hash className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Keywords & Tags
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {generatedTopic.tags.map((keyword: string) => (
-                <Badge
-                  key={keyword}
-                  variant="secondary"
-                  className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+          <FourColumnGrid gap="md">
+            {[
+              {
+                label: "Relevance",
+                value: Math.round(
+                  (generatedTopic?.scores.relevance || 0) * 100,
+                ),
+                icon: Target,
+                color: "text-primary",
+              },
+              {
+                label: "SEO Potential",
+                value: Math.round(
+                  (generatedTopic?.scores.seo_potential || 0) * 100,
+                ),
+                icon: TrendingUp,
+                color: "text-primary",
+              },
+              {
+                label: "Trend Level",
+                value: Math.round(
+                  (generatedTopic?.scores.trend_level || 0) * 100,
+                ),
+                icon: Zap,
+                color: "text-primary",
+              },
+              {
+                label: "Uniqueness",
+                value: Math.round(
+                  (generatedTopic?.scores.uniqueness || 0) * 100,
+                ),
+                icon: Sparkles,
+                color: "text-primary",
+              },
+              {
+                label: "Reader Interest",
+                value: Math.round(
+                  (generatedTopic?.scores.reader_interest || 0) * 100,
+                ),
+                icon: Users,
+                color: "text-primary",
+              },
+              {
+                label: "Actionable Potential",
+                value: Math.round(
+                  (generatedTopic?.scores.actionable_potential || 0) * 100,
+                ),
+                icon: PenTool,
+                color: "text-primary",
+              },
+              {
+                label: "Brand Alignment",
+                value: Math.round(
+                  (generatedTopic?.scores.brand_alignment || 0) * 100,
+                ),
+                icon: Globe,
+                color: "text-primary",
+              },
+              {
+                label: "Controversy",
+                value: Math.round(
+                  (generatedTopic?.scores.controversy || 0) * 100,
+                ),
+                icon: Zap,
+                color: "text-orange-500",
+              },
+            ].map((score) => {
+              const IconComponent = score.icon;
+              return (
+                <div
+                  key={score.label}
+                  className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors"
                 >
-                  <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
-                  {keyword}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
+                  <div className="flex items-center justify-center mb-2">
+                    <IconComponent className={`w-5 h-5 ${score.color} mr-1`} />
+                    <div className={`text-2xl font-bold ${score.color}`}>
+                      {score.value}%
+                    </div>
+                  </div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {score.label}
+                  </div>
+                </div>
+              );
+            })}
+          </FourColumnGrid>
+        </DetailCard>
 
-        {/* Channel and Audience Fit - From drawer */}
-        {((generatedTopic?.channel_fit?.length ?? 0) > 0 ||
+        {/* Keywords & Channel/Audience Fit - Strategic Bottom Section */}
+        {((generatedTopic?.tags?.length ?? 0) > 0 ||
+          (generatedTopic?.channel_fit?.length ?? 0) > 0 ||
           (generatedTopic?.audience_fit?.length ?? 0) > 0) && (
-          <div className="bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-rose-50/40 dark:from-amber-950/20 dark:via-orange-950/15 dark:to-rose-950/20 rounded-xl p-6 border border-amber-200/60 dark:border-amber-800/60">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {(generatedTopic?.channel_fit?.length ?? 0) > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    Best Channels
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {generatedTopic?.channel_fit?.map((channel: string) => (
-                      <div
-                        key={channel}
-                        className="bg-white/90 dark:bg-background/90 rounded-lg px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
-                      >
-                        {channel}
-                      </div>
-                    ))}
+          <DetailGrid columns={3} gap="lg" responsive={{ sm: 1, md: 2, lg: 3 }}>
+            {/* Keywords & Tags - Takes 1 column */}
+            <DetailGridItem span={1} className="flex">
+              {generatedTopic?.tags && generatedTopic.tags.length > 0 ? (
+                <DetailCard
+                  variant="accent"
+                  gradient
+                  className="flex-1 flex flex-col"
+                >
+                  <SectionHeader
+                    title="Keywords & Tags"
+                    icon={<Hash className="w-5 h-5" />}
+                    variant="compact"
+                    className="mb-4"
+                  />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap gap-2">
+                      {generatedTopic.tags
+                        .slice(0, 6)
+                        .map((keyword: string) => (
+                          <Badge
+                            key={keyword}
+                            variant="secondary"
+                            className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                          >
+                            <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
+                            {keyword}
+                          </Badge>
+                        ))}
+                      {generatedTopic.tags.length > 6 && (
+                        <Badge variant="outline" className="text-sm">
+                          +{generatedTopic.tags.length - 6} more
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </DetailCard>
+              ) : (
+                <DetailCard variant="default" className="flex-1 flex flex-col">
+                  <SectionHeader
+                    title="Keywords & Tags"
+                    icon={<Hash className="w-5 h-5" />}
+                    variant="compact"
+                    className="mb-4"
+                  />
+                  <div className="flex-1 flex items-start">
+                    <p className="text-sm text-muted-foreground">
+                      No keywords available.
+                    </p>
+                  </div>
+                </DetailCard>
               )}
+            </DetailGridItem>
 
-              {(generatedTopic?.audience_fit?.length ?? 0) > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-3">
-                    <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    Target Audience
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {generatedTopic?.audience_fit?.map((audience: string) => (
-                      <div
-                        key={audience}
-                        className="bg-white/90 dark:bg-background/90 rounded-lg px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
-                      >
-                        {audience}
-                      </div>
-                    ))}
+            {/* Channel Fit - Takes 1 column */}
+            <DetailGridItem span={1} className="flex">
+              {(generatedTopic?.channel_fit?.length ?? 0) > 0 ? (
+                <DetailCard
+                  variant="info"
+                  gradient
+                  className="flex-1 flex flex-col"
+                >
+                  <SectionHeader
+                    title="Best Channels"
+                    icon={<Globe className="w-5 h-5" />}
+                    variant="compact"
+                    className="mb-4"
+                  />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap gap-2">
+                      {generatedTopic?.channel_fit
+                        ?.slice(0, 4)
+                        .map((channel: string) => (
+                          <Badge
+                            key={channel}
+                            variant="secondary"
+                            className="text-sm px-4 py-2 bg-gradient-to-r from-blue-50/90 to-sky-50/90 dark:from-blue-950/30 dark:to-sky-950/30 border border-blue-200/60 dark:border-blue-700/60 hover:border-blue-300/80 dark:hover:border-blue-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                          >
+                            <Zap className="w-3 h-3 mr-1.5 text-blue-600 dark:text-blue-400" />
+                            {channel}
+                          </Badge>
+                        ))}
+                      {(generatedTopic?.channel_fit?.length ?? 0) > 4 && (
+                        <Badge variant="outline" className="text-sm">
+                          +{(generatedTopic?.channel_fit?.length ?? 0) - 4} more
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </DetailCard>
+              ) : (
+                <DetailCard variant="default" className="flex-1 flex flex-col">
+                  <SectionHeader
+                    title="Best Channels"
+                    icon={<Globe className="w-5 h-5" />}
+                    variant="compact"
+                    className="mb-4"
+                  />
+                  <div className="flex-1 flex items-start">
+                    <p className="text-sm text-muted-foreground">
+                      No channel data available.
+                    </p>
+                  </div>
+                </DetailCard>
               )}
-            </div>
-          </div>
+            </DetailGridItem>
+
+            {/* Audience Fit - Takes 1 column */}
+            <DetailGridItem span={1} className="flex">
+              {(generatedTopic?.audience_fit?.length ?? 0) > 0 ? (
+                <DetailCard variant="default" className="flex-1 flex flex-col">
+                  <SectionHeader
+                    title="Target Audience"
+                    icon={<Users className="w-5 h-5" />}
+                    variant="compact"
+                    className="mb-4"
+                  />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap gap-2">
+                      {generatedTopic?.audience_fit
+                        ?.slice(0, 4)
+                        .map((audience: string) => (
+                          <Badge
+                            key={audience}
+                            variant="secondary"
+                            className="text-sm px-4 py-2 bg-gradient-to-r from-emerald-50/90 to-green-50/90 dark:from-emerald-950/30 dark:to-green-950/30 border border-emerald-200/60 dark:border-emerald-700/60 hover:border-emerald-300/80 dark:hover:border-emerald-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                          >
+                            <Target className="w-3 h-3 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                            {audience}
+                          </Badge>
+                        ))}
+                      {(generatedTopic?.audience_fit?.length ?? 0) > 4 && (
+                        <Badge variant="outline" className="text-sm">
+                          +{(generatedTopic?.audience_fit?.length ?? 0) - 4}{" "}
+                          more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </DetailCard>
+              ) : (
+                <DetailCard variant="default" className="flex-1 flex flex-col">
+                  <SectionHeader
+                    title="Target Audience"
+                    icon={<Users className="w-5 h-5" />}
+                    variant="compact"
+                    className="mb-4"
+                  />
+                  <div className="flex-1 flex items-start">
+                    <p className="text-sm text-muted-foreground">
+                      No audience data available.
+                    </p>
+                  </div>
+                </DetailCard>
+              )}
+            </DetailGridItem>
+          </DetailGrid>
         )}
       </div>
     </DetailPageWrapper>

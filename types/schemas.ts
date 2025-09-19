@@ -10,6 +10,7 @@
 
 import { z } from "zod";
 import type { SaveTopicItem } from "./api";
+import type { BackendSaveTopicRequestList } from "./backend";
 import type { TopicData } from "./data-table";
 import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
@@ -566,7 +567,11 @@ export const createValidationReport = <T>(
  * }
  * ```
  */
-export const transformTopicForSaving = (topic: GeneratedTopic): any => {
+type BackendSaveTopicItem = BackendSaveTopicRequestList["topics"][number];
+
+export const transformTopicForSaving = (
+  topic: GeneratedTopic,
+): BackendSaveTopicItem => {
   // Validate input
   if (!isValidGeneratedTopic(topic)) {
     throw new Error("Invalid GeneratedTopic provided for transformation");
@@ -584,7 +589,7 @@ export const transformTopicForSaving = (topic: GeneratedTopic): any => {
   }
 
   // Transform to backend format (match SaveTopicRequest schema)
-  const backendTopic: any = {
+  const backendTopic: BackendSaveTopicItem = {
     id: topic.id,
     title: topic.title,
     angle: topic.angle,
@@ -607,7 +612,7 @@ export const transformTopicForSaving = (topic: GeneratedTopic): any => {
       secondaryKeywords: [],
       includeTOC: false,
     },
-    input_params: null,
+    input_params: undefined,
   };
 
   // Return the backend-compatible topic
@@ -625,7 +630,9 @@ export const transformTopicForSaving = (topic: GeneratedTopic): any => {
  * @returns Array of SaveTopicItem formatted for backend API
  * @throws Error if any topic transformation fails
  */
-export const transformTopicsForSaving = (topics: GeneratedTopic[]): any[] => {
+export const transformTopicsForSaving = (
+  topics: GeneratedTopic[],
+): BackendSaveTopicRequestList["topics"] => {
   return topics.map((topic, index) => {
     try {
       return transformTopicForSaving(topic);

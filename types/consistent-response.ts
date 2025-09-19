@@ -110,7 +110,7 @@ export interface ErrorDetail {
   /** Specific error code for this detail */
   code: string;
   /** The invalid value that caused the error (optional, filtered for security) */
-  value?: any;
+  value?: unknown;
 }
 
 /**
@@ -128,13 +128,13 @@ export interface ErrorInfo {
   /** Detailed error information (e.g., validation errors) */
   details?: ErrorDetail[];
   /** Additional context for debugging (filtered in production) */
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 /**
  * Standardized success response wrapper
  */
-export interface ConsistentSuccessResponse<T = any> {
+export interface ConsistentSuccessResponse<T = unknown> {
   /** Always true for success responses */
   success: true;
   /** Response data of generic type T */
@@ -162,7 +162,7 @@ export interface ConsistentErrorResponse {
 /**
  * Union type for all consistent API responses
  */
-export type ConsistentApiResponse<T = any> =
+export type ConsistentApiResponse<T = unknown> =
   | ConsistentSuccessResponse<T>
   | ConsistentErrorResponse;
 
@@ -191,15 +191,28 @@ export function isErrorResponse<T>(
 /**
  * Type guard to check if an object follows the consistent response format
  */
-export function isConsistentResponse(obj: any): obj is ConsistentApiResponse {
+export function isConsistentResponse(
+  obj: unknown,
+): obj is ConsistentApiResponse {
+  if (
+    typeof obj !== "object" ||
+    obj === null ||
+    !("success" in obj) ||
+    typeof (obj as { success: unknown }).success !== "boolean" ||
+    !("meta" in obj)
+  ) {
+    return false;
+  }
+
+  const meta = (obj as { meta: unknown }).meta;
+  if (typeof meta !== "object" || meta === null) {
+    return false;
+  }
+
+  const metaRecord = meta as Record<string, unknown>;
   return (
-    typeof obj === "object" &&
-    obj !== null &&
-    typeof obj.success === "boolean" &&
-    typeof obj.meta === "object" &&
-    obj.meta !== null &&
-    typeof obj.meta.request_id === "string" &&
-    typeof obj.meta.timestamp === "string"
+    typeof metaRecord.request_id === "string" &&
+    typeof metaRecord.timestamp === "string"
   );
 }
 
@@ -454,11 +467,20 @@ export function getSuggestedRetryDelay(error: ErrorInfo): number {
  * Adapter type for converting consistent responses to legacy format
  * Used during migration period to maintain backward compatibility
  */
-export interface LegacyResponseAdapter<T> {
+type LegacyErrorShape = {
+  error: string;
+  error_code?: BackendErrorCode;
+  details?: ErrorDetail[];
+  request_id?: string;
+  timestamp?: string;
+  processing_time_ms?: number;
+};
+
+export interface LegacyResponseAdapter<T, L = unknown> {
   /** Convert consistent response to legacy format */
-  toLegacy(response: ConsistentApiResponse<T>): any;
+  toLegacy(response: ConsistentApiResponse<T>): L | LegacyErrorShape;
   /** Convert legacy response to consistent format */
-  fromLegacy(legacyResponse: any): ConsistentApiResponse<T>;
+  fromLegacy(legacyResponse: L | LegacyErrorShape): ConsistentApiResponse<T>;
 }
 
 /**
@@ -469,7 +491,7 @@ export interface LegacyResponseAdapter<T> {
 export function createLegacyAdapter<T, L>(dataMapper: {
   toLegacy: (data: T) => L;
   fromLegacy: (legacy: L) => T;
-}): LegacyResponseAdapter<T> {
+}): LegacyResponseAdapter<T, L> {
   return {
     toLegacy(response: ConsistentApiResponse<T>) {
       if (isSuccessResponse(response)) {
@@ -479,47 +501,58 @@ export function createLegacyAdapter<T, L>(dataMapper: {
           timestamp: response.meta.timestamp,
           processing_time_ms: response.meta.processing_time_ms,
         };
-      } else {
-        return {
-          error: response.error.message,
-          error_code: response.error.code,
-          details: response.error.details,
-          request_id: response.meta.request_id,
-        };
       }
+
+      return {
+        error: response.error.message,
+        error_code: response.error.code,
+        details: response.error.details,
+        request_id: response.meta.request_id,
+      };
     },
 
-    fromLegacy(legacyResponse: any): ConsistentApiResponse<T> {
-      if (legacyResponse.error) {
+    fromLegacy(legacyResponse: L | LegacyErrorShape): ConsistentApiResponse<T> {
+      if (
+        typeof legacyResponse === "object" &&
+        legacyResponse !== null &&
+        "error" in legacyResponse
+      ) {
+        const legacyError = legacyResponse as LegacyErrorShape;
         return {
           success: false,
           data: null,
           error: {
-            code: legacyResponse.error_code || "unknown_error",
-            message: legacyResponse.error,
+            code: legacyError.error_code || "unknown_error",
+            message: legacyError.error,
             severity: "medium",
             status_code: 500,
-            details: legacyResponse.details,
+            details: legacyError.details,
           },
           meta: {
-            request_id: legacyResponse.request_id || "unknown",
+            request_id: legacyError.request_id || "unknown",
             timestamp: new Date().toISOString(),
             version: "1.0",
           },
         };
-      } else {
-        return {
-          success: true,
-          data: dataMapper.fromLegacy(legacyResponse),
-          error: null,
-          meta: {
-            request_id: legacyResponse.request_id || "unknown",
-            timestamp: legacyResponse.timestamp || new Date().toISOString(),
-            processing_time_ms: legacyResponse.processing_time_ms,
-            version: "1.0",
-          },
-        };
       }
+
+      const legacySuccess = legacyResponse as L & {
+        request_id?: string;
+        timestamp?: string;
+        processing_time_ms?: number;
+      };
+
+      return {
+        success: true,
+        data: dataMapper.fromLegacy(legacySuccess),
+        error: null,
+        meta: {
+          request_id: legacySuccess.request_id || "unknown",
+          timestamp: legacySuccess.timestamp || new Date().toISOString(),
+          processing_time_ms: legacySuccess.processing_time_ms,
+          version: "1.0",
+        },
+      };
     },
   };
 }

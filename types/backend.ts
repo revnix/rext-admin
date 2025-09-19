@@ -349,7 +349,7 @@ export interface BackendServiceError extends Error {
   /** Original backend response */
   originalResponse?: ConsistentErrorResponse;
   /** Additional error context */
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   /** Whether this error is retryable */
   retryable: boolean;
   /** Suggested retry delay in milliseconds */
@@ -533,16 +533,27 @@ export function wrapBackendServiceResponse<T>(
  * @returns Whether response is valid
  */
 export function validateConsistentResponse(
-  response: any,
+  response: unknown,
 ): response is ConsistentApiResponse {
+  if (
+    typeof response !== "object" ||
+    response === null ||
+    !("success" in response) ||
+    typeof (response as { success: unknown }).success !== "boolean" ||
+    !("meta" in response)
+  ) {
+    return false;
+  }
+
+  const meta = (response as { meta: unknown }).meta;
+  if (typeof meta !== "object" || meta === null) {
+    return false;
+  }
+
+  const metaRecord = meta as Record<string, unknown>;
   return (
-    typeof response === "object" &&
-    response !== null &&
-    typeof response.success === "boolean" &&
-    typeof response.meta === "object" &&
-    response.meta !== null &&
-    typeof response.meta.request_id === "string" &&
-    typeof response.meta.timestamp === "string"
+    typeof metaRecord.request_id === "string" &&
+    typeof metaRecord.timestamp === "string"
   );
 }
 
@@ -551,13 +562,18 @@ export function validateConsistentResponse(
  * @param error - Error object
  * @returns Structured error information
  */
-export function extractErrorInfo(error: any): {
+export function extractErrorInfo(error: unknown): {
   code: BackendErrorCode;
   message: string;
   severity: ErrorSeverity;
   retryable: boolean;
 } {
-  if (error instanceof Error && "code" in error) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    "message" in error
+  ) {
     const backendError = error as BackendServiceError;
     return {
       code: backendError.code || "unknown_error",
@@ -569,7 +585,12 @@ export function extractErrorInfo(error: any): {
 
   return {
     code: "unknown_error",
-    message: error?.message || "An unknown error occurred",
+    message:
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "An unknown error occurred",
     severity: "medium",
     retryable: true,
   };

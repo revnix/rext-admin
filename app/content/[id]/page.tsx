@@ -17,12 +17,18 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { MetadataItem } from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
+import {
+  DetailGrid,
+  DetailGridItem,
+  ThreeColumnGrid,
+  TwoColumnGrid,
+} from "@/components/ui/detail-grid";
 import { Progress } from "@/components/ui/progress";
+import { SectionHeader } from "@/components/ui/section-header";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { usePageTitle } from "@/hooks/use-page-title";
 import type { ContentData } from "@/types/data-table";
+import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
 
 // Mock content data - in real app this would come from API
 const contentData: ContentData[] = [
@@ -339,118 +346,129 @@ export default function ContentDetailPage() {
     </div>
   );
 
-  // Build sidebar content
-  const sidebarContent = (
-    <>
-      {/* Content Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Performance Metrics</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Views</span>
-              <span className="text-sm font-medium">
-                {content.engagement.views.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Likes</span>
-              <span className="text-sm font-medium">
-                {content.engagement.likes.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Shares</span>
-              <span className="text-sm font-medium">
-                {content.engagement.shares.toLocaleString()}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">SEO Score</span>
-              <span className="text-sm font-medium">{content.seoScore}%</span>
-            </div>
-            <Progress value={content.seoScore} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Publication Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Publication Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Badge
-              variant={
-                content.status === "Published"
-                  ? "default"
-                  : content.status === "Scheduled"
-                    ? "secondary"
-                    : "outline"
-              }
-            >
-              {content.status}
-            </Badge>
-          </div>
-
-          {content.publishedTo && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Published To
-              </span>
-              <span className="text-sm font-medium">{content.publishedTo}</span>
-            </div>
-          )}
-
-          {content.publishDate && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Published</span>
-              <span className="text-sm font-medium">
-                {new Date(content.publishDate).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-
-          {content.scheduledDate && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Scheduled</span>
-              <span className="text-sm font-medium">
-                {new Date(content.scheduledDate).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Flow</span>
-            <span className="text-sm font-medium">{content.flowName}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Platforms */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Platforms</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {content.platforms.map((platform) => (
-              <Badge key={platform} variant="outline" className="text-xs">
-                {platform}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </>
-  );
+  // Build new flexible sidebar configuration
+  const sidebarConfig: SidebarConfig = {
+    cards: [
+      // SEO Score Card (using score type)
+      {
+        type: "score",
+        config: {
+          score: content.seoScore,
+          title: "SEO Score",
+          description: "Search Engine Optimization",
+          variant:
+            content.seoScore >= 80
+              ? "success"
+              : content.seoScore >= 60
+                ? "default"
+                : "warning",
+        },
+      },
+      // Performance Metrics (using stats type)
+      {
+        type: "stats",
+        config: {
+          title: "Performance Metrics",
+          items: [
+            {
+              label: "Views",
+              value: content.engagement.views.toLocaleString(),
+              icon: <TrendingUp className="h-4 w-4" />,
+              highlight: true,
+            },
+            {
+              label: "Likes",
+              value: content.engagement.likes.toLocaleString(),
+            },
+            {
+              label: "Shares",
+              value: content.engagement.shares.toLocaleString(),
+            },
+          ],
+        },
+      },
+      // Publication Details (using stats type)
+      {
+        type: "stats",
+        config: {
+          title: "Publication Details",
+          items: [
+            {
+              label: "Status",
+              value: (
+                <Badge
+                  variant={
+                    content.status === "Published"
+                      ? "default"
+                      : content.status === "Scheduled"
+                        ? "secondary"
+                        : "outline"
+                  }
+                >
+                  {content.status}
+                </Badge>
+              ),
+              highlight: true,
+            },
+            ...(content.publishedTo
+              ? [
+                  {
+                    label: "Published To",
+                    value: content.publishedTo,
+                  },
+                ]
+              : []),
+            ...(content.publishDate
+              ? [
+                  {
+                    label: "Published",
+                    value: new Date(content.publishDate).toLocaleDateString(),
+                  },
+                ]
+              : []),
+            ...(content.scheduledDate
+              ? [
+                  {
+                    label: "Scheduled",
+                    value: new Date(content.scheduledDate).toLocaleDateString(),
+                  },
+                ]
+              : []),
+            {
+              label: "Flow",
+              value: content.flowName,
+            },
+          ],
+        },
+      },
+      // Platforms (using custom type for tags)
+      {
+        type: "custom",
+        config: {
+          id: "platforms",
+          content: (
+            <DetailCard variant="default">
+              <div className="p-6">
+                <SectionHeader
+                  title="Platforms"
+                  variant="compact"
+                  className="mb-4"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {content.platforms.map((platform) => (
+                    <Badge key={platform} variant="outline" className="text-xs">
+                      {platform}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </DetailCard>
+          ),
+        },
+      },
+    ],
+    order: ["cards", "metadata", "quickActions"],
+  };
 
   return (
     <DetailPageWrapper
@@ -466,17 +484,18 @@ export default function ContentDetailPage() {
       }
       metadata={metadata}
       headerActions={headerActions}
-      sidebar={sidebarContent}
+      sidebarConfig={sidebarConfig}
     >
-      {/* Main Content */}
+      {/* Main Content - Using standardized components */}
       <div className="space-y-8">
         {/* Content Preview */}
-        <div className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60">
+        <DetailCard variant="highlight" gradient>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-foreground flex items-center gap-3">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              Content Preview
-            </h3>
+            <SectionHeader
+              title="Content Preview"
+              icon={<FileText className="w-5 h-5" />}
+              variant="spacious"
+            />
             {content.publishedTo && (
               <div className="flex items-center gap-2">
                 <ExternalLink className="h-4 w-4 text-muted-foreground" />
@@ -493,102 +512,224 @@ export default function ContentDetailPage() {
               </pre>
             </div>
           </div>
-        </div>
+        </DetailCard>
 
-        {/* Keywords & Tags */}
-        {content.keywords && content.keywords.length > 0 && (
-          <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-xl p-6 border border-purple-200/50 dark:border-purple-800/50">
-            <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-              <Hash className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Keywords & Tags
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {content.keywords.map((keyword) => (
-                <Badge
-                  key={keyword}
-                  variant="secondary"
-                  className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
-                >
-                  <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
-                  {keyword}
-                </Badge>
-              ))}
+        {/* Keywords & Analytics - Two Column Layout */}
+        <TwoColumnGrid gap="lg">
+          {/* Keywords & Tags */}
+          {content.keywords && content.keywords.length > 0 && (
+            <DetailCard variant="accent" gradient>
+              <SectionHeader
+                title="Keywords & Tags"
+                icon={<Hash className="w-5 h-5" />}
+                variant="spacious"
+                className="mb-4"
+              />
+              <div className="flex flex-wrap gap-3">
+                {content.keywords.map((keyword) => (
+                  <Badge
+                    key={keyword}
+                    variant="secondary"
+                    className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                  >
+                    <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            </DetailCard>
+          )}
+
+          {/* Content Metrics Summary */}
+          <DetailCard variant="info" gradient>
+            <SectionHeader
+              title="Content Metrics"
+              icon={<FileText className="w-5 h-5" />}
+              variant="spacious"
+              className="mb-4"
+            />
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Word Count
+                </span>
+                <span className="font-medium">
+                  {content.wordCount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Read Time</span>
+                <span className="font-medium">{content.readTime}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">SEO Score</span>
+                <div className="flex items-center gap-2">
+                  <Progress value={content.seoScore} className="w-16 h-2" />
+                  <span className="font-medium">{content.seoScore}%</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Engagement Rate
+                </span>
+                <span className="font-medium">
+                  {content.engagement.views > 0
+                    ? `${(((content.engagement.likes + content.engagement.shares) / content.engagement.views) * 100).toFixed(1)}%`
+                    : "0%"}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          </DetailCard>
+        </TwoColumnGrid>
 
         {/* Content Analytics */}
-        <div className="bg-green-50/50 dark:bg-green-950/20 rounded-xl p-6 border border-green-200/50 dark:border-green-800/50">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-            Content Analytics
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {content.engagement.views.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Views</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {content.engagement.likes.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Likes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {content.engagement.shares.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Shares</div>
-            </div>
-          </div>
-        </div>
+        <DetailCard variant="success" gradient>
+          <SectionHeader
+            title="Content Analytics"
+            icon={<TrendingUp className="w-5 h-5" />}
+            variant="spacious"
+            className="mb-6"
+          />
+          <ThreeColumnGrid gap="lg">
+            {[
+              {
+                label: "Total Views",
+                value: content.engagement.views.toLocaleString(),
+                icon: TrendingUp,
+                color: "text-green-600 dark:text-green-400",
+              },
+              {
+                label: "Likes",
+                value: content.engagement.likes.toLocaleString(),
+                icon: Users,
+                color: "text-green-600 dark:text-green-400",
+              },
+              {
+                label: "Shares",
+                value: content.engagement.shares.toLocaleString(),
+                icon: Share2,
+                color: "text-green-600 dark:text-green-400",
+              },
+            ].map((metric) => {
+              const IconComponent = metric.icon;
+              return (
+                <div
+                  key={metric.label}
+                  className="text-center p-4 bg-white/60 dark:bg-background/60 rounded-lg border border-green-200/50 dark:border-green-800/50"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <IconComponent className="w-6 h-6 text-green-600 dark:text-green-400 mr-2" />
+                    <div className={`text-3xl font-bold ${metric.color}`}>
+                      {metric.value}
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground font-medium">
+                    {metric.label}
+                  </div>
+                </div>
+              );
+            })}
+          </ThreeColumnGrid>
+        </DetailCard>
 
-        {/* Timeline */}
-        <div className="bg-amber-50/40 dark:bg-amber-950/20 rounded-xl p-6 border border-amber-200/60 dark:border-amber-800/60">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            Content Timeline
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Created</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(content.created).toLocaleString()}
-                  </span>
+        {/* Timeline & Flow Information - Custom Grid Layout */}
+        <DetailGrid columns={3} gap="lg" responsive={{ sm: 1, md: 2, lg: 3 }}>
+          {/* Timeline */}
+          <DetailGridItem span={2}>
+            <DetailCard variant="warning" gradient>
+              <SectionHeader
+                title="Content Timeline"
+                icon={<Calendar className="w-5 h-5" />}
+                variant="spacious"
+                className="mb-4"
+              />
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Created</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(content.created).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Last Modified</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(content.lastModified).toLocaleString()}
-                  </span>
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Last Modified</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(content.lastModified).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                {content.publishDate && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Published</span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(content.publishDate).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {content.scheduledDate && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Scheduled</span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(content.scheduledDate).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-            {content.publishDate && (
-              <div className="flex items-center gap-4">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Published</span>
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(content.publishDate).toLocaleString()}
-                    </span>
+            </DetailCard>
+          </DetailGridItem>
+
+          {/* Flow Information */}
+          <DetailGridItem span={1}>
+            <DetailCard variant="default">
+              <div className="text-center space-y-4">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
+                  <Zap className="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+                  <div className="text-sm font-medium">Generated by</div>
+                  <div
+                    className="text-xs text-muted-foreground mt-1 truncate"
+                    title={content.flowName}
+                  >
+                    {content.flowName}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                  <Users className="w-6 h-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                  <div className="text-sm font-medium">Author</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {content.author}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
+                  <Users className="w-6 h-6 mx-auto mb-2 text-green-600 dark:text-green-400" />
+                  <div className="text-sm font-medium">Reviewer</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {content.humanReviewer}
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            </DetailCard>
+          </DetailGridItem>
+        </DetailGrid>
       </div>
     </DetailPageWrapper>
   );

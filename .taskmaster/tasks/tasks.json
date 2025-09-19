@@ -43,7 +43,71 @@
         "status": "pending",
         "dependencies": [1],
         "priority": "medium",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Conduct Component Audit and Analysis",
+            "description": "Review all existing details pages to identify current card and section patterns, inconsistencies in styling, spacing, typography, and interaction behaviors. Document all variations and create a plan for standardization.",
+            "dependencies": [],
+            "details": "Analyze workspace details, user profiles, project details, and other relevant pages. Record findings in a shared document for reference in subsequent tasks.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Define and Design Standardized Components",
+            "description": "Design reusable React components for standardized sections and cards, including DetailCard, SectionHeader, InfoSection, ActionSection, and StatusBadge, ensuring consistent UI and interaction patterns.",
+            "dependencies": ["4.1"],
+            "details": "Create component specifications and design mockups based on audit findings. Ensure each component adheres to the Single Responsibility Principle and avoids duplication.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Establish CSS/SCSS Design Tokens and Standards",
+            "description": "Develop a set of design tokens for spacing, color palette, typography, shadows, border-radius, and responsive breakpoints to ensure visual consistency across all components.",
+            "dependencies": ["4.2"],
+            "details": "Document and implement standardized variables and mixins in the CSS/SCSS codebase. Align tokens with the design system and component requirements.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Layout Grid System",
+            "description": "Create a flexible grid system for details pages that supports single-column, two-column, and three-column layouts while maintaining visual consistency.",
+            "dependencies": ["4.3"],
+            "details": "Define grid breakpoints and layout rules. Integrate the grid system with standardized components for seamless page composition.",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Migrate Existing Components to Standardized System",
+            "description": "Systematically replace ad-hoc sections and cards on all details pages with standardized components, ensuring backward compatibility and preserving existing functionality.",
+            "dependencies": ["4.4"],
+            "details": "Plan and execute migration in phases, starting with high-traffic pages. Monitor for regressions and coordinate with QA for validation.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Set Up Documentation and Storybook",
+            "description": "Document all standardized components, design tokens, and layout systems. Create Storybook stories for each component to facilitate developer onboarding and usage.",
+            "dependencies": ["4.5"],
+            "details": "Write clear usage guidelines, code examples, and visual references. Ensure documentation is accessible and kept up to date.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Perform Regression and Accessibility Testing",
+            "description": "Conduct comprehensive visual regression and accessibility testing on all standardized details pages to ensure consistency, usability, and compliance with accessibility standards.",
+            "dependencies": ["4.6"],
+            "details": "Use automated tools and manual review to verify visual consistency, keyboard navigation, screen reader compatibility, and color contrast. Address any issues found.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 5,
@@ -54,7 +118,35 @@
         "status": "pending",
         "dependencies": [4],
         "priority": "low",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement Base Skeleton Component Architecture",
+            "description": "Develop a flexible skeleton system with reusable base components (SkeletonCard, SkeletonSection, SkeletonText, SkeletonAvatar, SkeletonButton). Ensure these components support props for customizing dimensions, animation speed, and shape variations to match the standardized details page layout.",
+            "dependencies": [],
+            "details": "Establish a component architecture that allows for easy composition and customization. Implement core animation (shimmer, pulse) and ensure visual consistency across all skeleton elements.",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Map and Build Skeleton Variants for Standardized Details Pages",
+            "description": "Create skeleton components that mirror the structure of each standardized details page section and card type, such as WorkspaceDetailsSkeleton, UserProfileSkeleton, and ProjectDetailsSkeleton. Ensure these variants match the exact layout, dimensions, and spacing of their loaded counterparts.",
+            "dependencies": [],
+            "details": "For each details page type, analyze the layout and build corresponding skeleton variants using the base components. Validate that skeletons are visually identical to the loaded state and adapt responsively to different screen sizes.",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Integrate Skeleton Components with Loading States and Accessibility",
+            "description": "Implement hooks or HOCs (e.g., useSkeletonState, withSkeleton) to control skeleton display based on data fetching states. Add ARIA labels and ensure skeletons are accessible, do not interfere with keyboard navigation, and provide appropriate screen reader announcements.",
+            "dependencies": [],
+            "details": "Connect skeleton components to actual data loading logic, ensuring seamless transitions between loading and loaded states. Test accessibility features and refine as needed for compliance.",
+            "status": "done",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 6,
@@ -225,7 +317,7 @@
     "metadata": {
       "created": "2025-09-18T16:41:12.384Z",
       "description": "Default tasks context",
-      "updated": "2025-09-18T16:52:14.970Z"
+      "updated": "2025-09-19T05:32:23.022Z"
     }
   }
 }

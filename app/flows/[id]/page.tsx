@@ -17,12 +17,16 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { MetadataItem } from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { DetailCard } from "@/components/ui/detail-card";
+import {
+  DetailGrid,
+  DetailGridItem,
+  TwoColumnGrid,
+} from "@/components/ui/detail-grid";
+import { SectionHeader } from "@/components/ui/section-header";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +34,7 @@ import {
 } from "@/components/ui/tooltip";
 import { usePageTitle } from "@/hooks/use-page-title";
 import type { FlowData } from "@/types/data-table";
+import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
 
 // Mock flow data - in real app this would come from API
 const flowsData: FlowData[] = [
@@ -435,136 +440,118 @@ export default function FlowDetailPage() {
   // Parse success rate for progress bar
   const successRateValue = parseFloat(flow.successRate.replace("%", ""));
 
-  // Build sidebar content
-  const sidebarContent = (
-    <>
-      {/* Flow Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Performance Overview</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Success Rate
-              </span>
-              <span className="text-sm font-medium">{flow.successRate}</span>
-            </div>
-            <Progress value={successRateValue} className="h-2" />
-          </div>
+  // Build new flexible sidebar configuration
+  const sidebarConfig: SidebarConfig = {
+    cards: [
+      // Success Rate Card (using score type)
+      {
+        type: "score",
+        config: {
+          score: successRateValue,
+          title: "Success Rate",
+          description: "Flow Performance Metric",
+          variant:
+            successRateValue >= 95
+              ? "success"
+              : successRateValue >= 80
+                ? "default"
+                : "warning",
+        },
+      },
+      // Performance Stats (using stats type)
+      {
+        type: "stats",
+        config: {
+          title: "Performance Overview",
+          items: [
+            {
+              label: "Total Executions",
+              value: flow.totalRuns.toLocaleString(),
+              icon: <Activity className="h-4 w-4" />,
+              highlight: true,
+            },
+            {
+              label: "Avg Runtime",
+              value: flow.avgRunTime,
+            },
+            {
+              label: "Last Execution",
+              value: new Date(flow.lastRun).toLocaleDateString(),
+            },
+          ],
+        },
+      },
+      // Configuration Details (using stats type)
+      {
+        type: "stats",
+        config: {
+          title: "Configuration",
+          items: [
+            {
+              label: "Status",
+              value: (
+                <Badge
+                  variant={
+                    flow.status === "Active"
+                      ? "default"
+                      : flow.status === "Paused"
+                        ? "secondary"
+                        : "outline"
+                  }
+                >
+                  {flow.status}
+                </Badge>
+              ),
+              highlight: true,
+            },
+            {
+              label: "Trigger",
+              value: <Badge variant="outline">{flow.trigger}</Badge>,
+            },
+            ...(flow.configuration.schedule
+              ? [
+                  {
+                    label: "Schedule",
+                    value: flow.configuration.schedule,
+                  },
+                ]
+              : []),
+            {
+              label: "Retry Attempts",
+              value: flow.configuration.retryAttempts.toString(),
+            },
+            {
+              label: "Timeout",
+              value: flow.configuration.timeout,
+            },
+          ],
+        },
+      },
+    ],
+    order: ["cards", "metadata", "quickActions"],
+  };
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Total Executions
-            </span>
-            <span className="text-sm font-medium">
-              {flow.totalRuns.toLocaleString()}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Avg Runtime</span>
-            <span className="text-sm font-medium">{flow.avgRunTime}</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Last Execution
-            </span>
-            <span className="text-sm font-medium">
-              {new Date(flow.lastRun).toLocaleDateString()}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Configuration Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Configuration</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Badge
-              variant={
-                flow.status === "Active"
-                  ? "default"
-                  : flow.status === "Paused"
-                    ? "secondary"
-                    : "outline"
-              }
-            >
-              {flow.status}
-            </Badge>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Trigger</span>
-            <Badge variant="outline">{flow.trigger}</Badge>
-          </div>
-
-          {flow.configuration.schedule && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Schedule</span>
-              <span className="text-sm font-medium">
-                {flow.configuration.schedule}
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Retry Attempts
-            </span>
-            <span className="text-sm font-medium">
-              {flow.configuration.retryAttempts}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Timeout</span>
-            <span className="text-sm font-medium">
-              {flow.configuration.timeout}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              className="flex items-center gap-2 text-sm p-2 rounded hover:bg-muted transition-colors"
-            >
-              <Settings className="h-4 w-4" />
-              Configure Flow
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-2 text-sm p-2 rounded hover:bg-muted transition-colors"
-            >
-              <Activity className="h-4 w-4" />
-              View Logs
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-2 text-sm p-2 rounded hover:bg-muted transition-colors"
-            >
-              <TrendingUp className="h-4 w-4" />
-              Analytics
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    </>
-  );
+  // Quick actions for the sidebar
+  const flowQuickActions = [
+    {
+      label: "Configure Flow",
+      icon: <Settings className="h-4 w-4" />,
+      onClick: () => console.log("Configure Flow"),
+      variant: "outline" as const,
+    },
+    {
+      label: "View Logs",
+      icon: <Activity className="h-4 w-4" />,
+      onClick: () => console.log("View Logs"),
+      variant: "outline" as const,
+    },
+    {
+      label: "Analytics",
+      icon: <TrendingUp className="h-4 w-4" />,
+      onClick: () => console.log("Analytics"),
+      variant: "outline" as const,
+    },
+  ];
 
   return (
     <DetailPageWrapper
@@ -580,142 +567,201 @@ export default function FlowDetailPage() {
       }
       metadata={metadata}
       headerActions={headerActions}
-      sidebar={sidebarContent}
+      sidebarConfig={sidebarConfig}
+      quickActions={flowQuickActions}
     >
       {/* Main Content */}
       <div className="space-y-8">
         {/* Flow Description */}
-        <div className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60">
-          <h3 className="text-xl font-semibold text-foreground flex items-center gap-3 mb-4">
-            <Workflow className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Flow Overview
-          </h3>
+        <DetailCard variant="default" gradient>
+          <SectionHeader
+            title="Flow Overview"
+            icon={<Workflow className="w-5 h-5" />}
+            variant="default"
+            className="mb-4"
+          />
           <p className="text-base leading-relaxed text-muted-foreground">
             {flow.description}
           </p>
-        </div>
+        </DetailCard>
 
-        {/* Flow Steps */}
-        <div className="bg-green-50/50 dark:bg-green-950/20 rounded-xl p-6 border border-green-200/50 dark:border-green-800/50">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <Settings className="w-5 h-5 text-green-600 dark:text-green-400" />
-            Flow Steps
-          </h3>
-          <div className="space-y-4">
-            {flow.steps.map((step, index) => (
-              <div
-                key={step.id}
-                className="flex items-center gap-4 p-4 bg-white dark:bg-background rounded-lg border"
-              >
-                <div className="flex-shrink-0 w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    {index + 1}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">{step.name}</h4>
-                    <Badge variant="outline" className="text-xs">
-                      {step.type}
+        {/* Flow Steps and Recent Runs - Two Column Layout */}
+        <TwoColumnGrid gap="lg">
+          {/* Flow Steps */}
+          <DetailCard variant="success">
+            <SectionHeader
+              title="Flow Steps"
+              icon={<Settings className="w-5 h-5" />}
+              variant="default"
+              className="mb-4"
+            />
+            <div className="space-y-4">
+              {flow.steps.map((step, index) => (
+                <div
+                  key={step.id}
+                  className="flex items-center gap-4 p-4 bg-white dark:bg-background rounded-lg border"
+                >
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      {index + 1}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium">{step.name}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        {step.type}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {step.description}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Badge
+                      variant={
+                        step.status === "Active" ? "default" : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {step.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {step.description}
-                  </p>
                 </div>
-                <div className="flex-shrink-0">
+              ))}
+            </div>
+          </DetailCard>
+
+          {/* Recent Runs */}
+          <DetailCard variant="warning">
+            <SectionHeader
+              title="Recent Executions"
+              icon={<Activity className="w-5 h-5" />}
+              variant="default"
+              className="mb-4"
+            />
+            <div className="space-y-3">
+              {flow.recentRuns.map((run) => (
+                <div
+                  key={run.id}
+                  className="flex items-center justify-between p-4 bg-white dark:bg-background rounded-lg border"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        run.status === "Success"
+                          ? "bg-green-500"
+                          : run.status === "Failed"
+                            ? "bg-red-500"
+                            : "bg-yellow-500"
+                      }`}
+                    ></div>
+                    <div>
+                      <div className="font-medium text-sm">
+                        {new Date(run.startTime).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Duration: {run.duration} • Processed:{" "}
+                        {run.itemsProcessed} items
+                      </div>
+                    </div>
+                  </div>
                   <Badge
-                    variant={step.status === "Active" ? "default" : "secondary"}
+                    variant={
+                      run.status === "Success"
+                        ? "default"
+                        : run.status === "Failed"
+                          ? "destructive"
+                          : "secondary"
+                    }
                     className="text-xs"
                   >
-                    {step.status}
+                    {run.status}
                   </Badge>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </DetailCard>
+        </TwoColumnGrid>
 
-        {/* Recent Runs */}
-        <div className="bg-amber-50/40 dark:bg-amber-950/20 rounded-xl p-6 border border-amber-200/60 dark:border-amber-800/60">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <Activity className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            Recent Executions
-          </h3>
-          <div className="space-y-3">
-            {flow.recentRuns.map((run) => (
-              <div
-                key={run.id}
-                className="flex items-center justify-between p-4 bg-white dark:bg-background rounded-lg border"
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      run.status === "Success"
-                        ? "bg-green-500"
-                        : run.status === "Failed"
-                          ? "bg-red-500"
-                          : "bg-yellow-500"
-                    }`}
-                  ></div>
-                  <div>
-                    <div className="font-medium text-sm">
-                      {new Date(run.startTime).toLocaleString()}
+        {/* Configuration Details with Custom Grid */}
+        <DetailCard variant="info">
+          <SectionHeader
+            title="Configuration Details"
+            icon={<Settings className="w-5 h-5" />}
+            variant="default"
+            className="mb-6"
+          />
+          <DetailGrid columns={4} gap="md" responsive={{ sm: 1, md: 2, lg: 4 }}>
+            {/* Input Sources */}
+            <DetailGridItem span={2}>
+              <div className="space-y-3">
+                <h4 className="font-medium text-base">Input Sources</h4>
+                <div className="space-y-2">
+                  {flow.configuration.inputSources.map((source) => (
+                    <div key={source} className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="text-sm">{source}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Duration: {run.duration} • Processed: {run.itemsProcessed}{" "}
-                      items
+                  ))}
+                </div>
+              </div>
+            </DetailGridItem>
+
+            {/* Output Destinations */}
+            <DetailGridItem span={2}>
+              <div className="space-y-3">
+                <h4 className="font-medium text-base">Output Destinations</h4>
+                <div className="space-y-2">
+                  {flow.configuration.outputDestinations.map((destination) => (
+                    <div key={destination} className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm">{destination}</span>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </DetailGridItem>
+
+            {/* Additional Configuration - Single column items */}
+            <DetailGridItem span={1}>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Retry Attempts</h4>
+                <div className="text-2xl font-bold text-purple-600">
+                  {flow.configuration.retryAttempts}
+                </div>
+                <div className="text-xs text-muted-foreground">attempts</div>
+              </div>
+            </DetailGridItem>
+
+            <DetailGridItem span={1}>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Timeout</h4>
+                <div className="text-2xl font-bold text-orange-600">
+                  {flow.configuration.timeout}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  max duration
+                </div>
+              </div>
+            </DetailGridItem>
+
+            {/* Schedule - Full width if exists */}
+            {flow.configuration.schedule && (
+              <DetailGridItem span={4}>
+                <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200/50 dark:border-purple-800/50">
+                  <h4 className="font-medium mb-2">Schedule Configuration</h4>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm">
+                      {flow.configuration.schedule}
+                    </span>
                   </div>
                 </div>
-                <Badge
-                  variant={
-                    run.status === "Success"
-                      ? "default"
-                      : run.status === "Failed"
-                        ? "destructive"
-                        : "secondary"
-                  }
-                  className="text-xs"
-                >
-                  {run.status}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Configuration Details */}
-        <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-xl p-6 border border-purple-200/50 dark:border-purple-800/50">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <Settings className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            Configuration Details
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium mb-3">Input Sources</h4>
-              <div className="space-y-2">
-                {flow.configuration.inputSources.map((source) => (
-                  <div key={source} className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                    <span className="text-sm">{source}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium mb-3">Output Destinations</h4>
-              <div className="space-y-2">
-                {flow.configuration.outputDestinations.map((destination) => (
-                  <div key={destination} className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                    <span className="text-sm">{destination}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+              </DetailGridItem>
+            )}
+          </DetailGrid>
+        </DetailCard>
       </div>
     </DetailPageWrapper>
   );

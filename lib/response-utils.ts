@@ -235,6 +235,21 @@ export function getErrorAction(error: BackendServiceError): {
 }
 
 /**
+ * Type guard that checks if a value is a BackendServiceError.
+ */
+export function isBackendServiceError(
+  error: unknown,
+): error is BackendServiceError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    "statusCode" in error &&
+    "message" in error
+  );
+}
+
+/**
  * Formats an error for logging purposes
  * @param error - Backend service error
  * @param includeStack - Whether to include stack trace
@@ -246,7 +261,7 @@ export function formatErrorForLogging(
 ): {
   level: "error" | "warn" | "info";
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 } {
   const level =
     error.severity === "critical"
@@ -257,7 +272,7 @@ export function formatErrorForLogging(
           ? "warn"
           : "info";
 
-  const metadata: Record<string, any> = {
+  const metadata: Record<string, unknown> = {
     error_code: error.code,
     severity: error.severity,
     status_code: error.statusCode,
@@ -371,7 +386,7 @@ export function transformFromLegacyFormat<T, L>(
  * @throws Error if validation fails
  */
 export function validateResponseStructure<T>(
-  response: any,
+  response: unknown,
   expectedFields?: (keyof T)[],
 ): asserts response is ConsistentApiResponse<T> {
   if (!isConsistentResponse(response)) {
@@ -379,8 +394,13 @@ export function validateResponseStructure<T>(
   }
 
   if (isSuccessResponse(response) && expectedFields) {
+    if (typeof response.data !== "object" || response.data === null) {
+      throw new Error("Response data is not an object");
+    }
+
+    const dataRecord = response.data as Record<PropertyKey, unknown>;
     const missingFields = expectedFields.filter(
-      (field) => !(field in response.data),
+      (field) => !(field in dataRecord),
     );
     if (missingFields.length > 0) {
       throw new Error(
@@ -435,7 +455,7 @@ export function trackResponseMetrics<T>(response: ConsistentApiResponse<T>): {
  * @returns Performance summary
  */
 export function createPerformanceSummary(
-  responses: ConsistentApiResponse<any>[],
+  responses: ConsistentApiResponse<unknown>[],
 ): {
   totalRequests: number;
   successfulRequests: number;
@@ -458,16 +478,16 @@ export function createPerformanceSummary(
         processingTimes.length
       : 0;
 
-  const errorDistribution = metrics
-    .filter((m) => m.isError && m.errorCode)
-    .reduce(
-      (dist, m) => {
-        const code = m.errorCode!;
+  const errorDistribution = metrics.reduce(
+    (dist, metric) => {
+      if (metric.isError && metric.errorCode) {
+        const code = metric.errorCode;
         dist[code] = (dist[code] || 0) + 1;
-        return dist;
-      },
-      {} as Record<string, number>,
-    );
+      }
+      return dist;
+    },
+    {} as Record<BackendErrorCode, number>,
+  );
 
   return {
     totalRequests: responses.length,

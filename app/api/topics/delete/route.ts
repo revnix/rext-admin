@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { generateRequestId } from "@/lib/response-utils";
+import { generateRequestId, isBackendServiceError } from "@/lib/response-utils";
 import type { BackendErrorCode } from "@/types/consistent-response";
 
 /**
@@ -147,12 +147,11 @@ export async function DELETE(request: NextRequest) {
     let errorRequestId = correlationId;
 
     // Handle various error types
-    if (error instanceof Error && "code" in error) {
-      const backendError = error as any;
-      errorCode = backendError.code;
-      errorMessage = backendError.message;
-      statusCode = backendError.statusCode || 500;
-      errorRequestId = backendError.requestId || correlationId;
+    if (isBackendServiceError(error)) {
+      errorCode = error.code;
+      errorMessage = error.message;
+      statusCode = error.statusCode || 500;
+      errorRequestId = error.requestId || correlationId;
 
       console.error("Topics delete API error:", {
         error_code: errorCode,
@@ -160,10 +159,19 @@ export async function DELETE(request: NextRequest) {
         endpoint: "/api/topics/delete",
         correlation_id: correlationId,
       });
-    } else {
-      // Handle unexpected errors
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+
       console.error("Topics delete API error (Unexpected):", {
-        error: error instanceof Error ? error.message : String(error),
+        error: error.message,
+        endpoint: "/api/topics/delete",
+        user_agent: request.headers.get("user-agent"),
+        correlation_id: correlationId,
+      });
+    } else {
+      // Handle non-Error throwables
+      console.error("Topics delete API error (Unexpected):", {
+        error: String(error),
         endpoint: "/api/topics/delete",
         user_agent: request.headers.get("user-agent"),
         correlation_id: correlationId,

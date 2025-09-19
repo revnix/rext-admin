@@ -16,7 +16,6 @@ import type {
   BackendTopicGenerationPayload,
   BackendTopicGenerationResponse,
   BackendValidationConfig,
-  EnhancedBackendConfig,
   ErrorRecoveryAction,
   GetTopicsResponse,
   SaveTopicResponse,
@@ -43,7 +42,6 @@ import type {
  */
 export class BackendService {
   private readonly config: BackendConfig;
-  private readonly enhancedConfig: EnhancedBackendConfig;
   private readonly validationConfig: BackendValidationConfig;
   private readonly activeRequests = new Map<string, AbortController>();
   private readonly requestDeduplicationMap = new Map<
@@ -77,7 +75,6 @@ export class BackendService {
   constructor(
     config?: Partial<BackendConfig>,
     validationConfig?: BackendValidationConfig,
-    enhancedConfig?: Partial<EnhancedBackendConfig>,
   ) {
     this.config = {
       baseUrl: process.env.BACKEND_API_URL || "http://127.0.0.1:2024",
@@ -96,23 +93,6 @@ export class BackendService {
       enableAutoFix: false,
       includeMetrics: false,
       ...validationConfig,
-    };
-
-    // Enhanced configuration for consistent response handling
-    this.enhancedConfig = {
-      ...this.config,
-      enableConsistentResponse: true,
-      requestCorrelation: {
-        includeRequestId: true,
-        requestIdHeader: "X-Request-ID",
-        generateRequestId: true,
-      },
-      responseMetadata: {
-        trackProcessingTime: true,
-        logMetadata: process.env.NODE_ENV === "development",
-        includeMetadataInErrors: true,
-      },
-      ...enhancedConfig,
     };
   }
 

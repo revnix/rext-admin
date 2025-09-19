@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { generateRequestId } from "@/lib/response-utils";
+import { generateRequestId, isBackendServiceError } from "@/lib/response-utils";
 import type { BackendErrorCode } from "@/types/consistent-response";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 
@@ -110,12 +110,11 @@ export async function POST(request: NextRequest) {
     let errorRequestId = correlationId;
 
     // Check if it's a BackendServiceError from the new consistent response system
-    if (error instanceof Error && "code" in error) {
-      const backendError = error as any;
-      errorCode = backendError.code;
-      errorMessage = backendError.message;
-      statusCode = backendError.statusCode || 500;
-      errorRequestId = backendError.requestId || correlationId;
+    if (isBackendServiceError(error)) {
+      errorCode = error.code;
+      errorMessage = error.message;
+      statusCode = error.statusCode || 500;
+      errorRequestId = error.requestId || correlationId;
 
       console.error("Topics generation API error:", {
         error_code: errorCode,
@@ -123,10 +122,18 @@ export async function POST(request: NextRequest) {
         endpoint: "/api/topics/generate",
         correlation_id: correlationId,
       });
-    } else {
-      // Handle unexpected errors
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+
       console.error("Topics generation API error (Unexpected):", {
-        error: error instanceof Error ? error.message : String(error),
+        error: error.message,
+        endpoint: "/api/topics/generate",
+        correlation_id: correlationId,
+      });
+    } else {
+      // Handle non-Error throwables
+      console.error("Topics generation API error (Unexpected):", {
+        error: String(error),
         endpoint: "/api/topics/generate",
         correlation_id: correlationId,
       });
