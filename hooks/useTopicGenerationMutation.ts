@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { generateRequestId } from "@/lib/response-utils";
 import { prepareFormDataForAPI } from "@/lib/topic-builder-utils";
 import { getErrorInfo } from "@/types/api";
@@ -68,6 +69,8 @@ interface TopicGenerationVariables {
  * ```
  */
 export function useTopicGenerationMutation() {
+  const generationLogger = logger.forComponent("useTopicGenerationMutation");
+
   return useMutation<
     TopicGenerationResponse,
     TopicGenerationError,
@@ -78,6 +81,11 @@ export function useTopicGenerationMutation() {
       formData,
       requestId = generateRequestId("topic_generation"),
     }): Promise<TopicGenerationResponse> => {
+      generationLogger.info("Starting topic generation", {
+        requestId,
+        topics_count_requested: formData.num_topics ?? 5,
+      });
+
       // Prepare form data for API
       const apiData = prepareFormDataForAPI(formData);
 
@@ -104,8 +112,7 @@ export function useTopicGenerationMutation() {
           fallback_available: responseData.fallback_available || false,
         };
 
-        // Enhanced error logging with correlation
-        console.error("Topic generation API error:", {
+        generationLogger.error("Topic generation API error", {
           error_code: errorResponse.error_code,
           status_code: response.status,
           request_id: errorResponse.request_id,
@@ -135,8 +142,7 @@ export function useTopicGenerationMutation() {
         }),
       );
 
-      // Enhanced response logging
-      console.log("Topic generation success:", {
+      generationLogger.info("Topic generation success", {
         topics_count: topicsWithIds.length,
         request_id: responseData.request_id,
         generation_time_ms: responseData.generation_time_ms,
@@ -152,9 +158,12 @@ export function useTopicGenerationMutation() {
       };
     },
 
+    // Enhanced mutation lifecycle with 2025 patterns
     onMutate: async ({ requestId }) => {
       const finalRequestId = requestId || generateRequestId("topic_generation");
-      console.log(`Starting topic generation request: ${finalRequestId}`);
+      generationLogger.debug("Starting topic generation request", {
+        requestId: finalRequestId,
+      });
       return { requestId: finalRequestId };
     },
 
@@ -162,7 +171,7 @@ export function useTopicGenerationMutation() {
       // Enhanced error handling with consistent format
       const errorInfo = getErrorInfo(error.error_code);
 
-      console.error("Topic generation failed:", {
+      generationLogger.error("Topic generation failed", {
         error_code: error.error_code,
         error_message: error.error,
         request_id: error.request_id,
@@ -190,9 +199,11 @@ export function useTopicGenerationMutation() {
     },
 
     onSuccess: (data, _variables, context) => {
-      console.log(
-        `✅ Successfully generated ${data.topics.length} topics in ${data.generation_time_ms || "unknown"}ms`,
+      generationLogger.info(
+        `Successfully generated ${data.topics.length} topics`,
         {
+          topics_count: data.topics.length,
+          generation_time_ms: data.generation_time_ms,
           request_id: data.request_id,
           correlation_id: context?.requestId,
           model_used: data.model_used,

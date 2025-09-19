@@ -279,7 +279,7 @@ return Math.round(weightedScore × 100);
 
 ### Usage in Application
 1. **TopicsPage**: `/app/topics/page.tsx` (lines 33-34)
-2. **Topics Hook**: `/hooks/use-topics.ts` (line 24)
+2. **Topics Data Fetching**: `/app/topics/data-access.ts` (server fetcher)
 3. **Testing**: `/__tests__/lib/topic-transformations.test.ts`
 
 ## Testing Strategy

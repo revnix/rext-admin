@@ -64,8 +64,8 @@ export const GeneratedTopicSchema = z.object({
   why_it_works: z.string().min(1),
   /** Categorization tags for the topic */
   tags: z.array(z.string()).default([]),
-  /** When the topic was generated (ISO string) */
-  generated_at: z.string().datetime().optional(),
+  /** When the topic was created in backend (ISO string, nullable) */
+  created_at: z.string().nullable(),
   /** Generation metadata */
   metadata: z
     .object({
@@ -544,9 +544,9 @@ export const createValidationReport = <T>(
 /**
  * Transforms a GeneratedTopic to SaveTopicItem format for backend API
  *
- * This is a basic transformation utility. For enhanced error handling,
- * performance metrics, and batch processing, use the utilities in
- * @see /lib/transformation-utils.ts
+ * This is a basic transformation utility used primarily in validation tests.
+ * For direct backend persistence, use `transformTopicForBackend` from
+ * `@/lib/transformation-utils`.
  *
  * @param topic - Frontend GeneratedTopic object
  * @returns SaveTopicItem formatted for backend API
@@ -556,15 +556,6 @@ export const createValidationReport = <T>(
  * ```typescript
  * // Basic transformation
  * const backendTopic = transformTopicForSaving(frontendTopic);
- *
- * // Enhanced transformation with error handling
- * import { transformTopicForSavingEnhanced } from '@/lib/transformation-utils';
- * const result = transformTopicForSavingEnhanced(frontendTopic);
- * if (result.success) {
- *   console.log('Transformed:', result.data);
- * } else {
- *   console.error('Error:', result.error.message);
- * }
  * ```
  */
 type BackendSaveTopicItem = BackendSaveTopicRequestList["topics"][number];
@@ -624,7 +615,7 @@ export const transformTopicForSaving = (
  *
  * This is a basic batch transformation utility. For enhanced error handling,
  * per-item error reporting, and performance optimization, use:
- * @see /lib/transformation-utils.ts - transformTopicsForSavingEnhanced()
+ * @see /lib/transformation-utils.ts - transformTopicsForBackend()
  *
  * @param topics - Array of frontend GeneratedTopic objects
  * @returns Array of SaveTopicItem formatted for backend API

@@ -137,7 +137,19 @@ export default function FlowsPage() {
   ];
 
   const columns = [
-    { key: "name", header: "Flow Name", width: "250px" },
+    {
+      key: "name",
+      header: "Flow Name",
+      width: "250px",
+      cell: (value: unknown, row: FlowData) => (
+        <Link
+          href={`/flows/${row.id}`}
+          className="font-medium text-foreground leading-tight hover:text-primary transition-colors"
+        >
+          {String(value || "")}
+        </Link>
+      ),
+    },
     { key: "status", header: "Status", width: "100px" },
     { key: "category", header: "Category", width: "150px" },
     { key: "trigger", header: "Trigger", width: "100px" },
@@ -173,20 +185,11 @@ export default function FlowsPage() {
     </div>
   );
 
-  const handleRowClick = (row: FlowData) => {
-    console.log("Clicked flow:", row);
-    // Navigate to flow detail page
-    window.location.href = `/flows/${row.id}`;
-  };
-
   const rowActions: RowAction<FlowData>[] = [
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: FlowData) => {
-        console.log("View flow:", row.name);
-        window.location.href = `/flows/${row.id}`;
-      },
+      href: (row: FlowData) => `/flows/${row.id}`,
     },
     {
       label: "Run Flow",
@@ -236,7 +239,6 @@ export default function FlowsPage() {
         emptyIcon={<Workflow className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search flows by name, category, status, trigger..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={["name", "category", "status", "trigger"]}

@@ -62,6 +62,21 @@ export interface TopicData extends BaseTableRow {
   updated?: string;
   author?: string;
   contentType?: string;
+  // Enhanced fields for full topic display
+  audience_fit?: string[];
+  channel_fit?: string[];
+  scores?: {
+    relevance: number;
+    seo_potential: number;
+    trend_level: number;
+    uniqueness: number;
+    reader_interest: number;
+    actionable_potential: number;
+    brand_alignment: number;
+    controversy: number;
+  };
+  angle?: string;
+  why_it_works?: string;
 }
 
 export interface ModelData extends BaseTableRow {
@@ -198,13 +213,16 @@ export interface RuleData extends BaseTableRow {
 export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
   label: string;
   icon?: React.ReactNode;
-  onClick: (row: T) => void;
+  onClick?: (row: T) => void;
+  href?: string | ((row: T) => string);
   variant?: "default" | "destructive";
   requiresConfirmation?: boolean;
   confirmationTitle?: string;
   confirmationDescription?: string;
   tooltip?: string;
   disabled?: boolean | ((row: T) => boolean);
+  showLabel?: boolean;
+  primary?: boolean;
 }
 
 // Legacy alias for backwards compatibility

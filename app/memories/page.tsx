@@ -161,10 +161,6 @@ export default function MemoriesPage() {
     </div>
   );
 
-  const handleRowClick = (row: MemoryData) => {
-    console.log("Clicked memory:", row);
-  };
-
   const rowActions: RowAction<MemoryData>[] = [
     {
       label: "View Details",
@@ -204,7 +200,6 @@ export default function MemoriesPage() {
         emptyIcon={<Brain className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search memories by title, category, type, tags..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={["title", "category", "type", "source", "tags"]}

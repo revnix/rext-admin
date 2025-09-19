@@ -161,10 +161,6 @@ export default function NotificationsPage() {
     </div>
   );
 
-  const handleRowClick = (row: NotificationData) => {
-    console.log("Clicked notification:", row);
-  };
-
   const rowActions: RowAction<NotificationData>[] = [
     {
       label: "View Details",
@@ -208,7 +204,6 @@ export default function NotificationsPage() {
         emptyIcon={<Bell className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search channels by name, type, platform, status..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={["name", "type", "platform", "status"]}

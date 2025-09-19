@@ -13,7 +13,7 @@
  * import type { BackendConfig, SaveTopicResponse } from '@/services';
  *
  * // Use the service
- * const topics = await backendService.getTopics();
+ * const response = await backendService.generateTopics(formData);
  *
  * // Import error utilities
  * import { classifyError, DEFAULT_RETRY_CONFIG } from '@/services';
@@ -30,7 +30,7 @@ export {
   shouldRetry,
 } from "@/lib/error-utils";
 // Export transformation utilities
-export { transformTopicsForDisplay } from "@/lib/topic-transformations";
+export { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
 // Re-export all backend-related types for convenience
 export type {
   APIErrorResponse,
@@ -43,7 +43,6 @@ export type {
   BackendTopicGenerationPayload,
   BackendTopicGenerationResponse,
   ErrorRecoveryAction,
-  GetTopicsResponse,
   RetryConfig,
   SaveTopicRequest,
   SaveTopicResponse,

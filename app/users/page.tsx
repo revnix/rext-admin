@@ -127,10 +127,6 @@ export default function UsersPage() {
     </div>
   );
 
-  const handleRowClick = (row: UserData) => {
-    console.log("Clicked user:", row);
-  };
-
   const rowActions: RowAction<UserData>[] = [
     {
       label: "View Profile",
@@ -170,7 +166,6 @@ export default function UsersPage() {
         emptyIcon={<UsersIcon className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search users by name, email, role, status..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={["name", "email", "role", "status"]}

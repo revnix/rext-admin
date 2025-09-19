@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
 import { generateRequestId } from "@/lib/response-utils";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
@@ -7,6 +8,10 @@ import { getErrorInfo } from "@/types/api";
 import type { BackendErrorCode } from "@/types/consistent-response";
 import type { TopicData } from "@/types/data-table";
 import type { GeneratedTopic } from "@/types/topic-builder";
+
+const topicSaveLogger = logger.forComponent("useTopicSaveMutation");
+const topicBulkSaveLogger = logger.forComponent("useTopicBulkSaveMutation");
+const topicDeleteLogger = logger.forComponent("useTopicDeleteMutation");
 
 /**
  * Enhanced response type for topic save operations with consistent format
@@ -119,7 +124,7 @@ export function useTopicSaveMutation() {
           fallback_available: responseData.fallback_available || false,
         };
 
-        console.error("Topic save API error:", {
+        topicSaveLogger.error("Topic save API error", {
           error_code: errorResponse.error_code,
           status_code: response.status,
           request_id: errorResponse.request_id,
@@ -129,7 +134,7 @@ export function useTopicSaveMutation() {
         throw errorResponse;
       }
 
-      console.log("Topic save success:", {
+      topicSaveLogger.info("Topic save success", {
         topic_id: topic.id,
         request_id: responseData.request_id,
         processing_time_ms: responseData.processing_time_ms,
@@ -144,7 +149,10 @@ export function useTopicSaveMutation() {
       // Optimistically mark the topic as saved
       optimisticallyMarkTopicSaved(topic.id);
 
-      console.log(`Optimistically saving topic: ${topic.id} (${requestId})`);
+      topicSaveLogger.debug("Optimistically saving topic", {
+        topic_id: topic.id,
+        request_id: requestId,
+      });
 
       return {
         topicId: topic.id,
@@ -160,7 +168,7 @@ export function useTopicSaveMutation() {
 
       const errorInfo = getErrorInfo(error.error_code);
 
-      console.error("Topic save failed:", {
+      topicSaveLogger.error("Topic save failed", {
         error_code: error.error_code,
         topic_id: topic.id,
         request_id: error.request_id,
@@ -193,7 +201,8 @@ export function useTopicSaveMutation() {
       // Invalidate topics queries to refetch updated data
       queryClient.invalidateQueries({ queryKey: ["topics"] });
 
-      console.log(`✅ Successfully saved topic: ${topic.id}`, {
+      topicSaveLogger.info("Topic saved", {
+        topic_id: topic.id,
         request_id: data.request_id,
         correlation_id: context?.requestId,
         processing_time_ms: data.processing_time_ms,
@@ -283,7 +292,7 @@ export function useBulkTopicSaveMutation() {
           fallback_available: responseData.fallback_available || false,
         };
 
-        console.error("Bulk topic save API error:", {
+        topicBulkSaveLogger.error("Bulk topic save API error", {
           error_code: errorResponse.error_code,
           status_code: response.status,
           request_id: errorResponse.request_id,
@@ -293,7 +302,7 @@ export function useBulkTopicSaveMutation() {
         throw errorResponse;
       }
 
-      console.log("Bulk topic save success:", {
+      topicBulkSaveLogger.info("Bulk topic save success", {
         total_attempted: responseData.total_attempted,
         successful_saves: responseData.successful_saves,
         failed_saves: responseData.failed_saves,
@@ -306,16 +315,17 @@ export function useBulkTopicSaveMutation() {
 
     onMutate: async (topics) => {
       const requestId = generateRequestId("topic_bulk_save");
-      console.log(
-        `Starting bulk save for ${topics.length} topics (${requestId})`,
-      );
+      topicBulkSaveLogger.debug("Starting bulk save", {
+        topics_count: topics.length,
+        request_id: requestId,
+      });
       return { requestId };
     },
 
     onError: (error, topics, context) => {
       const errorInfo = getErrorInfo(error.error_code);
 
-      console.error("Bulk topic save failed:", {
+      topicBulkSaveLogger.error("Bulk topic save failed", {
         error_code: error.error_code,
         topics_count: topics.length,
         request_id: error.request_id,
@@ -342,14 +352,13 @@ export function useBulkTopicSaveMutation() {
 
       queryClient.invalidateQueries({ queryKey: ["topics"] });
 
-      console.log(
-        `✅ Bulk save completed: ${data.successful_saves}/${data.total_attempted} topics saved`,
-        {
-          request_id: data.request_id,
-          correlation_id: context?.requestId,
-          processing_time_ms: data.processing_time_ms,
-        },
-      );
+      topicBulkSaveLogger.info("Bulk save completed", {
+        successful_saves: data.successful_saves,
+        total_attempted: data.total_attempted,
+        request_id: data.request_id,
+        correlation_id: context?.requestId,
+        processing_time_ms: data.processing_time_ms,
+      });
 
       if (data.failed_saves > 0) {
         toast.warning("Partial save success", {
@@ -408,7 +417,7 @@ export function useTopicDeleteMutation() {
           fallback_available: responseData.fallback_available || false,
         };
 
-        console.error("Topic delete API error:", {
+        topicDeleteLogger.error("Topic delete API error", {
           error_code: errorResponse.error_code,
           status_code: response.status,
           request_id: errorResponse.request_id,
@@ -418,7 +427,7 @@ export function useTopicDeleteMutation() {
         throw errorResponse;
       }
 
-      console.log("Topic delete success:", {
+      topicDeleteLogger.info("Topic delete success", {
         deleted_count: responseData.deleted_count,
         failed_count: responseData.failed_count,
         request_id: responseData.request_id,
@@ -437,9 +446,10 @@ export function useTopicDeleteMutation() {
         return old.filter((topic) => !topicIds.includes(topic.id));
       });
 
-      console.log(
-        `Optimistically deleting ${topicIds.length} topics (${requestId})`,
-      );
+      topicDeleteLogger.debug("Optimistically deleting topics", {
+        topics_count: topicIds.length,
+        request_id: requestId,
+      });
 
       return { requestId };
     },
@@ -450,7 +460,7 @@ export function useTopicDeleteMutation() {
 
       const errorInfo = getErrorInfo(error.error_code);
 
-      console.error("Topic delete failed:", {
+      topicDeleteLogger.error("Topic delete failed", {
         error_code: error.error_code,
         topic_ids: topicIds,
         request_id: error.request_id,
@@ -468,14 +478,13 @@ export function useTopicDeleteMutation() {
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["topics"] });
 
-      console.log(
-        `✅ Successfully deleted ${data.deleted_count}/${data.total_requested} topics`,
-        {
-          request_id: data.request_id,
-          correlation_id: context?.requestId,
-          processing_time_ms: data.processing_time_ms,
-        },
-      );
+      topicDeleteLogger.info("Topics deleted", {
+        deleted_count: data.deleted_count,
+        total_requested: data.total_requested,
+        request_id: data.request_id,
+        correlation_id: context?.requestId,
+        processing_time_ms: data.processing_time_ms,
+      });
 
       if (data.failed_count > 0) {
         toast.warning("Partial deletion success", {

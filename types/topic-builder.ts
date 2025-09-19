@@ -134,6 +134,8 @@ export interface GeneratedTopic {
   };
   /** Categorization tags for the topic */
   tags: string[];
+  /** When the topic was created in backend (ISO string, nullable) */
+  created_at: string | null;
   /** Whether the topic has been saved to user's library */
   is_saved?: boolean;
   /** Optimistic UI state: marks topic as saved while API call is in progress */

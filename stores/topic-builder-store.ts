@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type {
   CurrentStep,
   GeneratedTopic,
@@ -20,10 +20,6 @@ interface TopicBuilderState {
   currentStep: CurrentStep;
   stepHistory: StepHistory;
   stepValidation: Record<CurrentStep, ValidationResult>;
-
-  // Legacy step tracking (for backward compatibility)
-  currentStepNumber: number;
-  visitedSteps: Set<number>;
 
   // Form state
   formData: Partial<TopicBuilderFormData>;
@@ -53,10 +49,6 @@ interface TopicBuilderState {
 
   // Form data actions
   updateFormData: (data: Partial<TopicBuilderFormData>) => void;
-
-  // Legacy actions (for backward compatibility)
-  setCurrentStepNumber: (step: number) => void;
-  setVisitedSteps: (steps: Set<number>) => void;
 
   // UI state actions
   setIsGenerating: (generating: boolean) => void;
@@ -130,10 +122,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         currentStep: "wizard-mode" as CurrentStep,
         stepHistory: initialStepHistory,
         stepValidation: initialStepValidation,
-
-        // Legacy initial state (for backward compatibility)
-        currentStepNumber: 1,
-        visitedSteps: new Set([1]),
 
         // Form state
         formData: initialFormData,
@@ -217,26 +205,10 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
           }));
         },
 
-        // Legacy action (for backward compatibility)
-        setCurrentStepNumber: (step) => {
-          const { visitedSteps } = get();
-          const newVisitedSteps = new Set(visitedSteps);
-          newVisitedSteps.add(step);
-
-          set({
-            currentStepNumber: step,
-            visitedSteps: newVisitedSteps,
-          });
-        },
-
         updateFormData: (data) => {
           set((state) => ({
             formData: { ...state.formData, ...data },
           }));
-        },
-
-        setVisitedSteps: (steps) => {
-          set({ visitedSteps: steps });
         },
 
         setIsGenerating: (generating) => {
@@ -295,10 +267,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             currentStep: "wizard-mode" as CurrentStep,
             stepHistory: initialStepHistory,
             stepValidation: initialStepValidation,
-
-            // Legacy state reset (for backward compatibility)
-            currentStepNumber: 1,
-            visitedSteps: new Set([1]),
 
             // Form and UI state reset
             formData: initialFormData,
@@ -360,13 +328,8 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         // setToneRecommendations removed as ToneType is deprecated
 
         updateContextualSuggestions: () => {
-          const { formData } = get();
           // This method can be used to trigger updates based on current form data
           // The actual suggestion logic is handled by the useContextualSuggestions hook
-          console.log("🔄 Contextual suggestions updated for:", {
-            industry: formData.industry,
-            purpose: formData.purpose,
-          });
         },
 
         resetContextualSuggestions: () => {
@@ -379,38 +342,16 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
       }),
       {
         name: "topic-builder-store",
-        // Only persist form data and current step for draft saving
+        // Modern 2025 pattern: Only persist form data and current step for draft saving
         partialize: (state) => ({
           currentStep: state.currentStep,
+          stepHistory: state.stepHistory,
           formData: state.formData,
-          visitedSteps: Array.from(state.visitedSteps), // Convert Set to Array for JSON
         }),
-        // Custom storage to handle Set serialization
-        storage: {
-          getItem: (name) => {
-            const str = localStorage.getItem(name);
-            if (!str) return null;
-
-            const parsed = JSON.parse(str);
-            // Convert visitedSteps array back to Set
-            if (parsed.state?.visitedSteps) {
-              parsed.state.visitedSteps = new Set(parsed.state.visitedSteps);
-            }
-            return parsed;
-          },
-          setItem: (name, value) => {
-            // Convert Set to Array for JSON serialization
-            const serialized = {
-              ...value,
-              state: {
-                ...value.state,
-                visitedSteps: Array.from(value.state.visitedSteps || []),
-              },
-            };
-            localStorage.setItem(name, JSON.stringify(serialized));
-          },
-          removeItem: (name) => localStorage.removeItem(name),
-        },
+        // Modern createJSONStorage for better performance and reliability
+        storage: createJSONStorage(() => localStorage),
+        // Enhanced hydration control for SSR compatibility
+        skipHydration: false,
       },
     ),
     {

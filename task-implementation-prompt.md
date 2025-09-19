@@ -1,13 +1,10 @@
 Task Implementation
 
-- Task ID: 39
-- Subtask ID: 39.1, 39.2, 39.3
-- Related plan files: `@features-requirements-plan.md`
+- Task ID: 6
 
 Authoritative references
 
-- Codebase: `src/app/**` 
-- Plan, Context and Questions: `@features-requirements-plan.md`
+- Codebase: `wrext-admin/app/**` 
 - Latest official docs (read before each implementation): Next.js App Router, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form
 
 Project guardrails (must follow)
@@ -24,7 +21,6 @@ Workflow
 
 1. Discovery (read-only)
    - Retrieve the task/subtask details from Taskmaster and read any linked context.
-   - Read the relevant `@features-requirements-plan.md` plan to confirm constraints and acceptance criteria.
    - Explore the exact files to be changed (APIs, services, db schema/migrations, auth, types). Quote small snippets and line ranges where helpful.
    - Consult latest docs (Next.js, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form) to validate patterns and APIs you will use.
 

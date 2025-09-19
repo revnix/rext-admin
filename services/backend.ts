@@ -6,6 +6,7 @@ import {
   sanitizeErrorForLogging,
   shouldRetry,
 } from "@/lib/error-utils";
+import { logger } from "@/lib/logger";
 import { transformTopicsForBackend } from "@/lib/transformation-utils";
 import type {
   BackendConfig,
@@ -17,7 +18,6 @@ import type {
   BackendTopicGenerationResponse,
   BackendValidationConfig,
   ErrorRecoveryAction,
-  GetTopicsResponse,
   SaveTopicResponse,
   ValidationError,
 } from "@/types/backend";
@@ -30,7 +30,6 @@ import {
   createUserFriendlyErrors,
   extractValidationErrors,
   GeneratedTopicSchema,
-  GetTopicsResponseSchema,
 } from "@/types/schemas";
 import type {
   GeneratedTopic,
@@ -42,6 +41,7 @@ import type {
  */
 export class BackendService {
   private readonly config: BackendConfig;
+  private readonly log = logger.forComponent("BackendService");
   private readonly validationConfig: BackendValidationConfig;
   private readonly activeRequests = new Map<string, AbortController>();
   private readonly requestDeduplicationMap = new Map<
@@ -160,7 +160,7 @@ export class BackendService {
       const dedupeKey = this.createDeduplicationKey(payload);
       const existingRequest = this.requestDeduplicationMap.get(dedupeKey);
       if (existingRequest) {
-        console.log("Using deduplicated request for:", requestId);
+        this.log.debug("Using deduplicated request", { requestId });
         return existingRequest;
       }
 
@@ -271,9 +271,11 @@ export class BackendService {
 
       const result = await response.json();
 
-      console.log(
-        `✅ Successfully deleted ${result.deleted_count || topicIds.length} topics via Next.js API`,
-      );
+      this.log.info("Successfully deleted topics via Next.js API", {
+        requestId,
+        deleted_count: result.deleted_count || topicIds.length,
+        topic_ids: topicIds,
+      });
 
       return {
         success: result.success || true,
@@ -290,111 +292,6 @@ export class BackendService {
   }
 
   /**
-   * Retrieve all saved topics from the Next.js API route (which proxies to backend)
-   *
-   * @returns Promise resolving to all saved topics and total count
-   * @throws {BackendError} When the retrieval operation fails after all retry attempts
-   *
-   * @example
-   * ```typescript
-   * const response = await backendService.getTopics();
-   * console.log(`Found ${response.total_count} saved topics`);
-   * response.topics.forEach(topic => console.log(topic.title));
-   * ```
-   */
-  async getTopics(): Promise<GetTopicsResponse> {
-    const requestId = generateRequestId();
-
-    try {
-      const response = await fetch("/api/topics", {
-        method: "GET",
-        headers: {
-          "X-Request-ID": requestId,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Unknown error" }));
-        throw new Error(
-          errorData.error ||
-            `API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const result = await response.json();
-
-      if (this.validationConfig.skipOutputValidation) {
-        console.log(
-          "⚠️  Skipping output validation for getTopics (disabled in config)",
-        );
-        return {
-          topics: result.topics || [],
-          total_count: (result.topics || []).length,
-        };
-      }
-
-      // Validate response structure with Zod
-      const validationResult = GetTopicsResponseSchema.safeParse(result);
-
-      if (!validationResult.success) {
-        const validationError: ValidationError = {
-          type: "validation_error",
-          message: "Get topics response validation failed",
-          statusCode: 422,
-          severity: "high",
-          recoveryActions: [
-            "retry_with_changes",
-            "contact_support",
-            "reload_page",
-          ],
-          isRetryable: false,
-          requestId,
-          timestamp: new Date().toISOString(),
-          validationIssues: validationResult.error.issues,
-          originalData: result,
-          stage: "output",
-          context: {
-            endpoint: "get_topics",
-            expectedSchema: "GetTopicsResponse",
-          },
-        };
-
-        console.error("🔴 Get topics response validation failed:", {
-          requestId,
-          issues: extractValidationErrors(validationResult.error),
-          friendlyErrors: createUserFriendlyErrors(
-            extractValidationErrors(validationResult.error),
-          ),
-        });
-
-        throw validationError;
-      }
-
-      const dataWithTotals = validationResult.data as {
-        total_count?: number;
-        topics: Array<unknown>;
-      };
-      const validatedResponse = {
-        ...validationResult.data,
-        total_count: dataWithTotals.total_count ?? dataWithTotals.topics.length,
-        request_id: requestId,
-      };
-
-      console.log(
-        `✅ Successfully validated and fetched ${validatedResponse.topics.length} topics via Next.js API`,
-      );
-
-      return validatedResponse;
-    } catch (error) {
-      const classifiedError = classifyError(error, requestId);
-      this.logError(`Failed to fetch topics via Next.js API`, classifiedError);
-      throw classifiedError;
-    }
-  }
-
-  /**
    * Execute request with retry logic
    */
   private async executeWithRetry(
@@ -406,9 +303,12 @@ export class BackendService {
 
     for (let attempt = 1; attempt <= this.config.retry.maxAttempts; attempt++) {
       try {
-        console.log(
-          `[${requestId}] Attempt ${attempt}/${this.config.retry.maxAttempts}`,
-        );
+        this.log.debug("Request attempt", {
+          requestId,
+          attempt,
+          max_attempts: this.config.retry.maxAttempts,
+          endpoint,
+        });
 
         const response = await this.makeRequest(endpoint, payload, requestId);
         const result = await this.validateResponse(response, requestId);
@@ -433,7 +333,10 @@ export class BackendService {
         // Wait before retrying (except on last attempt)
         if (attempt < this.config.retry.maxAttempts) {
           const delay = calculateRetryDelay(attempt, this.config.retry);
-          console.log(`[${requestId}] Waiting ${delay}ms before retry`);
+          this.log.debug("Waiting before retry", {
+            requestId,
+            delay_ms: delay,
+          });
           await this.delay(delay);
         }
       }
@@ -576,7 +479,9 @@ export class BackendService {
     const result = await response.json();
 
     if (this.validationConfig.skipOutputValidation) {
-      console.log("⚠️  Skipping output validation (disabled in config)");
+      this.log.warn("Skipping output validation (disabled in config)", {
+        requestId,
+      });
       return result as BackendTopicGenerationResponse;
     }
 
@@ -618,7 +523,7 @@ export class BackendService {
       };
 
       // Log detailed validation errors
-      console.error("🔴 Backend response validation failed:", {
+      this.log.error("Backend response validation failed", {
         requestId,
         issues: extractValidationErrors(validationResult.error),
         friendlyErrors: createUserFriendlyErrors(
@@ -652,10 +557,11 @@ export class BackendService {
     }
 
     if (invalidTopics.length > 0) {
-      console.warn(
-        "⚠️  Some topics failed individual validation:",
-        invalidTopics,
-      );
+      this.log.warn("Some topics failed individual validation", {
+        requestId,
+        invalid_topics: invalidTopics,
+        count: invalidTopics.length,
+      });
 
       if (!this.validationConfig.continueOnWarnings) {
         const validationError: ValidationError = {
@@ -676,9 +582,12 @@ export class BackendService {
       }
     }
 
-    console.log(
-      `✅ Successfully validated ${validatedResponse.topics.length} topics (${invalidTopics.length} warnings) in ${validatedResponse.generation_time_ms || "unknown"}ms`,
-    );
+    this.log.info("Successfully validated topics", {
+      requestId,
+      topics_count: validatedResponse.topics.length,
+      warnings_count: invalidTopics.length,
+      generation_time_ms: validatedResponse.generation_time_ms || null,
+    });
 
     return validatedResponse;
   }
@@ -696,9 +605,12 @@ export class BackendService {
 
     for (let attempt = 1; attempt <= this.config.retry.maxAttempts; attempt++) {
       try {
-        console.log(
-          `[${requestId}] Attempt ${attempt}/${this.config.retry.maxAttempts}`,
-        );
+        this.log.debug("Generic request attempt", {
+          requestId,
+          attempt,
+          max_attempts: this.config.retry.maxAttempts,
+          endpoint,
+        });
 
         const response = await this.makeGenericRequest(
           endpoint,
@@ -728,7 +640,10 @@ export class BackendService {
         // Wait before retrying (except on last attempt)
         if (attempt < this.config.retry.maxAttempts) {
           const delay = calculateRetryDelay(attempt, this.config.retry);
-          console.log(`[${requestId}] Waiting ${delay}ms before retry`);
+          this.log.debug("Waiting before retry", {
+            requestId,
+            delay_ms: delay,
+          });
           await this.delay(delay);
         }
       }
@@ -828,7 +743,7 @@ export class BackendService {
           (isSuccess ? "Topics saved successfully" : "Failed to save topics"),
       };
 
-      console.log("Transformed external API response:", {
+      this.log.debug("Transformed external API response", {
         original: result,
         transformed: transformedResult,
       });
@@ -949,18 +864,15 @@ export class BackendService {
   private logError(context: string, error: BackendError | unknown): void {
     if (error && typeof error === "object" && "type" in error) {
       const sanitized = sanitizeErrorForLogging(error as BackendError);
-      console.error(`[BackendService] ${context}:`, {
+      this.log.error(context, {
         ...sanitized,
-        context: context,
         userAgent:
           typeof navigator !== "undefined" ? navigator.userAgent : undefined,
         url: typeof window !== "undefined" ? window.location.href : undefined,
       });
     } else {
-      console.error(`[BackendService] ${context}:`, {
+      this.log.error(context, {
         error: String(error),
-        timestamp: new Date().toISOString(),
-        context,
       });
     }
   }

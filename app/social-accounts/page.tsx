@@ -171,10 +171,6 @@ export default function SocialAccountsPage() {
     </div>
   );
 
-  const handleRowClick = (row: SocialAccountData) => {
-    console.log("Clicked row:", row);
-  };
-
   const rowActions: RowAction<SocialAccountData>[] = [
     {
       label: "Configure",
@@ -218,7 +214,6 @@ export default function SocialAccountsPage() {
         emptyIcon={<Share2 className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search accounts by platform, handle, status..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={["platform", "account", "status"]}

@@ -147,10 +147,6 @@ export default function RulesPage() {
     </div>
   );
 
-  const handleRowClick = (row: RuleData) => {
-    console.log("Clicked rule:", row);
-  };
-
   const rowActions: RowAction<RuleData>[] = [
     {
       label: "View Details",
@@ -195,7 +191,6 @@ export default function RulesPage() {
         emptyIcon={<Shield className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search rules by name, category, status, author..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={["name", "category", "status", "priority", "author"]}

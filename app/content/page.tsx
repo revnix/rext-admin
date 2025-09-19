@@ -174,7 +174,19 @@ export default function ContentPage() {
   ];
 
   const columns = [
-    { key: "title", header: "Title", width: "300px" },
+    {
+      key: "title",
+      header: "Title",
+      width: "300px",
+      cell: (value: unknown, row: ContentData) => (
+        <Link
+          href={`/content/${row.id}`}
+          className="font-medium text-foreground leading-tight hover:text-primary transition-colors"
+        >
+          {String(value || "")}
+        </Link>
+      ),
+    },
     { key: "type", header: "Type", width: "120px" },
     { key: "status", header: "Status", width: "100px" },
     { key: "publishedTo", header: "Published To", width: "120px" },
@@ -210,20 +222,11 @@ export default function ContentPage() {
     </div>
   );
 
-  const handleRowClick = (row: ContentData) => {
-    console.log("Clicked content:", row);
-    // Navigate to content detail page
-    window.location.href = `/content/${row.id}`;
-  };
-
   const rowActions: RowAction<ContentData>[] = [
     {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: ContentData) => {
-        console.log("View content:", row.title);
-        window.location.href = `/content/${row.id}`;
-      },
+      href: (row: ContentData) => `/content/${row.id}`,
       tooltip: "View content details",
     },
     {
@@ -272,7 +275,6 @@ export default function ContentPage() {
         emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
         searchPlaceholder="Search content by title, type, status, platform..."
         actions={tableActions}
-        onRowClick={handleRowClick}
         rowActions={rowActions}
         pageSize={10}
         searchFields={[

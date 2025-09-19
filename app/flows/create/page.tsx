@@ -51,6 +51,7 @@ function CreateFlowContent() {
           },
           audience_fit: [`audience-${index + 1}`, `target-group-${id}`],
           channel_fit: [`blog`, `social-media`],
+          created_at: null, // Mock data represents newly generated topics
           is_saved: false,
         }));
 
