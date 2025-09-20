@@ -18,8 +18,7 @@ describe("BackendService deleteTopics", () => {
       timeout: 5000,
     });
 
-    // Mock environment variable
-    process.env.NEXT_PUBLIC_CONTENT_API_KEY = "test-api-key";
+    // API key authentication handled by backend - no client-side key needed
   });
 
   afterEach(() => {

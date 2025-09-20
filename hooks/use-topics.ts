@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:2024";
-const API_KEY = process.env.NEXT_PUBLIC_CONTENT_API_KEY || "supersecretapikey";
+// Backend URL for client-side requests (safe to expose)
+const BACKEND_URL = "http://localhost:2024";
+// API key will be handled server-side or through secure authentication
 
 const topicsLogger = logger.forComponent("useTopics");
 
@@ -24,7 +24,7 @@ export function useTopics() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "content-api-key": API_KEY,
+          // API key authentication will be handled by backend or auth middleware
         },
       });
 
@@ -73,7 +73,7 @@ export function useTopic(id: string) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "content-api-key": API_KEY,
+          // API key authentication will be handled by backend or auth middleware
         },
       });
 

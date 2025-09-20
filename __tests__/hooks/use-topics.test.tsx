@@ -11,9 +11,7 @@ import { useTopic, useTopics } from "@/hooks/use-topics";
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock environment variables
-process.env.NEXT_PUBLIC_BACKEND_API_URL = "http://localhost:2024";
-process.env.NEXT_PUBLIC_CONTENT_API_KEY = "test-api-key";
+// Mock environment variables - backend URL is safe to expose, API key handled server-side
 
 // Test wrapper with QueryClient
 function createWrapper() {

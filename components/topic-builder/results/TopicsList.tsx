@@ -14,8 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
-import { TopicsTable } from "./TopicsTable";
 import { TopicsHeader } from "./TopicsHeader";
+import { TopicsTable } from "./TopicsTable";
 
 // Lazy load TopicDetailDrawer for better performance
 const TopicDetailDrawer = lazy(() =>

@@ -481,7 +481,7 @@ export async function proxyToBackend(
 ): Promise<Response> {
   const {
     apiUrl = process.env.BACKEND_API_URL || "http://localhost:2024",
-    apiKey = process.env.CONTENT_API_KEY || "supersecretapikey",
+    apiKey = process.env.CONTENT_API_KEY,
     timeout = 30000,
   } = options;
 
@@ -494,7 +494,7 @@ export async function proxyToBackend(
       headers: {
         "Content-Type": "application/json",
         "X-Request-ID": requestId,
-        "content-api-key": apiKey,
+        ...(apiKey && { "content-api-key": apiKey }),
         ...Object.fromEntries(
           [...request.headers.entries()].filter(([key]) =>
             ["authorization", "x-api-key"].includes(key.toLowerCase()),

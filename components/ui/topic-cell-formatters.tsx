@@ -6,7 +6,6 @@
  * data types including status, priority, tags, scores, and dates.
  */
 
-import { Users } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useId } from "react";
 import { Badge } from "@/components/ui/badge";

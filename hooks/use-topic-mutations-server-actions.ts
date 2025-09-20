@@ -3,13 +3,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  approveTopic,
-  updateTopic,
-  type UpdateTopicData,
   deleteTopic,
   deleteTopics,
   type SaveTopicData,
   saveTopic,
+  type UpdateTopicData,
+  updateTopic,
 } from "@/app/topics/actions";
 import { logger } from "@/lib/logger";
 import type { TopicData } from "@/types/data-table";

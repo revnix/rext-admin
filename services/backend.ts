@@ -328,17 +328,12 @@ export class BackendService {
     }, this.config.timeout);
 
     try {
-      const contentApiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
-      if (!contentApiKey) {
-        throw new Error("CONTENT_API_KEY environment variable is not set");
-      }
-
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          "content-api-key": contentApiKey,
+          // API key authentication handled by backend or auth middleware
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -655,17 +650,12 @@ export class BackendService {
     }, this.config.timeout);
 
     try {
-      const contentApiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
-      if (!contentApiKey) {
-        throw new Error("CONTENT_API_KEY environment variable is not set");
-      }
-
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          "content-api-key": contentApiKey,
+          // API key authentication handled by backend or auth middleware
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -793,11 +783,8 @@ export class BackendService {
       );
     }
 
-    if (!process.env.NEXT_PUBLIC_CONTENT_API_KEY) {
-      throw new Error(
-        "Content API key is not configured. Please set NEXT_PUBLIC_CONTENT_API_KEY environment variable.",
-      );
-    }
+    // API key authentication is handled by backend or auth middleware
+    // No client-side API key validation needed
   }
 
   /**

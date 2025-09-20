@@ -45,9 +45,9 @@ export const TopicsTable = memo(function TopicsTable({
   newlyAddedTopicIds = [],
   onTopicSelect,
   onTopicSave,
-  onNavigateToContent,
-  onViewDetails,
-  onCopyTopic,
+  onNavigateToContent: _onNavigateToContent,
+  onViewDetails: _onViewDetails,
+  onCopyTopic: _onCopyTopic,
 }: TopicsTableProps) {
   // Transform topics data to include selection state
   const tableData: TopicTableRow[] = useMemo(() => {
@@ -96,7 +96,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "selected",
       header: "",
       width: "50px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="flex items-center justify-center">
           <input
             type="checkbox"
@@ -116,7 +116,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "title",
       header: "Topic",
       width: "320px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="space-y-1">
           <div className="font-semibold text-sm line-clamp-2 pr-2">
             {row.title}
@@ -137,7 +137,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "channel_fit",
       header: "Channel Fit",
       width: "150px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="flex flex-wrap gap-1">
           {row.channel_fit.slice(0, 2).map((channel) => (
             <Badge
@@ -161,7 +161,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "audience_fit",
       header: "Audience Fit",
       width: "150px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="flex flex-wrap gap-1">
           {row.audience_fit.slice(0, 2).map((audience) => (
             <Badge
@@ -185,7 +185,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "tags",
       header: "Tags",
       width: "120px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="flex flex-wrap gap-1">
           {row.tags.slice(0, 2).map((tag) => (
             <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5">
@@ -205,7 +205,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "scores",
       header: "Overall Score",
       width: "120px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="flex items-center justify-center">
           <CircularProgress
             value={calculateOverallScore(row.scores)}
@@ -220,7 +220,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "created_at",
       header: "Generated",
       width: "120px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="text-sm text-muted-foreground">
           {formatCreatedDate(row.created_at)}
         </div>
@@ -231,7 +231,7 @@ export const TopicsTable = memo(function TopicsTable({
       key: "is_saved",
       header: "Status",
       width: "80px",
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <div className="flex items-center justify-center">
           {(row._optimisticSaved || row.is_saved) && (
             <Tooltip>
@@ -308,7 +308,7 @@ export const TopicsTable = memo(function TopicsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tableData.map((row, index) => (
+            {tableData.map((row, _index) => (
               <TableRow
                 key={row.id}
                 className={getRowClassName(row)}
@@ -335,6 +335,7 @@ export const TopicsTable = memo(function TopicsTable({
                         <Tooltip key={`action-${action.label}-${actionIndex}`}>
                           <TooltipTrigger asChild>
                             <button
+                              type="button"
                               className={cn(
                                 "inline-flex h-8 px-2 gap-1 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                                 action.primary &&

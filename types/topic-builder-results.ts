@@ -5,7 +5,6 @@
 
 import type { GeneratedTopic } from "./topic-builder";
 
-
 // Topics List
 export interface TopicsListProps {
   topics: GeneratedTopic[];
@@ -70,7 +69,6 @@ export interface TopicsHeaderProps {
   onBulkSave?: (topicIds: string[]) => void;
   onClearSelection?: () => void;
 }
-
 
 // Empty States
 export interface EmptyStatesProps {
