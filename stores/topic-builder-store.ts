@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type {
@@ -7,6 +8,20 @@ import type {
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
+
+// SSR-safe storage implementation
+const getStorage = () => {
+  // SSR guard - only access localStorage on client-side
+  if (typeof window === "undefined") {
+    // Return a no-op storage for SSR
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  return localStorage;
+};
 
 /**
  * Topic Builder Store Interface
@@ -74,6 +89,10 @@ interface TopicBuilderState {
   // setToneRecommendations removed as ToneType is deprecated
   updateContextualSuggestions: () => void;
   resetContextualSuggestions: () => void;
+
+  // SSR hydration state
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
 }
 
 /**
@@ -140,6 +159,9 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         contextualSuggestions: {
           audienceByIndustry: [],
         },
+
+        // SSR hydration state
+        _hasHydrated: false,
 
         // TypeForm wizard actions
         setCurrentStep: (step: CurrentStep) => {
@@ -339,6 +361,11 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             },
           });
         },
+
+        // SSR hydration actions
+        setHasHydrated: (state: boolean) => {
+          set({ _hasHydrated: state });
+        },
       }),
       {
         name: "topic-builder-store",
@@ -348,10 +375,21 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
           stepHistory: state.stepHistory,
           formData: state.formData,
         }),
-        // Modern createJSONStorage for better performance and reliability
-        storage: createJSONStorage(() => localStorage),
+        // SSR-safe storage with guard
+        storage: createJSONStorage(() => getStorage()),
         // Enhanced hydration control for SSR compatibility
         skipHydration: false,
+        onRehydrateStorage: (_state) => {
+          console.log("Hydration starts for topic-builder-store");
+          return (state, error) => {
+            if (error) {
+              console.error("An error happened during hydration:", error);
+            } else {
+              console.log("Hydration finished for topic-builder-store");
+              state?.setHasHydrated(true);
+            }
+          };
+        },
       },
     ),
     {
@@ -359,3 +397,25 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
     },
   ),
 );
+
+/**
+ * Hydration-aware hook for React 19 compatibility
+ *
+ * This hook ensures that Zustand store values are not accessed before hydration
+ * is complete, preventing SSR mismatches and hydration errors.
+ *
+ * @param selector - Function to select specific state from the store
+ * @returns Selected state value or undefined if not yet hydrated
+ */
+export const useHydratedTopicBuilderStore = <T>(
+  selector: (state: TopicBuilderState) => T,
+): T | undefined => {
+  const [hydrated, setHydrated] = useState(false);
+  const state = useTopicBuilderStore(selector);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  return hydrated ? state : undefined;
+};
