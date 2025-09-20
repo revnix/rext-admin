@@ -88,7 +88,7 @@ export class BackendService {
 
     this.validationConfig = {
       skipInputValidation: false,
-      skipOutputValidation: true, // Temporarily disable to debug
+      skipOutputValidation: false, // Enable validation safety net
       continueOnWarnings: true,
       enableAutoFix: false,
       includeMetrics: false,
