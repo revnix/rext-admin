@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
-import { TopicsGrid } from "./TopicsGrid";
+import { TopicsTable } from "./TopicsTable";
 import { TopicsHeader } from "./TopicsHeader";
 
 // Lazy load TopicDetailDrawer for better performance
@@ -220,10 +220,9 @@ export const TopicsList = memo(function TopicsList({
       />
 
       {/* Topics Display */}
-      <TopicsGrid
+      <TopicsTable
         topics={sortedTopics}
         selectedTopicIds={selectedTopicIds}
-        viewMode="table"
         newlyAddedTopicIds={newlyAddedTopicIds}
         onTopicSelect={handleTopicSelect}
         onTopicSave={handleTopicSave}
