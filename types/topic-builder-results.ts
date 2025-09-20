@@ -5,8 +5,8 @@
 
 import type { GeneratedTopic } from "./topic-builder";
 
-// View Mode (simplified - only grid used now)
-export type ViewMode = "grid" | "list";
+// View Mode (table format is now the default)
+export type ViewMode = "grid" | "list" | "table";
 
 // Topics List
 export interface TopicsListProps {

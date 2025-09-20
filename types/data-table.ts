@@ -77,6 +77,7 @@ export interface TopicData extends BaseTableRow {
   };
   angle?: string;
   why_it_works?: string;
+  approved?: boolean;
 }
 
 export interface ModelData extends BaseTableRow {

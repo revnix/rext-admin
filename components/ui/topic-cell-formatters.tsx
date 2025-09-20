@@ -6,7 +6,7 @@
  * data types including status, priority, tags, scores, and dates.
  */
 
-import { FolderOpen, Tag, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useId } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -97,45 +97,33 @@ export function TagsList({
   const tags = formatTagsArray(value as string[]);
 
   if (tags.length === 0) {
-    return <span className="text-muted-foreground">--</span>;
+    return <span className="text-muted-foreground text-xs">--</span>;
   }
 
-  // Show first 3 tags as chips and remaining count
-  const visibleTags = tags.slice(0, 3);
-  const remainingCount = Math.max(0, tags.length - 3);
+  // Show first 2 tags and remaining count for cleaner look
+  const visibleTags = tags.slice(0, 2);
+  const remainingCount = Math.max(0, tags.length - 2);
 
   return (
     <div className="flex flex-wrap gap-1 items-center">
       {visibleTags.map((tag) => (
-        <Badge
+        <span
           key={tag}
-          variant="outline"
-          className="text-xs border-purple-200 text-purple-700"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200"
         >
-          <Tag className="h-3 w-3 mr-1" />
           {tag}
-        </Badge>
+        </span>
       ))}
       {remainingCount > 0 && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge
-                variant="outline"
-                className="text-xs border-purple-200 text-purple-600 cursor-help"
-              >
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200 cursor-help">
                 +{remainingCount}
-              </Badge>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
-              <div className="flex flex-wrap gap-1">
-                {tags.slice(3).map((tag, index) => (
-                  <span key={tag} className="text-xs">
-                    {tag}
-                    {index < tags.slice(3).length - 1 ? " " : ""}
-                  </span>
-                ))}
-              </div>
+              <div className="text-xs">{tags.slice(2).join(", ")}</div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -177,7 +165,7 @@ export function ContentTypeBadge({ value }: { value: unknown }): ReactNode {
 }
 
 /**
- * Date Display Cell Formatter with full date/time
+ * Dynamic Date Display Cell Formatter - shows relative time for recent dates
  */
 export function DateDisplay({ value }: { value: unknown }): ReactNode {
   const dateString = String(value || "");
@@ -192,24 +180,78 @@ export function DateDisplay({ value }: { value: unknown }): ReactNode {
       return <span className="text-muted-foreground text-sm">--</span>;
     }
 
-    const formattedDate = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
 
-    const formattedTime = date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // Show relative time for recent dates
+    if (diffInMinutes < 60) {
+      const minutes = Math.max(1, diffInMinutes);
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">{minutes}m ago</div>
+          <div className="text-muted-foreground">Just now</div>
+        </div>
+      );
+    } else if (diffInHours < 24) {
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">{diffInHours}h ago</div>
+          <div className="text-muted-foreground">Today</div>
+        </div>
+      );
+    } else if (diffInDays === 1) {
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">Yesterday</div>
+          <div className="text-muted-foreground">{formattedTime}</div>
+        </div>
+      );
+    } else if (diffInDays <= 7) {
+      const formattedDay = date.toLocaleDateString("en-US", {
+        weekday: "short",
+      });
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">{diffInDays}d ago</div>
+          <div className="text-muted-foreground">
+            {formattedDay} {formattedTime}
+          </div>
+        </div>
+      );
+    } else {
+      // Show full date for older items
+      const formattedDate = date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
 
-    return (
-      <div className="text-xs font-mono">
-        <div className="text-foreground">{formattedDate}</div>
-        <div className="text-muted-foreground">{formattedTime}</div>
-      </div>
-    );
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      return (
+        <div className="text-xs font-mono">
+          <div className="text-foreground">{formattedDate}</div>
+          <div className="text-muted-foreground">{formattedTime}</div>
+        </div>
+      );
+    }
   } catch {
     return <span className="text-muted-foreground text-sm">--</span>;
   }
@@ -395,43 +437,39 @@ export function CategoryDisplay({
               String(category).charAt(0).toUpperCase() +
               String(category).slice(1).toLowerCase(),
           )
-          .slice(0, 3) // Limit to 3 categories to avoid clutter
+          .slice(0, 2) // Limit to 2 categories for cleaner look
       : ["General"]; // Fallback when no tags available
 
-  const remainingCount = Math.max(0, filteredTags.length - 3);
+  const remainingCount = Math.max(0, filteredTags.length - 2);
 
   return (
     <div className="flex flex-wrap gap-1 items-center">
       {allCategories.map((category) => (
-        <Badge
+        <span
           key={String(category)}
-          variant="outline"
-          className="text-xs border-blue-200 text-blue-700"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
         >
-          <FolderOpen className="h-3 w-3 mr-1" />
           {category}
-        </Badge>
+        </span>
       ))}
       {remainingCount > 0 && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge
-                variant="outline"
-                className="text-xs border-blue-200 text-blue-600 cursor-help"
-              >
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200 cursor-help">
                 +{remainingCount}
-              </Badge>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
-              <div className="flex flex-wrap gap-1">
-                {filteredTags.slice(3).map((category, idx) => (
-                  <span key={String(category)} className="text-xs">
-                    {String(category).charAt(0).toUpperCase() +
-                      String(category).slice(1).toLowerCase()}
-                    {idx < filteredTags.slice(3).length - 1 ? ", " : ""}
-                  </span>
-                ))}
+              <div className="text-xs">
+                {filteredTags
+                  .slice(2)
+                  .map(
+                    (category) =>
+                      String(category).charAt(0).toUpperCase() +
+                      String(category).slice(1).toLowerCase(),
+                  )
+                  .join(", ")}
               </div>
             </TooltipContent>
           </Tooltip>
@@ -478,43 +516,36 @@ export function AudienceFitDisplay({ value }: { value: unknown }): ReactNode {
   const audiences = [...new Set(rawAudiences.filter(Boolean))]; // Deduplicate audiences
 
   if (audiences.length === 0) {
-    return <span className="text-muted-foreground text-sm">--</span>;
+    return <span className="text-muted-foreground text-xs">--</span>;
   }
 
-  const visibleAudiences = audiences.slice(0, 3);
+  const visibleAudiences = audiences.slice(0, 2);
   const remainingCount = audiences.length - visibleAudiences.length;
 
   return (
     <div className="flex flex-wrap gap-1 items-center">
       {visibleAudiences.map((audience) => (
-        <Badge
+        <span
           key={String(audience)}
-          variant="outline"
-          className="text-xs border-green-200 text-green-700"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200"
         >
-          <Users className="h-3 w-3 mr-1" />
           {String(audience)}
-        </Badge>
+        </span>
       ))}
       {remainingCount > 0 && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge
-                variant="outline"
-                className="text-xs border-green-200 text-green-600 cursor-help"
-              >
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-600 border border-green-200 cursor-help">
                 +{remainingCount}
-              </Badge>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
-              <div className="flex flex-wrap gap-1">
-                {audiences.slice(3).map((audience, idx) => (
-                  <span key={String(audience)} className="text-xs">
-                    {String(audience)}
-                    {idx < audiences.slice(3).length - 1 ? ", " : ""}
-                  </span>
-                ))}
+              <div className="text-xs">
+                {audiences
+                  .slice(2)
+                  .map((audience) => String(audience))
+                  .join(", ")}
               </div>
             </TooltipContent>
           </Tooltip>
@@ -527,12 +558,20 @@ export function AudienceFitDisplay({ value }: { value: unknown }): ReactNode {
 /**
  * Status Display Cell Formatter
  */
-export function StatusDisplay({ value }: { value: unknown }): ReactNode {
+export function StatusDisplay({
+  value,
+  row,
+}: {
+  value: unknown;
+  row?: TopicData;
+}): ReactNode {
   const status = String(value || "pending");
 
-  // Determine if status is approved or pending
+  // Determine if status is approved - check both status string and approved field
   const isApproved =
-    status.toLowerCase() === "approved" || status.toLowerCase() === "saved";
+    status.toLowerCase() === "approved" ||
+    status.toLowerCase() === "saved" ||
+    (row && "approved" in row && row.approved === true);
 
   return (
     <Badge
@@ -585,41 +624,41 @@ export function EnhancedScoreDisplay({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center gap-2 cursor-help">
-            {/* Circular Progress */}
-            <div className="relative w-8 h-8">
+            {/* Circular Progress - Larger size */}
+            <div className="relative w-12 h-12">
               <svg
-                className="w-8 h-8 transform -rotate-90"
-                viewBox="0 0 32 32"
+                className="w-12 h-12 transform -rotate-90"
+                viewBox="0 0 48 48"
                 role="img"
                 aria-labelledby={progressTitleId}
               >
                 <title id={progressTitleId}>Score progress</title>
                 {/* Background circle */}
                 <circle
-                  cx="16"
-                  cy="16"
-                  r="12"
+                  cx="24"
+                  cy="24"
+                  r="18"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="4"
                   fill="none"
                   className="text-muted-foreground/20"
                 />
                 {/* Progress circle */}
                 <circle
-                  cx="16"
-                  cy="16"
-                  r="12"
+                  cx="24"
+                  cy="24"
+                  r="18"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="4"
                   fill="none"
-                  strokeDasharray={`${2 * Math.PI * 12}`}
-                  strokeDashoffset={`${2 * Math.PI * 12 * (1 - score / 100)}`}
+                  strokeDasharray={`${2 * Math.PI * 18}`}
+                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - score / 100)}`}
                   className={colorClass}
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-medium">{Math.round(score)}</span>
+                <span className="text-sm font-medium">{Math.round(score)}</span>
               </div>
             </div>
           </div>

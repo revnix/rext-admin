@@ -143,6 +143,111 @@ export interface SaveTopicData {
   why_it_works?: string;
 }
 
+export interface UpdateTopicData {
+  topic_id: string;
+  title?: string;
+  angle?: string;
+  description?: string;
+  channel_fit?: string[];
+  audience_fit?: string[];
+  why_it_works?: string;
+  tags?: string[];
+  approved?: boolean;
+}
+
+export async function updateTopic(formData: FormData) {
+  const updateDataJson = formData.get("updateData") as string;
+
+  if (!updateDataJson) {
+    throw new Error("Update data is required");
+  }
+
+  let updateData: UpdateTopicData;
+  try {
+    updateData = JSON.parse(updateDataJson);
+  } catch {
+    throw new Error("Invalid update data format");
+  }
+
+  if (!updateData.topic_id) {
+    throw new Error("Topic ID is required");
+  }
+
+  try {
+    logger.info("Updating topic via server action", {
+      topicId: updateData.topic_id,
+      fields: Object.keys(updateData).filter(
+        (key) =>
+          key !== "topic_id" &&
+          updateData[key as keyof UpdateTopicData] !== undefined,
+      ),
+    });
+
+    const response = await fetch(`${BACKEND_URL}/api/topic/update-topic`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "content-api-key": VALIDATED_API_KEY,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      logger.error("Failed to update topic", {
+        topicId: updateData.topic_id,
+        status: response.status,
+        error: errorData.error || `HTTP ${response.status}`,
+      });
+      throw new Error(`Failed to update topic: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    logger.info("Successfully updated topic", {
+      topicId: updateData.topic_id,
+      updated_count: result.updated_count,
+      updated_fields: result.updated_fields,
+    });
+
+    // Revalidate the topics page to reflect the changes
+    revalidatePath("/topics");
+
+    return {
+      success: true,
+      updated_count: result.updated_count || 1,
+      updated_fields: result.updated_fields || [],
+    };
+  } catch (error) {
+    logger.error("Server action update topic failed", {
+      topicId: updateData.topic_id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+// Convenience function for approving topics
+export async function approveTopic(formData: FormData) {
+  const topicId = formData.get("topicId") as string;
+
+  if (!topicId) {
+    throw new Error("Topic ID is required");
+  }
+
+  // Create a new FormData with the update structure
+  const updateFormData = new FormData();
+  updateFormData.set(
+    "updateData",
+    JSON.stringify({
+      topic_id: topicId,
+      approved: true,
+    }),
+  );
+
+  return await updateTopic(updateFormData);
+}
+
 export async function saveTopic(formData: FormData) {
   const topicDataJson = formData.get("topicData") as string;
 

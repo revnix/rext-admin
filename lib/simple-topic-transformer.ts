@@ -65,7 +65,7 @@ export function transformTopicForDisplay(
     name: topic.title,
     description: topic.description || "",
     category: getCategory(),
-    status: topic.is_saved ? "saved" : "generated",
+    status: topic.approved ? "approved" : "pending",
     priority: calculatePriority(topic.scores),
     source: "AI Generated",
     tags: topic.tags || [],

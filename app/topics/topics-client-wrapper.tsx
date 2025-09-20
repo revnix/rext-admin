@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Lightbulb, PenTool, Trash2 } from "lucide-react";
+import { CheckCircle, Eye, Lightbulb, PenTool, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/data-table";
 import {
   AudienceFitDisplay,
@@ -11,7 +11,10 @@ import {
   TagsList,
   TitleDisplay,
 } from "@/components/ui/topic-cell-formatters";
-import { useTopicDeleteServerAction } from "@/hooks/use-topic-mutations-server-actions";
+import {
+  useTopicApproveServerAction,
+  useTopicDeleteServerAction,
+} from "@/hooks/use-topic-mutations-server-actions";
 import { logger } from "@/lib/logger";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
 
@@ -30,8 +33,9 @@ export function TopicsClientWrapper({
   emptyActions,
   tableActions,
 }: TopicsClientWrapperProps) {
-  // Delete mutation using modern server actions
+  // Mutations using modern server actions
   const deleteMutation = useTopicDeleteServerAction();
+  const approveMutation = useTopicApproveServerAction();
   const topicsLogger = logger.forComponent("TopicsClientWrapper");
 
   // Handle topic deletion using server actions
@@ -42,6 +46,20 @@ export function TopicsClientWrapper({
       // Error handling is done by the mutation hook
       topicsLogger.error("Failed to delete topic", {
         topic_id: topicId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  // Handle topic approval using server actions
+  const handleTopicApproval = async (topicId: string, topicName: string) => {
+    try {
+      await approveMutation.mutateAsync(topicId);
+    } catch (error) {
+      // Error handling is done by the mutation hook
+      topicsLogger.error("Failed to approve topic", {
+        topic_id: topicId,
+        topic_name: topicName,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -82,7 +100,7 @@ export function TopicsClientWrapper({
     {
       key: "score",
       header: "Overall Score",
-      width: "100px",
+      width: "120px",
       cell: (value, row) => <EnhancedScoreDisplay value={value} row={row} />,
       searchable: false,
     },
@@ -90,7 +108,7 @@ export function TopicsClientWrapper({
       key: "status",
       header: "Status",
       width: "120px",
-      cell: (value) => <StatusDisplay value={value} />,
+      cell: (value, row) => <StatusDisplay value={value} row={row} />,
       searchable: false,
     },
     {
@@ -111,6 +129,24 @@ export function TopicsClientWrapper({
       tooltip: "View topic details",
       showLabel: true,
     },
+    // Approve button - only shown for non-approved topics
+    {
+      label: "Approve",
+      icon: <CheckCircle className="h-4 w-4" />,
+      onClick: (row: TopicData) => {
+        handleTopicApproval(row.id, row.name);
+      },
+      tooltip: "Approve this topic for content creation",
+      variant: "default" as const,
+      showLabel: true,
+      primary: true,
+      disabled: (row: TopicData) =>
+        approveMutation.isPending ||
+        row.status?.toLowerCase() === "approved" ||
+        row.status?.toLowerCase() === "saved" ||
+        (row && "approved" in row && row.approved === true),
+    },
+    // Write Content button - only shown for approved topics
     {
       label: "Write Content",
       icon: <PenTool className="h-4 w-4" />,
@@ -125,6 +161,10 @@ export function TopicsClientWrapper({
       variant: "default" as const,
       showLabel: true,
       primary: true,
+      disabled: (row: TopicData) =>
+        row.status?.toLowerCase() !== "approved" &&
+        row.status?.toLowerCase() !== "saved" &&
+        !(row && "approved" in row && row.approved === true),
     },
     {
       label: "Remove",

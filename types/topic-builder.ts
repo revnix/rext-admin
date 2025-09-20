@@ -138,6 +138,8 @@ export interface GeneratedTopic {
   created_at: string | null;
   /** Whether the topic has been saved to user's library */
   is_saved?: boolean;
+  /** Whether the topic has been approved for content creation */
+  approved?: boolean;
   /** Optimistic UI state: marks topic as saved while API call is in progress */
   _optimisticSaved?: boolean;
   /** Tracks if topic is currently being saved (for loading states) */
