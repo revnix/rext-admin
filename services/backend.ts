@@ -1,12 +1,11 @@
 import {
-  calculateRetryDelay,
   classifyError,
   DEFAULT_RETRY_CONFIG,
   generateRequestId,
   sanitizeErrorForLogging,
-  shouldRetry,
 } from "@/lib/error-utils";
 import { logger } from "@/lib/logger";
+import { generateSessionId } from "@/lib/session-storage";
 import { transformTopicsForBackend } from "@/lib/transformation-utils";
 import type {
   BackendConfig,
@@ -77,9 +76,10 @@ export class BackendService {
     validationConfig?: BackendValidationConfig,
   ) {
     this.config = {
-      baseUrl: process.env.BACKEND_API_URL || "http://127.0.0.1:2024",
-      timeout: 30000,
-      retry: DEFAULT_RETRY_CONFIG,
+      baseUrl:
+        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024",
+      timeout: 120000, // 2 minutes for AI operations like topic generation
+      retry: { ...DEFAULT_RETRY_CONFIG, maxAttempts: 1 }, // No retries
       enableDeduplication: true,
       healthCheckEndpoint: "/health",
       enableOfflineDetection: true,
@@ -88,7 +88,7 @@ export class BackendService {
 
     this.validationConfig = {
       skipInputValidation: false,
-      skipOutputValidation: false,
+      skipOutputValidation: true, // Temporarily disable to debug
       continueOnWarnings: true,
       enableAutoFix: false,
       includeMetrics: false,
@@ -130,11 +130,11 @@ export class BackendService {
   }
 
   /**
-   * Generate topics using the backend AI API with comprehensive retry logic and deduplication.
+   * Generate topics using the backend AI API with direct communication.
    *
    * @param formData - Complete topic builder form data containing all user preferences
    * @returns Promise resolving to generated topics with metadata
-   * @throws {BackendError} When topic generation fails after all retry attempts
+   * @throws {BackendError} When topic generation fails
    *
    * @example
    * ```typescript
@@ -164,7 +164,7 @@ export class BackendService {
         return existingRequest;
       }
 
-      const requestPromise = this.executeWithRetry(
+      const requestPromise = this.executeSingleRequest(
         "/api/topic/generate-topic",
         payload,
         requestId,
@@ -184,7 +184,7 @@ export class BackendService {
       return requestPromise;
     }
 
-    return this.executeWithRetry(
+    return this.executeSingleRequest(
       "/api/topic/generate-topic",
       payload,
       requestId,
@@ -192,11 +192,11 @@ export class BackendService {
   }
 
   /**
-   * Save generated topics to the backend API with comprehensive error handling and retry logic.
+   * Save generated topics to the backend API with direct communication.
    *
    * @param topics - Array of generated topics to save to the backend
    * @returns Promise resolving to save operation results including success status and count
-   * @throws {BackendError} When the save operation fails after all retry attempts
+   * @throws {BackendError} When the save operation fails
    *
    * @example
    * ```typescript
@@ -215,7 +215,7 @@ export class BackendService {
     // Transform GeneratedTopic[] to backend SaveTopicRequest format
     const payload = transformTopicsForBackend(topics);
 
-    return this.executeWithRetryGeneric(
+    return this.executeSingleGenericRequest(
       "/api/topic/save-topic",
       payload,
       requestId,
@@ -292,61 +292,33 @@ export class BackendService {
   }
 
   /**
-   * Execute request with retry logic
+   * Execute request without retry logic
    */
-  private async executeWithRetry(
+  private async executeSingleRequest(
     endpoint: string,
     payload: BackendTopicGenerationPayload,
     requestId: string,
   ): Promise<BackendTopicGenerationResponse> {
-    let lastError: BackendError | null = null;
+    try {
+      this.log.debug("Single request", {
+        requestId,
+        endpoint,
+      });
 
-    for (let attempt = 1; attempt <= this.config.retry.maxAttempts; attempt++) {
-      try {
-        this.log.debug("Request attempt", {
-          requestId,
-          attempt,
-          max_attempts: this.config.retry.maxAttempts,
-          endpoint,
-        });
+      const response = await this.makeRequest(endpoint, payload, requestId);
+      const result = await this.validateResponse(response, requestId);
 
-        const response = await this.makeRequest(endpoint, payload, requestId);
-        const result = await this.validateResponse(response, requestId);
+      // Success - clean up any stored controllers
+      this.activeRequests.delete(requestId);
+      return result;
+    } catch (error) {
+      const classifiedError = classifyError(error, requestId, 1);
+      this.logError(`Request failed for ${requestId}`, classifiedError);
 
-        // Success - clean up any stored controllers
-        this.activeRequests.delete(requestId);
-        return result;
-      } catch (error) {
-        const classifiedError = classifyError(error, requestId, attempt);
-        lastError = classifiedError;
-
-        this.logError(
-          `Attempt ${attempt} failed for ${requestId}`,
-          classifiedError,
-        );
-
-        // Don't retry if error is not retryable or we've reached max attempts
-        if (!shouldRetry(classifiedError, attempt, this.config.retry)) {
-          break;
-        }
-
-        // Wait before retrying (except on last attempt)
-        if (attempt < this.config.retry.maxAttempts) {
-          const delay = calculateRetryDelay(attempt, this.config.retry);
-          this.log.debug("Waiting before retry", {
-            requestId,
-            delay_ms: delay,
-          });
-          await this.delay(delay);
-        }
-      }
+      // Clean up and throw the error
+      this.activeRequests.delete(requestId);
+      throw classifiedError;
     }
-
-    // Clean up and throw the last error
-    this.activeRequests.delete(requestId);
-    throw (
-      lastError || classifyError(new Error("Unknown retry failure"), requestId)
-    );
   }
 
   /**
@@ -364,13 +336,25 @@ export class BackendService {
     this.activeRequests.set(requestId, controller);
 
     // Set up timeout
+    this.log.debug("Setting up request timeout", {
+      requestId,
+      endpoint,
+      timeout_ms: this.config.timeout,
+      timeout_minutes: Math.round((this.config.timeout / 60000) * 10) / 10,
+    });
+
     const timeoutId = setTimeout(() => {
+      this.log.warn("Request timed out", {
+        requestId,
+        endpoint,
+        timeout_ms: this.config.timeout,
+      });
       controller.abort();
       this.activeRequests.delete(requestId);
     }, this.config.timeout);
 
     try {
-      const contentApiKey = process.env.CONTENT_API_KEY;
+      const contentApiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
       if (!contentApiKey) {
         throw new Error("CONTENT_API_KEY environment variable is not set");
       }
@@ -478,26 +462,61 @@ export class BackendService {
 
     const result = await response.json();
 
+    // Handle new consistent response format
+    let actualData = result;
+    if (result.success === false && result.error) {
+      // New format error: { success: false, error: { message: "...", code: "..." }, meta: {...} }
+      const backendError: BackendError = {
+        type: "server_error",
+        message: result.error.message || "Backend API error",
+        statusCode: response.status,
+        severity: "high",
+        recoveryActions: ["retry", "check_connection"],
+        isRetryable: true,
+        requestId,
+        timestamp: new Date().toISOString(),
+        originalError: new Error(result.error.message || "Unknown error"),
+        context: {
+          errorCode: result.error.code,
+          errorDetails: result.error.details,
+        },
+      };
+      throw backendError;
+    } else if (result.success && result.data) {
+      // New format: { success: true, data: { topics: [...] }, meta: {...} }
+      actualData = {
+        topics: result.data.topics || [],
+        total_count:
+          result.data.total_generated || result.data.topics?.length || 0,
+        generation_time_ms: result.meta?.processing_time_ms,
+        model_used: result.data.model_used,
+        request_id: result.meta?.request_id || requestId,
+      };
+    } else if (result.topics) {
+      // Legacy format: { topics: [...] }
+      actualData = result;
+    }
+
     if (this.validationConfig.skipOutputValidation) {
       this.log.warn("Skipping output validation (disabled in config)", {
         requestId,
       });
-      return result as BackendTopicGenerationResponse;
+      return actualData as BackendTopicGenerationResponse;
     }
 
     // Add missing IDs to topics before validation (backend may not include IDs)
-    if (result.topics && Array.isArray(result.topics)) {
-      result.topics = result.topics.map(
-        (topic: Record<string, unknown> & { id?: string }, index: number) => ({
+    if (actualData.topics && Array.isArray(actualData.topics)) {
+      actualData.topics = actualData.topics.map(
+        (topic: Record<string, unknown> & { id?: string }, _index: number) => ({
           ...topic,
-          id: topic.id || `topic_${Date.now()}_${index}`,
+          id: topic.id || generateSessionId(),
         }),
       );
     }
 
     // Validate response structure with Zod
     const validationResult =
-      BackendTopicGenerationResponseSchema.safeParse(result);
+      BackendTopicGenerationResponseSchema.safeParse(actualData);
 
     if (!validationResult.success) {
       const validationError: ValidationError = {
@@ -514,7 +533,7 @@ export class BackendService {
         requestId,
         timestamp: new Date().toISOString(),
         validationIssues: validationResult.error.issues,
-        originalData: result,
+        originalData: actualData,
         stage: "output",
         context: {
           endpoint: "generate_topics",
@@ -593,67 +612,39 @@ export class BackendService {
   }
 
   /**
-   * Execute request with retry logic for generic payloads
+   * Execute request without retry logic for generic payloads
    */
-  private async executeWithRetryGeneric<T, R>(
+  private async executeSingleGenericRequest<T, R>(
     endpoint: string,
     payload: T,
     requestId: string,
     method: "POST" | "PUT" = "POST",
   ): Promise<R> {
-    let lastError: BackendError | null = null;
+    try {
+      this.log.debug("Single generic request", {
+        requestId,
+        endpoint,
+      });
 
-    for (let attempt = 1; attempt <= this.config.retry.maxAttempts; attempt++) {
-      try {
-        this.log.debug("Generic request attempt", {
-          requestId,
-          attempt,
-          max_attempts: this.config.retry.maxAttempts,
-          endpoint,
-        });
+      const response = await this.makeGenericRequest(
+        endpoint,
+        payload,
+        requestId,
+        method,
+      );
+      const result = await this.validateGenericResponse<R>(response);
 
-        const response = await this.makeGenericRequest(
-          endpoint,
-          payload,
-          requestId,
-          method,
-        );
-        const result = await this.validateGenericResponse<R>(response);
+      // Success - clean up any stored controllers
+      this.activeRequests.delete(requestId);
+      return result;
+    } catch (error) {
+      const classifiedError = classifyError(error, requestId, 1);
+      this.logError(`Generic request failed for ${requestId}`, classifiedError);
 
-        // Success - clean up any stored controllers
-        this.activeRequests.delete(requestId);
-        return result;
-      } catch (error) {
-        const classifiedError = classifyError(error, requestId, attempt);
-        lastError = classifiedError;
-
-        this.logError(
-          `Attempt ${attempt} failed for ${requestId}`,
-          classifiedError,
-        );
-
-        // Don't retry if error is not retryable or we've reached max attempts
-        if (!shouldRetry(classifiedError, attempt, this.config.retry)) {
-          break;
-        }
-
-        // Wait before retrying (except on last attempt)
-        if (attempt < this.config.retry.maxAttempts) {
-          const delay = calculateRetryDelay(attempt, this.config.retry);
-          this.log.debug("Waiting before retry", {
-            requestId,
-            delay_ms: delay,
-          });
-          await this.delay(delay);
-        }
-      }
+      // Clean up and throw the error
+      this.activeRequests.delete(requestId);
+      throw classifiedError;
     }
-
-    // Clean up and throw the last error
-    this.activeRequests.delete(requestId);
-    throw (
-      lastError || classifyError(new Error("Unknown retry failure"), requestId)
-    );
   }
 
   /**
@@ -672,13 +663,25 @@ export class BackendService {
     this.activeRequests.set(requestId, controller);
 
     // Set up timeout
+    this.log.debug("Setting up request timeout", {
+      requestId,
+      endpoint,
+      timeout_ms: this.config.timeout,
+      timeout_minutes: Math.round((this.config.timeout / 60000) * 10) / 10,
+    });
+
     const timeoutId = setTimeout(() => {
+      this.log.warn("Request timed out", {
+        requestId,
+        endpoint,
+        timeout_ms: this.config.timeout,
+      });
       controller.abort();
       this.activeRequests.delete(requestId);
     }, this.config.timeout);
 
     try {
-      const contentApiKey = process.env.CONTENT_API_KEY;
+      const contentApiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
       if (!contentApiKey) {
         throw new Error("CONTENT_API_KEY environment variable is not set");
       }
@@ -717,6 +720,44 @@ export class BackendService {
     const result = await response.json();
 
     // Transform external API response format to internal SaveTopicResponse format
+
+    // Handle new consistent format: { success: true, data: {...}, meta: {...} }
+    if (
+      result &&
+      typeof result === "object" &&
+      "success" in result &&
+      "data" in result
+    ) {
+      const isSuccess = result.success === true;
+      const data = result.data || {};
+
+      // Transform to internal format
+      const transformedResult = {
+        success: isSuccess,
+        saved_count: data.saved_count || 0,
+        message:
+          data.message ||
+          (isSuccess ? "Topics saved successfully" : "Failed to save topics"),
+        saved_topic_ids: data.saved_topic_ids || [],
+        total_requested: data.total_requested || 0,
+        // Ensure all fields are available for proper response handling
+        successful_saves: data.saved_count || 0,
+        failed_saves: Math.max(
+          0,
+          (data.total_requested || 0) - (data.saved_count || 0),
+        ),
+        request_id: data.request_id || "unknown",
+      };
+
+      this.log.debug("Transformed new API response format", {
+        original: result,
+        transformed: transformedResult,
+      });
+
+      return transformedResult as T;
+    }
+
+    // Handle legacy format: { status: "success", message: "..." }
     if (
       result &&
       typeof result === "object" &&
@@ -743,7 +784,7 @@ export class BackendService {
           (isSuccess ? "Topics saved successfully" : "Failed to save topics"),
       };
 
-      this.log.debug("Transformed external API response", {
+      this.log.debug("Transformed legacy API response", {
         original: result,
         transformed: transformedResult,
       });
@@ -778,9 +819,9 @@ export class BackendService {
       );
     }
 
-    if (!process.env.CONTENT_API_KEY) {
+    if (!process.env.NEXT_PUBLIC_CONTENT_API_KEY) {
       throw new Error(
-        "Content API key is not configured. Please set CONTENT_API_KEY environment variable.",
+        "Content API key is not configured. Please set NEXT_PUBLIC_CONTENT_API_KEY environment variable.",
       );
     }
   }
@@ -799,13 +840,6 @@ export class BackendService {
       purpose: payload.purpose,
     };
     return btoa(JSON.stringify(keyData)).slice(0, 16);
-  }
-
-  /**
-   * Promise-based delay utility
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

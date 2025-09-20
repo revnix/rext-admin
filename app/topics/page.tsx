@@ -1,44 +1,19 @@
+"use client";
+
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { useTopics } from "@/hooks/use-topics";
 import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
-import type { TopicData } from "@/types/data-table";
-import { getTopics } from "./data-access";
 import { TopicsClientWrapper } from "./topics-client-wrapper";
 
-export const metadata = {
-  title: "Topics Library",
-  description:
-    "Browse, manage, and analyze your AI-generated topics. Create new content ideas, view performance metrics, and organize your topic collection.",
-};
-
-export default async function TopicsPage() {
+export default function TopicsPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Topics" }];
 
-  return (
-    <PageLayout
-      title="Topic Library"
-      description="Browse AI-generated topics and transform them into compelling content. Generate new topics or explore your saved collection."
-      breadcrumbs={breadcrumbs}
-    >
-      <Suspense fallback={<TopicsTableSkeleton />}>
-        <TopicsData />
-      </Suspense>
-    </PageLayout>
-  );
-}
+  const { data: topics, isLoading, error } = useTopics();
 
-async function TopicsData() {
-  const topics = await getTopics();
-  const transformedTopics = transformTopicsForDisplay(topics);
-
-  return <TopicsTable data={transformedTopics} />;
-}
-
-function TopicsTable({ data }: { data: TopicData[] }) {
   const emptyActions = [
     {
       label: "Generate Topics",
@@ -57,18 +32,33 @@ function TopicsTable({ data }: { data: TopicData[] }) {
   );
 
   return (
-    <TopicsClientWrapper
-      data={data}
-      emptyActions={emptyActions}
-      tableActions={tableActions}
-    />
-  );
-}
-
-function TopicsTableSkeleton() {
-  return (
-    <div>
-      <TableSkeleton rows={8} />
-    </div>
+    <PageLayout
+      title="Topic Library"
+      description="Browse AI-generated topics and transform them into compelling content. Generate new topics or explore your saved collection."
+      breadcrumbs={breadcrumbs}
+    >
+      {isLoading ? (
+        <TableSkeleton rows={8} />
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-red-500">
+            Failed to load topics. Please try again.
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            className="mt-2"
+          >
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <TopicsClientWrapper
+          data={transformTopicsForDisplay(topics || [])}
+          emptyActions={emptyActions}
+          tableActions={tableActions}
+        />
+      )}
+    </PageLayout>
   );
 }

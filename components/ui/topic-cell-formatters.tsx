@@ -129,10 +129,10 @@ export function TagsList({
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <div className="flex flex-wrap gap-1">
-                {tags.slice(2).map((tag, index) => (
+                {tags.slice(3).map((tag, index) => (
                   <span key={tag} className="text-xs">
                     {tag}
-                    {index < tags.slice(2).length - 1 ? " " : ""}
+                    {index < tags.slice(3).length - 1 ? " " : ""}
                   </span>
                 ))}
               </div>
@@ -373,33 +373,32 @@ export function TitleDisplay({
  * Enhanced Category Display Cell Formatter - shows all relevant categories
  */
 export function CategoryDisplay({
-  value,
   row,
 }: {
   value: unknown;
   row?: TopicData;
 }): ReactNode {
-  const primaryCategory = String(value || "General");
   const tags = row?.tags || [];
 
-  // Get all categories from tags, excluding channel and audience prefixes
-  const additionalCategories = tags.filter(
+  // Use only tags as categories, excluding channel and audience prefixes
+  // Don't duplicate the primary category since it's derived from the first tag
+  const filteredTags = tags.filter(
     (tag) => !tag.startsWith("channel:") && !tag.startsWith("audience:"),
   );
 
-  // Combine primary category with additional tags
-  const allCategories = [primaryCategory, ...additionalCategories]
-    .map(
-      (category) =>
-        String(category).charAt(0).toUpperCase() +
-        String(category).slice(1).toLowerCase(),
-    )
-    .slice(0, 3); // Limit to 3 categories to avoid clutter
+  // Just use the tags directly as categories, properly formatted and deduplicated
+  const allCategories =
+    filteredTags.length > 0
+      ? [...new Set(filteredTags)]
+          .map(
+            (category) =>
+              String(category).charAt(0).toUpperCase() +
+              String(category).slice(1).toLowerCase(),
+          )
+          .slice(0, 3) // Limit to 3 categories to avoid clutter
+      : ["General"]; // Fallback when no tags available
 
-  const remainingCount = Math.max(
-    0,
-    [primaryCategory, ...additionalCategories].length - 3,
-  );
+  const remainingCount = Math.max(0, filteredTags.length - 3);
 
   return (
     <div className="flex flex-wrap gap-1 items-center">
@@ -426,20 +425,13 @@ export function CategoryDisplay({
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <div className="flex flex-wrap gap-1">
-                {[primaryCategory, ...additionalCategories]
-                  .slice(3)
-                  .map((category, idx) => (
-                    <span key={String(category)} className="text-xs">
-                      {String(category).charAt(0).toUpperCase() +
-                        String(category).slice(1).toLowerCase()}
-                      {idx <
-                      [primaryCategory, ...additionalCategories].slice(3)
-                        .length -
-                        1
-                        ? ", "
-                        : ""}
-                    </span>
-                  ))}
+                {filteredTags.slice(3).map((category, idx) => (
+                  <span key={String(category)} className="text-xs">
+                    {String(category).charAt(0).toUpperCase() +
+                      String(category).slice(1).toLowerCase()}
+                    {idx < filteredTags.slice(3).length - 1 ? ", " : ""}
+                  </span>
+                ))}
               </div>
             </TooltipContent>
           </Tooltip>
@@ -482,7 +474,8 @@ export function AuthorDisplay({ value }: { value: unknown }): ReactNode {
  * Audience Fit Display Cell Formatter
  */
 export function AudienceFitDisplay({ value }: { value: unknown }): ReactNode {
-  const audiences = Array.isArray(value) ? value : [];
+  const rawAudiences = Array.isArray(value) ? value : [];
+  const audiences = [...new Set(rawAudiences.filter(Boolean))]; // Deduplicate audiences
 
   if (audiences.length === 0) {
     return <span className="text-muted-foreground text-sm">--</span>;
@@ -516,10 +509,10 @@ export function AudienceFitDisplay({ value }: { value: unknown }): ReactNode {
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <div className="flex flex-wrap gap-1">
-                {audiences.slice(2).map((audience, idx) => (
+                {audiences.slice(3).map((audience, idx) => (
                   <span key={String(audience)} className="text-xs">
                     {String(audience)}
-                    {idx < audiences.slice(2).length - 1 ? ", " : ""}
+                    {idx < audiences.slice(3).length - 1 ? ", " : ""}
                   </span>
                 ))}
               </div>

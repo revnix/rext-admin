@@ -27,7 +27,7 @@ import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
 import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
 import {
-  useBulkTopicSaveMutation,
+  useTopicBulkSaveMutation,
   useTopicSaveMutation,
 } from "@/hooks/useTopicMutations";
 import { getSession, updateSession } from "@/lib/session-storage";
@@ -62,7 +62,7 @@ export default function ResultsPage() {
     clearNewlyAddedHighlights,
   } = useTopicBuilderStore();
   const generateMoreMutation = useTopicGenerationMutation();
-  const bulkSaveMutation = useBulkTopicSaveMutation();
+  const bulkSaveMutation = useTopicBulkSaveMutation();
   const topicSaveMutation = useTopicSaveMutation();
 
   const {

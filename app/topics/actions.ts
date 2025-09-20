@@ -24,11 +24,11 @@ export async function deleteTopic(formData: FormData) {
   try {
     logger.info("Deleting topic via server action", { topicId });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/delete`, {
+    const response = await fetch(`${BACKEND_URL}/api/topic/delete-topic`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "Content-API-Key": VALIDATED_API_KEY,
+        "content-api-key": VALIDATED_API_KEY,
       },
       body: JSON.stringify({ topic_ids: [topicId] }),
     });
@@ -90,11 +90,11 @@ export async function deleteTopics(formData: FormData) {
       count: topicIds.length,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/delete`, {
+    const response = await fetch(`${BACKEND_URL}/api/topic/delete-topic`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "Content-API-Key": VALIDATED_API_KEY,
+        "content-api-key": VALIDATED_API_KEY,
       },
       body: JSON.stringify({ topic_ids: topicIds }),
     });
@@ -166,11 +166,11 @@ export async function saveTopic(formData: FormData) {
       title: topicData.title,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/save`, {
+    const response = await fetch(`${BACKEND_URL}/api/topic/save-topic`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Content-API-Key": VALIDATED_API_KEY,
+        "content-api-key": VALIDATED_API_KEY,
       },
       body: JSON.stringify(topicData),
     });

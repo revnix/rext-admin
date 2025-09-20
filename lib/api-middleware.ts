@@ -494,7 +494,7 @@ export async function proxyToBackend(
       headers: {
         "Content-Type": "application/json",
         "X-Request-ID": requestId,
-        "Content-API-Key": apiKey,
+        "content-api-key": apiKey,
         ...Object.fromEntries(
           [...request.headers.entries()].filter(([key]) =>
             ["authorization", "x-api-key"].includes(key.toLowerCase()),

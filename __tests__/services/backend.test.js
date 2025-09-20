@@ -21,20 +21,7 @@ describe("BackendService", () => {
     service = new BackendService({
       baseUrl: "http://localhost:2024",
       timeout: 30000,
-      retry: {
-        maxAttempts: 1,
-        initialDelay: 1,
-        maxDelay: 1,
-        backoffMultiplier: 1,
-        jitterFactor: 0,
-        retryableErrors: [
-          "network_error",
-          "timeout_error",
-          "server_error",
-          "rate_limit_error",
-          "abort_error",
-        ],
-      },
+      retry: { maxAttempts: 1 }, // No retries in current implementation
     });
     mockFetch.mockClear();
   });
