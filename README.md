@@ -34,14 +34,69 @@ cd wrext-admin
 npm install
 
 # Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your API keys
+cp .env.example .env
+cp .env.local.example .env.local
+# Edit .env.local with your actual API keys (see Environment Setup below)
 
 # Run development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+## 🔐 Environment Setup
+
+### Required Environment Variables
+
+This application requires proper environment variable configuration for security and functionality.
+
+#### 1. Copy Example Files
+```bash
+# Copy public environment template
+cp .env.example .env
+
+# Copy private environment template
+cp .env.local.example .env.local
+```
+
+#### 2. Configure API Keys in `.env.local`
+
+⚠️ **IMPORTANT**: Add your actual API keys to `.env.local` (NOT `.env`)
+
+```bash
+# Required: Content API authentication
+CONTENT_API_KEY=your_actual_content_api_key
+
+# Required: Backend API URL
+BACKEND_API_URL=http://127.0.0.1:2024
+
+# Required: AI Provider API Keys
+ANTHROPIC_API_KEY=your_anthropic_api_key    # Get from https://console.anthropic.com/
+PERPLEXITY_API_KEY=your_perplexity_api_key  # Get from https://www.perplexity.ai/settings/api
+
+# Optional: Additional AI providers (uncomment if needed)
+# OPENAI_API_KEY=your_openai_api_key        # Get from https://platform.openai.com/api-keys
+# GOOGLE_API_KEY=your_google_api_key        # Get from https://makersuite.google.com/app/apikey
+```
+
+#### 3. Security Best Practices
+
+✅ **DO:**
+- Keep `.env.local` private and never commit it to git
+- Use `.env.local` for sensitive API keys (server-side only)
+- Use `.env` for public configuration only
+
+❌ **DON'T:**
+- Never add sensitive keys to `.env` (it's tracked by git)
+- Never use `NEXT_PUBLIC_` prefix for sensitive data
+- Never share or expose API keys in client-side code
+
+#### 4. Production Deployment
+
+For production deployment (Vercel, Netlify, etc.):
+1. Set environment variables in your hosting platform dashboard
+2. Use the same variable names from `.env.local.example`
+3. Never commit actual API keys to your repository
 
 ## 🔧 Development
 
@@ -107,14 +162,23 @@ The application integrates with a Python backend service for AI topic generation
 
 ### Environment Variables
 ```bash
-BACKEND_API_URL=your_backend_url
-CONTENT_API_KEY=your_api_key
+# In .env.local (server-side only)
+BACKEND_API_URL=http://127.0.0.1:2024
+CONTENT_API_KEY=your_actual_api_key
+ANTHROPIC_API_KEY=your_anthropic_key
+PERPLEXITY_API_KEY=your_perplexity_key
 ```
 
 ### API Endpoints
 - `POST /api/topics/generate` - Generate topics
 - `POST /api/topics/save` - Save topic to library
 - `GET /api/topics` - Retrieve saved topics
+
+### Security Architecture
+- All external API calls are proxied through Next.js API routes
+- API keys are server-side only (never exposed to client)
+- Input validation with Zod schemas
+- Rate limiting protection
 
 ## 🧪 Testing
 
