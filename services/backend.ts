@@ -224,7 +224,7 @@ export class BackendService {
   }
 
   /**
-   * Delete topics from the backend API via Next.js API route
+   * Delete topics from the backend API with direct communication.
    *
    * @param topicIds - Array of topic IDs to delete from the backend
    * @returns Promise resolving to delete operation results including success status and count
@@ -243,52 +243,26 @@ export class BackendService {
     message: string;
     topic_ids: string[];
   }> {
+    this.validateConfig();
+
     if (!topicIds || topicIds.length === 0) {
       throw new Error("No topic IDs provided for deletion");
     }
 
     const requestId = generateRequestId();
+    const payload = { topic_ids: topicIds };
 
-    try {
-      const response = await fetch("/api/topics/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Request-ID": requestId,
-        },
-        body: JSON.stringify({ topic_ids: topicIds }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Unknown error" }));
-        throw new Error(
-          errorData.error ||
-            `API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const result = await response.json();
-
-      this.log.info("Successfully deleted topics via Next.js API", {
-        requestId,
-        deleted_count: result.deleted_count || topicIds.length,
-        topic_ids: topicIds,
-      });
-
-      return {
-        success: result.success || true,
-        deleted_count: result.deleted_count || topicIds.length,
-        message:
-          result.message || `Deleted ${topicIds.length} topics successfully`,
-        topic_ids: result.topic_ids || topicIds,
-      };
-    } catch (error) {
-      const classifiedError = classifyError(error, requestId);
-      this.logError(`Failed to delete topics via Next.js API`, classifiedError);
-      throw classifiedError;
-    }
+    return this.executeSingleGenericRequest(
+      "/api/topic/delete-topic",
+      payload,
+      requestId,
+      "DELETE",
+    ) as Promise<{
+      success: boolean;
+      deleted_count: number;
+      message: string;
+      topic_ids: string[];
+    }>;
   }
 
   /**
@@ -618,7 +592,7 @@ export class BackendService {
     endpoint: string,
     payload: T,
     requestId: string,
-    method: "POST" | "PUT" = "POST",
+    method: "POST" | "PUT" | "DELETE" = "POST",
   ): Promise<R> {
     try {
       this.log.debug("Single generic request", {
@@ -654,7 +628,7 @@ export class BackendService {
     endpoint: string,
     payload: T,
     requestId: string,
-    method: "POST" | "PUT" = "POST",
+    method: "POST" | "PUT" | "DELETE" = "POST",
   ): Promise<Response> {
     const url = `${this.config.baseUrl}${endpoint}`;
     const controller = new AbortController();
