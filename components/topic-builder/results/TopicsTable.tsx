@@ -256,7 +256,7 @@ export const TopicsTable = memo(function TopicsTable({
     {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: TopicTableRow) => onViewDetails(row.id),
+      onClick: (row: TopicTableRow) => _onViewDetails(row.id),
       tooltip: "Quick view topic details",
       showLabel: true,
       primary: true,
