@@ -5,6 +5,7 @@ import {
   sanitizeErrorForLogging,
 } from "@/lib/error-utils";
 import { logger } from "@/lib/logger";
+import { InputSanitizer } from "@/lib/sanitization";
 import { generateSessionId } from "@/lib/session-storage";
 import { transformTopicsForBackend } from "@/lib/transformation-utils";
 import type {
@@ -394,26 +395,121 @@ export class BackendService {
   }
 
   /**
-   * Transform frontend form data to backend API format
+   * Transform frontend form data to backend API format with input validation and sanitization
    */
   private transformFormDataToBackendFormat(
     formData: TopicBuilderFormData,
   ): BackendTopicGenerationPayload {
+    // Input validation and sanitization
+    const sanitizedFormData = this.validateAndSanitizeFormData(formData);
+
     // Transform to exact Pydantic schema format with backward compatibility
     return {
-      wizardMode: formData.wizardMode || "industry-first",
-      industry: formData.industry_other || formData.industry || "",
-      industry_other: formData.industry_other || null,
+      wizardMode: sanitizedFormData.wizardMode || "industry-first",
+      industry:
+        sanitizedFormData.industry_other || sanitizedFormData.industry || "",
+      industry_other: sanitizedFormData.industry_other || null,
       audience:
-        Array.isArray(formData.audience) && formData.audience.length > 0
-          ? formData.audience
+        Array.isArray(sanitizedFormData.audience) &&
+        sanitizedFormData.audience.length > 0
+          ? sanitizedFormData.audience
           : [],
-      purpose: Array.isArray(formData.purpose) ? formData.purpose : [],
-      purpose_other: formData.purpose_other || null,
-      num_topics: formData.num_topics || 5,
-      subject: formData.subject || null,
+      purpose: Array.isArray(sanitizedFormData.purpose)
+        ? sanitizedFormData.purpose
+        : [],
+      purpose_other: sanitizedFormData.purpose_other || null,
+      num_topics: sanitizedFormData.num_topics || 5,
+      subject: sanitizedFormData.subject || null,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Validate and sanitize form data to prevent XSS and other security issues
+   */
+  private validateAndSanitizeFormData(
+    formData: TopicBuilderFormData,
+  ): TopicBuilderFormData {
+    if (!this.validationConfig.skipInputValidation) {
+      const sanitized: TopicBuilderFormData = {
+        ...formData,
+        // Sanitize text fields
+        industry: formData.industry
+          ? (InputSanitizer.sanitizeText(
+              formData.industry,
+            ) as typeof formData.industry)
+          : formData.industry,
+        industry_other: formData.industry_other
+          ? InputSanitizer.sanitizeText(formData.industry_other)
+          : formData.industry_other,
+        subject: formData.subject
+          ? InputSanitizer.sanitizeText(formData.subject)
+          : formData.subject,
+        purpose_other: formData.purpose_other
+          ? InputSanitizer.sanitizeText(formData.purpose_other)
+          : formData.purpose_other,
+
+        // Sanitize arrays
+        audience: Array.isArray(formData.audience)
+          ? (formData.audience.map((item) =>
+              InputSanitizer.sanitizeText(item),
+            ) as typeof formData.audience)
+          : formData.audience,
+        purpose: Array.isArray(formData.purpose)
+          ? (formData.purpose.map((item) =>
+              InputSanitizer.sanitizeText(item),
+            ) as typeof formData.purpose)
+          : formData.purpose,
+
+        // Validate numeric fields
+        num_topics: this.validateNumericField(formData.num_topics, 1, 20, 5),
+      };
+
+      // Check for XSS attempts in any text field
+      const textFields = [
+        sanitized.industry,
+        sanitized.industry_other,
+        sanitized.subject,
+        sanitized.purpose_other,
+        ...(sanitized.audience || []),
+        ...(sanitized.purpose || []),
+      ].filter(Boolean);
+
+      for (const field of textFields) {
+        if (typeof field === "string" && InputSanitizer.containsXSS(field)) {
+          this.log.warn("XSS attempt detected in form data", {
+            field_content: InputSanitizer.sanitizeForLog(field),
+          });
+          throw new Error(
+            "Invalid input detected. Please check your form data.",
+          );
+        }
+      }
+
+      return sanitized;
+    }
+
+    return formData;
+  }
+
+  /**
+   * Validate numeric fields with min/max constraints
+   */
+  private validateNumericField(
+    value: unknown,
+    min: number,
+    max: number,
+    defaultValue: number,
+  ): number {
+    if (
+      typeof value === "number" &&
+      !Number.isNaN(value) &&
+      value >= min &&
+      value <= max
+    ) {
+      return Math.floor(value); // Ensure integer
+    }
+    return defaultValue;
   }
 
   /**
