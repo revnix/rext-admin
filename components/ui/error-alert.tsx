@@ -155,7 +155,7 @@ export function ErrorAlert({
   onRetry,
   onGoBack,
   onContactSupport,
-  onReload = () => window.location.reload(),
+  onReload,
   className,
   showErrorId = process.env.NODE_ENV === "development",
 }: ErrorAlertProps) {

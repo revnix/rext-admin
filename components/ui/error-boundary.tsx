@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, RefreshCw, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,70 @@ interface ErrorFallbackProps {
 }
 
 /**
+ * Hook-based wrapper component for router access in class component
+ */
+function ErrorFallbackWithRouter(props: ErrorFallbackProps) {
+  const router = useRouter();
+
+  const handleReloadPage = () => {
+    router.refresh();
+  };
+
+  return <DefaultErrorFallback {...props} onReloadPage={handleReloadPage} />;
+}
+
+/**
+ * Hook-based wrapper for API Error Boundary
+ */
+function APIErrorFallbackWithRouter({
+  error: _error,
+  resetError,
+  errorId,
+  requestId,
+  onRetry,
+}: ErrorFallbackProps & { onRetry?: () => void }) {
+  const router = useRouter();
+
+  const handleReloadPage = () => {
+    router.refresh();
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+      <AlertTriangle className="h-12 w-12 text-red-500" />
+      <div>
+        <h3 className="font-semibold text-lg mb-2">Unable to load content</h3>
+        <p className="text-sm text-muted-foreground">
+          There was an error loading this section. Please try again.
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          onClick={() => {
+            resetError();
+            onRetry?.();
+          }}
+          size="sm"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Try Again
+        </Button>
+        <Button onClick={handleReloadPage} variant="outline" size="sm">
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reload Page
+        </Button>
+      </div>
+      {process.env.NODE_ENV === "development" && (
+        <div className="text-xs text-gray-400 space-y-1">
+          <p>Error ID: {errorId}</p>
+          {requestId && <p>Request ID: {requestId}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Default error fallback component
  */
 export function DefaultErrorFallback({
@@ -36,7 +101,8 @@ export function DefaultErrorFallback({
   resetError,
   errorId,
   requestId,
-}: ErrorFallbackProps) {
+  onReloadPage,
+}: ErrorFallbackProps & { onReloadPage?: () => void }) {
   return (
     <Card className="border-red-200 bg-red-50/50">
       <CardHeader className="pb-4">
@@ -67,11 +133,7 @@ export function DefaultErrorFallback({
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
-          <Button
-            onClick={() => window.location.reload()}
-            variant="secondary"
-            size="sm"
-          >
+          <Button onClick={onReloadPage} variant="secondary" size="sm">
             <RotateCcw className="h-4 w-4 mr-2" />
             Reload Page
           </Button>
@@ -186,7 +248,7 @@ export class ErrorBoundary extends React.Component<
 
     if (hasError && error && errorId) {
       const FallbackComponentToRender =
-        FallbackComponent || DefaultErrorFallback;
+        FallbackComponent || ErrorFallbackWithRouter;
 
       return (
         <FallbackComponentToRender
@@ -231,45 +293,18 @@ export function APIErrorBoundary({
   onRetry?: () => void;
 }) {
   const fallback: React.ComponentType<ErrorFallbackProps> = ({
-    error: _error,
+    error,
     resetError,
     errorId,
     requestId,
   }) => (
-    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-      <AlertTriangle className="h-12 w-12 text-red-500" />
-      <div>
-        <h3 className="font-semibold text-lg mb-2">Unable to load content</h3>
-        <p className="text-sm text-muted-foreground">
-          There was an error loading this section. Please try again.
-        </p>
-      </div>
-      <div className="flex gap-2">
-        <Button
-          onClick={() => {
-            resetError();
-            onRetry?.();
-          }}
-          size="sm"
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Try Again
-        </Button>
-        <Button
-          onClick={() => window.location.reload()}
-          variant="outline"
-          size="sm"
-        >
-          Reload Page
-        </Button>
-      </div>
-      {process.env.NODE_ENV === "development" && (
-        <div className="text-xs text-gray-400 space-y-1">
-          <p>Error ID: {errorId}</p>
-          {requestId && <p>Request ID: {requestId}</p>}
-        </div>
-      )}
-    </div>
+    <APIErrorFallbackWithRouter
+      error={error}
+      resetError={resetError}
+      errorId={errorId}
+      requestId={requestId}
+      onRetry={onRetry}
+    />
   );
 
   return (

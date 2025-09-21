@@ -2,11 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
+import { backendService } from "@/services/backend";
 import type { GeneratedTopic } from "@/types/topic-builder";
-
-// Backend URL for client-side requests (safe to expose)
-const BACKEND_URL = "http://localhost:2024";
-// API key will be handled server-side or through secure authentication
 
 const topicsLogger = logger.forComponent("useTopics");
 
@@ -18,32 +15,9 @@ export function useTopics() {
   return useQuery({
     queryKey: ["topics"],
     queryFn: async (): Promise<GeneratedTopic[]> => {
-      topicsLogger.info("Fetching topics from backend");
+      topicsLogger.info("Fetching topics from backend via BackendService");
 
-      const response = await fetch(`${BACKEND_URL}/api/topic/get-topics`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // API key authentication will be handled by backend or auth middleware
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "Unknown error");
-        topicsLogger.error("Failed to fetch topics", {
-          status: response.status,
-          error: errorText,
-        });
-        throw new Error(
-          `Failed to fetch topics: ${response.status} ${errorText}`,
-        );
-      }
-
-      const data = await response.json();
-
-      // Handle backend consistent response format
-      // Backend returns: { status: "success", data: { topics: [...], total_count: n }, message: "..." }
-      const topics = data.data?.topics || data.topics || [];
+      const topics = await backendService.getTopics();
 
       topicsLogger.info("Successfully fetched topics", {
         count: topics.length,
@@ -52,7 +26,7 @@ export function useTopics() {
       return topics;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    gcTime: 10 * 60 * 1000, // 10 minutes (updated from cacheTime for TanStack Query v5)
     retry: false, // No retries
     refetchOnWindowFocus: false,
   });
@@ -67,36 +41,11 @@ export function useTopic(id: string) {
     queryFn: async (): Promise<GeneratedTopic | null> => {
       if (!id) return null;
 
-      topicsLogger.info("Fetching single topic", { topic_id: id });
-
-      const response = await fetch(`${BACKEND_URL}/api/topic/get-topic/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // API key authentication will be handled by backend or auth middleware
-        },
+      topicsLogger.info("Fetching single topic via BackendService", {
+        topic_id: id,
       });
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        const errorText = await response.text().catch(() => "Unknown error");
-        topicsLogger.error("Failed to fetch topic", {
-          topic_id: id,
-          status: response.status,
-          error: errorText,
-        });
-        throw new Error(
-          `Failed to fetch topic: ${response.status} ${errorText}`,
-        );
-      }
-
-      const data = await response.json();
-
-      // Handle backend consistent response format
-      // Backend returns: { status: "success", data: topic_data, message: "..." }
-      const topic = data.data || data || null;
+      const topic = await backendService.getTopic(id);
 
       topicsLogger.info("Successfully fetched topic", {
         topic_id: id,
@@ -107,7 +56,7 @@ export function useTopic(id: string) {
     },
     enabled: !!id,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes (updated from cacheTime)
     retry: false, // No retries
     refetchOnWindowFocus: false,
   });

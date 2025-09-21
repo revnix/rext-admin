@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,27 @@ import { TopicsClientWrapper } from "./topics-client-wrapper";
 
 export default function TopicsPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Topics" }];
+  const queryClient = useQueryClient();
 
-  const { data: topics, isLoading, error } = useTopics();
+  const { data: topics, isLoading, error, refetch } = useTopics();
+
+  const handleRetry = async () => {
+    try {
+      // Proper error recovery without losing SPA state
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["topics"] }),
+        refetch(),
+      ]);
+    } catch (error) {
+      console.error("Retry failed:", error);
+    }
+  };
+
+  const handleForceRefresh = () => {
+    // Clear all caches and refetch
+    queryClient.clear();
+    queryClient.invalidateQueries();
+  };
 
   const emptyActions = [
     {
@@ -40,17 +60,22 @@ export default function TopicsPage() {
       {isLoading ? (
         <TableSkeleton rows={8} />
       ) : error ? (
-        <div className="text-center py-8">
-          <p className="text-red-500">
-            Failed to load topics. Please try again.
+        <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <h2 className="text-lg font-semibold">Failed to load topics</h2>
+          <p className="text-muted-foreground text-center max-w-md">
+            {error.message ||
+              "An unexpected error occurred while loading topics."}
           </p>
-          <Button
-            onClick={() => window.location.reload()}
-            variant="outline"
-            className="mt-2"
-          >
-            Retry
-          </Button>
+          <div className="flex space-x-2">
+            <Button onClick={handleRetry} variant="default" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+            <Button onClick={handleForceRefresh} variant="outline" size="sm">
+              Force Refresh
+            </Button>
+          </div>
         </div>
       ) : (
         <TopicsClientWrapper

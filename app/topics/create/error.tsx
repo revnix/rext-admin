@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, Home, RefreshCw, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ interface ErrorProps {
  * within the Topic Builder page and its child components.
  */
 export default function TopicBuilderError({ error, reset }: ErrorProps) {
+  const router = useRouter();
+
   useEffect(() => {
     // Log error for debugging
     console.error("Topic Builder route error:", {
@@ -30,6 +33,16 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
       url: typeof window !== "undefined" ? window.location.href : undefined,
     });
   }, [error]);
+
+  const handleReloadPage = () => {
+    // Use router refresh instead of window.location.reload
+    router.refresh();
+  };
+
+  const handleBackToTopics = () => {
+    // Use router navigation instead of direct location assignment
+    router.push("/topics");
+  };
 
   const breadcrumbs = [
     { label: "Topics", href: "/topics" },
@@ -127,7 +140,7 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
 
               <div className="flex gap-3">
                 <Button
-                  onClick={() => window.location.reload()}
+                  onClick={handleReloadPage}
                   variant="outline"
                   className="flex-1"
                 >
@@ -136,9 +149,7 @@ export default function TopicBuilderError({ error, reset }: ErrorProps) {
                 </Button>
 
                 <Button
-                  onClick={() => {
-                    window.location.href = "/topics";
-                  }}
+                  onClick={handleBackToTopics}
                   variant="secondary"
                   className="flex-1"
                 >

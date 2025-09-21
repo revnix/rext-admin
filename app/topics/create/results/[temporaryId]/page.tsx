@@ -377,12 +377,8 @@ export default function ResultsPage() {
         "🔄 Starting over: Wizard reset, navigating to topic builder",
       );
       setShowStartOverDialog(false);
-      // Navigate to create page and force a full refresh to ensure clean state
+      // Navigate to create page without full refresh
       router.push("/topics/create");
-      // Small delay then refresh to ensure the store state is applied
-      setTimeout(() => {
-        window.location.href = "/topics/create";
-      }, 100);
     } catch (error) {
       console.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
@@ -399,8 +395,35 @@ export default function ResultsPage() {
 
   const handleRetryLoad = () => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
-    // Trigger reload by updating a dependency
-    window.location.reload();
+    // Retry session loading without full page reload
+    if (temporaryId) {
+      const loadSession = async () => {
+        try {
+          const sessionData = getSession(temporaryId);
+          if (sessionData) {
+            setState((prev) => ({
+              ...prev,
+              session: sessionData,
+              isLoading: false,
+              error: null,
+            }));
+          } else {
+            setState((prev) => ({
+              ...prev,
+              isLoading: false,
+              error: "Session not found or has expired.",
+            }));
+          }
+        } catch (_error) {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: "Failed to load session data.",
+          }));
+        }
+      };
+      loadSession();
+    }
   };
 
   const handleSessionRecover = (sessionId: string) => {

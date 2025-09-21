@@ -266,6 +266,51 @@ export class BackendService {
   }
 
   /**
+   * Get all topics from the backend API.
+   *
+   * @returns Promise<GeneratedTopic[]> - Array of topics from backend
+   */
+  async getTopics(): Promise<GeneratedTopic[]> {
+    this.validateConfig();
+
+    const requestId = generateRequestId();
+
+    const response = await this.executeSingleGenericRequest<
+      void,
+      { topics: GeneratedTopic[] }
+    >("/api/topic/get-topics", undefined, requestId, "GET");
+
+    return response.topics || [];
+  }
+
+  /**
+   * Get a single topic by ID from the backend API.
+   *
+   * @param topicId - ID of the topic to retrieve
+   * @returns Promise<GeneratedTopic | null> - Topic data or null if not found
+   */
+  async getTopic(topicId: string): Promise<GeneratedTopic | null> {
+    this.validateConfig();
+
+    const requestId = generateRequestId();
+
+    try {
+      const response = await this.executeSingleGenericRequest<
+        void,
+        GeneratedTopic
+      >(`/api/topic/get-topic/${topicId}`, undefined, requestId, "GET");
+
+      return response;
+    } catch (error) {
+      // Return null for 404 errors (topic not found)
+      if (error instanceof Error && error.message.includes("404")) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Execute request without retry logic
    */
   private async executeSingleRequest(
@@ -587,7 +632,7 @@ export class BackendService {
     endpoint: string,
     payload: T,
     requestId: string,
-    method: "POST" | "PUT" | "DELETE" = "POST",
+    method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
   ): Promise<R> {
     try {
       this.log.debug("Single generic request", {
@@ -623,7 +668,7 @@ export class BackendService {
     endpoint: string,
     payload: T,
     requestId: string,
-    method: "POST" | "PUT" | "DELETE" = "POST",
+    method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
   ): Promise<Response> {
     const url = `${this.config.baseUrl}${endpoint}`;
     const controller = new AbortController();
@@ -657,7 +702,7 @@ export class BackendService {
           "X-Request-ID": requestId,
           // API key authentication handled by backend or auth middleware
         },
-        body: JSON.stringify(payload),
+        ...(method !== "GET" && { body: JSON.stringify(payload) }),
         signal: controller.signal,
       });
 
