@@ -1,12 +1,15 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   withApiMiddleware,
   createSuccessResponse,
+  createErrorResponse,
   NotFoundError,
 } from "@/lib/api-middleware";
 import { requireMethod } from "@/lib/api-utils";
+import { apiRateLimiter, getRateLimitIdentifier } from "@/lib/rate-limit";
 
 // Schema for tasks data validation
 const TasksResponseSchema = z.object({
@@ -17,6 +20,21 @@ const TasksResponseSchema = z.object({
 export const GET = withApiMiddleware(
   async (request, context) => {
     requireMethod(request, "GET");
+
+    // Apply rate limiting
+    const identifier = getRateLimitIdentifier(request as NextRequest);
+    const { success, remaining } = await apiRateLimiter.limit(identifier);
+
+    if (!success) {
+      return createErrorResponse(
+        'Rate limit exceeded',
+        'api_rate_limit_exceeded',
+        context.requestId,
+        429,
+        'Too many requests. Please try again later.',
+        60
+      );
+    }
 
     try {
       const tasksFilePath = join(
@@ -32,9 +50,14 @@ export const GET = withApiMiddleware(
       // Validate the tasks data structure
       const validatedData = TasksResponseSchema.parse(tasksData);
 
-      return createSuccessResponse(validatedData, context.requestId, {
+      const response = createSuccessResponse(validatedData, context.requestId, {
         generated_at: new Date().toISOString(),
       });
+
+      // Set rate limit headers
+      response.headers.set('X-RateLimit-Remaining', remaining.toString());
+
+      return response;
     } catch (error) {
       if (error instanceof Error && error.message.includes("ENOENT")) {
         throw new NotFoundError("Tasks file not found");
