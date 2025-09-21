@@ -110,23 +110,45 @@ export function useTopicGenerationMutation() {
         });
 
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const errorType =
+          error && typeof error === "object" && "type" in error
+            ? (error as { type: string }).type
+            : "unknown";
+
         generationLogger.error("Topic generation failed", {
           requestId,
-          error: error?.message || String(error),
-          error_type: error?.type || "unknown",
+          error: errorMessage,
+          error_type: errorType,
         });
 
         // Convert backend error to expected format
         const errorResponse: TopicGenerationError = {
-          error: error?.message || "Topic generation failed",
+          error: errorMessage,
           error_code:
-            error?.statusCode === 401
+            error &&
+            typeof error === "object" &&
+            "statusCode" in error &&
+            error.statusCode === 401
               ? "unauthorized"
               : "external_service_error",
-          details: error?.context ? JSON.stringify(error.context) : undefined,
+          details:
+            error &&
+            typeof error === "object" &&
+            "context" in error &&
+            error.context
+              ? JSON.stringify(error.context)
+              : undefined,
           request_id: requestId,
-          retry_after: error?.isRetryable ? 5000 : undefined,
+          retry_after:
+            error &&
+            typeof error === "object" &&
+            "isRetryable" in error &&
+            error.isRetryable
+              ? 5000
+              : undefined,
           fallback_available: false,
         };
 
@@ -175,7 +197,14 @@ export function useTopicGenerationMutation() {
       });
 
       // Error toast notification with action button if retryable
-      const toastOptions: any = {
+      const toastOptions: {
+        description: string;
+        duration: number;
+        action?: {
+          label: string;
+          onClick: () => void;
+        };
+      } = {
         description: `Error code: ${error.error_code}`,
         duration: 6000,
       };

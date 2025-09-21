@@ -11,6 +11,32 @@ import { getErrorInfo } from "@/types/api";
 import type { BackendErrorCode } from "@/types/consistent-response";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
+// Helper function to safely extract error information
+function extractErrorInfo(error: unknown): {
+  message: string;
+  statusCode?: number;
+  context?: unknown;
+  isRetryable?: boolean;
+} {
+  if (error instanceof Error) {
+    return { message: error.message };
+  }
+
+  if (error && typeof error === "object") {
+    const obj = error as Record<string, unknown>;
+    return {
+      message: typeof obj.message === "string" ? obj.message : String(error),
+      statusCode:
+        typeof obj.statusCode === "number" ? obj.statusCode : undefined,
+      context: obj.context,
+      isRetryable:
+        typeof obj.isRetryable === "boolean" ? obj.isRetryable : undefined,
+    };
+  }
+
+  return { message: String(error) };
+}
+
 const topicSaveLogger = logger.forComponent("useTopicSaveMutation");
 const topicBulkSaveLogger = logger.forComponent("useTopicBulkSaveMutation");
 const topicDeleteLogger = logger.forComponent("useTopicDeleteMutation");
@@ -122,22 +148,26 @@ export function useTopicSaveMutation() {
         });
 
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorInfo = extractErrorInfo(error);
+
         topicSaveLogger.error("Topic save failed", {
           requestId,
           topic_id: topic.id,
-          error: error?.message || String(error),
+          error: errorInfo.message,
         });
 
         const errorResponse: TopicMutationError = {
-          error: error?.message || "Failed to save topic",
+          error: errorInfo.message || "Failed to save topic",
           error_code:
-            error?.statusCode === 401
+            errorInfo.statusCode === 401
               ? "unauthorized"
               : "external_service_error",
-          details: error?.context ? JSON.stringify(error.context) : undefined,
+          details: errorInfo.context
+            ? JSON.stringify(errorInfo.context)
+            : undefined,
           request_id: requestId,
-          retry_after: error?.isRetryable ? 5000 : undefined,
+          retry_after: errorInfo.isRetryable ? 5000 : undefined,
           fallback_available: false,
         };
 
@@ -244,22 +274,26 @@ export function useTopicBulkSaveMutation() {
         });
 
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorInfo = extractErrorInfo(error);
+
         topicBulkSaveLogger.error("Bulk topic save failed", {
           requestId,
           topics_count: topics.length,
-          error: error?.message || String(error),
+          error: errorInfo.message,
         });
 
         const errorResponse: TopicMutationError = {
-          error: error?.message || "Failed to save topics",
+          error: errorInfo.message || "Failed to save topics",
           error_code:
-            error?.statusCode === 401
+            errorInfo.statusCode === 401
               ? "unauthorized"
               : "external_service_error",
-          details: error?.context ? JSON.stringify(error.context) : undefined,
+          details: errorInfo.context
+            ? JSON.stringify(errorInfo.context)
+            : undefined,
           request_id: requestId,
-          retry_after: error?.isRetryable ? 5000 : undefined,
+          retry_after: errorInfo.isRetryable ? 5000 : undefined,
           fallback_available: false,
         };
 
@@ -350,22 +384,26 @@ export function useTopicDeleteMutation() {
         });
 
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorInfo = extractErrorInfo(error);
+
         topicDeleteLogger.error("Topic deletion failed", {
           requestId,
           topic_ids: topicIds,
-          error: error?.message || String(error),
+          error: errorInfo.message,
         });
 
         const errorResponse: TopicMutationError = {
-          error: error?.message || "Failed to delete topics",
+          error: errorInfo.message || "Failed to delete topics",
           error_code:
-            error?.statusCode === 401
+            errorInfo.statusCode === 401
               ? "unauthorized"
               : "external_service_error",
-          details: error?.context ? JSON.stringify(error.context) : undefined,
+          details: errorInfo.context
+            ? JSON.stringify(errorInfo.context)
+            : undefined,
           request_id: requestId,
-          retry_after: error?.isRetryable ? 5000 : undefined,
+          retry_after: errorInfo.isRetryable ? 5000 : undefined,
           fallback_available: false,
         };
 

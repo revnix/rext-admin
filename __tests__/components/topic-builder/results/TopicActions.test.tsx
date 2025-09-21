@@ -48,9 +48,19 @@ const mockTopic: GeneratedTopic = {
   channel_fit: ["blog", "social-media"],
   audience_fit: ["developers", "marketers"],
   why_it_works: "Test reasoning",
-  scores: { relevance: 0.8, freshness: 0.7, novelty: 0.6 },
+  scores: {
+    relevance: 0.8,
+    seo_potential: 0.7,
+    trend_level: 0.6,
+    uniqueness: 0.8,
+    reader_interest: 0.7,
+    actionable_potential: 0.6,
+    brand_alignment: 0.8,
+    controversy: 0.2,
+  },
   tags: ["tech", "marketing"],
   is_saved: false,
+  created_at: "2024-01-01T00:00:00Z",
   _optimisticSaved: false,
   _isBeingSaved: false,
 };
@@ -67,13 +77,11 @@ const mockOptimisticTopic: GeneratedTopic = {
 
 const mockBackendError: BackendError = {
   type: "network_error",
-  code: "FETCH_ERROR",
   message: "Network request failed",
-  details: "Connection timeout",
-  timestamp: Date.now(),
-  userMessage: "Unable to connect to server. Please check your connection.",
-  canRetry: true,
-  retryAfter: 1000,
+  severity: "high",
+  recoveryActions: ["retry", "contact_support"],
+  isRetryable: true,
+  timestamp: new Date().toISOString(),
 };
 
 describe("TopicActions Component", () => {
@@ -505,7 +513,7 @@ describe("TopicActions Component", () => {
     it("should handle component unmounting during operation", async () => {
       const user = userEvent.setup();
       // biome-ignore lint/suspicious/noExplicitAny: Required for promise callback typing
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: any) => void = () => {};
       const savePromise = new Promise((resolve) => {
         resolvePromise = resolve;
       });

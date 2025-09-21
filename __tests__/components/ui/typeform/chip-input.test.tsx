@@ -9,7 +9,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import * as React from "react";
-import { Controller, type UseFormReturn, useForm } from "react-hook-form";
+import {
+  Controller,
+  type ControllerRenderProps,
+  type FieldValues,
+  type UseFormReturn,
+  useForm,
+} from "react-hook-form";
 import {
   ChipInput,
   type ChipInputProps,
@@ -558,7 +564,15 @@ describe("ChipInput Component", () => {
               name="testField"
               control={control}
               render={({ field }) => (
-                <ControlledChipInput field={field} placeholder="Test field" />
+                <ControlledChipInput
+                  field={
+                    field as unknown as ControllerRenderProps<
+                      FieldValues,
+                      string
+                    >
+                  }
+                  placeholder="Test field"
+                />
               )}
             />
           )}

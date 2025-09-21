@@ -23,8 +23,18 @@ const mockTopics: GeneratedTopic[] = [
     channel_fit: ["blog"],
     audience_fit: ["developers"],
     why_it_works: "Test reason 1",
-    scores: { relevance: 0.8, freshness: 0.7, novelty: 0.6 },
+    scores: {
+      relevance: 0.8,
+      seo_potential: 0.7,
+      trend_level: 0.6,
+      uniqueness: 0.7,
+      reader_interest: 0.8,
+      actionable_potential: 0.6,
+      brand_alignment: 0.7,
+      controversy: 0.2,
+    },
     tags: ["tech"],
+    created_at: "2024-01-01T00:00:00Z",
   },
   {
     id: "2",
@@ -34,8 +44,18 @@ const mockTopics: GeneratedTopic[] = [
     channel_fit: ["social-media"],
     audience_fit: ["marketers"],
     why_it_works: "Test reason 2",
-    scores: { relevance: 0.9, freshness: 0.8, novelty: 0.7 },
+    scores: {
+      relevance: 0.9,
+      seo_potential: 0.8,
+      trend_level: 0.7,
+      uniqueness: 0.8,
+      reader_interest: 0.9,
+      actionable_potential: 0.7,
+      brand_alignment: 0.8,
+      controversy: 0.1,
+    },
     tags: ["marketing"],
+    created_at: "2024-01-01T00:00:00Z",
   },
 ];
 
@@ -461,7 +481,7 @@ describe("useTopicBuilderStore", () => {
       const { result } = renderHook(() => useTopicBuilderStore());
 
       act(() => {
-        result.current.setCurrentStep(3);
+        result.current.setCurrentStep("audience");
         result.current.updateFormData({ industry: "technology" });
         result.current.setIsGenerating(true);
         result.current.setGeneratedTopics(mockTopics);

@@ -79,11 +79,17 @@ export const generatedTopicSchema = z.object({
   why_it_works: z.string(),
   scores: z.object({
     relevance: z.number().min(0).max(1),
-    freshness: z.number().min(0).max(1),
-    novelty: z.number().min(0).max(1),
+    seo_potential: z.number().min(0).max(1),
+    trend_level: z.number().min(0).max(1),
+    uniqueness: z.number().min(0).max(1),
+    reader_interest: z.number().min(0).max(1),
+    actionable_potential: z.number().min(0).max(1),
+    brand_alignment: z.number().min(0).max(1),
+    controversy: z.number().min(0).max(1),
   }),
   tags: z.array(z.string()),
   is_saved: z.boolean().optional(),
+  created_at: z.string().datetime(),
 });
 
 // API request/response schemas
