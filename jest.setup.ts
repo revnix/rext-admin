@@ -3,6 +3,14 @@
 // Enable jest-dom matchers
 import "@testing-library/jest-dom";
 
+// Store original console methods for detailed test output
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+const originalConsoleLog = console.log;
+
+// Enable all console output for detailed testing
+// Note: All errors, warnings, and logs will be shown for comprehensive debugging
+
 // Mock Next.js router
 jest.mock("next/router", () => ({
   useRouter() {
@@ -65,25 +73,25 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Mock localStorage for Zustand persist tests
-const localStorageMock: Storage = {
+const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
   length: 0,
   key: jest.fn(),
-};
+} as Storage;
 global.localStorage = localStorageMock;
 
 // Mock sessionStorage
-const sessionStorageMock: Storage = {
+const sessionStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
   length: 0,
   key: jest.fn(),
-};
+} as Storage;
 global.sessionStorage = sessionStorageMock;
 
 // Mock TanStack Query Client for tests
@@ -192,3 +200,56 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
+
+// Global test cleanup to prevent memory leaks
+afterEach(() => {
+  // Clear all timers
+  jest.clearAllTimers();
+
+  // Reset localStorage and sessionStorage mocks
+  if (global.localStorage && "mockClear" in global.localStorage.clear) {
+    (global.localStorage.clear as jest.Mock).mockClear();
+    (global.localStorage.getItem as jest.Mock).mockClear();
+    (global.localStorage.setItem as jest.Mock).mockClear();
+    (global.localStorage.removeItem as jest.Mock).mockClear();
+  }
+
+  if (global.sessionStorage && "mockClear" in global.sessionStorage.clear) {
+    (global.sessionStorage.clear as jest.Mock).mockClear();
+    (global.sessionStorage.getItem as jest.Mock).mockClear();
+    (global.sessionStorage.setItem as jest.Mock).mockClear();
+    (global.sessionStorage.removeItem as jest.Mock).mockClear();
+  }
+
+  // Clear fetch mock
+  if (global.fetch && "mockClear" in global.fetch) {
+    (global.fetch as jest.Mock).mockClear();
+  }
+});
+
+// Global test setup
+beforeEach(() => {
+  // Reset all mocks to clean state
+  jest.clearAllMocks();
+
+  // Reset localStorage mock
+  if (global.localStorage && "mockReturnValue" in global.localStorage.getItem) {
+    (global.localStorage.getItem as jest.Mock).mockReturnValue(null);
+    (global.localStorage.setItem as jest.Mock).mockImplementation(() => {});
+    (global.localStorage.removeItem as jest.Mock).mockImplementation(() => {});
+    (global.localStorage.clear as jest.Mock).mockImplementation(() => {});
+  }
+
+  // Reset sessionStorage mock
+  if (
+    global.sessionStorage &&
+    "mockReturnValue" in global.sessionStorage.getItem
+  ) {
+    (global.sessionStorage.getItem as jest.Mock).mockReturnValue(null);
+    (global.sessionStorage.setItem as jest.Mock).mockImplementation(() => {});
+    (global.sessionStorage.removeItem as jest.Mock).mockImplementation(
+      () => {},
+    );
+    (global.sessionStorage.clear as jest.Mock).mockImplementation(() => {});
+  }
+});

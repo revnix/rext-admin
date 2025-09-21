@@ -62,8 +62,41 @@ const customJestConfig: Config = {
   // Clear mocks between tests
   clearMocks: true,
 
-  // Verbose output for better debugging
+  // Enable detailed output for comprehensive testing
   verbose: true,
+
+  // Show all console output for detailed debugging
+  silent: false,
+
+  // Use default reporter with verbose output
+  reporters: ["default"],
+
+  // Bail after first test suite failure (set to false for complete run)
+  bail: false,
+
+  // Show detailed diff output for failed assertions
+  expand: true,
+
+  // Error handling configuration
+  errorOnDeprecated: true,
+
+  // Detect open handles to catch async issues
+  detectOpenHandles: true,
+
+  // Force exit to ensure all tests complete
+  forceExit: false,
+
+  // Maximum number of workers for parallel execution
+  maxWorkers: "50%",
+
+  // Global test timeout (30 seconds for detailed testing)
+  testTimeout: 30000,
+
+  // Show each individual test name as it runs
+  notify: false,
+
+  // Continue running tests even if some fail
+  passWithNoTests: false,
 
   // Module file extensions
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
