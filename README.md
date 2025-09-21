@@ -2,6 +2,19 @@
 
 A modern Next.js application for generating, managing, and utilizing AI-powered topics for content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
 
+## 🔒 Security Notice
+
+**This application has been updated with comprehensive security measures (September 2024).**
+
+Key security features implemented:
+- **Server-side API proxy** prevents client-side key exposure
+- **Rate limiting** protects against API abuse (60 req/min per IP)
+- **Input validation & sanitization** blocks XSS attacks
+- **Security headers** via middleware (CSP, HSTS, XSS protection)
+- **Environment variable security** with proper isolation
+
+📖 **Review the [Security Implementation Guide](docs/security-implementation.md) before deployment.**
+
 ## 🚀 Features
 
 - **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
@@ -102,15 +115,33 @@ For production deployment (Vercel, Netlify, etc.):
 
 ### Available Scripts
 
+#### Development
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run Biome linter
-npm run format       # Format code with Biome
-npm run type-check   # Check TypeScript types
-npm run test         # Run test suite
+npm run dev              # Start development server with Turbopack
+npm run build            # Build for production with Turbopack optimizations
+npm run start            # Start production server
 ```
+
+#### Code Quality
+```bash
+npm run lint             # Run Biome linting and type checking
+npm run format           # Format code with Biome
+npm run prepare          # Set up Git hooks (runs automatically)
+```
+
+#### Testing
+```bash
+npm run test             # Run Jest test suite
+npm run test:watch       # Run tests in watch mode
+npm run test:coverage    # Run tests with coverage report
+npm run test:ci          # Run tests in CI mode (no watch, with coverage)
+```
+
+#### Security & Quality Checks
+- **Biome**: Fast linting and formatting (replaces ESLint + Prettier)
+- **TypeScript**: Strict mode enabled with comprehensive type checking
+- **Husky**: Pre-commit hooks for automated quality checks
+- **Jest**: Comprehensive test coverage with Testing Library
 
 ### Project Structure
 
@@ -150,6 +181,7 @@ The main feature is an AI-powered topic generator with a streamlined wizard:
 
 Detailed documentation is available in the `/docs` directory:
 
+- **[Security Implementation Guide](docs/security-implementation.md)** 🔒
 - [Component Architecture](docs/component-architecture.md)
 - [Accessibility Requirements](docs/accessibility-requirements.md)
 - [TypeForm UX Specifications](docs/typeform-ux-specifications.md)
@@ -175,10 +207,38 @@ PERPLEXITY_API_KEY=your_perplexity_key
 - `GET /api/topics` - Retrieve saved topics
 
 ### Security Architecture
-- All external API calls are proxied through Next.js API routes
-- API keys are server-side only (never exposed to client)
-- Input validation with Zod schemas
-- Rate limiting protection
+
+**Comprehensive Security Implementation (September 2024):**
+
+1. **API Security**
+   - All external API calls proxied through Next.js API routes
+   - API keys stored server-side only (never exposed to client)
+   - Request/response validation with comprehensive error handling
+
+2. **Input Protection**
+   - Zod schema validation for all inputs
+   - XSS detection and content sanitization
+   - Length limits and pattern validation
+   - Malicious content blocking
+
+3. **Rate Limiting**
+   - IP-based rate limiting (60 req/min for API routes)
+   - Automatic cleanup of expired entries
+   - Configurable limits per endpoint type
+   - Rate limit headers for client monitoring
+
+4. **Security Headers**
+   - Content Security Policy (CSP) via middleware
+   - XSS protection and frame options
+   - HSTS for production environments
+   - Referrer policy and content-type protection
+
+5. **Environment Security**
+   - Strict separation of public/private variables
+   - No client-side exposure of sensitive data
+   - Environment variable validation on startup
+
+📖 **Detailed Information**: See [Security Implementation Guide](docs/security-implementation.md)
 
 ## 🧪 Testing
 
