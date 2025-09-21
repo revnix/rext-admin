@@ -1019,410 +1019,17 @@ describe('TopicBuilderStore', () => {
 
 ---
 
-## Phase 3: Performance & Bundle Optimization (Days 6-8)
+## Phase 3: Security Hardening & Monitoring (Days 6-7)
 *Timeline: Medium Priority - Within 2 weeks*
 
-### 🟡 Task 3.1: Next.js 15 Bundle Optimization
-**Priority**: MEDIUM
-**Estimated Time**: 6-8 hours
-**Dependencies**: Phase 2 completion
-
-#### Implementation Steps
-
-##### Subtask 3.1.1: Enable Webpack Bundle Optimization
-**Update**: `next.config.ts`
-```typescript
-import type { NextConfig } from "next";
-import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-
-const nextConfig: NextConfig = {
-  // Enable webpack optimization for production
-  webpack: (config, { dev, isServer }) => {
-    // Bundle analyzer for development
-    if (dev && !isServer && process.env.ANALYZE === 'true') {
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: 'server',
-          openAnalyzer: true,
-        })
-      );
-    }
-
-    // Production optimizations
-    if (!dev) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          cacheGroups: {
-            ...config.optimization.splitChunks?.cacheGroups,
-            // Extract common vendor libraries
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 10,
-              enforce: true,
-            },
-            // Extract topic builder related components
-            topicBuilder: {
-              test: /[\\/]components[\\/]topic-builder[\\/]/,
-              name: 'topic-builder',
-              chunks: 'all',
-              priority: 20,
-              enforce: true,
-            },
-            // Extract UI components
-            ui: {
-              test: /[\\/]components[\\/]ui[\\/]/,
-              name: 'ui-components',
-              chunks: 'all',
-              priority: 15,
-              enforce: true,
-            },
-            // Extract common utilities
-            utils: {
-              test: /[\\/](lib|utils|hooks)[\\/]/,
-              name: 'utils',
-              chunks: 'all',
-              priority: 12,
-              enforce: true,
-            },
-          },
-        },
-      };
-    }
-
-    return config;
-  },
-
-  // Enable experimental package import optimization
-  experimental: {
-    optimizePackageImports: [
-      '@radix-ui/react-icons',
-      'lucide-react',
-      'framer-motion',
-      '@tanstack/react-query',
-    ],
-    // Enable modern bundling features
-    esmExternals: true,
-    serverComponentsExternalPackages: ['zod'],
-  },
-
-  // Compiler optimizations
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
-
-  // Image optimization
-  images: {
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-  },
-};
-
-export default nextConfig;
-```
-
-##### Subtask 3.1.2: Implement Dynamic Imports for Large Components
-**Create**: `components/topic-builder/LazyTopicBuilder.tsx`
-```typescript
-import { lazy, Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-
-// Lazy load large topic builder components
-const TopicWizard = lazy(() => import('./wizard/TopicWizard'));
-const TopicEditor = lazy(() => import('./editor/TopicEditor'));
-const TopicPreview = lazy(() => import('./preview/TopicPreview'));
-
-interface LazyTopicBuilderProps {
-  mode: 'wizard' | 'editor' | 'preview';
-  [key: string]: any;
-}
-
-const TopicBuilderSkeleton = () => (
-  <div className="space-y-4">
-    <Skeleton className="h-8 w-48" />
-    <Skeleton className="h-64 w-full" />
-    <div className="flex space-x-2">
-      <Skeleton className="h-10 w-24" />
-      <Skeleton className="h-10 w-24" />
-    </div>
-  </div>
-);
-
-export const LazyTopicBuilder = ({ mode, ...props }: LazyTopicBuilderProps) => {
-  const getComponent = () => {
-    switch (mode) {
-      case 'wizard':
-        return <TopicWizard {...props} />;
-      case 'editor':
-        return <TopicEditor {...props} />;
-      case 'preview':
-        return <TopicPreview {...props} />;
-      default:
-        return <div>Invalid mode</div>;
-    }
-  };
-
-  return (
-    <Suspense fallback={<TopicBuilderSkeleton />}>
-      {getComponent()}
-    </Suspense>
-  );
-};
-```
-
-##### Subtask 3.1.3: Add Bundle Analysis Scripts
-**Update**: `package.json`
-```json
-{
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "build:analyze": "ANALYZE=true next build",
-    "start": "next start",
-    "lint": "biome check",
-    "format": "biome format --write",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --watchAll=false",
-    "prepare": "husky",
-    "typecheck": "tsc --noEmit"
-  }
-}
-```
-
-**Bundle Optimization Implementation Notes:**
-- ✅ Intelligent code splitting by feature and vendor
-- ✅ Dynamic imports for large components
-- ✅ Bundle analysis tooling
-- ✅ Modern browser optimizations
-
----
-
-### 🟡 Task 3.2: TailwindCSS v4 Production Optimization
-**Priority**: MEDIUM
-**Estimated Time**: 4-6 hours
-**Dependencies**: Task 3.1
-
-#### Implementation Steps
-Based on **TailwindCSS v4 alpha production best practices** researched above:
-
-##### Subtask 3.2.1: Optimize CSS Token Configuration
-**Update**: `app/globals.css`
-```css
-@import "tailwindcss";
-
-@theme {
-  /* Optimized OKLCH color palette for production */
-  --color-primary: oklch(0.47 0.29 282.39);
-  --color-primary-foreground: oklch(0.98 0.02 282.39);
-  --color-secondary: oklch(0.97 0.01 282.39);
-  --color-secondary-foreground: oklch(0.45 0.29 282.39);
-
-  /* Performance-optimized font variables */
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", "Consolas", monospace;
-
-  /* Responsive breakpoints */
-  --breakpoint-xs: 475px;
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-
-  /* Animation performance optimizations */
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Performance optimizations for animations */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* OKLCH color fallbacks for older browsers */
-@supports not (color: oklch(0% 0 0)) {
-  :root {
-    --color-primary: hsl(278, 73%, 47%);
-    --color-primary-foreground: hsl(278, 25%, 98%);
-    /* Additional HSL fallbacks... */
-  }
-}
-```
-
-##### Subtask 3.2.2: Implement CSS-in-JS Performance Patterns
-**Create**: `lib/css-optimizations.ts`
-```typescript
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-// Optimized class merging utility
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// Performance-optimized variant system for Tailwind v4
-export const createVariants = <T extends Record<string, Record<string, string>>>(
-  base: string,
-  variants: T
-) => {
-  return (variant: keyof T, value: keyof T[keyof T], className?: string) => {
-    const variantClass = variants[variant]?.[value] || '';
-    return cn(base, variantClass, className);
-  };
-};
-
-// CSS custom property utilities for Tailwind v4
-export const cssVar = (name: string, fallback?: string) => {
-  return `var(--${name}${fallback ? `, ${fallback}` : ''})`;
-};
-```
-
-**CSS Optimization Implementation Notes:**
-- ✅ OKLCH colors with HSL fallbacks
-- ✅ Performance-optimized animations
-- ✅ Reduced motion accessibility
-- ✅ CSS custom property utilities
-
----
-
-### 🟡 Task 3.3: Query & State Management Optimization
-**Priority**: MEDIUM
-**Estimated Time**: 5-7 hours
-**Dependencies**: Task 2.1
-
-#### Implementation Steps
-
-##### Subtask 3.3.1: Optimize TanStack Query Configuration
-**Update**: `lib/query-client.ts`
-```typescript
-import { QueryClient } from '@tanstack/react-query';
-
-// Optimized query client configuration for production
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Consistent caching strategy
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes (renamed to gcTime in v5)
-      gcTime: 10 * 60 * 1000, // New name for cacheTime in v5
-
-      // Performance optimizations
-      refetchOnWindowFocus: false,
-      refetchOnMount: true,
-      refetchOnReconnect: 'always',
-
-      // Error handling
-      retry: (failureCount, error: any) => {
-        // Don't retry on 4xx errors (client errors)
-        if (error?.status >= 400 && error?.status < 500) {
-          return false;
-        }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
-      },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    },
-    mutations: {
-      // Mutation optimizations
-      retry: 1,
-      retryDelay: 1000,
-    },
-  },
-});
-
-// Performance monitoring (development only)
-if (process.env.NODE_ENV === 'development') {
-  queryClient.setMutationDefaults(['topics'], {
-    onMutate: () => {
-      console.time('topic-mutation');
-    },
-    onSettled: () => {
-      console.timeEnd('topic-mutation');
-    },
-  });
-}
-```
-
-##### Subtask 3.3.2: Implement Optimistic Updates
-**Update**: `hooks/use-topics.ts`
-```typescript
-export const useUpdateTopic = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: UpdateTopicRequest) =>
-      backendService.updateTopic(data.id, data),
-
-    // Optimistic updates for better UX
-    onMutate: async (newTopic) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['topics'] });
-
-      // Snapshot the previous value
-      const previousTopics = queryClient.getQueryData(['topics']);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(['topics'], (old: Topic[] | undefined) => {
-        if (!old) return [];
-        return old.map(topic =>
-          topic.id === newTopic.id
-            ? { ...topic, ...newTopic }
-            : topic
-        );
-      });
-
-      // Return a context with the previous and new todo
-      return { previousTopics };
-    },
-
-    // On error, roll back to the previous value
-    onError: (err, newTopic, context) => {
-      if (context?.previousTopics) {
-        queryClient.setQueryData(['topics'], context.previousTopics);
-      }
-    },
-
-    // Always refetch after error or success
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
-    },
-  });
-};
-```
-
-**Query Optimization Implementation Notes:**
-- ✅ Consistent caching strategy across the app
-- ✅ Intelligent retry mechanisms
-- ✅ Optimistic updates for better UX
-- ✅ Performance monitoring hooks
-
----
-
-## Phase 4: Security Hardening & Monitoring (Days 9-10)
-*Timeline: Medium Priority - Within 2 weeks*
-
-### 🟡 Task 4.1: Security Headers & Middleware
+### 🟡 Task 3.1: Security Headers & Middleware
 **Priority**: MEDIUM
 **Estimated Time**: 4-6 hours
 **Dependencies**: Phase 1 completion
 
 #### Implementation Steps
 
-##### Subtask 4.1.1: Implement Security Headers Middleware
+##### Subtask 3.1.1: Implement Security Headers Middleware
 **Create**: `middleware.ts`
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
@@ -1479,7 +1086,7 @@ export const config = {
 };
 ```
 
-##### Subtask 4.1.2: Implement Rate Limiting for API Routes
+##### Subtask 3.1.2: Implement Rate Limiting for API Routes
 **Create**: `lib/rate-limit.ts`
 ```typescript
 import { NextRequest } from 'next/server';
@@ -1549,7 +1156,7 @@ export function getRateLimitIdentifier(request: NextRequest): string {
 }
 ```
 
-##### Subtask 4.1.3: Update API Routes with Rate Limiting
+##### Subtask 3.1.3: Update API Routes with Rate Limiting
 **Update**: `app/api/content/generate/route.ts`
 ```typescript
 import { strictRateLimiter, getRateLimitIdentifier } from '@/lib/rate-limit';
@@ -1597,14 +1204,14 @@ export async function POST(request: NextRequest) {
 
 ---
 
-### 🟡 Task 4.2: Input Validation & Sanitization Enhancement
+### 🟡 Task 3.2: Input Validation & Sanitization Enhancement
 **Priority**: MEDIUM
 **Estimated Time**: 3-4 hours
 **Dependencies**: Task 1.4
 
 #### Implementation Steps
 
-##### Subtask 4.2.1: Enhanced Zod Schema Validation
+##### Subtask 3.2.1: Enhanced Zod Schema Validation
 **Update**: `schemas/content-schemas.ts`
 ```typescript
 import { z } from 'zod';
@@ -1694,7 +1301,7 @@ export type GenerateContentRequest = z.infer<typeof GenerateContentRequestSchema
 export type Topic = z.infer<typeof TopicSchema>;
 ```
 
-##### Subtask 4.2.2: Input Sanitization Middleware
+##### Subtask 3.2.2: Input Sanitization Middleware
 **Create**: `lib/sanitization.ts`
 ```typescript
 import DOMPurify from 'isomorphic-dompurify';
@@ -1741,17 +1348,17 @@ export class InputSanitizer {
 
 ---
 
-## Phase 5: Documentation & Developer Experience (Days 11-12)
+## Phase 4: Documentation & Developer Experience (Days 8-9)
 *Timeline: Low Priority - Future iterations*
 
-### 🟢 Task 5.1: Update Documentation for Security Changes
+### 🟢 Task 4.1: Update Documentation for Security Changes
 **Priority**: LOW
 **Estimated Time**: 6-8 hours
-**Dependencies**: Phase 1-4 completion
+**Dependencies**: Phase 1-3 completion
 
 #### Implementation Steps
 
-##### Subtask 5.1.1: Create Security Implementation Guide
+##### Subtask 4.1.1: Create Security Implementation Guide
 **Create**: `docs/security-implementation.md`
 ```markdown
 # Security Implementation Guide
@@ -1805,7 +1412,7 @@ Implemented via Next.js middleware:
 - Security event tracking
 ```
 
-##### Subtask 5.1.2: Update README with New Scripts and Security Notes
+##### Subtask 4.1.2: Update README with New Scripts and Security Notes
 **Update**: `README.md`
 ```markdown
 # Wrext Admin
@@ -1880,14 +1487,14 @@ PERPLEXITY_API_KEY=your_perplexity_key
 
 ---
 
-### 🟢 Task 5.2: Developer Tools & Monitoring Setup
+### 🟢 Task 4.2: Developer Tools & Monitoring Setup
 **Priority**: LOW
 **Estimated Time**: 4-5 hours
 **Dependencies**: Phase 3 completion
 
 #### Implementation Steps
 
-##### Subtask 5.2.1: Add Performance Monitoring
+##### Subtask 4.2.1: Add Performance Monitoring
 **Create**: `lib/performance-monitoring.ts`
 ```typescript
 export class PerformanceMonitor {
@@ -1964,7 +1571,7 @@ export function usePerformanceMonitor(label: string) {
 }
 ```
 
-##### Subtask 5.2.2: Development Dashboard Component
+##### Subtask 4.2.2: Development Dashboard Component
 **Create**: `components/dev/DevDashboard.tsx`
 ```typescript
 'use client';
@@ -2058,9 +1665,8 @@ export function DevDashboard({ show }: DevDashboardProps) {
 |-------|----------|----------|------------------|
 | **Phase 1** | 1-2 days | 🚨 URGENT | API key security, SSR fixes, DevTools removal |
 | **Phase 2** | 3-5 days | 🔴 HIGH | Architecture consolidation, error recovery, testing |
-| **Phase 3** | 6-8 days | 🟡 MEDIUM | Bundle optimization, performance improvements |
-| **Phase 4** | 9-10 days | 🟡 MEDIUM | Security hardening, monitoring |
-| **Phase 5** | 11-12 days | 🟢 LOW | Documentation, developer experience |
+| **Phase 3** | 6-7 days | 🟡 MEDIUM | Security hardening, monitoring |
+| **Phase 4** | 8-9 days | 🟢 LOW | Documentation, developer experience |
 
 ## Success Criteria
 
@@ -2077,18 +1683,12 @@ export function DevDashboard({ show }: DevDashboardProps) {
 - [ ] TypeScript compilation without errors
 
 ### Phase 3 Success Metrics
-- [ ] Bundle size reduced by >30%
-- [ ] Core Web Vitals scores improved
-- [ ] Dynamic imports implemented for large components
-- [ ] TailwindCSS v4 production-ready
-
-### Phase 4 Success Metrics
 - [ ] Security headers implemented
 - [ ] Rate limiting functional
 - [ ] Input validation comprehensive
 - [ ] CSP policy enforced
 
-### Phase 5 Success Metrics
+### Phase 4 Success Metrics
 - [ ] Documentation updated and accurate
 - [ ] Developer tools functional
 - [ ] Performance monitoring active
