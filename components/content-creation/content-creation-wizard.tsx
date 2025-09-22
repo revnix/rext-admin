@@ -27,6 +27,7 @@ import type {
   PartialContentCreationFormData,
   WizardAction,
   WizardState,
+  WizardStepFeedbackStateEntry,
 } from "@/types/content-creation";
 import type { FormFieldValue } from "@/types/shared";
 import { DraftManagerUI } from "./draft-manager-ui";
@@ -607,6 +608,52 @@ export function ContentCreationWizard({
     dispatch({ type: "CLEAR_AUTOFILLED_VALUES" });
   }, []);
 
+  const sidebarCompletions: Record<string, number> = {};
+  const sidebarValidations: Record<
+    string,
+    {
+      hasErrors: boolean;
+      hasWarnings: boolean;
+      errorCount: number;
+      warningCount: number;
+    }
+  > = {};
+  const sidebarFeedback: Record<string, WizardStepFeedbackStateEntry> = {};
+
+  WIZARD_CONFIG.steps.forEach((step, index) => {
+    const stepValidation = dependencyEngine.validateStep(step);
+    const visibleFields = dependencyEngine.getVisibleFields(step);
+
+    const hasTouchedField = visibleFields.some(
+      (field) =>
+        !!state.touched[field.id as keyof PartialContentCreationFormData],
+    );
+
+    const isBeforeCurrent = index < state.currentStep;
+    const isCurrent = index === state.currentStep;
+    const shouldSurface = isBeforeCurrent || hasTouchedField;
+
+    const errorCount = Object.keys(stepValidation.errors).length;
+    const warningCount = stepValidation.warnings
+      ? Object.keys(stepValidation.warnings).length
+      : 0;
+
+    sidebarCompletions[step.id] = stepValidation.completionPercentage || 0;
+    sidebarValidations[step.id] = {
+      hasErrors: errorCount > 0,
+      hasWarnings: warningCount > 0,
+      errorCount,
+      warningCount,
+    };
+
+    sidebarFeedback[step.id] = {
+      showValidation: shouldSurface || isCurrent,
+      showErrors: shouldSurface,
+      showWarnings: shouldSurface,
+      isVisited: shouldSurface || isCurrent,
+    };
+  });
+
   // Step navigation handlers with enhanced validation
   const handleNextStep = useCallback(() => {
     const currentStepConfig = WIZARD_CONFIG.steps[state.currentStep];
@@ -944,37 +991,9 @@ export function ContentCreationWizard({
                         if (index === state.currentStep) return "current";
                         return "pending";
                       })}
-                      stepCompletions={Object.fromEntries(
-                        WIZARD_CONFIG.steps.map((step, _index) => {
-                          const stepValidation =
-                            dependencyEngine.validateStep(step);
-                          return [
-                            step.id,
-                            stepValidation.completionPercentage || 0,
-                          ];
-                        }),
-                      )}
-                      stepValidations={Object.fromEntries(
-                        WIZARD_CONFIG.steps.map((step) => {
-                          const stepValidation =
-                            dependencyEngine.validateStep(step);
-                          const errorCount = Object.keys(
-                            stepValidation.errors,
-                          ).length;
-                          const warningCount = stepValidation.warnings
-                            ? Object.keys(stepValidation.warnings).length
-                            : 0;
-                          return [
-                            step.id,
-                            {
-                              hasErrors: errorCount > 0,
-                              hasWarnings: warningCount > 0,
-                              errorCount,
-                              warningCount,
-                            },
-                          ];
-                        }),
-                      )}
+                      stepCompletions={sidebarCompletions}
+                      stepValidations={sidebarValidations}
+                      stepFeedbackState={sidebarFeedback}
                       overallCompletion={enhancedProgress.overallCompletion}
                       completedFields={enhancedProgress.completedFields}
                       totalFields={enhancedProgress.totalFields}

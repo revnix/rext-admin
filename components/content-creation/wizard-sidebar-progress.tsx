@@ -19,18 +19,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import type {
+  WizardStep,
+  WizardStepFeedbackStateEntry,
+} from "@/types/content-creation";
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-interface WizardStep {
-  id: string;
-  title: string;
-  description: string;
-  optional?: boolean;
-  requiredFieldCount?: number;
-}
 
 interface WizardSidebarProgressProps {
   /** Current active step index */
@@ -49,6 +45,8 @@ interface WizardSidebarProgressProps {
       warningCount: number;
     }
   >;
+  /** Controls when validation feedback should surface per step */
+  stepFeedbackState?: Record<string, WizardStepFeedbackStateEntry>;
   /** Overall completion percentage */
   overallCompletion: number;
   /** Completed fields count */
@@ -76,6 +74,7 @@ interface SidebarStepItemProps {
   };
   isClickable: boolean;
   onClick: () => void;
+  feedback?: WizardStepFeedbackStateEntry;
 }
 
 // ============================================================================
@@ -90,10 +89,14 @@ function SidebarStepItem({
   validation,
   isClickable,
   onClick,
+  feedback,
 }: SidebarStepItemProps) {
-  const showValidation = status !== "pending";
-  const hasErrors = validation.hasErrors && showValidation;
-  const hasWarnings = validation.hasWarnings && showValidation;
+  const showValidation = feedback?.showValidation ?? status !== "pending";
+  const shouldSurfaceErrors = feedback?.showErrors ?? showValidation;
+  const shouldSurfaceWarnings = feedback?.showWarnings ?? showValidation;
+
+  const hasErrors = validation.hasErrors && shouldSurfaceErrors;
+  const hasWarnings = validation.hasWarnings && shouldSurfaceWarnings;
   const errorCount = hasErrors ? validation.errorCount : 0;
   const warningCount = hasWarnings ? validation.warningCount : 0;
 
@@ -281,6 +284,7 @@ export function WizardSidebarProgress({
   stepStatuses,
   stepCompletions,
   stepValidations,
+  stepFeedbackState,
   overallCompletion,
   completedFields,
   totalFields,
@@ -339,6 +343,7 @@ export function WizardSidebarProgress({
             errorCount: 0,
             warningCount: 0,
           };
+          const feedback = stepFeedbackState?.[step.id];
           const isClickable =
             onStepClick && (status === "completed" || index <= currentStep);
 
@@ -357,6 +362,7 @@ export function WizardSidebarProgress({
                 validation={validation}
                 isClickable={!!isClickable}
                 onClick={() => onStepClick?.(index)}
+                feedback={feedback}
               />
             </motion.div>
           );
@@ -374,10 +380,13 @@ export function WizardSidebarProgress({
           </div>
           <div className="text-center">
             <div className="font-medium text-red-600">
-              {Object.values(stepValidations).reduce(
-                (acc, v) => acc + (v.hasErrors ? 1 : 0),
-                0,
-              )}
+              {steps.reduce((acc, step) => {
+                const validation = stepValidations[step.id];
+                if (!validation) return acc;
+                const feedback = stepFeedbackState?.[step.id];
+                const shouldShowErrors = feedback?.showErrors ?? true;
+                return acc + (validation.hasErrors && shouldShowErrors ? 1 : 0);
+              }, 0)}
             </div>
             <div className="text-muted-foreground">With Errors</div>
           </div>

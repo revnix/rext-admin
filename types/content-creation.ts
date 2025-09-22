@@ -230,6 +230,20 @@ export interface WizardConfig {
 // ============================================================================
 
 /**
+ * Controls when wizard sidebar should surface validation feedback per step
+ */
+export interface WizardStepFeedbackStateEntry {
+  /** Whether general validation indicators should display */
+  showValidation: boolean;
+  /** Whether error styling/badges should appear */
+  showErrors: boolean;
+  /** Whether warning styling/badges should appear */
+  showWarnings: boolean;
+  /** Whether the step has been interacted with or completed */
+  isVisited: boolean;
+}
+
+/**
  * Current wizard state
  */
 export interface WizardState {

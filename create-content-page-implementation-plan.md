@@ -19,7 +19,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 ### Phase Status
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
-- [ ] **Phase 2**: UI/UX Improvements (2/6 tasks) _(IN PROGRESS)_
+- [ ] **Phase 2**: UI/UX Improvements (3/6 tasks) _(IN PROGRESS)_
 - [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
@@ -36,6 +36,8 @@ This document provides a comprehensive implementation plan for improving the Cre
 - 2025-09-22: Discovered validation flags still paint future steps red; need to suppress preemptive error styling for untouched steps.
 - 2025-09-22: Applied conditional validation styling so pending steps appear neutral until visited.
 - 2025-09-22: Current step still shows red by default due to step-level validation; require touched/error tracking to delay error styling.
+- 2025-09-22: Implemented touched-driven feedback gating so sidebar stays neutral until a step is interacted with or left; verified green/neutral/red palette matches UX brief.
+- 2025-09-22: Identified need for step-level interaction tracking—sidebar errors should surface only after user interaction or leaving a step; plan to derive visibility flags from `state.touched` when computing progress metadata.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -481,7 +483,12 @@ This document provides a comprehensive implementation plan for improving the Cre
 3. Create validation error and verify red styling
 4. Test all step states
 
-**Status**: 🚧 IN PROGRESS (Follow-up)
+**Status**: ✅ COMPLETED (Codex 2025-09-22)
+
+**Implementation Notes**:
+- **Validation gating**: Sidebar now defers error/warning indicators until a step is visited or a field is touched, keeping untouched steps neutral by default.
+- **Feedback plumbing**: Added step-level feedback map derived from wizard touched state to control sidebar styling without regressing completion metrics.
+- **Summary accuracy**: Error totals respect the new visibility rules so the counter only reflects surfaced issues.
 
 ---
 
