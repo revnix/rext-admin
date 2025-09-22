@@ -73,6 +73,7 @@ export const TopicsTable = memo(function TopicsTable({
     } = scores;
 
     // Weighted average of all score components (same as TopicDetailDrawer and simple-topic-transformer.ts)
+    // Note: controversy is inverted (lower controversy = higher score)
     const totalScore =
       relevance * 0.2 +
       seo_potential * 0.15 +
@@ -81,7 +82,7 @@ export const TopicsTable = memo(function TopicsTable({
       reader_interest * 0.15 +
       actionable_potential * 0.1 +
       brand_alignment * 0.1 +
-      controversy * 0.05;
+      (1 - controversy) * 0.05;
 
     return Math.round(totalScore * 100);
   };

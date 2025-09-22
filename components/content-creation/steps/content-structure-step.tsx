@@ -213,7 +213,7 @@ export function ContentStructureStep({
               if (!metadata?.originalSuggestedDefaults) return [];
 
               const suggestedDefaults =
-                metadata.originalSuggestedDefaults as any;
+                metadata.originalSuggestedDefaults as Record<string, unknown>;
               const suggestions: string[] = [];
 
               // Add secondary keywords if available
@@ -225,17 +225,22 @@ export function ContentStructureStep({
               }
 
               // Add long tail keywords from content guidance if available
+              const contentGuidance = suggestedDefaults.content_guidance as
+                | {
+                    seo_opportunities?: {
+                      long_tail_keywords?: string[];
+                    };
+                  }
+                | undefined;
+
               if (
-                suggestedDefaults.content_guidance?.seo_opportunities
-                  ?.long_tail_keywords &&
+                contentGuidance?.seo_opportunities?.long_tail_keywords &&
                 Array.isArray(
-                  suggestedDefaults.content_guidance.seo_opportunities
-                    .long_tail_keywords,
+                  contentGuidance.seo_opportunities.long_tail_keywords,
                 )
               ) {
                 suggestions.push(
-                  ...suggestedDefaults.content_guidance.seo_opportunities
-                    .long_tail_keywords,
+                  ...contentGuidance.seo_opportunities.long_tail_keywords,
                 );
               }
 

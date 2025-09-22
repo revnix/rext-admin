@@ -1116,6 +1116,19 @@
   }
 }
 
+/* Custom dialog styles for wide modals - using higher specificity to override defaults */
+[data-slot="dialog-content"].topic-picker-dialog {
+  max-width: 71vw;
+  width: 71vw;
+}
+
+@media (min-width: 1280px) {
+  [data-slot="dialog-content"].topic-picker-dialog {
+    max-width: 60vw;
+    width: 60vw;
+  }
+}
+
 /* Accessibility: Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-spin,

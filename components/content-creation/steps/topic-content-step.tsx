@@ -1,7 +1,7 @@
 "use client";
 
-import { Building2, FileText, Globe, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Building2, FileText, Globe } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import {
   Select,
@@ -19,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useTopics } from "@/hooks/use-topics";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import {
@@ -28,7 +26,9 @@ import {
   PLATFORM_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
 import type { WizardAction, WizardStepProps } from "@/types/content-creation";
+import type { GeneratedTopic } from "@/types/topic-builder";
 import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
+import { TopicSelector } from "../fields/topic-selector";
 
 interface TopicContentStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -55,30 +55,8 @@ export function TopicContentStep({
   dependencyEngine,
   dispatch,
 }: TopicContentStepProps) {
-  const [topicSearch, setTopicSearch] = useState("");
-
   // Fetch topics from API
-  const { data: topics = [], isLoading: isLoadingTopics } = useTopics();
-
-  // Filter topics based on search and only show approved ones
-  const filteredTopics = useMemo(() => {
-    if (!topics.length) return [];
-
-    // Filter to only approved topics
-    const approvedTopics = topics.filter((topic) => topic.approved === true);
-
-    if (!topicSearch.trim()) {
-      return approvedTopics;
-    }
-
-    const searchLower = topicSearch.toLowerCase();
-    return approvedTopics.filter(
-      (topic) =>
-        topic.title.toLowerCase().includes(searchLower) ||
-        topic.description?.toLowerCase().includes(searchLower) ||
-        topic.tags?.some((tag) => tag.toLowerCase().includes(searchLower)),
-    );
-  }, [topics, topicSearch]);
+  const { data: topics = [] } = useTopics();
 
   // Create stable references for callbacks to avoid dependency loops
   const onFieldChangeRef = useRef(onFieldChange);
@@ -106,26 +84,21 @@ export function TopicContentStep({
 
   // Handle topic selection
   const handleTopicSelect = useCallback(
-    async (topicId: string) => {
-      onFieldChangeRef.current("topicId", topicId);
+    async (topic: GeneratedTopic) => {
+      onFieldChangeRef.current("topicId", topic.id);
       onFieldTouchRef.current("topicId");
 
-      // Find the topic in our filtered list first
-      const selectedTopic = topics.find((topic) => topic.id === topicId);
-
-      if (selectedTopic) {
-        // Dispatch pre-fill action with topic data
-        dispatch({
-          type: "PREFILL_FROM_TOPIC",
-          payload: {
-            topicData: selectedTopic,
-            suggestedDefaults: selectedTopic.suggested_defaults,
-            userSettings: undefined, // user_settings not implemented yet
-          },
-        });
-      }
+      // Dispatch pre-fill action with topic data
+      dispatch({
+        type: "PREFILL_FROM_TOPIC",
+        payload: {
+          topicData: topic,
+          suggestedDefaults: topic.suggested_defaults,
+          userSettings: undefined, // user_settings not implemented yet
+        },
+      });
     },
-    [topics, dispatch],
+    [dispatch],
   );
 
   // Handle platform change
@@ -164,129 +137,14 @@ export function TopicContentStep({
       <div className="grid gap-8 w-full">
         {/* Enhanced Topic Selection */}
         {topicField && (
-          <Card
-            className={`wizard-card ${errors.topicId && touched.topicId ? "wizard-card-error" : ""}`}
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="wizard-field-label">
-                <FileText className="h-5 w-5 text-primary" />
-                Select Topic
-              </CardTitle>
-              <CardDescription className="wizard-field-description">
-                Choose the main topic you want to create content about
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Search input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search topics..."
-                  value={topicSearch}
-                  onChange={(e) => setTopicSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              {/* Topic list */}
-              {isLoadingTopics ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {filteredTopics.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No topics found matching "{topicSearch}"</p>
-                    </div>
-                  ) : (
-                    filteredTopics.map((topic) => (
-                      <Card
-                        key={topic.id}
-                        className={`wizard-card-interactive ${
-                          formData.topicId === topic.id
-                            ? "wizard-card-selected"
-                            : ""
-                        }`}
-                        onClick={() => handleTopicSelect(topic.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2 flex-1">
-                              <h4 className="font-semibold">{topic.title}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {topic.description}
-                              </p>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {topic.audience_fit
-                                  .slice(0, 2)
-                                  .map((audience) => (
-                                    <Badge
-                                      key={audience}
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {audience}
-                                    </Badge>
-                                  ))}
-                                {topic.channel_fit
-                                  .slice(0, 1)
-                                  .map((channel) => (
-                                    <Badge
-                                      key={channel}
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {channel}
-                                    </Badge>
-                                  ))}
-                              </div>
-                            </div>
-                            {formData.topicId === topic.id && (
-                              <div className="ml-2">
-                                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                  <div className="w-2 h-2 rounded-full bg-white" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* Selected topic preview */}
-              {selectedTopic && (
-                <div className="wizard-card-success p-4 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div>
-                      <div className="font-semibold text-green-700">
-                        Selected Topic
-                      </div>
-                      <div className="text-sm">{selectedTopic.title}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Tags: {selectedTopic.tags.join(", ")}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Validation error */}
-              {errors.topicId && touched.topicId && (
-                <div className="wizard-field-error">
-                  <FileText className="h-4 w-4" />
-                  {errors.topicId}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <TopicSelector
+            selectedTopic={selectedTopic}
+            onTopicSelect={handleTopicSelect}
+            hasError={!!(errors.topicId && touched.topicId)}
+            errorMessage={
+              errors.topicId && touched.topicId ? errors.topicId : undefined
+            }
+          />
         )}
 
         {/* Enhanced Platform Selection */}

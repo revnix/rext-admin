@@ -93,6 +93,80 @@ export class WizardDependencyEngine {
   }
 
   /**
+   * Get progressively visible fields for a step
+   * Shows fields one by one as previous required fields are completed
+   */
+  getProgressivelyVisibleFields(step: WizardStep): WizardField[] {
+    const allVisibleFields = this.getVisibleFields(step);
+    const requiredFields = allVisibleFields.filter((field) => field.required);
+    const optionalFields = allVisibleFields.filter((field) => !field.required);
+
+    const progressiveFields: WizardField[] = [];
+
+    // Always show the first required field (like topic selection)
+    if (requiredFields.length > 0) {
+      progressiveFields.push(requiredFields[0]);
+
+      // Process remaining required fields progressively
+      for (let i = 1; i < requiredFields.length; i++) {
+        const previousField = requiredFields[i - 1];
+
+        // Only show this field if the previous field is filled
+        if (!this.isValueEmpty(this.formData[previousField.id])) {
+          const field = requiredFields[i];
+          progressiveFields.push(field);
+
+          // If this field is not filled, stop here
+          if (this.isValueEmpty(this.formData[field.id])) {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    // If all required fields are completed, show all optional fields
+    const allRequiredCompleted = requiredFields.every(
+      (field) => !this.isValueEmpty(this.formData[field.id]),
+    );
+
+    if (allRequiredCompleted) {
+      progressiveFields.push(...optionalFields);
+    }
+
+    return progressiveFields;
+  }
+
+  /**
+   * Check if there are more fields to reveal in progressive disclosure
+   */
+  hasMoreFieldsToReveal(step: WizardStep): boolean {
+    const allVisible = this.getVisibleFields(step).length;
+    const progressive = this.getProgressivelyVisibleFields(step).length;
+    return progressive < allVisible;
+  }
+
+  /**
+   * Get the next field that will be revealed in progressive disclosure
+   */
+  getNextFieldToReveal(step: WizardStep): WizardField | null {
+    const allVisible = this.getVisibleFields(step);
+    const progressive = this.getProgressivelyVisibleFields(step);
+
+    if (progressive.length >= allVisible.length) {
+      return null;
+    }
+
+    // Find the next field that's not yet progressively visible
+    return (
+      allVisible.find(
+        (field) => !progressive.some((progField) => progField.id === field.id),
+      ) || null
+    );
+  }
+
+  /**
    * Get all visible fields across all steps
    */
   getAllVisibleFields(): WizardField[] {
