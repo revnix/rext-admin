@@ -55,7 +55,6 @@ export type {
   ControllableProps,
   EmptyStateProps,
   ErrorStateProps,
-  FlowSelectionProps,
   FormEventHandlers,
   FormFieldProps,
   FormNavigationProps,
@@ -119,7 +118,6 @@ export {
 // ============================================================================
 export type {
   ContentData,
-  FlowData,
   MemoryData,
   ModelData,
   NotificationConfiguration,

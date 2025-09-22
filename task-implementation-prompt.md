@@ -1,6 +1,10 @@
-Task Implementation
+Review the @create-content-page-implementation-plan.md file and based on the plan, work on the next task in the plan.
 
-- Task ID: 6
+Make sure to work on one subtask at a time. While working on a subtask, make sure to update the phase, task and that subtask's status to "in-progress" and "done" after completion.
+
+Always keep the plan updated for the progress so that it can be used for future reference.
+
+Write your learnings/observations/updates/lesson learned etc in a new section along the way. Before making the plan of a subtask, make sure to visit that section and update the plan with the new information accordingly.
 
 Authoritative references
 

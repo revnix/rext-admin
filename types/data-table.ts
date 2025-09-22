@@ -30,20 +30,6 @@ export interface ContentData extends BaseTableRow {
   content: string;
 }
 
-export interface FlowData extends BaseTableRow {
-  name: string;
-  description: string;
-  status: string;
-  trigger: string;
-  lastRun: string;
-  totalRuns: number;
-  successRate: string;
-  avgRunTime: string;
-  category: string;
-  created: string;
-  lastModified: string;
-}
-
 export interface TopicData extends BaseTableRow {
   name: string;
   description: string;

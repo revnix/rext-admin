@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Lightbulb, Plus, Workflow } from "lucide-react";
+import { ChevronDown, Lightbulb, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,15 +28,6 @@ export function QuickAddDropdown() {
           >
             <Lightbulb className="h-4 w-4" />
             Create Topic
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            href="/flows/create"
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <Workflow className="h-4 w-4" />
-            Create Flow
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

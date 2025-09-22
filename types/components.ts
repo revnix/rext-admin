@@ -25,11 +25,7 @@ import type {
   ValidationResult,
 } from "./shared";
 // Import core types
-import type {
-  GeneratedTopic,
-  TopicBuilderFormData,
-  WizardMode,
-} from "./topic-builder";
+import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
 // ============================================================================
 // FORM COMPONENT PROPS
@@ -652,20 +648,6 @@ export interface EmptyStateProps {
 // ============================================================================
 // WIZARD-SPECIFIC COMPONENT PROPS
 // ============================================================================
-
-/**
- * Props for flow selection component (first step)
- */
-export interface FlowSelectionProps {
-  /** Currently selected wizard mode */
-  selectedWizardMode?: WizardMode;
-  /** Callback when wizard mode is selected */
-  onWizardModeSelect: (wizardMode: WizardMode) => void;
-  /** Whether selection is disabled */
-  disabled?: boolean;
-  /** Custom CSS classes */
-  className?: string;
-}
 
 /**
  * Props for industry selection component

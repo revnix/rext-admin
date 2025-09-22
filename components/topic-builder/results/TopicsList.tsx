@@ -125,7 +125,7 @@ export const TopicsList = memo(function TopicsList({
     (topicId: string) => {
       try {
         console.log(`Navigating to content creation for topic ${topicId}`);
-        router.push(`/flows/create?topicId=${topicId}`);
+        router.push(`/content/create?topicId=${topicId}`);
         toast.success("Navigating to content creation...");
       } catch (error) {
         console.error(

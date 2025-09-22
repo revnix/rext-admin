@@ -9,7 +9,6 @@ import {
   Settings,
   Share2,
   Users,
-  Workflow,
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -61,23 +60,6 @@ const searchData: SearchResult[] = [
     category: "Topics",
     url: "/topics",
     icon: <Lightbulb className="h-4 w-4" />,
-  },
-  // Flows
-  {
-    id: "flows-1",
-    title: "Content Generation Flow",
-    description: "Automated workflow for generating blog content",
-    category: "Flows",
-    url: "/flows",
-    icon: <Workflow className="h-4 w-4" />,
-  },
-  {
-    id: "flows-2",
-    title: "Social Media Posting Flow",
-    description: "Schedule and post content across platforms",
-    category: "Flows",
-    url: "/flows",
-    icon: <Workflow className="h-4 w-4" />,
   },
   // Content
   {
@@ -203,7 +185,6 @@ const searchData: SearchResult[] = [
 const categories = [
   "All",
   "Topics",
-  "Flows",
   "Content",
   "Models",
   "Templates",

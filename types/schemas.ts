@@ -176,7 +176,7 @@ export const TopicBuilderFormDataSchema = z.object({
   ]),
   industry_other: z.string().optional(),
 
-  // Content type & platform (now optional - set in Flow)
+  // Content type & platform
   content_type: z
     .enum([
       "blog-post",

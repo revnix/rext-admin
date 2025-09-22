@@ -202,7 +202,7 @@ When adding new types:
 ### Naming Conventions
 
 - **Interfaces:** PascalCase, descriptive names (`UserData`, `FormStepProps`)
-- **Types:** PascalCase for union types (`Priority`, `FlowType`)
+- **Types:** PascalCase for union types (`Priority`, `Status`)
 - **Constants:** SCREAMING_SNAKE_CASE for option arrays (`PRIORITY_OPTIONS`)
 - **Functions:** camelCase (`isValidPriority`, `createInitialFormData`)
 

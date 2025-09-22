@@ -307,7 +307,7 @@ export function TopicActions({
 
       try {
         console.log(`Navigating to content creation for topic ${topic.id}`);
-        router.push(`/flows/create?topicId=${topic.id}`);
+        router.push(`/content/create?topicId=${topic.id}`);
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {
         console.error(

@@ -12,7 +12,6 @@ import {
   Settings2,
   Share2,
   Users,
-  Workflow,
   Zap,
 } from "lucide-react";
 import type * as React from "react";
@@ -55,11 +54,6 @@ const data = {
           title: "Topics",
           url: "/topics",
           icon: Library,
-        },
-        {
-          title: "Flows",
-          url: "/flows",
-          icon: Workflow,
         },
         {
           title: "Content",
