@@ -82,6 +82,33 @@ export function TopicContentStep({
       : [];
   }, [formData.platform]);
 
+  // Ensure default content type is selected when available
+  useEffect(() => {
+    if (!contentTypeField || formData.contentType) {
+      return;
+    }
+
+    const enabledOptions = contentTypeOptions.filter(
+      (option) => !option.disabled,
+    );
+    if (enabledOptions.length === 0) {
+      return;
+    }
+
+    const preferredDefault = contentTypeField.defaultValue;
+    const hasPreferredDefault = preferredDefault
+      ? enabledOptions.some((option) => option.value === preferredDefault)
+      : false;
+
+    const fallbackValue = hasPreferredDefault
+      ? preferredDefault
+      : enabledOptions[0]?.value;
+
+    if (fallbackValue) {
+      onFieldChangeRef.current("contentType", fallbackValue);
+    }
+  }, [contentTypeField, contentTypeOptions, formData.contentType]);
+
   // Handle topic selection
   const handleTopicSelect = useCallback(
     async (topic: GeneratedTopic) => {
@@ -201,7 +228,7 @@ export function TopicContentStep({
                   onFieldChange("contentType", value);
                   onFieldTouch("contentType");
                 }}
-                columns={1}
+                columns={3}
               />
 
               {errors.contentType && touched.contentType && (

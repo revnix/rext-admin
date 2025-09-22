@@ -36,32 +36,35 @@ export const PLATFORM_OPTIONS: SelectOption[] = [
 
 /** Content type options based on platform */
 export const getContentTypeOptions = (platform: Platform): SelectOption[] => {
+  const comingSoonTooltip = "Coming soon";
+
   const options: Record<Platform, SelectOption[]> = {
     Website: [
       {
-        label: "Article",
+        label: "Article / Blog Post",
         value: "Article",
-        description: "Long-form informational content",
-      },
-      {
-        label: "Blog Post",
-        value: "Blog Post",
-        description: "Casual, conversational content",
+        description: "Long-form or narrative content for your site",
       },
       {
         label: "Landing Page",
         value: "Landing Page",
         description: "Conversion-focused content",
+        disabled: true,
+        tooltip: comingSoonTooltip,
       },
       {
         label: "Case Study",
         value: "Case Study",
         description: "Success story documentation",
+        disabled: true,
+        tooltip: comingSoonTooltip,
       },
       {
         label: "White Paper",
         value: "White Paper",
         description: "In-depth technical content",
+        disabled: true,
+        tooltip: comingSoonTooltip,
       },
     ],
     "Social Media": [
@@ -69,21 +72,40 @@ export const getContentTypeOptions = (platform: Platform): SelectOption[] => {
         label: "Thread",
         value: "Thread",
         description: "Multi-part Twitter/X thread",
+        disabled: true,
+        tooltip: comingSoonTooltip,
       },
       {
         label: "Carousel",
         value: "Carousel",
         description: "Instagram/LinkedIn carousel",
+        disabled: true,
+        tooltip: comingSoonTooltip,
       },
-      { label: "Post", value: "Post", description: "Single social media post" },
-      { label: "Poll", value: "Poll", description: "Interactive poll content" },
+      {
+        label: "Post",
+        value: "Post",
+        description: "Single social media post",
+        disabled: true,
+        tooltip: comingSoonTooltip,
+      },
+      {
+        label: "Poll",
+        value: "Poll",
+        description: "Interactive poll content",
+        disabled: true,
+        tooltip: comingSoonTooltip,
+      },
       {
         label: "Video Script",
         value: "Video Script",
         description: "Script for video content",
+        disabled: true,
+        tooltip: comingSoonTooltip,
       },
     ],
   };
+
   return options[platform] || [];
 };
 
@@ -378,6 +400,7 @@ const STEP_1_FIELDS: WizardField[] = [
     label: "Content Type",
     type: "radio",
     required: true,
+    defaultValue: "Article",
     options: (formData) =>
       getContentTypeOptions(formData.platform || "Website"),
     dependsOn: [

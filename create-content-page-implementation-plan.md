@@ -19,7 +19,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 ### Phase Status
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
-- [ ] **Phase 2**: UI/UX Improvements (4/6 tasks) _(IN PROGRESS)_
+- [ ] **Phase 2**: UI/UX Improvements (5/6 tasks) _(IN PROGRESS — Task 2.6)_
 - [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
@@ -27,7 +27,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 11/39 tasks completed
+### Overall Progress: 12/39 tasks completed
 
 ## Learnings & Updates
 
@@ -40,6 +40,8 @@ This document provides a comprehensive implementation plan for improving the Cre
 - 2025-09-22: Identified need for step-level interaction tracking—sidebar errors should surface only after user interaction or leaving a step; plan to derive visibility flags from `state.touched` when computing progress metadata.
 - 2025-09-22: Discovered `RadioGroup` component lacks per-option disabled/tooltips support; need enhancement before disabling Social Media platform option.
 - 2025-09-22: Extended shared option types and radio group UI to support disabled state tooltips; Social Media option now communicates "Coming soon" without breaking existing selectors.
+- 2025-09-23: Defaulting content type required effect-driven guard so we only auto-select when enabled options exist; social media platform remains fully disabled pending rollout.
+- 2025-09-23: Verified `TopicContentStep` still renders content type radios in a single-column layout without a default; `getContentTypeOptions` keeps all Website types enabled—need grid layout update plus default + disabled configuration before implementation.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -555,6 +557,16 @@ This document provides a comprehensive implementation plan for improving the Cre
 2. Verify grid layout with 3 columns
 3. Verify Article/Blogpost is default
 4. Test disabled options and tooltips
+
+**Status**: ✅ DONE (Codex 2025-09-23)
+
+**Implementation Notes**:
+- Configured Website content types to keep Article / Blog Post enabled by default while providing "Coming soon" messaging for upcoming templates (Landing Page, Case Study, White Paper).
+- Added guarded auto-selection logic in `TopicContentStep` so the first enabled option is chosen only when available, leaving Social Media types disabled until launch.
+- Updated selector layout to use the shared 3-column radio grid ensuring responsive behavior per UX spec.
+
+**Notes**:
+- Monitor telemetry once additional templates are enabled so we can lift disabled states without regressing the default experience.
 
 ---
 
