@@ -65,7 +65,7 @@ export const TopicCardActions = memo(function TopicCardActions({
           <Button
             variant="secondary"
             size="sm"
-            className="h-7 px-2 gap-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800"
+            className="h-7 px-2 gap-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800 cursor-pointer"
             onClick={handleView}
           >
             <Eye className="h-3 w-3" />
@@ -83,7 +83,7 @@ export const TopicCardActions = memo(function TopicCardActions({
             <Button
               variant="secondary"
               size="sm"
-              className={`h-7 px-2 gap-1 text-xs ${
+              className={`h-7 px-2 gap-1 text-xs cursor-pointer ${
                 topic.is_saved
                   ? "bg-green-100 hover:bg-green-200 text-green-800 border-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-300 dark:border-green-800"
                   : "bg-orange-100 hover:bg-orange-200 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800"
@@ -107,7 +107,7 @@ export const TopicCardActions = memo(function TopicCardActions({
             <Button
               variant="secondary"
               size="sm"
-              className="h-7 px-2 gap-1 text-xs bg-purple-100 hover:bg-purple-200 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800"
+              className="h-7 px-2 gap-1 text-xs bg-purple-100 hover:bg-purple-200 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800 cursor-pointer"
               onClick={handleWriteContent}
             >
               <PenTool className="h-3 w-3" />
@@ -125,7 +125,7 @@ export const TopicCardActions = memo(function TopicCardActions({
           <Button
             variant="secondary"
             size="sm"
-            className="h-7 px-2 gap-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 dark:text-gray-300 dark:border-gray-700"
+            className="h-7 px-2 gap-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 dark:text-gray-300 dark:border-gray-700 cursor-pointer"
             onClick={handleCopy}
           >
             <Copy className="h-3 w-3" />

@@ -845,12 +845,56 @@ export class BackendService {
   private async validateGenericResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
-      throw new Error(
-        `Backend API error: ${response.status} ${response.statusText} - ${errorText}`,
-      );
+
+      // Try to parse error text as JSON to get structured error
+      let errorData: any = null;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        // If not JSON, use the text as-is
+      }
+
+      // Create a structured error with status code
+      const error = new Error(
+        errorData?.error?.message ||
+          errorData?.message ||
+          `Backend API error: ${response.status} ${response.statusText}`,
+      ) as Error & { statusCode?: number; context?: any };
+
+      error.statusCode = response.status;
+      error.context = errorData;
+
+      throw error;
     }
 
     const result = await response.json();
+
+    // Handle new consistent format with error responses: { success: false, error: {...}, meta: {...} }
+    if (
+      result &&
+      typeof result === "object" &&
+      "success" in result &&
+      result.success === false &&
+      "error" in result
+    ) {
+      // This is an error response in the new format
+      const errorInfo = result.error || {};
+
+      // Create a structured error with the proper status code
+      const error = new Error(
+        errorInfo.message || "Failed to save topics",
+      ) as Error & { statusCode?: number; context?: any };
+
+      error.statusCode = errorInfo.status_code || response.status;
+      error.context = {
+        ...errorInfo.context,
+        errorCode: errorInfo.code,
+        errorMessage: errorInfo.message,
+        severity: errorInfo.severity,
+      };
+
+      throw error;
+    }
 
     // Transform external API response format to internal SaveTopicResponse format
 

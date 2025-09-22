@@ -2,7 +2,6 @@
 
 import {
   Check,
-  Copy,
   FileText,
   Globe,
   Hash,
@@ -100,12 +99,12 @@ export function TopicDetailDrawer({
     await onSave(topic.id);
   };
 
-  const handleWriteContent = () => {
+  const _handleWriteContent = () => {
     if (!topic || !onNavigateToContent) return;
     onNavigateToContent(topic.id);
   };
 
-  const handleCopy = async () => {
+  const _handleCopy = async () => {
     if (!topic) return;
 
     if (onCopy) {
@@ -186,7 +185,7 @@ export function TopicDetailDrawer({
                   variant="ghost"
                   size="sm"
                   onClick={onClose}
-                  className="h-10 w-10 p-0 hover:bg-secondary"
+                  className="h-10 w-10 p-0 hover:bg-secondary cursor-pointer"
                   aria-label="Close drawer"
                 >
                   <X className="h-5 w-5" />
@@ -460,42 +459,6 @@ export function TopicDetailDrawer({
                       </TooltipContent>
                     </Tooltip>
                   )}
-
-                  {onNavigateToContent && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="lg"
-                          onClick={handleWriteContent}
-                          className="gap-3 px-6 py-3 text-base"
-                        >
-                          <PenTool className="h-5 w-5" />
-                          Write Content
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Create content for this topic</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={handleCopy}
-                        className="gap-3 px-6 py-3 text-base"
-                      >
-                        <Copy className="h-5 w-5" />
-                        Copy Topic
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Copy topic to clipboard</p>
-                    </TooltipContent>
-                  </Tooltip>
                 </div>
               </div>
             </div>

@@ -58,20 +58,32 @@ export const TopicsTable = memo(function TopicsTable({
     }));
   }, [topics, selectedTopicIds, newlyAddedTopicIds]);
 
-  // Helper function to calculate overall score
+  // Helper function to calculate overall score using weighted formula (same as TopicDetailDrawer)
   const calculateOverallScore = (scores: GeneratedTopic["scores"]) => {
-    return Math.round(
-      ((scores.relevance +
-        scores.seo_potential +
-        scores.trend_level +
-        scores.uniqueness +
-        scores.reader_interest +
-        scores.actionable_potential +
-        scores.brand_alignment +
-        scores.controversy) /
-        8) *
-        100,
-    );
+    if (!scores) return 0;
+    const {
+      relevance = 0,
+      seo_potential = 0,
+      trend_level = 0,
+      uniqueness = 0,
+      reader_interest = 0,
+      actionable_potential = 0,
+      brand_alignment = 0,
+      controversy = 0,
+    } = scores;
+
+    // Weighted average of all score components (same as TopicDetailDrawer and simple-topic-transformer.ts)
+    const totalScore =
+      relevance * 0.2 +
+      seo_potential * 0.15 +
+      trend_level * 0.15 +
+      uniqueness * 0.1 +
+      reader_interest * 0.15 +
+      actionable_potential * 0.1 +
+      brand_alignment * 0.1 +
+      controversy * 0.05;
+
+    return Math.round(totalScore * 100);
   };
 
   // Helper function to format created date
@@ -118,7 +130,13 @@ export const TopicsTable = memo(function TopicsTable({
       width: "320px",
       cell: (_value, row) => (
         <div className="space-y-1">
-          <div className="font-semibold text-sm line-clamp-2 pr-2">
+          <div
+            className="font-semibold text-sm line-clamp-2 pr-2 cursor-pointer text-primary hover:text-primary/80 hover:underline transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              _onViewDetails(row.id);
+            }}
+          >
             {row.title}
           </div>
           <div className="text-xs text-muted-foreground line-clamp-2">
@@ -259,7 +277,7 @@ export const TopicsTable = memo(function TopicsTable({
       onClick: (row: TopicTableRow) => _onViewDetails(row.id),
       tooltip: "Quick view topic details",
       showLabel: true,
-      primary: true,
+      primary: false,
     },
     {
       label: "Save",
@@ -270,6 +288,7 @@ export const TopicsTable = memo(function TopicsTable({
       disabled: (row: TopicTableRow): boolean =>
         !!(row._isBeingSaved || row.is_saved || row._optimisticSaved),
       variant: "default" as const,
+      primary: true,
     },
   ];
 
@@ -337,7 +356,7 @@ export const TopicsTable = memo(function TopicsTable({
                             <button
                               type="button"
                               className={cn(
-                                "inline-flex h-8 px-2 gap-1 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                                "inline-flex h-8 px-2 gap-1 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
                                 action.primary &&
                                   "border-primary text-primary hover:bg-primary/10 hover:text-primary",
                               )}
