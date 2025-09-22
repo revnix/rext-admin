@@ -19,7 +19,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 ### Phase Status
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
-- [ ] **Phase 2**: UI/UX Improvements (2/6 tasks)
+- [ ] **Phase 2**: UI/UX Improvements (2/6 tasks) _(IN PROGRESS)_
 - [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
@@ -28,6 +28,14 @@ This document provides a comprehensive implementation plan for improving the Cre
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
 ### Overall Progress: 10/39 tasks completed
+
+## Learnings & Updates
+
+- 2025-09-22: Reviewed Task 2.3 requirements; confirmed `WizardSidebarProgress` currently uses red accents for errors and green for completion, preparing neutral default styling adjustments.
+- 2025-09-22: Updated sidebar progress styling to adopt neutral defaults with success and error highlights only when appropriate—alignment with UX brief confirmed.
+- 2025-09-22: Discovered validation flags still paint future steps red; need to suppress preemptive error styling for untouched steps.
+- 2025-09-22: Applied conditional validation styling so pending steps appear neutral until visited.
+- 2025-09-22: Current step still shows red by default due to step-level validation; require touched/error tracking to delay error styling.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -472,6 +480,8 @@ This document provides a comprehensive implementation plan for improving the Cre
 2. Complete a step and verify green styling
 3. Create validation error and verify red styling
 4. Test all step states
+
+**Status**: 🚧 IN PROGRESS (Follow-up)
 
 ---
 

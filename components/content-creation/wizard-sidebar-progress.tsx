@@ -91,25 +91,47 @@ function SidebarStepItem({
   isClickable,
   onClick,
 }: SidebarStepItemProps) {
+  const showValidation = status !== "pending";
+  const hasErrors = validation.hasErrors && showValidation;
+  const hasWarnings = validation.hasWarnings && showValidation;
+  const errorCount = hasErrors ? validation.errorCount : 0;
+  const warningCount = hasWarnings ? validation.warningCount : 0;
+
   const getStatusIcon = () => {
-    if (validation.hasErrors) {
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
+    if (hasErrors) {
+      return (
+        <div className="h-6 w-6 rounded-full border border-rose-500/40 bg-rose-500/10 flex items-center justify-center">
+          <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
+        </div>
+      );
     }
 
     if (status === "completed") {
-      return <Check className="h-4 w-4 text-green-500" />;
+      return (
+        <div className="h-6 w-6 rounded-full border border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center">
+          <Check className="h-3.5 w-3.5 text-emerald-600" />
+        </div>
+      );
     }
 
-    if (validation.hasWarnings) {
-      return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+    if (hasWarnings) {
+      return (
+        <div className="h-6 w-6 rounded-full border border-amber-500/30 bg-amber-500/10 flex items-center justify-center">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+        </div>
+      );
     }
 
     if (status === "current") {
-      return <Target className="h-4 w-4 text-primary" />;
+      return (
+        <div className="h-6 w-6 rounded-full border border-border bg-muted flex items-center justify-center">
+          <Target className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+      );
     }
 
     return (
-      <div className="w-6 h-6 rounded-full bg-muted border border-muted-foreground/30 flex items-center justify-center">
+      <div className="w-6 h-6 rounded-full border border-border/50 bg-muted/60 flex items-center justify-center">
         <span className="text-xs font-medium text-muted-foreground">
           {stepIndex + 1}
         </span>
@@ -118,23 +140,23 @@ function SidebarStepItem({
   };
 
   const getStatusStyles = () => {
-    if (validation.hasErrors) {
-      return "border-red-200 bg-red-50 hover:bg-red-100";
-    }
-
-    if (status === "current") {
-      return "border-primary bg-primary/5 hover:bg-primary/10";
+    if (hasErrors) {
+      return "border-rose-200 bg-rose-50 hover:bg-rose-100";
     }
 
     if (status === "completed") {
-      return "border-green-200 bg-green-50 hover:bg-green-100";
+      return "border-emerald-200 bg-emerald-50 hover:bg-emerald-100";
     }
 
-    if (validation.hasWarnings) {
-      return "border-yellow-200 bg-yellow-50 hover:bg-yellow-100";
+    if (hasWarnings) {
+      return "border-amber-200 bg-amber-50 hover:bg-amber-100";
     }
 
-    return "border-muted bg-background hover:bg-muted/50";
+    if (status === "current") {
+      return "border-border bg-muted/50 hover:bg-muted";
+    }
+
+    return "border-border bg-background hover:bg-muted/40";
   };
 
   return (
@@ -158,12 +180,12 @@ function SidebarStepItem({
                   <p
                     className={cn(
                       "text-sm font-medium truncate",
-                      status === "current" && "text-primary",
-                      status === "completed" && "text-green-700",
-                      validation.hasErrors && "text-red-700",
+                      status === "current" && "text-foreground",
+                      status === "completed" && "text-emerald-700",
+                      hasErrors && "text-rose-700",
                       status === "pending" &&
-                        !validation.hasErrors &&
-                        !validation.hasWarnings &&
+                        !hasErrors &&
+                        !hasWarnings &&
                         "text-muted-foreground",
                     )}
                   >
@@ -174,17 +196,17 @@ function SidebarStepItem({
 
               {/* Status badges */}
               <div className="flex flex-col gap-1">
-                {validation.hasErrors && (
+                {hasErrors && (
                   <Badge
                     variant="destructive"
                     className="text-[10px] px-1 py-0"
                   >
-                    {validation.errorCount}
+                    {errorCount}
                   </Badge>
                 )}
-                {validation.hasWarnings && (
+                {hasWarnings && (
                   <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                    {validation.warningCount}
+                    {warningCount}
                   </Badge>
                 )}
                 {step.optional && status !== "completed" && (
@@ -227,16 +249,16 @@ function SidebarStepItem({
                   Optional
                 </Badge>
               )}
-              {validation.hasErrors && (
+              {hasErrors && (
                 <Badge variant="destructive" className="text-[10px]">
-                  {validation.errorCount} error
-                  {validation.errorCount !== 1 ? "s" : ""}
+                  {errorCount} error
+                  {errorCount !== 1 ? "s" : ""}
                 </Badge>
               )}
-              {validation.hasWarnings && (
+              {hasWarnings && (
                 <Badge variant="secondary" className="text-[10px]">
-                  {validation.warningCount} warning
-                  {validation.warningCount !== 1 ? "s" : ""}
+                  {warningCount} warning
+                  {warningCount !== 1 ? "s" : ""}
                 </Badge>
               )}
             </div>
