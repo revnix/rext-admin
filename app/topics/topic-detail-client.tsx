@@ -539,66 +539,63 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
                   ]
                     .sort((a, b) => b.value - a.value)
                     .map((score) => (
-                      <div
-                        key={score.label}
-                        className="flex items-center justify-between py-1"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-1.5 rounded-md shadow-sm ${
-                              score.value >= 80
-                                ? "bg-green-100 text-green-600 dark:bg-green-950/50 dark:text-green-400"
-                                : score.value >= 60
-                                  ? "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
-                                  : score.value >= 40
-                                    ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-950/50 dark:text-yellow-400"
-                                    : "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400"
-                            }`}
-                          >
-                            {score.icon}
-                          </div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="text-sm font-medium text-foreground cursor-help hover:text-primary transition-colors">
+                      <Tooltip key={score.label}>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-between py-1 cursor-help hover:bg-muted/10 rounded-md px-1 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`p-1.5 rounded-md shadow-sm ${
+                                  score.value >= 80
+                                    ? "bg-green-100 text-green-600 dark:bg-green-950/50 dark:text-green-400"
+                                    : score.value >= 60
+                                      ? "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+                                      : score.value >= 40
+                                        ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-950/50 dark:text-yellow-400"
+                                        : "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400"
+                                }`}
+                              >
+                                {score.icon}
+                              </div>
+                              <span className="text-sm font-medium text-foreground">
                                 {score.label}
                               </span>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="left"
-                              className="max-w-[280px]"
-                            >
-                              <div className="space-y-1">
-                                <div className="font-medium">{score.label}</div>
-                                <div className="text-xs text-muted-foreground mb-1">
-                                  {score.tooltip}
-                                </div>
-                                <div className="text-xs text-primary font-medium">
-                                  Weight: {score.weight} of overall score
-                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 bg-muted/100 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                    score.value >= 80
+                                      ? "bg-green-500"
+                                      : score.value >= 60
+                                        ? "bg-blue-500"
+                                        : score.value >= 40
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                  }`}
+                                  style={{ width: `${score.value}%` }}
+                                />
                               </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 bg-muted/60 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ease-out ${
-                                score.value >= 80
-                                  ? "bg-green-500"
-                                  : score.value >= 60
-                                    ? "bg-blue-500"
-                                    : score.value >= 40
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
-                              }`}
-                              style={{ width: `${score.value}%` }}
-                            />
+                              <span className="text-sm font-semibold text-foreground min-w-[2rem] text-right">
+                                {score.value}%
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-sm font-semibold text-foreground min-w-[2rem] text-right">
-                            {score.value}%
-                          </span>
-                        </div>
-                      </div>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="left"
+                          className="max-w-[280px]"
+                        >
+                          <div className="space-y-1">
+                            <div className="font-medium">{score.label}</div>
+                            <div className="text-xs text-muted-foreground mb-1">
+                              {score.tooltip}
+                            </div>
+                            <div className="text-xs text-primary font-medium">
+                              Weight: {score.weight} of overall score
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     ))}
                 </div>
               </div>
