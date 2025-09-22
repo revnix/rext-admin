@@ -547,7 +547,6 @@ export class BackendService {
     response: Response,
     requestId: string,
   ): Promise<BackendTopicGenerationResponse> {
-
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
 
