@@ -4,6 +4,7 @@ import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-e
 import type {
   ContentCreationFormData,
   PartialContentCreationFormData,
+  WizardAction,
   WizardStepProps,
 } from "@/types/content-creation";
 import { AudienceGoalsStep } from "./steps/audience-goals-step";
@@ -15,6 +16,7 @@ import { VoiceStyleStep } from "./steps/voice-style-step";
 
 interface WizardStepRendererProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
+  dispatch: React.Dispatch<WizardAction>;
   onLaunch?: (formData: ContentCreationFormData) => Promise<void>;
   onSaveDraft?: (formData: PartialContentCreationFormData) => Promise<void>;
   onGoToStep?: (stepIndex: number) => void;
@@ -35,6 +37,7 @@ export function WizardStepRenderer({
   onFieldChange,
   onFieldTouch,
   dependencyEngine,
+  dispatch,
   onLaunch,
   onSaveDraft,
   onGoToStep,
@@ -52,6 +55,7 @@ export function WizardStepRenderer({
           onFieldChange={onFieldChange}
           onFieldTouch={onFieldTouch}
           dependencyEngine={dependencyEngine}
+          dispatch={dispatch}
         />
       );
 

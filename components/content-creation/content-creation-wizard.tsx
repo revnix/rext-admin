@@ -1,14 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Eraser } from "lucide-react";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useDraftManager } from "@/hooks/use-draft-manager";
+import { useTopic } from "@/hooks/use-topics";
 import {
   applyCascadingUpdates,
   createDependencyEngine,
@@ -19,6 +22,8 @@ import { WIZARD_CONFIG } from "@/lib/content-creation/wizard-config";
 import type {
   ContentCreationFormData,
   ContentCreationWizardProps,
+  ContentFreshness,
+  ContentLengthOption,
   PartialContentCreationFormData,
   WizardAction,
   WizardState,
@@ -141,6 +146,194 @@ function wizardStateReducer(
         isSaving: true,
       };
 
+    case "CLEAR_AUTOFILLED_VALUES": {
+      const currentMetadata = state.formData._topicPrefillingMetadata;
+      if (!currentMetadata?.prefilledFields) {
+        return state; // No auto-filled fields to clear
+      }
+
+      const newFormData = { ...state.formData };
+      const newTouched = { ...state.touched };
+      const clearedFields: string[] = [];
+
+      // Clear auto-filled fields that haven't been manually modified
+      Object.entries(currentMetadata.prefilledFields).forEach(
+        ([field, isAutofilled]) => {
+          if (
+            isAutofilled &&
+            !state.touched[field as keyof PartialContentCreationFormData]
+          ) {
+            // Clear the field value
+            delete newFormData[field as keyof PartialContentCreationFormData];
+            clearedFields.push(field);
+          }
+        },
+      );
+
+      // Update metadata to remove cleared fields
+      const updatedPrefilledFields = { ...currentMetadata.prefilledFields };
+      clearedFields.forEach((field) => {
+        delete updatedPrefilledFields[field];
+      });
+
+      // If no auto-filled fields remain, remove the metadata entirely
+      if (Object.keys(updatedPrefilledFields).length === 0) {
+        delete newFormData._topicPrefillingMetadata;
+      } else {
+        newFormData._topicPrefillingMetadata = {
+          ...currentMetadata,
+          prefilledFields: updatedPrefilledFields,
+        };
+      }
+
+      return {
+        ...state,
+        formData: newFormData,
+        touched: newTouched,
+        hasUnsavedChanges: true,
+      };
+    }
+
+    case "PREFILL_FROM_TOPIC": {
+      const { topicData, suggestedDefaults, userSettings } = action.payload;
+      const prefilledFields: Record<string, boolean> = {};
+      const newFormData = { ...state.formData };
+
+      // Map suggested_defaults to form fields
+      if (suggestedDefaults) {
+        if (suggestedDefaults.platform) {
+          newFormData.platform = suggestedDefaults.platform as
+            | "Website"
+            | "Social Media";
+          prefilledFields.platform = true;
+        }
+        if (suggestedDefaults.industry) {
+          newFormData.industry = suggestedDefaults.industry as string;
+          prefilledFields.industry = true;
+        }
+        if (suggestedDefaults.audienceType) {
+          newFormData.audienceType = Array.isArray(
+            suggestedDefaults.audienceType,
+          )
+            ? (suggestedDefaults.audienceType as string[])
+            : [suggestedDefaults.audienceType as string];
+          prefilledFields.audienceType = true;
+        }
+        if (suggestedDefaults.readingLevel) {
+          const levels = Array.isArray(suggestedDefaults.readingLevel)
+            ? suggestedDefaults.readingLevel
+            : [suggestedDefaults.readingLevel];
+          newFormData.readingLevel = levels[0] as
+            | "Beginner"
+            | "Intermediate"
+            | "Advanced";
+          prefilledFields.readingLevel = true;
+        }
+        if (suggestedDefaults.goals && Array.isArray(suggestedDefaults.goals)) {
+          newFormData.goals = suggestedDefaults.goals as string[];
+          prefilledFields.goals = true;
+        }
+        if (suggestedDefaults.tone && Array.isArray(suggestedDefaults.tone)) {
+          newFormData.tone = suggestedDefaults.tone as string[];
+          prefilledFields.tone = true;
+        }
+        if (suggestedDefaults.region) {
+          newFormData.region = suggestedDefaults.region as string;
+          prefilledFields.region = true;
+        }
+        if (suggestedDefaults.contentLength) {
+          newFormData.contentLength =
+            suggestedDefaults.contentLength as ContentLengthOption;
+          prefilledFields.contentLength = true;
+        }
+        if (
+          suggestedDefaults.primaryKeywords &&
+          Array.isArray(suggestedDefaults.primaryKeywords)
+        ) {
+          newFormData.primaryKeywords =
+            suggestedDefaults.primaryKeywords as string[];
+          prefilledFields.primaryKeywords = true;
+        }
+        if (typeof suggestedDefaults.includeTOC === "boolean") {
+          newFormData.includeTOC = suggestedDefaults.includeTOC;
+          prefilledFields.includeTOC = true;
+        }
+        if (typeof suggestedDefaults.includeSummary === "boolean") {
+          newFormData.includeSummary = suggestedDefaults.includeSummary;
+          prefilledFields.includeSummary = true;
+        }
+        if (typeof suggestedDefaults.includeCTA === "boolean") {
+          newFormData.includeCTA = suggestedDefaults.includeCTA;
+          prefilledFields.includeCTA = true;
+        }
+        if (typeof suggestedDefaults.includeKeyTakeaways === "boolean") {
+          newFormData.includeKeyTakeaways =
+            suggestedDefaults.includeKeyTakeaways;
+          prefilledFields.includeKeyTakeaways = true;
+        }
+      }
+
+      // Map user_settings for Research Settings step
+      if (userSettings) {
+        if (userSettings.research_level) {
+          newFormData.researchLevel = userSettings.research_level as
+            | "Basic"
+            | "Comprehensive"
+            | "Expert";
+          prefilledFields.researchLevel = true;
+        }
+        if (typeof userSettings.include_latest_info === "boolean") {
+          newFormData.includeLatestInfo = userSettings.include_latest_info;
+          prefilledFields.includeLatestInfo = true;
+        }
+        if (typeof userSettings.include_examples === "boolean") {
+          newFormData.includeExamples = userSettings.include_examples;
+          prefilledFields.includeExamples = true;
+        }
+        if (userSettings.fact_checking) {
+          newFormData.factChecking = userSettings.fact_checking as
+            | "Basic"
+            | "Standard"
+            | "Strict";
+          prefilledFields.factChecking = true;
+        }
+        if (userSettings.content_freshness) {
+          newFormData.contentFreshness =
+            userSettings.content_freshness as ContentFreshness;
+          prefilledFields.contentFreshness = true;
+        }
+        if (typeof userSettings.include_statistics === "boolean") {
+          newFormData.includeStatistics = userSettings.include_statistics;
+          prefilledFields.includeStatistics = true;
+        }
+        if (typeof userSettings.include_quotes === "boolean") {
+          newFormData.includeQuotes = userSettings.include_quotes;
+          prefilledFields.includeQuotes = true;
+        }
+        if (typeof userSettings.competitor_analysis === "boolean") {
+          newFormData.competitorAnalysis = userSettings.competitor_analysis;
+          prefilledFields.competitorAnalysis = true;
+        }
+      }
+
+      // Set topic ID and metadata
+      newFormData.topicId = topicData.id;
+      prefilledFields.topicId = true;
+
+      newFormData._topicPrefillingMetadata = {
+        topicId: topicData.id,
+        prefilledFields,
+        originalSuggestedDefaults: suggestedDefaults,
+        originalUserSettings: userSettings,
+      };
+
+      return {
+        ...state,
+        formData: newFormData,
+        hasUnsavedChanges: true,
+      };
+    }
+
     default:
       return state;
   }
@@ -154,6 +347,7 @@ function wizardStateReducer(
  */
 export function ContentCreationWizard({
   initialData = {},
+  initialTopicId,
   onSubmit,
   onSaveDraft,
   onCancel,
@@ -195,6 +389,36 @@ export function ContentCreationWizard({
   useEffect(() => {
     dependencyEngine.updateFormData(state.formData);
   }, [state.formData, dependencyEngine]);
+
+  // Fetch topic data if initialTopicId is provided
+  const { data: initialTopic, isSuccess: isInitialTopicLoaded } = useTopic(
+    initialTopicId || "",
+  );
+
+  // Handle pre-filling from initial topic
+  useEffect(() => {
+    if (
+      initialTopicId &&
+      isInitialTopicLoaded &&
+      initialTopic &&
+      !state.formData.topicId
+    ) {
+      // Only pre-fill if we haven't already set a topic
+      dispatch({
+        type: "PREFILL_FROM_TOPIC",
+        payload: {
+          topicData: initialTopic,
+          suggestedDefaults: initialTopic.suggested_defaults,
+          userSettings: undefined, // user_settings not implemented yet
+        },
+      });
+    }
+  }, [
+    initialTopicId,
+    isInitialTopicLoaded,
+    initialTopic,
+    state.formData.topicId,
+  ]);
 
   // Calculate validation data
   const fullValidation = dependencyEngine.validateAll();
@@ -365,6 +589,23 @@ export function ContentCreationWizard({
     },
     [],
   );
+
+  // Helper function to count clearable auto-filled fields
+  const getClearableFieldsCount = useCallback(() => {
+    const metadata = state.formData._topicPrefillingMetadata;
+    if (!metadata?.prefilledFields) return 0;
+
+    return Object.entries(metadata.prefilledFields).filter(
+      ([field, isAutofilled]) =>
+        isAutofilled &&
+        !state.touched[field as keyof PartialContentCreationFormData],
+    ).length;
+  }, [state.formData._topicPrefillingMetadata, state.touched]);
+
+  // Handle clearing auto-filled values
+  const handleClearAutoFilledValues = useCallback(() => {
+    dispatch({ type: "CLEAR_AUTOFILLED_VALUES" });
+  }, []);
 
   // Step navigation handlers with enhanced validation
   const handleNextStep = useCallback(() => {
@@ -569,10 +810,40 @@ export function ContentCreationWizard({
   }, [state.hasUnsavedChanges, onCancel]);
 
   const currentStepConfig = WIZARD_CONFIG.steps[state.currentStep];
+  const clearableFieldsCount = getClearableFieldsCount();
 
   return (
     <div className="wizard-container w-full">
       <div className="space-y-8">
+        {/* Clear Auto-filled Values Button */}
+        {clearableFieldsCount > 0 && (
+          <Alert className="border-blue-200 bg-blue-50/30">
+            <AlertDescription className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="text-sm font-medium">
+                  {clearableFieldsCount} field
+                  {clearableFieldsCount !== 1 ? "s" : ""} pre-filled from topic
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  You can clear these auto-filled values to start fresh
+                </div>
+              </div>
+              <ConfirmationDialog
+                title="Clear Auto-filled Values?"
+                description={`This will clear ${clearableFieldsCount} field${clearableFieldsCount !== 1 ? "s" : ""} that were automatically filled from the topic. Fields you've edited will not be affected.`}
+                confirmText="Clear Fields"
+                variant="default"
+                onConfirm={handleClearAutoFilledValues}
+              >
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Eraser className="h-4 w-4" />
+                  Clear Auto-filled Values
+                </Button>
+              </ConfirmationDialog>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Enhanced Auto-save Status */}
         {(state.hasUnsavedChanges || draftState.lastSaved) && (
           <Alert
@@ -651,6 +922,7 @@ export function ContentCreationWizard({
                           onFieldChange={handleFieldChange}
                           onFieldTouch={handleFieldTouch}
                           dependencyEngine={dependencyEngine}
+                          dispatch={dispatch}
                           onLaunch={onSubmit}
                           onSaveDraft={handleSaveDraft}
                           onGoToStep={handleGoToStep}

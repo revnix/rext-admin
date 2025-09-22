@@ -20,70 +20,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTopics } from "@/hooks/use-topics";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import {
   getContentTypeOptions,
   INDUSTRY_OPTIONS,
   PLATFORM_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
-import type { WizardStepProps } from "@/types/content-creation";
+import type { WizardAction, WizardStepProps } from "@/types/content-creation";
+import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
 
 interface TopicContentStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
+  dispatch: React.Dispatch<WizardAction>;
 }
-
-// Mock topics data - will be replaced with API call
-const MOCK_TOPICS = [
-  {
-    id: "1",
-    title: "AI and Machine Learning in Business",
-    description:
-      "Exploring the practical applications of AI in modern business operations",
-    industry: "Technology",
-    platform: "Website",
-    keywords: [
-      "artificial intelligence",
-      "machine learning",
-      "business automation",
-    ],
-  },
-  {
-    id: "2",
-    title: "Social Media Marketing Strategies",
-    description:
-      "Effective strategies for building brand presence on social platforms",
-    industry: "Marketing",
-    platform: "Social Media",
-    keywords: ["social media", "marketing", "brand building"],
-  },
-  {
-    id: "3",
-    title: "Healthcare Digital Transformation",
-    description:
-      "How technology is revolutionizing patient care and medical practices",
-    industry: "Healthcare",
-    platform: "Website",
-    keywords: ["digital health", "telemedicine", "patient care"],
-  },
-  {
-    id: "4",
-    title: "Financial Technology Trends",
-    description:
-      "Latest innovations in fintech and their impact on traditional banking",
-    industry: "Finance",
-    platform: "Website",
-    keywords: ["fintech", "digital banking", "financial innovation"],
-  },
-  {
-    id: "5",
-    title: "E-commerce Customer Experience",
-    description:
-      "Best practices for creating seamless online shopping experiences",
-    industry: "E-commerce",
-    platform: "Website",
-    keywords: ["e-commerce", "customer experience", "online shopping"],
-  },
-];
 
 /**
  * Step 1: Topic & Content Type Component
@@ -103,10 +53,32 @@ export function TopicContentStep({
   onFieldChange,
   onFieldTouch,
   dependencyEngine,
+  dispatch,
 }: TopicContentStepProps) {
   const [topicSearch, setTopicSearch] = useState("");
-  const [filteredTopics, setFilteredTopics] = useState(MOCK_TOPICS);
-  const [isLoadingTopics, _setIsLoadingTopics] = useState(false);
+
+  // Fetch topics from API
+  const { data: topics = [], isLoading: isLoadingTopics } = useTopics();
+
+  // Filter topics based on search and only show approved ones
+  const filteredTopics = useMemo(() => {
+    if (!topics.length) return [];
+
+    // Filter to only approved topics
+    const approvedTopics = topics.filter((topic) => topic.approved === true);
+
+    if (!topicSearch.trim()) {
+      return approvedTopics;
+    }
+
+    const searchLower = topicSearch.toLowerCase();
+    return approvedTopics.filter(
+      (topic) =>
+        topic.title.toLowerCase().includes(searchLower) ||
+        topic.description?.toLowerCase().includes(searchLower) ||
+        topic.tags?.some((tag) => tag.toLowerCase().includes(searchLower)),
+    );
+  }, [topics, topicSearch]);
 
   // Create stable references for callbacks to avoid dependency loops
   const onFieldChangeRef = useRef(onFieldChange);
@@ -125,41 +97,6 @@ export function TopicContentStep({
   const contentTypeField = visibleFields.find((f) => f.id === "contentType");
   const industryField = visibleFields.find((f) => f.id === "industry");
 
-  // Filter topics based on search
-  useEffect(() => {
-    if (!topicSearch.trim()) {
-      setFilteredTopics(MOCK_TOPICS);
-      return;
-    }
-
-    const searchLower = topicSearch.toLowerCase();
-    const filtered = MOCK_TOPICS.filter(
-      (topic) =>
-        topic.title.toLowerCase().includes(searchLower) ||
-        topic.description.toLowerCase().includes(searchLower) ||
-        topic.keywords.some((keyword) =>
-          keyword.toLowerCase().includes(searchLower),
-        ),
-    );
-    setFilteredTopics(filtered);
-  }, [topicSearch]);
-
-  // Auto-fill industry when topic is selected
-  useEffect(() => {
-    if (formData.topicId && !formData.industry) {
-      const selectedTopic = MOCK_TOPICS.find(
-        (topic) => topic.id === formData.topicId,
-      );
-      if (selectedTopic) {
-        onFieldChangeRef.current("industry", selectedTopic.industry);
-        // Also suggest platform based on topic
-        if (!formData.platform) {
-          onFieldChangeRef.current("platform", selectedTopic.platform);
-        }
-      }
-    }
-  }, [formData.topicId, formData.industry, formData.platform]);
-
   // Get content type options based on selected platform
   const contentTypeOptions = useMemo(() => {
     return formData.platform
@@ -169,22 +106,26 @@ export function TopicContentStep({
 
   // Handle topic selection
   const handleTopicSelect = useCallback(
-    (topicId: string) => {
+    async (topicId: string) => {
       onFieldChangeRef.current("topicId", topicId);
       onFieldTouchRef.current("topicId");
 
-      // Auto-fill related fields
-      const selectedTopic = MOCK_TOPICS.find((topic) => topic.id === topicId);
+      // Find the topic in our filtered list first
+      const selectedTopic = topics.find((topic) => topic.id === topicId);
+
       if (selectedTopic) {
-        // Pre-fill industry
-        onFieldChangeRef.current("industry", selectedTopic.industry);
-        // Pre-fill platform if not already set
-        if (!formData.platform) {
-          onFieldChangeRef.current("platform", selectedTopic.platform);
-        }
+        // Dispatch pre-fill action with topic data
+        dispatch({
+          type: "PREFILL_FROM_TOPIC",
+          payload: {
+            topicData: selectedTopic,
+            suggestedDefaults: selectedTopic.suggested_defaults,
+            userSettings: undefined, // user_settings not implemented yet
+          },
+        });
       }
     },
-    [formData.platform],
+    [topics, dispatch],
   );
 
   // Handle platform change
@@ -209,7 +150,7 @@ export function TopicContentStep({
   );
 
   const selectedTopic = formData.topicId
-    ? MOCK_TOPICS.find((t) => t.id === formData.topicId)
+    ? topics.find((t) => t.id === formData.topicId)
     : null;
 
   return (
@@ -279,13 +220,29 @@ export function TopicContentStep({
                               <p className="text-sm text-muted-foreground">
                                 {topic.description}
                               </p>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="text-xs">
-                                  {topic.industry}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {topic.platform}
-                                </Badge>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {topic.audience_fit
+                                  .slice(0, 2)
+                                  .map((audience) => (
+                                    <Badge
+                                      key={audience}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {audience}
+                                    </Badge>
+                                  ))}
+                                {topic.channel_fit
+                                  .slice(0, 1)
+                                  .map((channel) => (
+                                    <Badge
+                                      key={channel}
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {channel}
+                                    </Badge>
+                                  ))}
                               </div>
                             </div>
                             {formData.topicId === topic.id && (
@@ -314,7 +271,7 @@ export function TopicContentStep({
                       </div>
                       <div className="text-sm">{selectedTopic.title}</div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Keywords: {selectedTopic.keywords.join(", ")}
+                        Tags: {selectedTopic.tags.join(", ")}
                       </div>
                     </div>
                   </div>
@@ -334,34 +291,34 @@ export function TopicContentStep({
 
         {/* Enhanced Platform Selection */}
         {platformField && (
-          <Card
-            className={`wizard-card ${errors.platform && touched.platform ? "wizard-card-error" : ""}`}
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="wizard-field-label">
-                <Globe className="h-5 w-5 text-primary" />
-                Select Platform
-              </CardTitle>
-              <CardDescription className="wizard-field-description">
-                Where will this content be published?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                options={PLATFORM_OPTIONS}
-                value={formData.platform || ""}
-                onValueChange={handlePlatformChange}
-                columns={2}
-              />
-
-              {errors.platform && touched.platform && (
+          <AutoFilledFieldWrapper
+            isAutoFilled={
+              formData._topicPrefillingMetadata?.prefilledFields?.platform ||
+              false
+            }
+            isModified={touched.platform || false}
+            label="Select Platform"
+            description="Where will this content be published?"
+            icon={<Globe className="h-5 w-5 text-primary" />}
+            className={
+              errors.platform && touched.platform ? "wizard-card-error" : ""
+            }
+            errorContent={
+              errors.platform && touched.platform ? (
                 <div className="wizard-field-error mt-4">
                   <Globe className="h-4 w-4" />
                   {errors.platform}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          >
+            <RadioGroup
+              options={PLATFORM_OPTIONS}
+              value={formData.platform || ""}
+              onValueChange={handlePlatformChange}
+              columns={2}
+            />
+          </AutoFilledFieldWrapper>
         )}
 
         {/* Enhanced Content Type Selection */}
@@ -401,47 +358,46 @@ export function TopicContentStep({
 
         {/* Enhanced Industry Selection */}
         {industryField && (
-          <Card
-            className={`wizard-card ${errors.industry && touched.industry ? "wizard-card-error" : ""}`}
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="wizard-field-label">
-                <Building2 className="h-5 w-5 text-primary" />
-                Industry
-              </CardTitle>
-              <CardDescription className="wizard-field-description">
-                Your business industry (pre-filled from topic but can be
-                changed)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={formData.industry || ""}
-                onValueChange={(value) => {
-                  onFieldChange("industry", value);
-                  onFieldTouch("industry");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your industry..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {INDUSTRY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {errors.industry && touched.industry && (
+          <AutoFilledFieldWrapper
+            isAutoFilled={
+              formData._topicPrefillingMetadata?.prefilledFields?.industry ||
+              false
+            }
+            isModified={touched.industry || false}
+            label="Industry"
+            description="Your business industry (pre-filled from topic but can be changed)"
+            icon={<Building2 className="h-5 w-5 text-primary" />}
+            className={
+              errors.industry && touched.industry ? "wizard-card-error" : ""
+            }
+            errorContent={
+              errors.industry && touched.industry ? (
                 <div className="wizard-field-error mt-4">
                   <Building2 className="h-4 w-4" />
                   {errors.industry}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          >
+            <Select
+              value={formData.industry || ""}
+              onValueChange={(value) => {
+                onFieldChange("industry", value);
+                onFieldTouch("industry");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select your industry..." />
+              </SelectTrigger>
+              <SelectContent>
+                {INDUSTRY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </AutoFilledFieldWrapper>
         )}
       </div>
 

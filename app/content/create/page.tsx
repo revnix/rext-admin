@@ -2,7 +2,8 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { ContentCreationWizard } from "@/components/content-creation/content-creation-wizard";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
@@ -20,13 +21,12 @@ import type {
 } from "@/types/content-creation";
 
 /**
- * Main content creation page component
- *
- * This page provides a wizard interface for creating content with AI assistance.
- * It follows the existing design patterns from the codebase and integrates with
- * the content creation system.
+ * Component that uses search params (needs Suspense boundary)
  */
-export default function CreateContentPage() {
+function CreateContentPageContent() {
+  const searchParams = useSearchParams();
+  const topicId = searchParams.get("topicId");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -199,6 +199,7 @@ export default function CreateContentPage() {
 
           {/* Content Creation Wizard */}
           <ContentCreationWizard
+            initialTopicId={topicId}
             onSubmit={handleSubmit}
             onSaveDraft={handleSaveDraft}
             onCancel={handleCancel}
@@ -207,5 +208,20 @@ export default function CreateContentPage() {
         </div>
       </div>
     </PageLayout>
+  );
+}
+
+/**
+ * Main content creation page component
+ *
+ * This page provides a wizard interface for creating content with AI assistance.
+ * It follows the existing design patterns from the codebase and integrates with
+ * the content creation system.
+ */
+export default function CreateContentPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateContentPageContent />
+    </Suspense>
   );
 }

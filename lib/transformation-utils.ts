@@ -17,7 +17,21 @@ export function transformTopicForBackend(topic: GeneratedTopic) {
     why_it_works: topic.why_it_works ?? "",
     tags: topic.tags ?? [],
     scores: topic.scores,
-    suggested_defaults: {},
+    suggested_defaults: {
+      platform: "Website",
+      industry: topic.audience_fit?.[0] || "general",
+      audienceType: topic.audience_fit || [],
+      readingLevel: ["Intermediate"],
+      goals: ["educate-inform"],
+      tone: ["professional-formal"],
+      region: "International/Global",
+      contentLength: { type: "preset", preset: "Medium" },
+      primaryKeywords: topic.tags?.slice(0, 5) || [],
+      includeTOC: false,
+      includeSummary: true,
+      includeCTA: true,
+      includeKeyTakeaways: true,
+    },
     input_params: undefined,
   } satisfies BackendSaveTopicRequestList["topics"][number];
 }

@@ -319,6 +319,9 @@ export const FIELD_VALIDATION_SCHEMAS: Record<
   flowName: [],
   format: [],
   includeFrontMatter: [],
+
+  // Metadata (not validated)
+  _topicPrefillingMetadata: [],
 };
 
 // ============================================================================

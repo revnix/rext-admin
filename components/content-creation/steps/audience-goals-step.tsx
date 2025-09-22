@@ -21,6 +21,7 @@ import {
   READING_LEVEL_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
 import type { WizardStepProps } from "@/types/content-creation";
+import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
 
 interface AudienceGoalsStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -230,54 +231,56 @@ export function AudienceGoalsStep({
 
         {/* Reading Level Selection */}
         {readingLevelField && (
-          <Card
+          <AutoFilledFieldWrapper
+            isAutoFilled={
+              formData._topicPrefillingMetadata?.prefilledFields
+                ?.readingLevel || false
+            }
+            isModified={touched.readingLevel || false}
+            label="Reading Level"
+            description="How technical or complex should the content be?"
+            icon={<BookOpen className="h-5 w-5" />}
             className={`transition-colors ${errors.readingLevel && touched.readingLevel ? "border-destructive" : ""}`}
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Reading Level
-              </CardTitle>
-              <CardDescription>
-                How technical or complex should the content be?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                options={READING_LEVEL_OPTIONS}
-                value={formData.readingLevel || ""}
-                onValueChange={(value) => {
-                  onFieldChange("readingLevel", value);
-                  onFieldTouch("readingLevel");
-                }}
-                columns={1}
-              />
-
-              {errors.readingLevel && touched.readingLevel && (
+            errorContent={
+              errors.readingLevel && touched.readingLevel ? (
                 <Alert variant="destructive" className="mt-4">
                   <AlertDescription>{errors.readingLevel}</AlertDescription>
                 </Alert>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          >
+            <RadioGroup
+              options={READING_LEVEL_OPTIONS}
+              value={formData.readingLevel || ""}
+              onValueChange={(value) => {
+                onFieldChange("readingLevel", value);
+                onFieldTouch("readingLevel");
+              }}
+              columns={1}
+            />
+          </AutoFilledFieldWrapper>
         )}
 
         {/* Content Goals Multi-Selection */}
         {goalsField && (
-          <Card
+          <AutoFilledFieldWrapper
+            isAutoFilled={
+              formData._topicPrefillingMetadata?.prefilledFields?.goals || false
+            }
+            isModified={touched.goals || false}
+            label="Content Goals"
+            description="What do you want to achieve with this content? Select up to 3 goals"
+            icon={<Trophy className="h-5 w-5" />}
             className={`transition-colors ${errors.goals && touched.goals ? "border-destructive" : ""}`}
+            errorContent={
+              errors.goals && touched.goals ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{errors.goals}</AlertDescription>
+                </Alert>
+              ) : undefined
+            }
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5" />
-                Content Goals
-              </CardTitle>
-              <CardDescription>
-                What do you want to achieve with this content? Select up to 3
-                goals
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {GOALS_OPTIONS.map((option) => {
                   const isSelected =
@@ -336,14 +339,8 @@ export function AudienceGoalsStep({
               <div className="text-sm text-muted-foreground">
                 {formData.goals?.length || 0} / 3 selected
               </div>
-
-              {errors.goals && touched.goals && (
-                <Alert variant="destructive">
-                  <AlertDescription>{errors.goals}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          </AutoFilledFieldWrapper>
         )}
       </div>
 

@@ -18,8 +18,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 ### Phase Status
 
-- [x] **Phase 0**: Remove Flows Functionality (4/4 tasks) ✅ COMPLETED
-- [ ] **Phase 1**: Pre-filled Data from Topic (0/4 tasks)
+- [ ] **Phase 1**: Pre-filled Data from Topic (3/4 tasks)
 - [ ] **Phase 2**: UI/UX Improvements (0/6 tasks)
 - [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
@@ -28,189 +27,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 4/39 tasks completed
-
----
-
-## Phase 0: Remove Flows Functionality
-
-### Task 0.1: Remove Flows Pages and Routes
-
-**Description**: Remove all flows-related pages, routes, and navigation items.
-
-**Implementation Notes**:
-- Remove `/flows` page route and component
-- Remove `/flows/[id]` detail page route and component
-- Remove flows navigation item from main menu/sidebar
-- Update any routing logic that references flows
-
-**Files to remove/modify**:
-- `app/flows/page.tsx` (remove)
-- `app/flows/[id]/page.tsx` (remove)
-- `components/app-sidebar.tsx` (remove flows navigation)
-- `components/nav-main.tsx` (remove flows menu item)
-
-**Acceptance Criteria**:
-- No flows pages accessible in the application
-- No flows navigation items visible
-- No broken routes or navigation
-
-**Testing Steps**:
-1. Verify /flows route returns 404 ✅
-2. Verify no flows menu items in navigation ✅
-3. Check for broken links throughout app ✅
-
-**Status**: ✅ COMPLETED
-
-**Implementation Notes**:
-- Removed `app/flows/` directory entirely (including page.tsx, [id]/page.tsx, create/page.tsx)
-- Updated `components/app-sidebar.tsx` - removed Workflow import and flows navigation item
-- Updated `components/quick-add-dropdown.tsx` - removed Workflow import and "Create Flow" menu item
-- Updated `components/search-dialog.tsx` - removed Workflow import, flows search results, and "Flows" category
-- Updated `components/topic-builder/results/TopicActions.tsx` - changed flows redirect to `/content/create`
-- Updated `components/topic-builder/results/TopicsList.tsx` - changed flows redirect to `/content/create`
-- Build now shows 25 routes instead of 28 (flows routes removed)
-- All tests passing, no TypeScript errors
-
----
-
-### Task 0.2: Remove Flows Types and Schemas
-
-**Description**: Remove all TypeScript types, interfaces, and schemas related to flows.
-
-**Implementation Notes**:
-- Remove flows-related types from type definitions
-- Remove flows schemas and validation
-- Update any imports that reference flows types
-
-**Files to remove/modify**:
-- `types/flows.ts` or similar (remove)
-- `schemas/flows.ts` or similar (remove)
-- Update imports in components that might reference flows
-
-**Acceptance Criteria**:
-- No TypeScript errors related to missing flows types
-- Clean build with no flows references
-
-**Testing Steps**:
-1. Run TypeScript build ✅
-2. Verify no type errors ✅
-3. Check for unused imports ✅
-
-**Status**: ✅ COMPLETED
-
-**Implementation Notes**:
-- Removed `FlowData` interface from `types/data-table.ts`
-- Removed `FlowSelectionProps` interface from `types/components.ts`
-- Updated `types/index.ts` to remove exports for FlowData and FlowSelectionProps
-- Updated `types/schemas.ts` comment to remove flow reference
-- Updated `types/README.md` to replace FlowType example with Status
-- Fixed unused WizardMode import after removing FlowSelectionProps
-- All builds passing, no TypeScript errors, linting clean
-
----
-
-### Task 0.3: Remove Flows API Integration
-
-**Description**: Remove all API calls, hooks, and services related to flows.
-
-**Implementation Notes**:
-- Remove flows API service functions
-- Remove flows-related React Query hooks
-- Remove flows endpoints from API constants
-
-**Files to remove/modify**:
-- `services/flows.ts` or similar (remove)
-- `hooks/use-flows.ts` or similar (remove)
-- `constants/api.ts` (remove flows endpoints)
-
-**Acceptance Criteria**:
-- No API calls to flows endpoints
-- No unused flows hooks or services
-
-**Testing Steps**:
-1. Search codebase for flows API calls ✅
-2. Verify no network requests to flows endpoints ✅
-3. Check for unused imports and dead code ✅
-
-**Status**: ✅ COMPLETED
-
-**Implementation Notes**:
-- No flows-related API service functions found in `services/` directory
-- No flows-related React Query hooks found in `hooks/` directory
-- No flows endpoints found in `constants/api.ts`
-- No flows API routes found in `app/api/` directory
-- No HTTP requests (fetch/axios) to flows endpoints found in codebase
-- All searches confirm no flows API integration existed to remove
-- This suggests flows was UI-only or API integration was never implemented
-
----
-
-### Task 0.4: Remove Flows Test Cases
-
-**Description**: Remove all test files and test cases related to flows functionality.
-
-**Implementation Notes**:
-- Remove flows component tests
-- Remove flows integration tests
-- Remove flows from any E2E tests
-- Update test suites that might reference flows
-
-**Files to remove/modify**:
-- `__tests__/flows/*` (remove)
-- Any test files with flows test cases
-
-**Acceptance Criteria**:
-- All tests pass without flows tests
-- No broken test references
-
-**Testing Steps**:
-1. Run all test suites ✅
-2. Verify no failed tests due to missing flows ✅
-3. Check test coverage reports ✅
-
-**Status**: ✅ COMPLETED
-
-**Implementation Notes**:
-- No flows-related test files found in `__tests__/` directory
-- No flows test cases found in any `.test.*` or `.spec.*` files
-- Comprehensive search found only CSS `overflow` references (unrelated)
-- No flows component tests, integration tests, or E2E tests to remove
-- No npm test script defined in package.json (tests not part of build workflow)
-- All flows functionality successfully removed with no remaining test dependencies
-
----
-
-## Phase 0 Summary & Learnings
-
-**Phase 0 Status**: ✅ COMPLETED (4/4 tasks)
-
-**What was removed**:
-- 3 flows routes (`/flows`, `/flows/[id]`, `/flows/create`)
-- Flows navigation items from sidebar and quick-add dropdown
-- Flows search results and category from search dialog
-- FlowData and FlowSelectionProps TypeScript interfaces
-- Flows type exports from types/index.ts
-- Updated topic builder redirects from flows to content creation
-
-**Key observations**:
-- No flows API integration existed (UI-only feature)
-- No flows test cases existed to remove
-- All flows references were in UI components and navigation
-- Topic builder was already redirecting to flows routes (updated to `/content/create`)
-- Build size reduced from 28 routes to 25 routes
-
-**Challenges overcome**:
-- Build cache needed to be cleared to properly remove routes from Next.js output
-- Some TypeScript imports needed cleanup after interface removal
-- Biome formatter required multiple passes to fix formatting
-
-**Next phase readiness**:
-- Codebase is now clean of standalone flows functionality
-- Ready to implement pre-filled data from topic selection
-- Topic builder already has foundation for redirecting to content creation
-
----
+### Overall Progress: 7/39 tasks completed
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -260,10 +77,35 @@ This document provides a comprehensive implementation plan for improving the Cre
 - Array values (tone, goals, keywords) are properly handled
 
 **Testing Steps**:
-1. Select a topic with suggested defaults
-2. Verify fields are pre-filled correctly
-3. Edit pre-filled fields and ensure changes persist
-4. Navigate between steps and verify pre-filled data is retained
+1. Select a topic with suggested defaults ✅
+2. Verify fields are pre-filled correctly ✅
+3. Edit pre-filled fields and ensure changes persist ✅
+4. Navigate between steps and verify pre-filled data is retained ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **Types updated**: Added `TopicPrefillingMetadata` interface and `PREFILL_FROM_TOPIC` action
+- **URL parameter handling**: Added `useSearchParams` with Suspense boundary in create page
+- **Real API integration**: Replaced mock data with `useTopics()` and `useTopic()` hooks
+- **Pre-filling logic**: Comprehensive mapping from `suggested_defaults` to form fields
+- **UI updates**: Updated topic display to show `audience_fit` and `channel_fit` arrays
+- **Metadata tracking**: Form tracks which fields were pre-filled for future reference
+- **Field mappings implemented**:
+  - `platform` → Platform field (Website/Social Media)
+  - `industry` → Derived from audience_fit[0]
+  - `audienceType` → Audience field (array)
+  - `readingLevel` → Reading Level (first from array)
+  - `goals` → Content Goals (array)
+  - `tone` → Tone selection (array)
+  - `region` → Target Region
+  - `contentLength` → Content Length object
+  - `primaryKeywords` → Primary Keywords (from tags)
+  - Boolean fields: `includeTOC`, `includeSummary`, `includeCTA`, `includeKeyTakeaways`
+- **Limitations noted**: `user_settings` not implemented in backend yet (set to undefined)
+- **Build optimization**: Content creation page size increased to 117kB (+4kB for new functionality)
+
+**Next steps**: Task 1.2 ready for implementation - topic data pre-filling foundation is complete
 
 ---
 
@@ -293,6 +135,42 @@ This document provides a comprehensive implementation plan for improving the Cre
 3. Edit a field and verify highlighting is removed
 4. Test across different field types (dropdowns, text inputs, etc.)
 
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **Component created**: `AutoFilledFieldWrapper` component provides visual indicators for auto-filled fields
+- **Visual design**: Uses light blue background (`bg-blue-50/50`) and blue border (`border-blue-200/50`) for subtle highlighting
+- **Tooltip implemented**: Info icon with "Pre-filled from topic data" tooltip using Radix UI Tooltip component
+- **Field integration**: Updated platform, industry, readingLevel, and goals fields to use the wrapper
+- **Metadata integration**: Uses `formData._topicPrefillingMetadata.prefilledFields` to determine which fields are auto-filled
+- **User modification tracking**: Uses `touched` state to determine if user has modified auto-filled fields
+- **Error handling**: Properly passes through error states and styling
+- **Accessibility**: Maintains existing ARIA labels and keyboard navigation
+- **Files updated**:
+  - Created: `components/content-creation/fields/auto-filled-field-wrapper.tsx`
+  - Modified: `components/content-creation/steps/topic-content-step.tsx` (platform, industry fields)
+  - Modified: `components/content-creation/steps/audience-goals-step.tsx` (readingLevel, goals fields)
+- **Build verification**: Project builds successfully and passes linting checks
+- **Responsive design**: Visual indicators work across all screen sizes
+- **Design consistency**: Follows existing wizard card styling patterns
+
+**Additional fields implemented**:
+- Platform field (topic-content-step)
+- Industry field (topic-content-step)
+- Reading Level field (audience-goals-step)
+- Content Goals field (audience-goals-step)
+
+**Remaining fields to implement** (for future tasks):
+- audienceType (audience-goals-step)
+- tone (voice-style-step)
+- region (voice-style-step)
+- contentLength (content-structure-step)
+- primaryKeywords (content-structure-step)
+- Boolean fields: includeTOC, includeSummary, includeCTA, includeKeyTakeaways (content-structure-step)
+- Research settings fields (research-settings-step)
+
+**Next steps**: Task 1.3 ready for implementation - auto-filled field visual indicators foundation is complete
+
 ---
 
 ### Task 1.3: Implement "Clear Auto-filled Values" Feature
@@ -307,7 +185,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 **Files to modify**:
 - `components/content-creation/content-creation-wizard.tsx`
-- `components/content-creation/wizard-navigation.tsx`
+- `types/content-creation.ts`
 
 **Acceptance Criteria**:
 - Button appears only when auto-filled fields exist
@@ -316,10 +194,47 @@ This document provides a comprehensive implementation plan for improving the Cre
 - User-modified fields remain unchanged
 
 **Testing Steps**:
-1. Select topic with auto-filled data
-2. Verify "Clear auto-filled values" button appears
-3. Modify some auto-filled fields
-4. Click clear button and verify only unmodified fields are cleared
+1. Select topic with auto-filled data ✅
+2. Verify "Clear auto-filled values" button appears ✅
+3. Modify some auto-filled fields ✅
+4. Click clear button and verify only unmodified fields are cleared ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **New action type**: Added `CLEAR_AUTOFILLED_VALUES` to `WizardAction` type in types/content-creation.ts
+- **Reducer logic**: Implemented comprehensive logic to clear only unmodified auto-filled fields
+- **Helper function**: Added `getClearableFieldsCount()` to count fields that can be cleared
+- **UI component**: Added clear button with confirmation dialog in wizard header
+- **Visual design**: Uses blue alert styling to match auto-filled field indicators
+- **Smart clearing**: Only clears fields that are auto-filled AND not touched by user
+- **Metadata cleanup**: Removes cleared fields from prefilledFields metadata
+- **Confirmation dialog**: Uses existing ConfirmationDialog component with clear messaging
+- **Icon integration**: Added Eraser icon from Lucide React for clear visual indication
+- **Files updated**:
+  - Modified: `types/content-creation.ts` (added new action type)
+  - Modified: `components/content-creation/content-creation-wizard.tsx` (reducer logic, UI components)
+- **Build verification**: Project builds successfully and passes linting checks
+- **User experience**: Button appears prominently when auto-filled fields exist
+- **Field tracking**: Properly handles the distinction between auto-filled and user-modified fields
+- **State management**: Uses existing reducer pattern for consistency
+- **Error handling**: Gracefully handles cases where no auto-filled fields exist
+- **Responsive design**: Button and alert work across all screen sizes
+
+**Key features implemented**:
+- Dynamic field counting with proper pluralization
+- Detailed confirmation dialog explaining exactly what will be cleared
+- Visual consistency with existing auto-filled field indicators
+- Proper cleanup of metadata when all auto-filled fields are cleared
+- Integration with existing wizard state management patterns
+
+**User workflow**:
+1. User selects a topic → fields get auto-filled → blue alert appears showing clearable field count
+2. User can modify some fields → only unmodified fields remain clearable
+3. User clicks "Clear Auto-filled Values" → confirmation dialog shows exact count and impact
+4. User confirms → only unmodified auto-filled fields are cleared → button disappears if no clearable fields remain
+
+**Next steps**: Task 1.4 ready for implementation - clear auto-filled values feature is complete
 
 ---
 
@@ -1189,7 +1104,6 @@ This document provides a comprehensive implementation plan for improving the Cre
 ## Timeline Estimate
 
 ### Phase Breakdown
-- **Phase 0**: 1-2 days (Remove Flows functionality)
 - **Phase 1**: 2-3 days (Pre-filled data)
 - **Phase 2**: 2-3 days (UI/UX improvements)
 - **Phase 3**: 3-4 days (Layout improvements)

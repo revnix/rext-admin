@@ -60,6 +60,20 @@ export interface ContentLengthOption {
 // ============================================================================
 
 /**
+ * Metadata for tracking pre-filled fields from topic data
+ */
+export interface TopicPrefillingMetadata extends Record<string, unknown> {
+  /** Topic ID that was used for pre-filling */
+  topicId?: string;
+  /** Fields that were auto-filled from topic data */
+  prefilledFields: Record<string, boolean>;
+  /** Original topic suggested_defaults for reference */
+  originalSuggestedDefaults?: Record<string, unknown>;
+  /** Original topic user_settings for reference */
+  originalUserSettings?: Record<string, unknown>;
+}
+
+/**
  * Main form data interface for the content creation wizard
  * Contains all data collected across all wizard steps
  */
@@ -109,6 +123,9 @@ export interface ContentCreationFormData {
   flowName?: string; // Auto-generated
   format: "Markdown"; // Default
   includeFrontMatter: boolean; // Auto true
+
+  // Metadata (not visible to user)
+  _topicPrefillingMetadata?: TopicPrefillingMetadata;
 }
 
 /**
@@ -260,7 +277,17 @@ export type WizardAction =
   | { type: "SAVE_DRAFT" }
   | { type: "LOAD_DRAFT"; payload: PartialContentCreationFormData }
   | { type: "RESET_WIZARD" }
-  | { type: "SUBMIT_FORM" };
+  | { type: "SUBMIT_FORM" }
+  | { type: "CLEAR_AUTOFILLED_VALUES" }
+  | {
+      type: "PREFILL_FROM_TOPIC";
+      payload: {
+        // biome-ignore lint/suspicious/noExplicitAny: GeneratedTopic type not imported here
+        topicData: any;
+        suggestedDefaults?: Record<string, unknown>;
+        userSettings?: Record<string, unknown>;
+      };
+    };
 
 // ============================================================================
 // COMPONENT PROP INTERFACES
@@ -272,6 +299,8 @@ export type WizardAction =
 export interface ContentCreationWizardProps {
   /** Initial form data (for editing existing content) */
   initialData?: PartialContentCreationFormData;
+  /** Initial topic ID from URL parameter */
+  initialTopicId?: string | null;
   /** Callback when form is successfully submitted */
   onSubmit?: (data: ContentCreationFormData) => Promise<void>;
   /** Callback when draft is saved */
