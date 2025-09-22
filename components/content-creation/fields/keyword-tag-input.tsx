@@ -25,9 +25,9 @@ interface KeywordTagInputProps {
   error?: string;
   touched?: boolean;
   suggestions?: string[];
+  topicSuggestions?: string[];
   onChange: (keywords: string[]) => void;
   onTouch?: () => void;
-  onGenerateSuggestions?: () => void;
 }
 
 /**
@@ -46,9 +46,9 @@ export function KeywordTagInput({
   error,
   touched,
   suggestions = [],
+  topicSuggestions = [],
   onChange,
   onTouch,
-  onGenerateSuggestions,
 }: KeywordTagInputProps) {
   const [inputValue, setInputValue] = useState("");
 
@@ -159,18 +159,6 @@ export function KeywordTagInput({
             <Plus className="h-4 w-4" />
             Add
           </Button>
-
-          {onGenerateSuggestions && (
-            <Button
-              onClick={onGenerateSuggestions}
-              variant="outline"
-              size="sm"
-              type="button"
-            >
-              <Sparkles className="h-4 w-4" />
-              AI Suggest
-            </Button>
-          )}
         </div>
 
         {/* Current Keywords */}
@@ -196,8 +184,43 @@ export function KeywordTagInput({
           </div>
         )}
 
-        {/* AI Suggestions */}
-        {suggestions.length > 0 && (
+        {/* Topic Suggestions */}
+        {topicSuggestions.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1">
+              <Hash className="h-3 w-3" />
+              Suggested from topic:
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {topicSuggestions
+                .filter((suggestion) => !value.includes(suggestion))
+                .slice(0, 8)
+                .map((suggestion) => (
+                  <Badge
+                    key={suggestion}
+                    variant="outline"
+                    className={`cursor-pointer transition-colors ${
+                      isAtLimit
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-blue-500 hover:text-white"
+                    }`}
+                    onClick={() =>
+                      !isAtLimit && handleSuggestionClick(suggestion)
+                    }
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {suggestion}
+                  </Badge>
+                ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Click to add keywords related to your selected topic
+            </p>
+          </div>
+        )}
+
+        {/* AI Suggestions (fallback) */}
+        {suggestions.length > 0 && topicSuggestions.length === 0 && (
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-1">
               <Sparkles className="h-3 w-3" />

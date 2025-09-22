@@ -201,24 +201,52 @@ export function ContentStructureStep({
           <KeywordTagInput
             value={formData.primaryKeywords}
             label="Primary Keywords"
-            description="Main keywords for SEO (optional, AI can suggest based on topic)"
+            description="Main keywords for SEO (optional, suggestions based on selected topic)"
             placeholder="Enter keywords..."
             maxKeywords={10}
             icon={Hash}
             error={errors.primaryKeywords}
             touched={touched.primaryKeywords}
+            topicSuggestions={(() => {
+              // Extract keyword suggestions from topic data
+              const metadata = formData._topicPrefillingMetadata;
+              if (!metadata?.originalSuggestedDefaults) return [];
+
+              const suggestedDefaults =
+                metadata.originalSuggestedDefaults as any;
+              const suggestions: string[] = [];
+
+              // Add secondary keywords if available
+              if (
+                suggestedDefaults.secondaryKeywords &&
+                Array.isArray(suggestedDefaults.secondaryKeywords)
+              ) {
+                suggestions.push(...suggestedDefaults.secondaryKeywords);
+              }
+
+              // Add long tail keywords from content guidance if available
+              if (
+                suggestedDefaults.content_guidance?.seo_opportunities
+                  ?.long_tail_keywords &&
+                Array.isArray(
+                  suggestedDefaults.content_guidance.seo_opportunities
+                    .long_tail_keywords,
+                )
+              ) {
+                suggestions.push(
+                  ...suggestedDefaults.content_guidance.seo_opportunities
+                    .long_tail_keywords,
+                );
+              }
+
+              // Remove duplicates and limit to 6-8 suggestions
+              return [...new Set(suggestions)].slice(0, 8);
+            })()}
             onChange={(keywords) => {
               onFieldChange("primaryKeywords", keywords);
               onFieldTouch("primaryKeywords");
             }}
             onTouch={() => onFieldTouch("primaryKeywords")}
-            onGenerateSuggestions={() => {
-              // TODO: Implement AI keyword suggestions
-              console.log(
-                "Generate AI keyword suggestions for:",
-                formData.topicId,
-              );
-            }}
           />
         )}
 
