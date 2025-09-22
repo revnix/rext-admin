@@ -196,29 +196,72 @@ export function TopicDetailDrawer({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-              {/* Description/Angle */}
-              <div className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60">
-                <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Topic Overview
+              {/* Topic Information */}
+              <div className="bg-muted/20 dark:bg-muted/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Topic Information
                 </h3>
-                <p className="text-base leading-relaxed text-muted-foreground">
-                  {topic.description || topic.angle}
-                </p>
-              </div>
 
-              {/* Why It Works */}
-              {topic.why_it_works && (
-                <div className="bg-green-50/50 dark:bg-green-950/20 rounded-xl p-6 border border-green-200/50 dark:border-green-800/50">
-                  <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-                    <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    Why This Topic Works
-                  </h3>
-                  <p className="text-base leading-relaxed text-muted-foreground">
-                    {topic.why_it_works}
-                  </p>
+                <div className="space-y-4">
+                  {/* Overview - Most Prominent */}
+                  <div className="bg-background rounded-lg p-4 border-2 border-muted/40 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-1">
+                        <FileText className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base font-medium text-foreground mb-2">
+                          Overview
+                        </h4>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {topic.description || topic.angle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Angle (if different from description) */}
+                  {topic.angle &&
+                    topic.description &&
+                    topic.angle !== topic.description && (
+                      <div className="bg-background rounded-lg p-4 border-2 border-muted/50 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
+                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-foreground mb-2">
+                              Angle
+                            </h4>
+                            <p className="text-xs leading-relaxed text-muted-foreground">
+                              {topic.angle}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Why This Works */}
+                  {topic.why_it_works && (
+                    <div className="bg-background rounded-lg p-4 border-2 border-muted/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
+                          <Target className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-foreground mb-2">
+                            Why This Works
+                          </h4>
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            {topic.why_it_works}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* Performance Scores - Minimal Design */}
               <div className="bg-muted/20 dark:bg-muted/10 rounded-xl p-6 border border-muted/30 dark:border-muted/20">

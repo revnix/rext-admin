@@ -581,10 +581,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
                             </div>
                           </div>
                         </TooltipTrigger>
-                        <TooltipContent
-                          side="left"
-                          className="max-w-[280px]"
-                        >
+                        <TooltipContent side="left" className="max-w-[280px]">
                           <div className="space-y-1">
                             <div className="font-medium">{score.label}</div>
                             <div className="text-xs text-muted-foreground mb-1">
@@ -656,68 +653,79 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
           ))}
         </div>
 
-        {/* Hero Section - Topic Overview with Angle */}
-        <DetailGrid columns={12} gap="lg" responsive={{ sm: 1, lg: 12 }}>
-          {/* Topic Overview - Takes 8 columns on large screens */}
-          <DetailGridItem span={12} responsive={{ lg: 8 }} className="flex">
-            <DetailCard
-              variant="highlight"
-              gradient
-              className="flex-1 flex flex-col"
-            >
-              <SectionHeader
-                title="Topic Overview"
-                icon={<FileText className="w-5 h-5" />}
-                variant="spacious"
-                className="mb-4"
-              />
-              <div className="flex-1 flex items-start">
-                <p className="text-base leading-relaxed text-muted-foreground">
-                  {generatedTopic?.description ||
-                    "No description available for this topic."}
-                </p>
-              </div>
-            </DetailCard>
-          </DetailGridItem>
+        {/* Topic Information */}
+        <DetailCard
+          variant="highlight"
+          className="bg-muted/20 dark:bg-muted/10"
+        >
+          <SectionHeader
+            title="Topic Information"
+            icon={<FileText className="w-5 h-5" />}
+            variant="spacious"
+            className="mb-6"
+          />
 
-          {/* Topic Angle - Takes 4 columns, acts as sidebar */}
-          {generatedTopic?.angle && (
-            <DetailGridItem span={12} responsive={{ lg: 4 }} className="flex">
-              <DetailCard
-                variant="info"
-                gradient
-                className="flex-1 flex flex-col"
-              >
-                <SectionHeader
-                  title="Topic Angle"
-                  icon={<Sparkles className="w-5 h-5" />}
-                  variant="compact"
-                  className="mb-4"
-                />
-                <div className="flex-1 flex items-start">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {generatedTopic.angle}
+          <div className="space-y-6">
+            {/* Overview - Most Prominent */}
+            <div className="bg-background rounded-lg p-6 border-2 border-muted/40 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mt-1">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-medium text-foreground mb-3">
+                    Overview
+                  </h3>
+                  <p className="text-base leading-relaxed text-muted-foreground">
+                    {generatedTopic?.description ||
+                      "No description available for this topic."}
                   </p>
                 </div>
-              </DetailCard>
-            </DetailGridItem>
-          )}
-        </DetailGrid>
+              </div>
+            </div>
 
-        {/* Why It Works - Full Width Emphasis */}
-        {generatedTopic?.why_it_works && (
-          <DetailCard variant="success" gradient>
-            <SectionHeader
-              title="Why This Topic Works"
-              icon={<Target className="w-5 h-5" />}
-              variant="spacious"
-              className="mb-4"
-            />
-            <p className="text-base leading-relaxed text-muted-foreground">
-              {generatedTopic.why_it_works}
-            </p>
-          </DetailCard>
-        )}
+            {/* Secondary Info Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Angle */}
+              {generatedTopic?.angle && (
+                <div className="bg-background rounded-lg p-5 border-2 border-muted/50 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-base font-medium text-foreground mb-2">
+                        Angle
+                      </h4>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {generatedTopic.angle}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Why This Works */}
+              {generatedTopic?.why_it_works && (
+                <div className="bg-background rounded-lg p-5 border-2 border-muted/50 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
+                      <Target className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-base font-medium text-foreground mb-2">
+                        Why This Works
+                      </h4>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {generatedTopic.why_it_works}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DetailCard>
 
         {/* Keywords & Channel/Audience Fit - Strategic Bottom Section */}
         {((generatedTopic?.tags?.length ?? 0) > 0 ||
