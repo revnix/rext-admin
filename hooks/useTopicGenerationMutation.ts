@@ -20,7 +20,7 @@ interface TopicGenerationResponse {
   request_id: string;
   generated_at: string;
   model_used?: string;
-  generation_time_ms?: number;
+  generation_time_ms?: number | null;
 }
 
 /**
@@ -111,6 +111,7 @@ export function useTopicGenerationMutation() {
 
         return response;
       } catch (error: unknown) {
+
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         const errorType =

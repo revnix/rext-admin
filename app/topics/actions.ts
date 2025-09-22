@@ -5,10 +5,12 @@ import { redirect } from "next/navigation";
 import { logger } from "@/lib/logger";
 
 const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:2024";
-const API_KEY = process.env.CONTENT_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
 
 if (!API_KEY) {
-  throw new Error("CONTENT_API_KEY environment variable is required");
+  throw new Error(
+    "NEXT_PUBLIC_CONTENT_API_KEY environment variable is required",
+  );
 }
 
 // Ensure API_KEY is never undefined for TypeScript

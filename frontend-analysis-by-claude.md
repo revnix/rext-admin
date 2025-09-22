@@ -429,7 +429,7 @@ export class BackendService {
    # Implement server-side API proxy routes
    # pages/api/topics/generate.ts or app/api/topics/generate/route.ts
    export async function POST(request: Request) {
-     const apiKey = process.env.CONTENT_API_KEY; // Server-side only
+     const apiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY; // Server-side only
      // Proxy to backend API
    }
    ```

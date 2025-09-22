@@ -65,7 +65,9 @@ export const GeneratedTopicSchema = z.object({
   /** Categorization tags for the topic */
   tags: z.array(z.string()).default([]),
   /** When the topic was created in backend (ISO string, nullable) */
-  created_at: z.string().nullable(),
+  created_at: z.string().nullable().optional(),
+  /** Suggested default content parameters */
+  suggested_defaults: z.record(z.string(), z.unknown()).optional(),
   /** Generation metadata */
   metadata: z
     .object({
@@ -805,9 +807,10 @@ export type StepValidationKey = keyof typeof STEP_VALIDATION_SCHEMAS;
  */
 export const BackendTopicGenerationResponseSchema = z.object({
   topics: z.array(GeneratedTopicSchema),
+  total_count: z.number().optional(),
   request_id: z.string().optional(),
   model_used: z.string().optional(),
-  generation_time_ms: z.number().optional(),
+  generation_time_ms: z.number().nullable().optional(),
 });
 
 export const GetTopicsResponseSchema = z.object({

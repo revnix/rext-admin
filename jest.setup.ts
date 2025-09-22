@@ -4,9 +4,9 @@
 import "@testing-library/jest-dom";
 
 // Store original console methods for detailed test output
-const originalConsoleError = console.error;
-const originalConsoleWarn = console.warn;
-const originalConsoleLog = console.log;
+const _originalConsoleError = console.error;
+const _originalConsoleWarn = console.warn;
+const _originalConsoleLog = console.log;
 
 // Enable all console output for detailed testing
 // Note: All errors, warnings, and logs will be shown for comprehensive debugging

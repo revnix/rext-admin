@@ -75,7 +75,7 @@ export const TopicsTable = memo(function TopicsTable({
   };
 
   // Helper function to format created date
-  const formatCreatedDate = (dateString: string | null) => {
+  const formatCreatedDate = (dateString: string | null | undefined) => {
     if (!dateString) return "Just now";
     try {
       const date = new Date(dateString);

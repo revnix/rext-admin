@@ -276,12 +276,24 @@ export class BackendService {
 
     const requestId = generateRequestId();
 
-    const response = await this.executeSingleGenericRequest<
-      void,
-      { topics: GeneratedTopic[] }
-    >("/api/topic/get-topics", undefined, requestId, "GET");
+    const response = await fetch(
+      `${this.config.baseUrl}/api/topic/get-topics`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": requestId,
+          "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
+        },
+      },
+    );
 
-    return response.topics || [];
+    if (!response.ok) {
+      throw new Error(`Failed to fetch topics: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data?.topics || [];
   }
 
   /**
@@ -296,12 +308,28 @@ export class BackendService {
     const requestId = generateRequestId();
 
     try {
-      const response = await this.executeSingleGenericRequest<
-        void,
-        GeneratedTopic
-      >(`/api/topic/get-topic/${topicId}`, undefined, requestId, "GET");
+      const response = await fetch(
+        `${this.config.baseUrl}/api/topic/get-topic/${topicId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Request-ID": requestId,
+            "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
+          },
+        },
+      );
 
-      return response;
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch topic: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data || data;
     } catch (error) {
       // Return null for 404 errors (topic not found)
       if (error instanceof Error && error.message.includes("404")) {
@@ -379,7 +407,7 @@ export class BackendService {
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          // API key authentication handled by backend or auth middleware
+          "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -519,6 +547,7 @@ export class BackendService {
     response: Response,
     requestId: string,
   ): Promise<BackendTopicGenerationResponse> {
+
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
 
@@ -796,7 +825,7 @@ export class BackendService {
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          // API key authentication handled by backend or auth middleware
+          "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
         },
         ...(method !== "GET" && { body: JSON.stringify(payload) }),
         signal: controller.signal,

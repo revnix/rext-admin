@@ -54,7 +54,7 @@ touch .env.local
 **New `.env.local` structure:**
 ```bash
 # Server-side only API keys (NO NEXT_PUBLIC_ prefix)
-CONTENT_API_KEY=new_secure_api_key_here
+NEXT_PUBLIC_CONTENT_API_KEY=new_secure_api_key_here
 ANTHROPIC_API_KEY=new_anthropic_key_here
 PERPLEXITY_API_KEY=new_perplexity_key_here
 
@@ -98,9 +98,9 @@ export async function POST(request: NextRequest) {
     const validatedInput = GenerateContentRequestSchema.parse(body);
 
     // Server-side API key (never exposed to client)
-    const apiKey = process.env.CONTENT_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
     if (!apiKey) {
-      console.error('CONTENT_API_KEY not configured');
+      console.error('NEXT_PUBLIC_CONTENT_API_KEY not configured');
       return NextResponse.json(
         { error: 'Service configuration error' },
         { status: 500 }
@@ -1544,7 +1544,7 @@ All external API calls are now proxied through Next.js API routes to prevent cli
 ### Environment Variables
 ```bash
 # Server-side only (in .env.local)
-CONTENT_API_KEY=your_secure_api_key
+NEXT_PUBLIC_CONTENT_API_KEY=your_secure_api_key
 ANTHROPIC_API_KEY=your_anthropic_key
 
 # Never use NEXT_PUBLIC_ prefix for sensitive data
@@ -1614,7 +1614,7 @@ npm run test:ci         # Run tests for CI/CD
 ### Required Environment Variables
 ```bash
 # Server-side API keys (in .env.local)
-CONTENT_API_KEY=your_api_key
+NEXT_PUBLIC_CONTENT_API_KEY=your_api_key
 BACKEND_API_URL=your_backend_url
 
 # Development only

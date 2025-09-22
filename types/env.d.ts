@@ -16,6 +16,14 @@ declare namespace NodeJS {
     BACKEND_API_URL: string;
 
     /**
+     * Content API authentication key for backend requests
+     * Must have NEXT_PUBLIC_ prefix to be available in browser
+     *
+     * @example "supersecretapikey"
+     */
+    NEXT_PUBLIC_CONTENT_API_KEY: string;
+
+    /**
      * Node.js environment mode
      */
     NODE_ENV: "development" | "production" | "test";

@@ -40,12 +40,14 @@ export interface BackendTopicGenerationPayload {
 export interface BackendTopicGenerationResponse {
   /** Generated topics */
   topics: GeneratedTopic[];
+  /** Total number of topics generated */
+  total_count?: number;
   /** Unique request identifier */
-  request_id: string;
+  request_id?: string;
   /** Model used for generation */
   model_used?: string;
   /** Generation time in milliseconds */
-  generation_time_ms?: number;
+  generation_time_ms?: number | null;
 }
 
 /**

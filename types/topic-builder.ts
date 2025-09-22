@@ -135,7 +135,9 @@ export interface GeneratedTopic {
   /** Categorization tags for the topic */
   tags: string[];
   /** When the topic was created in backend (ISO string, nullable) */
-  created_at: string | null;
+  created_at?: string | null;
+  /** Suggested default content parameters */
+  suggested_defaults?: Record<string, unknown>;
   /** Whether the topic has been saved to user's library */
   is_saved?: boolean;
   /** Whether the topic has been approved for content creation */

@@ -1,17 +1,19 @@
 "use client";
 
 import { notFound } from "next/navigation";
+import { use } from "react";
 import { useTopic } from "@/hooks/use-topics";
 import { TopicDetailClient } from "../topic-detail-client";
 
 type TopicDetailPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export default function TopicDetailPage({ params }: TopicDetailPageProps) {
-  const { data: topic, isLoading, error } = useTopic(params.id);
+  const { id } = use(params);
+  const { data: topic, isLoading, error } = useTopic(id);
 
   if (isLoading) {
     return (

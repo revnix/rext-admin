@@ -78,7 +78,7 @@ cp .env.local.example .env.local
 
 ```bash
 # Required: Content API authentication
-CONTENT_API_KEY=your_actual_content_api_key
+NEXT_PUBLIC_CONTENT_API_KEY=your_actual_content_api_key
 
 # Required: Backend API URL
 BACKEND_API_URL=http://127.0.0.1:2024
@@ -196,7 +196,7 @@ The application integrates with a Python backend service for AI topic generation
 ```bash
 # In .env.local (server-side only)
 BACKEND_API_URL=http://127.0.0.1:2024
-CONTENT_API_KEY=your_actual_api_key
+NEXT_PUBLIC_CONTENT_API_KEY=your_actual_api_key
 ANTHROPIC_API_KEY=your_anthropic_key
 PERPLEXITY_API_KEY=your_perplexity_key
 ```

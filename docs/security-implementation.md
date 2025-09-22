@@ -30,7 +30,7 @@ Client Request → Next.js API Route → Input Validation → Rate Limiting → 
 **Server-side only (in `.env.local`):**
 ```bash
 # Required: Content API authentication
-CONTENT_API_KEY=your_secure_api_key
+NEXT_PUBLIC_CONTENT_API_KEY=your_secure_api_key
 
 # Required: Backend API URL
 BACKEND_API_URL=http://127.0.0.1:2024
