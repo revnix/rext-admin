@@ -130,15 +130,16 @@ export const TopicsTable = memo(function TopicsTable({
       width: "320px",
       cell: (_value, row) => (
         <div className="space-y-1">
-          <div
-            className="font-semibold text-sm line-clamp-2 pr-2 cursor-pointer text-primary hover:text-primary/80 hover:underline transition-colors"
+          <button
+            type="button"
+            className="font-semibold text-sm line-clamp-2 pr-2 cursor-pointer text-primary hover:text-primary/80 hover:underline transition-colors text-left w-full"
             onClick={(e) => {
               e.stopPropagation();
               _onViewDetails(row.id);
             }}
           >
             {row.title}
-          </div>
+          </button>
           <div className="text-xs text-muted-foreground line-clamp-2">
             {row.angle}
           </div>
