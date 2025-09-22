@@ -847,7 +847,7 @@ export class BackendService {
       const errorText = await response.text().catch(() => "Unknown error");
 
       // Try to parse error text as JSON to get structured error
-      let errorData: any = null;
+      let errorData: unknown = null;
       try {
         errorData = JSON.parse(errorText);
       } catch {
@@ -855,11 +855,16 @@ export class BackendService {
       }
 
       // Create a structured error with status code
+      interface ErrorData {
+        error?: { message?: string };
+        message?: string;
+      }
+      const parsedError = errorData as ErrorData;
       const error = new Error(
-        errorData?.error?.message ||
-          errorData?.message ||
+        parsedError?.error?.message ||
+          parsedError?.message ||
           `Backend API error: ${response.status} ${response.statusText}`,
-      ) as Error & { statusCode?: number; context?: any };
+      ) as Error & { statusCode?: number; context?: unknown };
 
       error.statusCode = response.status;
       error.context = errorData;
@@ -883,7 +888,7 @@ export class BackendService {
       // Create a structured error with the proper status code
       const error = new Error(
         errorInfo.message || "Failed to save topics",
-      ) as Error & { statusCode?: number; context?: any };
+      ) as Error & { statusCode?: number; context?: unknown };
 
       error.statusCode = errorInfo.status_code || response.status;
       error.context = {
