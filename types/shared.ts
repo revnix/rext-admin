@@ -31,6 +31,7 @@ export interface SelectOption {
   label: string;
   value: string;
   disabled?: boolean;
+  tooltip?: string;
   description?: string;
   icon?: IconComponent;
 }

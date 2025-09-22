@@ -19,7 +19,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 ### Phase Status
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
-- [ ] **Phase 2**: UI/UX Improvements (3/6 tasks) _(IN PROGRESS)_
+- [ ] **Phase 2**: UI/UX Improvements (4/6 tasks) _(IN PROGRESS)_
 - [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
@@ -27,7 +27,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 10/39 tasks completed
+### Overall Progress: 11/39 tasks completed
 
 ## Learnings & Updates
 
@@ -38,6 +38,8 @@ This document provides a comprehensive implementation plan for improving the Cre
 - 2025-09-22: Current step still shows red by default due to step-level validation; require touched/error tracking to delay error styling.
 - 2025-09-22: Implemented touched-driven feedback gating so sidebar stays neutral until a step is interacted with or left; verified green/neutral/red palette matches UX brief.
 - 2025-09-22: Identified need for step-level interaction tracking—sidebar errors should surface only after user interaction or leaving a step; plan to derive visibility flags from `state.touched` when computing progress metadata.
+- 2025-09-22: Discovered `RadioGroup` component lacks per-option disabled/tooltips support; need enhancement before disabling Social Media platform option.
+- 2025-09-22: Extended shared option types and radio group UI to support disabled state tooltips; Social Media option now communicates "Coming soon" without breaking existing selectors.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -517,6 +519,14 @@ This document provides a comprehensive implementation plan for improving the Cre
 2. Verify Social Media option is disabled
 3. Hover and verify tooltip appears
 4. Attempt to select and verify it's prevented
+
+**Status**: ✅ COMPLETED (Codex 2025-09-22)
+
+**Implementation Notes**:
+- **Shared option typing**: Added `tooltip` metadata to `SelectOption` so any option list can describe disabled messaging without bespoke props.
+- **Platform config**: Marked Social Media platform as disabled with "Coming soon" tooltip, leaving Website untouched.
+- **Radio group UI**: Enhanced component to respect disabled options, prevent selection, and wrap them with Radix tooltip triggers while preserving accessibility cues and neutral styling.
+- **UX polish**: Disabled cards adopt muted styling and retain informative descriptions; tooltip appears on hover/focus to explain availability.
 
 ---
 

@@ -3,14 +3,15 @@
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Check } from "lucide-react";
 import * as React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import type { SelectOption } from "@/types/shared";
 
-interface RadioOption {
-  label: string;
-  value: string;
-  description?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-}
+type RadioOption = SelectOption;
 
 interface RadioGroupProps {
   options: RadioOption[];
@@ -58,69 +59,102 @@ const RadioGroup = React.forwardRef<
         {options.map((option) => {
           const isSelected = value === option.value;
           const OptionIcon = option.icon;
+          const isDisabled = option.disabled;
+
+          const labelClasses = cn(
+            "flex items-start gap-3 rounded-lg border-2 p-4 transition-all duration-200",
+            isDisabled ? "cursor-not-allowed" : "cursor-pointer",
+            isDisabled
+              ? "border-border/70 bg-muted text-muted-foreground"
+              : "border-border bg-background hover:bg-accent hover:text-accent-foreground hover:border-accent hover:shadow-sm",
+            isSelected
+              ? "bg-primary/10 border-primary ring-2 ring-primary/30 text-primary shadow-sm"
+              : undefined,
+            "peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
+          );
+
+          const labelContent = (
+            <label
+              htmlFor={option.value}
+              className={labelClasses}
+              aria-disabled={isDisabled}
+            >
+              <div
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded-full border-2 mt-0.5 shrink-0",
+                  isSelected
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-muted-foreground",
+                  isDisabled && !isSelected ? "bg-muted" : undefined,
+                )}
+              >
+                {isSelected && <Check className="h-3 w-3" />}
+              </div>
+
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  {OptionIcon && (
+                    <OptionIcon
+                      className={cn(
+                        "h-4 w-4",
+                        isDisabled
+                          ? "text-muted-foreground"
+                          : isSelected
+                            ? "text-primary"
+                            : "text-muted-foreground",
+                      )}
+                    />
+                  )}
+                  <span
+                    className={cn(
+                      "font-medium text-sm",
+                      isDisabled
+                        ? "text-muted-foreground"
+                        : isSelected
+                          ? "text-primary"
+                          : "text-foreground",
+                    )}
+                  >
+                    {option.label}
+                  </span>
+                </div>
+                {option.description && (
+                  <p
+                    className={cn(
+                      "text-xs",
+                      isDisabled
+                        ? "text-muted-foreground"
+                        : isSelected
+                          ? "text-primary/70"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    {option.description}
+                  </p>
+                )}
+              </div>
+            </label>
+          );
+
+          const contentWithTooltip =
+            isDisabled && option.tooltip ? (
+              <Tooltip>
+                <TooltipTrigger asChild>{labelContent}</TooltipTrigger>
+                <TooltipContent>{option.tooltip}</TooltipContent>
+              </Tooltip>
+            ) : (
+              labelContent
+            );
 
           return (
             <div key={option.value} className="relative">
               <RadioGroupPrimitive.Item
                 value={option.value}
                 id={option.value}
+                disabled={isDisabled}
                 className={cn("peer sr-only")}
               />
-              <label
-                htmlFor={option.value}
-                className={cn(
-                  "flex items-start gap-3 rounded-lg border-2 p-4 cursor-pointer transition-all duration-200",
-                  "hover:bg-accent hover:text-accent-foreground hover:border-accent",
-                  isSelected
-                    ? "bg-primary/10 border-primary ring-2 ring-primary/30 text-primary shadow-sm"
-                    : "border-border bg-background hover:shadow-sm",
-                  "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex h-5 w-5 items-center justify-center rounded-full border-2 mt-0.5 shrink-0",
-                    isSelected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted-foreground",
-                  )}
-                >
-                  {isSelected && <Check className="h-3 w-3" />}
-                </div>
-
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    {OptionIcon && (
-                      <OptionIcon
-                        className={cn(
-                          "h-4 w-4",
-                          isSelected ? "text-primary" : "text-muted-foreground",
-                        )}
-                      />
-                    )}
-                    <span
-                      className={cn(
-                        "font-medium text-sm",
-                        isSelected ? "text-primary" : "text-foreground",
-                      )}
-                    >
-                      {option.label}
-                    </span>
-                  </div>
-                  {option.description && (
-                    <p
-                      className={cn(
-                        "text-xs",
-                        isSelected
-                          ? "text-primary/70"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {option.description}
-                    </p>
-                  )}
-                </div>
-              </label>
+              {contentWithTooltip}
             </div>
           );
         })}

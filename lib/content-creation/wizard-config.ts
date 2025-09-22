@@ -29,6 +29,8 @@ export const PLATFORM_OPTIONS: SelectOption[] = [
     label: "Social Media",
     value: "Social Media",
     description: "Threads, carousels, posts, videos",
+    disabled: true,
+    tooltip: "Coming soon",
   },
 ];
 
