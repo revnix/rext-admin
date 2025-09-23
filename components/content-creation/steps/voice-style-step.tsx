@@ -27,7 +27,6 @@ import {
 } from "@/lib/content-creation/wizard-config";
 import type { WizardStepProps } from "@/types/content-creation";
 import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
-import { ProgressiveFieldWrapper } from "../fields/progressive-field-wrapper";
 import { OptionGridLayout } from "../layouts/option-grid-layout";
 
 interface VoiceStyleStepProps extends WizardStepProps {
@@ -54,21 +53,10 @@ export function VoiceStyleStep({
 }: VoiceStyleStepProps) {
   // Get visible fields for this step
   const visibleFields = dependencyEngine.getVisibleFields(step);
-  const progressiveFields =
-    dependencyEngine.getProgressivelyVisibleFields(step);
-  const hasMoreFields = dependencyEngine.hasMoreFieldsToReveal(step);
-  const nextField = dependencyEngine.getNextFieldToReveal(step);
 
   const toneField = visibleFields.find((f) => f.id === "tone");
   const regionField = visibleFields.find((f) => f.id === "region");
   const languageField = visibleFields.find((f) => f.id === "language");
-
-  // Check if each field is progressively visible
-  const isToneProgressive = progressiveFields.some((f) => f.id === "tone");
-  const isRegionProgressive = progressiveFields.some((f) => f.id === "region");
-  const isLanguageProgressive = progressiveFields.some(
-    (f) => f.id === "language",
-  );
 
   // Get tone options based on audience type and reading level
   const toneOptions = useMemo(
@@ -140,268 +128,248 @@ export function VoiceStyleStep({
       <div className="grid gap-8 w-full">
         {/* Tone Multi-Selection */}
         {toneField && (
-          <ProgressiveFieldWrapper
-            isProgressivelyVisible={isToneProgressive}
-            hasMoreFields={hasMoreFields}
-            nextField={nextField}
-          >
-            <AutoFilledFieldWrapper
-              isAutoFilled={
-                formData._topicPrefillingMetadata?.prefilledFields?.tone ||
-                false
-              }
-              isModified={touched.tone || false}
-              label="How should it sound?"
-              description="Select up to 3 tones that match your brand and audience"
-              icon={<MessageSquare className="h-5 w-5 text-primary" />}
-              className={errors.tone && touched.tone ? "wizard-card-error" : ""}
-              errorContent={
-                errors.tone && touched.tone ? (
-                  <div className="wizard-field-error mt-4">
-                    <MessageSquare className="h-4 w-4" />
-                    {errors.tone}
-                  </div>
-                ) : undefined
-              }
-            >
-              <div className="space-y-4">
-                {formData.audienceType && formData.audienceType.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    Suggestions based on your {formData.audienceType.join(", ")}{" "}
-                    audience
-                    {formData.readingLevel &&
-                      ` and ${formData.readingLevel} reading level`}
-                  </div>
-                )}
-
-                <OptionGridLayout>
-                  {toneOptions.map((option) => {
-                    const isSelected =
-                      formData.tone?.includes(option.value) || false;
-                    const isDisabled =
-                      !isSelected && (formData.tone?.length || 0) >= 3;
-
-                    // Check if this is a suggested tone (appears first in filtered results)
-                    const isSuggested = toneOptions
-                      .slice(0, 3)
-                      .some((suggested) => suggested.value === option.value);
-
-                    return (
-                      <Label
-                        key={option.value}
-                        className={`relative flex items-center justify-center border rounded-lg p-3 cursor-pointer transition-colors ${
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : isDisabled
-                              ? "opacity-50 cursor-not-allowed"
-                              : "hover:bg-accent"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          disabled={isDisabled}
-                          onChange={(e) =>
-                            handleToneChange(option.value, e.target.checked)
-                          }
-                          className="sr-only"
-                        />
-                        <div className="text-center">
-                          <span className="font-medium text-sm">
-                            {option.label}
-                          </span>
-                          {isSuggested && !isSelected && (
-                            <div className="absolute -top-1 -right-1">
-                              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                            </div>
-                          )}
-                        </div>
-                      </Label>
-                    );
-                  })}
-                </OptionGridLayout>
-
-                {/* Smart suggestions */}
-                {smartSuggestions.length > 0 && (
-                  <Alert>
-                    <MessageSquare className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>AI Suggestions:</strong>
-                      <ul className="mt-2 space-y-1">
-                        {smartSuggestions.map((suggestion) => (
-                          <li
-                            key={suggestion}
-                            className="text-sm text-muted-foreground"
-                          >
-                            • {suggestion}
-                          </li>
-                        ))}
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Selected tones preview */}
-                {formData.tone && formData.tone.length > 0 && (
-                  <Alert>
-                    <MessageSquare className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Selected tones:</strong>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.tone.map((tone) => (
-                          <Badge
-                            key={tone}
-                            variant="default"
-                            className="text-xs"
-                          >
-                            {tone}
-                          </Badge>
-                        ))}
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="text-sm text-muted-foreground">
-                  {formData.tone?.length || 0} / 3 selected
-                  {formData.tone?.length === 0 && " (recommended: 1-3 tones)"}
+          <AutoFilledFieldWrapper
+            isAutoFilled={
+              formData._topicPrefillingMetadata?.prefilledFields?.tone || false
+            }
+            isModified={touched.tone || false}
+            label="How should it sound?"
+            description="Select up to 3 tones that match your brand and audience"
+            icon={<MessageSquare className="h-5 w-5 text-primary" />}
+            className={errors.tone && touched.tone ? "wizard-card-error" : ""}
+            errorContent={
+              errors.tone && touched.tone ? (
+                <div className="wizard-field-error mt-4">
+                  <MessageSquare className="h-4 w-4" />
+                  {errors.tone}
                 </div>
+              ) : undefined
+            }
+          >
+            <div className="space-y-4">
+              {formData.audienceType && formData.audienceType.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  Suggestions based on your {formData.audienceType.join(", ")}{" "}
+                  audience
+                  {formData.readingLevel &&
+                    ` and ${formData.readingLevel} reading level`}
+                </div>
+              )}
+
+              <OptionGridLayout>
+                {toneOptions.map((option) => {
+                  const isSelected =
+                    formData.tone?.includes(option.value) || false;
+                  const isDisabled =
+                    !isSelected && (formData.tone?.length || 0) >= 3;
+
+                  // Check if this is a suggested tone (appears first in filtered results)
+                  const isSuggested = toneOptions
+                    .slice(0, 3)
+                    .some((suggested) => suggested.value === option.value);
+
+                  return (
+                    <Label
+                      key={option.value}
+                      className={`relative flex items-center justify-center border rounded-lg p-3 cursor-pointer transition-colors ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : isDisabled
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-accent"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        onChange={(e) =>
+                          handleToneChange(option.value, e.target.checked)
+                        }
+                        className="sr-only"
+                      />
+                      <div className="text-center">
+                        <span className="font-medium text-sm">
+                          {option.label}
+                        </span>
+                        {isSuggested && !isSelected && (
+                          <div className="absolute -top-1 -right-1">
+                            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                          </div>
+                        )}
+                      </div>
+                    </Label>
+                  );
+                })}
+              </OptionGridLayout>
+
+              {/* Smart suggestions */}
+              {smartSuggestions.length > 0 && (
+                <Alert>
+                  <MessageSquare className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>AI Suggestions:</strong>
+                    <ul className="mt-2 space-y-1">
+                      {smartSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion}
+                          className="text-sm text-muted-foreground"
+                        >
+                          • {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Selected tones preview */}
+              {formData.tone && formData.tone.length > 0 && (
+                <Alert>
+                  <MessageSquare className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Selected tones:</strong>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.tone.map((tone) => (
+                        <Badge key={tone} variant="default" className="text-xs">
+                          {tone}
+                        </Badge>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="text-sm text-muted-foreground">
+                {formData.tone?.length || 0} / 3 selected
+                {formData.tone?.length === 0 && " (recommended: 1-3 tones)"}
               </div>
-            </AutoFilledFieldWrapper>
-          </ProgressiveFieldWrapper>
+            </div>
+          </AutoFilledFieldWrapper>
         )}
 
         {/* Location & Language Combined */}
         {(regionField || languageField) && (
-          <ProgressiveFieldWrapper
-            isProgressivelyVisible={
-              isRegionProgressive || isLanguageProgressive
-            }
-            hasMoreFields={hasMoreFields}
-            nextField={nextField}
+          <Card
+            className={`transition-colors ${
+              (errors.region && touched.region) ||
+              (errors.language && touched.language)
+                ? "border-destructive"
+                : ""
+            }`}
           >
-            <Card
-              className={`transition-colors ${
-                (errors.region && touched.region) ||
-                (errors.language && touched.language)
-                  ? "border-destructive"
-                  : ""
-              }`}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  Location & Language
-                </CardTitle>
-                <CardDescription>
-                  Geographic focus and content language settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Target Region */}
-                  {regionField && (
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
-                        <Globe className="h-4 w-4" />
-                        Target Region
-                      </Label>
-                      <Select
-                        value={formData.region || ""}
-                        onValueChange={(value) => {
-                          onFieldChange("region", value);
-                          onFieldTouch("region");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select target region..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {REGION_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              <div className="flex items-center gap-2">
-                                {option.value === "International/Global" && (
-                                  <Globe className="h-4 w-4" />
-                                )}
-                                <span>{option.label}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.region && touched.region && (
-                        <p className="text-sm text-destructive">
-                          {errors.region}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Language */}
-                  {languageField && (
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center gap-2">
-                        <Languages className="h-4 w-4" />
-                        Language
-                      </Label>
-                      <Select
-                        value={formData.language || ""}
-                        onValueChange={(value) => {
-                          onFieldChange("language", value);
-                          onFieldTouch("language");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select language..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {LANGUAGE_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              <div className="flex items-center gap-2">
-                                <Languages className="h-4 w-4" />
-                                <span>{option.label}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.language && touched.language && (
-                        <p className="text-sm text-destructive">
-                          {errors.language}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Regional context info */}
-                {formData.region &&
-                  formData.region !== "International/Global" && (
-                    <Alert>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Location & Language
+              </CardTitle>
+              <CardDescription>
+                Geographic focus and content language settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Target Region */}
+                {regionField && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
                       <Globe className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Regional Focus:</strong> Content will be
-                        optimized for {formData.region}, including local
-                        references, examples, and cultural context where
-                        relevant.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                      Target Region
+                    </Label>
+                    <Select
+                      value={formData.region || ""}
+                      onValueChange={(value) => {
+                        onFieldChange("region", value);
+                        onFieldTouch("region");
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select target region..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REGION_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              {option.value === "International/Global" && (
+                                <Globe className="h-4 w-4" />
+                              )}
+                              <span>{option.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.region && touched.region && (
+                      <p className="text-sm text-destructive">
+                        {errors.region}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                {/* Language expansion note */}
-                {formData.language && (
+                {/* Language */}
+                {languageField && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Languages className="h-4 w-4" />
+                      Language
+                    </Label>
+                    <Select
+                      value={formData.language || ""}
+                      onValueChange={(value) => {
+                        onFieldChange("language", value);
+                        onFieldTouch("language");
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LANGUAGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              <Languages className="h-4 w-4" />
+                              <span>{option.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.language && touched.language && (
+                      <p className="text-sm text-destructive">
+                        {errors.language}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Regional context info */}
+              {formData.region &&
+                formData.region !== "International/Global" && (
                   <Alert>
-                    <Languages className="h-4 w-4" />
+                    <Globe className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Note:</strong> Additional languages will be
-                      supported in future updates. Currently focusing on
-                      high-quality English content generation.
+                      <strong>Regional Focus:</strong> Content will be optimized
+                      for {formData.region}, including local references,
+                      examples, and cultural context where relevant.
                     </AlertDescription>
                   </Alert>
                 )}
-              </CardContent>
-            </Card>
-          </ProgressiveFieldWrapper>
+
+              {/* Language expansion note */}
+              {formData.language && (
+                <Alert>
+                  <Languages className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Note:</strong> Additional languages will be
+                    supported in future updates. Currently focusing on
+                    high-quality English content generation.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
 

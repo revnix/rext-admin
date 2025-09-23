@@ -33,7 +33,6 @@ import type {
   WizardStepProps,
 } from "@/types/content-creation";
 import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
-import { ProgressiveFieldWrapper } from "../fields/progressive-field-wrapper";
 import { OptionGridLayout } from "../layouts/option-grid-layout";
 
 interface ResearchSettingsStepProps extends WizardStepProps {
@@ -61,24 +60,6 @@ export function ResearchSettingsStep({
 }: ResearchSettingsStepProps) {
   // Get visible fields for this step
   const visibleFields = dependencyEngine.getVisibleFields(step);
-  const progressiveFields =
-    dependencyEngine.getProgressivelyVisibleFields(step);
-  const hasMoreFields = dependencyEngine.hasMoreFieldsToReveal(step);
-  const nextField = dependencyEngine.getNextFieldToReveal(step);
-
-  // Check if each field is progressively visible
-  const isResearchLevelProgressive = progressiveFields.some(
-    (f) => f.id === "researchLevel",
-  );
-  const isContentFreshnessProgressive = progressiveFields.some(
-    (f) => f.id === "contentFreshness",
-  );
-  const isFactCheckingProgressive = progressiveFields.some(
-    (f) => f.id === "factChecking",
-  );
-  const isEnhancementsProgressive =
-    progressiveFields.some((f) => f.id === "includeLatestInfo") ||
-    progressiveFields.some((f) => f.id === "includeExamples");
 
   // Handle toggle changes
   const handleToggleChange = useCallback(
@@ -158,45 +139,39 @@ export function ResearchSettingsStep({
       <div className="grid gap-8 w-full">
         {/* Research Level Selection */}
         {researchLevelField && (
-          <ProgressiveFieldWrapper
-            isProgressivelyVisible={isResearchLevelProgressive}
-            hasMoreFields={hasMoreFields}
-            nextField={nextField}
+          <AutoFilledFieldWrapper
+            isAutoFilled={
+              formData._topicPrefillingMetadata?.prefilledFields
+                ?.research_level || false
+            }
+            isModified={touched.researchLevel || false}
+            label="Research Level"
+            description="How thorough should the research be? Higher levels provide more comprehensive content but take longer."
+            icon={<Search className="h-5 w-5 text-primary" />}
+            className={
+              errors.researchLevel && touched.researchLevel
+                ? "wizard-card-error"
+                : ""
+            }
+            errorContent={
+              errors.researchLevel && touched.researchLevel ? (
+                <div className="wizard-field-error mt-4">
+                  <Search className="h-4 w-4" />
+                  {errors.researchLevel}
+                </div>
+              ) : undefined
+            }
           >
-            <AutoFilledFieldWrapper
-              isAutoFilled={
-                formData._topicPrefillingMetadata?.prefilledFields
-                  ?.research_level || false
-              }
-              isModified={touched.researchLevel || false}
-              label="Research Level"
-              description="How thorough should the research be? Higher levels provide more comprehensive content but take longer."
-              icon={<Search className="h-5 w-5 text-primary" />}
-              className={
-                errors.researchLevel && touched.researchLevel
-                  ? "wizard-card-error"
-                  : ""
-              }
-              errorContent={
-                errors.researchLevel && touched.researchLevel ? (
-                  <div className="wizard-field-error mt-4">
-                    <Search className="h-4 w-4" />
-                    {errors.researchLevel}
-                  </div>
-                ) : undefined
-              }
-            >
-              <RadioGroup
-                options={RESEARCH_LEVEL_OPTIONS}
-                value={formData.researchLevel || ""}
-                onValueChange={(value) => {
-                  onFieldChange("researchLevel", value);
-                  onFieldTouch("researchLevel");
-                }}
-                columns={3}
-              />
-            </AutoFilledFieldWrapper>
-          </ProgressiveFieldWrapper>
+            <RadioGroup
+              options={RESEARCH_LEVEL_OPTIONS}
+              value={formData.researchLevel || ""}
+              onValueChange={(value) => {
+                onFieldChange("researchLevel", value);
+                onFieldTouch("researchLevel");
+              }}
+              columns={3}
+            />
+          </AutoFilledFieldWrapper>
         )}
 
         {/* Content Enhancement Options */}
@@ -205,242 +180,224 @@ export function ResearchSettingsStep({
           includeStatisticsField ||
           includeQuotesField ||
           competitorAnalysisField) && (
-          <ProgressiveFieldWrapper
-            isProgressivelyVisible={isEnhancementsProgressive}
-            hasMoreFields={hasMoreFields}
-            nextField={nextField}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Content Enhancement
-                </CardTitle>
-                <CardDescription>
-                  Choose what types of supporting content to include
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <OptionGridLayout columns={2}>
-                  {/* Include Latest Information */}
-                  {includeLatestInfoField && (
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="includeLatestInfo"
-                        checked={formData.includeLatestInfo ?? true}
-                        onCheckedChange={(checked) =>
-                          handleToggleChange("includeLatestInfo", !!checked)
-                        }
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="includeLatestInfo"
-                          className="font-medium cursor-pointer flex items-center gap-2"
-                        >
-                          <Clock className="h-4 w-4" />
-                          Include Latest Information
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Prioritize recent developments and news in the
-                          research
-                        </p>
-                      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Content Enhancement
+              </CardTitle>
+              <CardDescription>
+                Choose what types of supporting content to include
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <OptionGridLayout columns={2}>
+                {/* Include Latest Information */}
+                {includeLatestInfoField && (
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="includeLatestInfo"
+                      checked={formData.includeLatestInfo ?? true}
+                      onCheckedChange={(checked) =>
+                        handleToggleChange("includeLatestInfo", !!checked)
+                      }
+                    />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="includeLatestInfo"
+                        className="font-medium cursor-pointer flex items-center gap-2"
+                      >
+                        <Clock className="h-4 w-4" />
+                        Include Latest Information
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Prioritize recent developments and news in the research
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Include Examples */}
-                  {includeExamplesField && (
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="includeExamples"
-                        checked={formData.includeExamples ?? true}
-                        onCheckedChange={(checked) =>
-                          handleToggleChange("includeExamples", !!checked)
-                        }
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="includeExamples"
-                          className="font-medium cursor-pointer"
-                        >
-                          Include Examples
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Add real-world examples and case studies to illustrate
-                          points
-                        </p>
-                      </div>
+                {/* Include Examples */}
+                {includeExamplesField && (
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="includeExamples"
+                      checked={formData.includeExamples ?? true}
+                      onCheckedChange={(checked) =>
+                        handleToggleChange("includeExamples", !!checked)
+                      }
+                    />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="includeExamples"
+                        className="font-medium cursor-pointer"
+                      >
+                        Include Examples
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Add real-world examples and case studies to illustrate
+                        points
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Include Statistics */}
-                  {includeStatisticsField && (
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="includeStatistics"
-                        checked={formData.includeStatistics ?? true}
-                        onCheckedChange={(checked) =>
-                          handleToggleChange("includeStatistics", !!checked)
-                        }
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="includeStatistics"
-                          className="font-medium cursor-pointer flex items-center gap-2"
-                        >
-                          <BarChart className="h-4 w-4" />
-                          Include Statistics
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Add relevant data, statistics, and quantitative
-                          insights
-                        </p>
-                      </div>
+                {/* Include Statistics */}
+                {includeStatisticsField && (
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="includeStatistics"
+                      checked={formData.includeStatistics ?? true}
+                      onCheckedChange={(checked) =>
+                        handleToggleChange("includeStatistics", !!checked)
+                      }
+                    />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="includeStatistics"
+                        className="font-medium cursor-pointer flex items-center gap-2"
+                      >
+                        <BarChart className="h-4 w-4" />
+                        Include Statistics
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Add relevant data, statistics, and quantitative insights
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Include Quotes */}
-                  {includeQuotesField && (
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="includeQuotes"
-                        checked={formData.includeQuotes ?? true}
-                        onCheckedChange={(checked) =>
-                          handleToggleChange("includeQuotes", !!checked)
-                        }
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="includeQuotes"
-                          className="font-medium cursor-pointer flex items-center gap-2"
-                        >
-                          <Quote className="h-4 w-4" />
-                          Include Quotes
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Add expert quotes and industry leader insights
-                        </p>
-                      </div>
+                {/* Include Quotes */}
+                {includeQuotesField && (
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="includeQuotes"
+                      checked={formData.includeQuotes ?? true}
+                      onCheckedChange={(checked) =>
+                        handleToggleChange("includeQuotes", !!checked)
+                      }
+                    />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="includeQuotes"
+                        className="font-medium cursor-pointer flex items-center gap-2"
+                      >
+                        <Quote className="h-4 w-4" />
+                        Include Quotes
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Add expert quotes and industry leader insights
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Competitor Analysis */}
-                  {competitorAnalysisField && (
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="competitorAnalysis"
-                        checked={formData.competitorAnalysis ?? false}
-                        onCheckedChange={(checked) =>
-                          handleToggleChange("competitorAnalysis", !!checked)
-                        }
-                      />
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor="competitorAnalysis"
-                          className="font-medium cursor-pointer flex items-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          Competitor Analysis
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Research competitor content for insights and
-                          differentiation opportunities
-                        </p>
-                      </div>
+                {/* Competitor Analysis */}
+                {competitorAnalysisField && (
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="competitorAnalysis"
+                      checked={formData.competitorAnalysis ?? false}
+                      onCheckedChange={(checked) =>
+                        handleToggleChange("competitorAnalysis", !!checked)
+                      }
+                    />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="competitorAnalysis"
+                        className="font-medium cursor-pointer flex items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Competitor Analysis
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Research competitor content for insights and
+                        differentiation opportunities
+                      </p>
                     </div>
-                  )}
-                </OptionGridLayout>
-              </CardContent>
-            </Card>
-          </ProgressiveFieldWrapper>
+                  </div>
+                )}
+              </OptionGridLayout>
+            </CardContent>
+          </Card>
         )}
 
         {/* Quality Control */}
         {(factCheckingField || contentFreshnessField) && (
-          <ProgressiveFieldWrapper
-            isProgressivelyVisible={
-              isFactCheckingProgressive || isContentFreshnessProgressive
-            }
-            hasMoreFields={hasMoreFields}
-            nextField={nextField}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Quality Control
-                </CardTitle>
-                <CardDescription>
-                  Set standards for content accuracy and recency
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Fact Checking Level */}
-                {factCheckingField && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">
-                        Fact Checking Level
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        How rigorous should fact verification be?
-                      </p>
-                    </div>
-
-                    <RadioGroup
-                      options={FACT_CHECKING_OPTIONS}
-                      value={formData.factChecking || ""}
-                      onValueChange={(value) => {
-                        onFieldChange("factChecking", value);
-                        onFieldTouch("factChecking");
-                      }}
-                      columns={3}
-                    />
-
-                    {errors.factChecking && touched.factChecking && (
-                      <Alert variant="destructive">
-                        <AlertDescription>
-                          {errors.factChecking}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Quality Control
+              </CardTitle>
+              <CardDescription>
+                Set standards for content accuracy and recency
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Fact Checking Level */}
+              {factCheckingField && (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-medium">
+                      Fact Checking Level
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      How rigorous should fact verification be?
+                    </p>
                   </div>
-                )}
 
-                {/* Content Freshness */}
-                {contentFreshnessField && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">
-                        Content Freshness
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        How recent should source material be?
-                      </p>
-                    </div>
+                  <RadioGroup
+                    options={FACT_CHECKING_OPTIONS}
+                    value={formData.factChecking || ""}
+                    onValueChange={(value) => {
+                      onFieldChange("factChecking", value);
+                      onFieldTouch("factChecking");
+                    }}
+                    columns={3}
+                  />
 
-                    <RadioGroup
-                      options={CONTENT_FRESHNESS_OPTIONS}
-                      value={formData.contentFreshness || ""}
-                      onValueChange={(value) => {
-                        onFieldChange("contentFreshness", value);
-                        onFieldTouch("contentFreshness");
-                      }}
-                      columns={3}
-                    />
+                  {errors.factChecking && touched.factChecking && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{errors.factChecking}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
 
-                    {errors.contentFreshness && touched.contentFreshness && (
-                      <Alert variant="destructive">
-                        <AlertDescription>
-                          {errors.contentFreshness}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+              {/* Content Freshness */}
+              {contentFreshnessField && (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-medium">
+                      Content Freshness
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      How recent should source material be?
+                    </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </ProgressiveFieldWrapper>
+
+                  <RadioGroup
+                    options={CONTENT_FRESHNESS_OPTIONS}
+                    value={formData.contentFreshness || ""}
+                    onValueChange={(value) => {
+                      onFieldChange("contentFreshness", value);
+                      onFieldTouch("contentFreshness");
+                    }}
+                    columns={3}
+                  />
+
+                  {errors.contentFreshness && touched.contentFreshness && (
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        {errors.contentFreshness}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Smart Recommendations */}
