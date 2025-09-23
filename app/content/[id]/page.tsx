@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePageTitle } from "@/hooks/use-page-title";
+import type { ContentStatus } from "@/types/content";
 import type { ContentData } from "@/types/data-table";
 import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
 
@@ -45,7 +46,7 @@ const contentData: ContentData[] = [
     title: "The Future of AI in Content Marketing: 2024 Trends",
     type: "Blog Post",
     contentType: "Article",
-    status: "Published",
+    status: "published" as ContentStatus,
     publishedTo: "Company Blog",
     publishDate: "2024-01-22 10:00",
     scheduledDate: null,
@@ -97,7 +98,7 @@ As we progress through 2024, the synergy between human creativity and AI efficie
     title: "Customer Success Story: Revnix Solutions",
     type: "Case Study",
     contentType: "Case Study",
-    status: "Scheduled",
+    status: "scheduled" as ContentStatus,
     publishedTo: "",
     publishDate: null,
     scheduledDate: "2024-01-25 14:00",
@@ -276,7 +277,7 @@ export default function ContentDetailPage() {
         <TooltipTrigger asChild>
           <Button
             onClick={handlePublishNow}
-            disabled={content.status === "Published" || isPublishing}
+            disabled={content.status === "published" || isPublishing}
             className="gap-2"
           >
             {isPublishing ? (
@@ -288,7 +289,7 @@ export default function ContentDetailPage() {
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          {content.status === "Published"
+          {content.status === "published"
             ? "Already published"
             : "Publish content now"}
         </TooltipContent>
@@ -398,9 +399,9 @@ export default function ContentDetailPage() {
               value: (
                 <Badge
                   variant={
-                    content.status === "Published"
+                    content.status === "published"
                       ? "default"
-                      : content.status === "Scheduled"
+                      : content.status === "scheduled"
                         ? "secondary"
                         : "outline"
                   }
@@ -421,7 +422,7 @@ export default function ContentDetailPage() {
             ...(content.publishDate
               ? [
                   {
-                    label: "Published",
+                    label: "published",
                     value: new Date(content.publishDate).toLocaleDateString(),
                   },
                 ]
@@ -429,7 +430,7 @@ export default function ContentDetailPage() {
             ...(content.scheduledDate
               ? [
                   {
-                    label: "Scheduled",
+                    label: "scheduled",
                     value: new Date(content.scheduledDate).toLocaleDateString(),
                   },
                 ]
@@ -476,9 +477,9 @@ export default function ContentDetailPage() {
       breadcrumbs={breadcrumbs}
       status={content.status}
       statusVariant={
-        content.status === "Published"
+        content.status === "published"
           ? "default"
-          : content.status === "Scheduled"
+          : content.status === "scheduled"
             ? "secondary"
             : "outline"
       }

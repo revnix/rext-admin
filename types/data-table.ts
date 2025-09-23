@@ -1,13 +1,14 @@
 // Common data table types for the application
 
 import type { ReactNode } from "react";
+import type { ContentStatus } from "./content";
 import type { BaseTableRow } from "./shared";
 
 export interface ContentData extends BaseTableRow {
   title: string;
   type: string;
   contentType: string;
-  status: string;
+  status: ContentStatus;
   publishedTo: string;
   publishDate: string | null;
   scheduledDate: string | null;

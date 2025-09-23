@@ -12,10 +12,13 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
+import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/use-page-title";
+import type { ContentStatus } from "@/types/content";
+import { STATUS_FILTER_OPTIONS } from "@/types/content";
 import type { ContentData, RowAction } from "@/types/data-table";
 
 export default function ContentPage() {
@@ -30,14 +33,14 @@ export default function ContentPage() {
     "Manage your published and scheduled content. View performance metrics, edit content, and organize your content pipeline.",
   );
 
-  // Content data matching ContentData interface
+  // Content data with enhanced status system
   const contentData: ContentData[] = [
     {
       id: "1",
       title: "The Future of AI in Content Marketing: 2024 Trends",
       type: "Blog Post",
       contentType: "Article",
-      status: "Published",
+      status: "published" as ContentStatus,
       publishedTo: "Company Blog",
       publishDate: "2024-01-22 10:00",
       scheduledDate: null,
@@ -65,7 +68,7 @@ export default function ContentPage() {
       title: "Customer Success Story: Revnix Solutions",
       type: "Case Study",
       contentType: "Case Study",
-      status: "Scheduled",
+      status: "scheduled" as ContentStatus,
       publishedTo: "",
       publishDate: null,
       scheduledDate: "2024-01-25 14:00",
@@ -90,10 +93,10 @@ export default function ContentPage() {
     },
     {
       id: "3",
-      title: "5 LinkedIn Post Topicsfor Tech Companies",
+      title: "5 LinkedIn Post Topics for Tech Companies",
       type: "Social Media",
       contentType: "Social Post",
-      status: "Published",
+      status: "published" as ContentStatus,
       publishedTo: "LinkedIn",
       publishDate: "2024-01-21 09:00",
       scheduledDate: null,
@@ -121,7 +124,7 @@ export default function ContentPage() {
       title: "Email Newsletter: Weekly AI Roundup",
       type: "Email",
       contentType: "Newsletter",
-      status: "Draft",
+      status: "draft" as ContentStatus,
       publishedTo: "",
       publishDate: null,
       scheduledDate: "2024-01-24 10:00",
@@ -148,7 +151,7 @@ export default function ContentPage() {
       title: "Product Launch Announcement",
       type: "Press Release",
       contentType: "Press Release",
-      status: "Review",
+      status: "review" as ContentStatus,
       publishedTo: "",
       publishDate: null,
       scheduledDate: "2024-01-26 09:00",
@@ -171,6 +174,87 @@ export default function ContentPage() {
       content:
         "Revolutionary AI-powered platform launches to transform content creation...",
     },
+    {
+      id: "6",
+      title: "How to Build a Sustainable Content Strategy",
+      type: "Blog Post",
+      contentType: "Guide",
+      status: "generating" as ContentStatus,
+      publishedTo: "",
+      publishDate: null,
+      scheduledDate: null,
+      flowName: "Content Strategy Generator",
+      flowId: "flow_006",
+      wordCount: 0,
+      readTime: "TBD",
+      engagement: {
+        views: 0,
+        likes: 0,
+        shares: 0,
+      },
+      seoScore: 0,
+      author: "AI Assistant",
+      humanReviewer: "Alex Kim",
+      keywords: ["content strategy", "sustainability", "planning", "marketing"],
+      platforms: ["Website", "Medium"],
+      lastModified: "2024-01-23 16:45",
+      created: "2024-01-23 16:30",
+      content: "",
+    },
+    {
+      id: "7",
+      title: "Market Research Report: Q1 2024",
+      type: "Report",
+      contentType: "Research",
+      status: "generated" as ContentStatus,
+      publishedTo: "",
+      publishDate: null,
+      scheduledDate: null,
+      flowName: "Research Report Generator",
+      flowId: "flow_007",
+      wordCount: 3421,
+      readTime: "15 min read",
+      engagement: {
+        views: 0,
+        likes: 0,
+        shares: 0,
+      },
+      seoScore: 78,
+      author: "AI Assistant",
+      humanReviewer: "Rachel Green",
+      keywords: ["market research", "Q1 2024", "analysis", "trends"],
+      platforms: ["Internal", "Website"],
+      lastModified: "2024-01-23 18:20",
+      created: "2024-01-23 17:45",
+      content: "Comprehensive analysis of market trends and opportunities...",
+    },
+    {
+      id: "8",
+      title: "SEO Best Practices 2024",
+      type: "Blog Post",
+      contentType: "Tutorial",
+      status: "failed" as ContentStatus,
+      publishedTo: "",
+      publishDate: null,
+      scheduledDate: null,
+      flowName: "SEO Tutorial Generator",
+      flowId: "flow_008",
+      wordCount: 0,
+      readTime: "TBD",
+      engagement: {
+        views: 0,
+        likes: 0,
+        shares: 0,
+      },
+      seoScore: 0,
+      author: "AI Assistant",
+      humanReviewer: "Tom Wilson",
+      keywords: ["SEO", "best practices", "2024", "optimization"],
+      platforms: ["Website", "YouTube"],
+      lastModified: "2024-01-23 19:15",
+      created: "2024-01-23 19:00",
+      content: "",
+    },
   ];
 
   const columns = [
@@ -188,7 +272,17 @@ export default function ContentPage() {
       ),
     },
     { key: "type", header: "Type", width: "120px" },
-    { key: "status", header: "Status", width: "100px" },
+    {
+      key: "status",
+      header: "Status",
+      width: "120px",
+      cell: (_value: unknown, row: ContentData) => (
+        <ContentStatusBadge status={row.status} />
+      ),
+      filterable: true,
+      filterType: "select" as const,
+      filterOptions: STATUS_FILTER_OPTIONS.map((option) => option.value),
+    },
     { key: "publishedTo", header: "Published To", width: "120px" },
     { key: "wordCount", header: "Words", width: "80px" },
     { key: "seoScore", header: "SEO Score", width: "90px" },
