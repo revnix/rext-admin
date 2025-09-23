@@ -169,6 +169,12 @@ export function ReviewerSelector({
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
           {label}
+          <Badge
+            variant="outline"
+            className="text-xs bg-orange-50 text-orange-700 border-orange-200"
+          >
+            Demo Data
+          </Badge>
         </CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
@@ -419,9 +425,15 @@ export function ReviewerSelector({
               <Alert>
                 <Mail className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Review Process:</strong> Selected reviewers will be
-                  notified via email when content is ready for review. Content
-                  will not be published until at least one reviewer approves it.
+                  <strong>Review Process (Demo):</strong> In production,
+                  selected reviewers will be notified via email when content is
+                  ready for review. Content will not be published until at least
+                  one reviewer approves it.
+                  <br />
+                  <em className="text-xs text-muted-foreground">
+                    Note: This is demonstration data only. Real reviewer
+                    integration requires USER management system.
+                  </em>
                 </AlertDescription>
               </Alert>
             )}

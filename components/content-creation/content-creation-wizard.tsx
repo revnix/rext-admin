@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { Separator } from "@/components/ui/separator";
 import { useDraftManager } from "@/hooks/use-draft-manager";
 import { useTopic } from "@/hooks/use-topics";
 import {
@@ -30,7 +29,6 @@ import type {
   WizardStepFeedbackStateEntry,
 } from "@/types/content-creation";
 import type { FormFieldValue } from "@/types/shared";
-import { DraftManagerUI } from "./draft-manager-ui";
 import { WizardNavigation } from "./wizard-navigation";
 import { WizardSidebarProgress } from "./wizard-sidebar-progress";
 import { WizardStepRenderer } from "./wizard-step-renderer";
@@ -770,7 +768,7 @@ export function ContentCreationWizard({
   ]);
 
   // Handle draft loading
-  const handleLoadDraft = useCallback(
+  const _handleLoadDraft = useCallback(
     async (formData: PartialContentCreationFormData, draft: Draft) => {
       try {
         // Update wizard state with loaded data
@@ -796,7 +794,7 @@ export function ContentCreationWizard({
   );
 
   // Handle successful draft save
-  const handleDraftSaved = useCallback(
+  const _handleDraftSaved = useCallback(
     (draft: Draft) => {
       dispatch({ type: "LOAD_DRAFT", payload: state.formData });
 
@@ -999,18 +997,6 @@ export function ContentCreationWizard({
                       totalFields={enhancedProgress.totalFields}
                       onStepClick={handleGoToStep}
                       canSkipCurrentStep={currentStepConfig?.optional || false}
-                    />
-
-                    <Separator />
-
-                    {/* Draft Management */}
-                    <DraftManagerUI
-                      formData={state.formData}
-                      currentStep={state.currentStep}
-                      completionPercentage={enhancedProgress.overallCompletion}
-                      onLoadDraft={handleLoadDraft}
-                      onSaveDraft={handleDraftSaved}
-                      compact={true}
                     />
                   </div>
                 </div>

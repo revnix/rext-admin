@@ -31,6 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { loadMockReviewers, MOCK_REVIEWERS } from "@/data/mock-reviewers";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import type {
   ContentCreationFormData,
@@ -443,45 +444,7 @@ export function ReviewLaunchStep({
       <ReviewerSelector
         selectedReviewers={formData.humanReviewers}
         enableHumansInLoop={formData.enableHumansInLoop}
-        availableReviewers={[
-          // Mock data - in real implementation, this would come from API
-          {
-            id: "1",
-            name: "Sarah Johnson",
-            email: "sarah.johnson@company.com",
-            role: "Content Manager",
-            department: "Marketing",
-            expertise: ["SEO", "Brand Voice", "Content Strategy"],
-            isOnline: true,
-          },
-          {
-            id: "2",
-            name: "Mike Chen",
-            email: "mike.chen@company.com",
-            role: "Senior Editor",
-            department: "Marketing",
-            expertise: ["Copywriting", "Technical Writing"],
-            isOnline: false,
-          },
-          {
-            id: "3",
-            name: "Emily Rodriguez",
-            email: "emily.rodriguez@company.com",
-            role: "Brand Manager",
-            department: "Marketing",
-            expertise: ["Brand Guidelines", "Marketing Copy"],
-            isOnline: true,
-          },
-          {
-            id: "4",
-            name: "David Park",
-            email: "david.park@company.com",
-            role: "Legal Counsel",
-            department: "Legal",
-            expertise: ["Compliance", "Legal Review"],
-            isOnline: true,
-          },
-        ]}
+        availableReviewers={MOCK_REVIEWERS}
         maxReviewers={3}
         onChange={(reviewers, enabled) => {
           onFieldChange("humanReviewers", reviewers);
@@ -494,9 +457,9 @@ export function ReviewLaunchStep({
           onFieldTouch("enableHumansInLoop");
         }}
         onLoadReviewers={async () => {
-          // In real implementation, this would fetch from API
+          // Load mock reviewers with simulated delay
           console.log("Loading team members...");
-          return [];
+          return await loadMockReviewers(500);
         }}
       />
 
