@@ -79,7 +79,7 @@ export function ReviewerSelector({
   onLoadReviewers,
 }: ReviewerSelectorProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterByDepartment, setFilterByDepartment] = useState<string>("");
+  const [filterByDepartment, setFilterByDepartment] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle enabling/disabling human review
@@ -139,7 +139,8 @@ export function ReviewerSelector({
         reviewer.role.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesDepartment =
-        !filterByDepartment || reviewer.department === filterByDepartment;
+        filterByDepartment === "all" ||
+        reviewer.department === filterByDepartment;
 
       return matchesSearch && matchesDepartment;
     });
@@ -268,10 +269,10 @@ export function ReviewerSelector({
                         <SelectValue placeholder="Department" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Departments</SelectItem>
+                        <SelectItem value="all">All Departments</SelectItem>
                         {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept || ""}>
-                            {dept}
+                          <SelectItem key={dept} value={dept || "undefined"}>
+                            {dept || "Undefined"}
                           </SelectItem>
                         ))}
                       </SelectContent>

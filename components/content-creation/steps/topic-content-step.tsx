@@ -23,6 +23,7 @@ import {
 import type { WizardAction, WizardStepProps } from "@/types/content-creation";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
+import { ProgressiveFieldWrapper } from "../fields/progressive-field-wrapper";
 import { TopicSelector } from "../fields/topic-selector";
 
 interface TopicContentStepProps extends WizardStepProps {
@@ -65,10 +66,27 @@ export function TopicContentStep({
 
   // Get visible fields for this step
   const visibleFields = dependencyEngine.getVisibleFields(step);
+  const progressiveFields =
+    dependencyEngine.getProgressivelyVisibleFields(step);
+  const hasMoreFields = dependencyEngine.hasMoreFieldsToReveal(step);
+  const nextField = dependencyEngine.getNextFieldToReveal(step);
+
   const topicField = visibleFields.find((f) => f.id === "topicId");
   const platformField = visibleFields.find((f) => f.id === "platform");
   const contentTypeField = visibleFields.find((f) => f.id === "contentType");
   const industryField = visibleFields.find((f) => f.id === "industry");
+
+  // Check if each field is progressively visible
+  const isTopicProgressive = progressiveFields.some((f) => f.id === "topicId");
+  const isPlatformProgressive = progressiveFields.some(
+    (f) => f.id === "platform",
+  );
+  const isContentTypeProgressive = progressiveFields.some(
+    (f) => f.id === "contentType",
+  );
+  const isIndustryProgressive = progressiveFields.some(
+    (f) => f.id === "industry",
+  );
 
   // Get content type options based on selected platform
   const contentTypeOptions = useMemo(() => {
@@ -231,135 +249,159 @@ export function TopicContentStep({
       <div className="grid gap-8 w-full">
         {/* Enhanced Topic Selection */}
         {topicField && (
-          <TopicSelector
-            selectedTopic={selectedTopic}
-            onTopicSelect={handleTopicSelect}
-            hasError={!!(errors.topicId && touched.topicId)}
-            errorMessage={
-              errors.topicId && touched.topicId ? errors.topicId : undefined
-            }
-          />
+          <ProgressiveFieldWrapper
+            isProgressivelyVisible={isTopicProgressive}
+            hasMoreFields={hasMoreFields}
+            nextField={nextField}
+          >
+            <TopicSelector
+              selectedTopic={selectedTopic}
+              onTopicSelect={handleTopicSelect}
+              hasError={!!(errors.topicId && touched.topicId)}
+              errorMessage={
+                errors.topicId && touched.topicId ? errors.topicId : undefined
+              }
+            />
+          </ProgressiveFieldWrapper>
         )}
 
         {/* Enhanced Platform Selection */}
         {platformField && (
-          <AutoFilledFieldWrapper
-            isAutoFilled={
-              formData._topicPrefillingMetadata?.prefilledFields?.platform ||
-              false
-            }
-            isModified={touched.platform || false}
-            label="Select Platform"
-            description="Where will this content be published?"
-            icon={<Globe className="h-5 w-5 text-primary" />}
-            className={
-              errors.platform && touched.platform ? "wizard-card-error" : ""
-            }
-            errorContent={
-              errors.platform && touched.platform ? (
-                <div className="wizard-field-error mt-4">
-                  <Globe className="h-4 w-4" />
-                  {errors.platform}
-                </div>
-              ) : undefined
-            }
+          <ProgressiveFieldWrapper
+            isProgressivelyVisible={isPlatformProgressive}
+            hasMoreFields={hasMoreFields}
+            nextField={nextField}
           >
-            <RadioGroup
-              options={PLATFORM_OPTIONS}
-              value={formData.platform || ""}
-              onValueChange={handlePlatformChange}
-              columns={2}
-            />
-          </AutoFilledFieldWrapper>
+            <AutoFilledFieldWrapper
+              isAutoFilled={
+                formData._topicPrefillingMetadata?.prefilledFields?.platform ||
+                false
+              }
+              isModified={touched.platform || false}
+              label="Select Platform"
+              description="Where will this content be published?"
+              icon={<Globe className="h-5 w-5 text-primary" />}
+              className={
+                errors.platform && touched.platform ? "wizard-card-error" : ""
+              }
+              errorContent={
+                errors.platform && touched.platform ? (
+                  <div className="wizard-field-error mt-4">
+                    <Globe className="h-4 w-4" />
+                    {errors.platform}
+                  </div>
+                ) : undefined
+              }
+            >
+              <RadioGroup
+                options={PLATFORM_OPTIONS}
+                value={formData.platform || ""}
+                onValueChange={handlePlatformChange}
+                columns={2}
+              />
+            </AutoFilledFieldWrapper>
+          </ProgressiveFieldWrapper>
         )}
 
         {/* Enhanced Content Type Selection */}
         {contentTypeField && formData.platform && (
-          <Card
-            className={`wizard-card ${errors.contentType && touched.contentType ? "wizard-card-error" : ""}`}
+          <ProgressiveFieldWrapper
+            isProgressivelyVisible={isContentTypeProgressive}
+            hasMoreFields={hasMoreFields}
+            nextField={nextField}
           >
-            <CardHeader className="pb-4">
-              <CardTitle className="wizard-field-label">
-                <FileText className="h-5 w-5 text-primary" />
-                Content Type
-              </CardTitle>
-              <CardDescription className="wizard-field-description">
-                What type of content do you want to create?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                options={contentTypeOptions}
-                value={formData.contentType || ""}
-                onValueChange={(value) => {
-                  onFieldChange("contentType", value);
-                  onFieldTouch("contentType");
-                }}
-                columns={3}
-              />
+            <Card
+              className={`wizard-card ${errors.contentType && touched.contentType ? "wizard-card-error" : ""}`}
+            >
+              <CardHeader className="pb-4">
+                <CardTitle className="wizard-field-label">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Content Type
+                </CardTitle>
+                <CardDescription className="wizard-field-description">
+                  What type of content do you want to create?
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  options={contentTypeOptions}
+                  value={formData.contentType || ""}
+                  onValueChange={(value) => {
+                    onFieldChange("contentType", value);
+                    onFieldTouch("contentType");
+                  }}
+                  columns={3}
+                />
 
-              {errors.contentType && touched.contentType && (
-                <div className="wizard-field-error mt-4">
-                  <FileText className="h-4 w-4" />
-                  {errors.contentType}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                {errors.contentType && touched.contentType && (
+                  <div className="wizard-field-error mt-4">
+                    <FileText className="h-4 w-4" />
+                    {errors.contentType}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </ProgressiveFieldWrapper>
         )}
 
         {/* Enhanced Industry Selection */}
         {industryField && (
-          <AutoFilledFieldWrapper
-            isAutoFilled={
-              formData._topicPrefillingMetadata?.prefilledFields?.industry ||
-              false
-            }
-            isModified={touched.industry || false}
-            label="Industry"
-            description="Your business industry (pre-filled from topic but can be changed)"
-            icon={<Building2 className="h-5 w-5 text-primary" />}
-            className={
-              errors.industry && touched.industry ? "wizard-card-error" : ""
-            }
-            errorContent={
-              errors.industry && touched.industry ? (
-                <div className="wizard-field-error mt-4">
-                  <Building2 className="h-4 w-4" />
-                  {errors.industry}
-                </div>
-              ) : undefined
-            }
+          <ProgressiveFieldWrapper
+            isProgressivelyVisible={isIndustryProgressive}
+            hasMoreFields={hasMoreFields}
+            nextField={nextField}
           >
-            <div className="space-y-4">
-              <RadioGroup
-                options={industryOptions}
-                value={industrySelection}
-                onValueChange={handleIndustrySelect}
-                columns={3}
-              />
+            <AutoFilledFieldWrapper
+              isAutoFilled={
+                formData._topicPrefillingMetadata?.prefilledFields?.industry ||
+                false
+              }
+              isModified={touched.industry || false}
+              label="Industry"
+              description="Your business industry (pre-filled from topic but can be changed)"
+              icon={<Building2 className="h-5 w-5 text-primary" />}
+              className={
+                errors.industry && touched.industry ? "wizard-card-error" : ""
+              }
+              errorContent={
+                errors.industry && touched.industry ? (
+                  <div className="wizard-field-error mt-4">
+                    <Building2 className="h-4 w-4" />
+                    {errors.industry}
+                  </div>
+                ) : undefined
+              }
+            >
+              <div className="space-y-4">
+                <RadioGroup
+                  options={industryOptions}
+                  value={industrySelection}
+                  onValueChange={handleIndustrySelect}
+                  columns={3}
+                />
 
-              {showCustomIndustryInput && (
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="custom-industry"
-                    className="text-sm font-medium text-muted-foreground"
-                  >
-                    Specify your industry
-                  </Label>
-                  <Input
-                    id="custom-industry"
-                    value={formData.industry || ""}
-                    placeholder="Enter your industry"
-                    onChange={(event) =>
-                      handleCustomIndustryChange(event.target.value)
-                    }
-                    onBlur={handleCustomIndustryBlur}
-                  />
-                </div>
-              )}
-            </div>
-          </AutoFilledFieldWrapper>
+                {showCustomIndustryInput && (
+                  <div className="grid gap-2">
+                    <Label
+                      htmlFor="custom-industry"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      Specify your industry
+                    </Label>
+                    <Input
+                      id="custom-industry"
+                      value={formData.industry || ""}
+                      placeholder="Enter your industry"
+                      onChange={(event) =>
+                        handleCustomIndustryChange(event.target.value)
+                      }
+                      onBlur={handleCustomIndustryBlur}
+                    />
+                  </div>
+                )}
+              </div>
+            </AutoFilledFieldWrapper>
+          </ProgressiveFieldWrapper>
         )}
       </div>
 
