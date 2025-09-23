@@ -1,14 +1,13 @@
 "use client";
 
 import { CheckCircle, FileText, Hash, List, Mouse, Search } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   KeywordTagInput,
   MultiSelectCheckboxGrid,
 } from "@/components/content-creation/fields";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,8 +16,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import {
   getContentLengthOptions,
@@ -52,6 +59,17 @@ export function ContentStructureStep({
   onFieldTouch,
   dependencyEngine,
 }: ContentStructureStepProps) {
+  // State for custom length input
+  const [showCustomInput, setShowCustomInput] = useState(
+    formData.contentLength?.type === "custom",
+  );
+  const [customValue, setCustomValue] = useState<number>(
+    formData.contentLength?.custom?.value || 500,
+  );
+  const [customUnit, setCustomUnit] = useState<
+    "words" | "characters" | "tweets"
+  >(formData.contentLength?.custom?.unit || "words");
+
   // Get visible fields for this step
   const visibleFields = dependencyEngine.getVisibleFields(step);
 
@@ -61,31 +79,89 @@ export function ContentStructureStep({
     [formData.contentType],
   );
 
-  // Handle content length selection
-  const handleLengthPresetChange = useCallback(
-    (preset: string) => {
-      const newLength = { type: "preset" as const, preset };
-      onFieldChange("contentLength", newLength);
-      onFieldTouch("contentLength");
-    },
-    [onFieldChange, onFieldTouch],
+  // Get available units based on content type
+  const availableUnits = useMemo(() => {
+    const baseUnits = ["words", "characters"];
+    if (formData.contentType === "Thread" || formData.contentType === "Post") {
+      return [...baseUnits, "tweets"];
+    }
+    return baseUnits;
+  }, [formData.contentType]);
+
+  // Extended options including custom
+  const extendedLengthOptions = useMemo(
+    () => [
+      ...contentLengthOptions,
+      {
+        label: "Custom",
+        value: "custom",
+        description: "Set your own length requirements",
+      },
+    ],
+    [contentLengthOptions],
   );
 
-  // Handle custom content length
-  const handleCustomLength = useCallback(() => {
-    const customValue = prompt("Enter custom word count:");
-    if (customValue && !Number.isNaN(Number(customValue))) {
+  // Handle content length selection (both preset and custom)
+  const handleLengthOptionChange = useCallback(
+    (value: string) => {
+      if (value === "custom") {
+        setShowCustomInput(true);
+        // Set initial custom length if not already set
+        const newLength = {
+          type: "custom" as const,
+          custom: {
+            value: customValue,
+            unit: customUnit,
+          },
+        };
+        onFieldChange("contentLength", newLength);
+        onFieldTouch("contentLength");
+      } else {
+        setShowCustomInput(false);
+        const newLength = { type: "preset" as const, preset: value };
+        onFieldChange("contentLength", newLength);
+        onFieldTouch("contentLength");
+      }
+    },
+    [customValue, customUnit, onFieldChange, onFieldTouch],
+  );
+
+  // Handle custom value changes
+  const handleCustomValueChange = useCallback(
+    (value: string) => {
+      const numValue = parseInt(value, 10);
+      if (!Number.isNaN(numValue) && numValue > 0) {
+        setCustomValue(numValue);
+        const newLength = {
+          type: "custom" as const,
+          custom: {
+            value: numValue,
+            unit: customUnit,
+          },
+        };
+        onFieldChange("contentLength", newLength);
+        onFieldTouch("contentLength");
+      }
+    },
+    [customUnit, onFieldChange, onFieldTouch],
+  );
+
+  // Handle custom unit changes
+  const handleCustomUnitChange = useCallback(
+    (unit: "words" | "characters" | "tweets") => {
+      setCustomUnit(unit);
       const newLength = {
         type: "custom" as const,
         custom: {
-          value: Number(customValue),
-          unit: "words" as const,
+          value: customValue,
+          unit,
         },
       };
       onFieldChange("contentLength", newLength);
       onFieldTouch("contentLength");
-    }
-  }, [onFieldChange, onFieldTouch]);
+    },
+    [customValue, onFieldChange, onFieldTouch],
+  );
 
   // Handle toggle changes
   const handleToggleChange = (fieldId: string, checked: boolean) => {
@@ -126,6 +202,24 @@ export function ContentStructureStep({
     ["Promote", "Persuade"].includes(goal),
   );
 
+  // Get current selected value for radio group
+  const currentLengthValue = useMemo(() => {
+    if (formData.contentLength?.type === "preset") {
+      return formData.contentLength.preset;
+    } else if (formData.contentLength?.type === "custom") {
+      return "custom";
+    }
+    return "";
+  }, [formData.contentLength]);
+
+  // Validation for custom input
+  const customValueError = useMemo(() => {
+    if (showCustomInput && (customValue < 1 || customValue > 10000)) {
+      return "Length must be between 1 and 10,000";
+    }
+    return null;
+  }, [showCustomInput, customValue]);
+
   return (
     <div className="space-y-8 w-full">
       {/* Step header */}
@@ -152,40 +246,83 @@ export function ContentStructureStep({
             </CardHeader>
             <CardContent className="space-y-4">
               <RadioGroup
-                options={contentLengthOptions.map((option) => ({
+                options={extendedLengthOptions.map((option) => ({
                   label: option.label,
                   value: option.value,
                   description: option.description,
                 }))}
-                value={
-                  formData.contentLength?.type === "preset"
-                    ? formData.contentLength.preset
-                    : ""
-                }
-                onValueChange={handleLengthPresetChange}
+                value={currentLengthValue}
+                onValueChange={handleLengthOptionChange}
                 columns={2}
               />
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleCustomLength}
-                  type="button"
-                >
-                  Set Custom Length
-                </Button>
-                {formData.contentLength?.type === "custom" &&
-                  formData.contentLength.custom && (
-                    <Alert className="flex-1">
+              {/* Inline Custom Length Input */}
+              {showCustomInput && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50 transition-all duration-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">
+                      Custom Length Settings
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-length-value" className="text-sm">
+                        Length
+                      </Label>
+                      <Input
+                        id="custom-length-value"
+                        type="number"
+                        min="1"
+                        max="10000"
+                        value={customValue}
+                        onChange={(e) =>
+                          handleCustomValueChange(e.target.value)
+                        }
+                        placeholder="Enter length..."
+                        className={customValueError ? "border-destructive" : ""}
+                      />
+                      {customValueError && (
+                        <p className="text-sm text-destructive">
+                          {customValueError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-length-unit" className="text-sm">
+                        Unit
+                      </Label>
+                      <Select
+                        value={customUnit}
+                        onValueChange={handleCustomUnitChange}
+                      >
+                        <SelectTrigger id="custom-length-unit">
+                          <SelectValue placeholder="Select unit..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableUnits.map((unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Custom Length Preview */}
+                  {customValue > 0 && !customValueError && (
+                    <Alert>
                       <FileText className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>Custom:</strong>{" "}
-                        {formData.contentLength.custom.value}{" "}
-                        {formData.contentLength.custom.unit}
+                        <strong>Preview:</strong> {customValue} {customUnit}
                       </AlertDescription>
                     </Alert>
                   )}
-              </div>
+                </div>
+              )}
 
               {errors.contentLength && touched.contentLength && (
                 <Alert variant="destructive">

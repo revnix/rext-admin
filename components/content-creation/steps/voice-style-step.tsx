@@ -245,49 +245,106 @@ export function VoiceStyleStep({
           </Card>
         )}
 
-        {/* Target Region Selection */}
-        {regionField && (
+        {/* Location & Language Combined */}
+        {(regionField || languageField) && (
           <Card
-            className={`transition-colors ${errors.region && touched.region ? "border-destructive" : ""}`}
+            className={`transition-colors ${
+              (errors.region && touched.region) ||
+              (errors.language && touched.language)
+                ? "border-destructive"
+                : ""
+            }`}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5" />
-                Target Region
+                Location & Language
               </CardTitle>
               <CardDescription>
-                What geographic region should this content focus on?
+                Geographic focus and content language settings
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Select
-                value={formData.region || ""}
-                onValueChange={(value) => {
-                  onFieldChange("region", value);
-                  onFieldTouch("region");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select target region..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {REGION_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center gap-2">
-                        {option.value === "International/Global" && (
-                          <Globe className="h-4 w-4" />
-                        )}
-                        <span>{option.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Target Region */}
+                {regionField && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      Target Region
+                    </Label>
+                    <Select
+                      value={formData.region || ""}
+                      onValueChange={(value) => {
+                        onFieldChange("region", value);
+                        onFieldTouch("region");
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select target region..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REGION_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              {option.value === "International/Global" && (
+                                <Globe className="h-4 w-4" />
+                              )}
+                              <span>{option.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.region && touched.region && (
+                      <p className="text-sm text-destructive">
+                        {errors.region}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-              {/* Region context info */}
+                {/* Language */}
+                {languageField && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Languages className="h-4 w-4" />
+                      Language
+                    </Label>
+                    <Select
+                      value={formData.language || ""}
+                      onValueChange={(value) => {
+                        onFieldChange("language", value);
+                        onFieldTouch("language");
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LANGUAGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              <Languages className="h-4 w-4" />
+                              <span>{option.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.language && touched.language && (
+                      <p className="text-sm text-destructive">
+                        {errors.language}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Regional context info */}
               {formData.region &&
                 formData.region !== "International/Global" && (
-                  <Alert className="mt-4">
+                  <Alert>
                     <Globe className="h-4 w-4" />
                     <AlertDescription>
                       <strong>Regional Focus:</strong> Content will be optimized
@@ -297,65 +354,15 @@ export function VoiceStyleStep({
                   </Alert>
                 )}
 
-              {errors.region && touched.region && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{errors.region}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Language Selection */}
-        {languageField && (
-          <Card
-            className={`transition-colors ${errors.language && touched.language ? "border-destructive" : ""}`}
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Languages className="h-5 w-5" />
-                Language
-              </CardTitle>
-              <CardDescription>
-                What language should the content be written in?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={formData.language || ""}
-                onValueChange={(value) => {
-                  onFieldChange("language", value);
-                  onFieldTouch("language");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {LANGUAGE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center gap-2">
-                        <Languages className="h-4 w-4" />
-                        <span>{option.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Note about language expansion */}
-              <Alert className="mt-4">
-                <Languages className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Note:</strong> Additional languages will be supported
-                  in future updates. Currently focusing on high-quality English
-                  content generation.
-                </AlertDescription>
-              </Alert>
-
-              {errors.language && touched.language && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{errors.language}</AlertDescription>
+              {/* Language expansion note */}
+              {formData.language && (
+                <Alert>
+                  <Languages className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Note:</strong> Additional languages will be
+                    supported in future updates. Currently focusing on
+                    high-quality English content generation.
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>

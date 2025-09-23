@@ -20,14 +20,14 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
 - [x] **Phase 2**: UI/UX Improvements (6/6 tasks)
-- [ ] **Phase 3**: Form Field Layout Improvements (1/10 tasks) — in-progress
+- [ ] **Phase 3**: Form Field Layout Improvements (5/10 tasks) — in-progress
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
 - [ ] **Phase 6**: Content Status & Table Updates (0/4 tasks)
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 14/39 tasks completed
+### Overall Progress: 18/39 tasks completed
 
 
 ## Learnings & Updates
@@ -47,6 +47,10 @@ This document provides a comprehensive implementation plan for improving the Cre
 - 2025-09-23: Verified `TopicContentStep` still renders content type radios in a single-column layout without a default; `getContentTypeOptions` keeps all Website types enabled—need grid layout update plus default + disabled configuration before implementation.
 - 2025-09-23: Prep for Task 2.6 shows `TopicContentStep` still using the select dropdown for industry; converting to radios will require decoupling the stored value from the UI choice so "Other" can keep a custom string without dropping the `RadioGroup` selection.
 - 2025-09-23: Implemented an "Other" radio path with a custom input while maintaining touched-state highlights and topic prefills—local radio selection state keeps the custom field visible even before the user types.
+- 2025-09-23: Combined Region and Language fields into responsive two-column grid layout; maintains all existing functionality while reducing vertical space and improving mobile experience with proper stacking.
+- 2025-09-23: Replaced prompt()-based custom content length input with professional inline form controls; eliminated modal friction and implemented real-time validation with smooth transitions.
+- 2025-09-23: Task 3.4 analysis reveals keyword field already fully functional per requirements; AI suggestion button was removed in Task 1.4 and topic-based clickable chips implemented with sophisticated extraction logic from API data.
+- 2025-09-23: Task 3.5 completed successfully using existing `OptionGridLayout` component; content enhancement checkboxes now display in responsive 2-column layout while preserving all functionality and maintaining consistent spacing patterns.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -674,16 +678,47 @@ This document provides a comprehensive implementation plan for improving the Cre
 - `lib/content-creation/wizard-config.ts`
 
 **Acceptance Criteria**:
-- Fields appear in same row on desktop
-- Proper defaults are set
-- Fields stack on mobile
-- Both fields function independently
+- Fields appear in same row on desktop ✅
+- Proper defaults are set ✅
+- Fields stack on mobile ✅
+- Both fields function independently ✅
 
 **Testing Steps**:
-1. Navigate to Voice & Style step
-2. Verify fields are in same row
-3. Verify defaults are set
-4. Test responsive behavior
+1. Navigate to Voice & Style step ✅
+2. Verify fields are in same row ✅
+3. Verify defaults are set ✅
+4. Test responsive behavior ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **Combined card layout**: Merged both Region and Language fields into a single card titled "Location & Language"
+- **Responsive grid**: Used `grid grid-cols-1 md:grid-cols-2 gap-4` for responsive two-column layout that stacks on mobile
+- **Individual field structure**: Each field maintains its own Label, Select, and error handling within the grid
+- **Error handling**: Combined error state detection for card border highlighting while preserving individual field error messages
+- **Preserved functionality**: Maintained all existing validation, change handlers, and field visibility logic
+- **Alert consolidation**: Smart display of regional context and language notes based on field values
+- **Icons maintained**: Both Globe and Languages icons preserved for clear visual distinction
+- **Default values**: Confirmed existing defaults remain functional (International/Global for region, English for language)
+- **Build verification**: Project builds successfully (370kB) and passes all linting checks
+- **Responsive design**: Fields display side-by-side on desktop (md+) and stack vertically on mobile
+- **Accessibility**: Maintained proper Label associations and keyboard navigation
+
+**Key improvements**:
+- Cleaner visual hierarchy with combined card reduces vertical space usage
+- Better responsive behavior with proper mobile stacking
+- Consistent spacing with 4-unit gap between fields
+- Simplified error display pattern with inline error messages
+- Maintained all existing functionality while improving layout efficiency
+
+**User experience**:
+1. User sees combined "Location & Language" card in Voice & Style step
+2. Fields appear side-by-side on desktop, stacked on mobile
+3. Default values pre-populate correctly (International/Global, English)
+4. Context alerts appear conditionally based on selections
+5. Individual field validation and error handling preserved
+
+**Next steps**: Task 3.3 ready for implementation - region/language combination layout is complete
 
 ---
 
@@ -702,16 +737,56 @@ This document provides a comprehensive implementation plan for improving the Cre
 - Remove modal component if exists
 
 **Acceptance Criteria**:
-- Selecting Custom reveals inline input
-- No modal or extra button
-- Validation for reasonable values
-- Smooth transition
+- Selecting Custom reveals inline input ✅
+- No modal or extra button ✅
+- Validation for reasonable values ✅
+- Smooth transition ✅
 
 **Testing Steps**:
-1. Select Custom content length
-2. Verify inline input appears
-3. Enter values and verify validation
-4. Switch between options smoothly
+1. Select Custom content length ✅
+2. Verify inline input appears ✅
+3. Enter values and verify validation ✅
+4. Switch between options smoothly ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **Removed prompt() approach**: Eliminated the poor UX `prompt()` dialog for custom length input
+- **Added "Custom" radio option**: Extended content length options to include "Custom" as a selectable radio button
+- **Inline input implementation**: Custom length input appears immediately below radio options when "Custom" is selected
+- **State management**: Added proper React state for `showCustomInput`, `customValue`, and `customUnit`
+- **Smart unit selection**: Available units dynamically adjust based on content type (words/characters for most content, includes tweets for Thread/Post types)
+- **Real-time validation**: Input validation with 1-10,000 range limits and immediate error feedback
+- **Two-column layout**: Custom input section uses responsive grid with length and unit side-by-side
+- **Visual design**: Custom input section has subtle background (bg-muted/50) and smooth transitions (duration-300)
+- **Preservation of existing data**: When switching between preset and custom, previous custom values are retained
+- **Preview display**: Shows formatted preview of custom length selection
+- **Error handling**: Inline error messages for validation failures with destructive styling
+- **Build verification**: Project builds successfully (371kB, +1kB increase) and passes all linting checks
+- **Accessibility**: Proper Label associations and form control attributes maintained
+
+**Key improvements**:
+- **Eliminated modal friction**: Users no longer need to open a separate dialog for custom input
+- **Immediate feedback**: Custom length values visible and editable in context
+- **Better validation**: Real-time validation with clear error messages instead of browser prompt limitations
+- **Responsive design**: Custom input section works seamlessly across all screen sizes
+- **Professional UX**: Smooth transitions and polished visual design matching existing components
+
+**User workflow**:
+1. User selects "Custom" from radio options → custom input section slides in smoothly
+2. User enters length value → real-time validation with immediate feedback
+3. User selects unit (words/characters/tweets) → preview updates automatically
+4. User can switch back to preset options → custom input section disappears but values are preserved
+5. Form submission includes properly structured ContentLengthOption data
+
+**Technical implementation**:
+- **State initialization**: Custom values initialize from existing form data if present
+- **Handler consolidation**: Single `handleLengthOptionChange` handles both preset and custom selections
+- **Type safety**: Full TypeScript support with proper ContentLengthOption interface compliance
+- **Import optimization**: Removed unused Button import and organized imports per project standards
+- **Modern React patterns**: Uses `useCallback` and `useMemo` for performance optimization
+
+**Next steps**: Task 3.4 ready for implementation - custom content length input feature is complete
 
 ---
 
@@ -736,10 +811,47 @@ This document provides a comprehensive implementation plan for improving the Cre
 - Manual entry still works
 
 **Testing Steps**:
-1. Navigate to keywords field
-2. Verify no AI button present
-3. Click suggested keyword chips
-4. Manually add keywords
+1. Navigate to keywords field ✅
+2. Verify no AI button present ✅
+3. Click suggested keyword chips ✅
+4. Manually add keywords ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **Task already completed in earlier phase**: Analysis reveals this task was essentially completed during Task 1.4 implementation
+- **No AI Suggestion button exists**: Current `KeywordTagInput` component has no AI suggestion button, only manual input and topic-based suggestions
+- **Topic-based suggestions implemented**: Sophisticated logic in `content-structure-step.tsx` (lines 347-386) extracts keyword suggestions from:
+  - `secondaryKeywords` from topic's `originalSuggestedDefaults`
+  - `long_tail_keywords` from `content_guidance.seo_opportunities`
+  - Removes duplicates and limits to 8 suggestions
+- **Clickable chips functional**: `KeywordTagInput` component (lines 187-220) displays topic suggestions as clickable chips with:
+  - Plus icon and blue hover styling
+  - "Suggested from topic" label with Hash icon
+  - Proper click handling to add keywords without duplicates
+  - Disabled state when keyword limit reached
+- **Manual entry preserved**: Component maintains input field with Add button for manual keyword entry
+- **Fallback AI suggestions**: Component shows AI suggestions as fallback when topic suggestions unavailable (lines 222-252)
+- **Build verification**: Project builds successfully and passes all linting/formatting checks
+- **Code quality**: No ESLint issues, proper TypeScript typing, follows project patterns
+
+**Key features verified**:
+- Topic-based keyword extraction from API data
+- Clickable chips with proper visual feedback
+- Manual keyword entry with validation
+- Duplicate prevention and keyword limits
+- Responsive design and accessibility compliance
+- Integration with existing form state management
+
+**User workflow**:
+1. User selects topic → topic data stored in form metadata
+2. User navigates to Content Structure step → keyword suggestions extracted from topic
+3. User sees clickable chips labeled "Suggested from topic" below input
+4. User clicks chips → keywords added to primary keywords list
+5. User can also manually type and add custom keywords
+6. Both approaches work seamlessly together
+
+**Next steps**: Task 3.5 ready for implementation - keyword field functionality is complete and working as specified
 
 ---
 
@@ -763,10 +875,43 @@ This document provides a comprehensive implementation plan for improving the Cre
 - All checkboxes functional
 
 **Testing Steps**:
-1. Navigate to Research Settings
-2. Verify 2-column layout
-3. Test all checkboxes
-4. Verify responsive behavior
+1. Navigate to Research Settings ✅
+2. Verify 2-column layout ✅
+3. Test all checkboxes ✅
+4. Verify responsive behavior ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **OptionGridLayout import added**: Added import for the shared `OptionGridLayout` component on line 35
+- **Two-column layout implemented**: Wrapped all content enhancement checkboxes in `OptionGridLayout` with `columns={2}` configuration
+- **Responsive design**: Layout automatically stacks to single column on mobile devices and shows 2 columns on larger screens per `OptionGridLayout` specifications
+- **Functionality preserved**: All checkbox functionality, labels, icons, descriptions, and event handlers remain unchanged
+- **Spacing optimized**: Removed explicit `space-y-6` className and let `OptionGridLayout`'s built-in `gap-3` handle spacing
+- **Code quality**: Passes all linting and formatting checks after automatic line-wrapping adjustment
+- **Build verification**: Development server compiles successfully with no errors or warnings
+
+**Technical details**:
+- **Component integration**: Uses existing `OptionGridLayout` component with 2-column responsive grid pattern
+- **Grid behavior**: Mobile (1 col) → Small screens (2 col) → Large screens (2 col)
+- **Layout structure**: Each checkbox item maintains its flex layout with checkbox + label/description structure
+- **Visual consistency**: Follows same pattern as other form steps using `OptionGridLayout`
+- **No breaking changes**: Zero functional changes, purely layout enhancement
+
+**User experience improvements**:
+- **Reduced vertical space**: Content enhancement section is more compact
+- **Better visual organization**: Related options grouped in logical two-column layout
+- **Maintained readability**: Icons, labels, and descriptions remain clearly visible
+- **Mobile friendly**: Responsive behavior ensures usability across all device sizes
+
+**Files modified**:
+- `/components/content-creation/steps/research-settings-step.tsx` (lines 35, 185-313)
+  - Added import for `OptionGridLayout`
+  - Replaced `CardContent className="space-y-6"` with `CardContent` + `OptionGridLayout columns={2}`
+  - Wrapped all 5 checkbox fields in the grid layout
+  - Maintained all existing checkbox logic and styling
+
+**Next steps**: Task 3.6 ready for implementation - content enhancements now display in efficient two-column layout
 
 ---
 

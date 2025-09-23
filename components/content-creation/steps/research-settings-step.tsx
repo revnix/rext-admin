@@ -32,6 +32,7 @@ import type {
   ContentCreationFormData,
   WizardStepProps,
 } from "@/types/content-creation";
+import { OptionGridLayout } from "../layouts/option-grid-layout";
 
 interface ResearchSettingsStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -181,132 +182,134 @@ export function ResearchSettingsStep({
               Choose what types of supporting content to include
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Include Latest Information */}
-            {includeLatestInfoField && (
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="includeLatestInfo"
-                  checked={formData.includeLatestInfo ?? true}
-                  onCheckedChange={(checked) =>
-                    handleToggleChange("includeLatestInfo", !!checked)
-                  }
-                />
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="includeLatestInfo"
-                    className="font-medium cursor-pointer flex items-center gap-2"
-                  >
-                    <Clock className="h-4 w-4" />
-                    Include Latest Information
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Prioritize recent developments and news in the research
-                  </p>
+          <CardContent>
+            <OptionGridLayout columns={2}>
+              {/* Include Latest Information */}
+              {includeLatestInfoField && (
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="includeLatestInfo"
+                    checked={formData.includeLatestInfo ?? true}
+                    onCheckedChange={(checked) =>
+                      handleToggleChange("includeLatestInfo", !!checked)
+                    }
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="includeLatestInfo"
+                      className="font-medium cursor-pointer flex items-center gap-2"
+                    >
+                      <Clock className="h-4 w-4" />
+                      Include Latest Information
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Prioritize recent developments and news in the research
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Include Examples */}
-            {includeExamplesField && (
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="includeExamples"
-                  checked={formData.includeExamples ?? true}
-                  onCheckedChange={(checked) =>
-                    handleToggleChange("includeExamples", !!checked)
-                  }
-                />
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="includeExamples"
-                    className="font-medium cursor-pointer"
-                  >
-                    Include Examples
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Add real-world examples and case studies to illustrate
-                    points
-                  </p>
+              {/* Include Examples */}
+              {includeExamplesField && (
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="includeExamples"
+                    checked={formData.includeExamples ?? true}
+                    onCheckedChange={(checked) =>
+                      handleToggleChange("includeExamples", !!checked)
+                    }
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="includeExamples"
+                      className="font-medium cursor-pointer"
+                    >
+                      Include Examples
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Add real-world examples and case studies to illustrate
+                      points
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Include Statistics */}
-            {includeStatisticsField && (
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="includeStatistics"
-                  checked={formData.includeStatistics ?? true}
-                  onCheckedChange={(checked) =>
-                    handleToggleChange("includeStatistics", !!checked)
-                  }
-                />
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="includeStatistics"
-                    className="font-medium cursor-pointer flex items-center gap-2"
-                  >
-                    <BarChart className="h-4 w-4" />
-                    Include Statistics
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Add relevant data, statistics, and quantitative insights
-                  </p>
+              {/* Include Statistics */}
+              {includeStatisticsField && (
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="includeStatistics"
+                    checked={formData.includeStatistics ?? true}
+                    onCheckedChange={(checked) =>
+                      handleToggleChange("includeStatistics", !!checked)
+                    }
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="includeStatistics"
+                      className="font-medium cursor-pointer flex items-center gap-2"
+                    >
+                      <BarChart className="h-4 w-4" />
+                      Include Statistics
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Add relevant data, statistics, and quantitative insights
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Include Quotes */}
-            {includeQuotesField && (
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="includeQuotes"
-                  checked={formData.includeQuotes ?? true}
-                  onCheckedChange={(checked) =>
-                    handleToggleChange("includeQuotes", !!checked)
-                  }
-                />
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="includeQuotes"
-                    className="font-medium cursor-pointer flex items-center gap-2"
-                  >
-                    <Quote className="h-4 w-4" />
-                    Include Quotes
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Add expert quotes and industry leader insights
-                  </p>
+              {/* Include Quotes */}
+              {includeQuotesField && (
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="includeQuotes"
+                    checked={formData.includeQuotes ?? true}
+                    onCheckedChange={(checked) =>
+                      handleToggleChange("includeQuotes", !!checked)
+                    }
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="includeQuotes"
+                      className="font-medium cursor-pointer flex items-center gap-2"
+                    >
+                      <Quote className="h-4 w-4" />
+                      Include Quotes
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Add expert quotes and industry leader insights
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Competitor Analysis */}
-            {competitorAnalysisField && (
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="competitorAnalysis"
-                  checked={formData.competitorAnalysis ?? false}
-                  onCheckedChange={(checked) =>
-                    handleToggleChange("competitorAnalysis", !!checked)
-                  }
-                />
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="competitorAnalysis"
-                    className="font-medium cursor-pointer flex items-center gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Competitor Analysis
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Research competitor content for insights and differentiation
-                    opportunities
-                  </p>
+              {/* Competitor Analysis */}
+              {competitorAnalysisField && (
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="competitorAnalysis"
+                    checked={formData.competitorAnalysis ?? false}
+                    onCheckedChange={(checked) =>
+                      handleToggleChange("competitorAnalysis", !!checked)
+                    }
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="competitorAnalysis"
+                      className="font-medium cursor-pointer flex items-center gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Competitor Analysis
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Research competitor content for insights and
+                      differentiation opportunities
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </OptionGridLayout>
           </CardContent>
         </Card>
 
