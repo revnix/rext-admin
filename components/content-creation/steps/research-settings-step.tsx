@@ -159,7 +159,7 @@ export function ResearchSettingsStep({
                   onFieldChange("researchLevel", value);
                   onFieldTouch("researchLevel");
                 }}
-                columns={1}
+                columns={3}
               />
 
               {errors.researchLevel && touched.researchLevel && (
@@ -344,7 +344,7 @@ export function ResearchSettingsStep({
                     onFieldChange("factChecking", value);
                     onFieldTouch("factChecking");
                   }}
-                  columns={1}
+                  columns={3}
                 />
 
                 {errors.factChecking && touched.factChecking && (

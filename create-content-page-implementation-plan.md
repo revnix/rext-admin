@@ -20,14 +20,14 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
 - [x] **Phase 2**: UI/UX Improvements (6/6 tasks)
-- [ ] **Phase 3**: Form Field Layout Improvements (5/10 tasks) — in-progress
+- [ ] **Phase 3**: Form Field Layout Improvements (6/10 tasks) — in-progress
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
 - [ ] **Phase 6**: Content Status & Table Updates (0/4 tasks)
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 18/39 tasks completed
+### Overall Progress: 19/39 tasks completed
 
 
 ## Learnings & Updates
@@ -51,6 +51,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 - 2025-09-23: Replaced prompt()-based custom content length input with professional inline form controls; eliminated modal friction and implemented real-time validation with smooth transitions.
 - 2025-09-23: Task 3.4 analysis reveals keyword field already fully functional per requirements; AI suggestion button was removed in Task 1.4 and topic-based clickable chips implemented with sophisticated extraction logic from API data.
 - 2025-09-23: Task 3.5 completed successfully using existing `OptionGridLayout` component; content enhancement checkboxes now display in responsive 2-column layout while preserving all functionality and maintaining consistent spacing patterns.
+- 2025-09-23: Task 3.6 completed Research Settings radio group layout updates; Research Level and Fact Checking now use 3-column layouts per UX requirements, completing all radio group layout optimizations in the research step.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -915,9 +916,74 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 ---
 
-### Task 3.6-3.10: Additional Layout Updates
+### Task 3.6: Update Research Settings Radio Group Layouts
 
-*Similar structure for remaining layout tasks...*
+**Description**: Update remaining radio groups in research settings to use proper multi-column layouts per UX specifications.
+
+**Implementation Notes**:
+- Update Research Level to use 3-column layout (Basic, Comprehensive, Expert options)
+- Update Fact Checking to use 3-column layout (Basic, Standard, Strict options)
+- Content Freshness already using 3-column layout correctly
+- Content Enhancements already updated to 2-column layout in Task 3.5
+
+**Files to modify**:
+- `components/content-creation/steps/research-settings-step.tsx`
+
+**Acceptance Criteria**:
+- Research Level displays options in 3 columns
+- Fact Checking displays options in 3 columns
+- Content Freshness remains 3 columns (already correct)
+- Responsive behavior maintained (stacks on mobile)
+- All radio functionality preserved
+
+**Testing Steps**:
+1. Navigate to Research Settings step ✅
+2. Verify Research Level shows 3 columns ✅
+3. Verify Fact Checking shows 3 columns ✅
+4. Test responsive behavior on mobile ✅
+5. Test all radio button selections ✅
+
+**Status**: ✅ COMPLETED
+
+**Implementation Notes**:
+- **Research Level updated**: Changed `columns={1}` to `columns={3}` for 3-option layout (Basic, Comprehensive, Expert)
+- **Fact Checking updated**: Changed `columns={1}` to `columns={3}` for 3-option layout (Basic, Standard, Strict)
+- **Content Freshness verified**: Already using `columns={3}` correctly for 5-option layout
+- **Responsive design**: All radio groups use existing responsive grid patterns that stack on mobile
+- **Functionality preserved**: All radio button selection, validation, and form submission logic unchanged
+- **Code quality**: Passes all linting and formatting checks with no issues
+- **Build verification**: Development server compiles successfully with no errors or warnings
+
+**Technical details**:
+- **RadioGroup component**: Uses existing `columns` prop to control responsive grid layout
+- **Grid behavior**: Desktop shows specified columns, mobile automatically stacks to single column
+- **Visual consistency**: All radio groups now follow consistent multi-column layout patterns
+- **No breaking changes**: Zero functional changes, purely layout enhancement
+
+**User experience improvements**:
+- **Reduced vertical space**: Form sections are more compact and scannable
+- **Better visual organization**: Related options grouped in logical horizontal layouts
+- **Faster completion**: Users can see and compare options at a glance
+- **Consistent patterns**: All radio groups follow similar layout principles
+
+**Files modified**:
+- `/components/content-creation/steps/research-settings-step.tsx` (lines 162, 347)
+  - Research Level: `columns={1}` → `columns={3}`
+  - Fact Checking: `columns={1}` → `columns={3}`
+
+**Original requirements satisfied**:
+- ✅ Research Level: "Show the 3 options in the same row" (create-content-notes.md line 97-98)
+- ✅ Quality Control: "Show these options in the same row" (create-content-notes.md line 104-106)
+- ✅ Content Freshness: "Show atleast 3 options in the same row" (already implemented)
+- ✅ Content Enhancements: "Show options in two columns" (completed in Task 3.5)
+
+**Next steps**: Research Settings layout improvements now complete - all radio groups and checkboxes follow optimal multi-column layouts
+
+---
+
+### Task 3.7-3.10: Additional Layout Updates
+
+*Reserved for future layout tasks if needed...*
 
 ---
 
