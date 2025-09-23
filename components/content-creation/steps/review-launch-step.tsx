@@ -1,18 +1,16 @@
 "use client";
 
 import {
-  AlertCircle,
   BarChart,
-  CheckCircle,
   Clock,
   Download,
   Edit,
-  Eye,
   FileText,
   Globe,
   Loader2,
   MessageSquare,
   Rocket,
+  RotateCcw,
   Search,
   Shield,
   Users,
@@ -32,7 +30,6 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import type {
@@ -225,402 +222,219 @@ export function ReviewLaunchStep({
         <p className="text-muted-foreground mt-2">{step.description}</p>
       </div>
 
-      {/* Completion Overview */}
-      <Card
-        className={
-          completionStats.percentage === 100
-            ? "border-green-200 bg-green-50 dark:bg-green-950/20"
-            : ""
-        }
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle
-              className={`h-5 w-5 ${completionStats.percentage === 100 ? "text-green-600" : "text-muted-foreground"}`}
-            />
-            Completion Status
-          </CardTitle>
-          <CardDescription>
-            {completionStats.completed} of {completionStats.total} required
-            fields completed
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Progress value={completionStats.percentage} className="flex-1" />
-            <Badge
-              variant={
-                completionStats.percentage === 100 ? "default" : "secondary"
-              }
-            >
-              {completionStats.percentage}%
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-            {completionStats.fields.map((field, _index) => (
-              <Badge
-                key={field.key}
-                variant={field.completed ? "default" : "outline"}
-                className="justify-center text-xs"
-              >
-                {field.completed && <CheckCircle className="h-3 w-3 mr-1" />}
-                {field.label}
-              </Badge>
-            ))}
-          </div>
-
-          {completionStats.percentage < 100 && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Please complete all required fields before launching content
-                creation.
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Configuration Review */}
-      <div className="grid gap-6 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
         {/* Topic & Content */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="h-5 w-5" />
-                Topic & Content Type
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditStep(0)}
-                className="text-primary hover:text-primary/80"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="h-4 w-4" />
+              Topic & Content
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-3">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Topic
-                </Label>
-                <p className="font-medium">
-                  {formData.topicId || "Not specified"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Content Type
-                </Label>
-                <Badge variant="outline" className="ml-2">
-                  {formData.contentType || "Not specified"}
-                </Badge>
-              </div>
+          <CardContent className="space-y-2">
+            <div>
+              <p className="text-sm font-medium">
+                {formData.topicId || "No topic selected"}
+              </p>
             </div>
+            <div>
+              <Badge variant="outline" className="text-xs">
+                {formData.contentType || "Not specified"}
+              </Badge>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditStep(0)}
+              className="text-primary hover:text-primary/80 text-xs h-7 px-2 mt-2"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
           </CardContent>
         </Card>
 
         {/* Audience & Goals */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5" />
-                Audience & Goals
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditStep(1)}
-                className="text-primary hover:text-primary/80"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="h-4 w-4" />
+              Audience & Goals
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Audience Size
-                </Label>
-                <p className="font-medium">
-                  {formData.audienceSize || "Not specified"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Reading Level
-                </Label>
-                <p className="font-medium">
-                  {formData.readingLevel || "Not specified"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Audience Types
-                </Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.audienceType?.map((type) => (
-                    <Badge key={type} variant="secondary" className="text-xs">
-                      {type}
-                    </Badge>
-                  )) || (
-                    <span className="text-muted-foreground">None selected</span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Goals
-                </Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.goals?.map((goal) => (
-                    <Badge key={goal} variant="secondary" className="text-xs">
-                      {goal}
-                    </Badge>
-                  )) || (
-                    <span className="text-muted-foreground">None selected</span>
-                  )}
-                </div>
-              </div>
+          <CardContent className="space-y-2">
+            <div>
+              <p className="text-sm font-medium">
+                {formData.audienceSize || "Not specified"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {formData.readingLevel || "Reading level not set"}
+              </p>
             </div>
+            <div className="flex flex-wrap gap-1">
+              {formData.goals?.slice(0, 2).map((goal) => (
+                <Badge key={goal} variant="secondary" className="text-xs">
+                  {goal}
+                </Badge>
+              )) || (
+                <span className="text-xs text-muted-foreground">
+                  No goals selected
+                </span>
+              )}
+              {(formData.goals?.length || 0) > 2 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(formData.goals?.length || 0) - 2} more
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditStep(1)}
+              className="text-primary hover:text-primary/80 text-xs h-7 px-2 mt-2"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
           </CardContent>
         </Card>
 
         {/* Voice & Style */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MessageSquare className="h-5 w-5" />
-                Voice & Style
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditStep(2)}
-                className="text-primary hover:text-primary/80"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="h-4 w-4" />
+              Voice & Style
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Tone
-                </Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.tone?.map((tone) => (
-                    <Badge key={tone} variant="default" className="text-xs">
-                      {tone}
-                    </Badge>
-                  )) || (
-                    <span className="text-muted-foreground">None selected</span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Region
-                </Label>
-                <div className="flex items-center gap-1 mt-1">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">
-                    {formData.region || "Not specified"}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Language
-                </Label>
-                <p className="font-medium">
-                  {formData.language || "Not specified"}
-                </p>
-              </div>
+          <CardContent className="space-y-2">
+            <div className="flex flex-wrap gap-1">
+              {formData.tone?.slice(0, 2).map((tone) => (
+                <Badge key={tone} variant="default" className="text-xs">
+                  {tone}
+                </Badge>
+              )) || (
+                <span className="text-xs text-muted-foreground">
+                  No tone selected
+                </span>
+              )}
+              {(formData.tone?.length || 0) > 2 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(formData.tone?.length || 0) - 2} more
+                </Badge>
+              )}
             </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Globe className="h-3 w-3" />
+              <span>
+                {formData.region || "Global"} • {formData.language || "English"}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditStep(2)}
+              className="text-primary hover:text-primary/80 text-xs h-7 px-2 mt-2"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
           </CardContent>
         </Card>
 
         {/* Content Structure */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <BarChart className="h-5 w-5" />
-                Content Structure
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditStep(3)}
-                className="text-primary hover:text-primary/80"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart className="h-4 w-4" />
+              Content Structure
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Content Length
-                </Label>
-                {formData.contentLength ? (
-                  <div>
-                    <p className="font-medium">
-                      {formData.contentLength.type === "preset"
-                        ? formData.contentLength.preset
-                        : "Custom"}
-                    </p>
-                    {formData.contentLength.type === "custom" &&
-                      formData.contentLength.custom && (
-                        <p className="text-sm text-muted-foreground">
-                          {formData.contentLength.custom.value}{" "}
-                          {formData.contentLength.custom.unit}
-                        </p>
-                      )}
-                  </div>
-                ) : (
-                  <p className="font-medium">Not specified</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Search Intent
-                </Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.searchIntent?.map((intent) => (
-                    <Badge key={intent} variant="outline" className="text-xs">
-                      {intent}
-                    </Badge>
-                  )) || (
-                    <span className="text-muted-foreground">Not specified</span>
-                  )}
-                </div>
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Keywords
-                </Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {formData.primaryKeywords?.map((keyword) => (
-                    <Badge key={keyword} variant="outline" className="text-xs">
-                      {keyword}
-                    </Badge>
-                  )) || (
-                    <span className="text-muted-foreground">
-                      None specified
-                    </span>
-                  )}
-                </div>
-              </div>
+          <CardContent className="space-y-2">
+            <div>
+              <p className="text-sm font-medium">
+                {formData.contentLength?.type === "preset"
+                  ? formData.contentLength.preset
+                  : formData.contentLength?.type === "custom"
+                    ? `${formData.contentLength.custom?.value} ${formData.contentLength.custom?.unit}`
+                    : "Length not set"}
+              </p>
             </div>
+            <div className="flex flex-wrap gap-1">
+              {formData.primaryKeywords?.slice(0, 3).map((keyword) => (
+                <Badge key={keyword} variant="outline" className="text-xs">
+                  {keyword}
+                </Badge>
+              )) || (
+                <span className="text-xs text-muted-foreground">
+                  No keywords
+                </span>
+              )}
+              {(formData.primaryKeywords?.length || 0) > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(formData.primaryKeywords?.length || 0) - 3} more
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditStep(3)}
+              className="text-primary hover:text-primary/80 text-xs h-7 px-2 mt-2"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
           </CardContent>
         </Card>
 
         {/* Research Settings */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Search className="h-5 w-5" />
-                Research Settings
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditStep(4)}
-                className="text-primary hover:text-primary/80"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Search className="h-4 w-4" />
+              Research Settings
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Research Level
-                </Label>
-                <Badge
-                  variant={
-                    formData.researchLevel === "Expert"
-                      ? "default"
-                      : "secondary"
-                  }
-                  className="ml-2"
-                >
-                  {formData.researchLevel || "Not specified"}
-                </Badge>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Fact Checking
-                </Label>
-                <div className="flex items-center gap-1 mt-1">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">
-                    {formData.factChecking || "Not specified"}
-                  </span>
-                </div>
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Enhancements
-                </Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {[
-                    {
-                      key: "includeLatestInfo",
-                      label: "Latest Info",
-                      icon: Clock,
-                    },
-                    { key: "includeExamples", label: "Examples", icon: Eye },
-                    {
-                      key: "includeStatistics",
-                      label: "Statistics",
-                      icon: BarChart,
-                    },
-                    {
-                      key: "includeQuotes",
-                      label: "Quotes",
-                      icon: MessageSquare,
-                    },
-                    {
-                      key: "competitorAnalysis",
-                      label: "Competitor Analysis",
-                      icon: Search,
-                    },
-                  ].map(({ key, label, icon: Icon }) => (
-                    <Badge
-                      key={key}
-                      variant={
-                        formData[key as keyof ContentCreationFormData]
-                          ? "default"
-                          : "outline"
-                      }
-                      className="text-xs flex items-center gap-1"
-                    >
-                      <Icon className="h-3 w-3" />
-                      {label}
-                    </Badge>
-                  ))}
-                </div>
+          <CardContent className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={
+                  formData.researchLevel === "Expert" ? "default" : "secondary"
+                }
+                className="text-xs"
+              >
+                {formData.researchLevel || "Basic"}
+              </Badge>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                <span>{formData.factChecking || "Basic"}</span>
               </div>
             </div>
+            <div className="flex flex-wrap gap-1">
+              {[
+                formData.includeLatestInfo && "Latest",
+                formData.includeStatistics && "Stats",
+                formData.competitorAnalysis && "Competitors",
+              ]
+                .filter((item): item is string => Boolean(item))
+                .slice(0, 3)
+                .map((label) => (
+                  <Badge key={label} variant="outline" className="text-xs">
+                    {label}
+                  </Badge>
+                ))}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditStep(4)}
+              className="text-primary hover:text-primary/80 text-xs h-7 px-2 mt-2"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -844,11 +658,10 @@ export function ReviewLaunchStep({
             </div>
           </div>
 
-          {/* Launch Button */}
+          {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
               size="lg"
-              className="flex-1"
               disabled={
                 completionStats.percentage < 90 || !agreedToTerms || isLaunching
               }
@@ -871,8 +684,8 @@ export function ReviewLaunchStep({
               size="lg"
               onClick={() => handleEditStep(0)}
             >
-              <Edit className="h-4 w-4 mr-2" />
-              Review & Edit
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Start Over
             </Button>
           </div>
         </CardContent>
