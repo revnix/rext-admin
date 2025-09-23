@@ -23,6 +23,7 @@ import {
 import type { WizardStepProps } from "@/types/content-creation";
 import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
 import { ProgressiveFieldWrapper } from "../fields/progressive-field-wrapper";
+import { OptionGridLayout } from "../layouts/option-grid-layout";
 
 interface AudienceGoalsStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -157,7 +158,7 @@ export function AudienceGoalsStep({
                     onFieldChange("audienceSize", value);
                     onFieldTouch("audienceSize");
                   }}
-                  columns={1}
+                  columns={3}
                 />
 
                 {errors.audienceSize && touched.audienceSize && (
@@ -192,7 +193,7 @@ export function AudienceGoalsStep({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <OptionGridLayout>
                   {audienceTypeOptions.map((option) => {
                     const isSelected =
                       formData.audienceType?.includes(option.value) || false;
@@ -226,7 +227,7 @@ export function AudienceGoalsStep({
                       </Label>
                     );
                   })}
-                </div>
+                </OptionGridLayout>
 
                 {/* Selected audience types preview */}
                 {formData.audienceType && formData.audienceType.length > 0 && (
@@ -295,7 +296,7 @@ export function AudienceGoalsStep({
                   onFieldChange("readingLevel", value);
                   onFieldTouch("readingLevel");
                 }}
-                columns={1}
+                columns={3}
               />
             </AutoFilledFieldWrapper>
           </ProgressiveFieldWrapper>
@@ -327,7 +328,7 @@ export function AudienceGoalsStep({
               }
             >
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <OptionGridLayout>
                   {GOALS_OPTIONS.map((option) => {
                     const isSelected =
                       formData.goals?.includes(option.value) || false;
@@ -363,7 +364,7 @@ export function AudienceGoalsStep({
                       </Label>
                     );
                   })}
-                </div>
+                </OptionGridLayout>
 
                 {/* Selected goals preview */}
                 {formData.goals && formData.goals.length > 0 && (

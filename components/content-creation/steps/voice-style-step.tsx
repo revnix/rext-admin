@@ -26,6 +26,7 @@ import {
   REGION_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
 import type { WizardStepProps } from "@/types/content-creation";
+import { OptionGridLayout } from "../layouts/option-grid-layout";
 
 interface VoiceStyleStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -146,7 +147,7 @@ export function VoiceStyleStep({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <OptionGridLayout>
                 {toneOptions.map((option) => {
                   const isSelected =
                     formData.tone?.includes(option.value) || false;
@@ -191,7 +192,7 @@ export function VoiceStyleStep({
                     </Label>
                   );
                 })}
-              </div>
+              </OptionGridLayout>
 
               {/* Smart suggestions */}
               {smartSuggestions.length > 0 && (

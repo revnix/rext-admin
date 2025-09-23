@@ -20,18 +20,20 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
 - [x] **Phase 2**: UI/UX Improvements (6/6 tasks)
-- [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
+- [ ] **Phase 3**: Form Field Layout Improvements (1/10 tasks) — in-progress
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
 - [ ] **Phase 6**: Content Status & Table Updates (0/4 tasks)
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 13/39 tasks completed
+### Overall Progress: 14/39 tasks completed
 
 
 ## Learnings & Updates
 
+- 2025-09-24: Implemented shared `OptionGridLayout` to align checkbox groups with 3-up desktop spec; confirms existing field logic adapts cleanly once layout concerns are isolated.
+- 2025-09-24: Confirmed Task 3.1 multi-option fields still mix single/two-column grids; `RadioGroup` supports `columns` so we can shift radios to 3-col and introduce shared checkbox grid for consistency.
 - 2025-09-22: Reviewed Task 2.3 requirements; confirmed `WizardSidebarProgress` currently uses red accents for errors and green for completion, preparing neutral default styling adjustments.
 - 2025-09-22: Updated sidebar progress styling to adopt neutral defaults with success and error highlights only when appropriate—alignment with UX brief confirmed.
 - 2025-09-22: Discovered validation flags still paint future steps red; need to suppress preemptive error styling for untouched steps.
@@ -644,6 +646,15 @@ This document provides a comprehensive implementation plan for improving the Cre
 2. Verify 3-column layout
 3. Test responsive behavior
 4. Verify selection functionality
+
+**Status**: ✅ COMPLETED (Codex 2025-09-24)
+
+**Implementation Notes**:
+- Added `OptionGridLayout` helper to standardize responsive 3-up grids for checkbox tiles while keeping mobile stacks intact.
+- Updated `AudienceGoalsStep` radio fields (Audience Size, Reading Level) to use 3-column layout and migrated Audience Type/Content Goals checklists onto the shared grid without disrupting selection limits.
+- Swapped the tone selector grid in `VoiceStyleStep` to the shared layout, preserving tooltip indicators and progressive disclosure logic.
+- Adjusted Content Freshness radios in `ResearchSettingsStep` to `columns={3}` so all specified fields now follow the UX directive.
+- Ran `npm run format` + `npm run lint` inside `wrext-admin`; both completed successfully after applying formatter fixes.
 
 ---
 

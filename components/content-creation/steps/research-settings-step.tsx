@@ -371,7 +371,7 @@ export function ResearchSettingsStep({
                     onFieldChange("contentFreshness", value);
                     onFieldTouch("contentFreshness");
                   }}
-                  columns={2}
+                  columns={3}
                 />
 
                 {errors.contentFreshness && touched.contentFreshness && (
