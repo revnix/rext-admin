@@ -19,7 +19,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 ### Phase Status
 
 - [x] **Phase 1**: Pre-filled Data from Topic (4/4 tasks)
-- [ ] **Phase 2**: UI/UX Improvements (5/6 tasks) _(IN PROGRESS — Task 2.6)_
+- [x] **Phase 2**: UI/UX Improvements (6/6 tasks)
 - [ ] **Phase 3**: Form Field Layout Improvements (0/10 tasks)
 - [ ] **Phase 4**: Review & Launch Page Redesign (0/3 tasks)
 - [ ] **Phase 5**: Content Generation Progress Page (0/5 tasks)
@@ -27,7 +27,8 @@ This document provides a comprehensive implementation plan for improving the Cre
 - [ ] **Phase 7**: Human Review Integration (0/2 tasks)
 - [ ] **Phase 8**: Bug Fixes (0/1 task)
 
-### Overall Progress: 12/39 tasks completed
+### Overall Progress: 13/39 tasks completed
+
 
 ## Learnings & Updates
 
@@ -42,6 +43,8 @@ This document provides a comprehensive implementation plan for improving the Cre
 - 2025-09-22: Extended shared option types and radio group UI to support disabled state tooltips; Social Media option now communicates "Coming soon" without breaking existing selectors.
 - 2025-09-23: Defaulting content type required effect-driven guard so we only auto-select when enabled options exist; social media platform remains fully disabled pending rollout.
 - 2025-09-23: Verified `TopicContentStep` still renders content type radios in a single-column layout without a default; `getContentTypeOptions` keeps all Website types enabled—need grid layout update plus default + disabled configuration before implementation.
+- 2025-09-23: Prep for Task 2.6 shows `TopicContentStep` still using the select dropdown for industry; converting to radios will require decoupling the stored value from the UI choice so "Other" can keep a custom string without dropping the `RadioGroup` selection.
+- 2025-09-23: Implemented an "Other" radio path with a custom input while maintaining touched-state highlights and topic prefills—local radio selection state keeps the custom field visible even before the user types.
 
 ## Phase 1: Pre-filled Data from Topic
 
@@ -582,7 +585,7 @@ This document provides a comprehensive implementation plan for improving the Cre
 
 **Files to modify**:
 - `lib/content-creation/wizard-config.ts`
-- `components/content-creation/fields/radio-field.tsx` (enhance if needed)
+- `components/content-creation/steps/topic-content-step.tsx`
 
 **Acceptance Criteria**:
 - Industry displays as radio buttons
@@ -595,6 +598,14 @@ This document provides a comprehensive implementation plan for improving the Cre
 2. Verify radio buttons display
 3. Select "Other" and verify text input appears
 4. Enter custom value and verify it's saved
+
+**Status**: ✅ COMPLETED (Codex 2025-09-23)
+
+**Implementation Notes**:
+- Converted the wizard configuration to treat Industry as a radio field, preserving existing option metadata and validation routing.
+- Replaced the dropdown in `TopicContentStep` with the shared radio grid plus an inline custom input surfaced when "Other" is selected.
+- Added local radio-selection state so the custom input stays visible for empty custom values while still honoring topic-prefilled industries.
+- Wired the custom text field through the existing field change/touch handlers to maintain auto-fill highlighting, validation messaging, and draft persistence.
 
 ---
 

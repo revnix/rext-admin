@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2, FileText, Globe } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,14 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useTopics } from "@/hooks/use-topics";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import {
@@ -153,6 +148,78 @@ export function TopicContentStep({
     ? topics.find((t) => t.id === formData.topicId)
     : null;
 
+  const industryOptions = industryField ? INDUSTRY_OPTIONS : [];
+  const predefinedIndustryValues = useMemo(
+    () => new Set(industryOptions.map((option) => option.value)),
+    [industryOptions],
+  );
+
+  const [industrySelection, setIndustrySelection] = useState(() => {
+    if (!industryField) return "";
+    const currentValue = formData.industry || "";
+    if (!currentValue) return "";
+    return predefinedIndustryValues.has(currentValue) ? currentValue : "Other";
+  });
+
+  useEffect(() => {
+    if (!industryField) {
+      setIndustrySelection("");
+      return;
+    }
+
+    const currentValue = formData.industry || "";
+    if (!currentValue) {
+      if (industrySelection === "Other") {
+        return;
+      }
+      setIndustrySelection("");
+      return;
+    }
+
+    const nextSelection = predefinedIndustryValues.has(currentValue)
+      ? currentValue
+      : "Other";
+
+    if (nextSelection !== industrySelection) {
+      setIndustrySelection(nextSelection);
+    }
+  }, [
+    formData.industry,
+    industryField,
+    industrySelection,
+    predefinedIndustryValues,
+  ]);
+
+  const showCustomIndustryInput = industrySelection === "Other";
+
+  const handleIndustrySelect = useCallback(
+    (value: string) => {
+      setIndustrySelection(value);
+
+      if (value === "Other") {
+        const currentValue = formData.industry || "";
+        const nextValue =
+          currentValue && !predefinedIndustryValues.has(currentValue)
+            ? currentValue
+            : "";
+        onFieldChangeRef.current("industry", nextValue);
+      } else {
+        onFieldChangeRef.current("industry", value);
+      }
+
+      onFieldTouchRef.current("industry");
+    },
+    [formData.industry, predefinedIndustryValues],
+  );
+
+  const handleCustomIndustryChange = useCallback((value: string) => {
+    onFieldChangeRef.current("industry", value);
+  }, []);
+
+  const handleCustomIndustryBlur = useCallback(() => {
+    onFieldTouchRef.current("industry");
+  }, []);
+
   return (
     <div className="space-y-8 w-full">
       {/* Enhanced Step header */}
@@ -264,24 +331,34 @@ export function TopicContentStep({
               ) : undefined
             }
           >
-            <Select
-              value={formData.industry || ""}
-              onValueChange={(value) => {
-                onFieldChange("industry", value);
-                onFieldTouch("industry");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your industry..." />
-              </SelectTrigger>
-              <SelectContent>
-                {INDUSTRY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-4">
+              <RadioGroup
+                options={industryOptions}
+                value={industrySelection}
+                onValueChange={handleIndustrySelect}
+                columns={3}
+              />
+
+              {showCustomIndustryInput && (
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="custom-industry"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Specify your industry
+                  </Label>
+                  <Input
+                    id="custom-industry"
+                    value={formData.industry || ""}
+                    placeholder="Enter your industry"
+                    onChange={(event) =>
+                      handleCustomIndustryChange(event.target.value)
+                    }
+                    onBlur={handleCustomIndustryBlur}
+                  />
+                </div>
+              )}
+            </div>
           </AutoFilledFieldWrapper>
         )}
       </div>

@@ -415,7 +415,7 @@ const STEP_1_FIELDS: WizardField[] = [
   {
     id: "industry",
     label: "Industry",
-    type: "dropdown",
+    type: "radio",
     required: true,
     options: INDUSTRY_OPTIONS,
     helpText: "Your business industry (can be pre-filled from topic)",
