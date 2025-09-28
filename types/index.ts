@@ -200,6 +200,44 @@ export {
 } from "./topic-builder";
 
 // ============================================================================
+// WORKSPACE MANAGEMENT TYPES
+// ============================================================================
+export type {
+  AddFileKnowledgeRequest,
+  AddTextKnowledgeRequest,
+  AddWebKnowledgeRequest,
+  BrandVoice,
+  CreateWorkspaceRequest,
+  FileKnowledge,
+  FileKnowledgeStatus,
+  KnowledgeItem,
+  KnowledgeManagementState,
+  KnowledgeType,
+  TextKnowledge,
+  UpdateTextKnowledgeRequest,
+  UpdateWorkspaceRequest,
+  WebKnowledge,
+  WebKnowledgeStatus,
+  Workspace,
+  WorkspaceApiConfig,
+  WorkspaceApiContext,
+  WorkspaceError,
+  WorkspaceErrorCode,
+  WorkspaceFilters,
+  WorkspaceFormData,
+  WorkspaceFormState,
+  WorkspaceListResponse,
+  WorkspaceLoadingStates,
+  WorkspaceResponse,
+  WorkspaceStatus,
+  WorkspaceViewMode,
+} from "./workspace";
+export {
+  FILE_CONSTRAINTS,
+  WORKSPACE_CONSTRAINTS,
+} from "./workspace";
+
+// ============================================================================
 // DEPRECATED ALIASES (for backwards compatibility)
 // ============================================================================
 

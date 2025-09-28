@@ -1,0 +1,828 @@
+import { create } from "zustand";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { workspaceApiService } from "@/services/workspace-api";
+import type {
+  KnowledgeManagementState,
+  KnowledgeType,
+  Workspace,
+  WorkspaceFilters,
+  WorkspaceFormData,
+  WorkspaceFormState,
+  WorkspaceLoadingStates,
+  WorkspaceViewMode,
+} from "@/types/workspace";
+
+// SSR-safe storage implementation
+const getStorage = () => {
+  // SSR guard - only access localStorage on client-side
+  if (typeof window === "undefined") {
+    // Return a no-op storage for SSR
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  return localStorage;
+};
+
+/**
+ * Workspace Store Interface
+ *
+ * Manages client-side state for workspace management including:
+ * - Current workspace context
+ * - UI preferences and filters
+ * - Optimistic updates for better UX
+ * - Form state for workspace creation/editing
+ *
+ * Server state is handled by TanStack Query.
+ */
+interface WorkspaceState {
+  // Current workspace context
+  currentWorkspace: Workspace | null;
+  workspaceList: Workspace[];
+
+  // UI preferences and filters
+  viewMode: WorkspaceViewMode;
+  filters: WorkspaceFilters;
+  showFilters: boolean;
+
+  // Form state for workspace creation/editing
+  workspaceForm: WorkspaceFormState;
+
+  // Knowledge management state
+  knowledge: KnowledgeManagementState;
+
+  // Loading states for optimistic updates
+  loadingStates: WorkspaceLoadingStates;
+
+  // Recently used workspaces for quick access
+  recentWorkspaces: string[]; // workspace IDs
+
+  // SSR hydration state
+  _hasHydrated: boolean;
+
+  // ============================================================================
+  // WORKSPACE CONTEXT ACTIONS
+  // ============================================================================
+
+  setCurrentWorkspace: (workspace: Workspace | null) => void;
+  setWorkspaceList: (workspaces: Workspace[]) => void;
+  updateWorkspaceInList: (updatedWorkspace: Workspace) => void;
+  removeWorkspaceFromList: (workspaceId: string) => void;
+  addWorkspaceToList: (workspace: Workspace) => void;
+
+  // ============================================================================
+  // ASYNC WORKSPACE CRUD ACTIONS
+  // ============================================================================
+
+  createWorkspace: (data: WorkspaceFormData) => Promise<Workspace>;
+  updateWorkspace: (
+    workspaceId: string,
+    data: WorkspaceFormData,
+  ) => Promise<Workspace>;
+  deleteWorkspace: (workspaceId: string) => Promise<void>;
+  fetchWorkspaces: () => Promise<Workspace[]>;
+  fetchWorkspace: (workspaceId: string) => Promise<Workspace>;
+
+  // ============================================================================
+  // UI PREFERENCES ACTIONS
+  // ============================================================================
+
+  setViewMode: (mode: WorkspaceViewMode) => void;
+  updateFilters: (filters: Partial<WorkspaceFilters>) => void;
+  resetFilters: () => void;
+  toggleFilters: () => void;
+
+  // ============================================================================
+  // WORKSPACE FORM ACTIONS
+  // ============================================================================
+
+  openWorkspaceForm: (mode: "create" | "edit", workspace?: Workspace) => void;
+  closeWorkspaceForm: () => void;
+  updateWorkspaceFormData: (data: Partial<WorkspaceFormData>) => void;
+  setWorkspaceFormSubmitting: (isSubmitting: boolean) => void;
+  setWorkspaceFormErrors: (errors: Record<string, string>) => void;
+  resetWorkspaceForm: () => void;
+
+  // ============================================================================
+  // KNOWLEDGE MANAGEMENT ACTIONS
+  // ============================================================================
+
+  setSelectedKnowledgeType: (type: KnowledgeType) => void;
+  toggleKnowledgeSelection: (itemId: string) => void;
+  selectAllKnowledge: (itemIds: string[]) => void;
+  deselectAllKnowledge: () => void;
+  openUploadModal: () => void;
+  closeUploadModal: () => void;
+  setUploadProgress: (fileId: string, progress: number) => void;
+  removeUploadProgress: (fileId: string) => void;
+
+  // ============================================================================
+  // LOADING STATE ACTIONS
+  // ============================================================================
+
+  setLoading: (
+    operation: keyof WorkspaceLoadingStates,
+    loading: boolean,
+  ) => void;
+
+  // ============================================================================
+  // RECENT WORKSPACES ACTIONS
+  // ============================================================================
+
+  addToRecentWorkspaces: (workspaceId: string) => void;
+  removeFromRecentWorkspaces: (workspaceId: string) => void;
+  clearRecentWorkspaces: () => void;
+
+  // ============================================================================
+  // OPTIMISTIC UPDATE ACTIONS
+  // ============================================================================
+
+  optimisticallyUpdateWorkspace: (
+    workspaceId: string,
+    updates: Partial<Workspace>,
+  ) => void;
+  revertOptimisticUpdate: (workspace: Workspace) => void;
+
+  // ============================================================================
+  // UTILITY ACTIONS
+  // ============================================================================
+
+  resetStore: () => void;
+  setHasHydrated: (hydrated: boolean) => void;
+}
+
+/**
+ * Default workspace form data
+ */
+const initialWorkspaceFormData: WorkspaceFormData = {
+  title: "",
+  description: "",
+  url: "",
+};
+
+/**
+ * Default workspace filters
+ */
+const initialFilters: WorkspaceFilters = {
+  search: "",
+  sortBy: "updated_at",
+  sortOrder: "desc",
+};
+
+/**
+ * Workspace Management Zustand Store
+ *
+ * Uses devtools for debugging and persistence for UI preferences.
+ * Only stores client-side UI state - server state is handled by TanStack Query.
+ */
+export const useWorkspaceStore = create<WorkspaceState>()(
+  devtools(
+    persist(
+      (set, _get) => ({
+        // Initial state
+        currentWorkspace: null,
+        workspaceList: [],
+
+        // UI preferences
+        viewMode: "grid",
+        filters: initialFilters,
+        showFilters: false,
+
+        // Form state
+        workspaceForm: {
+          isOpen: false,
+          mode: "create",
+          data: initialWorkspaceFormData,
+          isSubmitting: false,
+          errors: {},
+        },
+
+        // Knowledge management
+        knowledge: {
+          selectedType: "web",
+          selectedItems: [],
+          isUploadModalOpen: false,
+          uploadProgress: {},
+        },
+
+        // Loading states
+        loadingStates: {
+          switching: false,
+          creating: false,
+          updating: false,
+          deleting: false,
+        },
+
+        // Recent workspaces
+        recentWorkspaces: [],
+
+        // SSR hydration
+        _hasHydrated: false,
+
+        // ============================================================================
+        // WORKSPACE CONTEXT ACTIONS
+        // ============================================================================
+
+        setCurrentWorkspace: (workspace) => {
+          set((state) => {
+            const newState = { ...state, currentWorkspace: workspace };
+
+            // Add to recent workspaces if setting a workspace
+            if (workspace) {
+              const recentWorkspaces = [
+                workspace.id,
+                ...state.recentWorkspaces.filter((id) => id !== workspace.id),
+              ].slice(0, 5); // Keep only 5 most recent
+
+              newState.recentWorkspaces = recentWorkspaces;
+            }
+
+            return newState;
+          });
+        },
+
+        setWorkspaceList: (workspaces) => {
+          set({ workspaceList: workspaces });
+        },
+
+        updateWorkspaceInList: (updatedWorkspace) => {
+          set((state) => ({
+            workspaceList: state.workspaceList.map((workspace) =>
+              workspace.id === updatedWorkspace.id
+                ? updatedWorkspace
+                : workspace,
+            ),
+            // Update current workspace if it's the one being updated
+            currentWorkspace:
+              state.currentWorkspace?.id === updatedWorkspace.id
+                ? updatedWorkspace
+                : state.currentWorkspace,
+          }));
+        },
+
+        removeWorkspaceFromList: (workspaceId) => {
+          set((state) => ({
+            workspaceList: state.workspaceList.filter(
+              (workspace) => workspace.id !== workspaceId,
+            ),
+            // Clear current workspace if it's the one being removed
+            currentWorkspace:
+              state.currentWorkspace?.id === workspaceId
+                ? null
+                : state.currentWorkspace,
+            // Remove from recent workspaces
+            recentWorkspaces: state.recentWorkspaces.filter(
+              (id) => id !== workspaceId,
+            ),
+          }));
+        },
+
+        addWorkspaceToList: (workspace) => {
+          set((state) => ({
+            workspaceList: [workspace, ...state.workspaceList],
+          }));
+        },
+
+        // ============================================================================
+        // UI PREFERENCES ACTIONS
+        // ============================================================================
+
+        setViewMode: (mode) => {
+          set({ viewMode: mode });
+        },
+
+        updateFilters: (newFilters) => {
+          set((state) => ({
+            filters: { ...state.filters, ...newFilters },
+          }));
+        },
+
+        resetFilters: () => {
+          set({ filters: initialFilters });
+        },
+
+        toggleFilters: () => {
+          set((state) => ({ showFilters: !state.showFilters }));
+        },
+
+        // ============================================================================
+        // WORKSPACE FORM ACTIONS
+        // ============================================================================
+
+        openWorkspaceForm: (mode, workspace) => {
+          set({
+            workspaceForm: {
+              isOpen: true,
+              mode,
+              data: workspace
+                ? {
+                    title: workspace.title,
+                    description: workspace.description || "",
+                    url: workspace.url,
+                  }
+                : initialWorkspaceFormData,
+              isSubmitting: false,
+              errors: {},
+            },
+          });
+        },
+
+        closeWorkspaceForm: () => {
+          set({
+            workspaceForm: {
+              isOpen: false,
+              mode: "create",
+              data: initialWorkspaceFormData,
+              isSubmitting: false,
+              errors: {},
+            },
+          });
+        },
+
+        updateWorkspaceFormData: (data) => {
+          set((state) => ({
+            workspaceForm: {
+              ...state.workspaceForm,
+              data: { ...state.workspaceForm.data, ...data },
+              // Clear errors for updated fields
+              errors: Object.keys(data).reduce((acc, key) => {
+                const { [key]: _, ...rest } = acc;
+                return rest;
+              }, state.workspaceForm.errors),
+            },
+          }));
+        },
+
+        setWorkspaceFormSubmitting: (isSubmitting) => {
+          set((state) => ({
+            workspaceForm: { ...state.workspaceForm, isSubmitting },
+          }));
+        },
+
+        setWorkspaceFormErrors: (errors) => {
+          set((state) => ({
+            workspaceForm: { ...state.workspaceForm, errors },
+          }));
+        },
+
+        resetWorkspaceForm: () => {
+          set((state) => ({
+            workspaceForm: {
+              ...state.workspaceForm,
+              data: initialWorkspaceFormData,
+              errors: {},
+            },
+          }));
+        },
+
+        // ============================================================================
+        // KNOWLEDGE MANAGEMENT ACTIONS
+        // ============================================================================
+
+        setSelectedKnowledgeType: (type) => {
+          set((state) => ({
+            knowledge: {
+              ...state.knowledge,
+              selectedType: type,
+              selectedItems: [], // Clear selection when switching types
+            },
+          }));
+        },
+
+        toggleKnowledgeSelection: (itemId) => {
+          set((state) => {
+            const selectedItems = state.knowledge.selectedItems.includes(itemId)
+              ? state.knowledge.selectedItems.filter((id) => id !== itemId)
+              : [...state.knowledge.selectedItems, itemId];
+
+            return {
+              knowledge: { ...state.knowledge, selectedItems },
+            };
+          });
+        },
+
+        selectAllKnowledge: (itemIds) => {
+          set((state) => ({
+            knowledge: { ...state.knowledge, selectedItems: itemIds },
+          }));
+        },
+
+        deselectAllKnowledge: () => {
+          set((state) => ({
+            knowledge: { ...state.knowledge, selectedItems: [] },
+          }));
+        },
+
+        openUploadModal: () => {
+          set((state) => ({
+            knowledge: { ...state.knowledge, isUploadModalOpen: true },
+          }));
+        },
+
+        closeUploadModal: () => {
+          set((state) => ({
+            knowledge: {
+              ...state.knowledge,
+              isUploadModalOpen: false,
+              uploadProgress: {},
+            },
+          }));
+        },
+
+        setUploadProgress: (fileId, progress) => {
+          set((state) => ({
+            knowledge: {
+              ...state.knowledge,
+              uploadProgress: {
+                ...state.knowledge.uploadProgress,
+                [fileId]: progress,
+              },
+            },
+          }));
+        },
+
+        removeUploadProgress: (fileId) => {
+          set((state) => {
+            const { [fileId]: _, ...rest } = state.knowledge.uploadProgress;
+            return {
+              knowledge: { ...state.knowledge, uploadProgress: rest },
+            };
+          });
+        },
+
+        // ============================================================================
+        // LOADING STATE ACTIONS
+        // ============================================================================
+
+        setLoading: (operation, loading) => {
+          set((state) => ({
+            loadingStates: { ...state.loadingStates, [operation]: loading },
+          }));
+        },
+
+        // ============================================================================
+        // RECENT WORKSPACES ACTIONS
+        // ============================================================================
+
+        addToRecentWorkspaces: (workspaceId) => {
+          set((state) => {
+            const recentWorkspaces = [
+              workspaceId,
+              ...state.recentWorkspaces.filter((id) => id !== workspaceId),
+            ].slice(0, 5); // Keep only 5 most recent
+
+            return { recentWorkspaces };
+          });
+        },
+
+        removeFromRecentWorkspaces: (workspaceId) => {
+          set((state) => ({
+            recentWorkspaces: state.recentWorkspaces.filter(
+              (id) => id !== workspaceId,
+            ),
+          }));
+        },
+
+        clearRecentWorkspaces: () => {
+          set({ recentWorkspaces: [] });
+        },
+
+        // ============================================================================
+        // OPTIMISTIC UPDATE ACTIONS
+        // ============================================================================
+
+        optimisticallyUpdateWorkspace: (workspaceId, updates) => {
+          set((state) => {
+            const updatedWorkspaceList = state.workspaceList.map((workspace) =>
+              workspace.id === workspaceId
+                ? { ...workspace, ...updates }
+                : workspace,
+            );
+
+            return {
+              workspaceList: updatedWorkspaceList,
+              currentWorkspace:
+                state.currentWorkspace?.id === workspaceId
+                  ? { ...state.currentWorkspace, ...updates }
+                  : state.currentWorkspace,
+            };
+          });
+        },
+
+        revertOptimisticUpdate: (workspace) => {
+          set((state) => ({
+            workspaceList: state.workspaceList.map((w) =>
+              w.id === workspace.id ? workspace : w,
+            ),
+            currentWorkspace:
+              state.currentWorkspace?.id === workspace.id
+                ? workspace
+                : state.currentWorkspace,
+          }));
+        },
+
+        // ============================================================================
+        // ASYNC WORKSPACE CRUD ACTIONS
+        // ============================================================================
+
+        createWorkspace: async (data) => {
+          set((state) => ({
+            ...state,
+            loadingStates: { ...state.loadingStates, creating: true },
+          }));
+
+          try {
+            const response = await workspaceApiService.createWorkspace({
+              title: data.title,
+              description: data.description || "",
+              url: data.url,
+            });
+
+            const workspace = response.workspace;
+
+            // Optimistically add to store
+            set((state) => ({
+              workspaceList: [workspace, ...state.workspaceList],
+              currentWorkspace: workspace,
+              loadingStates: { ...state.loadingStates, creating: false },
+            }));
+
+            return workspace;
+          } catch (error) {
+            set((state) => ({
+              ...state,
+              loadingStates: { ...state.loadingStates, creating: false },
+            }));
+            throw error;
+          }
+        },
+
+        updateWorkspace: async (workspaceId, data) => {
+          set((state) => ({
+            ...state,
+            loadingStates: { ...state.loadingStates, updating: true },
+          }));
+
+          try {
+            const response = await workspaceApiService.updateWorkspace(
+              workspaceId,
+              {
+                title: data.title,
+                description: data.description || "",
+                url: data.url,
+              },
+            );
+
+            const workspace = response.workspace;
+
+            // Update in store
+            set((state) => ({
+              workspaceList: state.workspaceList.map((w) =>
+                w.id === workspaceId ? workspace : w,
+              ),
+              currentWorkspace:
+                state.currentWorkspace?.id === workspaceId
+                  ? workspace
+                  : state.currentWorkspace,
+              loadingStates: { ...state.loadingStates, updating: false },
+            }));
+
+            return workspace;
+          } catch (error) {
+            set((state) => ({
+              ...state,
+              loadingStates: { ...state.loadingStates, updating: false },
+            }));
+            throw error;
+          }
+        },
+
+        deleteWorkspace: async (workspaceId) => {
+          set((state) => ({
+            ...state,
+            loadingStates: { ...state.loadingStates, deleting: true },
+          }));
+
+          try {
+            await workspaceApiService.deleteWorkspace(workspaceId);
+
+            // Remove from store
+            set((state) => ({
+              workspaceList: state.workspaceList.filter(
+                (w) => w.id !== workspaceId,
+              ),
+              currentWorkspace:
+                state.currentWorkspace?.id === workspaceId
+                  ? null
+                  : state.currentWorkspace,
+              recentWorkspaces: state.recentWorkspaces.filter(
+                (id) => id !== workspaceId,
+              ),
+              loadingStates: { ...state.loadingStates, deleting: false },
+            }));
+          } catch (error) {
+            set((state) => ({
+              ...state,
+              loadingStates: { ...state.loadingStates, deleting: false },
+            }));
+            throw error;
+          }
+        },
+
+        fetchWorkspaces: async () => {
+          set((state) => ({
+            ...state,
+            loadingStates: { ...state.loadingStates, switching: true },
+          }));
+
+          try {
+            const response = await workspaceApiService.listWorkspaces();
+            const workspaces = response.workspaces;
+
+            set((state) => ({
+              workspaceList: workspaces,
+              loadingStates: { ...state.loadingStates, switching: false },
+            }));
+
+            return workspaces;
+          } catch (error) {
+            set((state) => ({
+              ...state,
+              loadingStates: { ...state.loadingStates, switching: false },
+            }));
+            throw error;
+          }
+        },
+
+        fetchWorkspace: async (workspaceId) => {
+          set((state) => ({
+            ...state,
+            loadingStates: { ...state.loadingStates, switching: true },
+          }));
+
+          try {
+            const response =
+              await workspaceApiService.getWorkspace(workspaceId);
+            const workspace = response.workspace;
+
+            // Update workspace in list if it exists, otherwise add it
+            set((state) => {
+              const existingIndex = state.workspaceList.findIndex(
+                (w) => w.id === workspaceId,
+              );
+              const updatedList =
+                existingIndex >= 0
+                  ? state.workspaceList.map((w) =>
+                      w.id === workspaceId ? workspace : w,
+                    )
+                  : [workspace, ...state.workspaceList];
+
+              return {
+                workspaceList: updatedList,
+                currentWorkspace: workspace,
+                loadingStates: { ...state.loadingStates, switching: false },
+              };
+            });
+
+            return workspace;
+          } catch (error) {
+            set((state) => ({
+              ...state,
+              loadingStates: { ...state.loadingStates, switching: false },
+            }));
+            throw error;
+          }
+        },
+
+        // ============================================================================
+        // UTILITY ACTIONS
+        // ============================================================================
+
+        resetStore: () => {
+          set({
+            currentWorkspace: null,
+            workspaceList: [],
+            viewMode: "grid",
+            filters: initialFilters,
+            showFilters: false,
+            workspaceForm: {
+              isOpen: false,
+              mode: "create",
+              data: initialWorkspaceFormData,
+              isSubmitting: false,
+              errors: {},
+            },
+            knowledge: {
+              selectedType: "web",
+              selectedItems: [],
+              isUploadModalOpen: false,
+              uploadProgress: {},
+            },
+            loadingStates: {
+              switching: false,
+              creating: false,
+              updating: false,
+              deleting: false,
+            },
+            recentWorkspaces: [],
+          });
+        },
+
+        setHasHydrated: (hydrated) => {
+          set({ _hasHydrated: hydrated });
+        },
+      }),
+      {
+        name: "workspace-store",
+        storage: createJSONStorage(() => getStorage()),
+        // Only persist UI preferences, not server data
+        partialize: (state) => ({
+          viewMode: state.viewMode,
+          filters: state.filters,
+          recentWorkspaces: state.recentWorkspaces,
+          _hasHydrated: state._hasHydrated,
+        }),
+        onRehydrateStorage: () => (state) => {
+          state?.setHasHydrated(true);
+        },
+      },
+    ),
+    {
+      name: "workspace-store",
+    },
+  ),
+);
+
+// ============================================================================
+// SELECTOR HOOKS FOR PERFORMANCE
+// ============================================================================
+
+/**
+ * Hook to check if store has hydrated (for SSR compatibility)
+ */
+export const useWorkspaceStoreHydrated = () => {
+  return useWorkspaceStore((state) => state._hasHydrated);
+};
+
+/**
+ * Hook to get current workspace context
+ */
+export const useCurrentWorkspace = () => {
+  return useWorkspaceStore((state) => state.currentWorkspace);
+};
+
+/**
+ * Hook to get workspace list
+ */
+export const useWorkspaceList = () => {
+  return useWorkspaceStore((state) => state.workspaceList);
+};
+
+/**
+ * Hook to get workspace form state
+ */
+export const useWorkspaceForm = () => {
+  return useWorkspaceStore((state) => state.workspaceForm);
+};
+
+/**
+ * Hook to get knowledge management state
+ */
+export const useKnowledgeState = () => {
+  return useWorkspaceStore((state) => state.knowledge);
+};
+
+/**
+ * Hook to get loading states
+ */
+export const useWorkspaceLoadingStates = () => {
+  return useWorkspaceStore((state) => state.loadingStates);
+};
+
+/**
+ * Hook to get UI preferences
+ */
+export const useWorkspaceUIPreferences = () => {
+  const viewMode = useWorkspaceStore((state) => state.viewMode);
+  const filters = useWorkspaceStore((state) => state.filters);
+  const showFilters = useWorkspaceStore((state) => state.showFilters);
+
+  return { viewMode, filters, showFilters };
+};
+
+/**
+ * Hook to get recent workspaces
+ */
+export const useRecentWorkspaces = () => {
+  const workspaceList = useWorkspaceList();
+  const recentWorkspaceIds = useWorkspaceStore(
+    (state) => state.recentWorkspaces,
+  );
+
+  // Return actual workspace objects for recent workspace IDs
+  return recentWorkspaceIds
+    .map((id) => workspaceList.find((workspace) => workspace.id === id))
+    .filter(Boolean) as Workspace[];
+};

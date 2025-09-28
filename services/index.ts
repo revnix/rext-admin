@@ -20,6 +20,25 @@
  * ```
  */
 
+// Export authentication services
+export {
+  AuthenticatedFetch,
+  AuthManager,
+  authenticatedFetch,
+  authManager,
+  useAuth,
+  useAuthenticatedFetch,
+  useAuthStore,
+} from "@/lib/api-auth";
+// Export API error handling
+export {
+  ApiErrorHandler,
+  apiErrorHandler,
+  handleApiError,
+  useApiErrorHandler,
+  withApiErrorHandling,
+  withErrorHandling,
+} from "@/lib/api-error-middleware";
 // Export error handling utilities for advanced use cases
 export {
   calculateRetryDelay,
@@ -56,7 +75,6 @@ export type {
   TopicGenerationRequest,
   TopicGenerationResponse,
 } from "@/types/topic-builder";
-
 // Export the main service class and default instance
 // Export legacy compatibility function (marked as deprecated)
 export {
@@ -64,3 +82,20 @@ export {
   backendService,
   generateTopicsWithBackend,
 } from "./backend";
+// Export knowledge API services
+export {
+  FileKnowledgeService,
+  fileKnowledgeService,
+  KnowledgeService,
+  knowledgeService,
+  TextKnowledgeService,
+  textKnowledgeService,
+  WebKnowledgeService,
+  webKnowledgeService,
+} from "./knowledge-api";
+// Export workspace API service
+export {
+  WorkspaceApiError,
+  WorkspaceApiService,
+  workspaceApiService,
+} from "./workspace-api";

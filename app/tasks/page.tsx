@@ -113,8 +113,8 @@ export default function TasksPage() {
             `Failed to load tasks: ${response.status} ${response.statusText}`,
           );
         }
-        const data = await response.json();
-        setTasksData(data);
+        const response_data = await response.json();
+        setTasksData(response_data.data);
       } catch (err) {
         console.error("Error loading tasks:", err);
         setError(err instanceof Error ? err.message : "Failed to load tasks");
