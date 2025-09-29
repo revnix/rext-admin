@@ -39,7 +39,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { WorkspaceFormModal } from "@/components/workspace/workspace-form-modal";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
 import {
@@ -55,9 +54,6 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
-  const openWorkspaceForm = useWorkspaceStore(
-    (state) => state.openWorkspaceForm,
-  );
   const duplicateWorkspace = useWorkspaceStore(
     (state) => state.duplicateWorkspace,
   );
@@ -70,7 +66,7 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
 
   const handleEditWorkspace = (e: React.MouseEvent) => {
     e.stopPropagation();
-    openWorkspaceForm("edit", workspace);
+    router.push(`/workspaces/${workspace.id}/edit`);
   };
 
   const handleDuplicateWorkspace = async (e: React.MouseEvent) => {
@@ -176,9 +172,6 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
-  const openWorkspaceForm = useWorkspaceStore(
-    (state) => state.openWorkspaceForm,
-  );
   const duplicateWorkspace = useWorkspaceStore(
     (state) => state.duplicateWorkspace,
   );
@@ -191,7 +184,7 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
 
   const handleEditWorkspace = (e: React.MouseEvent) => {
     e.stopPropagation();
-    openWorkspaceForm("edit", workspace);
+    router.push(`/workspaces/${workspace.id}/edit`);
   };
 
   const handleDuplicateWorkspace = async (e: React.MouseEvent) => {
@@ -281,9 +274,7 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
 
 // Empty state component
 function EmptyWorkspaceState() {
-  const openWorkspaceForm = useWorkspaceStore(
-    (state) => state.openWorkspaceForm,
-  );
+  const router = useRouter();
 
   return (
     <Card className="border-dashed">
@@ -296,7 +287,7 @@ function EmptyWorkspaceState() {
           Create your first workspace to start organizing your knowledge,
           content, and brand voice.
         </p>
-        <Button onClick={() => openWorkspaceForm("create")}>
+        <Button onClick={() => router.push("/workspaces/create")}>
           <Plus className="h-4 w-4 mr-2" />
           Create Workspace
         </Button>
@@ -350,8 +341,9 @@ function WorkspaceListSkeleton({ viewMode }: { viewMode: WorkspaceViewMode }) {
 
 export default function WorkspacePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
   const { viewMode, filters } = useWorkspaceUIPreferences();
-  const { setViewMode, updateFilters, openWorkspaceForm } = useWorkspaceStore();
+  const { setViewMode, updateFilters } = useWorkspaceStore();
   const workspaceList = useWorkspaceList();
 
   // Update page title
@@ -429,7 +421,7 @@ export default function WorkspacePage() {
         <RefreshCw className="h-4 w-4 mr-2" />
         Refresh
       </Button>
-      <Button onClick={() => openWorkspaceForm("create")}>
+      <Button onClick={() => router.push("/workspaces/create")}>
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>
@@ -608,9 +600,6 @@ export default function WorkspacePage() {
           </Card>
         )}
       </div>
-
-      {/* Workspace Form Modal */}
-      <WorkspaceFormModal />
     </PageLayout>
   );
 }

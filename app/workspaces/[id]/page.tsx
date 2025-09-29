@@ -196,9 +196,6 @@ function BrandVoiceCard({ workspace }: { workspace: Workspace }) {
 // Workspace Details Card Component
 function WorkspaceDetailsCard({ workspace }: { workspace: Workspace }) {
   const router = useRouter();
-  const openWorkspaceForm = useWorkspaceStore(
-    (state) => state.openWorkspaceForm,
-  );
   const duplicateWorkspace = useWorkspaceStore(
     (state) => state.duplicateWorkspace,
   );
@@ -239,7 +236,7 @@ function WorkspaceDetailsCard({ workspace }: { workspace: Workspace }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={() => openWorkspaceForm("edit", workspace)}
+                onClick={() => router.push(`/workspaces/${workspace.id}/edit`)}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Workspace
@@ -480,7 +477,9 @@ export default function WorkspaceDetailPage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => router.push(`/workspaces/${workspace.id}/edit`)}
+          >
             <Settings className="h-4 w-4 mr-2" />
             Edit Workspace
           </DropdownMenuItem>
