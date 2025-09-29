@@ -10,6 +10,7 @@ import {
   List,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Search,
   Settings,
   Upload,
@@ -18,7 +19,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorkspaceListLayout } from "@/components/workspace/workspace-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
 import {
@@ -349,7 +350,7 @@ function WorkspaceListSkeleton({ viewMode }: { viewMode: WorkspaceViewMode }) {
 export default function WorkspacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { viewMode, filters } = useWorkspaceUIPreferences();
-  const { setViewMode, updateFilters, openWorkspaceForm } = useWorkspaceStore();
+  const { setViewMode, updateFilters } = useWorkspaceStore();
   const workspaceList = useWorkspaceList();
 
   // Update page title
@@ -419,23 +420,20 @@ export default function WorkspacePage() {
     return sortOrder === "desc" ? -comparison : comparison;
   });
 
-  const breadcrumbs = [{ label: "Workspaces" }];
-
   return (
-    <PageLayout
+    <WorkspaceListLayout
+      variant="list"
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
-      breadcrumbs={breadcrumbs}
-      actions={
-        <>
-          <Button variant="outline" onClick={() => refetch()}>
-            Refresh
-          </Button>
-          <Button onClick={() => openWorkspaceForm("create")}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Workspace
-          </Button>
-        </>
+      totalCount={sortedWorkspaces.length}
+      defaultActions={{
+        refresh: true,
+      }}
+      headerActions={
+        <Button variant="outline" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       }
     >
       <div className="space-y-6">
@@ -603,6 +601,6 @@ export default function WorkspacePage() {
           </Card>
         )}
       </div>
-    </PageLayout>
+    </WorkspaceListLayout>
   );
 }

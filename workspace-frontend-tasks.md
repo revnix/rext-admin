@@ -92,7 +92,7 @@ Based on comprehensive analysis of @wrext-backend/ functionality, this document 
 - [x] Create workspace sidebar navigation (✅ **COMPLETED**)
 
 ### Layout Components
-- [ ] Build workspace layout wrapper
+- [x] Build workspace layout wrapper (✅ **Implemented**: Specialized WorkspaceLayout component with variants for list/detail/minimal views, built-in action buttons, and automatic breadcrumb generation)
 - [ ] Create responsive workspace header
 - [ ] Implement workspace-specific sidebar
 - [ ] Add workspace action buttons (edit, delete, settings)
@@ -390,6 +390,19 @@ Upon detailed codebase analysis, discovered that all knowledge management compon
    - **Icon consistency**: Uses consistent Lucide icons throughout navigation items
    - **Enhanced workspace pages**: Updated workspace detail page to support URL-based tab navigation
 
+6. ✅ **Workspace layout wrapper** - Specialized layout component for workspace pages:
+   - **Three variants**: WorkspaceListLayout, WorkspaceDetailLayout, WorkspaceMinimalLayout for different use cases
+   - **Built-in action buttons**: Edit, duplicate, delete, settings, refresh actions with configurable placement (header vs dropdown)
+   - **Automatic breadcrumbs**: Auto-generated navigation based on workspace context
+   - **Workspace context handling**: Seamless integration with existing Zustand workspace store
+   - **Error boundaries**: Workspace-specific error handling with recovery actions
+   - **Loading states**: Integrated loading handling for workspace operations
+   - **Action loading states**: Individual button loading states during operations like duplication
+   - **Flexible API**: Supports custom actions alongside default workspace actions
+   - **TypeScript safety**: Comprehensive type definitions for all layout variants and configurations
+   - **Consistent UX**: Standardized workspace header patterns and action placements
+   - **Mobile responsive**: Maintains existing responsive design patterns from PageLayout
+
 #### **Implementation Learnings** (Dec 29, 2024 - Workspace Sidebar Navigation):
 - **Global sidebar context challenge**: Using `useParams()` in global components doesn't work reliably - need to use store state instead
 - **Context detection strategy**: Better to check pathname patterns (`/workspaces/*`) rather than route parameters for global components  
@@ -397,16 +410,26 @@ Upon detailed codebase analysis, discovered that all knowledge management compon
 - **Performance consideration**: Conditional rendering in global components prevents unnecessary re-renders
 - **Store integration**: Zustand workspace store provides reliable current workspace context across all components
 
-#### **Actual Missing Features** (Based on Current Analysis):
-1. **Workspace layout wrapper** - specialized layout for workspace pages
+#### **Implementation Learnings** (Dec 29, 2024 - WorkspaceLayout Component):
+- **Composition pattern**: WorkspaceLayout composes PageLayout rather than extending it, providing better flexibility and maintaining existing patterns
+- **Variant system**: Three distinct layout variants (list, detail, minimal) provide appropriate features for different workspace contexts
+- **Action placement strategy**: Header actions for immediate access (refresh, create) vs dropdown for secondary actions (edit, delete)
+- **Store integration pattern**: Direct access to Zustand store state in action handlers provides reliable state management
+- **Type safety approach**: Comprehensive TypeScript interfaces ensure proper usage and catch configuration errors at compile time
+- **Error boundary design**: Workspace-specific error handling provides better user experience with contextual recovery actions
+- **Loading state management**: Individual action loading states prevent UI confusion during async operations
+- **Auto-breadcrumb generation**: Reduces boilerplate in workspace pages while maintaining navigation consistency
+
+#### **Actual Missing Features** (Updated Dec 29, 2024):
+1. ✅ **Workspace layout wrapper** - COMPLETED: Specialized WorkspaceLayout component with variants and built-in actions
 2. **Responsive workspace header** - current PageLayout is generic
-3. **Workspace-specific sidebar** - current AppSidebar is global, not workspace-contextual
-4. **Workspace action buttons** - dedicated action buttons (edit, delete, settings) in workspace pages
+3. **Workspace-specific sidebar** - current AppSidebar is global, not workspace-contextual  
+4. ✅ **Workspace action buttons** - COMPLETED: Built into WorkspaceLayout with configurable placement and loading states
 5. **Mobile optimization** - some components may need responsive improvements
 
 #### **Status Update Required**:
 - Phase 2 (Knowledge Management) is essentially **COMPLETE**
-- Phase 3 (Navigation & Layout) is **50% COMPLETE** with workspace switcher, breadcrumbs, recent access, and workspace sidebar navigation implemented
+- Phase 3 (Navigation & Layout) is **75% COMPLETE** with workspace switcher, breadcrumbs, recent access, workspace sidebar navigation, and workspace layout wrapper implemented
 
 ### 🚧 **Next Implementation Phase** (Updated Priority)
 
