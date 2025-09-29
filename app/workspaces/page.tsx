@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorkspaceFormModal } from "@/components/workspace/workspace-form-modal";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
 import {
@@ -607,6 +608,9 @@ export default function WorkspacePage() {
           </Card>
         )}
       </div>
+
+      {/* Workspace Form Modal */}
+      <WorkspaceFormModal />
     </PageLayout>
   );
 }

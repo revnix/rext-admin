@@ -1,4 +1,4 @@
-Review the @workspace-frontend-tasks.md file and based on the plan, work on the next task in the plan.
+Review the @workspace-crud-implementation-plan.md file and based on the plan, work on the next task in the plan.
 
 Make sure to work on one subtask at a time. While working on a subtask, make sure to update the phase, task and that subtask's status to "in-progress" and "done" after completion.
 
