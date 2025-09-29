@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
 import { WorkspaceSettingsPanel } from "@/components/workspace/workspace-settings-panel";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
@@ -251,9 +252,17 @@ function WorkspaceDetailsCard({ workspace }: { workspace: Workspace }) {
                   : "Duplicate Workspace"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                Delete Workspace
-              </DropdownMenuItem>
+              <WorkspaceDeleteDialog
+                workspace={workspace}
+                trigger={
+                  <DropdownMenuItem className="text-destructive">
+                    Delete Workspace
+                  </DropdownMenuItem>
+                }
+                onDeleted={() => {
+                  router.push("/workspaces");
+                }}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -488,10 +497,18 @@ export default function WorkspaceDetailPage() {
             Duplicate
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </DropdownMenuItem>
+          <WorkspaceDeleteDialog
+            workspace={workspace}
+            trigger={
+              <DropdownMenuItem className="text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            }
+            onDeleted={() => {
+              router.push("/workspaces");
+            }}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

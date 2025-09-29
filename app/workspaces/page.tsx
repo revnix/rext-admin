@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
 import {
@@ -128,9 +129,17 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
                   : "Duplicate Workspace"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                Delete Workspace
-              </DropdownMenuItem>
+              <WorkspaceDeleteDialog
+                workspace={workspace}
+                trigger={
+                  <DropdownMenuItem className="text-destructive">
+                    Delete Workspace
+                  </DropdownMenuItem>
+                }
+                onDeleted={() => {
+                  // Stay on workspace list - automatic refresh via query invalidation
+                }}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -263,9 +272,17 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
               : "Duplicate Workspace"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive">
-            Delete Workspace
-          </DropdownMenuItem>
+          <WorkspaceDeleteDialog
+            workspace={workspace}
+            trigger={
+              <DropdownMenuItem className="text-destructive">
+                Delete Workspace
+              </DropdownMenuItem>
+            }
+            onDeleted={() => {
+              // Stay on workspace list - automatic refresh via query invalidation
+            }}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </button>
