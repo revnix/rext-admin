@@ -247,28 +247,51 @@ export class AuthManager {
     this.log.info("Attempting login", { email });
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024"}/api/user/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
         },
-        body: JSON.stringify({ email, password }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Login failed");
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
+
+      // The backend returns the data in a "data" property
+      const data = responseData.data;
+
+      // Create token object from response
+      const token: AuthToken = {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        tokenType: "Bearer",
+        expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour expiry
+      };
+
+      // Create user object
+      const user: AuthUser = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.username,
+        role: data.user.roles?.[0] || "user",
+        permissions: data.user.roles || [],
+      };
 
       // Store token and user
       const store = useAuthStore.getState();
-      store.setToken(data.token);
-      store.setUser(data.user);
+      store.setToken(token);
+      store.setUser(user);
 
-      this.log.info("Login successful", { userId: data.user.id });
-      return data.user;
+      this.log.info("Login successful", { userId: user.id });
+      return user;
     } catch (error) {
       this.log.error("Login failed", { email, error });
       throw error;

@@ -131,6 +131,22 @@ export type {
   UserData,
 } from "./data-table";
 // ============================================================================
+// KNOWLEDGE DOMAIN TYPES
+// ============================================================================
+export type {
+  KnowledgeFilterState,
+  KnowledgeListViewMode,
+  KnowledgeSortDirection,
+  KnowledgeSortKey,
+  UnifiedKnowledgeItem,
+  UnifiedKnowledgeSource,
+  UnifiedKnowledgeStatus,
+} from "./knowledge";
+export {
+  defaultKnowledgeFilterState,
+  hasActiveKnowledgeFilters,
+} from "./knowledge";
+// ============================================================================
 // SESSION STORAGE TYPES
 // ============================================================================
 export type {

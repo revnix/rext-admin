@@ -14,6 +14,7 @@ import {
   Upload,
   Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,6 +47,7 @@ import type { Workspace, WorkspaceViewMode } from "@/types/workspace";
 
 // Workspace card component for grid view
 function WorkspaceCard({ workspace }: { workspace: Workspace }) {
+  const router = useRouter();
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
@@ -55,7 +57,7 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
 
   const handleSelectWorkspace = () => {
     setCurrentWorkspace(workspace);
-    // Navigate to workspace detail page (to be implemented)
+    router.push(`/workspaces/${workspace.id}`);
   };
 
   const handleEditWorkspace = (e: React.MouseEvent) => {
@@ -137,6 +139,7 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
 
 // Workspace list item for list view
 function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
+  const router = useRouter();
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
@@ -146,7 +149,7 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
 
   const handleSelectWorkspace = () => {
     setCurrentWorkspace(workspace);
-    // Navigate to workspace detail page (to be implemented)
+    router.push(`/workspaces/${workspace.id}`);
   };
 
   const handleEditWorkspace = (e: React.MouseEvent) => {

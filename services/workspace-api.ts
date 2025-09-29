@@ -75,7 +75,7 @@ export class WorkspaceApiService {
 
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     this.config = {
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
+      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024",
       timeout: 30000, // 30 seconds
       enableRequestDeduplication: true,
       ...config,
@@ -504,6 +504,12 @@ export class WorkspaceApiService {
         duration,
       });
 
+      // Extract data from the backend's response wrapper
+      const responseData = data as { success?: boolean; data?: T };
+      if (responseData?.success && responseData.data) {
+        return responseData.data;
+      }
+
       return data as T;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -572,6 +578,12 @@ export class WorkspaceApiService {
         status: response.status,
         duration,
       });
+
+      // Extract data from the backend's response wrapper
+      const responseData = data as { success?: boolean; data?: T };
+      if (responseData?.success && responseData.data) {
+        return responseData.data;
+      }
 
       return data as T;
     } catch (error) {
