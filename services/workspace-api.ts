@@ -163,6 +163,52 @@ export class WorkspaceApiService {
     );
   }
 
+  /**
+   * Duplicate workspace by creating a new workspace with copied data
+   * Note: This is a client-side operation that uses the create endpoint
+   */
+  async duplicateWorkspace(
+    sourceWorkspaceId: string,
+  ): Promise<WorkspaceResponse> {
+    this.validateUuid(sourceWorkspaceId, "workspace_id");
+
+    // First, get the source workspace data
+    const sourceResponse = await this.getWorkspace(sourceWorkspaceId);
+    const sourceWorkspace = sourceResponse.workspace;
+
+    // Generate a unique title for the duplicate
+    const duplicateTitle = this.generateDuplicateTitle(sourceWorkspace.title);
+
+    // Create the duplicate workspace data
+    const duplicateData: CreateWorkspaceRequest = {
+      title: duplicateTitle,
+      description: sourceWorkspace.description
+        ? `${sourceWorkspace.description} (Duplicated from ${sourceWorkspace.title})`
+        : `Duplicated from ${sourceWorkspace.title}`,
+      url: sourceWorkspace.url,
+    };
+
+    // Create the new workspace
+    return this.createWorkspace(duplicateData);
+  }
+
+  /**
+   * Generate a unique title for duplicated workspace
+   */
+  private generateDuplicateTitle(originalTitle: string): string {
+    const copyPattern = / \(Copy( \d+)?\)$/;
+    const match = originalTitle.match(copyPattern);
+
+    if (match) {
+      // Title already has "(Copy)" or "(Copy N)" - increment the number
+      const copyNumber = match[1] ? parseInt(match[1].trim(), 10) + 1 : 2;
+      return originalTitle.replace(copyPattern, ` (Copy ${copyNumber})`);
+    } else {
+      // First copy - add "(Copy)"
+      return `${originalTitle} (Copy)`;
+    }
+  }
+
   // ============================================================================
   // WEB KNOWLEDGE OPERATIONS
   // ============================================================================

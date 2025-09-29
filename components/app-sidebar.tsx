@@ -2,7 +2,6 @@
 
 import {
   Bell,
-  BotMessageSquare,
   Brain,
   Database,
   FileText,
@@ -23,11 +22,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { WorkspaceSidebarNav } from "@/components/workspace/workspace-sidebar-nav";
+import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
 // This is sample data.
 const data = {
@@ -50,6 +48,11 @@ const data = {
     {
       groupLabel: "Manage",
       items: [
+        {
+          title: "Workspaces",
+          url: "/workspaces",
+          icon: Database,
+        },
         {
           title: "Topics",
           url: "/topics",
@@ -123,21 +126,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg">
-              <div className="bg-blue-500 text-white flex aspect-square size-8 items-center justify-center rounded-lg">
-                <BotMessageSquare className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">WREXT</span>
-                <span className="truncate text-xs">AI Content Studio</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
+        <WorkspaceSidebarNav />
         <NavMain groups={data.navMain} />
       </SidebarContent>
       <SidebarFooter>

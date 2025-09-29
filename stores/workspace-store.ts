@@ -9,8 +9,10 @@ import type {
   WorkspaceFormData,
   WorkspaceFormState,
   WorkspaceLoadingStates,
+  WorkspaceSettings,
   WorkspaceViewMode,
 } from "@/types/workspace";
+import { DEFAULT_WORKSPACE_SETTINGS } from "@/types/workspace";
 
 // SSR-safe storage implementation
 const getStorage = () => {
@@ -59,6 +61,9 @@ interface WorkspaceState {
   // Recently used workspaces for quick access
   recentWorkspaces: string[]; // workspace IDs
 
+  // Workspace settings
+  workspaceSettings: Record<string, WorkspaceSettings>; // keyed by workspace ID
+
   // SSR hydration state
   _hasHydrated: boolean;
 
@@ -82,6 +87,7 @@ interface WorkspaceState {
     data: WorkspaceFormData,
   ) => Promise<Workspace>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
+  duplicateWorkspace: (sourceWorkspaceId: string) => Promise<Workspace>;
   fetchWorkspaces: () => Promise<Workspace[]>;
   fetchWorkspace: (workspaceId: string) => Promise<Workspace>;
 
@@ -144,6 +150,17 @@ interface WorkspaceState {
     updates: Partial<Workspace>,
   ) => void;
   revertOptimisticUpdate: (workspace: Workspace) => void;
+
+  // ============================================================================
+  // WORKSPACE SETTINGS ACTIONS
+  // ============================================================================
+
+  getWorkspaceSettings: (workspaceId: string) => WorkspaceSettings;
+  updateWorkspaceSettings: (
+    workspaceId: string,
+    settings: Partial<WorkspaceSettings>,
+  ) => void;
+  resetWorkspaceSettings: (workspaceId: string) => void;
 
   // ============================================================================
   // UTILITY ACTIONS
@@ -213,10 +230,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           creating: false,
           updating: false,
           deleting: false,
+          duplicating: false,
         },
 
         // Recent workspaces
         recentWorkspaces: [],
+
+        // Workspace settings
+        workspaceSettings: {},
 
         // SSR hydration
         _hasHydrated: false,
@@ -631,6 +652,35 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }
         },
 
+        duplicateWorkspace: async (sourceWorkspaceId) => {
+          set((state) => ({
+            ...state,
+            loadingStates: { ...state.loadingStates, duplicating: true },
+          }));
+
+          try {
+            const response =
+              await workspaceApiService.duplicateWorkspace(sourceWorkspaceId);
+
+            const duplicatedWorkspace = response.workspace;
+
+            // Optimistically add to store
+            set((state) => ({
+              workspaceList: [duplicatedWorkspace, ...state.workspaceList],
+              currentWorkspace: duplicatedWorkspace,
+              loadingStates: { ...state.loadingStates, duplicating: false },
+            }));
+
+            return duplicatedWorkspace;
+          } catch (error) {
+            set((state) => ({
+              ...state,
+              loadingStates: { ...state.loadingStates, duplicating: false },
+            }));
+            throw error;
+          }
+        },
+
         fetchWorkspaces: async () => {
           set((state) => ({
             ...state,
@@ -697,6 +747,42 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         },
 
         // ============================================================================
+        // WORKSPACE SETTINGS ACTIONS
+        // ============================================================================
+
+        getWorkspaceSettings: (workspaceId) => {
+          const state = _get();
+          return (
+            state.workspaceSettings[workspaceId] || DEFAULT_WORKSPACE_SETTINGS
+          );
+        },
+
+        updateWorkspaceSettings: (workspaceId, settings) => {
+          set((state) => {
+            const currentSettings =
+              state.workspaceSettings[workspaceId] ||
+              DEFAULT_WORKSPACE_SETTINGS;
+            return {
+              ...state,
+              workspaceSettings: {
+                ...state.workspaceSettings,
+                [workspaceId]: { ...currentSettings, ...settings },
+              },
+            };
+          });
+        },
+
+        resetWorkspaceSettings: (workspaceId) => {
+          set((state) => ({
+            ...state,
+            workspaceSettings: {
+              ...state.workspaceSettings,
+              [workspaceId]: { ...DEFAULT_WORKSPACE_SETTINGS },
+            },
+          }));
+        },
+
+        // ============================================================================
         // UTILITY ACTIONS
         // ============================================================================
 
@@ -725,8 +811,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               creating: false,
               updating: false,
               deleting: false,
+              duplicating: false,
             },
             recentWorkspaces: [],
+            workspaceSettings: {},
           });
         },
 

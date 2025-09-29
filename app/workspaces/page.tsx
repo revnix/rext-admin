@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
+  Copy,
   FileText,
   Globe,
   Grid3X3,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +56,10 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const openWorkspaceForm = useWorkspaceStore(
     (state) => state.openWorkspaceForm,
   );
+  const duplicateWorkspace = useWorkspaceStore(
+    (state) => state.duplicateWorkspace,
+  );
+  const loadingStates = useWorkspaceStore((state) => state.loadingStates);
 
   const handleSelectWorkspace = () => {
     setCurrentWorkspace(workspace);
@@ -63,6 +69,22 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const handleEditWorkspace = (e: React.MouseEvent) => {
     e.stopPropagation();
     openWorkspaceForm("edit", workspace);
+  };
+
+  const handleDuplicateWorkspace = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const duplicatedWorkspace = await duplicateWorkspace(workspace.id);
+      toast.success(
+        `Workspace "${duplicatedWorkspace.title}" created successfully`,
+      );
+
+      // Navigate to the duplicated workspace
+      router.push(`/workspaces/${duplicatedWorkspace.id}`);
+    } catch (error) {
+      console.error("Failed to duplicate workspace:", error);
+      toast.error("Failed to duplicate workspace. Please try again.");
+    }
   };
 
   const knowledgeCount =
@@ -97,6 +119,15 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
               <DropdownMenuItem onClick={handleEditWorkspace}>
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Workspace
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDuplicateWorkspace}
+                disabled={loadingStates.duplicating}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                {loadingStates.duplicating
+                  ? "Duplicating..."
+                  : "Duplicate Workspace"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive">
@@ -146,6 +177,10 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
   const openWorkspaceForm = useWorkspaceStore(
     (state) => state.openWorkspaceForm,
   );
+  const duplicateWorkspace = useWorkspaceStore(
+    (state) => state.duplicateWorkspace,
+  );
+  const loadingStates = useWorkspaceStore((state) => state.loadingStates);
 
   const handleSelectWorkspace = () => {
     setCurrentWorkspace(workspace);
@@ -155,6 +190,22 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
   const handleEditWorkspace = (e: React.MouseEvent) => {
     e.stopPropagation();
     openWorkspaceForm("edit", workspace);
+  };
+
+  const handleDuplicateWorkspace = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const duplicatedWorkspace = await duplicateWorkspace(workspace.id);
+      toast.success(
+        `Workspace "${duplicatedWorkspace.title}" created successfully`,
+      );
+
+      // Navigate to the duplicated workspace
+      router.push(`/workspaces/${duplicatedWorkspace.id}`);
+    } catch (error) {
+      console.error("Failed to duplicate workspace:", error);
+      toast.error("Failed to duplicate workspace. Please try again.");
+    }
   };
 
   const knowledgeCount =
@@ -206,6 +257,15 @@ function WorkspaceListItem({ workspace }: { workspace: Workspace }) {
           <DropdownMenuItem onClick={handleEditWorkspace}>
             <Settings className="h-4 w-4 mr-2" />
             Edit Workspace
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={handleDuplicateWorkspace}
+            disabled={loadingStates.duplicating}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            {loadingStates.duplicating
+              ? "Duplicating..."
+              : "Duplicate Workspace"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-destructive">

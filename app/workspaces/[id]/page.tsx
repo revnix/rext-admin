@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Brain,
+  Copy,
   FileText,
   Globe,
   Link,
@@ -10,8 +11,9 @@ import {
   Settings,
   Upload,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { AllKnowledgeList } from "@/components/knowledge/all-knowledge-list";
 import { FileKnowledgeList } from "@/components/knowledge/file-knowledge-list";
 import { GlobalKnowledgeSearch } from "@/components/knowledge/global-knowledge-search";
@@ -37,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WorkspaceSettingsPanel } from "@/components/workspace/workspace-settings-panel";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
 import {
@@ -190,9 +193,29 @@ function BrandVoiceCard({ workspace }: { workspace: Workspace }) {
 
 // Workspace Details Card Component
 function WorkspaceDetailsCard({ workspace }: { workspace: Workspace }) {
+  const router = useRouter();
   const openWorkspaceForm = useWorkspaceStore(
     (state) => state.openWorkspaceForm,
   );
+  const duplicateWorkspace = useWorkspaceStore(
+    (state) => state.duplicateWorkspace,
+  );
+  const loadingStates = useWorkspaceStore((state) => state.loadingStates);
+
+  const handleDuplicateWorkspace = async () => {
+    try {
+      const duplicatedWorkspace = await duplicateWorkspace(workspace.id);
+      toast.success(
+        `Workspace "${duplicatedWorkspace.title}" created successfully`,
+      );
+
+      // Navigate to the duplicated workspace
+      router.push(`/workspaces/${duplicatedWorkspace.id}`);
+    } catch (error) {
+      console.error("Failed to duplicate workspace:", error);
+      toast.error("Failed to duplicate workspace. Please try again.");
+    }
+  };
 
   return (
     <Card>
@@ -218,6 +241,15 @@ function WorkspaceDetailsCard({ workspace }: { workspace: Workspace }) {
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Workspace
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDuplicateWorkspace}
+                disabled={loadingStates.duplicating}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                {loadingStates.duplicating
+                  ? "Duplicating..."
+                  : "Duplicate Workspace"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive">
@@ -315,7 +347,36 @@ function WorkspaceDetailSkeleton() {
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const workspaceId = params.id as string;
+
+  // Get current tab from URL parameters, default to 'overview'
+  const currentTab = searchParams.get("tab") || "overview";
+  const currentView = searchParams.get("view") || "all"; // For knowledge sub-tabs
+
+  // Handle tab changes by updating URL
+  const handleTabChange = (tab: string) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("tab", tab);
+    // Remove view parameter when not on knowledge tab
+    if (tab !== "knowledge") {
+      newParams.delete("view");
+    }
+    router.push(`/workspaces/${workspaceId}?${newParams.toString()}`, {
+      scroll: false,
+    });
+  };
+
+  // Handle knowledge view changes
+  const handleKnowledgeViewChange = (view: string) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("tab", "knowledge");
+    newParams.set("view", view);
+    router.push(`/workspaces/${workspaceId}?${newParams.toString()}`, {
+      scroll: false,
+    });
+  };
 
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
@@ -416,8 +477,12 @@ export default function WorkspaceDetailPage() {
           <WorkspaceDetailSkeleton />
         ) : workspace ? (
           <>
-            {/* Overview Tab */}
-            <Tabs defaultValue="overview" className="space-y-6">
+            {/* Main Navigation Tabs */}
+            <Tabs
+              value={currentTab}
+              onValueChange={handleTabChange}
+              className="space-y-6"
+            >
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="search">Search</TabsTrigger>
@@ -446,7 +511,11 @@ export default function WorkspaceDetailPage() {
               </TabsContent>
 
               <TabsContent value="knowledge" className="space-y-6">
-                <Tabs defaultValue="all" className="space-y-6">
+                <Tabs
+                  value={currentView}
+                  onValueChange={handleKnowledgeViewChange}
+                  className="space-y-6"
+                >
                   <TabsList>
                     <TabsTrigger value="all">All Knowledge</TabsTrigger>
                     <TabsTrigger value="web">Web Knowledge</TabsTrigger>
@@ -485,16 +554,7 @@ export default function WorkspaceDetailPage() {
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-6">
-                <div className="text-center py-12">
-                  <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
-                    Workspace Settings
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Advanced workspace configuration options
-                  </p>
-                  <Button variant="outline">Coming Soon</Button>
-                </div>
+                <WorkspaceSettingsPanel workspace={workspace} />
               </TabsContent>
             </Tabs>
           </>
