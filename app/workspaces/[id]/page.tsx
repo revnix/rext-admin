@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  Brain,
   Copy,
   FileText,
   Globe,
@@ -23,7 +22,6 @@ import { KnowledgeAnalytics } from "@/components/knowledge/knowledge-analytics";
 import { TextKnowledgeList } from "@/components/knowledge/text-knowledge-list";
 import { WebKnowledgeList } from "@/components/knowledge/web-knowledge-list";
 import { PageLayout } from "@/components/page-layout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BrandVoiceCard } from "@/components/workspace/brand-voice-card";
 import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
 import { WorkspaceSettingsPanel } from "@/components/workspace/workspace-settings-panel";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -99,96 +98,6 @@ function KnowledgeSummaryCard({ workspace }: { workspace: Workspace }) {
             <span className="text-lg font-semibold">{totalCount}</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Brand Voice Card Component
-function BrandVoiceCard({ workspace }: { workspace: Workspace }) {
-  const brandVoice = workspace.brand_voice;
-
-  if (!brandVoice) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-8">
-          <Brain className="h-8 w-8 text-muted-foreground mb-2" />
-          <h3 className="font-medium mb-1">No Brand Voice Extracted</h3>
-          <p className="text-sm text-muted-foreground text-center">
-            Brand voice will be automatically extracted when you add content to
-            this workspace.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Brain className="h-5 w-5" />
-          Brand Voice
-        </CardTitle>
-        <CardDescription>
-          AI-extracted brand characteristics and positioning
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {brandVoice.about && (
-          <div>
-            <h4 className="font-medium mb-2">About</h4>
-            <p className="text-sm text-muted-foreground">{brandVoice.about}</p>
-          </div>
-        )}
-
-        {brandVoice.selling_position && (
-          <div>
-            <h4 className="font-medium mb-2">Selling Position</h4>
-            <p className="text-sm text-muted-foreground">
-              {brandVoice.selling_position}
-            </p>
-          </div>
-        )}
-
-        {brandVoice.target_audience &&
-          brandVoice.target_audience.length > 0 && (
-            <div>
-              <h4 className="font-medium mb-2">Target Audience</h4>
-              <div className="flex flex-wrap gap-2">
-                {brandVoice.target_audience.map((audience, index) => (
-                  <Badge
-                    key={`audience-${index}-${audience}`}
-                    variant="secondary"
-                  >
-                    {audience}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {brandVoice.brand_voice && brandVoice.brand_voice.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-2">Voice Characteristics</h4>
-            <div className="flex flex-wrap gap-2">
-              {brandVoice.brand_voice.map((voice, index) => (
-                <Badge key={`voice-${index}-${voice}`} variant="outline">
-                  {voice}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {brandVoice.competitors && brandVoice.competitors.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-2">Competitors</h4>
-            <div className="text-sm text-muted-foreground">
-              {brandVoice.competitors.join(", ")}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
