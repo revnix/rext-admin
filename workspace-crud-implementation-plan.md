@@ -27,96 +27,76 @@ This plan outlines the implementation of comprehensive CRUD (Create, Read, Updat
 ## Phase 1: Workspace CRUD UI Components
 
 ### Parent Task 1.1: Create Workspace Form Components  
-**Description**: Implement form components for workspace creation and editing.
+**Description**: Implement dedicated pages for workspace creation and editing.
 
-**ARCHITECTURE UPDATE**: Based on UX analysis, workspace creation should be a dedicated multi-step page (not modal) due to complex workflow involving URL analysis, brand voice extraction, etc. Modal will be reserved for simple workspace editing.
+**ARCHITECTURE UPDATE**: Based on UX analysis, both workspace creation AND editing should be dedicated pages for consistent, professional UX:
+- **Create**: Multi-step wizard page with URL analysis and brand voice extraction
+- **Edit**: Single-step dedicated page with full context and better form experience
+- **No Modals**: Eliminates modal complexity, provides better UX consistency
 
-#### Subtask 1.1.1: Design and Create Modal Structure ✅ COMPLETED
+#### Subtask 1.1.1: Create Reusable Form Components ✅ COMPLETED (Repurposed)
 **Implementation Notes**:
-- Create `/components/workspace/workspace-form-modal.tsx`
-- Use shadcn/ui Dialog component as base
+- Create reusable workspace form components from modal work
+- Extract form logic into shareable components  
+- Use shadcn/ui components as base
 - Include form fields: title, description, URL
-- Add close button and keyboard escape functionality
-- Ensure responsive design for mobile devices
+- Ensure responsive design for desktop pages
 
-**Status**: ✅ Done
+**Status**: ✅ Done (Modal work repurposed)
 **Completion Date**: 2024-12-30
 **Implementation Details**:
-- Created WorkspaceFormModal component with full responsive design
-- Integrated with existing workspace store form state
-- Added proper TypeScript types and accessibility features
-- Implemented keyboard navigation (Escape key support)
-- Set up form structure ready for validation in next subtask
-- Added loading states and error display structure
-- Mobile-first responsive design with proper modal sizing
+- Created form structure with React Hook Form + Zod validation
+- Comprehensive validation schema in `schemas/workspace-schemas.ts`
+- Real-time validation with field-specific error messages
+- Character counting and input constraints
+- Ready to be refactored into reusable components for dedicated pages
 
-#### Subtask 1.1.2: Implement Form Logic with React Hook Form ✅ COMPLETED
+#### Subtask 1.1.2: Create Dedicated Edit Workspace Page
 **Implementation Notes**:
-- Use `react-hook-form` with `zod` validation
-- Create validation schema matching backend requirements:
-  - Title: Required, max 200 chars
-  - Description: Optional, max 1000 chars  
-  - URL: Required, valid HTTP/HTTPS URL
-- Add real-time validation feedback
-- Handle form submission states
+- Create `/app/workspaces/[id]/edit/page.tsx`
+- Reuse form components and validation from previous work
+- Add workspace context display (current values, metadata)
+- Implement `updateWorkspace` API integration
+- Handle optimistic updates and loading states
+- Success/error handling with proper redirects
+- Navigation back to workspace detail page
 
-**Status**: ✅ Done
-**Completion Date**: 2024-12-30
-**Implementation Details**:
-- Created comprehensive Zod validation schema in `schemas/workspace-schemas.ts`
-- Replaced controlled inputs with React Hook Form `register()` pattern
-- Implemented real-time validation with `mode: "onChange"`
-- Added field-specific error messages with proper ARIA attributes
-- Character counting for description field with live updates
-- URL validation ensures HTTP/HTTPS protocol requirement
-- Form submit button disabled until validation passes
-- Proper form reset and data syncing with workspace store
-
-#### Subtask 1.1.3: Connect Modal Form to Store (Edit Mode Only) 
+#### Subtask 1.1.3: Update Navigation for Edit Page
 **Implementation Notes**:
-- Focus modal on workspace editing only (not creation)
-- Implement `updateWorkspace` action integration
-- Handle optimistic updates for better UX
-- Add loading states during API calls
-- Handle success/error responses with toast notifications
-- **NOTE**: Create mode will be handled by dedicated page (subtask 1.1.5+)
+- Remove modal triggers from workspace list page
+- Update "Edit" menu items to link to `/workspaces/[id]/edit`
+- Update workspace detail page to include edit button
+- Ensure consistent navigation patterns across the app
 
-#### Subtask 1.1.4: Update Modal Integration for Edit-Only
-**Implementation Notes**:
-- Update workspace list page to use modal only for editing
-- Remove "New Workspace" modal trigger
-- Connect "Edit" menu items to open modal in edit mode
-- Update empty state to link to dedicated create page
-
-#### Subtask 1.1.5: Create Dedicated Workspace Creation Page
+#### Subtask 1.1.4: Create Dedicated Workspace Creation Page
 **Implementation Notes**:
 - Create `/app/workspaces/create/page.tsx`  
 - Design multi-step wizard layout
 - Implement stepper/progress indicator component
 - Set up routing and navigation structure
 
-#### Subtask 1.1.6: Step 1 - Basic Information Form
+#### Subtask 1.1.5: Step 1 - Basic Information Form
 **Implementation Notes**:
-- Reuse form validation schema from modal
+- Reuse form validation schema from previous work
 - Create step component for title, URL, description
 - Add URL validation and preview
 - Next/back navigation controls
 
-#### Subtask 1.1.7: Step 2 - URL Analysis & Preview  
+#### Subtask 1.1.6: Step 2 - URL Analysis & Preview  
 **Implementation Notes**:
 - Fetch URL content preview (title, description, favicon)
 - Show website screenshot or content preview
 - Allow user to confirm or modify detected information
 - Handle URL fetch errors gracefully
 
-#### Subtask 1.1.8: Step 3 - Brand Voice Processing
+#### Subtask 1.1.7: Step 3 - Brand Voice Processing
 **Implementation Notes**:
 - Show brand voice extraction progress
 - Display extracted brand voice data
 - Allow manual editing/refinement of brand voice
 - Preview brand voice output
 
-#### Subtask 1.1.9: Step 4 - Review & Create
+#### Subtask 1.1.8: Step 4 - Review & Create
 **Implementation Notes**:
 - Summary of all collected information
 - Final review before creation
@@ -364,8 +344,8 @@ This plan outlines the implementation of comprehensive CRUD (Create, Read, Updat
 ## Implementation Priority
 
 1. **High Priority** (Week 1):
-   - Workspace Edit Modal (Task 1.1.3-1.1.4) 
-   - Dedicated Create Page (Task 1.1.5-1.1.9)
+   - Dedicated Edit Page (Task 1.1.2-1.1.3) 
+   - Dedicated Create Page (Task 1.1.4-1.1.8)
    - Delete Workspace (Task 1.2)
    - Basic Error Handling (Task 4.1)
 
@@ -480,27 +460,32 @@ This plan provides a comprehensive roadmap for implementing the workspace CRUD U
 - All form data is properly typed and validated
 - Error states are handled consistently
 
-### Architecture Decision: Modal vs Dedicated Page
+### Architecture Decision: Dedicated Pages for All Operations
 **Date**: 2024-12-30
 
-**Decision**: Split workspace creation and editing into two different UX patterns:
-- **Modal**: For quick workspace editing (simple, single-step)
-- **Dedicated Page**: For workspace creation (complex, multi-step)
+**Decision**: Use dedicated pages for both workspace creation and editing:
+- **Create Page**: Multi-step wizard page (`/workspaces/create`)
+- **Edit Page**: Single-step dedicated page (`/workspaces/[id]/edit`)
+- **No Modals**: Eliminate modal complexity entirely for consistent UX
 
 **Rationale**:
-- Workspace creation involves complex backend processing (URL scraping, brand voice extraction)
-- Multi-step workflow needs more space than a modal can provide
-- User feedback and progress indication requires a full page experience
-- Edit operations are simpler and work well in modal format
+- **Consistency**: Both create and edit use the same page-based pattern
+- **Space**: Full pages provide better form experience and context display
+- **Professional UX**: Dedicated pages feel more substantial for important operations
+- **Flexibility**: Pages can show more context, better error handling, and future features
+- **Navigation**: Standard browser navigation (back button, bookmarks, etc.)
 
 **Implementation Impact**:
-- Current modal work is preserved and adapted for editing only
-- New dedicated `/workspaces/create` page will handle creation workflow
-- Better UX separation between create (complex) and edit (simple) flows
-- Allows for proper multi-step wizard with progress indicators
+- Repurpose modal form components into reusable page components
+- Create dedicated edit page with workspace context
+- Create multi-step create page with wizard flow
+- Update all navigation to use page routes instead of modal triggers
+- Consistent URL patterns for both operations
 
 **Benefits**:
-- Better user experience with appropriate UI patterns for each use case
-- More space for brand voice preview and URL analysis
-- Clearer user mental model (create = page, edit = modal)
-- Future extensibility for additional creation steps
+- **Better UX**: More space for forms, context, and feedback
+- **Consistency**: Same interaction patterns for create and edit
+- **Professional**: Dedicated pages feel more robust and trustworthy
+- **Accessibility**: Better keyboard navigation and screen reader support
+- **Future-Proof**: Easy to add features like auto-save, preview, etc.
+- **SEO/Bookmarking**: Edit URLs can be bookmarked and shared
