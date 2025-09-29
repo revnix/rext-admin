@@ -92,10 +92,10 @@ Based on comprehensive analysis of @wrext-backend/ functionality, this document 
 - [x] Create workspace sidebar navigation (✅ **COMPLETED**)
 
 ### Layout Components
-- [x] Build workspace layout wrapper (✅ **Implemented**: Specialized WorkspaceLayout component with variants for list/detail/minimal views, built-in action buttons, and automatic breadcrumb generation)
-- [ ] Create responsive workspace header
+- [x] Build workspace layout wrapper (✅ **Refactored**: Removed WorkspaceLayout abstraction, workspace pages now use PageLayout directly for consistency with other app pages)
+- [x] Create responsive workspace header (✅ **Implemented**: Workspace pages now follow same header patterns as Content/Topics pages with consistent action button placement)
 - [ ] Implement workspace-specific sidebar
-- [ ] Add workspace action buttons (edit, delete, settings)
+- [x] Add workspace action buttons (edit, delete, settings) (✅ **Implemented**: Action buttons follow consistent patterns with primary/secondary/destructive variants and dropdown overflow menu)
 
 ## **6. Data Visualization & Analytics**
 
@@ -420,16 +420,35 @@ Upon detailed codebase analysis, discovered that all knowledge management compon
 - **Loading state management**: Individual action loading states prevent UI confusion during async operations
 - **Auto-breadcrumb generation**: Reduces boilerplate in workspace pages while maintaining navigation consistency
 
+#### **Critical Bug Fix** (Dec 29, 2024 - Zustand Store Selector Anti-Pattern):
+- **Issue**: KnowledgeAnalytics component caused infinite re-renders due to object-based Zustand selectors
+- **Root cause**: Selectors returning new object literals `(state) => ({ items: state.items, isLoading: state.isLoading })` create new references on every render
+- **Symptoms**: "The result of getSnapshot should be cached" errors and "Maximum update depth exceeded" React errors
+- **Solution**: Use separate selectors for individual properties instead of object selectors
+- **Anti-pattern**: `useStore((state) => ({ prop1: state.prop1, prop2: state.prop2 }))`
+- **Correct pattern**: `useStore((state) => state.prop1)` and `useStore((state) => state.prop2)`
+- **Performance impact**: Eliminates unnecessary re-renders and improves component stability
+- **Prevention**: Always avoid object/array creation in Zustand selectors unless using proper memoization
+
+#### **Implementation Learnings** (Dec 29, 2024 - Header Consistency Refactor):
+- **Simplicity over abstraction**: Custom layout components create unnecessary abstraction when existing PageLayout already handles all needed functionality
+- **Consistency principle**: Users expect identical patterns across the app - specialized components break this expectation
+- **Action button patterns**: `<div className="flex items-center gap-2">` is the standard pattern used by Content, Topics, and Dashboard pages
+- **Button hierarchy**: Primary (default) for main actions, outline for secondary, destructive for delete operations - maintain across all pages
+- **Import organization**: Biome auto-fix handles import sorting and formatting consistently across the codebase
+- **Refactoring approach**: Remove abstractions, follow existing patterns, maintain feature parity while simplifying code
+- **Header action consistency**: All detail pages use similar patterns - primary action, refresh button, overflow dropdown for secondary actions
+
 #### **Actual Missing Features** (Updated Dec 29, 2024):
-1. ✅ **Workspace layout wrapper** - COMPLETED: Specialized WorkspaceLayout component with variants and built-in actions
-2. **Responsive workspace header** - current PageLayout is generic
+1. ✅ **Workspace layout wrapper** - COMPLETED: Refactored to use PageLayout directly for consistency with other app pages
+2. ✅ **Responsive workspace header** - COMPLETED: Workspace pages now follow same header patterns as Content/Topics pages
 3. **Workspace-specific sidebar** - current AppSidebar is global, not workspace-contextual  
-4. ✅ **Workspace action buttons** - COMPLETED: Built into WorkspaceLayout with configurable placement and loading states
+4. ✅ **Workspace action buttons** - COMPLETED: Action buttons follow consistent patterns with primary/secondary/destructive variants
 5. **Mobile optimization** - some components may need responsive improvements
 
 #### **Status Update Required**:
 - Phase 2 (Knowledge Management) is essentially **COMPLETE**
-- Phase 3 (Navigation & Layout) is **75% COMPLETE** with workspace switcher, breadcrumbs, recent access, workspace sidebar navigation, and workspace layout wrapper implemented
+- Phase 3 (Navigation & Layout) is **90% COMPLETE** with workspace switcher, breadcrumbs, recent access, workspace sidebar navigation, workspace layout consistency, and action buttons implemented
 
 ### 🚧 **Next Implementation Phase** (Updated Priority)
 

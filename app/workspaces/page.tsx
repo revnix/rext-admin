@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageLayout } from "@/components/page-layout";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { WorkspaceListLayout } from "@/components/workspace/workspace-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceApiService } from "@/services";
 import {
@@ -350,7 +350,7 @@ function WorkspaceListSkeleton({ viewMode }: { viewMode: WorkspaceViewMode }) {
 export default function WorkspacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { viewMode, filters } = useWorkspaceUIPreferences();
-  const { setViewMode, updateFilters } = useWorkspaceStore();
+  const { setViewMode, updateFilters, openWorkspaceForm } = useWorkspaceStore();
   const workspaceList = useWorkspaceList();
 
   // Update page title
@@ -420,21 +420,27 @@ export default function WorkspacePage() {
     return sortOrder === "desc" ? -comparison : comparison;
   });
 
+  const breadcrumbs = [{ label: "Workspaces" }];
+
+  const actions = (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" onClick={() => refetch()}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+      <Button onClick={() => openWorkspaceForm("create")}>
+        <Plus className="h-4 w-4 mr-2" />
+        New Workspace
+      </Button>
+    </div>
+  );
+
   return (
-    <WorkspaceListLayout
-      variant="list"
+    <PageLayout
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
-      totalCount={sortedWorkspaces.length}
-      defaultActions={{
-        refresh: true,
-      }}
-      headerActions={
-        <Button variant="outline" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      }
+      breadcrumbs={breadcrumbs}
+      actions={actions}
     >
       <div className="space-y-6">
         {/* Search and Filter Bar */}
@@ -601,6 +607,6 @@ export default function WorkspacePage() {
           </Card>
         )}
       </div>
-    </WorkspaceListLayout>
+    </PageLayout>
   );
 }
