@@ -8,6 +8,9 @@
 // Topic Builder Schemas
 export * from "./topic-builder";
 
+// Workspace Schemas
+export * from "./workspace-schemas";
+
 // Future schema exports:
 // export * from "./auth";
 // export * from "./user";

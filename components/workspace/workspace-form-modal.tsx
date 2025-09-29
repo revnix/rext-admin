@@ -1,6 +1,8 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,28 +15,67 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  type WorkspaceFormData,
+  workspaceFormSchema,
+} from "@/schemas/workspace-schemas";
 import { useWorkspaceForm, useWorkspaceStore } from "@/stores/workspace-store";
 
 /**
  * Workspace Form Modal Component
  *
  * A responsive modal for creating and editing workspaces.
- * Integrates with the workspace store for state management.
+ * Uses React Hook Form with Zod validation for robust form handling.
  *
  * Features:
- * - Create/Edit mode support
+ * - Create/Edit mode support with proper data syncing
+ * - Real-time validation with Zod schema
  * - Responsive design for mobile and desktop
  * - Keyboard navigation and accessibility
- * - Real-time validation (will be implemented in next subtask)
+ * - Character counting and input constraints
+ * - Form state management with React Hook Form
  */
 export function WorkspaceFormModal() {
   const workspaceForm = useWorkspaceForm();
-  const { closeWorkspaceForm, updateWorkspaceFormData } = useWorkspaceStore();
+  const { closeWorkspaceForm } = useWorkspaceStore();
+
+  // Set up React Hook Form with Zod validation
+  const form = useForm<WorkspaceFormData>({
+    resolver: zodResolver(workspaceFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      url: "",
+    },
+    mode: "onChange", // Enable real-time validation
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+    watch,
+  } = form;
+
+  // Watch description for character count
+  const watchedDescription = watch("description") || "";
+
+  // Sync form with workspace store data when modal opens
+  useEffect(() => {
+    if (workspaceForm.isOpen) {
+      reset({
+        title: workspaceForm.data.title || "",
+        description: workspaceForm.data.description || "",
+        url: workspaceForm.data.url || "",
+      });
+    }
+  }, [workspaceForm.isOpen, workspaceForm.data, reset]);
 
   // Close modal on escape key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && workspaceForm.isOpen) {
+      if (event.key === "Escape" && workspaceForm.isOpen && !isSubmitting) {
         closeWorkspaceForm();
       }
     };
@@ -43,34 +84,28 @@ export function WorkspaceFormModal() {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [workspaceForm.isOpen, closeWorkspaceForm]);
+  }, [workspaceForm.isOpen, closeWorkspaceForm, isSubmitting]);
 
-  // Reset form data when modal closes
+  // Reset form when modal closes
   useEffect(() => {
-    if (!workspaceForm.isOpen && !workspaceForm.isSubmitting) {
-      // Form reset will be handled in next subtask
+    if (!workspaceForm.isOpen) {
+      reset();
     }
-  }, [workspaceForm.isOpen, workspaceForm.isSubmitting]);
+  }, [workspaceForm.isOpen, reset]);
 
   const handleOpenChange = (open: boolean) => {
-    if (!open && !workspaceForm.isSubmitting) {
+    if (!open && !isSubmitting) {
       closeWorkspaceForm();
     }
   };
 
-  const handleInputChange = (field: keyof typeof workspaceForm.data) => {
-    return (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    ) => {
-      updateWorkspaceFormData({ [field]: event.target.value });
-    };
-  };
-
-  // Prevent form submission for now (will be implemented in next subtask)
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    // Form submission logic will be implemented in subtask 1.1.2
-    console.log("Form submission will be implemented in next subtask");
+  // Form submission handler (actual API calls will be implemented in next subtask)
+  const onSubmit = (data: WorkspaceFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log(
+      "Validation passed - API calls will be implemented in subtask 1.1.3",
+    );
+    // API integration will be implemented in subtask 1.1.3
   };
 
   const isCreateMode = workspaceForm.mode === "create";
@@ -88,7 +123,7 @@ export function WorkspaceFormModal() {
           <DialogDescription>{modalDescription}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Title Field */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
@@ -98,17 +133,14 @@ export function WorkspaceFormModal() {
               id="title"
               type="text"
               placeholder="Enter workspace title"
-              value={workspaceForm.data.title}
-              onChange={handleInputChange("title")}
-              disabled={workspaceForm.isSubmitting}
-              className={workspaceForm.errors.title ? "border-destructive" : ""}
-              maxLength={200}
-              required
+              {...register("title")}
+              disabled={isSubmitting}
+              className={errors.title ? "border-destructive" : ""}
               autoFocus
             />
-            {workspaceForm.errors.title && (
+            {errors.title && (
               <p className="text-sm text-destructive" role="alert">
-                {workspaceForm.errors.title}
+                {errors.title.message}
               </p>
             )}
           </div>
@@ -122,15 +154,13 @@ export function WorkspaceFormModal() {
               id="url"
               type="url"
               placeholder="https://example.com"
-              value={workspaceForm.data.url}
-              onChange={handleInputChange("url")}
-              disabled={workspaceForm.isSubmitting}
-              className={workspaceForm.errors.url ? "border-destructive" : ""}
-              required
+              {...register("url")}
+              disabled={isSubmitting}
+              className={errors.url ? "border-destructive" : ""}
             />
-            {workspaceForm.errors.url && (
+            {errors.url && (
               <p className="text-sm text-destructive" role="alert">
-                {workspaceForm.errors.url}
+                {errors.url.message}
               </p>
             )}
             <p className="text-xs text-muted-foreground">
@@ -146,20 +176,18 @@ export function WorkspaceFormModal() {
             <Textarea
               id="description"
               placeholder="Optional description for your workspace"
-              value={workspaceForm.data.description}
-              onChange={handleInputChange("description")}
-              disabled={workspaceForm.isSubmitting}
-              className={`resize-none ${workspaceForm.errors.description ? "border-destructive" : ""}`}
-              maxLength={1000}
+              {...register("description")}
+              disabled={isSubmitting}
+              className={`resize-none ${errors.description ? "border-destructive" : ""}`}
               rows={3}
             />
-            {workspaceForm.errors.description && (
+            {errors.description && (
               <p className="text-sm text-destructive" role="alert">
-                {workspaceForm.errors.description}
+                {errors.description.message}
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              {workspaceForm.data.description.length}/1000 characters
+              {watchedDescription.length}/1000 characters
             </p>
           </div>
 
@@ -168,17 +196,17 @@ export function WorkspaceFormModal() {
               type="button"
               variant="outline"
               onClick={closeWorkspaceForm}
-              disabled={workspaceForm.isSubmitting}
+              disabled={isSubmitting}
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={workspaceForm.isSubmitting}
+              disabled={isSubmitting || !isValid}
               className="w-full sm:w-auto"
             >
-              {workspaceForm.isSubmitting ? (
+              {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
                   {isCreateMode ? "Creating..." : "Saving..."}
