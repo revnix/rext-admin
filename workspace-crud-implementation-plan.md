@@ -26,8 +26,10 @@ This plan outlines the implementation of comprehensive CRUD (Create, Read, Updat
 
 ## Phase 1: Workspace CRUD UI Components
 
-### Parent Task 1.1: Create Workspace Form Modal Component
-**Description**: Implement a modal form component for creating and editing workspaces.
+### Parent Task 1.1: Create Workspace Form Components  
+**Description**: Implement form components for workspace creation and editing.
+
+**ARCHITECTURE UPDATE**: Based on UX analysis, workspace creation should be a dedicated multi-step page (not modal) due to complex workflow involving URL analysis, brand voice extraction, etc. Modal will be reserved for simple workspace editing.
 
 #### Subtask 1.1.1: Design and Create Modal Structure ✅ COMPLETED
 **Implementation Notes**:
@@ -48,7 +50,7 @@ This plan outlines the implementation of comprehensive CRUD (Create, Read, Updat
 - Added loading states and error display structure
 - Mobile-first responsive design with proper modal sizing
 
-#### Subtask 1.1.2: Implement Form Logic with React Hook Form
+#### Subtask 1.1.2: Implement Form Logic with React Hook Form ✅ COMPLETED
 **Implementation Notes**:
 - Use `react-hook-form` with `zod` validation
 - Create validation schema matching backend requirements:
@@ -58,20 +60,69 @@ This plan outlines the implementation of comprehensive CRUD (Create, Read, Updat
 - Add real-time validation feedback
 - Handle form submission states
 
-#### Subtask 1.1.3: Connect Form to Workspace Store
+**Status**: ✅ Done
+**Completion Date**: 2024-12-30
+**Implementation Details**:
+- Created comprehensive Zod validation schema in `schemas/workspace-schemas.ts`
+- Replaced controlled inputs with React Hook Form `register()` pattern
+- Implemented real-time validation with `mode: "onChange"`
+- Added field-specific error messages with proper ARIA attributes
+- Character counting for description field with live updates
+- URL validation ensures HTTP/HTTPS protocol requirement
+- Form submit button disabled until validation passes
+- Proper form reset and data syncing with workspace store
+
+#### Subtask 1.1.3: Connect Modal Form to Store (Edit Mode Only) 
 **Implementation Notes**:
-- Use existing `workspaceForm` state from store
-- Implement `createWorkspace` and `updateWorkspace` actions
+- Focus modal on workspace editing only (not creation)
+- Implement `updateWorkspace` action integration
 - Handle optimistic updates for better UX
 - Add loading states during API calls
 - Handle success/error responses with toast notifications
+- **NOTE**: Create mode will be handled by dedicated page (subtask 1.1.5+)
 
-#### Subtask 1.1.4: Integrate Modal into Workspace Pages
+#### Subtask 1.1.4: Update Modal Integration for Edit-Only
 **Implementation Notes**:
-- Add modal to workspace list page (`/workspaces/page.tsx`)
-- Connect "New Workspace" button to open modal in create mode
-- Connect "Edit" menu items to open modal in edit mode with data
-- Test modal behavior across different scenarios
+- Update workspace list page to use modal only for editing
+- Remove "New Workspace" modal trigger
+- Connect "Edit" menu items to open modal in edit mode
+- Update empty state to link to dedicated create page
+
+#### Subtask 1.1.5: Create Dedicated Workspace Creation Page
+**Implementation Notes**:
+- Create `/app/workspaces/create/page.tsx`  
+- Design multi-step wizard layout
+- Implement stepper/progress indicator component
+- Set up routing and navigation structure
+
+#### Subtask 1.1.6: Step 1 - Basic Information Form
+**Implementation Notes**:
+- Reuse form validation schema from modal
+- Create step component for title, URL, description
+- Add URL validation and preview
+- Next/back navigation controls
+
+#### Subtask 1.1.7: Step 2 - URL Analysis & Preview  
+**Implementation Notes**:
+- Fetch URL content preview (title, description, favicon)
+- Show website screenshot or content preview
+- Allow user to confirm or modify detected information
+- Handle URL fetch errors gracefully
+
+#### Subtask 1.1.8: Step 3 - Brand Voice Processing
+**Implementation Notes**:
+- Show brand voice extraction progress
+- Display extracted brand voice data
+- Allow manual editing/refinement of brand voice
+- Preview brand voice output
+
+#### Subtask 1.1.9: Step 4 - Review & Create
+**Implementation Notes**:
+- Summary of all collected information
+- Final review before creation
+- Connect to workspace creation API
+- Handle creation success/error states
+- Redirect to new workspace on success
 
 ### Parent Task 1.2: Implement Delete Workspace Functionality
 **Description**: Add delete capability with proper confirmation and cleanup.
@@ -313,7 +364,8 @@ This plan outlines the implementation of comprehensive CRUD (Create, Read, Updat
 ## Implementation Priority
 
 1. **High Priority** (Week 1):
-   - Workspace Create/Edit Form (Task 1.1)
+   - Workspace Edit Modal (Task 1.1.3-1.1.4) 
+   - Dedicated Create Page (Task 1.1.5-1.1.9)
    - Delete Workspace (Task 1.2)
    - Basic Error Handling (Task 4.1)
 
@@ -385,3 +437,70 @@ This plan provides a comprehensive roadmap for implementing the workspace CRUD U
 - Validation error display elements are in place
 - All form fields are properly controlled and ready for validation
 - Store integration points are established for form submission
+
+### Subtask 1.1.2 Completion Notes
+**Date**: 2024-12-30
+
+**Key Achievements**:
+- Successfully integrated React Hook Form with existing workspace store
+- Created robust Zod validation schemas following project patterns
+- Implemented real-time validation with excellent UX
+- Form validation works perfectly with backend API requirements
+
+**Technical Implementation Highlights**:
+- **Schema Design**: Created `workspaceFormSchema` with proper constraints and error messages
+- **Form Integration**: Used `zodResolver` for seamless React Hook Form + Zod integration
+- **Real-time Validation**: `mode: "onChange"` provides immediate feedback to users
+- **Data Syncing**: Form resets and syncs with store data when modal opens/closes
+- **Error Handling**: Field-specific error display with proper accessibility attributes
+- **Performance**: Watch only description field for character counting to minimize re-renders
+
+**Validation Features**:
+- Title: Required, 1-200 characters, trimmed
+- URL: HTTP/HTTPS protocol validation with detailed error messages
+- Description: Optional, max 1000 characters with live character count
+- Submit button automatically disabled until all validation passes
+
+**Architecture Benefits**:
+- Clean separation between form logic (React Hook Form) and UI state (Zustand)
+- Reusable validation schemas that can be used for API requests
+- Consistent error handling patterns across the application
+- Type-safe form data with proper TypeScript inference
+
+**Testing Observations**:
+- Form validation works immediately on field changes
+- Character counting updates in real-time
+- Error messages are clear and actionable
+- Form properly resets when modal closes
+- Data syncing works correctly for edit mode
+
+**Next Subtask Readiness**:
+- Form validation is complete and robust
+- Form submission handler is ready for API integration
+- All form data is properly typed and validated
+- Error states are handled consistently
+
+### Architecture Decision: Modal vs Dedicated Page
+**Date**: 2024-12-30
+
+**Decision**: Split workspace creation and editing into two different UX patterns:
+- **Modal**: For quick workspace editing (simple, single-step)
+- **Dedicated Page**: For workspace creation (complex, multi-step)
+
+**Rationale**:
+- Workspace creation involves complex backend processing (URL scraping, brand voice extraction)
+- Multi-step workflow needs more space than a modal can provide
+- User feedback and progress indication requires a full page experience
+- Edit operations are simpler and work well in modal format
+
+**Implementation Impact**:
+- Current modal work is preserved and adapted for editing only
+- New dedicated `/workspaces/create` page will handle creation workflow
+- Better UX separation between create (complex) and edit (simple) flows
+- Allows for proper multi-step wizard with progress indicators
+
+**Benefits**:
+- Better user experience with appropriate UI patterns for each use case
+- More space for brand voice preview and URL analysis
+- Clearer user mental model (create = page, edit = modal)
+- Future extensibility for additional creation steps
