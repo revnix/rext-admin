@@ -113,42 +113,33 @@ export function KnowledgeAnalytics({
   workspaceId,
   workspace,
 }: KnowledgeAnalyticsProps) {
-  const webState = useWebKnowledgeStore((state) => ({
-    items: state.items,
-    isLoading: state.isLoading,
-  }));
-  const fileState = useFileKnowledgeStore((state) => ({
-    items: state.items,
-    isLoading: state.isLoading,
-  }));
-  const textState = useTextKnowledgeStore((state) => ({
-    items: state.items,
-    isLoading: state.isLoading,
-  }));
+  // Use separate selectors to avoid creating new objects on every render
+  const webItems = useWebKnowledgeStore((state) => state.items);
+  const webIsLoading = useWebKnowledgeStore((state) => state.isLoading);
+  const fileItems = useFileKnowledgeStore((state) => state.items);
+  const fileIsLoading = useFileKnowledgeStore((state) => state.isLoading);
+  const textItems = useTextKnowledgeStore((state) => state.items);
+  const textIsLoading = useTextKnowledgeStore((state) => state.isLoading);
 
-  const isLoading =
-    webState.isLoading || fileState.isLoading || textState.isLoading;
+  const isLoading = webIsLoading || fileIsLoading || textIsLoading;
 
-  const webItems =
-    webState.items.length > 0 ? webState.items : (workspace?.websites ?? []);
-  const fileItems =
-    fileState.items.length > 0
-      ? fileState.items
-      : (workspace?.knowledge_files ?? []);
-  const textItems =
-    textState.items.length > 0
-      ? textState.items
-      : (workspace?.text_knowledge ?? []);
+  // Use store items if available, otherwise fallback to workspace data
+  const finalWebItems =
+    webItems.length > 0 ? webItems : (workspace?.websites ?? []);
+  const finalFileItems =
+    fileItems.length > 0 ? fileItems : (workspace?.knowledge_files ?? []);
+  const finalTextItems =
+    textItems.length > 0 ? textItems : (workspace?.text_knowledge ?? []);
 
   const analytics = useMemo(
     () =>
       buildKnowledgeAnalyticsSummary({
         workspaceId,
-        webItems,
-        fileItems,
-        textItems,
+        webItems: finalWebItems,
+        fileItems: finalFileItems,
+        textItems: finalTextItems,
       }),
-    [workspaceId, webItems, fileItems, textItems],
+    [workspaceId, finalWebItems, finalFileItems, finalTextItems],
   );
 
   if (isLoading) {
