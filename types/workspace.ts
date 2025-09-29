@@ -424,3 +424,33 @@ export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
 export interface UpdateWorkspaceSettingsRequest {
   settings: Partial<WorkspaceSettings>;
 }
+
+// ============================================================================
+// BRAND VOICE REFRESH TYPES
+// ============================================================================
+
+/**
+ * Request payload for refreshing brand voice analysis
+ */
+export interface RefreshBrandVoiceRequest {
+  workspace_id: string;
+}
+
+/**
+ * Response from brand voice refresh operation
+ */
+export interface RefreshBrandVoiceResponse {
+  brand_voice: BrandVoice;
+  changes_detected: boolean;
+  previous_brand_voice?: BrandVoice;
+}
+
+/**
+ * UI state for brand voice refresh operations
+ */
+export interface BrandVoiceRefreshState {
+  isRefreshing: boolean;
+  showComparison: boolean;
+  previousBrandVoice?: BrandVoice;
+  refreshError?: string;
+}

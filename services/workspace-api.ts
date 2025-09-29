@@ -18,6 +18,7 @@ import type {
   AddWebKnowledgeRequest,
   CreateWorkspaceRequest,
   FileKnowledge,
+  RefreshBrandVoiceResponse,
   TextKnowledge,
   UpdateTextKnowledgeRequest,
   UpdateWorkspaceRequest,
@@ -207,6 +208,171 @@ export class WorkspaceApiService {
       // First copy - add "(Copy)"
       return `${originalTitle} (Copy)`;
     }
+  }
+
+  /**
+   * Refresh brand voice analysis for workspace
+   * Note: This is a mock implementation for frontend development
+   * In production, this would trigger backend re-analysis
+   */
+  async refreshBrandVoice(
+    workspaceId: string,
+  ): Promise<RefreshBrandVoiceResponse> {
+    this.validateUuid(workspaceId, "workspace_id");
+
+    // Mock implementation - simulate backend processing time
+    return new Promise((resolve) => {
+      setTimeout(
+        () => {
+          const changesDetected = Math.random() > 0.3; // 70% chance of changes
+          resolve({
+            brand_voice: this.generateMockUpdatedBrandVoice(workspaceId),
+            changes_detected: changesDetected,
+            previous_brand_voice: changesDetected
+              ? this.generateMockPreviousBrandVoice(workspaceId)
+              : undefined,
+          });
+        },
+        2000 + Math.random() * 3000,
+      ); // 2-5 second delay to simulate processing
+    });
+  }
+
+  /**
+   * Generate mock updated brand voice data
+   */
+  private generateMockUpdatedBrandVoice(workspaceId: string) {
+    const mockVariations = [
+      {
+        about:
+          "An innovative tech company focused on AI-driven solutions and cutting-edge automation tools.",
+        customer_profile:
+          "Forward-thinking businesses and entrepreneurs seeking intelligent automation and data-driven insights.",
+        selling_position:
+          "Leading provider of intelligent automation tools that transform business operations through AI.",
+        target_audience: [
+          "Tech Leaders",
+          "Business Owners",
+          "Innovation Teams",
+          "Digital Transformation Managers",
+        ],
+        brand_voice: [
+          "Professional",
+          "Innovative",
+          "Trustworthy",
+          "Results-Driven",
+          "Forward-Thinking",
+        ],
+        competitors: [
+          "TechCorp",
+          "AI Solutions Inc",
+          "AutomateNow",
+          "SmartFlow",
+        ],
+        content_strategy: [
+          "Thought Leadership",
+          "Case Studies",
+          "Product Demos",
+          "Industry Insights",
+        ],
+      },
+      {
+        about:
+          "A customer-centric technology platform empowering businesses with seamless digital experiences.",
+        customer_profile:
+          "Growing companies looking to enhance customer experience and streamline operations.",
+        selling_position:
+          "The all-in-one platform for businesses to create exceptional customer experiences at scale.",
+        target_audience: [
+          "Customer Success Teams",
+          "Product Managers",
+          "Small Business Owners",
+          "Growth Teams",
+        ],
+        brand_voice: [
+          "Approachable",
+          "Empowering",
+          "Reliable",
+          "Customer-First",
+          "Growth-Oriented",
+        ],
+        competitors: [
+          "CustomerFlow",
+          "ExperienceHub",
+          "BusinessGrow",
+          "ScaleUp",
+        ],
+        content_strategy: [
+          "Customer Stories",
+          "Best Practices",
+          "Growth Tips",
+          "Platform Updates",
+        ],
+      },
+      {
+        about:
+          "A data-driven analytics company helping organizations make informed decisions through advanced insights.",
+        customer_profile:
+          "Data-conscious leaders and analysts seeking actionable business intelligence.",
+        selling_position:
+          "Transform your data into strategic advantages with our comprehensive analytics platform.",
+        target_audience: [
+          "Data Analysts",
+          "Business Intelligence Teams",
+          "C-Suite Executives",
+          "Research Teams",
+        ],
+        brand_voice: [
+          "Analytical",
+          "Insightful",
+          "Precise",
+          "Strategic",
+          "Data-Driven",
+        ],
+        competitors: [
+          "DataViz Pro",
+          "Analytics Central",
+          "InsightFlow",
+          "MetricsHub",
+        ],
+        content_strategy: [
+          "Data Insights",
+          "Industry Reports",
+          "Methodology Guides",
+          "Trend Analysis",
+        ],
+      },
+    ];
+
+    const selectedVariation =
+      mockVariations[Math.floor(Math.random() * mockVariations.length)];
+
+    return {
+      id: generateRequestId(),
+      workspace_id: workspaceId,
+      ...selectedVariation,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Generate mock previous brand voice data for comparison
+   */
+  private generateMockPreviousBrandVoice(workspaceId: string) {
+    return {
+      id: generateRequestId(),
+      workspace_id: workspaceId,
+      about: "A technology company providing business solutions.",
+      customer_profile: "Businesses looking for software solutions.",
+      selling_position: "Reliable technology solutions for modern businesses.",
+      target_audience: ["Business Owners", "IT Teams"],
+      brand_voice: ["Professional", "Reliable", "Practical"],
+      competitors: ["TechCorp", "BusinessSoft"],
+      content_strategy: ["Product Updates", "Case Studies"],
+      created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
   }
 
   // ============================================================================
@@ -927,6 +1093,7 @@ export type {
   AddWebKnowledgeRequest,
   CreateWorkspaceRequest,
   FileKnowledge,
+  RefreshBrandVoiceResponse,
   TextKnowledge,
   UpdateTextKnowledgeRequest,
   UpdateWorkspaceRequest,

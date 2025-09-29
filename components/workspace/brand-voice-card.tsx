@@ -9,6 +9,7 @@ import {
   ChevronUp,
   Clock,
   Copy,
+  RefreshCw,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { BrandVoice, Workspace } from "@/types/workspace";
 
 interface BrandVoiceCardProps {
@@ -245,9 +247,40 @@ function TemporalInfo({ brandVoice }: { brandVoice: BrandVoice }) {
   );
 }
 
+// Refresh brand voice button component
+function RefreshBrandVoiceButton({ workspaceId }: { workspaceId: string }) {
+  const { brandVoiceRefresh, refreshBrandVoice } = useWorkspaceStore();
+
+  const handleRefresh = async () => {
+    try {
+      await refreshBrandVoice(workspaceId);
+      toast.success("Brand voice refreshed successfully");
+    } catch (_error) {
+      toast.error("Failed to refresh brand voice");
+    }
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleRefresh}
+      disabled={brandVoiceRefresh.isRefreshing}
+      className="flex items-center gap-2"
+      title="Re-analyze workspace content to refresh brand voice"
+    >
+      <RefreshCw
+        className={`h-4 w-4 ${brandVoiceRefresh.isRefreshing ? "animate-spin" : ""}`}
+      />
+      {brandVoiceRefresh.isRefreshing ? "Refreshing..." : "Refresh"}
+    </Button>
+  );
+}
+
 // Main brand voice card component
 export function BrandVoiceCard({ workspace }: BrandVoiceCardProps) {
   const brandVoice = workspace.brand_voice;
+  const { brandVoiceRefresh } = useWorkspaceStore();
 
   // Empty state
   if (!brandVoice) {
@@ -272,15 +305,29 @@ export function BrandVoiceCard({ workspace }: BrandVoiceCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Brain className="h-5 w-5 text-purple-600" />
-          Brand Voice Profile
-        </CardTitle>
-        <CardDescription>
-          AI-extracted brand characteristics and positioning from your workspace
-          content
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brain className="h-5 w-5 text-purple-600" />
+              Brand Voice Profile
+            </CardTitle>
+            <CardDescription>
+              AI-extracted brand characteristics and positioning from your
+              workspace content
+            </CardDescription>
+          </div>
+          <RefreshBrandVoiceButton workspaceId={workspace.id} />
+        </div>
       </CardHeader>
+
+      {/* Error display for refresh failures */}
+      {brandVoiceRefresh.refreshError && (
+        <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-700">
+            {brandVoiceRefresh.refreshError}
+          </p>
+        </div>
+      )}
 
       <CardContent className="space-y-6">
         {/* Brand Overview */}

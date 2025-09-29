@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { workspaceApiService } from "@/services/workspace-api";
 import type {
+  BrandVoiceRefreshState,
   KnowledgeManagementState,
   KnowledgeType,
   Workspace,
@@ -64,6 +65,9 @@ interface WorkspaceState {
   // Workspace settings
   workspaceSettings: Record<string, WorkspaceSettings>; // keyed by workspace ID
 
+  // Brand voice refresh state
+  brandVoiceRefresh: BrandVoiceRefreshState;
+
   // SSR hydration state
   _hasHydrated: boolean;
 
@@ -90,6 +94,13 @@ interface WorkspaceState {
   duplicateWorkspace: (sourceWorkspaceId: string) => Promise<Workspace>;
   fetchWorkspaces: () => Promise<Workspace[]>;
   fetchWorkspace: (workspaceId: string) => Promise<Workspace>;
+
+  // ============================================================================
+  // BRAND VOICE REFRESH ACTIONS
+  // ============================================================================
+
+  refreshBrandVoice: (workspaceId: string) => Promise<void>;
+  setBrandVoiceRefreshState: (state: Partial<BrandVoiceRefreshState>) => void;
 
   // ============================================================================
   // UI PREFERENCES ACTIONS
@@ -238,6 +249,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         // Workspace settings
         workspaceSettings: {},
+
+        // Brand voice refresh state
+        brandVoiceRefresh: {
+          isRefreshing: false,
+          showComparison: false,
+          previousBrandVoice: undefined,
+          refreshError: undefined,
+        },
 
         // SSR hydration
         _hasHydrated: false,
@@ -744,6 +763,82 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             }));
             throw error;
           }
+        },
+
+        // ============================================================================
+        // BRAND VOICE REFRESH ACTIONS
+        // ============================================================================
+
+        refreshBrandVoice: async (workspaceId) => {
+          try {
+            set((state) => ({
+              brandVoiceRefresh: {
+                ...state.brandVoiceRefresh,
+                isRefreshing: true,
+                refreshError: undefined,
+              },
+            }));
+
+            const response =
+              await workspaceApiService.refreshBrandVoice(workspaceId);
+
+            // Update current workspace if it matches
+            const currentWorkspace = _get().currentWorkspace;
+            if (currentWorkspace && currentWorkspace.id === workspaceId) {
+              set((_state) => ({
+                currentWorkspace: {
+                  ...currentWorkspace,
+                  brand_voice: response.brand_voice,
+                },
+                brandVoiceRefresh: {
+                  isRefreshing: false,
+                  showComparison: response.changes_detected,
+                  previousBrandVoice: response.previous_brand_voice,
+                  refreshError: undefined,
+                },
+              }));
+            } else {
+              // Just update the refresh state if workspace doesn't match
+              set((_state) => ({
+                brandVoiceRefresh: {
+                  isRefreshing: false,
+                  showComparison: response.changes_detected,
+                  previousBrandVoice: response.previous_brand_voice,
+                  refreshError: undefined,
+                },
+              }));
+            }
+
+            // Also update workspace in list if it exists
+            set((state) => ({
+              workspaceList: state.workspaceList.map((w) =>
+                w.id === workspaceId
+                  ? { ...w, brand_voice: response.brand_voice }
+                  : w,
+              ),
+            }));
+          } catch (error) {
+            set((state) => ({
+              brandVoiceRefresh: {
+                ...state.brandVoiceRefresh,
+                isRefreshing: false,
+                refreshError:
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to refresh brand voice",
+              },
+            }));
+            throw error;
+          }
+        },
+
+        setBrandVoiceRefreshState: (newState) => {
+          set((state) => ({
+            brandVoiceRefresh: {
+              ...state.brandVoiceRefresh,
+              ...newState,
+            },
+          }));
         },
 
         // ============================================================================
