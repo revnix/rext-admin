@@ -94,7 +94,7 @@ Based on comprehensive analysis of @wrext-backend/ functionality, this document 
 ### Layout Components
 - [x] Build workspace layout wrapper (✅ **Refactored**: Removed WorkspaceLayout abstraction, workspace pages now use PageLayout directly for consistency with other app pages)
 - [x] Create responsive workspace header (✅ **Implemented**: Workspace pages now follow same header patterns as Content/Topics pages with consistent action button placement)
-- [x] Implement workspace-specific sidebar (✅ **Implemented**: Updated Knowledge menu in sidebar with Web URLs, Files, Text Notes - always visible and consistent)
+- [x] Implement workspace-specific sidebar (✅ **Implemented**: Knowledge sidebar menu navigates to current workspace detail page tabs, dynamic URL generation, no separate pages needed)
 - [x] Add workspace action buttons (edit, delete, settings) (✅ **Implemented**: Action buttons follow consistent patterns with primary/secondary/destructive variants and dropdown overflow menu)
 
 ## **6. Data Visualization & Analytics**
@@ -441,16 +441,18 @@ Upon detailed codebase analysis, discovered that all knowledge management compon
 
 #### **Implementation Learnings** (Dec 29, 2024 - Knowledge Sidebar Update):
 - **Consistent navigation principle**: Rather than conditional workspace-specific sidebar items, maintain consistent navigation structure always visible to users
-- **Knowledge menu enhancement**: Updated existing Knowledge menu under Configuration to include relevant workspace knowledge types (Web URLs, Files, Text Notes)
-- **Icon selection strategy**: Globe for Web URLs, Upload for Files, StickyNote for Text Notes - intuitive and consistent with app patterns
-- **URL structure**: Used `/knowledge/web`, `/knowledge/files`, `/knowledge/text` for potential cross-workspace knowledge management pages
-- **Always-visible approach**: Better UX than conditional menu items that appear/disappear based on context
-- **Menu hierarchy**: Knowledge items fit naturally under Configuration section alongside Integrations and Users
+- **Workspace tab integration**: Knowledge sidebar items navigate to current workspace detail page tabs instead of separate pages
+- **Dynamic URL generation**: Sidebar dynamically generates URLs based on current workspace: `/workspaces/[id]?tab=knowledge&view=web`
+- **Workspace context awareness**: Sidebar uses workspace store to generate appropriate URLs or fallback to workspace list
+- **Existing component leverage**: Reuses existing workspace detail page knowledge tabs and components (AllKnowledgeList, WebKnowledgeList, etc.)
+- **URL parameter strategy**: Uses `tab=knowledge` for main knowledge section and `view=web|files|text` for specific knowledge types
+- **Graceful fallback**: When no workspace selected, Knowledge menu navigates to workspace list page
+- **No separate pages needed**: Leverages existing workspace detail page infrastructure for better consistency
 
 #### **Actual Missing Features** (Updated Dec 29, 2024):
 1. ✅ **Workspace layout wrapper** - COMPLETED: Refactored to use PageLayout directly for consistency with other app pages
 2. ✅ **Responsive workspace header** - COMPLETED: Workspace pages now follow same header patterns as Content/Topics pages
-3. ✅ **Workspace-specific sidebar** - COMPLETED: Updated Knowledge menu with Web URLs, Files, Text Notes - always visible and consistent  
+3. ✅ **Workspace-specific sidebar** - COMPLETED: Knowledge menu navigates to current workspace detail page tabs, removed conditional sidebar items, dynamic URL generation based on active workspace  
 4. ✅ **Workspace action buttons** - COMPLETED: Action buttons follow consistent patterns with primary/secondary/destructive variants
 5. **Mobile optimization** - some components may need responsive improvements (lower priority)
 
