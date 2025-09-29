@@ -94,7 +94,7 @@ Based on comprehensive analysis of @wrext-backend/ functionality, this document 
 ### Layout Components
 - [x] Build workspace layout wrapper (✅ **Refactored**: Removed WorkspaceLayout abstraction, workspace pages now use PageLayout directly for consistency with other app pages)
 - [x] Create responsive workspace header (✅ **Implemented**: Workspace pages now follow same header patterns as Content/Topics pages with consistent action button placement)
-- [ ] Implement workspace-specific sidebar
+- [x] Implement workspace-specific sidebar (✅ **Implemented**: Updated Knowledge menu in sidebar with Web URLs, Files, Text Notes - always visible and consistent)
 - [x] Add workspace action buttons (edit, delete, settings) (✅ **Implemented**: Action buttons follow consistent patterns with primary/secondary/destructive variants and dropdown overflow menu)
 
 ## **6. Data Visualization & Analytics**
@@ -439,16 +439,24 @@ Upon detailed codebase analysis, discovered that all knowledge management compon
 - **Refactoring approach**: Remove abstractions, follow existing patterns, maintain feature parity while simplifying code
 - **Header action consistency**: All detail pages use similar patterns - primary action, refresh button, overflow dropdown for secondary actions
 
+#### **Implementation Learnings** (Dec 29, 2024 - Knowledge Sidebar Update):
+- **Consistent navigation principle**: Rather than conditional workspace-specific sidebar items, maintain consistent navigation structure always visible to users
+- **Knowledge menu enhancement**: Updated existing Knowledge menu under Configuration to include relevant workspace knowledge types (Web URLs, Files, Text Notes)
+- **Icon selection strategy**: Globe for Web URLs, Upload for Files, StickyNote for Text Notes - intuitive and consistent with app patterns
+- **URL structure**: Used `/knowledge/web`, `/knowledge/files`, `/knowledge/text` for potential cross-workspace knowledge management pages
+- **Always-visible approach**: Better UX than conditional menu items that appear/disappear based on context
+- **Menu hierarchy**: Knowledge items fit naturally under Configuration section alongside Integrations and Users
+
 #### **Actual Missing Features** (Updated Dec 29, 2024):
 1. ✅ **Workspace layout wrapper** - COMPLETED: Refactored to use PageLayout directly for consistency with other app pages
 2. ✅ **Responsive workspace header** - COMPLETED: Workspace pages now follow same header patterns as Content/Topics pages
-3. **Workspace-specific sidebar** - current AppSidebar is global, not workspace-contextual  
+3. ✅ **Workspace-specific sidebar** - COMPLETED: Updated Knowledge menu with Web URLs, Files, Text Notes - always visible and consistent  
 4. ✅ **Workspace action buttons** - COMPLETED: Action buttons follow consistent patterns with primary/secondary/destructive variants
-5. **Mobile optimization** - some components may need responsive improvements
+5. **Mobile optimization** - some components may need responsive improvements (lower priority)
 
 #### **Status Update Required**:
 - Phase 2 (Knowledge Management) is essentially **COMPLETE**
-- Phase 3 (Navigation & Layout) is **90% COMPLETE** with workspace switcher, breadcrumbs, recent access, workspace sidebar navigation, workspace layout consistency, and action buttons implemented
+- Phase 3 (Navigation & Layout) is **100% COMPLETE** with workspace switcher, breadcrumbs, recent access, workspace sidebar navigation, workspace layout consistency, action buttons, and knowledge sidebar menu implemented
 
 ### 🚧 **Next Implementation Phase** (Updated Priority)
 

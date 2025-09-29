@@ -5,13 +5,15 @@ import {
   Brain,
   Database,
   FileText,
+  Globe,
   LayoutDashboard,
   Library,
   Puzzle,
   Settings2,
   Share2,
+  StickyNote,
+  Upload,
   Users,
-  Zap,
 } from "lucide-react";
 import type * as React from "react";
 
@@ -24,7 +26,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { WorkspaceSidebarNav } from "@/components/workspace/workspace-sidebar-nav";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
 // This is sample data.
@@ -74,14 +75,19 @@ const data = {
           icon: Brain,
           items: [
             {
-              title: "Rules",
-              url: "/rules",
-              icon: Zap,
+              title: "Web URLs",
+              url: "/knowledge/web",
+              icon: Globe,
             },
             {
-              title: "Memories",
-              url: "/memories",
-              icon: Database,
+              title: "Files",
+              url: "/knowledge/files",
+              icon: Upload,
+            },
+            {
+              title: "Text Notes",
+              url: "/knowledge/text",
+              icon: StickyNote,
             },
           ],
         },
@@ -129,7 +135,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <WorkspaceSidebarNav />
         <NavMain groups={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
