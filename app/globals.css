@@ -135,6 +135,314 @@
   animation-delay: 1000ms;
 }
 
+/* Content Creation Wizard specific utility classes */
+.wizard-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  max-width: none;
+}
+
+@media (min-width: 768px) {
+  .wizard-container {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .wizard-container {
+    padding: 2rem;
+  }
+}
+
+.wizard-step-container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+/* Enhanced card styles for wizard */
+.wizard-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) * 1.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.wizard-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.5) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.wizard-card:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow: 0 8px 25px -8px hsl(var(--primary) / 0.15);
+  transform: translateY(-2px);
+}
+
+.wizard-card:hover::before {
+  opacity: 1;
+}
+
+.wizard-card-interactive {
+  cursor: pointer;
+  background: hsl(var(--card));
+  border: 2px solid hsl(var(--border));
+  border-radius: calc(var(--radius) * 1.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  min-height: 44px;
+}
+
+.wizard-card-interactive:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  background: hsl(var(--accent) / 0.5);
+  transform: translateY(-1px) scale(1.005);
+  box-shadow:
+    0 4px 20px -4px hsl(var(--primary) / 0.25),
+    0 0 0 0 hsl(var(--primary) / 0.1);
+}
+
+.wizard-card-interactive:active {
+  transform: translateY(0) scale(0.998);
+  transition: all 0.1s ease;
+}
+
+.wizard-card-selected {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.08);
+  box-shadow:
+    0 0 0 3px hsl(var(--primary) / 0.2),
+    0 8px 25px -8px hsl(var(--primary) / 0.3);
+  transform: translateY(-2px);
+}
+
+.wizard-card-error {
+  border-color: hsl(var(--destructive));
+  background: hsl(var(--destructive) / 0.05);
+  box-shadow:
+    0 0 0 2px hsl(var(--destructive) / 0.2),
+    0 4px 15px -4px hsl(var(--destructive) / 0.25);
+  animation: wizard-error-shake 0.4s ease-in-out;
+}
+
+.wizard-card-success {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, #22c55e08 0%, #22c55e05 100%);
+  box-shadow:
+    0 0 0 2px #22c55e20,
+    0 8px 25px -8px #22c55e25;
+}
+
+/* Enhanced form field states */
+.wizard-field-group {
+  position: relative;
+}
+
+.wizard-field-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wizard-field-description {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.wizard-field-error {
+  color: hsl(var(--destructive));
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  animation: wizard-slide-in-up 0.3s ease;
+}
+
+.wizard-field-success {
+  color: #22c55e;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  animation: wizard-slide-in-up 0.3s ease;
+}
+
+/* Enhanced progress styles */
+.wizard-progress-enhanced {
+  height: 8px;
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.wizard-progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.8) 100%
+  );
+  border-radius: 9999px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.wizard-progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: wizard-progress-shine 2s ease-in-out infinite;
+}
+
+/* Enhanced button styles */
+.wizard-button-primary {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.9) 100%
+  );
+  border: 1px solid hsl(var(--primary));
+  box-shadow: 0 2px 8px -2px hsl(var(--primary) / 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wizard-button-primary:hover {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.9) 0%,
+    hsl(var(--primary) / 0.8) 100%
+  );
+  box-shadow: 0 4px 16px -4px hsl(var(--primary) / 0.4);
+  transform: translateY(-1px);
+}
+
+.wizard-button-secondary {
+  background: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 4px -1px hsl(var(--foreground) / 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wizard-button-secondary:hover {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--primary) / 0.2);
+  box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.15);
+}
+
+/* Enhanced section headers */
+.wizard-section-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.wizard-section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.75rem;
+  line-height: 1.2;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--foreground) / 0.8) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.wizard-section-subtitle {
+  font-size: 1.125rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 48rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Enhanced grid layouts */
+.wizard-grid-2 {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .wizard-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+.wizard-grid-3 {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .wizard-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .wizard-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+.wizard-grid-4 {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .wizard-grid-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .wizard-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
 /* TypeForm-specific utility classes */
 .typeform-container {
   width: 100%;
@@ -722,6 +1030,102 @@
   }
   70% {
     transform: scale(1);
+  }
+}
+
+/* Enhanced wizard animations */
+@keyframes wizard-slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wizard-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wizard-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes wizard-progress-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes wizard-error-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-3px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes wizard-success-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 #22c55e40;
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 8px #22c55e00;
+  }
+}
+
+@keyframes wizard-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 5px hsl(var(--primary) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.8);
+  }
+}
+
+/* Custom dialog styles for wide modals - using higher specificity to override defaults */
+[data-slot="dialog-content"].topic-picker-dialog {
+  max-width: 71vw;
+  width: 71vw;
+}
+
+@media (min-width: 1280px) {
+  [data-slot="dialog-content"].topic-picker-dialog {
+    max-width: 60vw;
+    width: 60vw;
   }
 }
 

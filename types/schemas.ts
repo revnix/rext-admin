@@ -10,6 +10,7 @@
 
 import { z } from "zod";
 import type { SaveTopicItem } from "./api";
+import type { BackendSaveTopicRequestList } from "./backend";
 import type { TopicData } from "./data-table";
 import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
 
@@ -22,12 +23,22 @@ import type { GeneratedTopic, TopicBuilderFormData } from "./topic-builder";
  * Used in both frontend and backend topic structures
  */
 export const TopicScoresSchema = z.object({
-  /** Relevance score (0-100): How well the topic matches user criteria */
-  relevance: z.number().min(0).max(100),
-  /** Freshness score (0-100): How current/timely the topic is */
-  freshness: z.number().min(0).max(100),
-  /** Novelty score (0-100): How unique/original the topic approach is */
-  novelty: z.number().min(0).max(100),
+  /** Relevance score (0-1): How well the topic matches user criteria */
+  relevance: z.number().min(0).max(1),
+  /** SEO potential score (0-1): SEO ranking potential */
+  seo_potential: z.number().min(0).max(1),
+  /** Trend level score (0-1): How current/timely the topic is */
+  trend_level: z.number().min(0).max(1),
+  /** Uniqueness score (0-1): How unique/original the topic approach is */
+  uniqueness: z.number().min(0).max(1),
+  /** Reader interest score (0-1): Expected reader engagement potential */
+  reader_interest: z.number().min(0).max(1),
+  /** Actionable potential score (0-1): How actionable/practical the content can be */
+  actionable_potential: z.number().min(0).max(1),
+  /** Brand alignment score (0-1): How well it aligns with brand values */
+  brand_alignment: z.number().min(0).max(1),
+  /** Controversy score (0-1): Potential for controversy (lower = safer) */
+  controversy: z.number().min(0).max(1),
 });
 
 /**
@@ -53,8 +64,10 @@ export const GeneratedTopicSchema = z.object({
   why_it_works: z.string().min(1),
   /** Categorization tags for the topic */
   tags: z.array(z.string()).default([]),
-  /** When the topic was generated (ISO string) */
-  generated_at: z.string().datetime().optional(),
+  /** When the topic was created in backend (ISO string, nullable) */
+  created_at: z.string().nullable().optional(),
+  /** Suggested default content parameters */
+  suggested_defaults: z.record(z.string(), z.unknown()).optional(),
   /** Generation metadata */
   metadata: z
     .object({
@@ -163,7 +176,7 @@ export const TopicBuilderFormDataSchema = z.object({
   ]),
   industry_other: z.string().optional(),
 
-  // Content type & platform (now optional - set in Flow)
+  // Content type & platform
   content_type: z
     .enum([
       "blog-post",
@@ -533,9 +546,9 @@ export const createValidationReport = <T>(
 /**
  * Transforms a GeneratedTopic to SaveTopicItem format for backend API
  *
- * This is a basic transformation utility. For enhanced error handling,
- * performance metrics, and batch processing, use the utilities in
- * @see /lib/transformation-utils.ts
+ * This is a basic transformation utility used primarily in validation tests.
+ * For direct backend persistence, use `transformTopicForBackend` from
+ * `@/lib/transformation-utils`.
  *
  * @param topic - Frontend GeneratedTopic object
  * @returns SaveTopicItem formatted for backend API
@@ -545,20 +558,13 @@ export const createValidationReport = <T>(
  * ```typescript
  * // Basic transformation
  * const backendTopic = transformTopicForSaving(frontendTopic);
- *
- * // Enhanced transformation with error handling
- * import { transformTopicForSavingEnhanced } from '@/lib/transformation-utils';
- * const result = transformTopicForSavingEnhanced(frontendTopic);
- * if (result.success) {
- *   console.log('Transformed:', result.data);
- * } else {
- *   console.error('Error:', result.error.message);
- * }
  * ```
  */
+type BackendSaveTopicItem = BackendSaveTopicRequestList["topics"][number];
+
 export const transformTopicForSaving = (
   topic: GeneratedTopic,
-): SaveTopicItem => {
+): BackendSaveTopicItem => {
   // Validate input
   if (!isValidGeneratedTopic(topic)) {
     throw new Error("Invalid GeneratedTopic provided for transformation");
@@ -575,22 +581,34 @@ export const transformTopicForSaving = (
     throw new Error("tags array cannot be empty for backend save");
   }
 
-  // Transform to backend format (remove frontend-only fields)
-  const backendTopic: SaveTopicItem = {
+  // Transform to backend format (match SaveTopicRequest schema)
+  const backendTopic: BackendSaveTopicItem = {
+    id: topic.id,
     title: topic.title,
     angle: topic.angle,
+    description: topic.description || topic.angle, // Use angle as fallback if no description
     channel_fit: topic.channel_fit,
     audience_fit: topic.audience_fit,
-    scores: topic.scores,
     why_it_works: topic.why_it_works,
     tags: topic.tags,
+    scores: topic.scores,
+    suggested_defaults: {
+      platform: "blog",
+      industry: "general",
+      audienceType: topic.audience_fit,
+      readingLevel: ["intermediate"],
+      goals: ["educate-inform"],
+      tone: ["professional-formal"],
+      region: "global",
+      contentLength: "medium",
+      primaryKeywords: topic.tags,
+      secondaryKeywords: [],
+      includeTOC: false,
+    },
+    input_params: undefined,
   };
 
-  // Validate output
-  if (!isValidSaveTopicItem(backendTopic)) {
-    throw new Error("Transformed topic failed backend validation");
-  }
-
+  // Return the backend-compatible topic
   return backendTopic;
 };
 
@@ -599,7 +617,7 @@ export const transformTopicForSaving = (
  *
  * This is a basic batch transformation utility. For enhanced error handling,
  * per-item error reporting, and performance optimization, use:
- * @see /lib/transformation-utils.ts - transformTopicsForSavingEnhanced()
+ * @see /lib/transformation-utils.ts - transformTopicsForBackend()
  *
  * @param topics - Array of frontend GeneratedTopic objects
  * @returns Array of SaveTopicItem formatted for backend API
@@ -607,7 +625,7 @@ export const transformTopicForSaving = (
  */
 export const transformTopicsForSaving = (
   topics: GeneratedTopic[],
-): SaveTopicItem[] => {
+): BackendSaveTopicRequestList["topics"] => {
   return topics.map((topic, index) => {
     try {
       return transformTopicForSaving(topic);
@@ -789,9 +807,10 @@ export type StepValidationKey = keyof typeof STEP_VALIDATION_SCHEMAS;
  */
 export const BackendTopicGenerationResponseSchema = z.object({
   topics: z.array(GeneratedTopicSchema),
+  total_count: z.number().optional(),
   request_id: z.string().optional(),
   model_used: z.string().optional(),
-  generation_time_ms: z.number().optional(),
+  generation_time_ms: z.number().nullable().optional(),
 });
 
 export const GetTopicsResponseSchema = z.object({

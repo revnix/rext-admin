@@ -2,6 +2,19 @@
 
 A modern Next.js application for generating, managing, and utilizing AI-powered topics for content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
 
+## 🔒 Security Notice
+
+**This application has been updated with comprehensive security measures (September 2024).**
+
+Key security features implemented:
+- **Server-side API proxy** prevents client-side key exposure
+- **Rate limiting** protects against API abuse (60 req/min per IP)
+- **Input validation & sanitization** blocks XSS attacks
+- **Security headers** via middleware (CSP, HSTS, XSS protection)
+- **Environment variable security** with proper isolation
+
+📖 **Review the [Security Implementation Guide](docs/security-implementation.md) before deployment.**
+
 ## 🚀 Features
 
 - **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
@@ -34,8 +47,9 @@ cd wrext-admin
 npm install
 
 # Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your API keys
+cp .env.example .env
+cp .env.local.example .env.local
+# Edit .env.local with your actual API keys (see Environment Setup below)
 
 # Run development server
 npm run dev
@@ -43,19 +57,91 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
+## 🔐 Environment Setup
+
+### Required Environment Variables
+
+This application requires proper environment variable configuration for security and functionality.
+
+#### 1. Copy Example Files
+```bash
+# Copy public environment template
+cp .env.example .env
+
+# Copy private environment template
+cp .env.local.example .env.local
+```
+
+#### 2. Configure API Keys in `.env.local`
+
+⚠️ **IMPORTANT**: Add your actual API keys to `.env.local` (NOT `.env`)
+
+```bash
+# Required: Content API authentication
+NEXT_PUBLIC_CONTENT_API_KEY=your_actual_content_api_key
+
+# Required: Backend API URL
+BACKEND_API_URL=http://127.0.0.1:2024
+
+# Required: AI Provider API Keys
+ANTHROPIC_API_KEY=your_anthropic_api_key    # Get from https://console.anthropic.com/
+PERPLEXITY_API_KEY=your_perplexity_api_key  # Get from https://www.perplexity.ai/settings/api
+
+# Optional: Additional AI providers (uncomment if needed)
+# OPENAI_API_KEY=your_openai_api_key        # Get from https://platform.openai.com/api-keys
+# GOOGLE_API_KEY=your_google_api_key        # Get from https://makersuite.google.com/app/apikey
+```
+
+#### 3. Security Best Practices
+
+✅ **DO:**
+- Keep `.env.local` private and never commit it to git
+- Use `.env.local` for sensitive API keys (server-side only)
+- Use `.env` for public configuration only
+
+❌ **DON'T:**
+- Never add sensitive keys to `.env` (it's tracked by git)
+- Never use `NEXT_PUBLIC_` prefix for sensitive data
+- Never share or expose API keys in client-side code
+
+#### 4. Production Deployment
+
+For production deployment (Vercel, Netlify, etc.):
+1. Set environment variables in your hosting platform dashboard
+2. Use the same variable names from `.env.local.example`
+3. Never commit actual API keys to your repository
+
 ## 🔧 Development
 
 ### Available Scripts
 
+#### Development
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run Biome linter
-npm run format       # Format code with Biome
-npm run type-check   # Check TypeScript types
-npm run test         # Run test suite
+npm run dev              # Start development server with Turbopack
+npm run build            # Build for production with Turbopack optimizations
+npm run start            # Start production server
 ```
+
+#### Code Quality
+```bash
+npm run lint             # Run Biome linting and type checking
+npm run format           # Format code with Biome
+npm run prepare          # Set up Git hooks (runs automatically)
+```
+
+#### Testing
+```bash
+npm run test             # Run Jest test suite
+npm run test:watch       # Run tests in watch mode
+npm run test:coverage    # Run tests with coverage report
+npm run test:ci          # Run tests in CI mode (no watch, with coverage)
+```
+
+#### Security & Quality Checks
+- **Biome**: Fast linting and formatting (replaces ESLint + Prettier)
+- **TypeScript**: Strict mode enabled with comprehensive type checking
+- **Husky**: Pre-commit hooks for automated quality checks
+- **Jest**: Comprehensive test coverage with Testing Library
 
 ### Project Structure
 
@@ -95,6 +181,7 @@ The main feature is an AI-powered topic generator with a streamlined wizard:
 
 Detailed documentation is available in the `/docs` directory:
 
+- **[Security Implementation Guide](docs/security-implementation.md)** 🔒
 - [Component Architecture](docs/component-architecture.md)
 - [Accessibility Requirements](docs/accessibility-requirements.md)
 - [TypeForm UX Specifications](docs/typeform-ux-specifications.md)
@@ -107,14 +194,51 @@ The application integrates with a Python backend service for AI topic generation
 
 ### Environment Variables
 ```bash
-BACKEND_API_URL=your_backend_url
-CONTENT_API_KEY=your_api_key
+# In .env.local (server-side only)
+BACKEND_API_URL=http://127.0.0.1:2024
+NEXT_PUBLIC_CONTENT_API_KEY=your_actual_api_key
+ANTHROPIC_API_KEY=your_anthropic_key
+PERPLEXITY_API_KEY=your_perplexity_key
 ```
 
 ### API Endpoints
 - `POST /api/topics/generate` - Generate topics
 - `POST /api/topics/save` - Save topic to library
 - `GET /api/topics` - Retrieve saved topics
+
+### Security Architecture
+
+**Comprehensive Security Implementation (September 2024):**
+
+1. **API Security**
+   - All external API calls proxied through Next.js API routes
+   - API keys stored server-side only (never exposed to client)
+   - Request/response validation with comprehensive error handling
+
+2. **Input Protection**
+   - Zod schema validation for all inputs
+   - XSS detection and content sanitization
+   - Length limits and pattern validation
+   - Malicious content blocking
+
+3. **Rate Limiting**
+   - IP-based rate limiting (60 req/min for API routes)
+   - Automatic cleanup of expired entries
+   - Configurable limits per endpoint type
+   - Rate limit headers for client monitoring
+
+4. **Security Headers**
+   - Content Security Policy (CSP) via middleware
+   - XSS protection and frame options
+   - HSTS for production environments
+   - Referrer policy and content-type protection
+
+5. **Environment Security**
+   - Strict separation of public/private variables
+   - No client-side exposure of sensitive data
+   - Environment variable validation on startup
+
+📖 **Detailed Information**: See [Security Implementation Guide](docs/security-implementation.md)
 
 ## 🧪 Testing
 

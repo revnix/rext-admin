@@ -20,10 +20,15 @@ import {
   isOnline,
 } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
-import type { BackendError, ErrorRecoveryAction } from "@/types/backend";
+import type {
+  BackendError,
+  BackendServiceError,
+  ErrorRecoveryAction,
+} from "@/types/backend";
+import type { BackendErrorCode } from "@/types/consistent-response";
 
 interface ErrorAlertProps {
-  error: BackendError;
+  error: BackendError | BackendServiceError;
   operation?: "topic_generation" | "form_validation" | "data_save";
   onRetry?: () => void;
   onGoBack?: () => void;
@@ -36,7 +41,9 @@ interface ErrorAlertProps {
 /**
  * Get icon for error severity level
  */
-function getErrorIcon(severity: BackendError["severity"]) {
+function getErrorIcon(
+  severity: BackendError["severity"] | BackendServiceError["severity"],
+) {
   switch (severity) {
     case "low":
       return Info;
@@ -54,7 +61,7 @@ function getErrorIcon(severity: BackendError["severity"]) {
  * Get alert variant based on error severity
  */
 function getAlertVariant(
-  severity: BackendError["severity"],
+  severity: BackendError["severity"] | BackendServiceError["severity"],
 ): "default" | "destructive" {
   return severity === "high" || severity === "critical"
     ? "destructive"
@@ -148,20 +155,53 @@ export function ErrorAlert({
   onRetry,
   onGoBack,
   onContactSupport,
-  onReload = () => window.location.reload(),
+  onReload,
   className,
   showErrorId = process.env.NODE_ENV === "development",
 }: ErrorAlertProps) {
   const [isRetrying, setIsRetrying] = React.useState(false);
   const ErrorIcon = getErrorIcon(error.severity);
-  const contextualMessage = getContextualErrorMessage(error, operation);
+
+  // Handle both BackendError and BackendServiceError types
+  const contextualMessage =
+    "type" in error
+      ? getContextualErrorMessage(error as BackendError, operation)
+      : error.message;
+
+  // Enhanced error context for BackendServiceError
+  const errorCode =
+    "code" in error
+      ? (error as BackendServiceError).code
+      : "type" in error
+        ? ("unknown_error" as BackendErrorCode)
+        : ("unknown_error" as BackendErrorCode);
+  const requestId =
+    "requestId" in error
+      ? (error as BackendServiceError).requestId
+      : "requestId" in error
+        ? (error as BackendError).requestId
+        : undefined;
+  const processingTime =
+    "processingTime" in error
+      ? (error as BackendServiceError).processingTime
+      : undefined;
+  const retryable =
+    "retryable" in error
+      ? (error as BackendServiceError).retryable
+      : "isRetryable" in error
+        ? (error as BackendError).isRetryable
+        : false;
+  const recoveryActions: ErrorRecoveryAction[] =
+    "recoveryActions" in error
+      ? (error as BackendError).recoveryActions
+      : ["retry", "contact_support"];
 
   const handleRetry = async () => {
     if (!onRetry) return;
 
     setIsRetrying(true);
     try {
-      await onRetry();
+      onRetry();
     } catch (retryError) {
       console.error("Retry failed:", retryError);
     } finally {
@@ -187,10 +227,14 @@ export function ErrorAlert({
 
         {/* Detailed validation errors in development - only if contextual message doesn't show field names */}
         {process.env.NODE_ENV === "development" &&
-          error.type === "validation_error" &&
+          (("type" in error && error.type === "validation_error") ||
+            errorCode === "validation_failed") &&
           !contextualMessage.includes("Missing required fields:") &&
           (() => {
-            const validationErrors = extractValidationErrors(error);
+            const validationErrors =
+              "type" in error
+                ? extractValidationErrors(error as BackendError)
+                : [];
             return validationErrors.length > 0 ? (
               <div className="mt-3 p-3 bg-gray-50 rounded-md">
                 <p className="text-sm font-medium text-gray-700 mb-2">
@@ -207,15 +251,48 @@ export function ErrorAlert({
             ) : null;
           })()}
 
-        {/* Retry information */}
-        {error.isRetryable && error.retryAttempt && (
-          <p className="text-sm text-muted-foreground">
-            Attempt {error.retryAttempt} of maximum retries
-          </p>
+        {/* Enhanced error information for BackendServiceError */}
+        {process.env.NODE_ENV === "development" && "code" in error && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-md">
+            <p className="text-sm font-medium text-blue-700 mb-2">
+              Enhanced Error Details:
+            </p>
+            <div className="text-sm text-blue-600 space-y-1">
+              <div className="font-mono">Error Code: {errorCode}</div>
+              {processingTime && (
+                <div className="font-mono">
+                  Processing Time: {processingTime}ms
+                </div>
+              )}
+              {"statusCode" in error && (
+                <div className="font-mono">
+                  Status Code: {(error as BackendServiceError).statusCode}
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
+        {/* Retry information */}
+        {retryable &&
+          ("retryAttempt" in error
+            ? error.retryAttempt
+            : "retryDelay" in error) && (
+            <p className="text-sm text-muted-foreground">
+              {"retryAttempt" in error
+                ? `Attempt ${error.retryAttempt} of maximum retries`
+                : "retryDelay" in error &&
+                    (error as BackendServiceError).retryDelay
+                  ? `Retry available in ${Math.ceil(((error as BackendServiceError).retryDelay || 0) / 1000)}s`
+                  : "Retry available"}
+            </p>
+          )}
+
         {/* Network status for network-related errors */}
-        {(error.type === "network_error" || error.type === "timeout_error") && (
+        {(("type" in error &&
+          (error.type === "network_error" || error.type === "timeout_error")) ||
+          errorCode === "network_error" ||
+          errorCode === "timeout_error") && (
           <div className="flex items-center gap-2 text-sm">
             {isOnline() ? (
               <>
@@ -233,7 +310,7 @@ export function ErrorAlert({
 
         {/* Recovery actions */}
         <RecoveryActions
-          actions={error.recoveryActions}
+          actions={recoveryActions}
           onRetry={handleRetry}
           onGoBack={onGoBack}
           onContactSupport={onContactSupport}
@@ -242,9 +319,9 @@ export function ErrorAlert({
         />
 
         {/* Error ID for debugging */}
-        {showErrorId && error.requestId && (
+        {showErrorId && requestId && (
           <p className="text-xs text-gray-400 mt-3 font-mono">
-            Request ID: {error.requestId}
+            Request ID: {requestId}
           </p>
         )}
       </AlertDescription>
@@ -260,7 +337,7 @@ export function CompactErrorAlert({
   onRetry,
   className,
 }: {
-  error: BackendError;
+  error: BackendError | BackendServiceError;
   onRetry?: () => void;
   className?: string;
 }) {
@@ -287,21 +364,26 @@ export function CompactErrorAlert({
       <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
       <p className="text-sm text-red-700 flex-1">{error.message}</p>
 
-      {error.isRetryable && onRetry && (
-        <Button
-          onClick={handleRetry}
-          disabled={isRetrying}
-          size="sm"
-          variant="outline"
-          className="shrink-0"
-        >
-          {isRetrying ? (
-            <RefreshCw className="h-3 w-3 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3 w-3" />
-          )}
-        </Button>
-      )}
+      {("isRetryable" in error
+        ? error.isRetryable
+        : "retryable" in error
+          ? error.retryable
+          : false) &&
+        onRetry && (
+          <Button
+            onClick={handleRetry}
+            disabled={isRetrying}
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+          >
+            {isRetrying ? (
+              <RefreshCw className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+          </Button>
+        )}
     </div>
   );
 }

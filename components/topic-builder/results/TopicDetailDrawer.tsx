@@ -2,7 +2,6 @@
 
 import {
   Check,
-  Copy,
   FileText,
   Globe,
   Hash,
@@ -53,16 +52,36 @@ export function TopicDetailDrawer({
   onCopy,
   className,
 }: TopicDetailDrawerProps) {
-  // Calculate overall score for circular progress
-  const overallScore = topic
-    ? Math.round(
-        ((topic.scores.relevance +
-          topic.scores.freshness +
-          topic.scores.novelty) /
-          3) *
-          100,
-      )
-    : 0;
+  // Calculate overall score using same weighted formula as topics table
+  const calculateOverallScore = (scores: GeneratedTopic["scores"]): number => {
+    if (!scores) return 0;
+    const {
+      relevance = 0,
+      seo_potential = 0,
+      trend_level = 0,
+      uniqueness = 0,
+      reader_interest = 0,
+      actionable_potential = 0,
+      brand_alignment = 0,
+      controversy = 0,
+    } = scores;
+
+    // Weighted average of all score components (same as simple-topic-transformer.ts)
+    // Note: controversy is inverted (lower controversy = higher score)
+    const totalScore =
+      relevance * 0.2 +
+      seo_potential * 0.15 +
+      trend_level * 0.15 +
+      uniqueness * 0.1 +
+      reader_interest * 0.15 +
+      actionable_potential * 0.1 +
+      brand_alignment * 0.1 +
+      (1 - controversy) * 0.05;
+
+    return Math.round(totalScore * 100);
+  };
+
+  const overallScore = topic ? calculateOverallScore(topic.scores) : 0;
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -81,12 +100,12 @@ export function TopicDetailDrawer({
     await onSave(topic.id);
   };
 
-  const handleWriteContent = () => {
+  const _handleWriteContent = () => {
     if (!topic || !onNavigateToContent) return;
     onNavigateToContent(topic.id);
   };
 
-  const handleCopy = async () => {
+  const _handleCopy = async () => {
     if (!topic) return;
 
     if (onCopy) {
@@ -139,7 +158,7 @@ export function TopicDetailDrawer({
                       {topic.title}
                     </SheetTitle>
 
-                    {/* Saved Indicator */}
+                    {/* Saved Status Indicator */}
                     {(topic._optimisticSaved || topic.is_saved) && (
                       <div className="flex items-center gap-2 mt-2">
                         <div
@@ -167,7 +186,7 @@ export function TopicDetailDrawer({
                   variant="ghost"
                   size="sm"
                   onClick={onClose}
-                  className="h-10 w-10 p-0 hover:bg-secondary"
+                  className="h-10 w-10 p-0 hover:bg-secondary cursor-pointer"
                   aria-label="Close drawer"
                 >
                   <X className="h-5 w-5" />
@@ -177,75 +196,173 @@ export function TopicDetailDrawer({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-              {/* Description/Angle */}
-              <div className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60">
-                <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Topic Overview
+              {/* Topic Information */}
+              <div className="bg-muted/20 dark:bg-muted/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Topic Information
                 </h3>
-                <p className="text-base leading-relaxed text-muted-foreground">
-                  {topic.description || topic.angle}
-                </p>
+
+                <div className="space-y-4">
+                  {/* Overview - Most Prominent */}
+                  <div className="bg-background rounded-lg p-4 border-2 border-muted/40 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-1">
+                        <FileText className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base font-medium text-foreground mb-2">
+                          Overview
+                        </h4>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {topic.description || topic.angle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Angle (if different from description) */}
+                  {topic.angle &&
+                    topic.description &&
+                    topic.angle !== topic.description && (
+                      <div className="bg-background rounded-lg p-4 border-2 border-muted/50 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
+                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-foreground mb-2">
+                              Angle
+                            </h4>
+                            <p className="text-xs leading-relaxed text-muted-foreground">
+                              {topic.angle}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Why This Works */}
+                  {topic.why_it_works && (
+                    <div className="bg-background rounded-lg p-4 border-2 border-muted/50 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
+                          <Target className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-foreground mb-2">
+                            Why This Works
+                          </h4>
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            {topic.why_it_works}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Why It Works */}
-              {topic.why_it_works && (
-                <div className="bg-green-50/50 dark:bg-green-950/20 rounded-xl p-6 border border-green-200/50 dark:border-green-800/50">
-                  <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-                    <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    Why This Topic Works
-                  </h3>
-                  <p className="text-base leading-relaxed text-muted-foreground">
-                    {topic.why_it_works}
-                  </p>
-                </div>
-              )}
-
-              {/* Detailed Scores */}
-              <div className="bg-blue-50/30 dark:bg-blue-950/20 rounded-xl p-6 border border-blue-200/50 dark:border-blue-800/50">
+              {/* Performance Scores - Minimal Design */}
+              <div className="bg-muted/20 dark:bg-muted/10 rounded-xl p-6 border border-muted/30 dark:border-muted/20">
                 <div className="flex items-start justify-between mb-6">
                   <h3 className="text-xl font-semibold text-foreground flex items-center gap-3">
-                    <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <TrendingUp className="w-5 h-5 text-muted-foreground" />
                     Performance Scores
                   </h3>
-                  <div className="text-xs text-muted-foreground bg-white/60 dark:bg-background/60 px-2 py-1 rounded-md border border-blue-200/40 dark:border-blue-700/40">
+                  <div className="text-xs text-muted-foreground bg-muted/20 px-2 py-1 rounded-md border border-muted/30">
                     Based on your configuration
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-                    <div className="flex items-center justify-center mb-2">
-                      <Target className="w-6 h-6 text-primary mr-2" />
-                      <div className="text-3xl font-bold text-primary">
-                        {Math.round(topic.scores.relevance * 100)}%
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    {
+                      label: "Relevance",
+                      value: Math.round(topic.scores.relevance * 100),
+                      icon: Target,
+                    },
+                    {
+                      label: "SEO",
+                      value: Math.round(topic.scores.seo_potential * 100),
+                      icon: TrendingUp,
+                    },
+                    {
+                      label: "Trending",
+                      value: Math.round(topic.scores.trend_level * 100),
+                      icon: Zap,
+                    },
+                    {
+                      label: "Unique",
+                      value: Math.round(topic.scores.uniqueness * 100),
+                      icon: Sparkles,
+                    },
+                    {
+                      label: "Interest",
+                      value: Math.round(topic.scores.reader_interest * 100),
+                      icon: Users,
+                    },
+                    {
+                      label: "Actionable",
+                      value: Math.round(
+                        topic.scores.actionable_potential * 100,
+                      ),
+                      icon: PenTool,
+                    },
+                    {
+                      label: "Brand Fit",
+                      value: Math.round(topic.scores.brand_alignment * 100),
+                      icon: Check,
+                    },
+                    {
+                      label: "Safe",
+                      value: Math.round((1 - topic.scores.controversy) * 100),
+                      icon: Globe,
+                    },
+                  ].map((score) => {
+                    const IconComponent = score.icon;
+                    const getScoreColor = (value: number) => {
+                      if (value >= 80)
+                        return "text-green-600 dark:text-green-400";
+                      if (value >= 60)
+                        return "text-blue-600 dark:text-blue-400";
+                      if (value >= 40)
+                        return "text-yellow-600 dark:text-yellow-400";
+                      return "text-red-600 dark:text-red-400";
+                    };
+                    const getProgressColor = (value: number) => {
+                      if (value >= 80) return "bg-green-500";
+                      if (value >= 60) return "bg-blue-500";
+                      if (value >= 40) return "bg-yellow-500";
+                      return "bg-red-500";
+                    };
+
+                    return (
+                      <div
+                        key={score.label}
+                        className="bg-background/50 rounded-lg p-3 border border-muted/40 hover:border-muted/60 transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <IconComponent
+                            className={`w-4 h-4 ${getScoreColor(score.value)}`}
+                          />
+                          <span
+                            className={`text-sm font-bold ${getScoreColor(score.value)}`}
+                          >
+                            {score.value}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted/30 rounded-full h-1.5 mb-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${getProgressColor(score.value)}`}
+                            style={{ width: `${score.value}%` }}
+                          />
+                        </div>
+                        <div className="text-xs font-medium text-muted-foreground">
+                          {score.label}
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Relevance
-                    </div>
-                  </div>
-                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-                    <div className="flex items-center justify-center mb-2">
-                      <Zap className="w-6 h-6 text-primary mr-2" />
-                      <div className="text-3xl font-bold text-primary">
-                        {Math.round(topic.scores.freshness * 100)}%
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Freshness
-                    </div>
-                  </div>
-                  <div className="bg-white/80 dark:bg-background/80 rounded-xl p-5 text-center shadow-sm border border-muted/60 hover:border-muted/80 transition-colors">
-                    <div className="flex items-center justify-center mb-2">
-                      <Sparkles className="w-6 h-6 text-primary mr-2" />
-                      <div className="text-3xl font-bold text-primary">
-                        {Math.round(topic.scores.novelty * 100)}%
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Novelty
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -343,42 +460,6 @@ export function TopicDetailDrawer({
                       </TooltipContent>
                     </Tooltip>
                   )}
-
-                  {onNavigateToContent && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="lg"
-                          onClick={handleWriteContent}
-                          className="gap-3 px-6 py-3 text-base"
-                        >
-                          <PenTool className="h-5 w-5" />
-                          Write Content
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Create content for this topic</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={handleCopy}
-                        className="gap-3 px-6 py-3 text-base"
-                      >
-                        <Copy className="h-5 w-5" />
-                        Copy Topic
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Copy topic to clipboard</p>
-                    </TooltipContent>
-                  </Tooltip>
                 </div>
               </div>
             </div>

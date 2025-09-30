@@ -6,6 +6,7 @@
  */
 
 import type * as React from "react";
+import type { ContentLengthOption } from "./content-creation";
 
 /**
  * Standard props for icon components (Lucide React icons)
@@ -30,6 +31,7 @@ export interface SelectOption {
   label: string;
   value: string;
   disabled?: boolean;
+  tooltip?: string;
   description?: string;
   icon?: IconComponent;
 }
@@ -163,6 +165,8 @@ export type FormFieldValue =
   | string[]
   | number[]
   | Date
+  | Record<string, unknown> // For complex objects
+  | ContentLengthOption // Specific complex object type
   | null
   | undefined;
 
@@ -172,3 +176,12 @@ export type FormFieldValue =
 export type FieldValue<T, K extends keyof T> = T[K] extends FormFieldValue
   ? T[K]
   : FormFieldValue;
+
+/**
+ * Validation result interface for form validation
+ */
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings?: string[];
+}

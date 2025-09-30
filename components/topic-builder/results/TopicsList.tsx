@@ -14,8 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
-import { TopicsGrid } from "./TopicsGrid";
 import { TopicsHeader } from "./TopicsHeader";
+import { TopicsTable } from "./TopicsTable";
 
 // Lazy load TopicDetailDrawer for better performance
 const TopicDetailDrawer = lazy(() =>
@@ -86,16 +86,27 @@ export const TopicsList = memo(function TopicsList({
     [],
   );
 
-  // Sort topics by overall score (highest first) - no filters
+  // Sort topics by creation date (newest first) - newly generated appear on top
   const sortedTopics = useMemo(() => {
     return [...topics].sort((a, b) => {
-      const aOverall =
-        (a.scores.relevance + a.scores.freshness + a.scores.novelty) / 3;
-      const bOverall =
-        (b.scores.relevance + b.scores.freshness + b.scores.novelty) / 3;
-      return bOverall - aOverall;
+      // First, prioritize newly added topics (they appear at the top)
+      const aIsNew = newlyAddedTopicIds.includes(a.id);
+      const bIsNew = newlyAddedTopicIds.includes(b.id);
+
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+
+      // Then sort by creation date (newest first)
+      const aDate = a.created_at
+        ? new Date(a.created_at).getTime()
+        : Date.now();
+      const bDate = b.created_at
+        ? new Date(b.created_at).getTime()
+        : Date.now();
+
+      return bDate - aDate;
     });
-  }, [topics]);
+  }, [topics, newlyAddedTopicIds]);
 
   const handleTopicSave = useCallback(
     (topicId: string) => {
@@ -114,7 +125,7 @@ export const TopicsList = memo(function TopicsList({
     (topicId: string) => {
       try {
         console.log(`Navigating to content creation for topic ${topicId}`);
-        router.push(`/flows/create?topicId=${topicId}`);
+        router.push(`/content/create?topicId=${topicId}`);
         toast.success("Navigating to content creation...");
       } catch (error) {
         console.error(
@@ -209,10 +220,9 @@ export const TopicsList = memo(function TopicsList({
       />
 
       {/* Topics Display */}
-      <TopicsGrid
+      <TopicsTable
         topics={sortedTopics}
         selectedTopicIds={selectedTopicIds}
-        viewMode="grid"
         newlyAddedTopicIds={newlyAddedTopicIds}
         onTopicSelect={handleTopicSelect}
         onTopicSave={handleTopicSave}

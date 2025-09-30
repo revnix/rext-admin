@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type {
   CurrentStep,
   GeneratedTopic,
@@ -7,6 +8,20 @@ import type {
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
+
+// SSR-safe storage implementation
+const getStorage = () => {
+  // SSR guard - only access localStorage on client-side
+  if (typeof window === "undefined") {
+    // Return a no-op storage for SSR
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  return localStorage;
+};
 
 /**
  * Topic Builder Store Interface
@@ -20,10 +35,6 @@ interface TopicBuilderState {
   currentStep: CurrentStep;
   stepHistory: StepHistory;
   stepValidation: Record<CurrentStep, ValidationResult>;
-
-  // Legacy step tracking (for backward compatibility)
-  currentStepNumber: number;
-  visitedSteps: Set<number>;
 
   // Form state
   formData: Partial<TopicBuilderFormData>;
@@ -54,10 +65,6 @@ interface TopicBuilderState {
   // Form data actions
   updateFormData: (data: Partial<TopicBuilderFormData>) => void;
 
-  // Legacy actions (for backward compatibility)
-  setCurrentStepNumber: (step: number) => void;
-  setVisitedSteps: (steps: Set<number>) => void;
-
   // UI state actions
   setIsGenerating: (generating: boolean) => void;
   setIsGeneratingMore: (generating: boolean) => void;
@@ -82,6 +89,10 @@ interface TopicBuilderState {
   // setToneRecommendations removed as ToneType is deprecated
   updateContextualSuggestions: () => void;
   resetContextualSuggestions: () => void;
+
+  // SSR hydration state
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
 }
 
 /**
@@ -131,10 +142,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         stepHistory: initialStepHistory,
         stepValidation: initialStepValidation,
 
-        // Legacy initial state (for backward compatibility)
-        currentStepNumber: 1,
-        visitedSteps: new Set([1]),
-
         // Form state
         formData: initialFormData,
 
@@ -152,6 +159,9 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         contextualSuggestions: {
           audienceByIndustry: [],
         },
+
+        // SSR hydration state
+        _hasHydrated: false,
 
         // TypeForm wizard actions
         setCurrentStep: (step: CurrentStep) => {
@@ -217,26 +227,10 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
           }));
         },
 
-        // Legacy action (for backward compatibility)
-        setCurrentStepNumber: (step) => {
-          const { visitedSteps } = get();
-          const newVisitedSteps = new Set(visitedSteps);
-          newVisitedSteps.add(step);
-
-          set({
-            currentStepNumber: step,
-            visitedSteps: newVisitedSteps,
-          });
-        },
-
         updateFormData: (data) => {
           set((state) => ({
             formData: { ...state.formData, ...data },
           }));
-        },
-
-        setVisitedSteps: (steps) => {
-          set({ visitedSteps: steps });
         },
 
         setIsGenerating: (generating) => {
@@ -295,10 +289,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             currentStep: "wizard-mode" as CurrentStep,
             stepHistory: initialStepHistory,
             stepValidation: initialStepValidation,
-
-            // Legacy state reset (for backward compatibility)
-            currentStepNumber: 1,
-            visitedSteps: new Set([1]),
 
             // Form and UI state reset
             formData: initialFormData,
@@ -360,13 +350,8 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         // setToneRecommendations removed as ToneType is deprecated
 
         updateContextualSuggestions: () => {
-          const { formData } = get();
           // This method can be used to trigger updates based on current form data
           // The actual suggestion logic is handled by the useContextualSuggestions hook
-          console.log("🔄 Contextual suggestions updated for:", {
-            industry: formData.industry,
-            purpose: formData.purpose,
-          });
         },
 
         resetContextualSuggestions: () => {
@@ -376,40 +361,34 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             },
           });
         },
+
+        // SSR hydration actions
+        setHasHydrated: (state: boolean) => {
+          set({ _hasHydrated: state });
+        },
       }),
       {
         name: "topic-builder-store",
-        // Only persist form data and current step for draft saving
+        // Modern 2025 pattern: Only persist form data and current step for draft saving
         partialize: (state) => ({
           currentStep: state.currentStep,
+          stepHistory: state.stepHistory,
           formData: state.formData,
-          visitedSteps: Array.from(state.visitedSteps), // Convert Set to Array for JSON
         }),
-        // Custom storage to handle Set serialization
-        storage: {
-          getItem: (name) => {
-            const str = localStorage.getItem(name);
-            if (!str) return null;
-
-            const parsed = JSON.parse(str);
-            // Convert visitedSteps array back to Set
-            if (parsed.state?.visitedSteps) {
-              parsed.state.visitedSteps = new Set(parsed.state.visitedSteps);
+        // SSR-safe storage with guard
+        storage: createJSONStorage(() => getStorage()),
+        // Enhanced hydration control for SSR compatibility
+        skipHydration: false,
+        onRehydrateStorage: (_state) => {
+          console.log("Hydration starts for topic-builder-store");
+          return (state, error) => {
+            if (error) {
+              console.error("An error happened during hydration:", error);
+            } else {
+              console.log("Hydration finished for topic-builder-store");
+              state?.setHasHydrated(true);
             }
-            return parsed;
-          },
-          setItem: (name, value) => {
-            // Convert Set to Array for JSON serialization
-            const serialized = {
-              ...value,
-              state: {
-                ...value.state,
-                visitedSteps: Array.from(value.state.visitedSteps || []),
-              },
-            };
-            localStorage.setItem(name, JSON.stringify(serialized));
-          },
-          removeItem: (name) => localStorage.removeItem(name),
+          };
         },
       },
     ),
@@ -418,3 +397,25 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
     },
   ),
 );
+
+/**
+ * Hydration-aware hook for React 19 compatibility
+ *
+ * This hook ensures that Zustand store values are not accessed before hydration
+ * is complete, preventing SSR mismatches and hydration errors.
+ *
+ * @param selector - Function to select specific state from the store
+ * @returns Selected state value or undefined if not yet hydrated
+ */
+export const useHydratedTopicBuilderStore = <T>(
+  selector: (state: TopicBuilderState) => T,
+): T | undefined => {
+  const [hydrated, setHydrated] = useState(false);
+  const state = useTopicBuilderStore(selector);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  return hydrated ? state : undefined;
+};

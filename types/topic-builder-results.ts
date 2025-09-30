@@ -5,9 +5,6 @@
 
 import type { GeneratedTopic } from "./topic-builder";
 
-// View Mode (simplified - only grid used now)
-export type ViewMode = "grid" | "list";
-
 // Topics List
 export interface TopicsListProps {
   topics: GeneratedTopic[];
@@ -71,19 +68,6 @@ export interface TopicsHeaderProps {
   isBulkSaving?: boolean;
   onBulkSave?: (topicIds: string[]) => void;
   onClearSelection?: () => void;
-}
-
-// Topics Grid
-export interface TopicsGridProps {
-  topics: GeneratedTopic[];
-  selectedTopicIds: string[];
-  viewMode: ViewMode;
-  newlyAddedTopicIds?: string[];
-  onTopicSelect: (topicId: string, selected: boolean) => void;
-  onTopicSave: (topicId: string) => void;
-  onNavigateToContent: (topicId: string) => void;
-  onViewDetails: (topicId: string) => void;
-  onCopyTopic: (topicId: string) => void;
 }
 
 // Empty States

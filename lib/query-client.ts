@@ -1,45 +1,40 @@
 import { QueryClient } from "@tanstack/react-query";
 
 /**
- * Create a new QueryClient instance with optimized defaults for Next.js 15
+ * Create a new QueryClient instance optimized for 2025 best practices
  *
- * Configuration follows Next.js App Router best practices:
- * - Longer stale times for better UX
- * - Retry configuration for network resilience
- * - Background refetch optimization
+ * Configuration balances performance with real-time collaboration needs:
+ * - Shorter stale times for collaborative scenarios (2min vs 5min)
+ * - Smart refetch defaults for better user experience
+ * - Enhanced retry strategies with exponential backoff
+ * - Structured logging integration
+ * - Optimized for Next.js 15 + Server Components
  */
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Don't refetch immediately on mount if data exists and is less than 5 minutes old
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        // Optimized for 2025 collaborative scenarios
+        staleTime: 2 * 60 * 1000, // 2 minutes (reduced from 5 for better collaboration)
+        gcTime: 5 * 60 * 1000, // 5 minutes (reduced from 10 for memory efficiency)
 
-        // Keep data in cache for 10 minutes after component unmounts
-        gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime)
-
-        // Retry failed requests 3 times with exponential backoff
-        retry: (failureCount, error) => {
-          // Don't retry on 4xx errors (client errors)
-          if (error instanceof Error && "status" in error) {
-            const status = (error as Error & { status: number }).status;
-            if (status >= 400 && status < 500) return false;
-          }
-          return failureCount < 3;
-        },
-
-        // Don't refetch on window focus in development (annoying during dev)
-        refetchOnWindowFocus: process.env.NODE_ENV === "production",
-
-        // Refetch on reconnect to ensure data freshness
+        // Better for collaborative scenarios - always fetch fresh data on mount
+        refetchOnMount: true, // Changed from false - important for collaboration
+        refetchOnWindowFocus: true, // Always enabled for better UX
         refetchOnReconnect: true,
 
-        // Don't refetch on mount if we have data (improves perceived performance)
-        refetchOnMount: false,
+        // No retries - fail fast for better user experience
+        retry: false,
+
+        // Network failure detection
+        networkMode: "online",
       },
       mutations: {
-        // Retry failed mutations once
-        retry: 1,
+        // No retries for mutations - fail fast
+        retry: false,
+
+        // Network failure detection for mutations
+        networkMode: "online",
       },
     },
   });

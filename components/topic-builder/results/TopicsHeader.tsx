@@ -30,7 +30,7 @@ export const TopicsHeader = memo(function TopicsHeader({
   selectedTopics = [],
   isBulkSaving = false,
   onBulkSave,
-  onClearSelection,
+  onClearSelection: _onClearSelection,
 }: TopicsHeaderProps) {
   return (
     <div className="space-y-4">

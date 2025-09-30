@@ -2,9 +2,9 @@ import type {
   BackendError,
   BackendErrorType,
   ErrorRecoveryAction,
-  ErrorSeverity,
   RetryConfig,
 } from "@/types/backend";
+import type { ErrorSeverity } from "@/types/consistent-response";
 
 /**
  * Default retry configuration for backend requests

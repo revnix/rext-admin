@@ -117,15 +117,35 @@ export interface GeneratedTopic {
   scores: {
     /** How relevant the topic is to the input criteria (0-1) */
     relevance: number;
-    /** How fresh/trending the topic is (0-1) */
-    freshness: number;
-    /** How novel/unique the topic approach is (0-1) */
-    novelty: number;
+    /** SEO ranking potential (0-1) */
+    seo_potential: number;
+    /** How trending/current the topic is (0-1) */
+    trend_level: number;
+    /** How unique/original the topic approach is (0-1) */
+    uniqueness: number;
+    /** Expected reader engagement potential (0-1) */
+    reader_interest: number;
+    /** How actionable/practical the content can be (0-1) */
+    actionable_potential: number;
+    /** How well it aligns with brand values (0-1) */
+    brand_alignment: number;
+    /** Potential for controversy/polarization (0-1, lower = safer) */
+    controversy: number;
   };
   /** Categorization tags for the topic */
   tags: string[];
+  /** When the topic was created/generated (ISO string, nullable) */
+  created_at?: string | null;
+  /** When the topic was last updated (ISO string, nullable) */
+  updated_at?: string | null;
+  /** When the topic was approved (ISO string, nullable) */
+  approved_at?: string | null;
+  /** Suggested default content parameters */
+  suggested_defaults?: Record<string, unknown>;
   /** Whether the topic has been saved to user's library */
   is_saved?: boolean;
+  /** Whether the topic has been approved for content creation */
+  approved?: boolean;
   /** Optimistic UI state: marks topic as saved while API call is in progress */
   _optimisticSaved?: boolean;
   /** Tracks if topic is currently being saved (for loading states) */

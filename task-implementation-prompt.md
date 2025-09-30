@@ -1,13 +1,14 @@
-Task Implementation
+Review the @workspace-crud-implementation-plan.md file and based on the plan, work on the next task in the plan.
 
-- Task ID: 39
-- Subtask ID: 39.1, 39.2, 39.3
-- Related plan files: `@features-requirements-plan.md`
+Make sure to work on one subtask at a time. While working on a subtask, make sure to update the phase, task and that subtask's status to "in-progress" and "done" after completion.
+
+Always keep the plan updated for the progress so that it can be used for future reference.
+
+Write your learnings/observations/updates/lesson learned etc in a new section along the way. Before making the plan of a subtask, make sure to visit that section and update the plan with the new information accordingly.
 
 Authoritative references
 
-- Codebase: `src/app/**` 
-- Plan, Context and Questions: `@features-requirements-plan.md`
+- Codebase: `wrext-admin/app/**` 
 - Latest official docs (read before each implementation): Next.js App Router, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form
 
 Project guardrails (must follow)
@@ -24,7 +25,6 @@ Workflow
 
 1. Discovery (read-only)
    - Retrieve the task/subtask details from Taskmaster and read any linked context.
-   - Read the relevant `@features-requirements-plan.md` plan to confirm constraints and acceptance criteria.
    - Explore the exact files to be changed (APIs, services, db schema/migrations, auth, types). Quote small snippets and line ranges where helpful.
    - Consult latest docs (Next.js, Zod, Tailwind CSS 4, shadcn/ui 3, Radix UI, Zustand, TanStack Query, React Hook Form) to validate patterns and APIs you will use.
 

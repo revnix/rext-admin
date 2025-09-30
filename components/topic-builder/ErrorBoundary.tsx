@@ -4,6 +4,22 @@ import { AlertTriangle } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
+// Hook component to access router
+function RouterRefreshButton() {
+  const handleRefresh = () => {
+    // Use router refresh for Next.js App Router
+    if (typeof window !== "undefined") {
+      window.location.href = window.location.pathname;
+    }
+  };
+
+  return (
+    <Button onClick={handleRefresh} variant="outline" size="sm">
+      Refresh Page
+    </Button>
+  );
+}
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -69,13 +85,7 @@ export class TopicBuilderErrorBoundary extends Component<Props, State> {
               </details>
             )}
           </div>
-          <Button
-            onClick={() => window.location.reload()}
-            variant="outline"
-            size="sm"
-          >
-            Refresh Page
-          </Button>
+          <RouterRefreshButton />
         </div>
       );
     }

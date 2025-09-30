@@ -1,13 +1,15 @@
 // Common data table types for the application
 
 import type { ReactNode } from "react";
+import type { ContentStatus } from "./content";
 import type { BaseTableRow } from "./shared";
+import type { BrandVoice } from "./workspace";
 
 export interface ContentData extends BaseTableRow {
   title: string;
   type: string;
   contentType: string;
-  status: string;
+  status: ContentStatus;
   publishedTo: string;
   publishDate: string | null;
   scheduledDate: string | null;
@@ -30,20 +32,6 @@ export interface ContentData extends BaseTableRow {
   content: string;
 }
 
-export interface FlowData extends BaseTableRow {
-  name: string;
-  description: string;
-  status: string;
-  trigger: string;
-  lastRun: string;
-  totalRuns: number;
-  successRate: string;
-  avgRunTime: string;
-  category: string;
-  created: string;
-  lastModified: string;
-}
-
 export interface TopicData extends BaseTableRow {
   name: string;
   description: string;
@@ -62,6 +50,22 @@ export interface TopicData extends BaseTableRow {
   updated?: string;
   author?: string;
   contentType?: string;
+  // Enhanced fields for full topic display
+  audience_fit?: string[];
+  channel_fit?: string[];
+  scores?: {
+    relevance: number;
+    seo_potential: number;
+    trend_level: number;
+    uniqueness: number;
+    reader_interest: number;
+    actionable_potential: number;
+    brand_alignment: number;
+    controversy: number;
+  };
+  angle?: string;
+  why_it_works?: string;
+  approved?: boolean;
 }
 
 export interface ModelData extends BaseTableRow {
@@ -194,17 +198,41 @@ export interface RuleData extends BaseTableRow {
   author: string;
 }
 
+export interface WorkspaceData extends BaseTableRow {
+  title: string; // Display name for workspace
+  name?: string; // API field name (mapped to title)
+  description?: string;
+  url: string;
+  created_at: string;
+  updated_at?: string;
+  owner?: {
+    name: string;
+    email: string;
+  };
+  knowledge_stats?: {
+    web_knowledge: number;
+    files: number;
+    text_knowledge: number;
+    total: number;
+  };
+  brand_voice?: BrandVoice;
+  status: string;
+}
+
 // Row action types for data table
 export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
   label: string;
   icon?: React.ReactNode;
-  onClick: (row: T) => void;
+  onClick?: (row: T) => void;
+  href?: string | ((row: T) => string);
   variant?: "default" | "destructive";
   requiresConfirmation?: boolean;
   confirmationTitle?: string;
   confirmationDescription?: string;
   tooltip?: string;
   disabled?: boolean | ((row: T) => boolean);
+  showLabel?: boolean;
+  primary?: boolean;
 }
 
 // Legacy alias for backwards compatibility

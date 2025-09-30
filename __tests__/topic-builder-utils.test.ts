@@ -12,7 +12,6 @@ import {
   getAudienceForIndustry,
   getAudienceOptions,
   sanitizeInput,
-  updateFormDataForContentTypeChange,
   updateFormDataForIndustryChange,
   validateFormStep,
   validateFormStepDetailed,
@@ -434,9 +433,7 @@ describe("updateFormDataForIndustryChange", () => {
       wizardMode: "industry-first",
       industry: "other",
       industry_other: "Custom Industry",
-      content_type: "blog-post",
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
 
@@ -449,48 +446,13 @@ describe("updateFormDataForIndustryChange", () => {
     const formData: TopicBuilderFormData = {
       wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
 
     const result = updateFormDataForIndustryChange(formData, "other");
     expect(result.industry).toBe("other");
     expect(result.industry_other).toBeUndefined(); // Starts undefined
-  });
-});
-
-describe("updateFormDataForContentTypeChange", () => {
-  test("should reset platform when content type is not social-media", () => {
-    const formData: TopicBuilderFormData = {
-      wizardMode: "industry-first",
-      industry: "technology",
-      content_type: "social-media",
-      platform: "facebook",
-      purpose: ["educate-inform"],
-      tone: ["professional-formal"],
-      num_topics: 5,
-    };
-
-    const result = updateFormDataForContentTypeChange(formData, "blog-post");
-    expect(result.content_type).toBe("blog-post");
-    expect(result.platform).toBeUndefined();
-  });
-
-  test("should preserve platform when content type is social-media", () => {
-    const formData: TopicBuilderFormData = {
-      wizardMode: "industry-first",
-      industry: "technology",
-      content_type: "blog-post",
-      purpose: ["educate-inform"],
-      tone: ["professional-formal"],
-      num_topics: 5,
-    };
-
-    const result = updateFormDataForContentTypeChange(formData, "social-media");
-    expect(result.content_type).toBe("social-media");
-    expect(result.platform).toBeUndefined(); // Starts undefined, will be set by user
   });
 });
 
@@ -532,17 +494,13 @@ describe("buildPromptFromFormData", () => {
     const formData: TopicBuilderFormData = {
       wizardMode: "industry-first",
       industry: "technology",
-      content_type: "blog-post",
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
 
     const prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain("technology");
-    expect(prompt).toContain("blog-post");
     expect(prompt).toContain("educate-inform");
-    expect(prompt).toContain("professional-formal");
   });
 
   test("should build prompt for subject-first mode", () => {
@@ -550,16 +508,13 @@ describe("buildPromptFromFormData", () => {
       wizardMode: "subject-first",
       subject: "Machine Learning",
       industry: "technology",
-      content_type: "blog-post",
       purpose: ["educate-inform"],
-      tone: ["professional-formal"],
       num_topics: 5,
     };
 
     const prompt = buildPromptFromFormData(formData);
     expect(prompt).toContain("Machine Learning");
     expect(prompt).toContain("technology");
-    expect(prompt).toContain("blog-post");
   });
 });
 

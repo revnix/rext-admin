@@ -2,23 +2,37 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { classifyError } from "@/lib/error-utils";
-import { prepareFormDataForAPI } from "@/lib/topic-builder-utils";
-import type { BackendError, ErrorRecoveryAction } from "@/types/backend";
+import { logger } from "@/lib/logger";
+import { generateRequestId } from "@/lib/response-utils";
+import { backendService } from "@/services/backend";
+import { getErrorInfo } from "@/types/api";
+import type { BackendErrorCode } from "@/types/consistent-response";
 import type {
   GeneratedTopic,
   TopicBuilderFormData,
 } from "@/types/topic-builder";
 
 /**
- * Response type for topic generation API
+ * Enhanced response type for topic generation API with consistent format
  */
 interface TopicGenerationResponse {
   topics: GeneratedTopic[];
   request_id: string;
   generated_at: string;
   model_used?: string;
-  generation_time_ms?: number;
+  generation_time_ms?: number | null;
+}
+
+/**
+ * Enhanced error response type with consistent format
+ */
+interface TopicGenerationError {
+  error: string;
+  error_code: BackendErrorCode;
+  details?: string;
+  request_id: string;
+  retry_after?: number;
+  fallback_available?: boolean;
 }
 
 /**
@@ -30,217 +44,185 @@ interface TopicGenerationVariables {
 }
 
 /**
- * TanStack Query mutation hook for topic generation
+ * Enhanced TanStack Query mutation hook for topic generation
  *
- * Provides:
- * - Loading states for better UX
- * - Automatic error classification and retry logic
- * - Rate limiting and network error handling
- * - Integration with existing API contract
+ * Features:
+ * - Direct backend communication (no API route proxying)
+ * - Enhanced error classification with backend error codes
+ * - Request correlation and tracking
+ * - User-friendly error messages
+ * - Processing time tracking
  *
  * @example
  * ```tsx
  * const generateMutation = useTopicGenerationMutation();
  *
- * const handleGenerate = async (formData: TopicBuilderFormData) => {
- *   try {
- *     const result = await generateMutation.mutateAsync({ formData });
- *     console.log(`Generated ${result.topics.length} topics`);
- *   } catch (error) {
- *     console.error('Generation failed:', error);
- *   }
+ * const handleGenerate = () => {
+ *   generateMutation.mutate({ formData: wizardFormData });
  * };
  * ```
  */
 export function useTopicGenerationMutation() {
+  const generationLogger = logger.forComponent("useTopicGenerationMutation");
+
   return useMutation<
     TopicGenerationResponse,
-    BackendError,
+    TopicGenerationError,
     TopicGenerationVariables,
     { requestId: string }
   >({
     mutationFn: async ({
       formData,
-      requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      requestId = generateRequestId("topic_generation"),
     }): Promise<TopicGenerationResponse> => {
-      // Prepare form data for API
-      const apiData = prepareFormDataForAPI(formData);
-
-      // Make request to Next.js API route
-      const response = await fetch("/api/topics/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Request-ID": requestId,
-        },
-        body: JSON.stringify({ formData: apiData }),
+      generationLogger.info("Starting topic generation", {
+        requestId,
+        topics_count_requested: formData.num_topics ?? 5,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      try {
+        // Use backend service directly (no API route proxying)
+        generationLogger.info("Calling backend service generateTopics", {
+          requestId,
+          formData,
+        });
 
-        // Handle structured API errors
-        if (errorData.error_code && errorData.details) {
-          const parsedDetails = errorData.details;
-          let actualErrorType = errorData.error_code;
-          let context = {
-            responseStatus: response.status,
-            apiError: errorData,
-          };
+        const result = await backendService.generateTopics(formData);
 
-          // Try to parse details if they contain JSON
-          try {
-            const detailsObj = JSON.parse(errorData.details);
-            if (
-              detailsObj &&
-              typeof detailsObj === "object" &&
-              detailsObj.type
-            ) {
-              actualErrorType = detailsObj.type;
-              if (detailsObj.context) {
-                context = { ...context, ...detailsObj.context };
-              }
-            }
-          } catch {
-            // Not JSON, use as-is
-          }
+        generationLogger.info("Backend service returned result", {
+          requestId,
+          result,
+          topics_generated: result.topics?.length || 0,
+          generation_time_ms: result.generation_time_ms,
+        });
 
-          const backendError: BackendError = {
-            type: actualErrorType,
-            message: errorData.error,
-            technicalMessage: parsedDetails,
-            statusCode: response.status,
-            severity:
-              response.status >= 500
-                ? "high"
-                : response.status >= 400
-                  ? "medium"
-                  : "low",
-            recoveryActions: getRecoveryActions(response.status),
-            isRetryable: response.status >= 500 || response.status === 429,
-            requestId: errorData.request_id || requestId,
-            timestamp: new Date().toISOString(),
-            context,
-          };
-          throw backendError;
-        } else {
-          // Fallback for unstructured errors
-          const errorMessage =
-            errorData.error ||
-            `HTTP ${response.status}: ${response.statusText}`;
-          throw new Error(
-            `Backend API error: ${response.status} ${errorMessage}`,
-          );
-        }
+        const response = {
+          topics: result.topics,
+          request_id: result.request_id || requestId,
+          generated_at: new Date().toISOString(),
+          model_used: result.model_used,
+          generation_time_ms: result.generation_time_ms,
+        };
+
+        generationLogger.info("Mutation returning response", {
+          requestId,
+          response,
+        });
+
+        return response;
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const errorType =
+          error && typeof error === "object" && "type" in error
+            ? (error as { type: string }).type
+            : "unknown";
+
+        generationLogger.error("Topic generation failed", {
+          requestId,
+          error: errorMessage,
+          error_type: errorType,
+        });
+
+        // Convert backend error to expected format
+        const errorResponse: TopicGenerationError = {
+          error: errorMessage,
+          error_code:
+            error &&
+            typeof error === "object" &&
+            "statusCode" in error &&
+            error.statusCode === 401
+              ? "unauthorized"
+              : "external_service_error",
+          details:
+            error &&
+            typeof error === "object" &&
+            "context" in error &&
+            error.context
+              ? JSON.stringify(error.context)
+              : undefined,
+          request_id: requestId,
+          retry_after:
+            error &&
+            typeof error === "object" &&
+            "isRetryable" in error &&
+            error.isRetryable
+              ? 5000
+              : undefined,
+          fallback_available: false,
+        };
+
+        throw errorResponse;
       }
-
-      const result = await response.json();
-
-      // Validate response structure
-      if (!result.topics || !Array.isArray(result.topics)) {
-        throw new Error("Invalid response format from topic generation API");
-      }
-
-      // Add unique IDs to topics if not present
-      const topicsWithIds = result.topics.map(
-        (topic: unknown, index: number) => ({
-          ...(topic as GeneratedTopic),
-          id: (topic as GeneratedTopic).id || `topic_${Date.now()}_${index}`,
-        }),
-      );
-
-      return {
-        topics: topicsWithIds,
-        request_id: result.request_id || requestId,
-        generated_at: result.generated_at || new Date().toISOString(),
-        model_used: result.model_used,
-        generation_time_ms: result.generation_time_ms,
-      };
     },
 
-    onMutate: async ({ requestId }) => {
-      const finalRequestId =
-        requestId ||
-        `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      console.log(`Starting topic generation request: ${finalRequestId}`);
-      return { requestId: finalRequestId };
+    onMutate: async (variables) => {
+      const requestId =
+        variables.requestId || generateRequestId("topic_generation");
+      return { requestId };
+    },
+
+    onSuccess: (data, _variables, context) => {
+      const successMessage = `Generated ${data.topics.length} topics successfully`;
+
+      generationLogger.info("Topic generation mutation success", {
+        topics_count: data.topics.length,
+        request_id: data.request_id,
+        correlation_id: context?.requestId,
+        generation_time_ms: data.generation_time_ms,
+        model_used: data.model_used,
+      });
+
+      // Success toast notification
+      toast.success(successMessage, {
+        description: `Request ID: ${data.request_id}`,
+        duration: 4000,
+      });
     },
 
     onError: (error, _variables, context) => {
-      // Log error for debugging
-      const classifiedError =
-        error &&
-        typeof error === "object" &&
-        "type" in error &&
-        "message" in error
-          ? (error as BackendError)
-          : classifyError(error, context?.requestId);
-
-      console.error("Topic generation failed:", classifiedError);
-
-      // Show error toast with recovery action if available
-      toast.error("Generation failed", {
-        description: classifiedError.message,
-        action: classifiedError.recoveryActions?.includes("retry")
-          ? {
-              label: "Retry",
-              onClick: () => {
-                // The retry will be handled by the component using this hook
-              },
-            }
-          : undefined,
-        duration: 6000,
-      });
-    },
-
-    onSuccess: (data, _variables, _context) => {
-      console.log(
-        `✅ Successfully generated ${data.topics.length} topics in ${data.generation_time_ms || "unknown"}ms`,
+      // Get user-friendly error information
+      const { userMessage, retryable: shouldShowRetry } = getErrorInfo(
+        error.error_code,
       );
 
-      // Success toast
-      toast.success("Topics generated successfully!", {
-        description: `Generated ${data.topics.length} topics`,
-        duration: 3000,
+      generationLogger.error("Topic generation mutation error", {
+        error_code: error.error_code,
+        error_message: error.error,
+        details: error.details,
+        request_id: error.request_id,
+        correlation_id: context?.requestId,
+        retry_after: error.retry_after,
+        fallback_available: error.fallback_available,
       });
-    },
 
-    // Retry configuration for network resilience
-    retry: (failureCount, error) => {
-      // Don't retry on 4xx errors (client/validation errors)
-      if (error && typeof error === "object" && "statusCode" in error) {
-        const statusCode = (error as BackendError).statusCode;
-        if (
-          statusCode &&
-          statusCode >= 400 &&
-          statusCode < 500 &&
-          statusCode !== 429
-        ) {
-          return false;
-        }
+      // Error toast notification with action button if retryable
+      const toastOptions: {
+        description: string;
+        duration: number;
+        action?: {
+          label: string;
+          onClick: () => void;
+        };
+      } = {
+        description: `Error code: ${error.error_code}`,
+        duration: 6000,
+      };
+
+      if (shouldShowRetry && error.retry_after) {
+        toastOptions.action = {
+          label: "Retry",
+          onClick: () => {
+            // You can implement retry logic here or let the component handle it
+            generationLogger.info("User initiated retry from toast", {
+              error_code: error.error_code,
+              request_id: error.request_id,
+            });
+          },
+        };
       }
-      // Retry up to 3 times for 5xx errors and network issues
-      return failureCount < 3;
+
+      toast.error(userMessage, toastOptions);
     },
-
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff, max 30s
   });
-}
-
-/**
- * Get recovery actions based on HTTP status code
- */
-function getRecoveryActions(statusCode: number): ErrorRecoveryAction[] {
-  if (statusCode >= 500) {
-    return ["retry", "check_connection"];
-  } else if (statusCode === 429) {
-    return ["retry"];
-  } else if (statusCode === 401 || statusCode === 403) {
-    return ["reload_page", "contact_support"];
-  } else if (statusCode === 422) {
-    return ["go_back", "retry_with_changes"];
-  } else if (statusCode >= 400) {
-    return ["go_back", "retry_with_changes"];
-  }
-  return ["retry"];
 }

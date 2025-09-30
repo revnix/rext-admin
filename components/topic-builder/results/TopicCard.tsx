@@ -96,9 +96,14 @@ export const TopicCard = memo(function TopicCard({
               <CircularProgress
                 value={Math.round(
                   ((topic.scores.relevance +
-                    topic.scores.freshness +
-                    topic.scores.novelty) /
-                    3) *
+                    topic.scores.seo_potential +
+                    topic.scores.trend_level +
+                    topic.scores.uniqueness +
+                    topic.scores.reader_interest +
+                    topic.scores.actionable_potential +
+                    topic.scores.brand_alignment +
+                    topic.scores.controversy) /
+                    8) *
                     100,
                 )}
                 size="md"

@@ -116,7 +116,7 @@ export function getPriorityColorClass(priority: string): string {
  */
 export function formatTagsArray(tags: string[] | undefined): string[] {
   if (!Array.isArray(tags)) return [];
-  return tags.filter(Boolean).slice(0, 5); // Limit to 5 tags for display
+  return [...new Set(tags.filter(Boolean))].slice(0, 5); // Deduplicate and limit to 5 tags for display
 }
 
 /**

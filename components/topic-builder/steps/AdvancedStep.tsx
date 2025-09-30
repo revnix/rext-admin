@@ -20,8 +20,8 @@ export function AdvancedStep({
   formData,
   updateFormData,
   validateField: _validateField,
-  getFieldError,
-  errors,
+  getFieldError: _getFieldError,
+  errors: _errors,
 }: AdvancedStepProps) {
   return (
     <div className="space-y-6">

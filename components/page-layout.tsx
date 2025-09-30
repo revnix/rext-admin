@@ -70,7 +70,7 @@ export function PageLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -137,7 +137,7 @@ export function PageLayout({
           </div>
         </header>
 
-        <div className={`flex flex-1 flex-col gap-4 p-4 pt-0 ${className}`}>
+        <div className={`flex flex-1 flex-col gap-4 p-4 pt-6 ${className}`}>
           {/* Page Header */}
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -147,7 +147,7 @@ export function PageLayout({
               )}
             </div>
             {actions && (
-              <div className="flex items-center gap-2">{actions}</div>
+              <div className="flex items-start gap-2 mt-1">{actions}</div>
             )}
           </div>
 

@@ -422,13 +422,23 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           formData: dataToUse,
         });
 
+        console.log("Processing mutation result:", result);
+        console.log("Result has topics:", !!result.topics);
+        console.log("Topics is array:", Array.isArray(result.topics));
+        console.log("Topics length:", result.topics?.length);
+
         if (result.topics && Array.isArray(result.topics)) {
+          console.log("Setting generated topics...");
           setGeneratedTopics(result.topics);
           setGenerationError(null); // Clear any previous errors
 
           // Auto-save session and navigate to results page
           try {
+            console.log("Generating session ID...");
             const sessionId = generateSessionId();
+            console.log("Session ID generated:", sessionId);
+
+            console.log("Saving session...");
             saveSession({
               id: sessionId,
               topics: result.topics,
@@ -441,6 +451,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             });
 
             // Navigate to results page
+            console.log("Navigating to results page...");
             router.push(`/topics/create/results/${sessionId}`);
           } catch (sessionError) {
             console.error("Failed to save session:", sessionError);
@@ -448,6 +459,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             // User will still see results in current page
           }
         } else {
+          console.error("Invalid result format:", result);
           throw new Error("Invalid response format from topic generation API");
         }
       } catch (error) {

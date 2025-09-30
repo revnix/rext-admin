@@ -84,9 +84,7 @@ afterAll(() => {
 const mockFormData: TopicBuilderFormData = {
   wizardMode: "industry-first",
   industry: "technology",
-  content_type: "blog-post",
   purpose: ["educate-inform"],
-  tone: ["professional-formal"],
   num_topics: 10,
 };
 
@@ -100,10 +98,16 @@ const mockTopic: GeneratedTopic = {
   why_it_works: "Test explanation",
   scores: {
     relevance: 0.8,
-    freshness: 0.7,
-    novelty: 0.9,
+    seo_potential: 0.7,
+    trend_level: 0.9,
+    uniqueness: 0.8,
+    reader_interest: 0.8,
+    actionable_potential: 0.7,
+    brand_alignment: 0.8,
+    controversy: 0.2,
   },
   tags: ["technology", "testing"],
+  created_at: "2024-01-01T00:00:00Z",
 };
 
 const mockTopic2: GeneratedTopic = {
@@ -116,10 +120,16 @@ const mockTopic2: GeneratedTopic = {
   why_it_works: "Second test explanation",
   scores: {
     relevance: 0.9,
-    freshness: 0.6,
-    novelty: 0.8,
+    seo_potential: 0.6,
+    trend_level: 0.8,
+    uniqueness: 0.7,
+    reader_interest: 0.9,
+    actionable_potential: 0.6,
+    brand_alignment: 0.8,
+    controversy: 0.1,
   },
   tags: ["design", "testing"],
+  created_at: "2024-01-01T00:00:00Z",
 };
 
 const mockTopic3: GeneratedTopic = {
@@ -132,10 +142,16 @@ const mockTopic3: GeneratedTopic = {
   why_it_works: "Third test explanation",
   scores: {
     relevance: 0.7,
-    freshness: 0.8,
-    novelty: 0.7,
+    seo_potential: 0.8,
+    trend_level: 0.7,
+    uniqueness: 0.8,
+    reader_interest: 0.7,
+    actionable_potential: 0.8,
+    brand_alignment: 0.7,
+    controversy: 0.3,
   },
   tags: ["marketing", "testing"],
+  created_at: "2024-01-01T00:00:00Z",
 };
 
 const mockTopics = [mockTopic, mockTopic2, mockTopic3];
@@ -451,7 +467,7 @@ describe("getSessionMetadata", () => {
     expect(metadata?.id).toBe(mockSessionData.id);
     expect(metadata?.topicCount).toBe(1);
     expect(metadata?.industry).toBe("technology");
-    expect(metadata?.contentType).toBe("blog-post");
+    expect(metadata?.contentType).toBe("unknown");
     expect(metadata?.createdAt).toBeDefined();
     expect(metadata?.expiresAt).toBeDefined();
   });
@@ -483,7 +499,7 @@ describe("getAllSessionMetadata", () => {
     const allMetadata = getAllSessionMetadata();
     expect(allMetadata).toHaveLength(2);
     expect(allMetadata.every((m) => m.industry === "technology")).toBe(true);
-    expect(allMetadata.every((m) => m.contentType === "blog-post")).toBe(true);
+    expect(allMetadata.every((m) => m.contentType === "unknown")).toBe(true);
   });
 });
 
@@ -566,7 +582,7 @@ describe("updateSession", () => {
     const updatedSession = updateSession(sessionId, [mockTopics[0]]);
 
     expect(updatedSession).not.toBeNull();
-    expect(updatedSession?.expiresAt).toBeGreaterThan(originalExpiration!);
+    expect(updatedSession?.expiresAt).toBeGreaterThan(originalExpiration || 0);
   });
 
   it("should return null for non-existent session", () => {

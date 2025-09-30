@@ -55,7 +55,6 @@ export type {
   ControllableProps,
   EmptyStateProps,
   ErrorStateProps,
-  FlowSelectionProps,
   FormEventHandlers,
   FormFieldProps,
   FormNavigationProps,
@@ -84,11 +83,41 @@ export {
   isErrorResponse as isComponentErrorResponse,
 } from "./components";
 // ============================================================================
+// CONTENT CREATION TYPES
+// ============================================================================
+export type {
+  AudienceSize,
+  ContentCreationFormData,
+  ContentCreationWizardProps,
+  ContentFreshness,
+  ContentLengthOption,
+  ContentTypeForPlatform,
+  ContentTypeOptions,
+  CreateContentRequest,
+  CreateContentResponse,
+  FactCheckingLevel,
+  FieldDependency,
+  PartialContentCreationFormData,
+  Platform,
+  ReadingLevel,
+  ResearchLevel,
+  WizardAction,
+  WizardConfig,
+  WizardField,
+  WizardProgressProps,
+  WizardState,
+  WizardStep,
+  WizardStepProps,
+} from "./content-creation";
+export {
+  getDefaultFormData,
+  isCompleteFormData,
+} from "./content-creation";
+// ============================================================================
 // DATA TABLE TYPES
 // ============================================================================
 export type {
   ContentData,
-  FlowData,
   MemoryData,
   ModelData,
   NotificationConfiguration,
@@ -101,6 +130,22 @@ export type {
   TopicData,
   UserData,
 } from "./data-table";
+// ============================================================================
+// KNOWLEDGE DOMAIN TYPES
+// ============================================================================
+export type {
+  KnowledgeFilterState,
+  KnowledgeListViewMode,
+  KnowledgeSortDirection,
+  KnowledgeSortKey,
+  UnifiedKnowledgeItem,
+  UnifiedKnowledgeSource,
+  UnifiedKnowledgeStatus,
+} from "./knowledge";
+export {
+  defaultKnowledgeFilterState,
+  hasActiveKnowledgeFilters,
+} from "./knowledge";
 // ============================================================================
 // SESSION STORAGE TYPES
 // ============================================================================
@@ -152,7 +197,7 @@ export type {
   TopicGenerationResponse,
   TypeFormWizardState,
   WizardMode,
-  WizardStep,
+  WizardStep as TopicBuilderWizardStep,
 } from "./topic-builder";
 // Export option constants for Topic Builder
 // Export helper functions
@@ -169,6 +214,43 @@ export {
   validateEnumArray,
   WIZARD_MODE_OPTIONS,
 } from "./topic-builder";
+
+// ============================================================================
+// WORKSPACE MANAGEMENT TYPES
+// ============================================================================
+export type {
+  AddFileKnowledgeRequest,
+  AddTextKnowledgeRequest,
+  AddWebKnowledgeRequest,
+  BrandVoice,
+  CreateWorkspaceRequest,
+  FileKnowledge,
+  FileKnowledgeStatus,
+  KnowledgeItem,
+  KnowledgeManagementState,
+  KnowledgeType,
+  TextKnowledge,
+  UpdateTextKnowledgeRequest,
+  UpdateWorkspaceRequest,
+  WebKnowledge,
+  WebKnowledgeStatus,
+  Workspace,
+  WorkspaceApiConfig,
+  WorkspaceApiContext,
+  WorkspaceError,
+  WorkspaceErrorCode,
+  WorkspaceFilters,
+  WorkspaceFormData,
+  WorkspaceFormState,
+  WorkspaceListResponse,
+  WorkspaceLoadingStates,
+  WorkspaceResponse,
+  WorkspaceStatus,
+} from "./workspace";
+export {
+  FILE_CONSTRAINTS,
+  WORKSPACE_CONSTRAINTS,
+} from "./workspace";
 
 // ============================================================================
 // DEPRECATED ALIASES (for backwards compatibility)

@@ -172,7 +172,7 @@ None. The integration is designed to be a drop-in replacement.
 
 1. **API not responding**
    - Check `BACKEND_API_URL` environment variable
-   - Verify `CONTENT_API_KEY` is set correctly
+   - Verify `NEXT_PUBLIC_CONTENT_API_KEY` is set correctly
    - Check network connectivity
    - Review browser console for errors
 

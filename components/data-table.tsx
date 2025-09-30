@@ -512,7 +512,7 @@ export function DataTable<
                               ] as string) || "--"}
                         </TableCell>
                       ))}
-                      <TableCell className="w-[50px]">
+                      <TableCell className="w-[200px]">
                         <ActionsCell
                           actions={displayRowActions}
                           row={row as T}

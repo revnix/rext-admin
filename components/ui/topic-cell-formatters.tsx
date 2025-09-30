@@ -6,7 +6,8 @@
  * data types including status, priority, tags, scores, and dates.
  */
 
-import type { ReactNode } from "react";
+import Link from "next/link";
+import { type ReactNode, useId } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -15,7 +16,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  formatDate,
   formatRanking,
   formatScore,
   formatTagsArray,
@@ -24,7 +24,6 @@ import {
   getEffortColorClass,
   getPriorityColorClass,
   getScoreColorClass,
-  truncateText,
 } from "@/lib/topic-display-utils";
 import type { TopicData } from "@/types/data-table";
 
@@ -45,16 +44,15 @@ export function StatusBadge({ value }: { value: unknown }): ReactNode {
       break;
     case "saving":
       variant = "secondary";
-      className =
-        "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse";
+      className = "text-yellow-800 border-yellow-200 animate-pulse";
       break;
     case "saved":
       variant = "default";
-      className = "bg-green-100 text-green-800 border-green-200";
+      className = "text-green-800 border-green-200";
       break;
     case "published":
       variant = "default";
-      className = "bg-purple-100 text-purple-800 border-purple-200";
+      className = "text-purple-800 border-purple-200";
       break;
     case "archived":
       variant = "secondary";
@@ -98,43 +96,33 @@ export function TagsList({
   const tags = formatTagsArray(value as string[]);
 
   if (tags.length === 0) {
-    return <span className="text-muted-foreground">--</span>;
+    return <span className="text-muted-foreground text-xs">--</span>;
   }
 
+  // Show first 2 tags and remaining count for cleaner look
   const visibleTags = tags.slice(0, 2);
-  const remainingCount = tags.length - visibleTags.length;
+  const remainingCount = Math.max(0, tags.length - 2);
 
   return (
-    <div className="flex items-center gap-1 flex-wrap">
+    <div className="flex flex-wrap gap-1 items-center">
       {visibleTags.map((tag) => (
-        <Badge
+        <span
           key={tag}
-          variant="secondary"
-          className="text-xs bg-muted/50 text-muted-foreground border-0"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200"
         >
           {tag}
-        </Badge>
+        </span>
       ))}
       {remainingCount > 0 && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge
-                variant="secondary"
-                className="text-xs bg-muted text-muted-foreground border-0 cursor-help"
-              >
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200 cursor-help">
                 +{remainingCount}
-              </Badge>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
-              <div className="flex flex-wrap gap-1">
-                {tags.slice(2).map((tag, tagIndex) => (
-                  <span key={`tag-${tagIndex}-${tag}`} className="text-xs">
-                    {tag}
-                    {tagIndex < tags.slice(2).length - 1 ? ", " : ""}
-                  </span>
-                ))}
-              </div>
+              <div className="text-xs">{tags.slice(2).join(", ")}</div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -176,16 +164,96 @@ export function ContentTypeBadge({ value }: { value: unknown }): ReactNode {
 }
 
 /**
- * Date Display Cell Formatter
+ * Dynamic Date Display Cell Formatter - shows relative time for recent dates
  */
 export function DateDisplay({ value }: { value: unknown }): ReactNode {
-  const formattedDate = formatDate(String(value || ""));
+  const dateString = String(value || "");
 
-  return (
-    <span className="text-sm text-muted-foreground font-mono">
-      {formattedDate}
-    </span>
-  );
+  if (!dateString || dateString === "--") {
+    return <span className="text-muted-foreground text-sm">--</span>;
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return <span className="text-muted-foreground text-sm">--</span>;
+    }
+
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    // Show relative time for recent dates
+    if (diffInMinutes < 60) {
+      const minutes = Math.max(1, diffInMinutes);
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">{minutes}m ago</div>
+          <div className="text-muted-foreground">Just now</div>
+        </div>
+      );
+    } else if (diffInHours < 24) {
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">{diffInHours}h ago</div>
+          <div className="text-muted-foreground">Today</div>
+        </div>
+      );
+    } else if (diffInDays === 1) {
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">Yesterday</div>
+          <div className="text-muted-foreground">{formattedTime}</div>
+        </div>
+      );
+    } else if (diffInDays <= 7) {
+      const formattedDay = date.toLocaleDateString("en-US", {
+        weekday: "short",
+      });
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      return (
+        <div className="text-xs">
+          <div className="text-foreground font-medium">{diffInDays}d ago</div>
+          <div className="text-muted-foreground">
+            {formattedDay} {formattedTime}
+          </div>
+        </div>
+      );
+    } else {
+      // Show full date for older items
+      const formattedDate = date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      return (
+        <div className="text-xs font-mono">
+          <div className="text-foreground">{formattedDate}</div>
+          <div className="text-muted-foreground">{formattedTime}</div>
+        </div>
+      );
+    }
+  } catch {
+    return <span className="text-muted-foreground text-sm">--</span>;
+  }
 }
 
 /**
@@ -231,39 +299,111 @@ export function DescriptionPreview({ value }: { value: unknown }): ReactNode {
 }
 
 /**
- * Title Display Cell Formatter
+ * Enhanced Title Display Cell Formatter with hover tooltip for details
  */
 export function TitleDisplay({
   value,
+  row,
+  onClick,
+  href,
 }: {
   value: unknown;
   row?: TopicData;
+  onClick?: () => void;
+  href?: string;
 }): ReactNode {
   const title = String(value || "");
-  const truncatedTitle = truncateText(title, 60);
 
   if (!title) {
     return <span className="text-muted-foreground">Untitled</span>;
   }
 
-  const shouldTruncate = title.length > 60;
+  // Use enhanced fields if available, otherwise fall back to parsing description
+  const angle = row?.angle || "";
+  const whyItWorks = row?.why_it_works || "";
+  let displayAngle = angle;
+  let displayDescription = row?.description || "";
 
-  if (!shouldTruncate) {
+  // If angle is not available, try to extract from description (fallback for basic transformation)
+  if (!angle && displayDescription.includes(" • ")) {
+    const parts = displayDescription.split(" • ");
+    displayAngle = parts[0] || "";
+    displayDescription = parts[1] || "";
+  }
+
+  // If we have additional details, show them in tooltip
+  const hasDetails = displayAngle || displayDescription || whyItWorks;
+
+  const TitleContent = ({ children }: { children: ReactNode }) => {
+    if (href) {
+      return (
+        <Link
+          href={href}
+          className="font-medium text-foreground leading-tight hover:text-primary transition-colors"
+        >
+          {children}
+        </Link>
+      );
+    }
+
+    if (onClick) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          className="font-medium text-foreground leading-tight cursor-pointer hover:text-primary transition-colors"
+        >
+          {children}
+        </button>
+      );
+    }
+
     return (
-      <span className="font-medium text-foreground leading-tight">{title}</span>
+      <span className="font-medium text-foreground leading-tight">
+        {children}
+      </span>
     );
+  };
+
+  if (!hasDetails) {
+    return <TitleContent>{title}</TitleContent>;
   }
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="cursor-help font-medium text-foreground leading-tight">
-            {truncatedTitle}
+          <span className="cursor-help">
+            <TitleContent>{title}</TitleContent>
           </span>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-sm">
-          <p className="text-sm">{title}</p>
+        <TooltipContent side="bottom" className="max-w-md p-4">
+          <div className="space-y-3">
+            {displayAngle && (
+              <div>
+                <div className="font-medium text-xs text-muted-foreground mb-1">
+                  Angle:
+                </div>
+                <div className="text-sm italic">{displayAngle}</div>
+              </div>
+            )}
+            {displayDescription && (
+              <div>
+                <div className="font-medium text-xs text-muted-foreground mb-1">
+                  Description:
+                </div>
+                <div className="text-sm">{displayDescription}</div>
+              </div>
+            )}
+            {whyItWorks && (
+              <div>
+                <div className="font-medium text-xs text-muted-foreground mb-1">
+                  Why it works:
+                </div>
+                <div className="text-sm">{whyItWorks}</div>
+              </div>
+            )}
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -271,18 +411,70 @@ export function TitleDisplay({
 }
 
 /**
- * Category Display Cell Formatter
+ * Enhanced Category Display Cell Formatter - shows all relevant categories
  */
-export function CategoryDisplay({ value }: { value: unknown }): ReactNode {
-  const category = String(value || "General");
+export function CategoryDisplay({
+  row,
+}: {
+  value: unknown;
+  row?: TopicData;
+}): ReactNode {
+  const tags = row?.tags || [];
+
+  // Use only tags as categories, excluding channel and audience prefixes
+  // Don't duplicate the primary category since it's derived from the first tag
+  const filteredTags = tags.filter(
+    (tag) => !tag.startsWith("channel:") && !tag.startsWith("audience:"),
+  );
+
+  // Just use the tags directly as categories, properly formatted and deduplicated
+  const allCategories =
+    filteredTags.length > 0
+      ? [...new Set(filteredTags)]
+          .map(
+            (category) =>
+              String(category).charAt(0).toUpperCase() +
+              String(category).slice(1).toLowerCase(),
+          )
+          .slice(0, 2) // Limit to 2 categories for cleaner look
+      : ["General"]; // Fallback when no tags available
+
+  const remainingCount = Math.max(0, filteredTags.length - 2);
 
   return (
-    <Badge
-      variant="secondary"
-      className="bg-slate-100 text-slate-700 border-slate-200"
-    >
-      {category}
-    </Badge>
+    <div className="flex flex-wrap gap-1 items-center">
+      {allCategories.map((category) => (
+        <span
+          key={String(category)}
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+        >
+          {category}
+        </span>
+      ))}
+      {remainingCount > 0 && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200 cursor-help">
+                +{remainingCount}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs">
+              <div className="text-xs">
+                {filteredTags
+                  .slice(2)
+                  .map(
+                    (category) =>
+                      String(category).charAt(0).toUpperCase() +
+                      String(category).slice(1).toLowerCase(),
+                  )
+                  .join(", ")}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
   );
 }
 
@@ -313,4 +505,234 @@ export function AuthorDisplay({ value }: { value: unknown }): ReactNode {
   }
 
   return <span className="text-sm font-medium">{author}</span>;
+}
+
+/**
+ * Audience Fit Display Cell Formatter
+ */
+export function AudienceFitDisplay({ value }: { value: unknown }): ReactNode {
+  const rawAudiences = Array.isArray(value) ? value : [];
+  const audiences = [...new Set(rawAudiences.filter(Boolean))]; // Deduplicate audiences
+
+  if (audiences.length === 0) {
+    return <span className="text-muted-foreground text-xs">--</span>;
+  }
+
+  const visibleAudiences = audiences.slice(0, 2);
+  const remainingCount = audiences.length - visibleAudiences.length;
+
+  return (
+    <div className="flex flex-wrap gap-1 items-center">
+      {visibleAudiences.map((audience) => (
+        <span
+          key={String(audience)}
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200"
+        >
+          {String(audience)}
+        </span>
+      ))}
+      {remainingCount > 0 && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-600 border border-green-200 cursor-help">
+                +{remainingCount}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs">
+              <div className="text-xs">
+                {audiences
+                  .slice(2)
+                  .map((audience) => String(audience))
+                  .join(", ")}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Status Display Cell Formatter
+ */
+export function StatusDisplay({
+  value,
+  row,
+}: {
+  value: unknown;
+  row?: TopicData;
+}): ReactNode {
+  const status = String(value || "pending");
+
+  // Determine if status is approved - check both status string and approved field
+  const isApproved =
+    status.toLowerCase() === "approved" ||
+    status.toLowerCase() === "saved" ||
+    (row && "approved" in row && row.approved === true);
+
+  return (
+    <Badge
+      variant="outline"
+      className={
+        isApproved
+          ? "text-green-700 border-green-200"
+          : "text-yellow-700 border-yellow-200"
+      }
+    >
+      {isApproved ? "Approved" : "Pending Approval"}
+    </Badge>
+  );
+}
+
+/**
+ * Enhanced Score Display with 8-point breakdown tooltip
+ */
+export function EnhancedScoreDisplay({
+  value,
+  row,
+}: {
+  value: unknown;
+  row?: TopicData;
+}): ReactNode {
+  const progressTitleId = useId();
+  const score =
+    typeof value === "number" ? value : parseFloat(String(value || "0"));
+  const formattedScore = formatScore(score);
+  const colorClass = getScoreColorClass(score);
+
+  if (formattedScore === "--") {
+    return <span className="text-muted-foreground">--</span>;
+  }
+
+  // Use the preserved scores data from TopicData
+  const scoreBreakdown = row?.scores;
+
+  if (!scoreBreakdown) {
+    // Fallback to basic score display
+    return (
+      <span className={`font-mono text-sm ${colorClass}`}>
+        {formattedScore}
+      </span>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 cursor-help">
+            {/* Circular Progress - Larger size */}
+            <div className="relative w-12 h-12">
+              <svg
+                className="w-12 h-12 transform -rotate-90"
+                viewBox="0 0 48 48"
+                role="img"
+                aria-labelledby={progressTitleId}
+              >
+                <title id={progressTitleId}>Score progress</title>
+                {/* Background circle */}
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="18"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  className="text-muted-foreground/20"
+                />
+                {/* Progress circle */}
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="18"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 18}`}
+                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - score / 100)}`}
+                  className={colorClass}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-medium">{Math.round(score)}</span>
+              </div>
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-md p-4">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Relevance:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.relevance * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  SEO Potential:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.seo_potential * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Trend Level:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.trend_level * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Uniqueness:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.uniqueness * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Reader Interest:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.reader_interest * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Actionable Potential:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.actionable_potential * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Brand Alignment:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.brand_alignment * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Controversy:
+                </span>
+                <span className="text-sm">
+                  {Math.round(scoreBreakdown.controversy * 100)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }

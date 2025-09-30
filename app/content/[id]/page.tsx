@@ -17,15 +17,27 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type {
-  ActionButton,
-  MetadataItem,
-} from "@/components/detail-page-wrapper";
 import { DetailPageWrapper } from "@/components/detail-page-wrapper";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DetailCard } from "@/components/ui/detail-card";
+import {
+  DetailGrid,
+  DetailGridItem,
+  ThreeColumnGrid,
+  TwoColumnGrid,
+} from "@/components/ui/detail-grid";
 import { Progress } from "@/components/ui/progress";
+import { SectionHeader } from "@/components/ui/section-header";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { usePageTitle } from "@/hooks/use-page-title";
+import type { ContentStatus } from "@/types/content";
 import type { ContentData } from "@/types/data-table";
+import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
 
 // Mock content data - in real app this would come from API
 const contentData: ContentData[] = [
@@ -34,7 +46,7 @@ const contentData: ContentData[] = [
     title: "The Future of AI in Content Marketing: 2024 Trends",
     type: "Blog Post",
     contentType: "Article",
-    status: "Published",
+    status: "published" as ContentStatus,
     publishedTo: "Company Blog",
     publishDate: "2024-01-22 10:00",
     scheduledDate: null,
@@ -86,7 +98,7 @@ As we progress through 2024, the synergy between human creativity and AI efficie
     title: "Customer Success Story: Revnix Solutions",
     type: "Case Study",
     contentType: "Case Study",
-    status: "Scheduled",
+    status: "scheduled" as ContentStatus,
     publishedTo: "",
     publishDate: null,
     scheduledDate: "2024-01-25 14:00",
@@ -122,17 +134,22 @@ export default function ContentDetailPage() {
   // Find the current content
   const content = contentData.find((c: ContentData) => c.id === contentId);
 
+  // Update page title and description dynamically
+  usePageTitle(
+    content?.title || "Content Detail",
+    content
+      ? `${content.type} content: ${content.title}. ${content.wordCount} words, ${content.readTime} read time.`
+      : "Content details and management",
+  );
+
   if (!content) {
     return (
       <DetailPageWrapper
         title="Content Not Found"
-        description="The requested content could not be found"
         breadcrumbs={[
           { label: "Content", href: "/content" },
           { label: "Content Detail" },
         ]}
-        backUrl="/content"
-        backLabel="Back to Content"
         error="Content not found"
       >
         <div />
@@ -243,201 +260,243 @@ export default function ContentDetailPage() {
     },
   ];
 
-  // Build quick actions for sidebar - Content specific actions
-  const quickActions: ActionButton[] = [
-    {
-      label: "Edit Content",
-      icon: <Edit3 className="h-4 w-4" />,
-      onClick: handleEditContent,
-      variant: "default",
-      tooltip: "Edit this content",
-    },
-    {
-      label: isPublishing ? "Publishing..." : "Publish Now",
-      icon: isPublishing ? undefined : <Zap className="h-4 w-4" />,
-      onClick: handlePublishNow,
-      variant: "default",
-      disabled: content.status === "Published" || isPublishing,
-      loading: isPublishing,
-      tooltip:
-        content.status === "Published"
-          ? "Already published"
-          : "Publish immediately",
-    },
-    {
-      label: "Share Content",
-      icon: <Share2 className="h-4 w-4" />,
-      onClick: handleShareContent,
-      variant: "outline",
-      tooltip: "Share this content",
-    },
-    {
-      label: "Copy Content",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: handleCopyContent,
-      variant: "outline",
-      tooltip: "Copy content to clipboard",
-    },
-    {
-      label: "Download",
-      icon: <Download className="h-4 w-4" />,
-      onClick: handleDownloadContent,
-      variant: "outline",
-      tooltip: "Download as text file",
-    },
-    {
-      label: isDeleting ? "Deleting..." : "Delete Content",
-      icon: isDeleting ? undefined : <Trash2 className="h-4 w-4" />,
-      onClick: handleDeleteContent,
-      variant: "destructive",
-      disabled: isDeleting,
-      loading: isDeleting,
-      tooltip: "Permanently delete this content",
-    },
-  ];
+  // Build header actions for page header
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleEditContent} className="gap-2">
+            <Edit3 className="h-4 w-4" />
+            Edit Content
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit this content</TooltipContent>
+      </Tooltip>
 
-  // Build sidebar content
-  const sidebarContent = (
-    <>
-      {/* Content Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Performance Metrics</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Views</span>
-              <span className="text-sm font-medium">
-                {content.engagement.views.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Likes</span>
-              <span className="text-sm font-medium">
-                {content.engagement.likes.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Shares</span>
-              <span className="text-sm font-medium">
-                {content.engagement.shares.toLocaleString()}
-              </span>
-            </div>
-          </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handlePublishNow}
+            disabled={content.status === "published" || isPublishing}
+            className="gap-2"
+          >
+            {isPublishing ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Zap className="h-4 w-4" />
+            )}
+            {isPublishing ? "Publishing..." : "Publish"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {content.status === "published"
+            ? "Already published"
+            : "Publish content now"}
+        </TooltipContent>
+      </Tooltip>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">SEO Score</span>
-              <span className="text-sm font-medium">{content.seoScore}%</span>
-            </div>
-            <Progress value={content.seoScore} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleShareContent}
+            variant="outline"
+            className="gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Share content</TooltipContent>
+      </Tooltip>
 
-      {/* Publication Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Publication Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Badge
-              variant={
-                content.status === "Published"
-                  ? "default"
-                  : content.status === "Scheduled"
-                    ? "secondary"
-                    : "outline"
-              }
-            >
-              {content.status}
-            </Badge>
-          </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleCopyContent} variant="outline" size="sm">
+            <Copy className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Copy content</TooltipContent>
+      </Tooltip>
 
-          {content.publishedTo && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Published To
-              </span>
-              <span className="text-sm font-medium">{content.publishedTo}</span>
-            </div>
-          )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={handleDownloadContent} variant="outline" size="sm">
+            <Download className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Download content</TooltipContent>
+      </Tooltip>
 
-          {content.publishDate && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Published</span>
-              <span className="text-sm font-medium">
-                {new Date(content.publishDate).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-
-          {content.scheduledDate && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Scheduled</span>
-              <span className="text-sm font-medium">
-                {new Date(content.scheduledDate).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Flow</span>
-            <span className="text-sm font-medium">{content.flowName}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Platforms */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Platforms</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {content.platforms.map((platform) => (
-              <Badge key={platform} variant="outline" className="text-xs">
-                {platform}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={handleDeleteContent}
+            disabled={isDeleting}
+            variant="destructive"
+            size="sm"
+          >
+            {isDeleting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Delete this content</TooltipContent>
+      </Tooltip>
+    </div>
   );
+
+  // Build new flexible sidebar configuration
+  const sidebarConfig: SidebarConfig = {
+    cards: [
+      // SEO Score Card (using score type)
+      {
+        type: "score",
+        config: {
+          score: content.seoScore,
+          title: "SEO Score",
+          description: "Search Engine Optimization",
+          variant:
+            content.seoScore >= 80
+              ? "success"
+              : content.seoScore >= 60
+                ? "default"
+                : "warning",
+        },
+      },
+      // Performance Metrics (using stats type)
+      {
+        type: "stats",
+        config: {
+          title: "Performance Metrics",
+          items: [
+            {
+              label: "Views",
+              value: content.engagement.views.toLocaleString(),
+              icon: <TrendingUp className="h-4 w-4" />,
+              highlight: true,
+            },
+            {
+              label: "Likes",
+              value: content.engagement.likes.toLocaleString(),
+            },
+            {
+              label: "Shares",
+              value: content.engagement.shares.toLocaleString(),
+            },
+          ],
+        },
+      },
+      // Publication Details (using stats type)
+      {
+        type: "stats",
+        config: {
+          title: "Publication Details",
+          items: [
+            {
+              label: "Status",
+              value: (
+                <Badge
+                  variant={
+                    content.status === "published"
+                      ? "default"
+                      : content.status === "scheduled"
+                        ? "secondary"
+                        : "outline"
+                  }
+                >
+                  {content.status}
+                </Badge>
+              ),
+              highlight: true,
+            },
+            ...(content.publishedTo
+              ? [
+                  {
+                    label: "Published To",
+                    value: content.publishedTo,
+                  },
+                ]
+              : []),
+            ...(content.publishDate
+              ? [
+                  {
+                    label: "published",
+                    value: new Date(content.publishDate).toLocaleDateString(),
+                  },
+                ]
+              : []),
+            ...(content.scheduledDate
+              ? [
+                  {
+                    label: "scheduled",
+                    value: new Date(content.scheduledDate).toLocaleDateString(),
+                  },
+                ]
+              : []),
+            {
+              label: "Flow",
+              value: content.flowName,
+            },
+          ],
+        },
+      },
+      // Platforms (using custom type for tags)
+      {
+        type: "custom",
+        config: {
+          id: "platforms",
+          content: (
+            <DetailCard variant="default">
+              <div className="p-6">
+                <SectionHeader
+                  title="Platforms"
+                  variant="compact"
+                  className="mb-4"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {content.platforms.map((platform) => (
+                    <Badge key={platform} variant="outline" className="text-xs">
+                      {platform}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </DetailCard>
+          ),
+        },
+      },
+    ],
+    order: ["cards", "metadata", "quickActions"],
+  };
 
   return (
     <DetailPageWrapper
       title={content.title}
-      subtitle={`${content.type} • ${content.readTime}`}
-      description="View, edit, and manage this piece of content."
       breadcrumbs={breadcrumbs}
-      backUrl="/content"
-      backLabel="Back to Content"
       status={content.status}
       statusVariant={
-        content.status === "Published"
+        content.status === "published"
           ? "default"
-          : content.status === "Scheduled"
+          : content.status === "scheduled"
             ? "secondary"
             : "outline"
       }
       metadata={metadata}
-      quickActions={quickActions}
-      sidebar={sidebarContent}
+      headerActions={headerActions}
+      sidebarConfig={sidebarConfig}
     >
-      {/* Main Content */}
+      {/* Main Content - Using standardized components */}
       <div className="space-y-8">
         {/* Content Preview */}
-        <div className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60">
+        <DetailCard variant="highlight" gradient>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-foreground flex items-center gap-3">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              Content Preview
-            </h3>
+            <SectionHeader
+              title="Content Preview"
+              icon={<FileText className="w-5 h-5" />}
+              variant="spacious"
+            />
             {content.publishedTo && (
               <div className="flex items-center gap-2">
                 <ExternalLink className="h-4 w-4 text-muted-foreground" />
@@ -454,102 +513,224 @@ export default function ContentDetailPage() {
               </pre>
             </div>
           </div>
-        </div>
+        </DetailCard>
 
-        {/* Keywords & Tags */}
-        {content.keywords && content.keywords.length > 0 && (
-          <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-xl p-6 border border-purple-200/50 dark:border-purple-800/50">
-            <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-              <Hash className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Keywords & Tags
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {content.keywords.map((keyword) => (
-                <Badge
-                  key={keyword}
-                  variant="secondary"
-                  className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
-                >
-                  <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
-                  {keyword}
-                </Badge>
-              ))}
+        {/* Keywords & Analytics - Two Column Layout */}
+        <TwoColumnGrid gap="lg">
+          {/* Keywords & Tags */}
+          {content.keywords && content.keywords.length > 0 && (
+            <DetailCard variant="accent" gradient>
+              <SectionHeader
+                title="Keywords & Tags"
+                icon={<Hash className="w-5 h-5" />}
+                variant="spacious"
+                className="mb-4"
+              />
+              <div className="flex flex-wrap gap-3">
+                {content.keywords.map((keyword) => (
+                  <Badge
+                    key={keyword}
+                    variant="secondary"
+                    className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                  >
+                    <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            </DetailCard>
+          )}
+
+          {/* Content Metrics Summary */}
+          <DetailCard variant="info" gradient>
+            <SectionHeader
+              title="Content Metrics"
+              icon={<FileText className="w-5 h-5" />}
+              variant="spacious"
+              className="mb-4"
+            />
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Word Count
+                </span>
+                <span className="font-medium">
+                  {content.wordCount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Read Time</span>
+                <span className="font-medium">{content.readTime}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">SEO Score</span>
+                <div className="flex items-center gap-2">
+                  <Progress value={content.seoScore} className="w-16 h-2" />
+                  <span className="font-medium">{content.seoScore}%</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Engagement Rate
+                </span>
+                <span className="font-medium">
+                  {content.engagement.views > 0
+                    ? `${(((content.engagement.likes + content.engagement.shares) / content.engagement.views) * 100).toFixed(1)}%`
+                    : "0%"}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          </DetailCard>
+        </TwoColumnGrid>
 
         {/* Content Analytics */}
-        <div className="bg-green-50/50 dark:bg-green-950/20 rounded-xl p-6 border border-green-200/50 dark:border-green-800/50">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-            Content Analytics
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {content.engagement.views.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Views</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {content.engagement.likes.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Likes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {content.engagement.shares.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Shares</div>
-            </div>
-          </div>
-        </div>
+        <DetailCard variant="success" gradient>
+          <SectionHeader
+            title="Content Analytics"
+            icon={<TrendingUp className="w-5 h-5" />}
+            variant="spacious"
+            className="mb-6"
+          />
+          <ThreeColumnGrid gap="lg">
+            {[
+              {
+                label: "Total Views",
+                value: content.engagement.views.toLocaleString(),
+                icon: TrendingUp,
+                color: "text-green-600 dark:text-green-400",
+              },
+              {
+                label: "Likes",
+                value: content.engagement.likes.toLocaleString(),
+                icon: Users,
+                color: "text-green-600 dark:text-green-400",
+              },
+              {
+                label: "Shares",
+                value: content.engagement.shares.toLocaleString(),
+                icon: Share2,
+                color: "text-green-600 dark:text-green-400",
+              },
+            ].map((metric) => {
+              const IconComponent = metric.icon;
+              return (
+                <div
+                  key={metric.label}
+                  className="text-center p-4 bg-white/60 dark:bg-background/60 rounded-lg border border-green-200/50 dark:border-green-800/50"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <IconComponent className="w-6 h-6 text-green-600 dark:text-green-400 mr-2" />
+                    <div className={`text-3xl font-bold ${metric.color}`}>
+                      {metric.value}
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground font-medium">
+                    {metric.label}
+                  </div>
+                </div>
+              );
+            })}
+          </ThreeColumnGrid>
+        </DetailCard>
 
-        {/* Timeline */}
-        <div className="bg-amber-50/40 dark:bg-amber-950/20 rounded-xl p-6 border border-amber-200/60 dark:border-amber-800/60">
-          <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            Content Timeline
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Created</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(content.created).toLocaleString()}
-                  </span>
+        {/* Timeline & Flow Information - Custom Grid Layout */}
+        <DetailGrid columns={3} gap="lg" responsive={{ sm: 1, md: 2, lg: 3 }}>
+          {/* Timeline */}
+          <DetailGridItem span={2}>
+            <DetailCard variant="warning" gradient>
+              <SectionHeader
+                title="Content Timeline"
+                icon={<Calendar className="w-5 h-5" />}
+                variant="spacious"
+                className="mb-4"
+              />
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Created</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(content.created).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Last Modified</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(content.lastModified).toLocaleString()}
-                  </span>
+                <div className="flex items-center gap-4">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Last Modified</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(content.lastModified).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                {content.publishDate && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Published</span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(content.publishDate).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {content.scheduledDate && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Scheduled</span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(content.scheduledDate).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-            {content.publishDate && (
-              <div className="flex items-center gap-4">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Published</span>
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(content.publishDate).toLocaleString()}
-                    </span>
+            </DetailCard>
+          </DetailGridItem>
+
+          {/* Flow Information */}
+          <DetailGridItem span={1}>
+            <DetailCard variant="default">
+              <div className="text-center space-y-4">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
+                  <Zap className="w-6 h-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+                  <div className="text-sm font-medium">Generated by</div>
+                  <div
+                    className="text-xs text-muted-foreground mt-1 truncate"
+                    title={content.flowName}
+                  >
+                    {content.flowName}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                  <Users className="w-6 h-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                  <div className="text-sm font-medium">Author</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {content.author}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
+                  <Users className="w-6 h-6 mx-auto mb-2 text-green-600 dark:text-green-400" />
+                  <div className="text-sm font-medium">Reviewer</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {content.humanReviewer}
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            </DetailCard>
+          </DetailGridItem>
+        </DetailGrid>
       </div>
     </DetailPageWrapper>
   );

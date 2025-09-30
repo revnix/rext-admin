@@ -307,7 +307,7 @@ export function TopicActions({
 
       try {
         console.log(`Navigating to content creation for topic ${topic.id}`);
-        router.push(`/flows/create?topicId=${topic.id}`);
+        router.push(`/content/create?topicId=${topic.id}`);
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {
         console.error(
@@ -353,7 +353,7 @@ export function TopicActions({
             size="sm"
             onClick={handleSave}
             disabled={isAnyLoading}
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
           >
             {loadingStates.saving || saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -370,7 +370,7 @@ export function TopicActions({
             size="sm"
             onClick={handleNavigateToContent}
             disabled={isAnyLoading}
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
           >
             {loadingStates.navigatingToContent ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -388,7 +388,7 @@ export function TopicActions({
                 variant="outline"
                 size="sm"
                 disabled={isAnyLoading}
-                className="gap-1.5"
+                className="gap-1.5 cursor-pointer"
               >
                 <Edit className="h-4 w-4" />
                 {showLabels && "Edit"}
@@ -506,7 +506,7 @@ export function TopicActions({
                 variant="outline"
                 size="sm"
                 disabled={isAnyLoading}
-                className="gap-1.5"
+                className="gap-1.5 cursor-pointer"
               >
                 <MoreHorizontal className="h-4 w-4" />
                 {showLabels && "More"}
@@ -659,7 +659,7 @@ export function TopicActions({
             variant="ghost"
             size="sm"
             disabled={isAnyLoading}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             {isAnyLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

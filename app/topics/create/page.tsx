@@ -21,8 +21,11 @@ import { useTopicBuilder } from "@/hooks/use-topic-builder";
 import { useTopicStorage } from "@/hooks/use-topic-storage";
 import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
 import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
+import { logger } from "@/lib/logger";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
+
+const topicsCreateLogger = logger.forComponent("TopicsCreatePage");
 
 export default function TopicBuilderPage() {
   const router = useRouter();
@@ -68,19 +71,24 @@ export default function TopicBuilderPage() {
   const handleTopicSave = async (topicId: string) => {
     const topic = generatedTopics.find((t) => t.id === topicId);
     if (!topic) {
-      console.error("Topic not found:", topicId);
+      topicsCreateLogger.error("Topic not found", { topic_id: topicId });
       return;
     }
 
     // Check if topic is already saved to prevent duplicates
     if (topic.is_saved || topic._optimisticSaved) {
-      console.log("Topic already saved, skipping:", topicId);
+      topicsCreateLogger.debug("Topic already saved, skipping", {
+        topic_id: topicId,
+      });
       toast.info("This topic is already saved to your library");
       return;
     }
 
     try {
-      console.log("Saving topic to API:", { id: topicId, title: topic.title });
+      topicsCreateLogger.info("Saving topic to API", {
+        topic_id: topicId,
+        title: topic.title,
+      });
 
       // Use the proper API mutation
       await topicSaveMutation.mutateAsync(topic);
@@ -88,15 +96,26 @@ export default function TopicBuilderPage() {
       // Also save to localStorage as backup
       saveTopic(topic);
 
-      console.log("Topic saved successfully:", topicId);
+      topicsCreateLogger.info("Topic saved successfully", {
+        topic_id: topicId,
+      });
     } catch (error) {
-      console.error("Error saving topic:", error);
+      topicsCreateLogger.error("Error saving topic", {
+        topic_id: topicId,
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Fallback to localStorage save if API fails
       try {
         saveTopic(topic);
-        console.log("Fallback: Topic saved to localStorage only:", topicId);
+        topicsCreateLogger.warn("Fallback local save", { topic_id: topicId });
       } catch (fallbackError) {
-        console.error("Fallback save also failed:", fallbackError);
+        topicsCreateLogger.error("Fallback save also failed", {
+          topic_id: topicId,
+          error:
+            fallbackError instanceof Error
+              ? fallbackError.message
+              : String(fallbackError),
+        });
       }
     }
   };
@@ -106,7 +125,9 @@ export default function TopicBuilderPage() {
       topicIds.includes(topic.id),
     );
     saveTopics(topicsToSave);
-    console.log("Bulk saved topics to localStorage:", topicIds);
+    topicsCreateLogger.debug("Bulk saved topics to localStorage", {
+      topic_ids: topicIds,
+    });
   };
 
   const handleTopicEdit = async (
@@ -114,13 +135,16 @@ export default function TopicBuilderPage() {
     updates: Partial<GeneratedTopic>,
   ) => {
     // TODO: Implement topic editing functionality
-    console.log("Editing topic:", topicId, updates);
+    topicsCreateLogger.debug("Editing topic", {
+      topic_id: topicId,
+      updates,
+    });
     // In a real implementation, this would update the topic in state/API
   };
 
   const handleTopicRegenerate = async (topicId: string) => {
     // TODO: Implement single topic regeneration
-    console.log("Regenerating topic:", topicId);
+    topicsCreateLogger.info("Regenerating topic", { topic_id: topicId });
     // In a real implementation, this would call the API to regenerate just this topic
   };
 
@@ -129,12 +153,14 @@ export default function TopicBuilderPage() {
     format: "json" | "csv",
   ) => {
     exportTopics(format);
-    console.log("Exporting saved topics:", format);
+    topicsCreateLogger.info("Exporting saved topics", { format });
   };
 
   const handleTopicDelete = async (topicId: string) => {
     removeTopic(topicId);
-    console.log("Topic deleted from localStorage:", topicId);
+    topicsCreateLogger.debug("Topic deleted from localStorage", {
+      topic_id: topicId,
+    });
   };
 
   const handleGenerateMore = async (additionalCount: number) => {
@@ -143,9 +169,9 @@ export default function TopicBuilderPage() {
       clearNewlyAddedHighlights(); // Clear any existing highlights
 
       // Generate more topics without clearing existing ones
-      console.log(
-        `🔄 Generating ${additionalCount} more topics with current settings`,
-      );
+      topicsCreateLogger.info("Generating additional topics", {
+        additional_count: additionalCount,
+      });
 
       // Create modified form data with the requested number of additional topics
       const modifiedFormData = {
@@ -161,9 +187,9 @@ export default function TopicBuilderPage() {
       if (result.topics && Array.isArray(result.topics)) {
         // Append the new topics to existing ones (this will set newlyAddedTopicIds)
         appendGeneratedTopics(result.topics);
-        console.log(
-          `✅ Successfully generated and added ${result.topics.length} more topics`,
-        );
+        topicsCreateLogger.info("Generated additional topics", {
+          additional_count: result.topics.length,
+        });
 
         // Clear highlights after 3 seconds
         setTimeout(() => {
@@ -173,7 +199,10 @@ export default function TopicBuilderPage() {
         throw new Error("Invalid response format from topic generation API");
       }
     } catch (error) {
-      console.error("❌ Error generating more topics:", error);
+      topicsCreateLogger.error("Error generating more topics", {
+        error: error instanceof Error ? error.message : String(error),
+        additional_count: additionalCount,
+      });
       // The mutation already handles error toasts
     } finally {
       setIsGeneratingMore(false);
@@ -189,10 +218,14 @@ export default function TopicBuilderPage() {
       // Clear all topic data and reset wizard state
       clearTopics();
       resetWizard();
-      console.log("🔄 Starting over: All data cleared and wizard reset");
+      topicsCreateLogger.info("Resetting topic builder", {
+        cleared_topics: true,
+      });
       setShowStartOverDialog(false);
     } catch (error) {
-      console.error("❌ Error resetting wizard:", error);
+      topicsCreateLogger.error("Error resetting wizard", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       setShowStartOverDialog(false);
     }
   };
@@ -255,7 +288,9 @@ export default function TopicBuilderPage() {
                 onRetry={retryGeneration}
                 onGoBack={() => {}}
                 onContactSupport={() => {
-                  console.log("Contact support clicked");
+                  topicsCreateLogger.info("Contact support clicked", {
+                    source: "generation-error-dialog",
+                  });
                 }}
               />
             </div>
@@ -276,7 +311,9 @@ export default function TopicBuilderPage() {
                 onRetry={clearStorageError}
                 onGoBack={() => clearStorageError()}
                 onContactSupport={() => {
-                  console.log("Storage error - contact support clicked");
+                  topicsCreateLogger.info("Contact support clicked", {
+                    source: "storage-error-dialog",
+                  });
                 }}
               />
             </div>

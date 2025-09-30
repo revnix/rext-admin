@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
@@ -28,8 +29,8 @@ export function ActionsCell<
   actions,
   row,
   className,
-  showOnHover = true,
-  alwaysShowTrigger = false,
+  showOnHover: _showOnHover = true,
+  alwaysShowTrigger: _alwaysShowTrigger = false,
 }: ActionsCellProps<T>) {
   const [_isHovered, _setIsHovered] = useState(false);
   const { confirm, ConfirmationComponent } = useConfirmation();
@@ -43,7 +44,7 @@ export function ActionsCell<
   });
 
   if (availableActions.length === 0) {
-    return <div className={cn("w-[50px]", className)} />;
+    return <div className={cn("w-[200px]", className)} />;
   }
 
   // Handle action click with confirmation if needed
@@ -52,6 +53,8 @@ export function ActionsCell<
     e: React.MouseEvent,
   ) => {
     e.stopPropagation();
+
+    if (!action.onClick) return;
 
     if (action.requiresConfirmation) {
       const confirmed = await confirm({
@@ -83,18 +86,60 @@ export function ActionsCell<
     >
       <legend className="sr-only">Row actions</legend>
       {availableActions.map((action, index) => {
-        const button = (
+        const getHref = () => {
+          if (!action.href) return undefined;
+          return typeof action.href === "function"
+            ? action.href(row)
+            : action.href;
+        };
+
+        const href = getHref();
+
+        const getButtonVariant = (): "outline" => {
+          return "outline";
+        };
+
+        const getButtonClassName = () => {
+          const baseClasses = action.showLabel
+            ? "h-8 px-2 gap-1"
+            : "h-8 w-8 p-0";
+          const primaryClasses = action.primary
+            ? "border-primary text-primary hover:bg-primary/10 hover:text-primary"
+            : "";
+          const destructiveClasses =
+            action.variant === "destructive"
+              ? "border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+              : "";
+
+          return cn(baseClasses, primaryClasses, destructiveClasses);
+        };
+
+        const buttonContent = (
+          <>
+            {action.icon}
+            {action.showLabel && (
+              <span className="text-xs font-medium">{action.label}</span>
+            )}
+          </>
+        );
+
+        const button = href ? (
           <Button
-            variant="outline"
+            variant={getButtonVariant()}
+            size="sm"
+            asChild
+            className={getButtonClassName()}
+          >
+            <Link href={href}>{buttonContent}</Link>
+          </Button>
+        ) : (
+          <Button
+            variant={getButtonVariant()}
             size="sm"
             onClick={(e) => handleActionClick(action, e)}
-            className={cn(
-              "h-8 w-8 p-0",
-              action.variant === "destructive" &&
-                "border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
-            )}
+            className={getButtonClassName()}
           >
-            {action.icon}
+            {buttonContent}
           </Button>
         );
 

@@ -1,37 +1,101 @@
+"use client";
+
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
+import { generateRequestId } from "@/lib/response-utils";
+import { backendService } from "@/services/backend";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
-import type { SaveTopicResponse } from "@/types/backend";
+import { getErrorInfo } from "@/types/api";
+import type { BackendErrorCode } from "@/types/consistent-response";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
-/**
- * Response type for topic deletion operations
- */
-interface DeleteTopicResponse {
-  success: boolean;
-  deleted_count: number;
+// Helper function to safely extract error information
+function extractErrorInfo(error: unknown): {
   message: string;
-  topic_ids: string[];
+  statusCode?: number;
+  context?: unknown;
+  isRetryable?: boolean;
+} {
+  if (error instanceof Error) {
+    return { message: error.message };
+  }
+
+  if (error && typeof error === "object") {
+    const obj = error as Record<string, unknown>;
+    return {
+      message: typeof obj.message === "string" ? obj.message : String(error),
+      statusCode:
+        typeof obj.statusCode === "number" ? obj.statusCode : undefined,
+      context: obj.context,
+      isRetryable:
+        typeof obj.isRetryable === "boolean" ? obj.isRetryable : undefined,
+    };
+  }
+
+  return { message: String(error) };
+}
+
+const topicSaveLogger = logger.forComponent("useTopicSaveMutation");
+const topicBulkSaveLogger = logger.forComponent("useTopicBulkSaveMutation");
+const topicDeleteLogger = logger.forComponent("useTopicDeleteMutation");
+
+/**
+ * Enhanced response type for topic save operations with consistent format
+ */
+interface SaveTopicResponse {
+  success: boolean;
+  bulk_save: boolean;
+  single_save: boolean;
+  total_attempted: number;
+  successful_saves: number;
+  failed_saves: number;
+  saved_topic_ids: string[];
+  failed_topics: Array<{
+    topic_id: string;
+    reason: string;
+  }>;
+  topic?: GeneratedTopic; // For single save compatibility
+  message?: string; // For single save compatibility
+  saved_count?: number; // For single save compatibility
+  saved_at: string;
+  request_id: string;
+  processing_time_ms?: number;
 }
 
 /**
- * TanStack Query mutation hook for saving topics with optimistic updates
- *
- * Provides:
- * - Optimistic UI updates (topic appears saved immediately)
- * - Automatic rollback on API errors
- * - Cache invalidation for saved topics
- * - Integration with Zustand store for state management
- *
- * @example
- * ```tsx
- * const saveMutation = useTopicSaveMutation();
- *
- * const handleSave = () => {
- *   saveMutation.mutate(topic);
- * };
- * ```
+ * Enhanced response type for topic deletion operations with consistent format
+ */
+interface DeleteTopicResponse {
+  success: boolean;
+  total_requested: number;
+  deleted_count: number;
+  failed_count: number;
+  deleted_topic_ids: string[];
+  failed_deletions: Array<{
+    topic_id: string;
+    reason: string;
+  }>;
+  deleted_at: string;
+  request_id: string;
+  processing_time_ms?: number;
+}
+
+/**
+ * Enhanced error response type with consistent format
+ */
+interface TopicMutationError {
+  error: string;
+  error_code: BackendErrorCode;
+  details?: string;
+  request_id: string;
+  retry_after?: number;
+  fallback_available?: boolean;
+}
+
+/**
+ * TanStack Query mutation hook for saving a single topic
  */
 export function useTopicSaveMutation() {
   const queryClient = getQueryClient();
@@ -43,322 +107,346 @@ export function useTopicSaveMutation() {
 
   return useMutation<
     SaveTopicResponse,
-    Error,
+    TopicMutationError,
     GeneratedTopic,
-    { topicId: string }
+    { topicId: string; requestId: string }
   >({
     mutationFn: async (topic: GeneratedTopic): Promise<SaveTopicResponse> => {
-      // Call the Next.js API route which handles backend communication server-side
-      const response = await fetch("/api/topics/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          topic: topic,
-        }),
+      const requestId = generateRequestId("topic_save");
+
+      try {
+        // Use backend service directly
+        const result = await backendService.saveTopics([topic]);
+
+        // Transform to expected response format
+        const response: SaveTopicResponse = {
+          success: result.success,
+          bulk_save: false,
+          single_save: true,
+          total_attempted: 1,
+          successful_saves: result.saved_count || 0,
+          failed_saves: 1 - (result.saved_count || 0),
+          saved_topic_ids: result.saved_count ? [topic.id] : [],
+          failed_topics: result.saved_count
+            ? []
+            : [
+                {
+                  topic_id: topic.id,
+                  reason: result.message || "Unknown error",
+                },
+              ],
+          topic: result.success ? topic : undefined,
+          message: result.message,
+          saved_count: result.saved_count,
+          saved_at: new Date().toISOString(),
+          request_id: requestId,
+        };
+
+        topicSaveLogger.info("Topic save successful", {
+          topic_id: topic.id,
+          request_id: requestId,
+        });
+
+        return response;
+      } catch (error: unknown) {
+        const errorInfo = extractErrorInfo(error);
+
+        topicSaveLogger.error("Topic save failed", {
+          requestId,
+          topic_id: topic.id,
+          error: errorInfo.message,
+        });
+
+        const errorResponse: TopicMutationError = {
+          error: errorInfo.message || "Failed to save topic",
+          error_code:
+            errorInfo.statusCode === 401
+              ? "unauthorized"
+              : "external_service_error",
+          details: errorInfo.context
+            ? JSON.stringify(errorInfo.context)
+            : undefined,
+          request_id: requestId,
+          retry_after: errorInfo.isRetryable ? 5000 : undefined,
+          fallback_available: false,
+        };
+
+        throw errorResponse;
+      }
+    },
+
+    onMutate: async (topic) => {
+      const requestId = generateRequestId("topic_save");
+      // Optimistically mark the topic as saved
+      optimisticallyMarkTopicSaved(topic.id);
+      topicSaveLogger.debug("Optimistically saving topic", {
+        topic_id: topic.id,
+        request_id: requestId,
+      });
+      return {
+        topicId: topic.id,
+        requestId,
+      };
+    },
+
+    onSuccess: (data, topic, context) => {
+      // Invalidate and refetch topics list
+      queryClient.invalidateQueries({ queryKey: ["topics"] });
+
+      updateTopicSaveState(topic.id, false); // Mark as no longer being saved
+
+      topicSaveLogger.info("Topic save mutation success", {
+        topic_id: topic.id,
+        request_id: data.request_id,
+        correlation_id: context.requestId,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: `HTTP ${response.status}`,
-        }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      return response.json();
+      toast.success(`Topic "${topic.title}" saved successfully`, {
+        description: `Request ID: ${data.request_id}`,
+        duration: 3000,
+      });
     },
-    onMutate: async (topic) => {
-      // Start optimistic update
-      console.log(`Starting optimistic save for topic ${topic.id}`);
 
-      updateTopicSaveState(topic.id, true);
-      optimisticallyMarkTopicSaved(topic.id);
-
-      return { topicId: topic.id };
-    },
     onError: (error, topic, context) => {
-      // Rollback optimistic changes
-      console.error(
-        `Topic save failed for ${topic.id}, reverting optimistic changes:`,
-        error,
-      );
-
-      if (context?.topicId) {
+      // Revert optimistic update
+      if (context) {
         revertOptimisticSave(context.topicId);
       }
 
-      // Show error toast
-      toast.error(`Failed to save topic "${topic.title}": ${error.message}`);
-    },
-    onSuccess: (data, topic) => {
-      console.log(
-        `Topic ${topic.id} saved successfully - ${data.saved_count} topics saved`,
-      );
+      const { userMessage } = getErrorInfo(error.error_code);
 
-      // Show success toast
-      if (data.success && data.saved_count > 0) {
-        toast.success(`Topic "${topic.title}" saved successfully!`);
-      } else {
-        toast.error(`Failed to save topic "${topic.title}"`);
-      }
-    },
-    onSettled: (_data, _error, topic) => {
-      // Always clear loading state
-      updateTopicSaveState(topic.id, false);
+      topicSaveLogger.error("Topic save mutation error", {
+        error_code: error.error_code,
+        error_message: error.error,
+        topic_id: topic.id,
+        request_id: error.request_id,
+        correlation_id: context?.requestId,
+      });
 
-      // Invalidate queries that might list saved topics
-      queryClient.invalidateQueries({
-        queryKey: ["saved-topics"],
+      toast.error(userMessage, {
+        description: `Error code: ${error.error_code}`,
+        duration: 5000,
       });
     },
   });
 }
 
 /**
- * TanStack Query mutation hook for bulk saving multiple topics with optimistic updates
- *
- * Provides:
- * - Bulk optimistic UI updates (all topics appear saved immediately)
- * - Automatic rollback on API errors
- * - Cache invalidation for saved topics
- * - Integration with Zustand store for state management
- * - Efficient handling of multiple topics in a single API call
- *
- * @example
- * ```tsx
- * const bulkSaveMutation = useBulkTopicSaveMutation();
- *
- * const handleBulkSave = async (topics) => {
- *   try {
- *     await bulkSaveMutation.mutateAsync(topics);
- *     toast.success(`Saved ${topics.length} topics`);
- *   } catch (error) {
- *     toast.error(`Failed to save topics: ${error.message}`);
- *   }
- * };
- * ```
+ * TanStack Query mutation hook for saving multiple topics
  */
-export function useBulkTopicSaveMutation() {
+export function useTopicBulkSaveMutation() {
   const queryClient = getQueryClient();
-  const {
-    optimisticallyMarkTopicSaved,
-    revertOptimisticSave,
-    updateTopicSaveState,
-  } = useTopicBuilderStore();
 
   return useMutation<
     SaveTopicResponse,
-    Error,
+    TopicMutationError,
     GeneratedTopic[],
-    { topicIds: string[] }
+    { requestId: string }
   >({
     mutationFn: async (
       topics: GeneratedTopic[],
     ): Promise<SaveTopicResponse> => {
-      // Call the Next.js API route which handles backend communication server-side
-      const response = await fetch("/api/topics/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          topics,
-        }),
+      const requestId = generateRequestId("topic_bulk_save");
+
+      try {
+        // Use backend service directly
+        const result = await backendService.saveTopics(topics);
+
+        const response: SaveTopicResponse = {
+          success: result.success,
+          bulk_save: true,
+          single_save: false,
+          total_attempted: topics.length,
+          successful_saves: result.saved_count || 0,
+          failed_saves: topics.length - (result.saved_count || 0),
+          saved_topic_ids: result.success ? topics.map((t) => t.id) : [],
+          failed_topics: [],
+          message: result.message,
+          saved_count: result.saved_count,
+          saved_at: new Date().toISOString(),
+          request_id: requestId,
+        };
+
+        topicBulkSaveLogger.info("Bulk topic save successful", {
+          topics_count: topics.length,
+          saved_count: result.saved_count,
+          request_id: requestId,
+        });
+
+        return response;
+      } catch (error: unknown) {
+        const errorInfo = extractErrorInfo(error);
+
+        topicBulkSaveLogger.error("Bulk topic save failed", {
+          requestId,
+          topics_count: topics.length,
+          error: errorInfo.message,
+        });
+
+        const errorResponse: TopicMutationError = {
+          error: errorInfo.message || "Failed to save topics",
+          error_code:
+            errorInfo.statusCode === 401
+              ? "unauthorized"
+              : "external_service_error",
+          details: errorInfo.context
+            ? JSON.stringify(errorInfo.context)
+            : undefined,
+          request_id: requestId,
+          retry_after: errorInfo.isRetryable ? 5000 : undefined,
+          fallback_available: false,
+        };
+
+        throw errorResponse;
+      }
+    },
+
+    onMutate: async (_topics) => {
+      const requestId = generateRequestId("topic_bulk_save");
+      return {
+        requestId,
+      };
+    },
+
+    onSuccess: (data, topics, context) => {
+      // Invalidate and refetch topics list
+      queryClient.invalidateQueries({ queryKey: ["topics"] });
+
+      topicBulkSaveLogger.info("Bulk topic save mutation success", {
+        topics_count: topics.length,
+        successful_saves: data.successful_saves,
+        request_id: data.request_id,
+        correlation_id: context?.requestId,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: `HTTP ${response.status}`,
-        }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      return response.json();
-    },
-    onMutate: async (topics) => {
-      const topicIds = topics.map((t) => t.id);
-      console.log(`Starting bulk save for ${topics.length} topics:`, topicIds);
-
-      // Mark all topics as being saved and optimistically saved
-      for (const id of topicIds) {
-        updateTopicSaveState(id, true);
-        optimisticallyMarkTopicSaved(id);
-      }
-
-      return { topicIds };
-    },
-    onError: (error, topics, context) => {
-      console.error(`Bulk save failed for ${topics.length} topics:`, error);
-
-      // Rollback all optimistic changes
-      if (context?.topicIds) {
-        for (const id of context.topicIds) {
-          revertOptimisticSave(id);
-        }
-      }
-
-      // Show error toast
-      toast.error(`Failed to save ${topics.length} topics: ${error.message}`);
-    },
-    onSuccess: (data, topics) => {
-      console.log(
-        `Bulk save completed - ${data.saved_count} of ${topics.length} topics saved`,
+      toast.success(
+        `Saved ${data.successful_saves} of ${topics.length} topics`,
+        {
+          description: `Request ID: ${data.request_id}`,
+          duration: 4000,
+        },
       );
-
-      // Show success toast
-      if (data.success && data.saved_count > 0) {
-        if (data.saved_count === topics.length) {
-          toast.success(`Successfully saved all ${topics.length} topics!`);
-        } else {
-          toast.success(
-            `Saved ${data.saved_count} of ${topics.length} topics successfully`,
-          );
-        }
-      } else {
-        toast.error(`Failed to save topics`);
-      }
     },
-    onSettled: (_data, _error, topics) => {
-      // Clear loading state for all topics
-      for (const topic of topics) {
-        updateTopicSaveState(topic.id, false);
-      }
 
-      // Invalidate queries that might list saved topics
-      queryClient.invalidateQueries({
-        queryKey: ["saved-topics"],
+    onError: (error, topics, context) => {
+      const { userMessage } = getErrorInfo(error.error_code);
+
+      topicBulkSaveLogger.error("Bulk topic save mutation error", {
+        error_code: error.error_code,
+        error_message: error.error,
+        topics_count: topics.length,
+        request_id: error.request_id,
+        correlation_id: context?.requestId,
+      });
+
+      toast.error(userMessage, {
+        description: `Failed to save ${topics.length} topics. Error: ${error.error_code}`,
+        duration: 6000,
       });
     },
   });
 }
 
 /**
- * TanStack Query mutation hook for deleting topics with optimistic updates
- *
- * Provides:
- * - Optimistic UI updates (topics disappear immediately)
- * - Automatic rollback on API errors
- * - Cache invalidation for saved topics
- * - Support for single or multiple topic deletion
- *
- * @example
- * ```tsx
- * const deleteMutation = useTopicDeleteMutation();
- *
- * const handleDelete = async (topicIds) => {
- *   try {
- *     await deleteMutation.mutateAsync(topicIds);
- *     toast.success(`Deleted ${topicIds.length} topics`);
- *   } catch (error) {
- *     toast.error(`Failed to delete topics: ${error.message}`);
- *   }
- * };
- * ```
+ * TanStack Query mutation hook for deleting topics
  */
 export function useTopicDeleteMutation() {
   const queryClient = getQueryClient();
 
   return useMutation<
     DeleteTopicResponse,
-    Error,
+    TopicMutationError,
     string[],
-    { originalTopics?: unknown[] }
+    { requestId: string }
   >({
     mutationFn: async (topicIds: string[]): Promise<DeleteTopicResponse> => {
-      // Call the Next.js API route which handles backend communication server-side
-      const response = await fetch("/api/topics/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const requestId = generateRequestId("topic_delete");
+
+      try {
+        // Use backend service directly
+        const result = await backendService.deleteTopics(topicIds);
+
+        const response: DeleteTopicResponse = {
+          success: result.success,
+          total_requested: topicIds.length,
+          deleted_count: result.deleted_count,
+          failed_count: topicIds.length - result.deleted_count,
+          deleted_topic_ids: result.topic_ids || [],
+          failed_deletions: [], // Backend doesn't provide this detail currently
+          deleted_at: new Date().toISOString(),
+          request_id: requestId,
+        };
+
+        topicDeleteLogger.info("Topic deletion successful", {
           topic_ids: topicIds,
-        }),
-      });
+          deleted_count: result.deleted_count,
+          request_id: requestId,
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: `HTTP ${response.status}`,
-        }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        return response;
+      } catch (error: unknown) {
+        const errorInfo = extractErrorInfo(error);
+
+        topicDeleteLogger.error("Topic deletion failed", {
+          requestId,
+          topic_ids: topicIds,
+          error: errorInfo.message,
+        });
+
+        const errorResponse: TopicMutationError = {
+          error: errorInfo.message || "Failed to delete topics",
+          error_code:
+            errorInfo.statusCode === 401
+              ? "unauthorized"
+              : "external_service_error",
+          details: errorInfo.context
+            ? JSON.stringify(errorInfo.context)
+            : undefined,
+          request_id: requestId,
+          retry_after: errorInfo.isRetryable ? 5000 : undefined,
+          fallback_available: false,
+        };
+
+        throw errorResponse;
       }
-
-      return response.json();
     },
-    onMutate: async (topicIds) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["topics"] });
 
-      // Snapshot the previous value
-      const previousTopics = queryClient.getQueryData(["topics"]);
+    onSuccess: (data, topicIds, context) => {
+      // Invalidate and refetch topics list
+      queryClient.invalidateQueries({ queryKey: ["topics"] });
 
-      // Optimistically update by removing deleted topics from cache
-      queryClient.setQueryData(["topics"], (old: unknown) => {
-        if (!old || typeof old !== "object" || !("topics" in old)) return old;
-        const typedOld = old as {
-          topics: Array<{ id: string }>;
-          total_count?: number;
-        };
-        if (!typedOld.topics) return old;
-        return {
-          ...typedOld,
-          topics: typedOld.topics.filter(
-            (topic) => !topicIds.includes(topic.id),
-          ),
-          total_count: Math.max(
-            0,
-            (typedOld.total_count || 0) - topicIds.length,
-          ),
-        };
+      topicDeleteLogger.info("Topic delete mutation success", {
+        topic_ids: topicIds,
+        deleted_count: data.deleted_count,
+        request_id: data.request_id,
+        correlation_id: context.requestId,
       });
 
-      console.log(
-        `Starting optimistic delete for ${topicIds.length} topics:`,
-        topicIds,
-      );
+      const successMessage =
+        data.deleted_count === 1
+          ? "Topic deleted successfully"
+          : `Deleted ${data.deleted_count} topics successfully`;
 
-      return { originalTopics: previousTopics as unknown[] };
+      toast.success(successMessage, {
+        description: `Request ID: ${data.request_id}`,
+        duration: 3000,
+      });
     },
+
     onError: (error, topicIds, context) => {
-      console.error(`Delete failed for ${topicIds.length} topics:`, error);
+      const { userMessage } = getErrorInfo(error.error_code);
 
-      // Rollback optimistic changes
-      if (context?.originalTopics) {
-        queryClient.setQueryData(["topics"], context.originalTopics);
-      }
+      topicDeleteLogger.error("Topic delete mutation error", {
+        error_code: error.error_code,
+        error_message: error.error,
+        topic_ids: topicIds,
+        request_id: error.request_id,
+        correlation_id: context?.requestId,
+      });
 
-      // Show error toast
-      const topicsText = topicIds.length === 1 ? "topic" : "topics";
-      toast.error(
-        `Failed to delete ${topicIds.length} ${topicsText}: ${error.message}`,
-      );
-    },
-    onSuccess: (data, topicIds) => {
-      console.log(
-        `Successfully deleted ${data.deleted_count} of ${topicIds.length} topics`,
-      );
-
-      // Show success toast
-      if (data.success && data.deleted_count > 0) {
-        const topicsText = data.deleted_count === 1 ? "topic" : "topics";
-        if (data.deleted_count === topicIds.length) {
-          toast.success(
-            `Successfully deleted ${data.deleted_count} ${topicsText}!`,
-          );
-        } else {
-          toast.success(
-            `Deleted ${data.deleted_count} of ${topicIds.length} topics`,
-          );
-        }
-      } else {
-        toast.error(`Failed to delete topics`);
-      }
-    },
-    onSettled: () => {
-      // Invalidate and refetch topics to ensure UI is in sync
-      queryClient.invalidateQueries({
-        queryKey: ["topics"],
+      toast.error(userMessage, {
+        description: `Failed to delete ${topicIds.length} topics. Error: ${error.error_code}`,
+        duration: 5000,
       });
     },
   });

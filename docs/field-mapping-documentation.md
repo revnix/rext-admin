@@ -31,9 +31,14 @@ interface GeneratedTopic {
   audience_fit: string[];
   why_it_works: string;
   scores: {
-    relevance: number;    // 0-1 range
-    freshness: number;    // 0-1 range
-    novelty: number;      // 0-1 range
+    relevance: number;             // 0-1 range: How well the topic matches user criteria
+    seo_potential: number;         // 0-1 range: SEO ranking potential
+    trend_level: number;           // 0-1 range: How current/timely the topic is
+    uniqueness: number;            // 0-1 range: How unique/original the approach is
+    reader_interest: number;       // 0-1 range: Expected reader engagement
+    actionable_potential: number;  // 0-1 range: How actionable/practical content can be
+    brand_alignment: number;       // 0-1 range: How well it aligns with brand values
+    controversy: number;           // 0-1 range: Controversy potential (lower = safer)
   };
   tags: string[];
   is_saved?: boolean;
@@ -274,7 +279,7 @@ return Math.round(weightedScore × 100);
 
 ### Usage in Application
 1. **TopicsPage**: `/app/topics/page.tsx` (lines 33-34)
-2. **Topics Hook**: `/hooks/use-topics.ts` (line 24)
+2. **Topics Data Fetching**: `/app/topics/data-access.ts` (server fetcher)
 3. **Testing**: `/__tests__/lib/topic-transformations.test.ts`
 
 ## Testing Strategy

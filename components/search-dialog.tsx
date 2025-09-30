@@ -3,15 +3,12 @@
 import {
   Archive,
   Bell,
-  Bot,
   FileText,
   Lightbulb,
   Link,
-  MessageSquare,
   Settings,
   Share2,
   Users,
-  Workflow,
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -64,23 +61,6 @@ const searchData: SearchResult[] = [
     url: "/topics",
     icon: <Lightbulb className="h-4 w-4" />,
   },
-  // Flows
-  {
-    id: "flows-1",
-    title: "Content Generation Flow",
-    description: "Automated workflow for generating blog content",
-    category: "Flows",
-    url: "/flows",
-    icon: <Workflow className="h-4 w-4" />,
-  },
-  {
-    id: "flows-2",
-    title: "Social Media Posting Flow",
-    description: "Schedule and post content across platforms",
-    category: "Flows",
-    url: "/flows",
-    icon: <Workflow className="h-4 w-4" />,
-  },
   // Content
   {
     id: "content-1",
@@ -97,40 +77,6 @@ const searchData: SearchResult[] = [
     category: "Content",
     url: "/content",
     icon: <FileText className="h-4 w-4" />,
-  },
-  // Models
-  {
-    id: "models-1",
-    title: "GPT-4 Configuration",
-    description: "OpenAI GPT-4 model settings and parameters",
-    category: "Models",
-    url: "/models",
-    icon: <Bot className="h-4 w-4" />,
-  },
-  {
-    id: "models-2",
-    title: "Claude 3 Integration",
-    description: "Anthropic Claude 3 model configuration",
-    category: "Models",
-    url: "/models",
-    icon: <Bot className="h-4 w-4" />,
-  },
-  // Templates
-  {
-    id: "templates-1",
-    title: "Blog Post Template",
-    description: "Standard template for blog content generation",
-    category: "Templates",
-    url: "/prompt-templates",
-    icon: <MessageSquare className="h-4 w-4" />,
-  },
-  {
-    id: "templates-2",
-    title: "Social Media Template",
-    description: "Template for social media post creation",
-    category: "Templates",
-    url: "/prompt-templates",
-    icon: <MessageSquare className="h-4 w-4" />,
   },
   // Memories
   {
@@ -239,7 +185,6 @@ const searchData: SearchResult[] = [
 const categories = [
   "All",
   "Topics",
-  "Flows",
   "Content",
   "Models",
   "Templates",
