@@ -425,77 +425,90 @@ export function AllKnowledgeList({
   const [dateValue, setDateValue] = useState<DateRange | undefined>(undefined);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Use workspace-specific endpoints for better performance
   const webQuery = useQuery({
     queryKey: ["web-knowledge", workspaceId],
-    queryFn: () => webKnowledgeService.list(),
+    queryFn: () => webKnowledgeService.listForWorkspace(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
   });
 
   const fileQuery = useQuery({
     queryKey: ["file-knowledge", workspaceId],
-    queryFn: () => fileKnowledgeService.list(),
+    queryFn: () => fileKnowledgeService.listForWorkspace(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
   });
 
   const textQuery = useQuery({
     queryKey: ["text-knowledge", workspaceId],
-    queryFn: () => textKnowledgeService.list(),
+    queryFn: () => textKnowledgeService.listForWorkspace(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
   });
 
   useEffect(() => {
     setWebLoading(webQuery.isLoading || webQuery.isFetching);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webQuery.isLoading, webQuery.isFetching, setWebLoading]);
 
   useEffect(() => {
     setWebError(webQuery.error ? "Failed to load web knowledge" : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webQuery.error, setWebError]);
 
   useEffect(() => {
     if (webQuery.data) {
-      const workspaceItems = webQuery.data.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-      setWebItems(workspaceItems);
+      // No filtering needed - workspace-specific endpoint already filters
+      setWebItems(webQuery.data);
     }
-  }, [webQuery.data, workspaceId, setWebItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    webQuery.data, // No filtering needed - workspace-specific endpoint already filters
+    setWebItems,
+  ]);
 
   useEffect(() => {
     setFileLoading(fileQuery.isLoading || fileQuery.isFetching);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileQuery.isLoading, fileQuery.isFetching, setFileLoading]);
 
   useEffect(() => {
     setFileError(fileQuery.error ? "Failed to load file knowledge" : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileQuery.error, setFileError]);
 
   useEffect(() => {
     if (fileQuery.data) {
-      const workspaceItems = fileQuery.data.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-      setFileItems(workspaceItems);
+      // No filtering needed - workspace-specific endpoint already filters
+      setFileItems(fileQuery.data);
     }
-  }, [fileQuery.data, workspaceId, setFileItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    fileQuery.data, // No filtering needed - workspace-specific endpoint already filters
+    setFileItems,
+  ]);
 
   useEffect(() => {
     setTextLoading(textQuery.isLoading || textQuery.isFetching);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textQuery.isLoading, textQuery.isFetching, setTextLoading]);
 
   useEffect(() => {
     setTextError(textQuery.error ? "Failed to load text knowledge" : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textQuery.error, setTextError]);
 
   useEffect(() => {
     if (textQuery.data) {
-      const workspaceItems = textQuery.data.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-      setTextItems(workspaceItems);
+      // No filtering needed - workspace-specific endpoint already filters
+      setTextItems(textQuery.data);
     }
-  }, [textQuery.data, workspaceId, setTextItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    textQuery.data, // No filtering needed - workspace-specific endpoint already filters
+    setTextItems,
+  ]);
 
   useEffect(() => {
     if (!dateRange.from && !dateRange.to) {

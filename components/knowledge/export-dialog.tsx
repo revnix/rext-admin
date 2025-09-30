@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Download, FileText, Loader2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -139,28 +139,41 @@ export function ExportDialog({
     },
   });
 
-  // Watch form values for preview updates
-  const watchedValues = form.watch();
+  // Watch specific form values to avoid unnecessary re-renders
+  const format = form.watch("format");
+  const knowledgeTypes = form.watch("knowledgeTypes");
+  const scope = form.watch("scope");
+  const includeContent = form.watch("includeContent");
+  const includeMetadata = form.watch("includeMetadata");
+  const includeStats = form.watch("includeStats");
+  const maxItems = form.watch("maxItems");
+  const dateRange = form.watch("dateRange");
+
+  // Memoize dateRange string to prevent infinite loops
+  const _dateRangeKey = useMemo(() => {
+    if (!dateRange?.start || !dateRange?.end) return null;
+    return `${dateRange.start.toISOString()}-${dateRange.end.toISOString()}`;
+  }, [dateRange?.start, dateRange?.end]);
 
   // Update preview when form values change
   useEffect(() => {
     const options: ExportOptions = {
-      format: watchedValues.format as ExportFormat,
-      knowledgeTypes: watchedValues.knowledgeTypes as ExportKnowledgeType[],
-      scope: watchedValues.scope as ExportScope,
-      includeContent: watchedValues.includeContent,
-      includeMetadata: watchedValues.includeMetadata,
-      includeStats: watchedValues.includeStats,
-      selectedIds: watchedValues.scope === "selected" ? selectedIds : undefined,
-      maxItems: watchedValues.maxItems,
+      format: format as ExportFormat,
+      knowledgeTypes: knowledgeTypes as ExportKnowledgeType[],
+      scope: scope as ExportScope,
+      includeContent,
+      includeMetadata,
+      includeStats,
+      selectedIds: scope === "selected" ? selectedIds : undefined,
+      maxItems,
     };
 
     const filters = {
       dateRange:
-        watchedValues.dateRange?.start && watchedValues.dateRange.end
+        dateRange?.start && dateRange.end
           ? {
-              start: watchedValues.dateRange.start.toISOString(),
-              end: watchedValues.dateRange.end.toISOString(),
+              start: dateRange.start.toISOString(),
+              end: dateRange.end.toISOString(),
             }
           : undefined,
     };
@@ -182,13 +195,24 @@ export function ExportDialog({
     } else {
       setPreviewData(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    watchedValues,
-    webItems,
+    format,
+    knowledgeTypes,
+    scope,
+    includeContent,
+    includeMetadata,
+    includeStats,
+    maxItems,
+    selectedIds,
+    dateRange?.end,
+    dateRange?.start,
     fileItems,
     textItems,
-    selectedIds,
     validateExport,
+    webItems,
+    // Note: webItems, fileItems, textItems, validateExport excluded to prevent loops
+    // They are used but their changes shouldn't trigger this effect
   ]);
 
   // Handle form submission
@@ -258,7 +282,7 @@ export function ExportDialog({
     json: { fileExtension: "json" },
     csv: { fileExtension: "csv" },
     pdf: { fileExtension: "pdf" },
-  }[watchedValues.format as ExportFormat];
+  }[format as ExportFormat];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -497,7 +521,7 @@ export function ExportDialog({
             </div>
 
             {/* Advanced Options */}
-            {watchedValues.scope === "filtered" && (
+            {scope === "filtered" && (
               <div className="space-y-4">
                 <Label className="text-base font-medium">Filter Options</Label>
 

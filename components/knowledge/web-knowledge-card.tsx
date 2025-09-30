@@ -4,6 +4,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Edit2,
   ExternalLink,
   Globe,
   Loader2,
@@ -33,12 +34,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 import type { WebKnowledge } from "@/types/workspace";
@@ -91,7 +103,11 @@ export function WebKnowledgeCard({
   isSelected = false,
 }: WebKnowledgeCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title || "");
+  const [isUpdating, setIsUpdating] = useState(false);
   const removeItem = useWebKnowledgeStore((state) => state.removeItem);
+  const updateItem = useWebKnowledgeStore((state) => state.updateItem);
 
   const status = statusConfig[item.status];
   const StatusIcon = status.icon;
@@ -107,6 +123,25 @@ export function WebKnowledgeCard({
       toast.error("Failed to delete web knowledge");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editTitle.trim()) {
+      toast.error("Title cannot be empty");
+      return;
+    }
+    try {
+      setIsUpdating(true);
+      await webKnowledgeService.update(item.workspace_id, item.id, editTitle);
+      updateItem(item.id, { ...item, title: editTitle });
+      toast.success("Web knowledge updated successfully");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to update web knowledge:", error);
+      toast.error("Failed to update web knowledge");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -177,6 +212,55 @@ export function WebKnowledgeCard({
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open URL
               </DropdownMenuItem>
+              <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Edit Title
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent onClick={(e) => e.stopPropagation()}>
+                  <DialogHeader>
+                    <DialogTitle>Edit Web Knowledge</DialogTitle>
+                    <DialogDescription>
+                      Update the title for this web knowledge item.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Enter title"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setEditTitle(item.title || "");
+                        setIsEditing(false);
+                      }}
+                      disabled={isUpdating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleUpdate} disabled={isUpdating}>
+                      {isUpdating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <DropdownMenuSeparator />
               <AlertDialog>
                 <AlertDialogTrigger asChild>

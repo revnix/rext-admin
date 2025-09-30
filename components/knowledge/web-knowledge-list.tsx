@@ -166,7 +166,7 @@ export function WebKnowledgeList({
     deselectAll,
   } = useWebKnowledgeStore();
 
-  // Query web knowledge data
+  // Query web knowledge data - using workspace-specific endpoint
   const {
     data: webKnowledgeList,
     isLoading: isQueryLoading,
@@ -174,7 +174,7 @@ export function WebKnowledgeList({
     refetch,
   } = useQuery({
     queryKey: ["web-knowledge", workspaceId],
-    queryFn: () => webKnowledgeService.list(),
+    queryFn: () => webKnowledgeService.listForWorkspace(workspaceId),
     staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!workspaceId,
   });
@@ -182,19 +182,17 @@ export function WebKnowledgeList({
   // Update store when API data changes
   useEffect(() => {
     if (webKnowledgeList) {
-      // Filter items for this workspace
-      const workspaceItems = webKnowledgeList.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-      setItems(workspaceItems);
+      setItems(webKnowledgeList);
     }
-  }, [webKnowledgeList, workspaceId, setItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [webKnowledgeList, setItems]);
 
   // Update loading and error states
   useEffect(() => {
     setLoading(isQueryLoading);
     setError(queryError ? "Failed to load web knowledge" : null);
-  }, [isQueryLoading, queryError, setLoading, setError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isQueryLoading, queryError, setError, setLoading]);
 
   // Filter and sort items
   const filteredItems = items.filter((item) => {

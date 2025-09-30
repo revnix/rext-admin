@@ -19,6 +19,7 @@
 export interface Workspace {
   id: string; // UUID
   title: string; // unique, required
+  name?: string; // alternative to title (backend uses name)
   description?: string; // optional
   url: string; // required
   created_at: string; // DateTime ISO string
@@ -27,6 +28,32 @@ export interface Workspace {
   websites?: WebKnowledge[];
   knowledge_files?: FileKnowledge[];
   text_knowledge?: TextKnowledge[];
+  // New fields from backend API response
+  knowledge_stats?: {
+    web_knowledge: number;
+    files: number;
+    text_knowledge: number;
+    total: number;
+  };
+  analytics?: {
+    knowledge_counts: {
+      web_knowledge: number;
+      files: number;
+      text_knowledge: number;
+      total_knowledge_items: number;
+    };
+    content_metrics: {
+      total_words: number;
+      web_content_words: number;
+      file_content_words: number;
+      avg_web_article_words: number;
+      avg_file_words: number;
+      estimated_reading_time_minutes: number;
+    };
+    team_metrics: {
+      total_members: number;
+    };
+  };
 }
 
 /**
@@ -214,12 +241,7 @@ export interface WorkspaceFormData {
 }
 
 /**
- * Workspace dashboard view modes
- */
-export type WorkspaceViewMode = "grid" | "list";
-
-/**
- * Workspace filtering options
+ * Workspace filtering options (now handled by DataTable)
  */
 export interface WorkspaceFilters {
   search?: string;

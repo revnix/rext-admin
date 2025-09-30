@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { workspaceApiService } from "@/services";
 import {
   useRecentWorkspaces,
@@ -80,8 +81,8 @@ export function WorkspaceSwitcher() {
     workspacesLength: workspaces.length,
     recentWorkspacesCount: recentWorkspaces.length,
     remainingWorkspacesCount: remainingWorkspaces.length,
-    currentWorkspace: currentWorkspace?.title,
-    displayWorkspace: displayWorkspace?.title,
+    currentWorkspace: getWorkspaceDisplayTitle(currentWorkspace),
+    displayWorkspace: getWorkspaceDisplayTitle(displayWorkspace),
     hasData: !!workspaceListResponse,
   });
 
@@ -102,7 +103,10 @@ export function WorkspaceSwitcher() {
                 <span className="truncate font-medium">
                   {isLoading
                     ? "Loading..."
-                    : displayWorkspace?.title || "Select Workspace"}
+                    : getWorkspaceDisplayTitle(
+                        displayWorkspace,
+                        "Select Workspace",
+                      )}
                 </span>
                 <span className="truncate text-xs">
                   {isLoading
@@ -164,7 +168,10 @@ export function WorkspaceSwitcher() {
                         <div className="flex size-6 items-center justify-center rounded-md border">
                           <Building2 className="size-3.5 shrink-0" />
                         </div>
-                        {workspace.title}
+                        {getWorkspaceDisplayTitle(
+                          workspace,
+                          "Untitled Workspace",
+                        )}
                         <DropdownMenuShortcut>
                           ⌘R{index + 1}
                         </DropdownMenuShortcut>
@@ -192,7 +199,7 @@ export function WorkspaceSwitcher() {
                     <div className="flex size-6 items-center justify-center rounded-md border">
                       <Building2 className="size-3.5 shrink-0" />
                     </div>
-                    {workspace.title}
+                    {getWorkspaceDisplayTitle(workspace, "Untitled Workspace")}
                     <DropdownMenuShortcut>
                       ⌘{recentWorkspaces.length + index + 1}
                     </DropdownMenuShortcut>

@@ -17,14 +17,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace-store";
+import type { WorkspaceData } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceDeleteDialogProps {
   /**
    * The workspace to be deleted
    */
-  workspace: Workspace;
+  workspace: Workspace | WorkspaceData;
   /**
    * Trigger element for the dialog (optional - will use default button if not provided)
    */
@@ -79,12 +81,13 @@ export function WorkspaceDeleteDialog({
   const setDialogOpen = onOpenChange || setIsOpen;
 
   // Check if confirmation is valid
-  const isConfirmationValid =
-    confirmationText.trim() === workspace.title.trim();
+  const workspaceName = getWorkspaceDisplayTitle(workspace);
+  const isConfirmationValid = confirmationText.trim() === workspaceName?.trim();
   const canDelete =
     isConfirmationValid && !isDeleting && !loadingStates.deleting;
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
     if (!canDelete) return;
 
     setIsDeleting(true);
@@ -94,7 +97,7 @@ export function WorkspaceDeleteDialog({
 
       // Success feedback
       toast.success(
-        `Workspace "${workspace.title}" has been deleted successfully`,
+        `Workspace "${workspaceName}" has been deleted successfully`,
         {
           description: "All associated knowledge and data have been removed",
         },
@@ -145,15 +148,18 @@ export function WorkspaceDeleteDialog({
   );
 
   const knowledgeCount =
-    (workspace.websites?.length || 0) +
-    (workspace.knowledge_files?.length || 0) +
-    (workspace.text_knowledge?.length || 0);
+    workspace.knowledge_stats?.total ||
+    ((workspace as Workspace).websites?.length || 0) +
+      ((workspace as Workspace).knowledge_files?.length || 0) +
+      ((workspace as Workspace).text_knowledge?.length || 0);
 
   return (
     <AlertDialog open={dialogOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </AlertDialogTrigger>
+      {!open && (
+        <AlertDialogTrigger asChild>
+          {trigger || defaultTrigger}
+        </AlertDialogTrigger>
+      )}
 
       <AlertDialogContent className="sm:max-w-[500px]">
         <AlertDialogHeader>
@@ -161,28 +167,27 @@ export function WorkspaceDeleteDialog({
             <Trash2 className="h-5 w-5" />
             Delete Workspace
           </AlertDialogTitle>
-          <AlertDialogDescription className="space-y-3">
-            <p>
-              You are about to permanently delete the workspace{" "}
-              <span className="font-semibold text-foreground">
-                "{workspace.title}"
-              </span>
-              .
-            </p>
-
+          <AlertDialogDescription>
+            You are about to permanently delete the workspace{" "}
+            <span className="font-semibold text-foreground">
+              "{workspaceName}"
+            </span>
+            .
             {knowledgeCount > 0 && (
-              <p className="text-orange-600 dark:text-orange-400 font-medium">
-                ⚠️ This will also delete {knowledgeCount} knowledge item
-                {knowledgeCount === 1 ? "" : "s"}
-                (websites, files, and text notes) associated with this
-                workspace.
-              </p>
-            )}
-
-            <p className="font-medium">
+              <>
+                {" "}
+                <span className="text-orange-600 dark:text-orange-400 font-medium">
+                  ⚠️ This will also delete {knowledgeCount} knowledge item
+                  {knowledgeCount === 1 ? "" : "s"}
+                  (websites, files, and text notes) associated with this
+                  workspace.
+                </span>
+              </>
+            )}{" "}
+            <span className="font-medium">
               This action cannot be undone. All data will be permanently removed
               from the vector store.
-            </p>
+            </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -192,7 +197,7 @@ export function WorkspaceDeleteDialog({
               To confirm deletion, type the workspace name below:
             </Label>
             <div className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
-              {workspace.title}
+              {workspaceName}
             </div>
             <Input
               id="confirmation-input"
@@ -211,7 +216,7 @@ export function WorkspaceDeleteDialog({
             {confirmationText && !isConfirmationValid && (
               <p className="text-sm text-destructive">
                 Workspace name does not match. Please type exactly: "
-                {workspace.title}"
+                {workspaceName}"
               </p>
             )}
           </div>

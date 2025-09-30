@@ -39,6 +39,23 @@ export class WebKnowledgeService {
   }
 
   /**
+   * List web knowledge for a specific workspace
+   */
+  async listForWorkspace(workspaceId: string): Promise<WebKnowledge[]> {
+    try {
+      const response =
+        await workspaceApiService.getWorkspaceWebKnowledge(workspaceId);
+      return response.web_knowledge;
+    } catch (error) {
+      this.log.error("Failed to list workspace web knowledge", {
+        workspaceId,
+        error,
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Get specific web knowledge by ID
    */
   async getById(webId: string): Promise<WebKnowledge> {
@@ -67,6 +84,33 @@ export class WebKnowledgeService {
       return response.web_knowledge;
     } catch (error) {
       this.log.error("Failed to add web knowledge", { data, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Update web knowledge title
+   */
+  async update(
+    workspaceId: string,
+    webId: string,
+    title: string,
+  ): Promise<WebKnowledge> {
+    try {
+      this.log.info("Updating web knowledge", { workspaceId, webId, title });
+      const response = await workspaceApiService.updateWebKnowledge(
+        workspaceId,
+        webId,
+        title,
+      );
+      this.log.info("Web knowledge updated successfully", { webId });
+      return response.web_knowledge;
+    } catch (error) {
+      this.log.error("Failed to update web knowledge", {
+        workspaceId,
+        webId,
+        error,
+      });
       throw error;
     }
   }
@@ -156,6 +200,23 @@ export class FileKnowledgeService {
       return response.file_knowledge;
     } catch (error) {
       this.log.error("Failed to list file knowledge", { error });
+      throw error;
+    }
+  }
+
+  /**
+   * List file knowledge for a specific workspace
+   */
+  async listForWorkspace(workspaceId: string): Promise<FileKnowledge[]> {
+    try {
+      const response =
+        await workspaceApiService.getWorkspaceFileKnowledge(workspaceId);
+      return response.file_knowledge;
+    } catch (error) {
+      this.log.error("Failed to list workspace file knowledge", {
+        workspaceId,
+        error,
+      });
       throw error;
     }
   }
@@ -312,6 +373,23 @@ export class TextKnowledgeService {
       return response.text_knowledge;
     } catch (error) {
       this.log.error("Failed to list text knowledge", { error });
+      throw error;
+    }
+  }
+
+  /**
+   * List text knowledge for a specific workspace
+   */
+  async listForWorkspace(workspaceId: string): Promise<TextKnowledge[]> {
+    try {
+      const response =
+        await workspaceApiService.getWorkspaceTextKnowledge(workspaceId);
+      return response.text_knowledge;
+    } catch (error) {
+      this.log.error("Failed to list workspace text knowledge", {
+        workspaceId,
+        error,
+      });
       throw error;
     }
   }

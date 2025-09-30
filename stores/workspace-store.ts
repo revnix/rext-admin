@@ -1,17 +1,16 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { workspaceApiService } from "@/services/workspace-api";
 import type {
   BrandVoiceRefreshState,
   KnowledgeManagementState,
   KnowledgeType,
   Workspace,
-  WorkspaceFilters,
   WorkspaceFormData,
   WorkspaceFormState,
   WorkspaceLoadingStates,
   WorkspaceSettings,
-  WorkspaceViewMode,
 } from "@/types/workspace";
 import { DEFAULT_WORKSPACE_SETTINGS } from "@/types/workspace";
 
@@ -45,10 +44,7 @@ interface WorkspaceState {
   currentWorkspace: Workspace | null;
   workspaceList: Workspace[];
 
-  // UI preferences and filters
-  viewMode: WorkspaceViewMode;
-  filters: WorkspaceFilters;
-  showFilters: boolean;
+  // No longer needed - DataTable handles its own state
 
   // Form state for workspace creation/editing
   workspaceForm: WorkspaceFormState;
@@ -102,14 +98,7 @@ interface WorkspaceState {
   refreshBrandVoice: (workspaceId: string) => Promise<void>;
   setBrandVoiceRefreshState: (state: Partial<BrandVoiceRefreshState>) => void;
 
-  // ============================================================================
-  // UI PREFERENCES ACTIONS
-  // ============================================================================
-
-  setViewMode: (mode: WorkspaceViewMode) => void;
-  updateFilters: (filters: Partial<WorkspaceFilters>) => void;
-  resetFilters: () => void;
-  toggleFilters: () => void;
+  // UI preferences removed - DataTable handles its own state
 
   // ============================================================================
   // WORKSPACE FORM ACTIONS
@@ -190,14 +179,7 @@ const initialWorkspaceFormData: WorkspaceFormData = {
   url: "",
 };
 
-/**
- * Default workspace filters
- */
-const initialFilters: WorkspaceFilters = {
-  search: "",
-  sortBy: "updated_at",
-  sortOrder: "desc",
-};
+// Workspace filters removed - DataTable handles its own state
 
 /**
  * Workspace Management Zustand Store
@@ -213,10 +195,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         currentWorkspace: null,
         workspaceList: [],
 
-        // UI preferences
-        viewMode: "grid",
-        filters: initialFilters,
-        showFilters: false,
+        // UI preferences removed - DataTable handles its own state
 
         // Form state
         workspaceForm: {
@@ -325,27 +304,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
         },
 
-        // ============================================================================
-        // UI PREFERENCES ACTIONS
-        // ============================================================================
-
-        setViewMode: (mode) => {
-          set({ viewMode: mode });
-        },
-
-        updateFilters: (newFilters) => {
-          set((state) => ({
-            filters: { ...state.filters, ...newFilters },
-          }));
-        },
-
-        resetFilters: () => {
-          set({ filters: initialFilters });
-        },
-
-        toggleFilters: () => {
-          set((state) => ({ showFilters: !state.showFilters }));
-        },
+        // UI preferences methods removed - DataTable handles its own state
 
         // ============================================================================
         // WORKSPACE FORM ACTIONS
@@ -358,7 +317,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               mode,
               data: workspace
                 ? {
-                    title: workspace.title,
+                    title: getWorkspaceDisplayTitle(workspace),
                     description: workspace.description || "",
                     url: workspace.url,
                   }
@@ -885,9 +844,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           set({
             currentWorkspace: null,
             workspaceList: [],
-            viewMode: "grid",
-            filters: initialFilters,
-            showFilters: false,
             workspaceForm: {
               isOpen: false,
               mode: "create",
@@ -922,9 +878,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         storage: createJSONStorage(() => getStorage()),
         // Only persist UI preferences, not server data
         partialize: (state) => ({
-          viewMode: state.viewMode,
-          filters: state.filters,
           recentWorkspaces: state.recentWorkspaces,
+          workspaceSettings: state.workspaceSettings,
           _hasHydrated: state._hasHydrated,
         }),
         onRehydrateStorage: () => (state) => {
@@ -984,16 +939,7 @@ export const useWorkspaceLoadingStates = () => {
   return useWorkspaceStore((state) => state.loadingStates);
 };
 
-/**
- * Hook to get UI preferences
- */
-export const useWorkspaceUIPreferences = () => {
-  const viewMode = useWorkspaceStore((state) => state.viewMode);
-  const filters = useWorkspaceStore((state) => state.filters);
-  const showFilters = useWorkspaceStore((state) => state.showFilters);
-
-  return { viewMode, filters, showFilters };
-};
+// useWorkspaceUIPreferences removed - DataTable handles its own state
 
 /**
  * Hook to get recent workspaces

@@ -419,6 +419,23 @@ export class WorkspaceApiService {
   }
 
   /**
+   * Update web knowledge
+   */
+  async updateWebKnowledge(
+    workspaceId: string,
+    webId: string,
+    title: string,
+  ): Promise<{ web_knowledge: WebKnowledge }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    this.validateUuid(webId, "web_id");
+
+    return this.makeRequest<{ web_knowledge: WebKnowledge }>(
+      "PUT",
+      `/api/workspace/web_knowledge/update/${workspaceId}/${webId}?title=${encodeURIComponent(title)}`,
+    );
+  }
+
+  /**
    * Delete web knowledge with cleanup
    */
   async deleteWebKnowledge(
@@ -576,6 +593,128 @@ export class WorkspaceApiService {
       "DELETE",
       `/api/workspace/text/delete/${workspaceId}/${textId}`,
     );
+  }
+
+  // ============================================================================
+  // WORKSPACE-SPECIFIC KNOWLEDGE ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Get all knowledge for a specific workspace
+   */
+  async getWorkspaceKnowledge(workspaceId: string): Promise<{
+    web_knowledge: WebKnowledge[];
+    file_knowledge: FileKnowledge[];
+    text_knowledge: TextKnowledge[];
+    summary: {
+      web_count: number;
+      file_count: number;
+      text_count: number;
+      total_count: number;
+    };
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+
+    return this.makeRequest<{
+      web_knowledge: WebKnowledge[];
+      file_knowledge: FileKnowledge[];
+      text_knowledge: TextKnowledge[];
+      summary: {
+        web_count: number;
+        file_count: number;
+        text_count: number;
+        total_count: number;
+      };
+    }>("GET", `/api/workspace/${workspaceId}/knowledge/all`);
+  }
+
+  /**
+   * Get web knowledge for a specific workspace
+   */
+  async getWorkspaceWebKnowledge(
+    workspaceId: string,
+  ): Promise<{ web_knowledge: WebKnowledge[]; total_count: number }> {
+    this.validateUuid(workspaceId, "workspace_id");
+
+    return this.makeRequest<{
+      web_knowledge: WebKnowledge[];
+      total_count: number;
+    }>("GET", `/api/workspace/${workspaceId}/knowledge/web`);
+  }
+
+  /**
+   * Get file knowledge for a specific workspace
+   */
+  async getWorkspaceFileKnowledge(
+    workspaceId: string,
+  ): Promise<{ file_knowledge: FileKnowledge[]; total_count: number }> {
+    this.validateUuid(workspaceId, "workspace_id");
+
+    return this.makeRequest<{
+      file_knowledge: FileKnowledge[];
+      total_count: number;
+    }>("GET", `/api/workspace/${workspaceId}/knowledge/files`);
+  }
+
+  /**
+   * Get text knowledge for a specific workspace
+   */
+  async getWorkspaceTextKnowledge(
+    workspaceId: string,
+  ): Promise<{ text_knowledge: TextKnowledge[]; total_count: number }> {
+    this.validateUuid(workspaceId, "workspace_id");
+
+    return this.makeRequest<{
+      text_knowledge: TextKnowledge[];
+      total_count: number;
+    }>("GET", `/api/workspace/${workspaceId}/knowledge/text`);
+  }
+
+  // ============================================================================
+  // WORKSPACE MEMBERS ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Get all members of a workspace
+   */
+  async getWorkspaceMembers(workspaceId: string): Promise<{
+    members: Array<{
+      id: string;
+      user_id: string;
+      workspace_id: string;
+      status: string;
+      is_default: boolean;
+      joined_at: string | null;
+      last_activity_at: string | null;
+      user: {
+        id: string;
+        email: string;
+        display_name: string;
+        is_verified: boolean;
+      };
+    }>;
+    total_count: number;
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+
+    return this.makeRequest<{
+      members: Array<{
+        id: string;
+        user_id: string;
+        workspace_id: string;
+        status: string;
+        is_default: boolean;
+        joined_at: string | null;
+        last_activity_at: string | null;
+        user: {
+          id: string;
+          email: string;
+          display_name: string;
+          is_verified: boolean;
+        };
+      }>;
+      total_count: number;
+    }>("GET", `/api/workspace/${workspaceId}/members`);
   }
 
   // ============================================================================
@@ -980,9 +1119,9 @@ export class WorkspaceApiService {
 
   private sanitizeWorkspaceData(
     data: CreateWorkspaceRequest,
-  ): CreateWorkspaceRequest {
+  ): Record<string, unknown> {
     return {
-      title: InputSanitizer.sanitizeText(data.title.trim()),
+      name: InputSanitizer.sanitizeText(data.title.trim()), // Map title to name for backend
       description: data.description
         ? InputSanitizer.sanitizeText(data.description.trim())
         : undefined,
@@ -992,11 +1131,12 @@ export class WorkspaceApiService {
 
   private sanitizeWorkspaceUpdateData(
     data: UpdateWorkspaceRequest,
-  ): UpdateWorkspaceRequest {
-    const result: UpdateWorkspaceRequest = {};
+  ): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
 
     if (data.title !== undefined) {
-      result.title = InputSanitizer.sanitizeText(data.title.trim());
+      // Map 'title' to 'name' for backend compatibility
+      result.name = InputSanitizer.sanitizeText(data.title.trim());
     }
     if (data.description !== undefined) {
       result.description = InputSanitizer.sanitizeText(data.description.trim());

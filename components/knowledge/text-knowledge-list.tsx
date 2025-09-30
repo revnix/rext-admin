@@ -151,15 +151,20 @@ export function TextKnowledgeList({
   } = useTextKnowledgeStore();
 
   // Fetch text knowledge data
+  // Use workspace-specific endpoint if workspaceId is provided
   const {
     data: textKnowledge,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ["textKnowledge"],
-    queryFn: () => textKnowledgeService.list(),
+    queryKey: ["textKnowledge", workspaceId],
+    queryFn: () =>
+      workspaceId
+        ? textKnowledgeService.listForWorkspace(workspaceId)
+        : textKnowledgeService.list(),
     staleTime: 30000,
+    enabled: !!workspaceId,
   });
 
   // Update store when data changes
@@ -167,6 +172,7 @@ export function TextKnowledgeList({
     if (textKnowledge) {
       setItems(textKnowledge);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textKnowledge, setItems]);
 
   // Get all unique tags for filtering

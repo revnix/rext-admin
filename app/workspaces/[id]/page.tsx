@@ -1,295 +1,52 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  Copy,
-  FileText,
-  Globe,
-  Link,
-  MoreHorizontal,
-  RefreshCw,
-  Settings,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import { AllKnowledgeList } from "@/components/knowledge/all-knowledge-list";
-import { FileKnowledgeList } from "@/components/knowledge/file-knowledge-list";
 import { GlobalKnowledgeSearch } from "@/components/knowledge/global-knowledge-search";
-import { KnowledgeAnalytics } from "@/components/knowledge/knowledge-analytics";
-import { TextKnowledgeList } from "@/components/knowledge/text-knowledge-list";
-import { WebKnowledgeList } from "@/components/knowledge/web-knowledge-list";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BrandVoiceCard } from "@/components/workspace/brand-voice-card";
+import { EditableBrandVoiceCard } from "@/components/workspace/editable-brand-voice-card";
+import { WorkspaceAnalyticsDashboard } from "@/components/workspace/workspace-analytics-dashboard";
 import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
+import { WorkspaceDetailSkeleton } from "@/components/workspace/workspace-detail-skeleton";
+import { WorkspaceKnowledgeSummaryCard } from "@/components/workspace/workspace-knowledge-summary-card";
+import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-panel";
+import { WorkspaceOverviewForm } from "@/components/workspace/workspace-overview-form";
 import { WorkspaceSettingsPanel } from "@/components/workspace/workspace-settings-panel";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { workspaceApiService } from "@/services";
 import {
   useKnowledgeFilterStore,
   useUnifiedKnowledgeStore,
 } from "@/stores/knowledge-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import type { Workspace } from "@/types/workspace";
-
-// Knowledge Summary Card Component
-function KnowledgeSummaryCard({ workspace }: { workspace: Workspace }) {
-  const webCount = workspace.websites?.length || 0;
-  const fileCount = workspace.knowledge_files?.length || 0;
-  const textCount = workspace.text_knowledge?.length || 0;
-  const totalCount = webCount + fileCount + textCount;
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Knowledge Base</CardTitle>
-        <CardDescription>
-          Content and information stored in this workspace
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <Globe className="h-8 w-8 text-blue-500" />
-            <div>
-              <div className="text-2xl font-bold">{webCount}</div>
-              <div className="text-sm text-muted-foreground">Web URLs</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <Upload className="h-8 w-8 text-green-500" />
-            <div>
-              <div className="text-2xl font-bold">{fileCount}</div>
-              <div className="text-sm text-muted-foreground">Files</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <FileText className="h-8 w-8 text-purple-500" />
-            <div>
-              <div className="text-2xl font-bold">{textCount}</div>
-              <div className="text-sm text-muted-foreground">Text Notes</div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              Total Knowledge Items
-            </span>
-            <span className="text-lg font-semibold">{totalCount}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Workspace Details Card Component
-function WorkspaceDetailsCard({ workspace }: { workspace: Workspace }) {
-  const router = useRouter();
-  const duplicateWorkspace = useWorkspaceStore(
-    (state) => state.duplicateWorkspace,
-  );
-  const loadingStates = useWorkspaceStore((state) => state.loadingStates);
-
-  const handleDuplicateWorkspace = async () => {
-    try {
-      const duplicatedWorkspace = await duplicateWorkspace(workspace.id);
-      toast.success(
-        `Workspace "${duplicatedWorkspace.title}" created successfully`,
-      );
-
-      // Navigate to the duplicated workspace
-      router.push(`/workspaces/${duplicatedWorkspace.id}`);
-    } catch (error) {
-      console.error("Failed to duplicate workspace:", error);
-      toast.error("Failed to duplicate workspace. Please try again.");
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">{workspace.title}</CardTitle>
-            {workspace.description && (
-              <CardDescription className="mt-1">
-                {workspace.description}
-              </CardDescription>
-            )}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => router.push(`/workspaces/${workspace.id}/edit`)}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Edit Workspace
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDuplicateWorkspace}
-                disabled={loadingStates.duplicating}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                {loadingStates.duplicating
-                  ? "Duplicating..."
-                  : "Duplicate Workspace"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <WorkspaceDeleteDialog
-                workspace={workspace}
-                trigger={
-                  <DropdownMenuItem className="text-destructive">
-                    Delete Workspace
-                  </DropdownMenuItem>
-                }
-                onDeleted={() => {
-                  router.push("/workspaces");
-                }}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <a
-              href={workspace.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {workspace.url}
-            </a>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Created {new Date(workspace.created_at).toLocaleDateString()}
-            {workspace.updated_at && (
-              <span>
-                {" "}
-                • Updated {new Date(workspace.updated_at).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Loading Skeleton Component
-function WorkspaceDetailSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-full" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-48" />
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {Array.from({ length: 3 }, (_, _i) => (
-                <div
-                  key={`skeleton-stat-${crypto.randomUUID()}`}
-                  className="p-3 border rounded-lg"
-                >
-                  <Skeleton className="h-8 w-8 mb-2" />
-                  <Skeleton className="h-6 w-8 mb-1" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <div className="flex gap-2">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-6 w-18" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const workspaceId = params.id as string;
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get current tab from URL parameters, default to 'overview'
   const currentTab = searchParams.get("tab") || "overview";
-  const currentView = searchParams.get("view") || "all"; // For knowledge sub-tabs
 
   // Handle tab changes by updating URL
   const handleTabChange = (tab: string) => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set("tab", tab);
-    // Remove view parameter when not on knowledge tab
-    if (tab !== "knowledge") {
-      newParams.delete("view");
-    }
-    router.push(`/workspaces/${workspaceId}?${newParams.toString()}`, {
-      scroll: false,
-    });
-  };
-
-  // Handle knowledge view changes
-  const handleKnowledgeViewChange = (view: string) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.set("tab", "knowledge");
-    newParams.set("view", view);
     router.push(`/workspaces/${workspaceId}?${newParams.toString()}`, {
       scroll: false,
     });
@@ -319,6 +76,7 @@ export default function WorkspaceDetailPage() {
   });
 
   const workspace = workspaceResponse?.workspace;
+  const workspaceTitle = getWorkspaceDisplayTitle(workspace);
 
   // Update stores when workspace data changes
   useEffect(() => {
@@ -337,9 +95,9 @@ export default function WorkspaceDetailPage() {
 
   // Update page title
   usePageTitle(
-    workspace ? `${workspace.title} - Workspace` : "Workspace",
+    workspace ? `${workspaceTitle} - Workspace` : "Workspace",
     workspace
-      ? `Manage knowledge, content, and brand voice for ${workspace.title}`
+      ? `Manage knowledge, content, and brand voice for ${workspaceTitle}`
       : "Loading workspace details...",
   );
 
@@ -375,15 +133,11 @@ export default function WorkspaceDetailPage() {
 
   const breadcrumbs = [
     { label: "Workspaces", href: "/workspaces" },
-    { label: workspace?.title || "Loading..." },
+    { label: workspace ? workspaceTitle : "Loading..." },
   ];
 
   const actions = workspace && (
     <div className="flex items-center gap-2">
-      <Button>
-        <Link className="h-4 w-4 mr-2" />
-        Add Content
-      </Button>
       <Button variant="outline" onClick={() => refetch()}>
         <RefreshCw className="h-4 w-4 mr-2" />
         Refresh
@@ -396,28 +150,12 @@ export default function WorkspaceDetailPage() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() => router.push(`/workspaces/${workspace.id}/edit`)}
+            className="text-destructive"
+            onClick={() => setShowDeleteDialog(true)}
           >
-            <Settings className="h-4 w-4 mr-2" />
-            Edit Workspace
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <WorkspaceDeleteDialog
-            workspace={workspace}
-            trigger={
-              <DropdownMenuItem className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            }
-            onDeleted={() => {
-              router.push("/workspaces");
-            }}
-          />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -425,7 +163,7 @@ export default function WorkspaceDetailPage() {
 
   return (
     <PageLayout
-      title={workspace?.title || "Loading..."}
+      title={workspace ? workspaceTitle : "Loading..."}
       description={
         workspace?.description ||
         "Manage knowledge, content, and brand voice for this workspace"
@@ -446,72 +184,41 @@ export default function WorkspaceDetailPage() {
             >
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="search">Search</TabsTrigger>
                 <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
+                <TabsTrigger value="members">Members</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
                 {/* Workspace Details & Knowledge Summary */}
-                <div className="grid gap-6 md:grid-cols-2">
-                  <WorkspaceDetailsCard workspace={workspace} />
-                  <KnowledgeSummaryCard workspace={workspace} />
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                  <WorkspaceOverviewForm
+                    workspace={workspace}
+                    onSuccess={() => refetch()}
+                  />
+                  <WorkspaceKnowledgeSummaryCard workspace={workspace} />
                 </div>
 
-                <KnowledgeAnalytics
-                  workspaceId={workspaceId}
-                  workspace={workspace}
-                />
+                {/* Analytics Dashboard */}
+                <WorkspaceAnalyticsDashboard workspace={workspace} />
 
                 {/* Brand Voice */}
-                <BrandVoiceCard workspace={workspace} />
-              </TabsContent>
-
-              <TabsContent value="search" className="space-y-6">
-                <GlobalKnowledgeSearch workspaceId={workspaceId} />
+                <EditableBrandVoiceCard workspace={workspace} />
               </TabsContent>
 
               <TabsContent value="knowledge" className="space-y-6">
-                <Tabs
-                  value={currentView}
-                  onValueChange={handleKnowledgeViewChange}
-                  className="space-y-6"
-                >
-                  <TabsList>
-                    <TabsTrigger value="all">All Knowledge</TabsTrigger>
-                    <TabsTrigger value="web">Web Knowledge</TabsTrigger>
-                    <TabsTrigger value="files">Files</TabsTrigger>
-                    <TabsTrigger value="text">Text Notes</TabsTrigger>
-                  </TabsList>
+                {/* Global Search */}
+                <GlobalKnowledgeSearch workspaceId={workspaceId} />
 
-                  <TabsContent value="all">
-                    <AllKnowledgeList
-                      workspaceId={workspaceId}
-                      workspace={workspace}
-                    />
-                  </TabsContent>
+                {/* All Knowledge Combined */}
+                <AllKnowledgeList
+                  workspaceId={workspaceId}
+                  workspace={workspace}
+                />
+              </TabsContent>
 
-                  <TabsContent value="web">
-                    <WebKnowledgeList
-                      workspaceId={workspaceId}
-                      workspace={workspace}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="files">
-                    <FileKnowledgeList
-                      workspaceId={workspaceId}
-                      workspace={workspace}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="text">
-                    <TextKnowledgeList
-                      workspaceId={workspaceId}
-                      workspace={workspace}
-                    />
-                  </TabsContent>
-                </Tabs>
+              <TabsContent value="members" className="space-y-6">
+                <WorkspaceMembersPanel workspace={workspace} />
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-6">
@@ -521,6 +228,20 @@ export default function WorkspaceDetailPage() {
           </>
         ) : null}
       </div>
+
+      {/* Delete Dialog - Outside PageLayout to avoid conflicts */}
+      {workspace && (
+        <WorkspaceDeleteDialog
+          workspace={workspace}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          trigger={<span />}
+          onDeleted={() => {
+            setShowDeleteDialog(false);
+            router.push("/workspaces");
+          }}
+        />
+      )}
     </PageLayout>
   );
 }

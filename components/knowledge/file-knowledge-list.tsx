@@ -136,15 +136,20 @@ export function FileKnowledgeList({
   } = useFileKnowledgeStore();
 
   // Fetch file knowledge data
+  // Use workspace-specific endpoint if workspaceId is provided
   const {
     data: fileKnowledge,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ["fileKnowledge"],
-    queryFn: () => fileKnowledgeService.list(),
+    queryKey: ["fileKnowledge", workspaceId],
+    queryFn: () =>
+      workspaceId
+        ? fileKnowledgeService.listForWorkspace(workspaceId)
+        : fileKnowledgeService.list(),
     staleTime: 30000,
+    enabled: !!workspaceId,
   });
 
   // Update store when data changes
@@ -152,6 +157,7 @@ export function FileKnowledgeList({
     if (fileKnowledge) {
       setItems(fileKnowledge);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileKnowledge, setItems]);
 
   // Filter and sort items

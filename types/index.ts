@@ -246,7 +246,6 @@ export type {
   WorkspaceLoadingStates,
   WorkspaceResponse,
   WorkspaceStatus,
-  WorkspaceViewMode,
 } from "./workspace";
 export {
   FILE_CONSTRAINTS,

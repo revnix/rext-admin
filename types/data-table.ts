@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { ContentStatus } from "./content";
 import type { BaseTableRow } from "./shared";
+import type { BrandVoice } from "./workspace";
 
 export interface ContentData extends BaseTableRow {
   title: string;
@@ -195,6 +196,27 @@ export interface RuleData extends BaseTableRow {
   successRate: string;
   created: string;
   author: string;
+}
+
+export interface WorkspaceData extends BaseTableRow {
+  title: string; // Display name for workspace
+  name?: string; // API field name (mapped to title)
+  description?: string;
+  url: string;
+  created_at: string;
+  updated_at?: string;
+  owner?: {
+    name: string;
+    email: string;
+  };
+  knowledge_stats?: {
+    web_knowledge: number;
+    files: number;
+    text_knowledge: number;
+    total: number;
+  };
+  brand_voice?: BrandVoice;
+  status: string;
 }
 
 // Row action types for data table
