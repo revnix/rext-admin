@@ -67,6 +67,13 @@ export type {
   TopicGenerationRequest,
   TopicGenerationResponse,
 } from "@/types/topic-builder";
+// Export session types
+export type {
+  RevokeAllSessionsResponse,
+  RevokeSessionResponse,
+  SessionListResponse,
+  UserSession,
+} from "@/types/user-session";
 // Export the main service class and default instance
 // Export legacy compatibility function (marked as deprecated)
 export {
@@ -85,6 +92,8 @@ export {
   WebKnowledgeService,
   webKnowledgeService,
 } from "./knowledge-api";
+// Export session API service
+export { SessionApiService, sessionApiService } from "./session-api";
 // Export workspace API service
 export {
   WorkspaceApiError,

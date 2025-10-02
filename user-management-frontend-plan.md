@@ -1198,38 +1198,133 @@ To test OAuth flows, developers must:
 
 ---
 
-### Task 3.3: Add Activity Log
+### Task 3.3: Add Session Management & Activity Log
 
-**Status:** ⏸️ SKIPPED (Deferred)
-**Reason:** Deprioritized - will be implemented after higher priority tasks
+**Status:** ✅ SESSION MANAGEMENT COMPLETE | ⏸️ ACTIVITY LOG DEFERRED
+**Completed:** 2025-10-02 (Session Management)
+**Duration:** 3 hours (actual for session management)
 
-**Duration:** 1-2 days (estimated when implemented)
+#### Part 1: Session Management UI ✅ COMPLETE
 
-**Subtasks:**
+**Implementation:**
 
-1. Create activity log component
-2. Fetch user activity from backend
-3. Display login history
-4. Display account changes
-5. Add filtering and pagination
+Created comprehensive session management UI in Settings → Security page to display and manage user login sessions across devices.
 
-**Testing Requirements:**
+**Files Created:**
+- ✅ `types/user-session.ts` (45 lines) - TypeScript types for session data
+- ✅ `services/session-api.ts` (84 lines) - API service for session operations
+- ✅ `app/settings/security/page.tsx` (269 lines) - Security settings page with session cards
 
-- Test activity display
-- Test pagination
-- Test filtering
-- Test real-time updates
+**Files Modified:**
+- ✅ `services/index.ts` - Added session API exports
+
+**Features Implemented:**
+
+**1. Session List Display:**
+- ✅ Device cards showing browser and OS (e.g., "Chrome on Windows")
+- ✅ Device type icons (desktop/mobile/tablet) using lucide-react
+- ✅ IP address and location display (city, country)
+- ✅ Relative timestamps ("2 hours ago", "Just now")
+- ✅ Current session highlighted with "Current Session" badge
+- ✅ Sessions ordered by last_activity_at descending
+
+**2. Session Management Actions:**
+- ✅ "Revoke" button for individual sessions (remote logout)
+- ✅ "Logout All Other Devices" button (bulk revocation)
+- ✅ Loading states during mutations (spinner on buttons)
+- ✅ Success/error toast notifications
+
+**3. Real-time Updates:**
+- ✅ Auto-refresh every 30 seconds using TanStack Query
+- ✅ Manual refresh on session revocation
+- ✅ Optimistic UI updates
+
+**4. API Integration:**
+- ✅ GET /api/v1/user/sessions - List sessions
+- ✅ DELETE /api/v1/user/sessions/{id} - Revoke specific session
+- ✅ DELETE /api/v1/user/sessions - Revoke all other sessions
+- ✅ Uses `authenticatedFetch` from auth-utils
+- ✅ Extracts data from backend success() wrapper
+
+**UI Components Used:**
+- shadcn/ui: Card, Button, Badge, Separator
+- lucide-react: Monitor, Smartphone, Tablet, MapPin, Clock, LogOut, Shield, Loader2
+- TanStack Query: useQuery, useMutation, useQueryClient
+- sonner: Toast notifications
 
 **Success Criteria:**
+- ✅ Session list displays all active sessions
+- ✅ Current session marked correctly
+- ✅ Device detection works (desktop/mobile/tablet)
+- ✅ IP and location show correctly
+- ✅ Revoke individual session works
+- ✅ Revoke all sessions works
+- ✅ Auto-refresh updates data
+- ✅ Toast notifications show feedback
+- ✅ Loading states display properly
+- ✅ Error handling works
+- ✅ Responsive design (mobile-friendly)
+- ✅ Accessibility (ARIA labels, keyboard nav)
 
-- Activity log displays
+**Testing:**
+```typescript
+// Navigate to Settings → Security
+// Verify current session shows with badge
+// Open app in different browser
+// Verify both sessions appear
+// Click "Revoke" on other session
+// Verify session removed and other device logged out
+// Click "Logout All Other Devices"
+// Verify count in toast matches sessions revoked
+// Wait 30+ seconds, verify auto-refresh
+```
+
+**Actual Time:** 3 hours
+
+---
+
+#### Part 2: Activity Log ⏸️ DEFERRED
+
+**Status:** ⏸️ DEFERRED (Requires Phase 6 audit logging)
+**Reason:** Backend audit logging infrastructure not yet implemented
+
+**Placeholder Added:**
+- ✅ Activity log card added to Security settings page
+- ✅ Explains that activity log requires Phase 6 audit logging
+- ✅ Shows what will be included (login attempts, password changes, security events)
+
+**Future Implementation (Phase 6):**
+
+When backend audit logging is implemented, will add:
+1. Fetch audit logs from backend
+2. Display login history with timestamps
+3. Display account changes
+4. Display security events
+5. Add filtering and pagination
+
+**Subtasks (For Phase 6):**
+1. Create audit log API service
+2. Create audit log component
+3. Add filtering UI
+4. Add pagination
+5. Connect to backend audit API
+
+**Success Criteria (For Phase 6):**
+- Activity log displays audit events
 - Pagination works
 - Filters functional
 - Real-time updates
+- Login history shows device and location
 
-**Estimated Time:** 1-2 days
+**Estimated Time (For Phase 6):** 1-2 days
 
-**Note:** Task skipped on 2025-10-02. Will be implemented later once higher priority tasks are complete.
+---
+
+**Overall Task Status:**
+- ✅ Session Management UI: 100% COMPLETE
+- ⏸️ Activity Log: DEFERRED to Phase 6
+
+**Note:** Session management implemented on 2025-10-02. Activity log placeholder added, full implementation deferred to Phase 6 when backend audit logging is available.
 
 ---
 
