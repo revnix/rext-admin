@@ -1,0 +1,159 @@
+"use client";
+
+import { useMutation } from "@tanstack/react-query";
+import { CheckCircle2, Download, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { requestDataExport } from "@/services/account-api";
+import type { DataExportRequest } from "@/types/account";
+
+export function PrivacySettings() {
+  const [exportOptions, setExportOptions] = useState<DataExportRequest>({
+    include_profile: true,
+    include_roles: true,
+    include_workspaces: true,
+    include_activity: true,
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: requestDataExport,
+    onSuccess: (data) => {
+      toast.success(
+        data.message || "Your data export will be sent to your email shortly.",
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(
+        error.message || "Failed to request data export. Please try again.",
+      );
+    },
+  });
+
+  const handleExport = () => {
+    exportMutation.mutate(exportOptions);
+  };
+
+  const exportItems = [
+    {
+      id: "include_profile",
+      label: "Profile Information",
+      description: "Basic account details, email, username, and settings",
+    },
+    {
+      id: "include_roles",
+      label: "Role Assignments",
+      description: "All roles assigned to your account across workspaces",
+    },
+    {
+      id: "include_workspaces",
+      label: "Workspace Memberships",
+      description: "Workspaces you're a member of and your role in each",
+    },
+    {
+      id: "include_activity",
+      label: "Activity Logs",
+      description: "Your account activity and action history",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Data Export Section */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-medium">Export Your Data</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Request a copy of your data to be sent to your email address
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {exportItems.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-start space-x-3 p-3 border rounded-lg"
+            >
+              <Checkbox
+                id={item.id}
+                checked={
+                  exportOptions[item.id as keyof DataExportRequest] as boolean
+                }
+                onCheckedChange={(checked) =>
+                  setExportOptions((prev) => ({
+                    ...prev,
+                    [item.id]: checked,
+                  }))
+                }
+                disabled={exportMutation.isPending}
+              />
+              <div className="flex-1 space-y-1">
+                <Label htmlFor={item.id} className="cursor-pointer font-medium">
+                  {item.label}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {exportMutation.isSuccess && (
+          <Alert>
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>
+              Export request submitted successfully. Check your email for the
+              download link.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Button
+          onClick={handleExport}
+          disabled={exportMutation.isPending}
+          className="w-full sm:w-auto"
+        >
+          {exportMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Preparing Export...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Request Data Export
+            </>
+          )}
+        </Button>
+
+        <p className="text-xs text-muted-foreground">
+          The export will be sent to your email address as a JSON file
+          containing all selected data. Processing may take a few minutes.
+        </p>
+      </div>
+
+      {/* Privacy Information */}
+      <div className="pt-6 border-t space-y-4">
+        <div>
+          <h3 className="text-lg font-medium">Privacy Information</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            How we handle your data
+          </p>
+        </div>
+
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <p>• Your data is encrypted and stored securely</p>
+          <p>• You can request deletion of your account at any time</p>
+          <p>• We never share your personal information with third parties</p>
+          <p>
+            • Data exports include all information associated with your account
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
