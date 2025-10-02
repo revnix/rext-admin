@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/api-auth";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -31,7 +31,7 @@ export function AuthGuard({
   redirectTo = "/login",
   requireAuth = true,
 }: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthSession();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
 
@@ -90,7 +90,7 @@ export function GuestGuard({
   children: React.ReactNode;
   redirectTo?: string;
 }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthSession();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
 

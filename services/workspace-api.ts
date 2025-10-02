@@ -7,8 +7,8 @@
  * request deduplication, and proper authentication.
  */
 
-import { AuthenticatedFetch } from "@/lib/api-auth";
 import { apiErrorHandler } from "@/lib/api-error-middleware";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
 import { logger } from "@/lib/logger";
 import { InputSanitizer } from "@/lib/sanitization";
@@ -72,7 +72,6 @@ export class WorkspaceApiService {
     string,
     Promise<unknown>
   >();
-  private readonly authenticatedFetch: AuthenticatedFetch;
 
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     this.config = {
@@ -81,8 +80,6 @@ export class WorkspaceApiService {
       enableRequestDeduplication: true,
       ...config,
     };
-
-    this.authenticatedFetch = new AuthenticatedFetch();
 
     this.log.info("WorkspaceApiService initialized", {
       baseUrl: this.config.baseUrl,
@@ -825,7 +822,7 @@ export class WorkspaceApiService {
       const combinedSignal =
         signals.length > 1 ? AbortSignal.any(signals) : signal;
 
-      const response = await this.authenticatedFetch.fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
@@ -900,7 +897,7 @@ export class WorkspaceApiService {
       const combinedSignal =
         signals.length > 1 ? AbortSignal.any(signals) : signal;
 
-      const response = await this.authenticatedFetch.fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
         headers,
         body: formData,

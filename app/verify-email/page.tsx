@@ -11,13 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/lib/api-auth";
 
 export default function VerifyEmailPage() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const { verifyEmail } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -31,7 +29,23 @@ export default function VerifyEmailPage() {
       }
 
       try {
-        await verifyEmail(token);
+        console.log("[Auth Migration] Using direct API call for verify-email");
+
+        // Direct API call - no auth session needed for email verification
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/verify-email`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token }),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Email verification failed");
+        }
+
         setSuccess(true);
         // Redirect to login after 3 seconds
         setTimeout(() => {
@@ -47,7 +61,7 @@ export default function VerifyEmailPage() {
     };
 
     verify();
-  }, [token, verifyEmail, router]);
+  }, [token, router]);
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">

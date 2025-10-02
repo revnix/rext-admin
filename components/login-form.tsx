@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,9 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/api-auth";
 import { cn } from "@/lib/utils";
 
 export function LoginForm({
@@ -22,9 +24,9 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -34,13 +36,33 @@ export function LoginForm({
     setError("");
 
     try {
-      await login(email, password);
+      console.log(
+        "[AuthJS] Signing in user:",
+        email,
+        "Remember me:",
+        rememberMe,
+      );
 
-      // Redirect to the original page or default to workspaces
-      const redirect = searchParams.get("redirect") || "/workspaces";
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        rememberMe: rememberMe.toString(), // Pass to JWT callback
+      });
+
+      console.log("[AuthJS] Sign in result:", result);
+
+      if (result?.error) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      // Redirect to the original page or default to dashboard
+      const redirect = searchParams.get("redirect") || "/dashboard";
       router.push(redirect);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
+      console.error("[AuthJS] Sign in failed:", error);
+      setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +84,11 @@ export function LoginForm({
                 {error}
               </div>
             )}
+
+            <OAuthButtons
+              callbackUrl={searchParams.get("redirect") || "/dashboard"}
+            />
+
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
@@ -91,6 +118,21 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) =>
+                    setRememberMe(checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor="remember"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Remember me for 30 days
+                </label>
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full" disabled={isLoading}>

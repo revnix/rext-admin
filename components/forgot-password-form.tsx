@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/api-auth";
 import { cn } from "@/lib/utils";
 import {
   type ForgotPasswordData,
@@ -28,7 +27,6 @@ export function ForgotPasswordForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const { forgotPassword } = useAuth();
 
   const {
     register,
@@ -44,7 +42,23 @@ export function ForgotPasswordForm({
     setSuccess(false);
 
     try {
-      await forgotPassword(data.email);
+      console.log("[Auth Migration] Using direct API call for forgot-password");
+
+      // Direct API call - no auth session needed for forgot password
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/forgot-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send reset email");
+      }
+
       setSuccess(true);
     } catch (err) {
       setError(

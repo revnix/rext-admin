@@ -26,11 +26,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/lib/api-auth";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuthSession();
   const router = useRouter();
 
   // Generate initials from user name
@@ -44,8 +44,7 @@ export function NavUser() {
   };
 
   const handleLogout = async () => {
-    await logout();
-    router.push("/login");
+    await logout(); // logout already handles redirect in useAuthSession
   };
 
   // Show loading state

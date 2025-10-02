@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/api-auth";
 import {
   type ResetPasswordData,
   resetPasswordSchema,
@@ -25,7 +24,6 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const { resetPassword } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -49,7 +47,23 @@ export default function ResetPasswordPage() {
     setSuccess(false);
 
     try {
-      await resetPassword(token, data.password);
+      console.log("[Auth Migration] Using direct API call for reset-password");
+
+      // Direct API call - no auth session needed for password reset
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, new_password: data.password }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Password reset failed");
+      }
+
       setSuccess(true);
       // Redirect to login after 3 seconds
       setTimeout(() => {

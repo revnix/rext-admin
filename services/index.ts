@@ -20,16 +20,6 @@
  * ```
  */
 
-// Export authentication services
-export {
-  AuthenticatedFetch,
-  AuthManager,
-  authenticatedFetch,
-  authManager,
-  useAuth,
-  useAuthenticatedFetch,
-  useAuthStore,
-} from "@/lib/api-auth";
 // Export API error handling
 export {
   ApiErrorHandler,
@@ -39,6 +29,8 @@ export {
   withApiErrorHandling,
   withErrorHandling,
 } from "@/lib/api-error-middleware";
+// Export authentication utilities (AuthJS-based)
+export { authenticatedFetch, getAuthHeaders } from "@/lib/auth-utils";
 // Export error handling utilities for advanced use cases
 export {
   calculateRetryDelay,

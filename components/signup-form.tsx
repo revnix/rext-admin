@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/api-auth";
 import { cn } from "@/lib/utils";
 import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
 
@@ -26,7 +26,6 @@ export function SignupForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const { signup } = useAuth();
   const router = useRouter();
 
   const {
@@ -43,18 +42,43 @@ export function SignupForm({
     setSuccess(false);
 
     try {
-      await signup({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password,
-      });
+      // Register user with backend
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            password: data.password,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Registration failed");
+      }
 
       setSuccess(true);
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+
+      // Auto-login after successful registration
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        router.push("/dashboard");
+      } else {
+        // If auto-login fails, redirect to login page
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
     } finally {
@@ -80,8 +104,7 @@ export function SignupForm({
             )}
             {success && (
               <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
-                Account created successfully! Check your email to verify your
-                account. Redirecting to login...
+                Account created successfully! Redirecting to dashboard...
               </div>
             )}
             <div className="flex flex-col gap-6">

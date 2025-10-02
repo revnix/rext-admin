@@ -53,7 +53,14 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+// Login form schema
+export const loginSchema = z.object({
+  email: z.string().email("Invalid email address").trim().toLowerCase(),
+  password: z.string().min(1, "Password is required"),
+});
+
 // Type exports
 export type SignupFormData = z.infer<typeof signupFormSchema>;
 export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
+export type LoginData = z.infer<typeof loginSchema>;
