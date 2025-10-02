@@ -282,7 +282,7 @@ export class AuthManager {
         email: data.user.email,
         name: data.user.username,
         role: data.user.roles?.[0] || "user",
-        permissions: data.user.roles || [],
+        permissions: [], // Empty until backend provides permission resolution
       };
 
       // Store token and user
@@ -290,7 +290,11 @@ export class AuthManager {
       store.setToken(token);
       store.setUser(user);
 
-      this.log.info("Login successful", { userId: user.id });
+      this.log.info("Login successful", {
+        userId: user.id,
+        role: user.role,
+        permissionsCount: user.permissions.length,
+      });
       return user;
     } catch (error) {
       this.log.error("Login failed", { email, error });
@@ -362,7 +366,24 @@ export class AuthManager {
    */
   hasPermission(permission: string): boolean {
     const user = this.getCurrentUser();
-    return user?.permissions.includes(permission) || false;
+
+    // Check actual permissions first (when backend provides them)
+    if (user?.permissions.includes(permission)) {
+      return true;
+    }
+
+    // Fallback: Admin role has all permissions
+    // TODO: Remove this once proper permission resolution is implemented
+    if (user?.role === "admin") {
+      this.log.debug("Using role-based permission check", {
+        permission,
+        userRole: user.role,
+        granted: true,
+      });
+      return true;
+    }
+
+    return false;
   }
 
   /**
