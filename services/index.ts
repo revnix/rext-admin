@@ -60,6 +60,38 @@ export type {
 } from "@/types/backend";
 // Re-export ErrorSeverity from consistent-response
 export type { ErrorSeverity } from "@/types/consistent-response";
+// Export security monitoring types
+export type {
+  FailedLoginAttempt,
+  FailedLoginsResponse,
+  LockedAccount,
+  LockedAccountsResponse,
+  LoginEvent,
+  LoginHistory,
+  ResetFailedAttemptsRequest,
+  SecurityStats,
+  TopFailedLoginIP,
+  TopFailedLoginUser,
+  UnlockAccountRequest,
+} from "@/types/security";
+// Export subscription types
+export type {
+  BillingPeriod,
+  SubscriptionCancelRequest,
+  SubscriptionCreateRequest,
+  SubscriptionHistoryEntry,
+  SubscriptionHistoryResponse,
+  SubscriptionListResponse,
+  SubscriptionPlan,
+  SubscriptionPlanCreate,
+  SubscriptionPlanUpdate,
+  SubscriptionStatus,
+  SubscriptionUpgradeRequest,
+  SubscriptionWithPlan,
+  TrialStatus,
+  UsageStats,
+  UserSubscription,
+} from "@/types/subscription";
 // Re-export topic builder types that are commonly used with services
 export type {
   GeneratedTopic,
@@ -99,8 +131,34 @@ export {
   WebKnowledgeService,
   webKnowledgeService,
 } from "./knowledge-api";
+// Export security monitoring API service
+export {
+  getFailedLogins,
+  getLockedAccounts,
+  getLoginHistory,
+  getSecurityStats,
+  resetFailedAttempts,
+  SecurityApiService,
+  unlockAccount,
+} from "./security-api";
 // Export session API service
 export { SessionApiService, sessionApiService } from "./session-api";
+// Export subscription API service
+export {
+  cancelSubscription,
+  createSubscriptionPlan,
+  deleteSubscriptionPlan,
+  getMySubscription,
+  getSubscriptionHistory,
+  getSubscriptionPlan,
+  getSubscriptionPlans,
+  getTrialStatus,
+  getUsageStats,
+  SubscriptionApiService,
+  subscribe,
+  updateSubscriptionPlan,
+  upgradeSubscription,
+} from "./subscription-api";
 // Export workspace API service
 export {
   WorkspaceApiError,
