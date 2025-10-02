@@ -1,7 +1,6 @@
 "use client";
 
 import { Save } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,14 +15,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 export default function GeneralSettingsPage() {
-  const breadcrumbs = [{ label: "Settings", href: "#" }, { label: "General" }];
-
   return (
-    <PageLayout
-      title="General Settings"
-      description="Configure global application settings, preferences, and system-wide options."
-      breadcrumbs={breadcrumbs}
-    >
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">General Settings</h2>
+        <p className="text-muted-foreground mt-1">
+          Configure global application settings, preferences, and system-wide
+          options
+        </p>
+      </div>
+
       <div className="space-y-8">
         {/* Organization Section */}
         <div className="space-y-6">
@@ -126,6 +127,6 @@ export default function GeneralSettingsPage() {
           </Button>
         </div>
       </div>
-    </PageLayout>
+    </div>
   );
 }
