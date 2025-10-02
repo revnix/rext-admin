@@ -2956,7 +2956,10 @@ export default function ProfilePage() {
 
 ### Task 3.3: Add Activity Log
 
-**Duration:** 1-2 days
+**Status:** ⏸️ SKIPPED (Deferred)
+**Reason:** Deprioritized - will be implemented after higher priority tasks
+
+**Duration:** 1-2 days (estimated when implemented)
 
 **Subtasks:**
 
@@ -2981,6 +2984,8 @@ export default function ProfilePage() {
 - Real-time updates
 
 **Estimated Time:** 1-2 days
+
+**Note:** Task skipped on 2025-10-02. Will be implemented later once higher priority tasks are complete.
 
 ---
 
