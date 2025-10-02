@@ -21,8 +21,8 @@ export function useAuthSession() {
         id: session.user.id || "",
         email: session.user.email || "",
         name: session.user.name || "",
-        role: "user", // TODO: Add role to session type
-        permissions: [], // TODO: Add permissions to session type
+        role: session.user.role || "user",
+        permissions: session.user.permissions || [],
       }
     : null;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -19,24 +19,9 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import type { NavGroup } from "@/types/navigation";
 
-export function NavMain({
-  groups,
-}: {
-  groups: {
-    groupLabel: string;
-    items: {
-      title: string;
-      url: string;
-      icon?: LucideIcon;
-      isActive?: boolean;
-      items?: {
-        title: string;
-        url: string;
-      }[];
-    }[];
-  }[];
-}) {
+export function NavMain({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
   return (
     <>

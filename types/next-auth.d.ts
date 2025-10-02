@@ -9,6 +9,8 @@ declare module "next-auth" {
       image: string | null;
       accessToken: string;
       refreshToken: string;
+      role?: string; // User's primary role
+      permissions?: string[]; // User's permissions array
     } & DefaultSession["user"];
     error?: string; // Error code if token refresh fails
   }
@@ -20,6 +22,8 @@ declare module "next-auth" {
     image: string | null;
     accessToken: string;
     refreshToken: string;
+    role?: string; // User's primary role
+    permissions?: string[]; // User's permissions array
     rememberMe?: boolean;
   }
 }
@@ -32,6 +36,8 @@ declare module "next-auth/jwt" {
     picture: string | null;
     accessToken: string;
     refreshToken: string;
+    role?: string; // User's primary role
+    permissions?: string[]; // User's permissions array
     accessTokenExpires?: number; // Timestamp when access token expires
     rememberMe?: boolean; // Whether user chose "remember me"
     error?: string; // Error code if token refresh fails

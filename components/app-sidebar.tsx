@@ -11,8 +11,10 @@ import {
   Puzzle,
   Settings2,
   Share2,
+  Shield,
   StickyNote,
   Upload,
+  UserCog,
   Users,
 } from "lucide-react";
 import type * as React from "react";
@@ -27,7 +29,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
+import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
+import { PERMISSIONS, ROLES } from "@/lib/permissions";
 import { useWorkspaceStore } from "@/stores/workspace-store";
+import type { NavGroup } from "@/types/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { currentWorkspace } = useWorkspaceStore();
@@ -41,99 +46,123 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return view ? `${baseUrl}&view=${view}` : baseUrl;
   };
 
-  const data = {
-    navMain: [
-      {
-        groupLabel: "",
-        items: [
-          {
-            title: "Dashboard",
-            url: "/dashboard",
-            icon: LayoutDashboard,
-          },
-        ],
-      },
-      {
-        groupLabel: "Manage",
-        items: [
-          {
-            title: "Workspaces",
-            url: "/workspaces",
-            icon: Database,
-          },
-          {
-            title: "Topics",
-            url: "/topics",
-            icon: Library,
-          },
-          {
-            title: "Content",
-            url: "/content",
-            icon: FileText,
-          },
-        ],
-      },
-      {
-        groupLabel: "Configuration",
-        items: [
-          {
-            title: "Knowledge",
-            url: getKnowledgeUrl(),
-            icon: Brain,
-            items: [
-              {
-                title: "Web URLs",
-                url: getKnowledgeUrl("web"),
-                icon: Globe,
-              },
-              {
-                title: "Files",
-                url: getKnowledgeUrl("files"),
-                icon: Upload,
-              },
-              {
-                title: "Text Notes",
-                url: getKnowledgeUrl("text"),
-                icon: StickyNote,
-              },
-            ],
-          },
-          {
-            title: "Integrations",
-            url: "/integrations",
-            icon: Puzzle,
-            items: [
-              {
-                title: "Social Accounts",
-                url: "/social-accounts",
-                icon: Share2,
-              },
-              {
-                title: "Notifications",
-                url: "/notifications",
-                icon: Bell,
-              },
-            ],
-          },
-          {
-            title: "Users",
-            url: "/users",
-            icon: Users,
-          },
-        ],
-      },
-      {
-        groupLabel: "Settings",
-        items: [
-          {
-            title: "General",
-            url: "/settings/general",
-            icon: Settings2,
-          },
-        ],
-      },
-    ],
-  };
+  const navigationGroups: NavGroup[] = [
+    {
+      groupLabel: "",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: LayoutDashboard,
+        },
+      ],
+    },
+    {
+      groupLabel: "Manage",
+      items: [
+        {
+          title: "Workspaces",
+          url: "/workspaces",
+          icon: Database,
+          anyPermission: [
+            PERMISSIONS.WORKSPACE_READ,
+            PERMISSIONS.WORKSPACE_CREATE,
+          ],
+        },
+        {
+          title: "Topics",
+          url: "/topics",
+          icon: Library,
+        },
+        {
+          title: "Content",
+          url: "/content",
+          icon: FileText,
+        },
+      ],
+    },
+    {
+      groupLabel: "Configuration",
+      items: [
+        {
+          title: "Knowledge",
+          url: getKnowledgeUrl(),
+          icon: Brain,
+          items: [
+            {
+              title: "Web URLs",
+              url: getKnowledgeUrl("web"),
+              icon: Globe,
+            },
+            {
+              title: "Files",
+              url: getKnowledgeUrl("files"),
+              icon: Upload,
+            },
+            {
+              title: "Text Notes",
+              url: getKnowledgeUrl("text"),
+              icon: StickyNote,
+            },
+          ],
+        },
+        {
+          title: "Integrations",
+          url: "/integrations",
+          icon: Puzzle,
+          items: [
+            {
+              title: "Social Accounts",
+              url: "/social-accounts",
+              icon: Share2,
+            },
+            {
+              title: "Notifications",
+              url: "/notifications",
+              icon: Bell,
+            },
+          ],
+        },
+        {
+          title: "Users",
+          url: "/users",
+          icon: Users,
+          anyPermission: [PERMISSIONS.USER_READ, PERMISSIONS.USER_CREATE],
+        },
+      ],
+    },
+    {
+      groupLabel: "Administration",
+      anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+      items: [
+        {
+          title: "User Management",
+          url: "/admin/users",
+          icon: UserCog,
+          permission: PERMISSIONS.USER_READ,
+        },
+        {
+          title: "Roles & Permissions",
+          url: "/admin/roles",
+          icon: Shield,
+          anyPermission: [PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ],
+        },
+      ],
+    },
+    {
+      groupLabel: "Settings",
+      items: [
+        {
+          title: "General",
+          url: "/settings/general",
+          icon: Settings2,
+        },
+      ],
+    },
+  ];
+
+  // Filter navigation based on user permissions
+  const filteredNavigation = useFilteredNavigation(navigationGroups);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -141,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain groups={data.navMain} />
+        <NavMain groups={filteredNavigation} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
