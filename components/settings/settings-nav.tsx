@@ -27,8 +27,8 @@ const settingsRoutes = [
     icon: Shield,
   },
   {
-    label: "Billing",
-    href: "/settings/billing",
+    label: "Subscription",
+    href: "/settings/subscription",
     icon: CreditCard,
   },
 ];
