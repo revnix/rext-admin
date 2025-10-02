@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ export function LoginForm({
   const [error, setError] = useState("");
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,10 @@ export function LoginForm({
 
     try {
       await login(email, password);
-      router.push("/workspaces");
+
+      // Redirect to the original page or default to workspaces
+      const redirect = searchParams.get("redirect") || "/workspaces";
+      router.push(redirect);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Login failed");
     } finally {

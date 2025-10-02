@@ -42,11 +42,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   const data = {
-    user: {
-      name: "Mobeen A.",
-      email: "mobeen@wrext.com",
-      avatar: "/avatars/shadcn.jpg",
-    },
     navMain: [
       {
         groupLabel: "",
@@ -149,7 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain groups={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
