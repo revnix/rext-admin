@@ -38,152 +38,19 @@ This document outlines the complete implementation plan for the WREXT Admin fron
 ### Current System Status
 
 **Completed:**
-- ✅ Login page and form (functional)
+- ✅ Core authentication (login, signup, password reset, email verification)
 - ✅ Auth store with Zustand + localStorage persistence
-- ✅ AuthManager class with login/logout
+- ✅ AuthJS integration (credentials + OAuth providers)
 - ✅ Authenticated fetch wrapper with auto-refresh
-- ✅ TanStack Query setup with SSR support
+- ✅ Route protection middleware
+- ✅ User profile and account management
+- ✅ Role-based UI rendering
 - ✅ Workspace management UI
 - ✅ Form validation infrastructure (Zod + react-hook-form)
 
-**⚠️ Critical Regressions Identified:**
-- **Login permission mapping bug** (`wrext-admin/lib/api-auth.ts:279`): Stores role objects in `permissions` field instead of permission strings, breaking downstream permission checks
-- **Static auth forms** (`wrext-admin/components/signup-form.tsx:28`): Signup, forgot-password, and verification forms are static markup with no validation or API integration
-- **NavUser mock data** (`wrext-admin/components/nav-user.tsx:21`): Component relies on caller-provided mock data instead of session
-- **Environment variable mismatch**: Code uses `NEXT_PUBLIC_API_BASE_URL` but plan references `NEXT_PUBLIC_API_URL`
-
-**Gaps Identified:**
-- ❌ Signup form not connected to backend (static markup)
-- ❌ Password reset flow incomplete (no validation/API)
-- ❌ Email verification UI missing
-- ❌ Route protection middleware basic
-- ❌ NavUser component uses mock data
-- ❌ No user profile page
-- ❌ No account settings
-- ❌ No role-based rendering
-- ❌ No AuthJS integration
-- ❌ Custom auth layer (`lib/api-auth.ts`) needs migration/retirement plan when AuthJS is adopted
-
-### Estimated Timeline
-
-- **Total Duration:** 6-8 weeks
-- **Phase 1:** 1-2 weeks (Critical)
-- **Phase 2:** 2-3 weeks (Critical)
-- **Phase 3:** 1-2 weeks (High Priority)
-- **Phase 4:** 1 week (Medium Priority)
-- **Phase 5:** 1 week (Medium Priority)
-- **Phase 6:** 1-2 weeks (Low Priority)
-
----
-
-## Current State Analysis
-
-### Existing Files Inventory
-
-#### Authentication Pages
-
-| File | Path | Status | Notes |
-|------|------|--------|-------|
-| Login | `/Users/mobeen/Work/Products/wrext/wrext-admin/app/login/page.tsx` | ✅ Functional | Uses useAuth hook, redirects work |
-| Signup | `/Users/mobeen/Work/Products/wrext/wrext-admin/app/signup/page.tsx` | ⚠️ UI Only | No backend integration |
-| Forgot Password | `/Users/mobeen/Work/Products/wrext/wrext-admin/app/forgot-password/page.tsx` | ⚠️ UI Only | No backend integration |
-
-#### Authentication Components
-
-| Component | Path | Status | Notes |
-|-----------|------|--------|-------|
-| LoginForm | `/Users/mobeen/Work/Products/wrext/wrext-admin/components/login-form.tsx` | ✅ Complete | Validation, error handling working |
-| SignupForm | `/Users/mobeen/Work/Products/wrext/wrext-admin/components/signup-form.tsx` | ❌ Incomplete | No validation, no submission |
-| ForgotPasswordForm | `/Users/mobeen/Work/Products/wrext/wrext-admin/components/forgot-password-form.tsx` | ❌ Incomplete | No validation, no submission |
-| NavUser | `/Users/mobeen/Work/Products/wrext/wrext-admin/components/nav-user.tsx` | ⚠️ Mock Data | Not connected to auth store |
-
-#### Core Libraries
-
-| Library | Path | Status | Purpose |
-|---------|------|--------|---------|
-| Auth Store | `/Users/mobeen/Work/Products/wrext/wrext-admin/lib/api-auth.ts` | ✅ Complete | Zustand store with persistence |
-| Auth Manager | `/Users/mobeen/Work/Products/wrext/wrext-admin/lib/api-auth.ts` | ✅ Functional | Login/logout/permission checks |
-| Authenticated Fetch | `/Users/mobeen/Work/Products/wrext/wrext-admin/lib/api-auth.ts` | ✅ Complete | Auto token injection & refresh |
-| Query Client | `/Users/mobeen/Work/Products/wrext/wrext-admin/lib/query-client.ts` | ✅ Complete | SSR-safe TanStack Query setup |
-| Error Handler | `/Users/mobeen/Work/Products/wrext/wrext-admin/lib/api-error-middleware.ts` | ✅ Complete | Centralized error handling |
-
-#### Services
-
-| Service | Path | Status | Purpose |
-|---------|------|--------|---------|
-| Workspace API | `/Users/mobeen/Work/Products/wrext/wrext-admin/services/workspace-api.ts` | ✅ Complete | Workspace CRUD operations |
-| Knowledge API | `/Users/mobeen/Work/Products/wrext/wrext-admin/services/knowledge-api.ts` | ✅ Complete | Knowledge management |
-| Backend Service | `/Users/mobeen/Work/Products/wrext/wrext-admin/services/backend.ts` | ✅ Complete | Topic generation |
-
-**Missing:** UserApiService for user management operations
-
-#### Schemas
-
-| Schema | Path | Status | Purpose |
-|--------|------|--------|---------|
-| Workspace Schemas | `/Users/mobeen/Work/Products/wrext/wrext-admin/schemas/workspace-schemas.ts` | ✅ Complete | Workspace validation |
-| Topic Builder | `/Users/mobeen/Work/Products/wrext/wrext-admin/schemas/topic-builder.ts` | ✅ Complete | Topic validation |
-
-**Missing:** Auth schemas (signup, login, password reset, profile)
-
-### Gap Analysis
-
-#### Priority 1: Critical Gaps (Block Production)
-
-1. **Incomplete Signup Flow**
-   - No Zod validation schema
-   - No backend API integration
-   - No password strength validation
-   - No email verification flow
-
-2. **Missing Password Reset**
-   - No token-based reset page
-   - No reset form validation
-   - No email sending confirmation
-
-3. **Basic Route Protection**
-   - Middleware doesn't check auth tokens
-   - No redirect logic for protected routes
-   - No loading states during auth check
-
-4. **Disconnected Navigation**
-   - NavUser uses hardcoded mock data
-   - Logout action not wired to auth system
-   - No user context in navigation
-
-#### Priority 2: High Priority (Production Ready)
-
-5. **No User Profile Management**
-   - Missing profile page
-   - No profile edit capability
-   - No avatar upload
-
-6. **No Account Settings**
-   - Missing password change form
-   - No email change functionality
-   - No account deletion option
-
-7. **No Email Verification UI**
-   - No verification pending state
-   - No resend verification email
-   - No verification success page
-
-#### Priority 3: Medium Priority (Enhanced Features)
-
-8. **No Role-Based UI**
-   - Permission checks exist but not used in components
-   - No conditional rendering based on roles
-   - No admin-only sections
-
-9. **No Settings Structure**
-   - Missing settings layout
-   - No notification preferences
-   - No privacy settings
-
-10. **No AuthJS Integration**
-    - No OAuth providers configured
-    - No session management with next-auth
-    - Missing server actions for auth
+**Remaining Work:**
+- ⏳ Settings & Preferences (Phase 4 - in progress)
+- ⏳ Advanced features (Phase 6)
 
 ---
 
@@ -216,7 +83,7 @@ This document outlines the complete implementation plan for the WREXT Admin fron
 **Completed:** 2025-10-02
 **Complexity:** Low
 **Priority:** Critical
-**Location:** `wrext-admin/lib/api-auth.ts:279`
+**Location:** `lib/api-auth.ts:279`
 
 #### Current Issue
 
@@ -224,63 +91,7 @@ The login function stores role objects in the `permissions` field, breaking down
 
 #### Implementation Steps
 
-```typescript
-// WRONG (current buggy code at line 279):
-permissions: userInfo.roles || []  // Stores role objects
-
-// CORRECT:
-// Extract permissions from roles or use separate permissions field
-permissions: userInfo.permissions || [],  // Permission strings
-roles: userInfo.roles?.map(r => r.name) || [],  // Role names
-```
-
-**Complete Fix:**
-
-```typescript
-// In wrext-admin/lib/api-auth.ts, update the login function:
-
-async login(email: string, password: string) {
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ username: email, password }).toString(),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Login failed");
-  }
-
-  const data = await response.json();
-  const userInfo = data.data?.user;
-
-  // FIX: Map response correctly
-  const authData = {
-    user: {
-      id: userInfo.id,
-      email: userInfo.email,
-      firstName: userInfo.first_name,
-      lastName: userInfo.last_name,
-      // FIXED: Extract role names as strings, not objects
-      roles: userInfo.roles?.map((r: any) => typeof r === 'string' ? r : r.name) || [],
-      // FIXED: Use permissions if available, otherwise empty array
-      permissions: userInfo.permissions || [],
-    },
-    accessToken: data.data.access_token,
-    refreshToken: data.data.refresh_token,
-  };
-
-  this.setAuth(authData);
-  return authData;
-}
-```
-
-#### Testing Requirements
-
-- Test login with role-based user
-- Verify `permissions` contains permission strings
-- Verify `roles` contains role name strings
-- Test permission checks work correctly
+Fixed role and permission mapping in login function to properly separate roles and permissions.
 
 #### Success Criteria
 
@@ -326,7 +137,7 @@ async login(email: string, password: string) {
 **Completed:** 2025-10-02
 **Complexity:** Medium
 **Priority:** Critical
-**Location:** `wrext-admin/components/signup-form.tsx:28` (and related forms)
+**Location:** `components/signup-form.tsx:28` (and related forms)
 
 #### Current Issue
 
@@ -383,7 +194,7 @@ Signup, forgot-password, and email verification forms were static markup with no
 **Completed:** 2025-10-02
 **Complexity:** Low
 **Priority:** High
-**Location:** `wrext-admin/components/nav-user.tsx:21`
+**Location:** `components/nav-user.tsx:21`
 
 #### Current Issue
 
@@ -441,14 +252,6 @@ Code was using `NEXT_PUBLIC_API_BASE_URL` but environment configuration files di
 5. No code changes needed - all code already used correct variable name
 
 **Environment Variable Documentation:**
-```env
-# Public (client-side accessible)
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:2024
-
-# Server-side only (not accessible in browser)
-BACKEND_API_URL=http://127.0.0.1:2024
-CONTENT_API_KEY=your_key
-```
 
 **Security Notes Added:**
 - NEXT_PUBLIC_* = Exposed to browser (use for API URLs, public config)
@@ -520,503 +323,12 @@ CONTENT_API_KEY=your_key
 5. ✅ Add success/error states
 6. ✅ Implement redirect after successful signup
 
-**Files to Create/Modify:**
-
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/schemas/auth-schemas.ts` (CREATE)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/signup-form.tsx` (MODIFY)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/services/auth-api.ts` (CREATE)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/signup/page.tsx` (MODIFY)
-
-**Code Examples:**
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/schemas/auth-schemas.ts
-import { z } from "zod";
-
-// Password validation with strength requirements
-const passwordSchema = z
-  .string()
-  .min(8, "Password must be at least 8 characters")
-  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-  .regex(/[0-9]/, "Password must contain at least one number")
-  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
-
-// Signup form schema
-export const signupSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: passwordSchema,
-  confirmPassword: z.string(),
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  agreeToTerms: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms and conditions",
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-export type SignupFormData = z.infer<typeof signupSchema>;
-
-// Login schema
-export const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean().optional(),
-});
-
-export type LoginFormData = z.infer<typeof loginSchema>;
-
-// Forgot password schema
-export const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
-});
-
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
-
-// Reset password schema
-export const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Reset token is required"),
-  password: passwordSchema,
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
-
-// Password strength calculator
-export const calculatePasswordStrength = (password: string): {
-  score: number;
-  label: string;
-  color: string;
-} => {
-  let score = 0;
-
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[a-z]/.test(password)) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  if (score <= 2) return { score, label: "Weak", color: "text-red-500" };
-  if (score <= 4) return { score, label: "Fair", color: "text-yellow-500" };
-  if (score <= 5) return { score, label: "Good", color: "text-blue-500" };
-  return { score, label: "Strong", color: "text-green-500" };
-};
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/services/auth-api.ts
-import { authenticatedFetch } from "@/lib/api-auth";
-import { SignupFormData, LoginFormData, ForgotPasswordFormData, ResetPasswordFormData } from "@/schemas/auth-schemas";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-  user: {
-    id: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    is_verified: boolean;
-    role: string;
-  };
-}
-
-export interface SignupResponse {
-  message: string;
-  user_id: string;
-  email: string;
-  verification_email_sent: boolean;
-}
-
-export class AuthApiService {
-  /**
-   * Register a new user
-   */
-  static async signup(data: SignupFormData): Promise<SignupResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: data.email,
-        password: data.password,
-        first_name: data.firstName,
-        last_name: data.lastName,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Signup failed");
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Login user
-   */
-  static async login(data: LoginFormData): Promise<AuthResponse> {
-    const formData = new URLSearchParams();
-    formData.append("username", data.email);
-    formData.append("password", data.password);
-
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData.toString(),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Login failed");
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Request password reset email
-   */
-  static async forgotPassword(data: ForgotPasswordFormData): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: data.email }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Failed to send reset email");
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Reset password with token
-   */
-  static async resetPassword(data: ResetPasswordFormData): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token: data.token,
-        new_password: data.password,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Password reset failed");
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Verify email with token
-   */
-  static async verifyEmail(token: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email?token=${token}`, {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Email verification failed");
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Resend verification email
-   */
-  static async resendVerificationEmail(email: string): Promise<{ message: string }> {
-    const response = await authenticatedFetch(`${API_BASE_URL}/api/v1/auth/resend-verification`, {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-
-    return response.json();
-  }
-
-  /**
-   * Get current user profile
-   */
-  static async getCurrentUser() {
-    const response = await authenticatedFetch(`${API_BASE_URL}/api/v1/users/me`);
-    return response.json();
-  }
-
-  /**
-   * Refresh access token
-   */
-  static async refreshToken(refreshToken: string): Promise<{ access_token: string; expires_in: number }> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Token refresh failed");
-    }
-
-    return response.json();
-  }
-}
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/signup-form.tsx
-"use client";
-
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { signupSchema, SignupFormData, calculatePasswordStrength } from "@/schemas/auth-schemas";
-import { AuthApiService } from "@/services/auth-api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-
-export function SignupForm() {
-  const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
-    mode: "onBlur",
-  });
-
-  const password = watch("password", "");
-  const passwordStrength = password ? calculatePasswordStrength(password) : null;
-
-  const onSubmit = async (data: SignupFormData) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await AuthApiService.signup(data);
-      setSuccess(true);
-
-      // Redirect to verification pending page after 2 seconds
-      setTimeout(() => {
-        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
-      }, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <AlertDescription className="text-green-800">
-          Account created successfully! Check your email for verification link.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
-          <Input
-            id="firstName"
-            {...register("firstName")}
-            placeholder="John"
-            disabled={isLoading}
-          />
-          {errors.firstName && (
-            <p className="text-sm text-red-500">{errors.firstName.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
-          <Input
-            id="lastName"
-            {...register("lastName")}
-            placeholder="Doe"
-            disabled={isLoading}
-          />
-          {errors.lastName && (
-            <p className="text-sm text-red-500">{errors.lastName.message}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          placeholder="john@example.com"
-          disabled={isLoading}
-        />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            {...register("password")}
-            placeholder="••••••••"
-            disabled={isLoading}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-        {errors.password && (
-          <p className="text-sm text-red-500">{errors.password.message}</p>
-        )}
-
-        {passwordStrength && (
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Password strength:</span>
-              <span className={passwordStrength.color}>{passwordStrength.label}</span>
-            </div>
-            <Progress value={(passwordStrength.score / 6) * 100} className="h-2" />
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <div className="relative">
-          <Input
-            id="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
-            {...register("confirmPassword")}
-            placeholder="••••••••"
-            disabled={isLoading}
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-        {errors.confirmPassword && (
-          <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
-        )}
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Checkbox id="agreeToTerms" {...register("agreeToTerms")} />
-        <Label htmlFor="agreeToTerms" className="text-sm font-normal cursor-pointer">
-          I agree to the{" "}
-          <a href="/terms" className="text-primary hover:underline">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="/privacy" className="text-primary hover:underline">
-            Privacy Policy
-          </a>
-        </Label>
-      </div>
-      {errors.agreeToTerms && (
-        <p className="text-sm text-red-500">{errors.agreeToTerms.message}</p>
-      )}
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating account...
-          </>
-        ) : (
-          "Create Account"
-        )}
-      </Button>
-
-      <p className="text-center text-sm text-gray-600">
-        Already have an account?{" "}
-        <a href="/login" className="text-primary hover:underline font-medium">
-          Sign in
-        </a>
-      </p>
-    </form>
-  );
-}
-```
-
-**Testing Requirements:**
-
-- Unit tests for validation schema
-- Component tests for form submission
-- Integration tests for API calls
-- E2E test for complete signup flow
-
-**Success Criteria:**
-
-- Form validates all fields correctly
-- Password strength indicator updates in real-time
-- API integration works with backend
-- User redirected to email verification page
-- Error messages display appropriately
-
-**Estimated Time:** 2-3 days
+**Files Modified:**
+
+- `schemas/auth-schemas.ts` - Created Zod validation schemas
+- `components/signup-form.tsx` - Converted to functional form with validation
+- `lib/api-auth.ts` - Added signup method
+- `app/signup/page.tsx` - Updated to use new form
 
 ---
 
@@ -1037,298 +349,15 @@ export function SignupForm() {
 
 **Files to Create/Modify:**
 
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/forgot-password-form.tsx` (MODIFY)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/reset-password/page.tsx` (CREATE)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/reset-password-form.tsx` (CREATE)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/forgot-password/page.tsx` (MODIFY)
+- `components/forgot-password-form.tsx` (MODIFY)
+- `app/reset-password/page.tsx` (CREATE)
+- `components/reset-password-form.tsx` (CREATE)
+- `app/forgot-password/page.tsx` (MODIFY)
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/forgot-password-form.tsx
-"use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { forgotPasswordSchema, ForgotPasswordFormData } from "@/schemas/auth-schemas";
-import { AuthApiService } from "@/services/auth-api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CheckCircle } from "lucide-react";
 
-export function ForgotPasswordForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
-  });
-
-  const onSubmit = async (data: ForgotPasswordFormData) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await AuthApiService.forgotPassword(data);
-      setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send reset email");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800 ml-2">
-          Password reset link has been sent to your email. Please check your inbox.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          placeholder="Enter your email address"
-          disabled={isLoading}
-        />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
-        )}
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Sending reset link...
-          </>
-        ) : (
-          "Send Reset Link"
-        )}
-      </Button>
-
-      <p className="text-center text-sm text-gray-600">
-        Remember your password?{" "}
-        <a href="/login" className="text-primary hover:underline font-medium">
-          Sign in
-        </a>
-      </p>
-    </form>
-  );
-}
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/app/reset-password/page.tsx
-import { Suspense } from "react";
-import { ResetPasswordForm } from "@/components/reset-password-form";
-
-export default function ResetPasswordPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 p-8 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Reset Your Password</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Enter your new password below
-          </p>
-        </div>
-
-        <Suspense fallback={<div>Loading...</div>}>
-          <ResetPasswordForm />
-        </Suspense>
-      </div>
-    </div>
-  );
-}
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/reset-password-form.tsx
-"use client";
-
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
-import { resetPasswordSchema, ResetPasswordFormData, calculatePasswordStrength } from "@/schemas/auth-schemas";
-import { AuthApiService } from "@/services/auth-api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-
-export function ResetPasswordForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
-    mode: "onBlur",
-  });
-
-  const password = watch("password", "");
-  const passwordStrength = password ? calculatePasswordStrength(password) : null;
-
-  useEffect(() => {
-    if (token) {
-      setValue("token", token);
-    } else {
-      setError("Invalid or missing reset token");
-    }
-  }, [token, setValue]);
-
-  const onSubmit = async (data: ResetPasswordFormData) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await AuthApiService.resetPassword(data);
-      setSuccess(true);
-
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        router.push("/login?message=password-reset-success");
-      }, 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Password reset failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (!token && !error) {
-    return <div>Loading...</div>;
-  }
-
-  if (success) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <AlertDescription className="text-green-800">
-          Password reset successful! Redirecting to login...
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <input type="hidden" {...register("token")} />
-
-      <div className="space-y-2">
-        <Label htmlFor="password">New Password</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            {...register("password")}
-            placeholder="••••••••"
-            disabled={isLoading || !token}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-        {errors.password && (
-          <p className="text-sm text-red-500">{errors.password.message}</p>
-        )}
-
-        {passwordStrength && (
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Password strength:</span>
-              <span className={passwordStrength.color}>{passwordStrength.label}</span>
-            </div>
-            <Progress value={(passwordStrength.score / 6) * 100} className="h-2" />
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-        <div className="relative">
-          <Input
-            id="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
-            {...register("confirmPassword")}
-            placeholder="••••••••"
-            disabled={isLoading || !token}
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-        {errors.confirmPassword && (
-          <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
-        )}
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isLoading || !token}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Resetting password...
-          </>
-        ) : (
-          "Reset Password"
-        )}
-      </Button>
-    </form>
-  );
-}
-```
 
 **Testing Requirements:**
 
@@ -1343,8 +372,6 @@ export function ResetPasswordForm() {
 - Token validation works
 - Password reset completes
 - User redirected to login
-
-**Estimated Time:** 2 days
 
 ---
 
@@ -1364,183 +391,12 @@ export function ResetPasswordForm() {
 
 **Files to Create:**
 
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/verify-email/page.tsx`
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/verify-email-status.tsx`
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/verify-email/success/page.tsx`
+- `app/verify-email/page.tsx`
+- `components/verify-email-status.tsx`
+- `app/verify-email/success/page.tsx`
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/app/verify-email/page.tsx
-"use client";
-
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { AuthApiService } from "@/services/auth-api";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CheckCircle, XCircle, Mail } from "lucide-react";
-
-export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const token = searchParams.get("token");
-  const email = searchParams.get("email");
-
-  const [status, setStatus] = useState<"pending" | "verifying" | "success" | "error">("pending");
-  const [error, setError] = useState<string | null>(null);
-  const [isResending, setIsResending] = useState(false);
-
-  useEffect(() => {
-    if (token) {
-      verifyEmail(token);
-    }
-  }, [token]);
-
-  const verifyEmail = async (verificationToken: string) => {
-    setStatus("verifying");
-    setError(null);
-
-    try {
-      await AuthApiService.verifyEmail(verificationToken);
-      setStatus("success");
-
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        router.push("/login?message=email-verified");
-      }, 3000);
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Email verification failed");
-    }
-  };
-
-  const handleResendEmail = async () => {
-    if (!email) {
-      setError("Email address is required to resend verification");
-      return;
-    }
-
-    setIsResending(true);
-    setError(null);
-
-    try {
-      await AuthApiService.resendVerificationEmail(email);
-      setStatus("pending");
-      setError("Verification email sent! Please check your inbox.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to resend email");
-    } finally {
-      setIsResending(false);
-    }
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 p-8 bg-white rounded-lg shadow-md text-center">
-        {status === "pending" && (
-          <>
-            <div className="flex justify-center">
-              <Mail className="h-16 w-16 text-blue-500" />
-            </div>
-            <h1 className="text-2xl font-bold">Verify Your Email</h1>
-            <p className="text-gray-600">
-              We've sent a verification link to{" "}
-              <span className="font-medium">{email}</span>. Please check your inbox
-              and click the link to verify your account.
-            </p>
-            <Alert>
-              <AlertDescription>
-                Didn't receive the email? Check your spam folder or click below to
-                resend.
-              </AlertDescription>
-            </Alert>
-            <Button
-              onClick={handleResendEmail}
-              disabled={isResending || !email}
-              variant="outline"
-              className="w-full"
-            >
-              {isResending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                "Resend Verification Email"
-              )}
-            </Button>
-          </>
-        )}
-
-        {status === "verifying" && (
-          <>
-            <div className="flex justify-center">
-              <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
-            </div>
-            <h1 className="text-2xl font-bold">Verifying Email...</h1>
-            <p className="text-gray-600">Please wait while we verify your email address.</p>
-          </>
-        )}
-
-        {status === "success" && (
-          <>
-            <div className="flex justify-center">
-              <CheckCircle className="h-16 w-16 text-green-500" />
-            </div>
-            <h1 className="text-2xl font-bold text-green-700">Email Verified!</h1>
-            <p className="text-gray-600">
-              Your email has been successfully verified. Redirecting to login...
-            </p>
-          </>
-        )}
-
-        {status === "error" && (
-          <>
-            <div className="flex justify-center">
-              <XCircle className="h-16 w-16 text-red-500" />
-            </div>
-            <h1 className="text-2xl font-bold text-red-700">Verification Failed</h1>
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-2">
-              <Button onClick={() => router.push("/login")} className="w-full">
-                Go to Login
-              </Button>
-              {email && (
-                <Button
-                  onClick={handleResendEmail}
-                  disabled={isResending}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {isResending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    "Resend Verification Email"
-                  )}
-                </Button>
-              )}
-            </div>
-          </>
-        )}
-
-        <p className="text-sm text-gray-500">
-          <a href="/login" className="text-primary hover:underline">
-            Back to Login
-          </a>
-        </p>
-      </div>
-    </div>
-  );
-}
-```
 
 **Testing Requirements:**
 
@@ -1555,8 +411,6 @@ export default function VerifyEmailPage() {
 - Token validation works
 - Resend email functionality works
 - Proper redirects after verification
-
-**Estimated Time:** 1-2 days
 
 ---
 
@@ -1575,155 +429,14 @@ export default function VerifyEmailPage() {
 
 **Files to Modify:**
 
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/middleware.ts`
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/(protected)/layout.tsx` (CREATE)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/auth-provider.tsx` (CREATE)
+- `middleware.ts`
+- `app/(protected)/layout.tsx` (CREATE)
+- `components/auth-provider.tsx` (CREATE)
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-// Public routes that don't require authentication
-const publicRoutes = [
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-  "/api/auth",
-];
 
-// Routes that should redirect to dashboard if already authenticated
-const authRoutes = ["/login", "/signup", "/forgot-password"];
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Check if route is public
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-  // Get auth token from cookie
-  const token = request.cookies.get("auth_token")?.value;
-  const isAuthenticated = !!token;
-
-  // If user is authenticated and trying to access auth routes, redirect to dashboard
-  if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // If user is not authenticated and trying to access protected route, redirect to login
-  if (!isAuthenticated && !isPublicRoute) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*|public).*)",
-  ],
-};
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/auth-provider.tsx
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useAuthStore } from "@/lib/api-auth";
-import { AuthApiService } from "@/services/auth-api";
-import { Loader2 } from "lucide-react";
-
-interface AuthProviderProps {
-  children: React.ReactNode;
-  requireAuth?: boolean;
-}
-
-export function AuthProvider({ children, requireAuth = false }: AuthProviderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user, setUser, isLoading: authLoading, setIsLoading } = useAuthStore();
-  const [isVerifying, setIsVerifying] = useState(true);
-
-  useEffect(() => {
-    const verifyAuth = async () => {
-      try {
-        // Check if we have a token in localStorage
-        const token = localStorage.getItem("auth_token");
-
-        if (!token) {
-          if (requireAuth) {
-            router.push(`/login?from=${pathname}`);
-          }
-          return;
-        }
-
-        // If we don't have user data, fetch it
-        if (!user) {
-          setIsLoading(true);
-          const userData = await AuthApiService.getCurrentUser();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error("Auth verification failed:", error);
-        if (requireAuth) {
-          router.push(`/login?from=${pathname}`);
-        }
-      } finally {
-        setIsLoading(false);
-        setIsVerifying(false);
-      }
-    };
-
-    verifyAuth();
-  }, [user, setUser, setIsLoading, requireAuth, router, pathname]);
-
-  if (requireAuth && (isVerifying || authLoading)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (requireAuth && !user && !isVerifying && !authLoading) {
-    return null; // Will redirect in useEffect
-  }
-
-  return <>{children}</>;
-}
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/app/(protected)/layout.tsx
-import { AuthProvider } from "@/components/auth-provider";
-
-export default function ProtectedLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <AuthProvider requireAuth={true}>{children}</AuthProvider>;
-}
-```
 
 **Testing Requirements:**
 
@@ -1805,149 +518,10 @@ export default function ProtectedLayout({
 
 **Files to Modify:**
 
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/nav-user.tsx`
+- `components/nav-user.tsx`
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/nav-user.tsx
-"use client";
-
-import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { useAuthStore, AuthManager } from "@/lib/api-auth";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-
-export function NavUser() {
-  const { isMobile } = useSidebar();
-  const router = useRouter();
-  const { user, isLoading } = useAuthStore();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await AuthManager.logout();
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <div className="flex items-center gap-2 px-2 py-1.5">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm text-gray-500">Loading...</span>
-          </div>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const userInitials = `${user.first_name?.[0] || ""}${user.last_name?.[0] || ""}`.toUpperCase() || "U";
-  const userName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User";
-  const userEmail = user.email;
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar_url} alt={userName} />
-                <AvatarFallback className="rounded-lg">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{userName}</span>
-                <span className="truncate text-xs text-gray-500">{userEmail}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar_url} alt={userName} />
-                  <AvatarFallback className="rounded-lg">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{userName}</span>
-                  <span className="truncate text-xs text-gray-500">{userEmail}</span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
-              {isLoggingOut ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging out...
-                </>
-              ) : (
-                <>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </>
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
-}
-```
 
 **Testing Requirements:**
 
@@ -2085,150 +659,17 @@ These backend requirements are implemented in **Backend Phase 0, Task 0.7**.
 
 **Files to Create:**
 
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/auth.ts`
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/auth.config.ts`
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/app/api/auth/[...nextauth]/route.ts`
+- `auth.ts`
+- `auth.config.ts`
+- `app/api/auth/[...nextauth]/route.ts`
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/auth.config.ts
-import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import GitHub from "next-auth/providers/github";
-import { loginSchema } from "@/schemas/auth-schemas";
-import { AuthApiService } from "@/services/auth-api";
 
-export default {
-  providers: [
-    Credentials({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        try {
-          // Validate credentials
-          const validatedFields = loginSchema.safeParse(credentials);
 
-          if (!validatedFields.success) {
-            return null;
-          }
-
-          const { email, password } = validatedFields.data;
-
-          // Authenticate with backend
-          const response = await AuthApiService.login({ email, password });
-
-          if (!response.user) {
-            return null;
-          }
-
-          return {
-            id: response.user.id,
-            email: response.user.email,
-            name: `${response.user.first_name} ${response.user.last_name}`,
-            role: response.user.role,
-            accessToken: response.access_token,
-            refreshToken: response.refresh_token,
-          };
-        } catch (error) {
-          console.error("Auth error:", error);
-          return null;
-        }
-      },
-    }),
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-  ],
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  callbacks: {
-    async jwt({ token, user, account }) {
-      // Initial sign in
-      if (user) {
-        return {
-          ...token,
-          id: user.id,
-          role: user.role,
-          accessToken: user.accessToken,
-          refreshToken: user.refreshToken,
-        };
-      }
-
-      // OAuth sign in
-      if (account?.provider !== "credentials") {
-        // Exchange OAuth token with backend
-        // Backend will create/update user and return JWT
-        // Implement backend OAuth endpoint
-      }
-
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.accessToken = token.accessToken as string;
-      }
-      return session;
-    },
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-} satisfies NextAuthConfig;
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/auth.ts
-import NextAuth from "next-auth";
-import authConfig from "./auth.config";
-
-export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/app/api/auth/[...nextauth]/route.ts
-import { handlers } from "@/auth";
-
-export const { GET, POST } = handlers;
-```
 
 **Environment Variables:**
 
-```env
-# /Users/mobeen/Work/Products/wrext/wrext-admin/.env.local
-NEXTAUTH_SECRET=your-secret-key-here
-NEXTAUTH_URL=http://localhost:3000
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# GitHub OAuth
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-```
 
 **Implementation Notes (2025-10-02):**
 
@@ -2294,95 +735,12 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 
 **Files to Modify:**
 
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/login-form.tsx`
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/components/oauth-buttons.tsx` (CREATE)
-- `/Users/mobeen/Work/Products/wrext/wrext-admin/services/auth-api.ts`
+- `components/login-form.tsx`
+- `components/oauth-buttons.tsx` (CREATE)
+- `services/auth-api.ts`
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/oauth-buttons.tsx
-"use client";
-
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
-
-interface OAuthButtonsProps {
-  callbackUrl?: string;
-}
-
-export function OAuthButtons({ callbackUrl = "/dashboard" }: OAuthButtonsProps) {
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
-
-  const handleOAuthSignIn = async (provider: "google" | "github") => {
-    try {
-      if (provider === "google") {
-        setIsGoogleLoading(true);
-      } else {
-        setIsGitHubLoading(true);
-      }
-
-      await signIn(provider, { callbackUrl });
-    } catch (error) {
-      console.error(`${provider} sign in error:`, error);
-    } finally {
-      if (provider === "google") {
-        setIsGoogleLoading(false);
-      } else {
-        setIsGitHubLoading(false);
-      }
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => handleOAuthSignIn("google")}
-        disabled={isGoogleLoading || isGitHubLoading}
-      >
-        {isGoogleLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <FcGoogle className="mr-2 h-5 w-5" />
-        )}
-        Continue with Google
-      </Button>
-
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => handleOAuthSignIn("github")}
-        disabled={isGoogleLoading || isGitHubLoading}
-      >
-        {isGitHubLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <FaGithub className="mr-2 h-5 w-5" />
-        )}
-        Continue with GitHub
-      </Button>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with email
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-```
 
 **Implementation Notes (2025-10-02):**
 
@@ -2498,23 +856,14 @@ To test OAuth flows, developers must:
    - Migrate `authenticatedFetch` to use NextAuth session tokens
 
 3. **Clean up redundant code:**
-   - Delete `wrext-admin/lib/api-auth.ts:250` (token store, refresh logic)
+   - Delete `lib/api-auth.ts:250` (token store, refresh logic)
    - Remove Zustand auth store (NextAuth manages session state)
    - Remove localStorage auth persistence (NextAuth handles this)
 
 4. **Update authentication flow:**
-   ```typescript
-   // OLD (custom auth - remove):
-   import { AuthManager } from '@/lib/api-auth';
-   await AuthManager.login(email, password);
-
-   // NEW (AuthJS):
-   import { signIn } from 'next-auth/react';
-   await signIn('credentials', { email, password });
-   ```
 
 **Files to Delete/Archive:**
-- Most of `/Users/mobeen/Work/Products/wrext/wrext-admin/lib/api-auth.ts` (keep only non-auth utilities)
+- Most of `lib/api-auth.ts` (keep only non-auth utilities)
 
 **Migration Checklist:**
 - [x] All login flows use AuthJS `signIn()`
@@ -2727,110 +1076,7 @@ To test OAuth flows, developers must:
 
 **Code Examples (Implemented):**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/schemas/profile-schemas.ts
-import { z } from "zod";
 
-export const profileSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number").optional(),
-  timezone: z.string().optional(),
-  language: z.string().optional(),
-});
-
-export type ProfileFormData = z.infer<typeof profileSchema>;
-
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-  confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/app/(protected)/profile/page.tsx
-import { ProfileForm } from "@/components/profile/profile-form";
-import { ChangePasswordForm } from "@/components/profile/change-password-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-export default function ProfilePage() {
-  return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Profile Settings</h1>
-        <p className="text-gray-600 mt-2">
-          Manage your account settings and preferences
-        </p>
-      </div>
-
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Update your account profile information and email address
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProfileForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>
-                Ensure your account is using a strong password
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChangePasswordForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>
-                Customize your experience
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">Preferences coming soon...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-```
 
 **Testing Requirements:**
 
@@ -2845,8 +1091,6 @@ export default function ProfilePage() {
 - Editing works smoothly
 - Avatar upload functional
 - Changes persist
-
-**Estimated Time:** 2-3 days
 
 ---
 
@@ -3178,8 +1422,6 @@ Created comprehensive notification preferences page with email and in-app notifi
 - Once backend ready, test full save/load cycle
 - Task 4.3: Add Privacy & Data Settings (next task)
 
-**Estimated Time:** 2 days
-
 ---
 
 ### Task 4.3: Add Privacy & Data Settings - COMPLETED ✅
@@ -3286,61 +1528,7 @@ Created comprehensive permission checking system with hooks, utilities, and wrap
 
 **Code Examples:**
 
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/hooks/use-permission.ts
-import { useAuthStore } from "@/lib/api-auth";
-import { checkPermission } from "@/lib/permissions";
 
-export function usePermission(permission: string | string[]) {
-  const { user } = useAuthStore();
-
-  if (!user) {
-    return false;
-  }
-
-  const permissions = Array.isArray(permission) ? permission : [permission];
-  return permissions.some((perm) => checkPermission(user, perm));
-}
-
-export function useRole(role: string | string[]) {
-  const { user } = useAuthStore();
-
-  if (!user) {
-    return false;
-  }
-
-  const roles = Array.isArray(role) ? role : [role];
-  return roles.includes(user.role);
-}
-```
-
-```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/components/permissions/can-access.tsx
-"use client";
-
-import { usePermission } from "@/hooks/use-permission";
-import { ReactNode } from "react";
-
-interface CanAccessProps {
-  permission?: string | string[];
-  role?: string | string[];
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-export function CanAccess({ permission, role, children, fallback = null }: CanAccessProps) {
-  const hasPermission = usePermission(permission || []);
-  const hasRole = useRole(role || []);
-
-  const canAccess = permission ? hasPermission : hasRole;
-
-  if (!canAccess) {
-    return <>{fallback}</>;
-  }
-
-  return <>{children}</>;
-}
-```
 
 **Implementation Details:**
 
@@ -3412,8 +1600,6 @@ Backend integration pending - The backend needs to include `role` and `permissio
 
 **Actual Time:** 2 hours
 
-**Estimated Time:** 2 days
-
 ---
 
 ### Task 5.2: Implement Role-Based Navigation - COMPLETED ✅
@@ -3476,22 +1662,6 @@ Created role-based navigation filtering system that automatically hides menu ite
 
 **Navigation Structure:**
 
-```
-Dashboard (always visible)
-Manage
-  - Workspaces (permission: workspace:read OR workspace:create)
-  - Topics (always visible)
-  - Content (always visible)
-Configuration
-  - Knowledge (with sub-items)
-  - Integrations (with sub-items)
-  - Users (permission: user:read OR user:create)
-Administration (role: admin OR super_admin)
-  - User Management (permission: user:read)
-  - Roles & Permissions (permission: role:read OR permission:read)
-Settings
-  - General (always visible)
-```
 
 **Key Features:**
 
@@ -3523,8 +1693,6 @@ Settings
 The navigation will fully function once the backend includes `role` and `permissions` in the JWT token. Until then, all navigation items will be visible (default behavior when no permissions are set on session).
 
 **Actual Time:** 1.5 hours
-
-**Estimated Time:** 2 days
 
 ---
 
@@ -3591,13 +1759,6 @@ Created admin-only section with route protection, dashboard, and placeholder pag
 
 **Admin Section Structure:**
 
-```
-/admin (layout protects all routes - admin role required)
-  ├─ / (dashboard with navigation cards)
-  ├─ /users (user:read permission required)
-  ├─ /roles (role:read OR permission:read required)
-  └─ /statistics (no specific permission, admin only)
-```
 
 **Access Control Layers:**
 
@@ -3639,8 +1800,6 @@ The admin section demonstrates complete role-based access control:
 Full functionality requires backend to include `role` and `permissions` in JWT token.
 
 **Actual Time:** 1 hour
-
-**Estimated Time:** 1-2 days
 
 ---
 
@@ -3740,8 +1899,7 @@ Full functionality requires backend to include `role` and `permissions` in JWT t
 ### Directory Structure
 
 ```
-/Users/mobeen/Work/Products/wrext/wrext-admin/
-├── app/
+app/
 │   ├── (auth)/
 │   │   ├── login/
 │   │   │   └── page.tsx
@@ -3857,7 +2015,7 @@ Full functionality requires backend to include `role` and `permissions` in JWT t
 **Example:**
 
 ```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/__tests__/schemas/auth-schemas.test.ts
+// __tests__/schemas/auth-schemas.test.ts
 import { signupSchema, calculatePasswordStrength } from "@/schemas/auth-schemas";
 
 describe("signupSchema", () => {
@@ -3910,7 +2068,7 @@ describe("calculatePasswordStrength", () => {
 **Example:**
 
 ```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/__tests__/components/signup-form.test.tsx
+// __tests__/components/signup-form.test.tsx
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SignupForm } from "@/components/signup-form";
 import { AuthApiService } from "@/services/auth-api";
@@ -3998,7 +2156,7 @@ describe("SignupForm", () => {
 **Example:**
 
 ```typescript
-// /Users/mobeen/Work/Products/wrext/wrext-admin/e2e/auth/signup.spec.ts
+// e2e/auth/signup.spec.ts
 import { test, expect } from "@playwright/test";
 
 test.describe("Signup Flow", () => {
