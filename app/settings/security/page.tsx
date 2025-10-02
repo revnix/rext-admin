@@ -7,12 +7,12 @@ import {
   LogOut,
   MapPin,
   Monitor,
-  Shield,
   Smartphone,
   Tablet,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ActivityLog } from "@/components/security/activity-log";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -269,29 +269,8 @@ export default function SecuritySettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Activity Log - Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Activity Log
-          </CardTitle>
-          <CardDescription>
-            Recent account activity and security events
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-dashed p-8 text-center">
-            <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              Activity log requires backend audit logging (Phase 6)
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Will display login attempts, password changes, and security events
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Activity Log */}
+      <ActivityLog />
     </div>
   );
 }

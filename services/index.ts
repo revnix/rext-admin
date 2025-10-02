@@ -74,6 +74,13 @@ export type {
   SessionListResponse,
   UserSession,
 } from "@/types/user-session";
+// Export audit log API functions
+export {
+  AuditLogApiService,
+  getAllAuditLogs,
+  getAuditLogById,
+  getMyAuditLogs,
+} from "./audit-log-api";
 // Export the main service class and default instance
 // Export legacy compatibility function (marked as deprecated)
 export {
