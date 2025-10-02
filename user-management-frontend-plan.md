@@ -321,24 +321,60 @@ async login(email: string, password: string) {
 
 ---
 
-### Task 0.2: Wire Up Static Auth Forms
+### Task 0.2: Wire Up Static Auth Forms - COMPLETED ✅
 
+**Completed:** 2025-10-02
 **Complexity:** Medium
 **Priority:** Critical
 **Location:** `wrext-admin/components/signup-form.tsx:28` (and related forms)
 
 #### Current Issue
 
-Signup, forgot-password, and email verification forms are static markup with no validation or backend integration.
+Signup, forgot-password, and email verification forms were static markup with no validation or backend integration.
 
-#### Implementation Steps
+#### Implementation Summary
 
-**This task is already covered in Phase 1, Task 1.1-1.3** but should be completed in Phase 0 instead. Move these implementations to Phase 0:
-- Task 1.1: Complete Signup Form (with validation & API integration)
-- Task 1.2: Implement Password Reset Flow (with validation & API integration)
-- Task 1.3: Add Email Verification UI (with token handling & API integration)
+**Files Created:**
+- `schemas/auth-schemas.ts` - Zod validation schemas for auth forms
+- `app/verify-email/page.tsx` - Email verification page with token handling
+- `app/reset-password/page.tsx` - Password reset page with form
 
-No code changes needed here - just reprioritize existing planned work to Phase 0.
+**Files Modified:**
+- `components/signup-form.tsx` - Converted to functional form with React Hook Form + Zod validation
+- `components/forgot-password-form.tsx` - Added validation and API integration
+- `lib/api-auth.ts` - Added signup, forgotPassword, resetPassword, verifyEmail methods
+
+**Key Changes:**
+1. Created comprehensive Zod schemas with password strength validation (min 8 chars, uppercase, lowercase, number)
+2. Implemented signup form with validation, API integration, success/error states, and auto-redirect
+3. Implemented forgot password form with email validation and success messaging
+4. Created verify-email page with token extraction from URL and verification flow
+5. Created reset-password page with password validation and token-based reset
+6. Added all auth methods to AuthManager class with proper error handling and logging
+7. Exposed new methods through useAuth hook
+
+**Password Validation Rules:**
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- Passwords must match in confirmation field
+
+**Observations/Learnings:**
+- React Hook Form + Zod provides excellent DX for form validation
+- Email/URL token pattern works well for verification and password reset flows
+- Success states with auto-redirect provide good UX (2-3 second delays)
+- Username generation from email (email.split("@")[0]) aligns with backend requirements
+- All forms follow consistent patterns with loading/error/success states
+
+**Testing:**
+- ✅ TypeScript compilation successful
+- ✅ Linting passed with auto-fixes applied
+- ✅ Formatting successful
+- ⏳ Manual testing pending (requires running dev server with backend)
+
+**Follow-ups:**
+- None - all auth forms are now functional
 
 ---
 

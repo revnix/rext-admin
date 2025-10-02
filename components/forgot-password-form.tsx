@@ -1,4 +1,9 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,12 +14,47 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/api-auth";
 import { cn } from "@/lib/utils";
+import {
+  type ForgotPasswordData,
+  forgotPasswordSchema,
+} from "@/schemas/auth-schemas";
 
 export function ForgotPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const { forgotPassword } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordData>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
+
+  const onSubmit = async (data: ForgotPasswordData) => {
+    setIsLoading(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      await forgotPassword(data.email);
+      setSuccess(true);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to send reset email",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -26,7 +66,17 @@ export function ForgotPasswordForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+                Password reset email sent! Check your inbox for the reset link.
+              </div>
+            )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
@@ -34,12 +84,24 @@ export function ForgotPasswordForm({
                   id="email"
                   type="email"
                   placeholder="m@example.com"
-                  required
+                  {...register("email")}
+                  disabled={isLoading || success}
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                )}
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
-                  Send Reset Link
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || success}
+                >
+                  {isLoading
+                    ? "Sending..."
+                    : success
+                      ? "Email Sent!"
+                      : "Send Reset Link"}
                 </Button>
               </div>
             </div>

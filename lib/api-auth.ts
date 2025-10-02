@@ -345,6 +345,140 @@ export class AuthManager {
   }
 
   /**
+   * Register a new user
+   */
+  async signup(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }): Promise<void> {
+    this.log.info("Attempting signup", { email: data.email });
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024"}/api/user/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            first_name: data.firstName,
+            last_name: data.lastName,
+            username: data.email.split("@")[0], // Generate username from email
+            email: data.email,
+            password: data.password,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Signup failed");
+      }
+
+      this.log.info("Signup successful", { email: data.email });
+    } catch (error) {
+      this.log.error("Signup failed", { email: data.email, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Request password reset
+   */
+  async forgotPassword(email: string): Promise<void> {
+    this.log.info("Requesting password reset", { email });
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024"}/api/user/forgot-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to send reset email");
+      }
+
+      this.log.info("Password reset email sent", { email });
+    } catch (error) {
+      this.log.error("Password reset request failed", { email, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Reset password with token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    this.log.info("Resetting password");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024"}/api/user/reset-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            new_password: newPassword,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Password reset failed");
+      }
+
+      this.log.info("Password reset successful");
+    } catch (error) {
+      this.log.error("Password reset failed", { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Verify email with token
+   */
+  async verifyEmail(token: string): Promise<void> {
+    this.log.info("Verifying email");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024"}/api/user/verify-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Email verification failed");
+      }
+
+      this.log.info("Email verification successful");
+    } catch (error) {
+      this.log.error("Email verification failed", { error });
+      throw error;
+    }
+  }
+
+  /**
    * Logout current user
    */
   async logout(): Promise<void> {
@@ -520,6 +654,27 @@ export function useAuth() {
     return authManager.loginWithApiKey(apiKey);
   };
 
+  const signup = async (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }) => {
+    return authManager.signup(data);
+  };
+
+  const forgotPassword = async (email: string) => {
+    return authManager.forgotPassword(email);
+  };
+
+  const resetPassword = async (token: string, newPassword: string) => {
+    return authManager.resetPassword(token, newPassword);
+  };
+
+  const verifyEmail = async (token: string) => {
+    return authManager.verifyEmail(token);
+  };
+
   const hasPermission = (permission: string) => {
     return authManager.hasPermission(permission);
   };
@@ -539,6 +694,10 @@ export function useAuth() {
     // Actions
     login,
     loginWithApiKey,
+    signup,
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
     logout,
     refreshToken,
     hasPermission,
