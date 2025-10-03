@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsAdmin, usePermissionUser } from "@/hooks/use-permission";
 import { getLoginHistory, getSecurityStats } from "@/services";
-import { SessionApiService } from "@/services/session-api";
+import { sessionApiService } from "@/services/session-api";
 
 export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
@@ -52,7 +52,7 @@ export default function SecuritySettingsPage() {
     error: sessionsError,
   } = useQuery({
     queryKey: ["user-sessions"],
-    queryFn: () => SessionApiService.listSessions(),
+    queryFn: () => sessionApiService.listSessions(),
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
@@ -83,7 +83,7 @@ export default function SecuritySettingsPage() {
   // Revoke single session mutation
   const revokeMutation = useMutation({
     mutationFn: (sessionId: string) =>
-      SessionApiService.revokeSession(sessionId),
+      sessionApiService.revokeSession(sessionId),
     onMutate: (sessionId) => {
       setRevokingSessionId(sessionId);
     },
@@ -101,7 +101,7 @@ export default function SecuritySettingsPage() {
 
   // Revoke all sessions mutation
   const revokeAllMutation = useMutation({
-    mutationFn: () => SessionApiService.revokeAllSessions(),
+    mutationFn: () => sessionApiService.revokeAllSessions(),
     onSuccess: (data) => {
       toast.success(`Logged out from ${data.revoked_count} devices`);
       queryClient.invalidateQueries({ queryKey: ["user-sessions"] });

@@ -164,7 +164,12 @@ export {
   unlockAccount,
 } from "./security-api";
 // Export session API service
-export { SessionApiService, sessionApiService } from "./session-api";
+export {
+  listSessions,
+  revokeAllSessions,
+  revokeSession,
+  sessionApiService,
+} from "./session-api";
 // Export subscription API service
 export {
   cancelSubscription,
