@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -102,6 +103,7 @@ const STEPS: Array<{
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState<WizardStep>("basic");
   const [wizardData, setWizardData] = useState<WizardData>({
     title: "",
@@ -243,8 +245,12 @@ export function WorkspaceCreateWizard() {
 
       toast.success(`Workspace "${workspace.title}" created successfully!`);
 
-      // Navigate to the new workspace
-      router.push(`/workspaces/${workspace.id}`);
+      // Invalidate workspace queries to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["workspaces", "switcher"] });
+
+      // Navigate to the new workspace topics page
+      router.push(`/w/${workspace.id}/topics`);
     } catch (error) {
       console.error("Failed to create workspace:", error);
       toast.error("Failed to create workspace. Please try again.");

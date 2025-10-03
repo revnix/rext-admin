@@ -86,7 +86,7 @@ export default function WorkspacePage() {
           </div>
           <div className="flex flex-col">
             <Link
-              href={`/workspaces/${row.id}`}
+              href={`/w/${row.id}/topics`}
               className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
               onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
             >
@@ -211,7 +211,7 @@ export default function WorkspacePage() {
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/workspaces/${row.id}`);
+        router.push(`/w/${row.id}/topics`);
       },
       tooltip: "View workspace details",
       primary: true,
