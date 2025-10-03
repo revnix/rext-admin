@@ -69,7 +69,7 @@ export function WorkspaceSwitcher() {
   const handleWorkspaceSelect = (workspace: Workspace) => {
     setCurrentWorkspace(workspace);
     addToRecentWorkspaces(workspace.id);
-    router.push(`/workspaces/${workspace.id}`);
+    router.push(`/w/${workspace.id}/topics`);
   };
 
   // Use current workspace or first available workspace

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -115,5 +115,25 @@ export default function VerifyEmailPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+          <div className="w-full max-w-sm">
+            <Card>
+              <CardHeader>
+                <CardTitle>Verifying Email...</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

@@ -31,6 +31,7 @@ import {
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { PERMISSIONS, ROLES } from "@/lib/permissions";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { NavGroup } from "@/types/navigation";
 
@@ -42,8 +43,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (!currentWorkspace) {
       return "/workspaces"; // Fallback to workspaces list
     }
-    const baseUrl = `/workspaces/${currentWorkspace.id}?tab=knowledge`;
-    return view ? `${baseUrl}&view=${view}` : baseUrl;
+    return workspaceRoutes.knowledge(currentWorkspace.id, view);
   };
 
   const navigationGroups: NavGroup[] = [
@@ -71,12 +71,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
           title: "Topics",
-          url: "/topics",
+          url: currentWorkspace
+            ? workspaceRoutes.topics(currentWorkspace.id)
+            : "/workspaces",
           icon: Library,
         },
         {
           title: "Content",
-          url: "/content",
+          url: currentWorkspace
+            ? workspaceRoutes.content(currentWorkspace.id)
+            : "/workspaces",
           icon: FileText,
         },
       ],

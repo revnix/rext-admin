@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-export default auth((_request) => {
+export default auth((request) => {
+  const { pathname } = request.nextUrl;
+
+  // Redirect old workspace routes to new structure
+  // /workspaces/{id} -> /w/{id}/topics (except /workspaces and /workspaces/create)
+  if (pathname.startsWith("/workspaces/") && !pathname.includes("/create")) {
+    const workspaceIdMatch = pathname.match(/^\/workspaces\/([^/]+)/);
+    if (workspaceIdMatch) {
+      const workspaceId = workspaceIdMatch[1];
+      const newUrl = new URL(`/w/${workspaceId}/topics`, request.url);
+      console.log(`[Middleware] Redirecting ${pathname} -> ${newUrl.pathname}`);
+      return NextResponse.redirect(newUrl);
+    }
+  }
+
   // Create response
   const response = NextResponse.next();
 

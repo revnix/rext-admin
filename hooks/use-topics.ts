@@ -10,21 +10,40 @@ const topicsLogger = logger.forComponent("useTopics");
 /**
  * TanStack Query hook for fetching topics from backend
  * Uses client-side fetching for Next.js 15 best practices
+ *
+ * @param workspaceId - Optional workspace ID to scope topics to a specific workspace
  */
-export function useTopics() {
+export function useTopics(workspaceId?: string) {
   return useQuery({
-    queryKey: ["topics"],
+    queryKey: workspaceId ? ["topics", workspaceId] : ["topics"],
     queryFn: async (): Promise<GeneratedTopic[]> => {
-      topicsLogger.info("Fetching topics from backend via BackendService");
+      if (workspaceId) {
+        topicsLogger.info(
+          "Fetching workspace-scoped topics from backend via BackendService",
+          { workspace_id: workspaceId },
+        );
+      } else {
+        topicsLogger.info(
+          "Fetching all topics from backend via BackendService",
+        );
+      }
 
+      // TODO: Once backend supports workspace-scoped topics, use:
+      // const topics = workspaceId
+      //   ? await backendService.getWorkspaceTopics(workspaceId)
+      //   : await backendService.getTopics();
+
+      // For now, fetch all topics (backward compatible)
       const topics = await backendService.getTopics();
 
       topicsLogger.info("Successfully fetched topics", {
         count: topics.length,
+        workspace_id: workspaceId || "all",
       });
 
       return topics;
     },
+    enabled: workspaceId ? !!workspaceId : true,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (updated from cacheTime for TanStack Query v5)
     retry: false, // No retries
