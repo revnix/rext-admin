@@ -29,7 +29,9 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       throw new Error("Token refresh failed");
     }
 
-    const refreshedTokens = await response.json();
+    const refreshResponseData = await response.json();
+    // Extract data from wrapped response
+    const refreshedTokens = refreshResponseData.data || refreshResponseData;
 
     console.log("[Auth] Access token refreshed successfully");
 
@@ -86,7 +88,10 @@ export default {
             return null;
           }
 
-          const data = await response.json();
+          const responseData = await response.json();
+
+          // Extract data from wrapped response (backend returns { success, data: {...}, meta, error })
+          const data = responseData.data || responseData;
 
           if (!data.user) {
             console.error("[AuthJS] No user in response");
@@ -208,7 +213,10 @@ export default {
                 return token;
               }
 
-              const registerData = await registerResponse.json();
+              const registerResponseData = await registerResponse.json();
+              // Extract data from wrapped response
+              const registerData =
+                registerResponseData.data || registerResponseData;
               token.id = registerData.user.id;
               token.email = registerData.user.email;
               token.name =
@@ -218,7 +226,9 @@ export default {
               token.refreshToken = registerData.refresh_token;
             } else {
               // User exists, use their data
-              const loginData = await loginResponse.json();
+              const loginResponseData = await loginResponse.json();
+              // Extract data from wrapped response
+              const loginData = loginResponseData.data || loginResponseData;
               token.id = loginData.user.id;
               token.email = loginData.user.email;
               token.name =
