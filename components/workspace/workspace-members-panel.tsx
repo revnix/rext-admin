@@ -25,6 +25,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorkspaceBulkInviteDialog } from "@/components/workspace/workspace-bulk-invite-dialog";
+import { WorkspaceChangeRoleDialog } from "@/components/workspace/workspace-change-role-dialog";
+import { WorkspaceInviteDialog } from "@/components/workspace/workspace-invite-dialog";
+import { WorkspaceRemoveMemberDialog } from "@/components/workspace/workspace-remove-member-dialog";
 import { workspaceApiService } from "@/services";
 import type { Workspace } from "@/types/workspace";
 
@@ -85,7 +89,13 @@ function EmptyMembers() {
 export function WorkspaceMembersPanel({
   workspace,
 }: WorkspaceMembersPanelProps) {
-  const [_showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showBulkInviteDialog, setShowBulkInviteDialog] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
+    null,
+  );
+  const [memberToChangeRole, setMemberToChangeRole] =
+    useState<WorkspaceMember | null>(null);
 
   // Fetch workspace members
   const {
@@ -159,6 +169,14 @@ export function WorkspaceMembersPanel({
               <RefreshCw
                 className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
               />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkInviteDialog(true)}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Bulk Invite
             </Button>
             <Button size="sm" onClick={() => setShowInviteDialog(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
@@ -242,12 +260,17 @@ export function WorkspaceMembersPanel({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setMemberToChangeRole(member)}
+                      >
                         <Shield className="h-4 w-4 mr-2" />
                         Change Role
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setMemberToRemove(member)}
+                      >
                         <UserMinus className="h-4 w-4 mr-2" />
                         Remove Member
                       </DropdownMenuItem>
@@ -259,6 +282,38 @@ export function WorkspaceMembersPanel({
           </div>
         )}
       </CardContent>
+
+      {/* Invite Dialog */}
+      <WorkspaceInviteDialog
+        workspaceId={workspace.id}
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        onInvited={() => refetch()}
+      />
+
+      {/* Bulk Invite Dialog */}
+      <WorkspaceBulkInviteDialog
+        workspaceId={workspace.id}
+        open={showBulkInviteDialog}
+        onOpenChange={setShowBulkInviteDialog}
+        onInvited={() => refetch()}
+      />
+
+      {/* Change Role Dialog */}
+      <WorkspaceChangeRoleDialog
+        member={memberToChangeRole}
+        open={!!memberToChangeRole}
+        onOpenChange={(open) => !open && setMemberToChangeRole(null)}
+        onRoleChanged={() => refetch()}
+      />
+
+      {/* Remove Member Dialog */}
+      <WorkspaceRemoveMemberDialog
+        member={memberToRemove}
+        open={!!memberToRemove}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+        onRemoved={() => refetch()}
+      />
     </Card>
   );
 }

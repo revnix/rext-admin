@@ -20,6 +20,7 @@ import { EditableBrandVoiceCard } from "@/components/workspace/editable-brand-vo
 import { WorkspaceAnalyticsDashboard } from "@/components/workspace/workspace-analytics-dashboard";
 import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
 import { WorkspaceDetailSkeleton } from "@/components/workspace/workspace-detail-skeleton";
+import { WorkspaceInvitationsPanel } from "@/components/workspace/workspace-invitations-panel";
 import { WorkspaceKnowledgeSummaryCard } from "@/components/workspace/workspace-knowledge-summary-card";
 import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-panel";
 import { WorkspaceOverviewForm } from "@/components/workspace/workspace-overview-form";
@@ -219,6 +220,7 @@ export default function WorkspaceDetailPage() {
 
               <TabsContent value="members" className="space-y-6">
                 <WorkspaceMembersPanel workspace={workspace} />
+                <WorkspaceInvitationsPanel workspaceId={workspaceId} />
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-6">

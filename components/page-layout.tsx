@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ImpersonationBanner } from "@/components/impersonation/impersonation-banner";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
 import { QuickAddDropdown } from "@/components/quick-add-dropdown";
 import { SearchDialog } from "@/components/search-dialog";
@@ -136,6 +137,9 @@ export function PageLayout({
             <QuickAddDropdown />
           </div>
         </header>
+
+        {/* Impersonation Banner */}
+        <ImpersonationBanner />
 
         <div className={`flex flex-1 flex-col gap-4 p-4 pt-6 ${className}`}>
           {/* Page Header */}

@@ -714,6 +714,294 @@ export class WorkspaceApiService {
     }>("GET", `/api/workspace/${workspaceId}/members`);
   }
 
+  /**
+   * Add member to workspace by email
+   */
+  async addWorkspaceMember(
+    workspaceId: string,
+    email: string,
+  ): Promise<{
+    member: {
+      id: string;
+      user_id: string;
+      email: string;
+      display_name: string;
+      status: string;
+    };
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    if (!email || !this.isValidEmail(email)) {
+      throw new WorkspaceApiError("INVALID_REQUEST", "Valid email is required");
+    }
+
+    return this.makeRequest<{
+      member: {
+        id: string;
+        user_id: string;
+        email: string;
+        display_name: string;
+        status: string;
+      };
+    }>("POST", `/api/workspace/${workspaceId}/members`, { email });
+  }
+
+  /**
+   * Remove member from workspace
+   */
+  async removeWorkspaceMember(
+    workspaceId: string,
+    memberId: string,
+  ): Promise<{ member_id: string }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    this.validateUuid(memberId, "member_id");
+
+    return this.makeRequest<{ member_id: string }>(
+      "DELETE",
+      `/api/workspace/${workspaceId}/members/${memberId}`,
+    );
+  }
+
+  /**
+   * Change workspace member's role
+   */
+  async changeMemberRole(
+    workspaceId: string,
+    memberId: string,
+    roleId: string,
+  ): Promise<{
+    member_id: string;
+    user_id: string;
+    workspace_id: string;
+    role_id: string;
+    role_name: string;
+    updated_by: string;
+    updated_at: string;
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    this.validateUuid(memberId, "member_id");
+    this.validateUuid(roleId, "role_id");
+
+    return this.makeRequest<{
+      member_id: string;
+      user_id: string;
+      workspace_id: string;
+      role_id: string;
+      role_name: string;
+      updated_by: string;
+      updated_at: string;
+    }>("PUT", `/api/workspace/${workspaceId}/members/${memberId}/role`, {
+      role_id: roleId,
+    });
+  }
+
+  // ============================================================================
+  // WORKSPACE INVITATIONS ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Create workspace invitation
+   */
+  async createInvitation(data: {
+    workspace_id: string;
+    email: string;
+    role_id: string;
+    expires_in_days?: number;
+  }): Promise<{
+    invitation: {
+      id: string;
+      workspace_id: string;
+      email: string;
+      role_id: string;
+      status: string;
+      expires_at: string;
+      created_at: string;
+    };
+  }> {
+    this.validateUuid(data.workspace_id, "workspace_id");
+    this.validateUuid(data.role_id, "role_id");
+    if (!data.email || !this.isValidEmail(data.email)) {
+      throw new WorkspaceApiError("INVALID_REQUEST", "Valid email is required");
+    }
+
+    return this.makeRequest<{
+      invitation: {
+        id: string;
+        workspace_id: string;
+        email: string;
+        role_id: string;
+        status: string;
+        expires_at: string;
+        created_at: string;
+      };
+    }>("POST", "/api/workspace/invitations/", data);
+  }
+
+  /**
+   * Accept workspace invitation
+   */
+  async acceptInvitation(token: string): Promise<{
+    workspace_member: {
+      id: string;
+      workspace_id: string;
+      user_id: string;
+      role_id: string;
+      status: string;
+    };
+  }> {
+    if (!token || token.trim().length === 0) {
+      throw new WorkspaceApiError(
+        "INVALID_REQUEST",
+        "Invitation token is required",
+      );
+    }
+
+    return this.makeRequest<{
+      workspace_member: {
+        id: string;
+        workspace_id: string;
+        user_id: string;
+        role_id: string;
+        status: string;
+      };
+    }>("POST", "/api/workspace/invitations/accept", { token });
+  }
+
+  /**
+   * Revoke workspace invitation
+   */
+  async revokeInvitation(invitationId: string): Promise<{
+    invitation_id: string;
+    status: string;
+  }> {
+    this.validateUuid(invitationId, "invitation_id");
+
+    return this.makeRequest<{
+      invitation_id: string;
+      status: string;
+    }>("POST", `/api/workspace/invitations/${invitationId}/revoke`);
+  }
+
+  /**
+   * List sent invitations (invitations created by current user)
+   */
+  async listSentInvitations(workspaceId?: string): Promise<{
+    invitations: Array<{
+      id: string;
+      workspace_id: string;
+      email: string;
+      role_id: string;
+      status: string;
+      expires_at: string;
+      created_at: string;
+      workspace_name?: string;
+      role_name?: string;
+    }>;
+    total_count: number;
+  }> {
+    const endpoint = workspaceId
+      ? `/api/workspace/invitations/sent?workspace_id=${workspaceId}`
+      : "/api/workspace/invitations/sent";
+
+    return this.makeRequest<{
+      invitations: Array<{
+        id: string;
+        workspace_id: string;
+        email: string;
+        role_id: string;
+        status: string;
+        expires_at: string;
+        created_at: string;
+        workspace_name?: string;
+        role_name?: string;
+      }>;
+      total_count: number;
+    }>("GET", endpoint);
+  }
+
+  /**
+   * List received invitations (invitations for current user's email)
+   */
+  async listReceivedInvitations(): Promise<{
+    invitations: Array<{
+      id: string;
+      workspace_id: string;
+      email: string;
+      role_id: string;
+      status: string;
+      expires_at: string;
+      created_at: string;
+      workspace_name?: string;
+      role_name?: string;
+      invitation_token?: string;
+    }>;
+    total_count: number;
+  }> {
+    return this.makeRequest<{
+      invitations: Array<{
+        id: string;
+        workspace_id: string;
+        email: string;
+        role_id: string;
+        status: string;
+        expires_at: string;
+        created_at: string;
+        workspace_name?: string;
+        role_name?: string;
+        invitation_token?: string;
+      }>;
+      total_count: number;
+    }>("GET", "/api/workspace/invitations/received");
+  }
+
+  /**
+   * Create bulk invitations
+   */
+  async createBulkInvitations(data: {
+    workspace_id: string;
+    emails: string[];
+    role_id: string;
+    expires_in_days?: number;
+  }): Promise<{
+    total_requested: number;
+    successful: number;
+    failed: number;
+    results: Array<{
+      email: string;
+      success: boolean;
+      invitation_id?: string;
+      error_message?: string;
+    }>;
+  }> {
+    this.validateUuid(data.workspace_id, "workspace_id");
+    this.validateUuid(data.role_id, "role_id");
+
+    if (!data.emails || data.emails.length === 0) {
+      throw new WorkspaceApiError(
+        "INVALID_REQUEST",
+        "At least one email is required",
+      );
+    }
+
+    if (data.emails.length > 50) {
+      throw new WorkspaceApiError(
+        "INVALID_REQUEST",
+        "Maximum 50 emails allowed per request",
+      );
+    }
+
+    return this.makeRequest<{
+      total_requested: number;
+      successful: number;
+      failed: number;
+      results: Array<{
+        email: string;
+        success: boolean;
+        invitation_id?: string;
+        error_message?: string;
+      }>;
+    }>("POST", "/api/workspace/invitations/bulk", data);
+  }
+
   // ============================================================================
   // PRIVATE HELPER METHODS
   // ============================================================================
@@ -1108,6 +1396,11 @@ export class WorkspaceApiService {
     } catch {
       return false;
     }
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 
   // ============================================================================

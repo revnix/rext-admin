@@ -120,6 +120,17 @@ export {
   backendService,
   generateTopicsWithBackend,
 } from "./backend";
+export type {
+  ImpersonationStartRequest,
+  ImpersonationStartResponse,
+  ImpersonationStatus,
+  ImpersonationStopResponse,
+} from "./impersonation-api";
+// Export impersonation API service
+export {
+  ImpersonationApiService,
+  impersonationApiService,
+} from "./impersonation-api";
 // Export knowledge API services
 export {
   FileKnowledgeService,
@@ -131,6 +142,17 @@ export {
   WebKnowledgeService,
   webKnowledgeService,
 } from "./knowledge-api";
+export type {
+  Permission,
+  PermissionListResponse,
+  Role,
+  RoleListResponse,
+} from "./role-api";
+// Export role API service
+export {
+  RoleApiService,
+  roleApiService,
+} from "./role-api";
 // Export security monitoring API service
 export {
   getFailedLogins,
