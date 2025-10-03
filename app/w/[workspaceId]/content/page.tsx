@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  AlertCircle,
   Calendar,
   Copy,
   Edit3,
   Eye,
   FileText,
+  Loader2,
   Plus,
   Settings,
   Trash2,
@@ -15,7 +17,9 @@ import Link from "next/link";
 import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -40,8 +44,69 @@ export default function WorkspaceContentPage() {
     `Manage published and scheduled content for ${workspace?.title || "this workspace"}.`,
   );
 
-  // TODO: Replace with actual content data from API
-  const contentData: ContentData[] = [];
+  // Fetch content data from API
+  const { data: contentResponse, isLoading, error } = useContent(workspaceId);
+
+  // Map ContentResponse to ContentData for DataTable
+  const contentData: ContentData[] = (contentResponse?.content || []).map(
+    (item) => ({
+      id: item.id,
+      title: item.title,
+      type: item.metadata?.content_type || "Article",
+      contentType: item.content_format || "Markdown",
+      status: item.status,
+      publishedTo: item.metadata?.target_platform || "-",
+      publishDate: item.updated_at || null,
+      scheduledDate: null,
+      flowName: "-",
+      flowId: "-",
+      wordCount: item.metadata?.content_word_count || 0,
+      readTime: item.metadata?.reading_time_minutes
+        ? `${item.metadata.reading_time_minutes} min`
+        : "-",
+      engagement: {
+        views: 0,
+        likes: 0,
+        shares: 0,
+      },
+      seoScore: item.seo_data?.content_seo_score || 0,
+      author: "-",
+      humanReviewer: "-",
+      keywords: item.seo_data?.content_primary_keywords || [],
+      platforms: item.metadata?.target_platform
+        ? [item.metadata.target_platform]
+        : [],
+      lastModified: item.updated_at || item.created_at,
+      created: item.created_at,
+      content: item.body_markdown || "",
+    }),
+  );
+
+  // Add loading state
+  if (isLoading) {
+    return (
+      <PageLayout title="Content Library" breadcrumbs={breadcrumbs}>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Add error state
+  if (error) {
+    return (
+      <PageLayout title="Content Library" breadcrumbs={breadcrumbs}>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load content. Please try again.
+          </AlertDescription>
+        </Alert>
+      </PageLayout>
+    );
+  }
 
   const columns = [
     {
