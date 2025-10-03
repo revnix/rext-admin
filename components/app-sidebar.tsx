@@ -3,6 +3,7 @@
 import {
   Bell,
   Brain,
+  ChartBar as ChartBarIcon,
   Database,
   FileText,
   Globe,
@@ -14,6 +15,7 @@ import {
   Shield,
   StickyNote,
   Upload,
+  User,
   UserCog,
   Users,
 } from "lucide-react";
@@ -58,17 +60,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ],
     },
     {
-      groupLabel: "Manage",
+      groupLabel: "Workspace",
       items: [
-        {
-          title: "Workspaces",
-          url: "/workspaces",
-          icon: Database,
-          anyPermission: [
-            PERMISSIONS.WORKSPACE_READ,
-            PERMISSIONS.WORKSPACE_CREATE,
-          ],
-        },
         {
           title: "Topics",
           url: currentWorkspace
@@ -83,10 +76,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/workspaces",
           icon: FileText,
         },
+        {
+          title: "Users",
+          url: currentWorkspace
+            ? workspaceRoutes.users(currentWorkspace.id)
+            : "/workspaces",
+          icon: Users,
+          anyPermission: [PERMISSIONS.USER_READ],
+        },
+        {
+          title: "Analytics",
+          url: currentWorkspace
+            ? workspaceRoutes.analytics(currentWorkspace.id)
+            : "/workspaces",
+          icon: ChartBarIcon,
+        },
+        {
+          title: "Settings",
+          url: currentWorkspace
+            ? workspaceRoutes.settings(currentWorkspace.id)
+            : "/workspaces",
+          icon: Settings2,
+          anyPermission: [PERMISSIONS.WORKSPACE_UPDATE],
+        },
       ],
     },
     {
-      groupLabel: "Configuration",
+      groupLabel: "Knowledge",
       items: [
         {
           title: "Knowledge",
@@ -127,11 +143,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
           ],
         },
+      ],
+    },
+    {
+      groupLabel: "Manage",
+      items: [
         {
-          title: "Users",
-          url: "/users",
-          icon: Users,
-          anyPermission: [PERMISSIONS.USER_READ, PERMISSIONS.USER_CREATE],
+          title: "Workspaces",
+          url: "/workspaces",
+          icon: Database,
+          anyPermission: [
+            PERMISSIONS.WORKSPACE_READ,
+            PERMISSIONS.WORKSPACE_CREATE,
+          ],
+        },
+      ],
+    },
+    {
+      groupLabel: "Personal",
+      items: [
+        {
+          title: "Settings",
+          url: "/settings/general",
+          icon: Settings2,
+        },
+        {
+          title: "Profile",
+          url: "/profile",
+          icon: User,
         },
       ],
     },
@@ -150,16 +189,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/admin/roles",
           icon: Shield,
           anyPermission: [PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ],
-        },
-      ],
-    },
-    {
-      groupLabel: "Settings",
-      items: [
-        {
-          title: "General",
-          url: "/settings/general",
-          icon: Settings2,
         },
       ],
     },

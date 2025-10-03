@@ -20,7 +20,7 @@ export const workspaceRoutes = {
   topics: (workspaceId: string) => `/w/${workspaceId}/topics`,
   topicDetail: (workspaceId: string, topicId: string) =>
     `/w/${workspaceId}/topics/${topicId}`,
-  topicCreate: (_workspaceId: string) => `/topics/create`, // Fallback to global for now
+  topicCreate: (workspaceId: string) => `/w/${workspaceId}/topics/create`,
 
   /**
    * Content routes
