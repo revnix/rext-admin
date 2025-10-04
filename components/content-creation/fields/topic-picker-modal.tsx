@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useTopics } from "@/hooks/use-topics";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 interface TopicPickerModalProps {
@@ -41,9 +42,12 @@ export function TopicPickerModal({
   selectedTopicId,
 }: TopicPickerModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const currentWorkspace = useCurrentWorkspace();
+  const workspaceId = currentWorkspace?.id || "";
 
   // Fetch topics from API
-  const { data: topics = [], isLoading: isLoadingTopics } = useTopics();
+  const { data: topics = [], isLoading: isLoadingTopics } =
+    useTopics(workspaceId);
 
   // Filter topics based on search and only show approved ones
   const filteredTopics = useMemo(() => {

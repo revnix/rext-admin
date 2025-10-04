@@ -208,13 +208,16 @@ export class BackendService {
    * console.log(`Saved ${result.saved_count} topics successfully`);
    * ```
    */
-  async saveTopics(topics: GeneratedTopic[]): Promise<SaveTopicResponse> {
+  async saveTopics(
+    topics: GeneratedTopic[],
+    workspaceId: string,
+  ): Promise<SaveTopicResponse> {
     this.validateConfig();
 
     const requestId = generateRequestId();
 
-    // Transform GeneratedTopic[] to backend SaveTopicRequest format
-    const payload = transformTopicsForBackend(topics);
+    // Transform GeneratedTopic[] to backend SaveTopicRequest format and add workspace_id
+    const payload = transformTopicsForBackend(topics, workspaceId);
 
     return this.executeSingleGenericRequest(
       "/api/topic/save-topic",
@@ -238,7 +241,10 @@ export class BackendService {
    * console.log(`Deleted ${result.deleted_count} topics successfully`);
    * ```
    */
-  async deleteTopics(topicIds: string[]): Promise<{
+  async deleteTopics(
+    topicIds: string[],
+    workspaceId: string,
+  ): Promise<{
     success: boolean;
     deleted_count: number;
     message: string;
@@ -254,7 +260,7 @@ export class BackendService {
     const payload = { topic_ids: topicIds };
 
     return this.executeSingleGenericRequest(
-      "/api/topic/delete-topic",
+      `/api/topic/delete-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
       payload,
       requestId,
       "DELETE",
@@ -271,13 +277,13 @@ export class BackendService {
    *
    * @returns Promise<GeneratedTopic[]> - Array of topics from backend
    */
-  async getTopics(): Promise<GeneratedTopic[]> {
+  async getTopics(workspaceId: string): Promise<GeneratedTopic[]> {
     this.validateConfig();
 
     const requestId = generateRequestId();
 
     const response = await fetch(
-      `${this.config.baseUrl}/api/topic/get-topics`,
+      `${this.config.baseUrl}/api/topic/get-topics?workspace_id=${encodeURIComponent(workspaceId)}`,
       {
         method: "GET",
         headers: {
@@ -300,16 +306,20 @@ export class BackendService {
    * Get a single topic by ID from the backend API.
    *
    * @param topicId - ID of the topic to retrieve
+   * @param workspaceId - ID of the workspace the topic belongs to
    * @returns Promise<GeneratedTopic | null> - Topic data or null if not found
    */
-  async getTopic(topicId: string): Promise<GeneratedTopic | null> {
+  async getTopic(
+    topicId: string,
+    workspaceId: string,
+  ): Promise<GeneratedTopic | null> {
     this.validateConfig();
 
     const requestId = generateRequestId();
 
     try {
       const response = await fetch(
-        `${this.config.baseUrl}/api/topic/get-topic/${topicId}`,
+        `${this.config.baseUrl}/api/topic/get-topic/${topicId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
           headers: {

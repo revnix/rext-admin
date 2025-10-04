@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import { use } from "react";
 import { useTopic } from "@/hooks/use-topics";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import { TopicDetailClient } from "../topic-detail-client";
 
 type TopicDetailPageProps = {
@@ -13,7 +14,10 @@ type TopicDetailPageProps = {
 
 export default function TopicDetailPage({ params }: TopicDetailPageProps) {
   const { id } = use(params);
-  const { data: topic, isLoading, error } = useTopic(id);
+  const currentWorkspace = useCurrentWorkspace();
+  const workspaceId = currentWorkspace?.id || "";
+
+  const { data: topic, isLoading, error } = useTopic(id, workspaceId);
 
   if (isLoading) {
     return (

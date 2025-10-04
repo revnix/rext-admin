@@ -564,6 +564,7 @@ type BackendSaveTopicItem = BackendSaveTopicRequestList["topics"][number];
 
 export const transformTopicForSaving = (
   topic: GeneratedTopic,
+  workspaceId: string,
 ): BackendSaveTopicItem => {
   // Validate input
   if (!isValidGeneratedTopic(topic)) {
@@ -584,6 +585,7 @@ export const transformTopicForSaving = (
   // Transform to backend format (match SaveTopicRequest schema)
   const backendTopic: BackendSaveTopicItem = {
     id: topic.id,
+    workspace_id: workspaceId,
     title: topic.title,
     angle: topic.angle,
     description: topic.description || topic.angle, // Use angle as fallback if no description
@@ -625,10 +627,11 @@ export const transformTopicForSaving = (
  */
 export const transformTopicsForSaving = (
   topics: GeneratedTopic[],
+  workspaceId: string,
 ): BackendSaveTopicRequestList["topics"] => {
   return topics.map((topic, index) => {
     try {
-      return transformTopicForSaving(topic);
+      return transformTopicForSaving(topic, workspaceId);
     } catch (error) {
       throw new Error(`Failed to transform topic at index ${index}: ${error}`);
     }

@@ -41,6 +41,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { useTopicApproveServerAction } from "@/hooks/use-topic-mutations-server-actions";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import { logger } from "@/lib/logger";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -52,8 +53,10 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const detailLogger = logger.forComponent("TopicDetailClient");
+  const currentWorkspace = useCurrentWorkspace();
+  const workspaceId = currentWorkspace?.id || "";
 
-  const deleteMutation = useTopicDeleteMutation();
+  const deleteMutation = useTopicDeleteMutation(workspaceId);
   const approveMutation = useTopicApproveServerAction();
 
   // The topic data is already in the correct GeneratedTopic format

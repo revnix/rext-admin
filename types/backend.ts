@@ -217,6 +217,7 @@ export interface SaveTopicRequest {
 export interface BackendSaveTopicRequestList {
   topics: Array<{
     id: string;
+    workspace_id: string; // Required for workspace-scoped topics
     title: string;
     angle: string;
     description: string; // Required by backend validation

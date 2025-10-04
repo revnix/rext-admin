@@ -46,6 +46,7 @@ export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
   const temporaryId = params.temporaryId as string;
+  const urlWorkspaceId = params.workspaceId as string; // Extract from URL
   const [showStartOverDialog, setShowStartOverDialog] = useState(false);
   const currentWorkspace = useCurrentWorkspace();
 
@@ -65,18 +66,17 @@ export default function ResultsPage() {
   } = useTopicBuilderStore();
   const generateMoreMutation = useTopicGenerationMutation();
 
-  // Get workspace ID from current workspace
-  const workspaceId = currentWorkspace?.id || "";
-  const isWorkspaceLoading = !currentWorkspace;
+  // Prefer workspace ID from URL params (most reliable), fallback to currentWorkspace
+  const workspaceId = urlWorkspaceId || currentWorkspace?.id || "";
+  const _isWorkspaceLoading = !urlWorkspaceId && !currentWorkspace;
 
-  // Show warning if workspace isn't loaded (user should use workspace-scoped route)
-  if (!isWorkspaceLoading && !workspaceId) {
-    console.warn(
-      "No workspace selected. Please use workspace-scoped route: /w/[workspaceId]/topics/create",
-    );
-  }
+  console.log("[WorkspaceResults] Workspace ID:", {
+    urlWorkspaceId,
+    currentWorkspaceId: currentWorkspace?.id,
+    finalWorkspaceId: workspaceId,
+  });
 
-  // Use dummy ID during loading to avoid hook errors
+  // Use workspace ID from URL or current workspace
   const bulkSaveMutation = useTopicBulkSaveMutation(
     workspaceId || "00000000-0000-0000-0000-000000000000",
   );

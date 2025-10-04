@@ -10,6 +10,7 @@ import {
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { BackendError } from "@/types/backend";
 import type {
   GeneratedTopic,
@@ -74,6 +75,9 @@ interface UseTopicBuilderReturn {
 export const useTopicBuilder = (): UseTopicBuilderReturn => {
   // Navigation
   const router = useRouter();
+
+  // Get current workspace for workspace-scoped navigation
+  const currentWorkspace = useCurrentWorkspace();
 
   // TanStack Query mutation for topic generation
   const generateMutation = useTopicGenerationMutation();
@@ -450,9 +454,19 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
               formData: dataToUse,
             });
 
-            // Navigate to results page
-            console.log("Navigating to results page...");
-            router.push(`/topics/create/results/${sessionId}`);
+            // Navigate to workspace-scoped results page
+            const workspaceId = currentWorkspace?.id;
+            if (!workspaceId) {
+              console.error("Cannot navigate: No workspace selected");
+              toast.error("No workspace selected", {
+                description:
+                  "Please select a workspace before generating topics",
+              });
+              return;
+            }
+
+            console.log("Navigating to workspace-scoped results page...");
+            router.push(`/w/${workspaceId}/topics/create/results/${sessionId}`);
           } catch (sessionError) {
             console.error("Failed to save session:", sessionError);
             // Don't throw, just log the error and continue
@@ -482,7 +496,14 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         });
       }
     },
-    [formData, validateStep, connectionStatus, router, generateMutation],
+    [
+      formData,
+      validateStep,
+      connectionStatus,
+      router,
+      generateMutation,
+      currentWorkspace?.id,
+    ],
   );
 
   const clearTopics = useCallback(() => {
@@ -576,10 +597,19 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
   const navigateToResults = useCallback(
     (sessionId: string): void => {
-      console.log(`Navigating to results page: ${sessionId}`);
-      router.push(`/topics/create/results/${sessionId}`);
+      const workspaceId = currentWorkspace?.id;
+      if (!workspaceId) {
+        console.error("Cannot navigate: No workspace selected");
+        toast.error("No workspace selected", {
+          description: "Please select a workspace before navigating to results",
+        });
+        return;
+      }
+
+      console.log(`Navigating to workspace-scoped results page: ${sessionId}`);
+      router.push(`/w/${workspaceId}/topics/create/results/${sessionId}`);
     },
-    [router],
+    [router, currentWorkspace],
   );
 
   return {

@@ -18,6 +18,7 @@ import {
 } from "@/lib/content-creation/dependency-engine";
 import type { Draft } from "@/lib/content-creation/draft-manager";
 import { WIZARD_CONFIG } from "@/lib/content-creation/wizard-config";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type {
   ContentCreationFormData,
   ContentCreationWizardProps,
@@ -389,9 +390,13 @@ export function ContentCreationWizard({
     dependencyEngine.updateFormData(state.formData);
   }, [state.formData, dependencyEngine]);
 
+  const currentWorkspace = useCurrentWorkspace();
+  const workspaceId = currentWorkspace?.id || "";
+
   // Fetch topic data if initialTopicId is provided
   const { data: initialTopic, isSuccess: isInitialTopicLoaded } = useTopic(
     initialTopicId || "",
+    workspaceId,
   );
 
   // Handle pre-filling from initial topic

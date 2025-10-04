@@ -20,6 +20,7 @@ import {
   INDUSTRY_OPTIONS,
   PLATFORM_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { WizardAction, WizardStepProps } from "@/types/content-creation";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
@@ -50,8 +51,11 @@ export function TopicContentStep({
   dependencyEngine,
   dispatch,
 }: TopicContentStepProps) {
+  const currentWorkspace = useCurrentWorkspace();
+  const workspaceId = currentWorkspace?.id || "";
+
   // Fetch topics from API
-  const { data: topics = [] } = useTopics();
+  const { data: topics = [] } = useTopics(workspaceId);
 
   // Create stable references for callbacks to avoid dependency loops
   const onFieldChangeRef = useRef(onFieldChange);

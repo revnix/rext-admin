@@ -97,7 +97,7 @@ interface TopicMutationError {
 /**
  * TanStack Query mutation hook for saving a single topic
  */
-export function useTopicSaveMutation() {
+export function useTopicSaveMutation(workspaceId: string) {
   const queryClient = getQueryClient();
   const {
     optimisticallyMarkTopicSaved,
@@ -115,8 +115,8 @@ export function useTopicSaveMutation() {
       const requestId = generateRequestId("topic_save");
 
       try {
-        // Use backend service directly
-        const result = await backendService.saveTopics([topic]);
+        // Use backend service directly with workspace_id
+        const result = await backendService.saveTopics([topic], workspaceId);
 
         // Transform to expected response format
         const response: SaveTopicResponse = {
@@ -234,7 +234,7 @@ export function useTopicSaveMutation() {
 /**
  * TanStack Query mutation hook for saving multiple topics
  */
-export function useTopicBulkSaveMutation() {
+export function useTopicBulkSaveMutation(workspaceId: string) {
   const queryClient = getQueryClient();
 
   return useMutation<
@@ -249,8 +249,8 @@ export function useTopicBulkSaveMutation() {
       const requestId = generateRequestId("topic_bulk_save");
 
       try {
-        // Use backend service directly
-        const result = await backendService.saveTopics(topics);
+        // Use backend service directly with workspace_id
+        const result = await backendService.saveTopics(topics, workspaceId);
 
         const response: SaveTopicResponse = {
           success: result.success,
@@ -350,7 +350,7 @@ export function useTopicBulkSaveMutation() {
 /**
  * TanStack Query mutation hook for deleting topics
  */
-export function useTopicDeleteMutation() {
+export function useTopicDeleteMutation(workspaceId: string) {
   const queryClient = getQueryClient();
 
   return useMutation<
@@ -363,8 +363,8 @@ export function useTopicDeleteMutation() {
       const requestId = generateRequestId("topic_delete");
 
       try {
-        // Use backend service directly
-        const result = await backendService.deleteTopics(topicIds);
+        // Use backend service directly with workspace_id
+        const result = await backendService.deleteTopics(topicIds, workspaceId);
 
         const response: DeleteTopicResponse = {
           success: result.success,

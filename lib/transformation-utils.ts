@@ -6,9 +6,13 @@ import type { GeneratedTopic } from "@/types/topic-builder";
  * persisting topics. This keeps only the surface level mapping that was
  * previously buried inside the 1k+ line transformer module.
  */
-export function transformTopicForBackend(topic: GeneratedTopic) {
+export function transformTopicForBackend(
+  topic: GeneratedTopic,
+  workspaceId: string,
+) {
   return {
     id: topic.id,
+    workspace_id: workspaceId,
     title: topic.title,
     angle: topic.angle,
     description: topic.description ?? topic.title,
@@ -41,8 +45,9 @@ export function transformTopicForBackend(topic: GeneratedTopic) {
  */
 export function transformTopicsForBackend(
   topics: GeneratedTopic[],
+  workspaceId: string,
 ): BackendSaveTopicRequestList {
   return {
-    topics: topics.map(transformTopicForBackend),
+    topics: topics.map((topic) => transformTopicForBackend(topic, workspaceId)),
   };
 }

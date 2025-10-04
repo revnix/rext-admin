@@ -23,6 +23,7 @@ import { useTopicGenerationMutation } from "@/hooks/useTopicGenerationMutation";
 import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { logger } from "@/lib/logger";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 const topicsCreateLogger = logger.forComponent("TopicsCreatePage");
@@ -30,6 +31,7 @@ const topicsCreateLogger = logger.forComponent("TopicsCreatePage");
 export default function TopicBuilderPage() {
   const router = useRouter();
   const [showStartOverDialog, setShowStartOverDialog] = useState(false);
+  const currentWorkspace = useCurrentWorkspace();
 
   const {
     formData,
@@ -52,7 +54,15 @@ export default function TopicBuilderPage() {
     clearNewlyAddedHighlights,
   } = useTopicBuilderStore();
   const generateMoreMutation = useTopicGenerationMutation();
-  const topicSaveMutation = useTopicSaveMutation();
+
+  // Get workspace ID from current workspace
+  const workspaceId = currentWorkspace?.id || "";
+  const isWorkspaceLoading = !currentWorkspace;
+
+  // Only initialize mutation if we have a workspace (use dummy ID during loading to avoid hook errors)
+  const topicSaveMutation = useTopicSaveMutation(
+    workspaceId || "00000000-0000-0000-0000-000000000000",
+  );
 
   const {
     saveTopic,
@@ -75,6 +85,24 @@ export default function TopicBuilderPage() {
       return;
     }
 
+    // Check if workspace is still loading
+    if (isWorkspaceLoading) {
+      topicsCreateLogger.warn("Workspace still loading");
+      toast.warning("Workspace is loading", {
+        description: "Please wait for workspace to load before saving topics",
+      });
+      return;
+    }
+
+    // Check if workspace is selected
+    if (!workspaceId) {
+      topicsCreateLogger.error("No workspace selected");
+      toast.error("Please select a workspace first", {
+        description: "Topics must be saved to a workspace",
+      });
+      return;
+    }
+
     // Check if topic is already saved to prevent duplicates
     if (topic.is_saved || topic._optimisticSaved) {
       topicsCreateLogger.debug("Topic already saved, skipping", {
@@ -88,6 +116,7 @@ export default function TopicBuilderPage() {
       topicsCreateLogger.info("Saving topic to API", {
         topic_id: topicId,
         title: topic.title,
+        workspace_id: workspaceId,
       });
 
       // Use the proper API mutation

@@ -15,8 +15,8 @@ type WorkspaceTopicDetailPageProps = {
 export default function WorkspaceTopicDetailPage({
   params,
 }: WorkspaceTopicDetailPageProps) {
-  const { id } = use(params);
-  const { data: topic, isLoading, error } = useTopic(id);
+  const { id, workspaceId } = use(params);
+  const { data: topic, isLoading, error } = useTopic(id, workspaceId);
 
   if (isLoading) {
     return (

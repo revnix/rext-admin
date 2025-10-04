@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { classifyError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { BackendError } from "@/types/backend";
 import { type TopicEditFormData, topicEditFormSchema } from "@/types/forms";
 import type { GeneratedTopic } from "@/types/topic-builder";
@@ -85,6 +87,7 @@ export function TopicActions({
   variant = "dropdown",
   showLabels = false,
 }: TopicActionsProps) {
+  const currentWorkspace = useCurrentWorkspace();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -118,8 +121,14 @@ export function TopicActions({
     navigatingToContent?: string;
   }>({});
 
-  // TanStack Query mutation for optimistic saves
-  const saveMutation = useTopicSaveMutation();
+  // Get workspace ID from current workspace
+  const workspaceId = currentWorkspace?.id || "";
+  const isWorkspaceLoading = !currentWorkspace;
+
+  // TanStack Query mutation for optimistic saves (use dummy ID during loading)
+  const saveMutation = useTopicSaveMutation(
+    workspaceId || "00000000-0000-0000-0000-000000000000",
+  );
 
   // Router for navigation
   const router = useRouter();
@@ -174,6 +183,22 @@ export function TopicActions({
 
   const handleSave = async () => {
     clearFeedback("saving");
+
+    // Check if workspace is still loading
+    if (isWorkspaceLoading) {
+      toast.warning("Workspace is loading", {
+        description: "Please wait for workspace to load before saving",
+      });
+      return;
+    }
+
+    // Check if workspace is selected
+    if (!workspaceId) {
+      toast.error("Please select a workspace first", {
+        description: "Topics must be saved to a workspace",
+      });
+      return;
+    }
 
     try {
       // Set transient success early for responsive feedback (auto-clears)

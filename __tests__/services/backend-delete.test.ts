@@ -40,7 +40,10 @@ describe("BackendService deleteTopics", () => {
       });
 
       const topicIds = ["topic_1", "topic_2"];
-      const result = await backendService.deleteTopics(topicIds);
+      const result = await backendService.deleteTopics(
+        topicIds,
+        "test-workspace-id",
+      );
 
       // Verify the direct API call
       expect(fetch).toHaveBeenCalledWith(
@@ -68,18 +71,18 @@ describe("BackendService deleteTopics", () => {
       });
 
       await expect(
-        unconfiguredService.deleteTopics(["topic_1"]),
+        unconfiguredService.deleteTopics(["topic_1"], "test-workspace-id"),
       ).rejects.toThrow("Backend API URL is not configured");
     });
 
     it("should throw error for empty topic IDs", async () => {
-      await expect(backendService.deleteTopics([])).rejects.toThrow(
-        "No topic IDs provided for deletion",
-      );
+      await expect(
+        backendService.deleteTopics([], "test-workspace-id"),
+      ).rejects.toThrow("No topic IDs provided for deletion");
 
-      await expect(backendService.deleteTopics([])).rejects.toThrow(
-        "No topic IDs provided for deletion",
-      );
+      await expect(
+        backendService.deleteTopics([], "test-workspace-id"),
+      ).rejects.toThrow("No topic IDs provided for deletion");
     });
 
     it("should handle backend API errors properly", async () => {
@@ -90,9 +93,9 @@ describe("BackendService deleteTopics", () => {
         text: () => Promise.resolve("Server error occurred"),
       });
 
-      await expect(backendService.deleteTopics(["topic_1"])).rejects.toThrow(
-        "Backend API error: 500 Internal Server Error",
-      );
+      await expect(
+        backendService.deleteTopics(["topic_1"], "test-workspace-id"),
+      ).rejects.toThrow("Backend API error: 500 Internal Server Error");
 
       // Verify it made the direct API call
       expect(fetch).toHaveBeenCalledWith(
@@ -114,7 +117,10 @@ describe("BackendService deleteTopics", () => {
         () => new Promise(() => {}), // Never resolves
       );
 
-      const deletePromise = timeoutService.deleteTopics(["topic_1"]);
+      const deletePromise = timeoutService.deleteTopics(
+        ["topic_1"],
+        "test-workspace-id",
+      );
 
       // Should timeout quickly
       await expect(deletePromise).rejects.toThrow();
@@ -133,7 +139,7 @@ describe("BackendService deleteTopics", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      await backendService.deleteTopics(["topic_1"]);
+      await backendService.deleteTopics(["topic_1"], "test-workspace-id");
 
       // Verify it's NOT calling the Next.js API route
       expect(fetch).not.toHaveBeenCalledWith(
@@ -153,9 +159,9 @@ describe("BackendService deleteTopics", () => {
     it("should handle network errors", async () => {
       (fetch as jest.Mock).mockRejectedValue(new Error("Network error"));
 
-      await expect(backendService.deleteTopics(["topic_1"])).rejects.toThrow(
-        "Network error",
-      );
+      await expect(
+        backendService.deleteTopics(["topic_1"], "test-workspace-id"),
+      ).rejects.toThrow("Network error");
     });
 
     it("should pass correct payload format", async () => {
@@ -166,7 +172,7 @@ describe("BackendService deleteTopics", () => {
       });
 
       const topicIds = ["topic_1", "topic_2", "topic_3"];
-      await backendService.deleteTopics(topicIds);
+      await backendService.deleteTopics(topicIds, "test-workspace-id");
 
       // Verify the payload format matches backend expectation
       expect(fetch).toHaveBeenCalledWith(
@@ -186,7 +192,7 @@ describe("BackendService deleteTopics", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      await backendService.deleteTopics(["topic_1"]);
+      await backendService.deleteTopics(["topic_1"], "test-workspace-id");
 
       const fetchCall = (fetch as jest.Mock).mock.calls[0];
       const [url, options] = fetchCall;

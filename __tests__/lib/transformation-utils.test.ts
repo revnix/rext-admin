@@ -30,7 +30,7 @@ const baseTopic: GeneratedTopic = {
 
 describe("transformTopicForBackend", () => {
   it("maps a generated topic to the backend payload", () => {
-    const result = transformTopicForBackend(baseTopic);
+    const result = transformTopicForBackend(baseTopic, "test-workspace-id");
 
     expect(result).toEqual({
       id: baseTopic.id,
@@ -57,7 +57,10 @@ describe("transformTopicForBackend", () => {
       tags: [],
     };
 
-    const result = transformTopicForBackend(topicWithoutOptionalFields);
+    const result = transformTopicForBackend(
+      topicWithoutOptionalFields,
+      "test-workspace-id",
+    );
 
     expect(result.description).toBe(topicWithoutOptionalFields.title);
     expect(result.channel_fit).toEqual([]);
@@ -69,14 +72,16 @@ describe("transformTopicForBackend", () => {
 
 describe("transformTopicsForBackend", () => {
   it("wraps multiple topics in the backend request structure", () => {
-    const result = transformTopicsForBackend([baseTopic]);
+    const result = transformTopicsForBackend([baseTopic], "test-workspace-id");
 
     expect(result).toEqual({
-      topics: [transformTopicForBackend(baseTopic)],
+      topics: [transformTopicForBackend(baseTopic, "test-workspace-id")],
     });
   });
 
   it("handles an empty list", () => {
-    expect(transformTopicsForBackend([])).toEqual({ topics: [] });
+    expect(transformTopicsForBackend([], "test-workspace-id")).toEqual({
+      topics: [],
+    });
   });
 });

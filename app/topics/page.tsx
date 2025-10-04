@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { useTopics } from "@/hooks/use-topics";
 import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import { TopicsClientWrapper } from "./topics-client-wrapper";
 
 export default function TopicsPage() {
   const breadcrumbs = [{ label: "Library", href: "#" }, { label: "Topics" }];
   const queryClient = useQueryClient();
+  const currentWorkspace = useCurrentWorkspace();
+  const workspaceId = currentWorkspace?.id || "";
 
-  const { data: topics, isLoading, error, refetch } = useTopics();
+  const { data: topics, isLoading, error, refetch } = useTopics(workspaceId);
 
   const handleRetry = async () => {
     try {

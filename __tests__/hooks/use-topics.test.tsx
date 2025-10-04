@@ -65,7 +65,7 @@ describe("useTopics", () => {
       }),
     });
 
-    const { result } = renderHook(() => useTopics(), {
+    const { result } = renderHook(() => useTopics("test-workspace-id"), {
       wrapper: createWrapper(),
     });
 
@@ -89,7 +89,7 @@ describe("useTopics", () => {
   it("should handle fetch error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-    const { result } = renderHook(() => useTopics(), {
+    const { result } = renderHook(() => useTopics("test-workspace-id"), {
       wrapper: createWrapper(),
     });
 
@@ -135,7 +135,7 @@ describe("useTopic", () => {
       }),
     });
 
-    const { result } = renderHook(() => useTopic("1"), {
+    const { result } = renderHook(() => useTopic("1", "test-workspace-id"), {
       wrapper: createWrapper(),
     });
 
@@ -163,9 +163,12 @@ describe("useTopic", () => {
       text: async () => "Not found",
     });
 
-    const { result } = renderHook(() => useTopic("nonexistent"), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(
+      () => useTopic("nonexistent", "test-workspace-id"),
+      {
+        wrapper: createWrapper(),
+      },
+    );
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -175,7 +178,7 @@ describe("useTopic", () => {
   });
 
   it("should not fetch when id is empty", async () => {
-    const { result } = renderHook(() => useTopic(""), {
+    const { result } = renderHook(() => useTopic("", "test-workspace-id"), {
       wrapper: createWrapper(),
     });
 
