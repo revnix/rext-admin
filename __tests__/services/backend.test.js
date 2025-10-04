@@ -60,7 +60,7 @@ describe("BackendService", () => {
       const result = await service.generateTopics(mockFormData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/topic/generate-topic",
+        "http://localhost:2024/api/v1/topic/generate-topic",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({

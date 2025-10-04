@@ -62,7 +62,7 @@ export class ContentApiService {
     if (options?.offset) params.append("offset", options.offset.toString());
 
     const queryString = params.toString();
-    const url = `${this.baseUrl}/api/content/${workspaceId}${queryString ? `?${queryString}` : ""}`;
+    const url = `${this.baseUrl}/api/v1/content/${workspaceId}${queryString ? `?${queryString}` : ""}`;
 
     this.log.info("Fetching content list", { workspaceId, options });
 
@@ -110,7 +110,7 @@ export class ContentApiService {
     workspaceId: string,
     contentId: string,
   ): Promise<ContentResponse> {
-    const url = `${this.baseUrl}/api/content/${workspaceId}/${contentId}`;
+    const url = `${this.baseUrl}/api/v1/content/${workspaceId}/${contentId}`;
 
     this.log.info("Fetching content detail", { workspaceId, contentId });
 
@@ -163,7 +163,7 @@ export class ContentApiService {
     workspaceId: string,
     data: CreateContentRequest,
   ): Promise<ContentResponse> {
-    const url = `${this.baseUrl}/api/content/${workspaceId}`;
+    const url = `${this.baseUrl}/api/v1/content/${workspaceId}`;
 
     this.log.info("Creating content", { workspaceId, title: data.title });
 
@@ -216,7 +216,7 @@ export class ContentApiService {
     contentId: string,
     data: UpdateContentRequest,
   ): Promise<ContentResponse> {
-    const url = `${this.baseUrl}/api/content/${workspaceId}/${contentId}`;
+    const url = `${this.baseUrl}/api/v1/content/${workspaceId}/${contentId}`;
 
     this.log.info("Updating content", { workspaceId, contentId });
 
@@ -263,7 +263,7 @@ export class ContentApiService {
    * Delete content
    */
   async deleteContent(workspaceId: string, contentId: string): Promise<void> {
-    const url = `${this.baseUrl}/api/content/${workspaceId}/${contentId}`;
+    const url = `${this.baseUrl}/api/v1/content/${workspaceId}/${contentId}`;
 
     this.log.info("Deleting content", { workspaceId, contentId });
 

@@ -26,7 +26,7 @@ export async function deleteTopic(formData: FormData) {
   try {
     logger.info("Deleting topic via server action", { topicId });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/delete-topic`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/topic/delete-topic`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -92,7 +92,7 @@ export async function deleteTopics(formData: FormData) {
       count: topicIds.length,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/delete-topic`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/topic/delete-topic`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -185,7 +185,7 @@ export async function updateTopic(formData: FormData) {
       ),
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/update-topic`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/topic/update-topic`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -273,7 +273,7 @@ export async function saveTopic(formData: FormData) {
       title: topicData.title,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/topic/save-topic`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/topic/save-topic`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

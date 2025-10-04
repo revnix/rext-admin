@@ -47,7 +47,7 @@ describe("BackendService deleteTopics", () => {
 
       // Verify the direct API call
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/topic/delete-topic",
+        "http://localhost:2024/api/v1/topic/delete-topic",
         expect.objectContaining({
           method: "DELETE",
           headers: expect.objectContaining({
@@ -99,7 +99,7 @@ describe("BackendService deleteTopics", () => {
 
       // Verify it made the direct API call
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/topic/delete-topic",
+        "http://localhost:2024/api/v1/topic/delete-topic",
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -143,13 +143,13 @@ describe("BackendService deleteTopics", () => {
 
       // Verify it's NOT calling the Next.js API route
       expect(fetch).not.toHaveBeenCalledWith(
-        "/api/topics/delete",
+        "/api/v1/topics/delete",
         expect.any(Object),
       );
 
       // Verify it IS calling the backend directly with DELETE method
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/topic/delete-topic",
+        "http://localhost:2024/api/v1/topic/delete-topic",
         expect.objectContaining({
           method: "DELETE",
         }),

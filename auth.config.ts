@@ -13,7 +13,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     console.log("[Auth] Refreshing access token...");
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/refresh`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
       {
         method: "POST",
         headers: {
@@ -75,7 +75,7 @@ export default {
 
           // Call backend login endpoint
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/login`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -175,7 +175,7 @@ export default {
             // Check if user exists by calling backend login
             // For OAuth users, we'll attempt login first
             const loginResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/login`,
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -195,7 +195,7 @@ export default {
                 " ",
               );
               const registerResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/register`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },

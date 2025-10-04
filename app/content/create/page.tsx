@@ -59,7 +59,7 @@ function CreateContentPageContent() {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch("/api/content/create", {
+      const response = await fetch("/api/v1/content/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +102,7 @@ function CreateContentPageContent() {
   ): Promise<void> => {
     try {
       // TODO: Replace with actual API call
-      const response = await fetch("/api/content/drafts", {
+      const response = await fetch("/api/v1/content/drafts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

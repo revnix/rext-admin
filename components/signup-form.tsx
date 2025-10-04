@@ -44,7 +44,7 @@ export function SignupForm({
     try {
       // Register user with backend
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/register`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -50,7 +50,7 @@ export function EditableBrandVoiceCard({
   const updateMutation = useMutation({
     mutationFn: async (data: BrandVoiceFormData) => {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/workspace/${workspace.id}/brand-voice`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/workspace/${workspace.id}/brand-voice`,
         {
           method: "PUT",
           headers: {

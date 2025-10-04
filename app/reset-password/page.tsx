@@ -51,7 +51,7 @@ function ResetPasswordForm() {
 
       // Direct API call - no auth session needed for password reset
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/reset-password`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

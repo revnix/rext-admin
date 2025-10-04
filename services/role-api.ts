@@ -52,7 +52,7 @@ export class RoleApiService {
    * List all roles
    */
   async listRoles(): Promise<RoleListResponse> {
-    const url = `${this.baseUrl}/api/user/roles`;
+    const url = `${this.baseUrl}/api/v1/user/roles`;
 
     try {
       const response = await authenticatedFetch(url, {
@@ -84,7 +84,7 @@ export class RoleApiService {
    * Get role by ID
    */
   async getRole(roleId: string): Promise<{ role: Role }> {
-    const url = `${this.baseUrl}/api/user/roles/${roleId}`;
+    const url = `${this.baseUrl}/api/v1/user/roles/${roleId}`;
 
     try {
       const response = await authenticatedFetch(url, {
@@ -116,7 +116,7 @@ export class RoleApiService {
    * List all permissions
    */
   async listPermissions(): Promise<PermissionListResponse> {
-    const url = `${this.baseUrl}/api/user/permissions`;
+    const url = `${this.baseUrl}/api/v1/user/permissions`;
 
     try {
       const response = await authenticatedFetch(url, {

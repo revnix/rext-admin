@@ -107,7 +107,7 @@ export default function TasksPage() {
   useEffect(() => {
     async function loadTasks() {
       try {
-        const response = await fetch("/api/tasks");
+        const response = await fetch("/api/v1/tasks");
         if (!response.ok) {
           throw new Error(
             `Failed to load tasks: ${response.status} ${response.statusText}`,

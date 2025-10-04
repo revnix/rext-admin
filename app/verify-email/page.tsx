@@ -33,7 +33,7 @@ function VerifyEmailContent() {
 
         // Direct API call - no auth session needed for email verification
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/verify-email`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/verify-email`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

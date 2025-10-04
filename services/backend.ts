@@ -166,7 +166,7 @@ export class BackendService {
       }
 
       const requestPromise = this.executeSingleRequest(
-        "/api/topic/generate-topic",
+        "/api/v1/topic/generate-topic",
         payload,
         requestId,
       );
@@ -186,7 +186,7 @@ export class BackendService {
     }
 
     return this.executeSingleRequest(
-      "/api/topic/generate-topic",
+      "/api/v1/topic/generate-topic",
       payload,
       requestId,
     );
@@ -220,7 +220,7 @@ export class BackendService {
     const payload = transformTopicsForBackend(topics, workspaceId);
 
     return this.executeSingleGenericRequest(
-      "/api/topic/save-topic",
+      "/api/v1/topic/save-topic",
       payload,
       requestId,
       "POST",
@@ -260,7 +260,7 @@ export class BackendService {
     const payload = { topic_ids: topicIds };
 
     return this.executeSingleGenericRequest(
-      `/api/topic/delete-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/topic/delete-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
       payload,
       requestId,
       "DELETE",
@@ -283,7 +283,7 @@ export class BackendService {
     const requestId = generateRequestId();
 
     const response = await fetch(
-      `${this.config.baseUrl}/api/topic/get-topics?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `${this.config.baseUrl}/api/v1/topic/get-topics?workspace_id=${encodeURIComponent(workspaceId)}`,
       {
         method: "GET",
         headers: {
@@ -319,7 +319,7 @@ export class BackendService {
 
     try {
       const response = await fetch(
-        `${this.config.baseUrl}/api/topic/get-topic/${topicId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${this.config.baseUrl}/api/v1/topic/get-topic/${topicId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
           headers: {

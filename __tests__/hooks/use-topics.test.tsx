@@ -75,7 +75,7 @@ describe("useTopics", () => {
 
     expect(result.current.data).toEqual(mockTopics);
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:2024/api/topic/get-topics",
+      "http://localhost:2024/api/v1/topic/get-topics",
       {
         method: "GET",
         headers: {
@@ -145,7 +145,7 @@ describe("useTopic", () => {
 
     expect(result.current.data).toEqual(mockTopic);
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:2024/api/topic/get-topic/1",
+      "http://localhost:2024/api/v1/topic/get-topic/1",
       {
         method: "GET",
         headers: {

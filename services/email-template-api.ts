@@ -69,7 +69,7 @@ export class EmailTemplateAPI {
    */
   async getTemplateVariables(templateType: string): Promise<TemplateVariables> {
     return this.request<TemplateVariables>(
-      `/api/workspace/email-templates/variables/${templateType}`,
+      `/api/v1/workspace/email-templates/variables/${templateType}`,
     );
   }
 
@@ -80,7 +80,7 @@ export class EmailTemplateAPI {
     data: PreviewEmailTemplateRequest,
   ): Promise<PreviewEmailTemplateResponse> {
     return this.request<PreviewEmailTemplateResponse>(
-      "/api/workspace/email-templates/preview",
+      "/api/v1/workspace/email-templates/preview",
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -93,7 +93,7 @@ export class EmailTemplateAPI {
    */
   async listTemplates(workspaceId: string): Promise<EmailTemplate[]> {
     return this.request<EmailTemplate[]>(
-      `/api/workspace/email-templates/${workspaceId}`,
+      `/api/v1/workspace/email-templates/${workspaceId}`,
     );
   }
 
@@ -103,7 +103,7 @@ export class EmailTemplateAPI {
   async createTemplate(
     data: CreateEmailTemplateRequest,
   ): Promise<EmailTemplate> {
-    return this.request<EmailTemplate>("/api/workspace/email-templates/", {
+    return this.request<EmailTemplate>("/api/v1/workspace/email-templates/", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -117,7 +117,7 @@ export class EmailTemplateAPI {
     data: UpdateEmailTemplateRequest,
   ): Promise<EmailTemplate> {
     return this.request<EmailTemplate>(
-      `/api/workspace/email-templates/${templateId}`,
+      `/api/v1/workspace/email-templates/${templateId}`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -129,9 +129,12 @@ export class EmailTemplateAPI {
    * Delete an email template
    */
   async deleteTemplate(templateId: string): Promise<void> {
-    await this.request<void>(`/api/workspace/email-templates/${templateId}`, {
-      method: "DELETE",
-    });
+    await this.request<void>(
+      `/api/v1/workspace/email-templates/${templateId}`,
+      {
+        method: "DELETE",
+      },
+    );
   }
 
   /**
@@ -139,7 +142,7 @@ export class EmailTemplateAPI {
    */
   async getDefaultTemplate(templateType: string): Promise<EmailTemplate> {
     return this.request<EmailTemplate>(
-      `/api/workspace/email-templates/defaults/${templateType}`,
+      `/api/v1/workspace/email-templates/defaults/${templateType}`,
     );
   }
 }

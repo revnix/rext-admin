@@ -95,14 +95,17 @@ export class WorkspaceApiService {
    * Health check for workspace API
    */
   async healthCheck(): Promise<{ status: string }> {
-    return this.makeRequest<{ status: string }>("GET", "/api/workspace/");
+    return this.makeRequest<{ status: string }>("GET", "/api/v1/workspace/");
   }
 
   /**
    * List all workspaces with metadata
    */
   async listWorkspaces(): Promise<WorkspaceListResponse> {
-    return this.makeRequest<WorkspaceListResponse>("GET", "/api/workspace/all");
+    return this.makeRequest<WorkspaceListResponse>(
+      "GET",
+      "/api/v1/workspace/all",
+    );
   }
 
   /**
@@ -112,7 +115,7 @@ export class WorkspaceApiService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<WorkspaceResponse>(
       "GET",
-      `/api/workspace/${workspaceId}`,
+      `/api/v1/workspace/${workspaceId}`,
     );
   }
 
@@ -127,7 +130,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<WorkspaceResponse>(
       "POST",
-      "/api/workspace/create",
+      "/api/v1/workspace/create",
       sanitizedData,
     );
   }
@@ -145,7 +148,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<WorkspaceResponse>(
       "PUT",
-      `/api/workspace/update/${workspaceId}`,
+      `/api/v1/workspace/update/${workspaceId}`,
       sanitizedData,
     );
   }
@@ -157,7 +160,7 @@ export class WorkspaceApiService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/workspace/delete/${workspaceId}`,
+      `/api/v1/workspace/delete/${workspaceId}`,
     );
   }
 
@@ -382,7 +385,7 @@ export class WorkspaceApiService {
   async listWebKnowledge(): Promise<{ web_knowledge: WebKnowledge[] }> {
     return this.makeRequest<{ web_knowledge: WebKnowledge[] }>(
       "GET",
-      "/api/workspace/web_knowledge/all",
+      "/api/v1/workspace/web_knowledge/all",
     );
   }
 
@@ -395,7 +398,7 @@ export class WorkspaceApiService {
     this.validateUuid(webId, "web_id");
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "GET",
-      `/api/workspace/web_knowledge/${webId}`,
+      `/api/v1/workspace/web_knowledge/${webId}`,
     );
   }
 
@@ -410,7 +413,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "POST",
-      "/api/workspace/web_knowledge/add",
+      "/api/v1/workspace/web_knowledge/add",
       sanitizedData,
     );
   }
@@ -428,7 +431,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "PUT",
-      `/api/workspace/web_knowledge/update/${workspaceId}/${webId}?title=${encodeURIComponent(title)}`,
+      `/api/v1/workspace/web_knowledge/update/${workspaceId}/${webId}?title=${encodeURIComponent(title)}`,
     );
   }
 
@@ -444,7 +447,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/workspace/web_knowledge/delete/${workspaceId}/${webId}`,
+      `/api/v1/workspace/web_knowledge/delete/${workspaceId}/${webId}`,
     );
   }
 
@@ -458,7 +461,7 @@ export class WorkspaceApiService {
   async listFileKnowledge(): Promise<{ file_knowledge: FileKnowledge[] }> {
     return this.makeRequest<{ file_knowledge: FileKnowledge[] }>(
       "GET",
-      "/api/workspace/file/all",
+      "/api/v1/workspace/file/all",
     );
   }
 
@@ -471,7 +474,7 @@ export class WorkspaceApiService {
     this.validateUuid(fileId, "file_id");
     return this.makeRequest<{ file_knowledge: FileKnowledge }>(
       "GET",
-      `/api/workspace/file/${fileId}`,
+      `/api/v1/workspace/file/${fileId}`,
     );
   }
 
@@ -489,7 +492,7 @@ export class WorkspaceApiService {
 
     return this.makeFileRequest<{ file_knowledge: FileKnowledge }>(
       "POST",
-      "/api/workspace/file/add",
+      "/api/v1/workspace/file/add",
       formData,
     );
   }
@@ -506,7 +509,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/workspace/file/delete/${workspaceId}/${fileId}`,
+      `/api/v1/workspace/file/delete/${workspaceId}/${fileId}`,
     );
   }
 
@@ -520,7 +523,7 @@ export class WorkspaceApiService {
   async listTextKnowledge(): Promise<{ text_knowledge: TextKnowledge[] }> {
     return this.makeRequest<{ text_knowledge: TextKnowledge[] }>(
       "GET",
-      "/api/workspace/text/all",
+      "/api/v1/workspace/text/all",
     );
   }
 
@@ -536,7 +539,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "GET",
-      `/api/workspace/text/${workspaceId}/${textId}`,
+      `/api/v1/workspace/text/${workspaceId}/${textId}`,
     );
   }
 
@@ -551,7 +554,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "POST",
-      "/api/workspace/text/add-text",
+      "/api/v1/workspace/text/add-text",
       sanitizedData,
     );
   }
@@ -571,7 +574,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "PUT",
-      `/api/workspace/text/update/${workspaceId}/${textId}`,
+      `/api/v1/workspace/text/update/${workspaceId}/${textId}`,
       sanitizedData,
     );
   }
@@ -588,7 +591,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/workspace/text/delete/${workspaceId}/${textId}`,
+      `/api/v1/workspace/text/delete/${workspaceId}/${textId}`,
     );
   }
 
@@ -622,7 +625,7 @@ export class WorkspaceApiService {
         text_count: number;
         total_count: number;
       };
-    }>("GET", `/api/workspace/${workspaceId}/knowledge/all`);
+    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/all`);
   }
 
   /**
@@ -636,7 +639,7 @@ export class WorkspaceApiService {
     return this.makeRequest<{
       web_knowledge: WebKnowledge[];
       total_count: number;
-    }>("GET", `/api/workspace/${workspaceId}/knowledge/web`);
+    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/web`);
   }
 
   /**
@@ -650,7 +653,7 @@ export class WorkspaceApiService {
     return this.makeRequest<{
       file_knowledge: FileKnowledge[];
       total_count: number;
-    }>("GET", `/api/workspace/${workspaceId}/knowledge/files`);
+    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/files`);
   }
 
   /**
@@ -664,7 +667,7 @@ export class WorkspaceApiService {
     return this.makeRequest<{
       text_knowledge: TextKnowledge[];
       total_count: number;
-    }>("GET", `/api/workspace/${workspaceId}/knowledge/text`);
+    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/text`);
   }
 
   // ============================================================================
@@ -711,7 +714,7 @@ export class WorkspaceApiService {
         };
       }>;
       total_count: number;
-    }>("GET", `/api/workspace/${workspaceId}/members`);
+    }>("GET", `/api/v1/workspace/${workspaceId}/members`);
   }
 
   /**
@@ -742,7 +745,7 @@ export class WorkspaceApiService {
         display_name: string;
         status: string;
       };
-    }>("POST", `/api/workspace/${workspaceId}/members`, { email });
+    }>("POST", `/api/v1/workspace/${workspaceId}/members`, { email });
   }
 
   /**
@@ -757,7 +760,7 @@ export class WorkspaceApiService {
 
     return this.makeRequest<{ member_id: string }>(
       "DELETE",
-      `/api/workspace/${workspaceId}/members/${memberId}`,
+      `/api/v1/workspace/${workspaceId}/members/${memberId}`,
     );
   }
 
@@ -789,7 +792,7 @@ export class WorkspaceApiService {
       role_name: string;
       updated_by: string;
       updated_at: string;
-    }>("PUT", `/api/workspace/${workspaceId}/members/${memberId}/role`, {
+    }>("PUT", `/api/v1/workspace/${workspaceId}/members/${memberId}/role`, {
       role_id: roleId,
     });
   }
@@ -833,7 +836,7 @@ export class WorkspaceApiService {
         expires_at: string;
         created_at: string;
       };
-    }>("POST", "/api/workspace/invitations/", data);
+    }>("POST", "/api/v1/workspace/invitations/", data);
   }
 
   /**
@@ -863,7 +866,7 @@ export class WorkspaceApiService {
         role_id: string;
         status: string;
       };
-    }>("POST", "/api/workspace/invitations/accept", { token });
+    }>("POST", "/api/v1/workspace/invitations/accept", { token });
   }
 
   /**
@@ -878,7 +881,7 @@ export class WorkspaceApiService {
     return this.makeRequest<{
       invitation_id: string;
       status: string;
-    }>("POST", `/api/workspace/invitations/${invitationId}/revoke`);
+    }>("POST", `/api/v1/workspace/invitations/${invitationId}/revoke`);
   }
 
   /**
@@ -899,8 +902,8 @@ export class WorkspaceApiService {
     total_count: number;
   }> {
     const endpoint = workspaceId
-      ? `/api/workspace/invitations/sent?workspace_id=${workspaceId}`
-      : "/api/workspace/invitations/sent";
+      ? `/api/v1/workspace/invitations/sent?workspace_id=${workspaceId}`
+      : "/api/v1/workspace/invitations/sent";
 
     return this.makeRequest<{
       invitations: Array<{
@@ -950,7 +953,7 @@ export class WorkspaceApiService {
         invitation_token?: string;
       }>;
       total_count: number;
-    }>("GET", "/api/workspace/invitations/received");
+    }>("GET", "/api/v1/workspace/invitations/received");
   }
 
   /**
@@ -999,7 +1002,7 @@ export class WorkspaceApiService {
         invitation_id?: string;
         error_message?: string;
       }>;
-    }>("POST", "/api/workspace/invitations/bulk", data);
+    }>("POST", "/api/v1/workspace/invitations/bulk", data);
   }
 
   // ============================================================================

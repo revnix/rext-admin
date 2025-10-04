@@ -56,7 +56,7 @@ export class ImpersonationApiService {
   async startImpersonation(
     userId: string,
   ): Promise<ImpersonationStartResponse> {
-    const url = `${this.baseUrl}/api/user/impersonate/start`;
+    const url = `${this.baseUrl}/api/v1/user/impersonate/start`;
 
     try {
       const response = await authenticatedFetch(url, {
@@ -93,7 +93,7 @@ export class ImpersonationApiService {
    * Stop impersonating and return to original user
    */
   async stopImpersonation(): Promise<ImpersonationStopResponse> {
-    const url = `${this.baseUrl}/api/user/impersonate/stop`;
+    const url = `${this.baseUrl}/api/v1/user/impersonate/stop`;
 
     try {
       const response = await authenticatedFetch(url, {
@@ -129,7 +129,7 @@ export class ImpersonationApiService {
    * Get current impersonation status
    */
   async getImpersonationStatus(): Promise<ImpersonationStatus> {
-    const url = `${this.baseUrl}/api/user/impersonate/status`;
+    const url = `${this.baseUrl}/api/v1/user/impersonate/status`;
 
     try {
       const response = await authenticatedFetch(url, {

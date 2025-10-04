@@ -6,8 +6,8 @@
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  GENERATE_TOPICS: "/api/topics/generate",
-  TASKS: "/api/tasks",
+  GENERATE_TOPICS: "/api/v1/topics/generate",
+  TASKS: "/api/v1/tasks",
 } as const;
 
 // HTTP Status Codes
