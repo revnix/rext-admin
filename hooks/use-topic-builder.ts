@@ -127,6 +127,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         window.removeEventListener("offline", handleOffline);
       };
     }
+    return undefined;
   }, []);
 
   // Draft management functions (defined early to avoid dependency issues)

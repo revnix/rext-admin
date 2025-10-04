@@ -6,6 +6,7 @@
  */
 
 import type { FormFieldValue, SelectOption, ValidationResult } from "./shared";
+import type { GeneratedTopic } from "./topic-builder";
 
 // ============================================================================
 // ENUMS AND CONSTANTS
@@ -296,8 +297,7 @@ export type WizardAction =
   | {
       type: "PREFILL_FROM_TOPIC";
       payload: {
-        // biome-ignore lint/suspicious/noExplicitAny: GeneratedTopic type not imported here
-        topicData: any;
+        topicData: GeneratedTopic;
         suggestedDefaults?: Record<string, unknown>;
         userSettings?: Record<string, unknown>;
       };

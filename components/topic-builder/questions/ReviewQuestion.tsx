@@ -322,6 +322,7 @@ export function ReviewQuestion({
       window.addEventListener("keydown", handleKeyPress);
       return () => window.removeEventListener("keydown", handleKeyPress);
     }
+    return undefined;
   }, [errorCount, handleFixFirstError]);
 
   return (

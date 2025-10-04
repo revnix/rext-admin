@@ -85,6 +85,7 @@ export function WorkspaceFormModal() {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
+    return undefined;
   }, [workspaceForm.isOpen, closeWorkspaceForm, isSubmitting]);
 
   // Reset form when modal closes

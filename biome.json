@@ -30,7 +30,9 @@
         "noUnknownAtRules": "off",
         "noConsole": {
           "level": "error"
-        }
+        },
+        "noExplicitAny": "error",
+        "noImplicitAnyLet": "error"
       }
     },
     "domains": {
