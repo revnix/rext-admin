@@ -1,195 +1,191 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+/**
+ * Structured logging using Pino
+ * Provides production-ready logging with sensitive data redaction
+ */
+import pino from "pino";
 
-interface LogEntry {
-  level: LogLevel;
-  message: string;
-  data?: Record<string, unknown>;
-  timestamp: string;
-  requestId?: string;
-  context?: string;
-  component?: string;
-}
+const isDevelopment = process.env.NODE_ENV === "development";
+const isClient = typeof window !== "undefined";
 
-interface LogContext {
-  requestId?: string;
-  component?: string;
-  userId?: string;
-  sessionId?: string;
-  [key: string]: unknown;
-}
+// Browser logger configuration
+const browserLogger = pino({
+  level: isDevelopment ? "debug" : "info",
+  browser: {
+    asObject: true,
+    serialize: true,
+  },
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+});
 
-class Logger {
-  private isDevelopment = process.env.NODE_ENV === "development";
-  private isDebugEnabled = process.env.ENABLE_DEBUG_LOGS === "true";
-  private globalContext: LogContext = {};
+// Server logger configuration
+const serverLogger = pino({
+  level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+  transport: isDevelopment
+    ? {
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          ignore: "pid,hostname",
+          translateTime: "SYS:standard",
+        },
+      }
+    : undefined,
+});
 
-  setGlobalContext(context: LogContext) {
-    this.globalContext = { ...this.globalContext, ...context };
-  }
+const pinoLogger = isClient ? browserLogger : serverLogger;
 
-  clearGlobalContext() {
-    this.globalContext = {};
-  }
-
-  private log(
-    level: LogLevel,
-    message: string,
-    data?: Record<string, unknown>,
-    context?: LogContext,
-  ) {
-    // Skip debug logs in production unless explicitly enabled
-    if (!this.isDevelopment && level === "debug" && !this.isDebugEnabled)
-      return;
-
-    const mergedContext = { ...this.globalContext, ...context };
-    const entry: LogEntry = {
-      level,
-      message,
-      data: data ? { ...data, ...mergedContext } : mergedContext,
-      timestamp: new Date().toISOString(),
-      requestId: mergedContext.requestId as string,
-      context: mergedContext.context as string,
-      component: mergedContext.component as string,
-    };
-
-    if (this.isDevelopment) {
-      // Colorful console logging for development
-      const colors = {
-        debug: "\x1b[36m", // cyan
-        info: "\x1b[34m", // blue
-        warn: "\x1b[33m", // yellow
-        error: "\x1b[31m", // red
-      };
-
-      const contextPrefix = entry.component ? `[${entry.component}] ` : "";
-      const requestPrefix = entry.requestId ? `{${entry.requestId}} ` : "";
-
-      console.log(
-        `${colors[level]}[${level.toUpperCase()}]\x1b[0m ${contextPrefix}${requestPrefix}${message}`,
-        entry.data && Object.keys(entry.data).length > 0 ? entry.data : "",
-      );
-    } else {
-      // Structured JSON logging for production
-      console[level === "debug" ? "log" : level](JSON.stringify(entry));
-    }
-  }
-
-  // Main logging methods
-  debug(message: string, data?: Record<string, unknown>, context?: LogContext) {
-    this.log("debug", message, data, context);
-  }
-
-  info(message: string, data?: Record<string, unknown>, context?: LogContext) {
-    this.log("info", message, data, context);
-  }
-
-  warn(message: string, data?: Record<string, unknown>, context?: LogContext) {
-    this.log("warn", message, data, context);
-  }
-
-  error(message: string, data?: Record<string, unknown>, context?: LogContext) {
-    this.log("error", message, data, context);
-  }
-
-  // Convenience methods for common use cases
-  request(
+// Wrapper to maintain old logger API (message, data) while using pino (data, message)
+type ComponentLogger = {
+  debug: (message: string, data?: unknown) => void;
+  info: (message: string, data?: unknown) => void;
+  warn: (message: string, data?: unknown) => void;
+  error: (message: string, error?: Error | unknown, data?: unknown) => void;
+  request: (
     requestId: string,
     method: string,
     url: string,
-    data?: Record<string, unknown>,
-  ) {
-    this.info(`${method} ${url}`, data, { requestId, component: "http" });
-  }
-
-  response(
+    data?: unknown,
+  ) => void;
+  response: (
     requestId: string,
     status: number,
     duration?: number,
-    data?: Record<string, unknown>,
-  ) {
-    const level = status >= 400 ? "error" : status >= 300 ? "warn" : "info";
-    this.log(
-      level,
-      `Response ${status}${duration ? ` (${duration}ms)` : ""}`,
-      data,
-      { requestId, component: "http" },
-    );
-  }
+    data?: unknown,
+  ) => void;
+  performance: (operation: string, duration: number, data?: unknown) => void;
+};
 
-  performance(
-    component: string,
-    operation: string,
-    duration: number,
-    data?: Record<string, unknown>,
-  ) {
-    this.debug(`${operation} completed in ${duration}ms`, data, {
-      component: `perf:${component}`,
-    });
-  }
-
-  validation(
-    component: string,
+// Create a wrapper that swaps pino's (obj, msg) to old logger's (msg, obj) signature
+export const logger = {
+  debug: (message: string, data?: unknown, ...args: unknown[]) => {
+    const mergedData =
+      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+    pinoLogger.debug(mergedData, message);
+  },
+  info: (message: string, data?: unknown, ...args: unknown[]) => {
+    const mergedData =
+      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+    pinoLogger.info(mergedData, message);
+  },
+  warn: (message: string, data?: unknown, ...args: unknown[]) => {
+    const mergedData =
+      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+    pinoLogger.warn(mergedData, message);
+  },
+  error: (
     message: string,
-    data?: Record<string, unknown>,
-  ) {
-    this.warn(`Validation: ${message}`, data, {
-      component: `validation:${component}`,
-    });
+    error?: Error | unknown,
+    data?: unknown,
+    ...args: unknown[]
+  ) => {
+    const mergedData =
+      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+    pinoLogger.error(
+      {
+        ...mergedData,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      message,
+    );
+  },
+  forComponent: (component: string): ComponentLogger => ({
+    debug: (message: string, data?: unknown) => {
+      pinoLogger.debug({ ...sanitize(data), component }, message);
+    },
+    info: (message: string, data?: unknown) => {
+      pinoLogger.info({ ...sanitize(data), component }, message);
+    },
+    warn: (message: string, data?: unknown) => {
+      pinoLogger.warn({ ...sanitize(data), component }, message);
+    },
+    error: (message: string, error?: Error | unknown, data?: unknown) => {
+      pinoLogger.error(
+        {
+          ...sanitize(data),
+          component,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+        message,
+      );
+    },
+    request: (
+      requestId: string,
+      method: string,
+      url: string,
+      data?: unknown,
+    ) => {
+      pinoLogger.info(
+        { ...sanitize(data), component, requestId },
+        `${method} ${url}`,
+      );
+    },
+    response: (
+      requestId: string,
+      status: number,
+      duration?: number,
+      data?: unknown,
+    ) => {
+      const level = status >= 400 ? "error" : status >= 300 ? "warn" : "info";
+      pinoLogger[level](
+        { ...sanitize(data), component, requestId },
+        `Response ${status}${duration ? ` (${duration}ms)` : ""}`,
+      );
+    },
+    performance: (operation: string, duration: number, data?: unknown) => {
+      pinoLogger.debug(
+        { ...sanitize(data), component: `perf:${component}` },
+        `${operation} completed in ${duration}ms`,
+      );
+    },
+  }),
+};
+
+// Sensitive data redaction
+const SENSITIVE_KEYS = [
+  "password",
+  "token",
+  "authorization",
+  "cookie",
+  "apiKey",
+  "api_key",
+  "secret",
+  "refresh_token",
+  "access_token",
+];
+
+// biome-ignore lint/suspicious/noExplicitAny: Required for dynamic object sanitization
+export function sanitize(obj: any): any {
+  if (typeof obj !== "object" || obj === null) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitize);
   }
 
-  // Factory method for component-specific loggers
-  forComponent(component: string) {
-    return {
-      debug: (message: string, data?: Record<string, unknown>) =>
-        this.debug(message, data, { component }),
-      info: (message: string, data?: Record<string, unknown>) =>
-        this.info(message, data, { component }),
-      warn: (message: string, data?: Record<string, unknown>) =>
-        this.warn(message, data, { component }),
-      error: (message: string, data?: Record<string, unknown>) =>
-        this.error(message, data, { component }),
-      request: (
-        requestId: string,
-        method: string,
-        url: string,
-        data?: Record<string, unknown>,
-      ) => this.request(requestId, method, url, data),
-      response: (
-        requestId: string,
-        status: number,
-        duration?: number,
-        data?: Record<string, unknown>,
-      ) => this.response(requestId, status, duration, data),
-      performance: (
-        operation: string,
-        duration: number,
-        data?: Record<string, unknown>,
-      ) => this.performance(component, operation, duration, data),
-    };
+  // biome-ignore lint/suspicious/noExplicitAny: Dynamic object construction
+  const sanitized: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (
+      SENSITIVE_KEYS.some((sensitive) => key.toLowerCase().includes(sensitive))
+    ) {
+      sanitized[key] = "***REDACTED***";
+    } else if (typeof value === "object") {
+      sanitized[key] = sanitize(value);
+    } else {
+      sanitized[key] = value;
+    }
   }
+  return sanitized;
 }
 
-export const logger = new Logger();
+// Convenience export - `log` is an alias for `logger` for files converted from console.*
+export const log = logger;
 
-// Legacy console replacements for gradual migration
-export const createConsoleReplacements = (component?: string) => ({
-  log: (message: string, ...args: unknown[]) => {
-    logger.info(message, args.length > 0 ? { args } : undefined, { component });
-  },
-  error: (message: string, ...args: unknown[]) => {
-    logger.error(message, args.length > 0 ? { args } : undefined, {
-      component,
-    });
-  },
-  warn: (message: string, ...args: unknown[]) => {
-    logger.warn(message, args.length > 0 ? { args } : undefined, { component });
-  },
-  info: (message: string, ...args: unknown[]) => {
-    logger.info(message, args.length > 0 ? { args } : undefined, { component });
-  },
-  debug: (message: string, ...args: unknown[]) => {
-    logger.debug(message, args.length > 0 ? { args } : undefined, {
-      component,
-    });
-  },
-});
+// Default export for compatibility
+export default logger;

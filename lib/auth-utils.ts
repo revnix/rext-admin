@@ -7,6 +7,7 @@
 
 import { getSession } from "next-auth/react";
 import { auth } from "@/auth";
+import { log } from "@/lib/logger";
 
 /**
  * Get authentication headers for API requests
@@ -55,7 +56,7 @@ export async function authenticatedFetch(
 
   // Handle 401 Unauthorized - session expired
   if (response.status === 401) {
-    console.error("[AuthJS] Session expired, redirecting to login");
+    log.error("[AuthJS] Session expired, redirecting to login");
     // Redirect to login
     if (typeof window !== "undefined") {
       window.location.href = "/login";

@@ -3,6 +3,7 @@ import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 
 /**
@@ -10,18 +11,15 @@ import { loginSchema } from "@/schemas/auth-schemas";
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    console.log("[Auth] Refreshing access token...");
+    log.info("[Auth] Refreshing access token...");
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh?refresh_token=${token.refreshToken}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          refresh_token: token.refreshToken,
-        }),
       },
     );
 
@@ -33,7 +31,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     // Extract data from wrapped response
     const refreshedTokens = refreshResponseData.data || refreshResponseData;
 
-    console.log("[Auth] Access token refreshed successfully");
+    log.info("[Auth] Access token refreshed successfully");
 
     return {
       ...token,
@@ -42,7 +40,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       accessTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
     };
   } catch (error) {
-    console.error("[Auth] Error refreshing access token:", error);
+    log.error("[Auth] Error refreshing access token:", error);
 
     return {
       ...token,
@@ -65,7 +63,7 @@ export default {
           const validatedFields = loginSchema.safeParse(credentials);
 
           if (!validatedFields.success) {
-            console.error("[AuthJS] Validation failed:", validatedFields.error);
+            log.error("[AuthJS] Validation failed:", validatedFields.error);
             return null;
           }
 
@@ -84,7 +82,7 @@ export default {
           );
 
           if (!response.ok) {
-            console.error("[AuthJS] Login failed:", response.status);
+            log.error("[AuthJS] Login failed:", response.status);
             return null;
           }
 
@@ -94,11 +92,11 @@ export default {
           const data = responseData.data || responseData;
 
           if (!data.user) {
-            console.error("[AuthJS] No user in response");
+            log.error("[AuthJS] No user in response");
             return null;
           }
 
-          console.log(
+          log.info(
             "[AuthJS] User authenticated:",
             data.user.email,
             "Remember me:",
@@ -116,7 +114,7 @@ export default {
             rememberMe,
           };
         } catch (error) {
-          console.error("[AuthJS] Authorization error:", error);
+          log.error("[AuthJS] Authorization error:", error);
           return null;
         }
       },
@@ -160,7 +158,7 @@ export default {
             ? 30 * 24 * 60 * 60 * 1000 // 30 days
             : 24 * 60 * 60 * 1000; // 24 hours
           token.accessTokenExpires = Date.now() + expiryDuration;
-          console.log(
+          log.info(
             "[Auth] Remember me:",
             token.rememberMe,
             "Expires in:",
@@ -170,7 +168,7 @@ export default {
         } else {
           // For OAuth providers, register/login user with backend
           try {
-            console.log("[AuthJS] OAuth sign-in with", account?.provider);
+            log.info("[AuthJS] OAuth sign-in with", account?.provider);
 
             // Check if user exists by calling backend login
             // For OAuth users, we'll attempt login first
@@ -189,7 +187,7 @@ export default {
 
             if (!loginResponse.ok) {
               // User doesn't exist, register them
-              console.log("[AuthJS] OAuth user not found, registering...");
+              log.info("[AuthJS] OAuth user not found, registering...");
 
               const [firstName, ...lastNameParts] = (user.name || "").split(
                 " ",
@@ -209,7 +207,7 @@ export default {
               );
 
               if (!registerResponse.ok) {
-                console.error("[AuthJS] OAuth registration failed");
+                log.error("[AuthJS] OAuth registration failed");
                 return token;
               }
 
@@ -238,7 +236,7 @@ export default {
               token.refreshToken = loginData.refresh_token;
             }
           } catch (error) {
-            console.error("[AuthJS] OAuth backend integration error:", error);
+            log.error("[AuthJS] OAuth backend integration error:", error);
             // Fall back to OAuth-only data
             token.id = user.id;
             token.email = user.email;
@@ -254,7 +252,7 @@ export default {
       }
 
       // Access token has expired, try to refresh it
-      console.log("[Auth] Access token expired, attempting refresh...");
+      log.info("[Auth] Access token expired, attempting refresh...");
       return await refreshAccessToken(token);
     },
     async session({ session, token }) {

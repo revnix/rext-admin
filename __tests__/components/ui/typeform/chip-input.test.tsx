@@ -23,7 +23,9 @@ import {
 } from "../../../../components/ui/typeform/chip-input";
 
 // Mock console methods to avoid noise in tests
+// biome-ignore lint/suspicious/noConsole: Test requires console access
 const originalError = console.error;
+// biome-ignore lint/suspicious/noConsole: Test requires console access
 const originalWarn = console.warn;
 beforeEach(() => {
   console.error = jest.fn();

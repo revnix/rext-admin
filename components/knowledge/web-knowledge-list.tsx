@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { log } from "@/lib/logger";
 import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 import type { WebKnowledgeStatus, Workspace } from "@/types/workspace";
@@ -254,7 +255,7 @@ export function WebKnowledgeList({
       deselectAll();
       refetch();
     } catch (error) {
-      console.error("Failed to delete items:", error);
+      log.error("Failed to delete items:", error);
       toast.error("Failed to delete some items");
     }
   };

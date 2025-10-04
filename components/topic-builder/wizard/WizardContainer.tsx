@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { log } from "@/lib/logger";
 import { announceToScreenReader } from "@/lib/typeform-utils";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
@@ -110,7 +111,7 @@ export const WizardContainer = memo(function WizardContainer({
   useHotkeys(
     "enter",
     (e) => {
-      console.log("🔑 Enter key pressed", {
+      log.info("🔑 Enter key pressed", {
         isChipInputFocused: isChipInputFocused(),
         targetTag: (e.target as HTMLElement)?.tagName,
         isValid: currentQuestionValidation.isValid,
@@ -119,7 +120,7 @@ export const WizardContainer = memo(function WizardContainer({
 
       // Don't handle Enter if we're in a chip input - let the component handle it
       if (isChipInputFocused()) {
-        console.log("🚫 Enter ignored - chip input is focused");
+        log.info("🚫 Enter ignored - chip input is focused");
         return;
       }
 
@@ -130,16 +131,16 @@ export const WizardContainer = memo(function WizardContainer({
         target.contentEditable === "true" ||
         target.getAttribute("role") === "combobox"
       ) {
-        console.log("🚫 Enter ignored - in textarea/contenteditable/combobox");
+        log.info("🚫 Enter ignored - in textarea/contenteditable/combobox");
         return;
       }
 
       if (currentQuestionValidation.isValid) {
-        console.log("✅ Enter - advancing to next question");
+        log.info("✅ Enter - advancing to next question");
         e.preventDefault();
         handleNext();
       } else {
-        console.log("❌ Enter blocked - validation issue");
+        log.info("❌ Enter blocked - validation issue");
       }
     },
     { preventDefault: false, enableOnFormTags: true },
@@ -184,17 +185,17 @@ export const WizardContainer = memo(function WizardContainer({
   useHotkeys(
     "Escape",
     (e) => {
-      console.log("🔑 Escape key pressed", {
+      log.info("🔑 Escape key pressed", {
         isFirstQuestion,
         allowBackNavigation,
       });
 
       if (!isFirstQuestion && allowBackNavigation) {
-        console.log("✅ Escape - going back to previous question");
+        log.info("✅ Escape - going back to previous question");
         e.preventDefault();
         handlePrevious();
       } else {
-        console.log("❌ Escape blocked - first question or not allowed");
+        log.info("❌ Escape blocked - first question or not allowed");
       }
     },
     { preventDefault: false, enableOnFormTags: true },

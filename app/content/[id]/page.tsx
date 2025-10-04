@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { log } from "@/lib/logger";
 import type { ContentStatus } from "@/types/content";
 import type { ContentData } from "@/types/data-table";
 import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
@@ -159,16 +160,16 @@ export default function ContentDetailPage() {
 
   // Handle content actions
   const handleEditContent = () => {
-    console.log("Editing content:", content.title);
+    log.info("Editing content:", content.title);
     // TODO: Navigate to edit page
   };
 
   const handleCopyContent = async () => {
     try {
       await navigator.clipboard.writeText(content.content);
-      console.log("Content copied to clipboard");
+      log.info("Content copied to clipboard");
     } catch (error) {
-      console.error("Failed to copy content:", error);
+      log.error("Failed to copy content:", error);
     }
   };
 
@@ -189,9 +190,9 @@ export default function ContentDetailPage() {
     setIsPublishing(true);
     try {
       // TODO: Implement publish logic
-      console.log("Publishing content:", content.title);
+      log.info("Publishing content:", content.title);
     } catch (error) {
-      console.error("Failed to publish content:", error);
+      log.error("Failed to publish content:", error);
     } finally {
       setIsPublishing(false);
     }
@@ -201,10 +202,10 @@ export default function ContentDetailPage() {
     setIsDeleting(true);
     try {
       // TODO: Implement delete logic
-      console.log("Deleting content:", content.title);
+      log.info("Deleting content:", content.title);
       router.push("/content");
     } catch (error) {
-      console.error("Failed to delete content:", error);
+      log.error("Failed to delete content:", error);
     } finally {
       setIsDeleting(false);
     }

@@ -1,3 +1,5 @@
+import { log } from "@/lib/logger";
+
 /**
  * Draft Management System
  *
@@ -122,7 +124,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
 
       localStorage.setItem(this.storageKey, serialized);
     } catch (error) {
-      console.error("Failed to save draft:", error);
+      log.error("Failed to save draft:", error);
       throw error;
     }
   }
@@ -132,7 +134,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
       const drafts = await this.listDrafts();
       return drafts.find((d) => d.id === id) || null;
     } catch (error) {
-      console.error("Failed to load draft:", error);
+      log.error("Failed to load draft:", error);
       return null;
     }
   }
@@ -156,7 +158,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
         );
       });
     } catch (error) {
-      console.error("Failed to list drafts:", error);
+      log.error("Failed to list drafts:", error);
       return [];
     }
   }
@@ -167,7 +169,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
       const filteredDrafts = drafts.filter((d) => d.id !== id);
       localStorage.setItem(this.storageKey, JSON.stringify(filteredDrafts));
     } catch (error) {
-      console.error("Failed to delete draft:", error);
+      log.error("Failed to delete draft:", error);
       throw error;
     }
   }
@@ -176,7 +178,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
     try {
       localStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error("Failed to clear drafts:", error);
+      log.error("Failed to clear drafts:", error);
       throw error;
     }
   }
@@ -190,7 +192,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
         available: this.maxStorageSize - used,
       };
     } catch (error) {
-      console.error("Failed to get storage info:", error);
+      log.error("Failed to get storage info:", error);
       return { used: 0, available: this.maxStorageSize };
     }
   }
@@ -410,7 +412,7 @@ export class DraftManager {
           return;
         }
 
-        console.error("Auto-save failed:", error);
+        log.error("Auto-save failed:", error);
         onError?.(error as Error);
       }
     }, this.config.interval);

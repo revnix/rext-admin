@@ -42,10 +42,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Generate dynamic URLs based on current workspace
   const getKnowledgeUrl = (view?: string) => {
-    if (!currentWorkspace) {
+    if (!currentWorkspace || !currentWorkspace.slug) {
       return "/workspaces"; // Fallback to workspaces list
     }
-    return workspaceRoutes.knowledge(currentWorkspace.id, view);
+    return workspaceRoutes.knowledge(currentWorkspace.slug, view);
   };
 
   const navigationGroups: NavGroup[] = [
@@ -64,37 +64,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Topics",
-          url: currentWorkspace
-            ? workspaceRoutes.topics(currentWorkspace.id)
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.topics(currentWorkspace.slug)
             : "/workspaces",
           icon: Library,
         },
         {
           title: "Content",
-          url: currentWorkspace
-            ? workspaceRoutes.content(currentWorkspace.id)
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.content(currentWorkspace.slug)
             : "/workspaces",
           icon: FileText,
         },
         {
           title: "Users",
-          url: currentWorkspace
-            ? workspaceRoutes.users(currentWorkspace.id)
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.users(currentWorkspace.slug)
             : "/workspaces",
           icon: Users,
           anyPermission: [PERMISSIONS.USER_READ],
         },
         {
           title: "Analytics",
-          url: currentWorkspace
-            ? workspaceRoutes.analytics(currentWorkspace.id)
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.analytics(currentWorkspace.slug)
             : "/workspaces",
           icon: ChartBarIcon,
         },
         {
           title: "Settings",
-          url: currentWorkspace
-            ? workspaceRoutes.settings(currentWorkspace.id)
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.settings(currentWorkspace.slug)
             : "/workspaces",
           icon: Settings2,
           anyPermission: [PERMISSIONS.WORKSPACE_UPDATE],

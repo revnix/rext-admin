@@ -10,6 +10,7 @@
 import { memo, useCallback } from "react";
 import { useTopicBuilder } from "@/hooks/use-topic-builder";
 import { useWizardNavigation } from "@/hooks/use-wizard-navigation";
+import { log } from "@/lib/logger";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import { QuestionWizard } from "./wizard/QuestionWizard";
 
@@ -61,12 +62,12 @@ export const TopicBuilderWizard = memo(function TopicBuilderWizard({
   const handleGenerateTopics = useCallback(
     async (formData: TopicBuilderFormData): Promise<void> => {
       try {
-        console.log("🚀 Starting topic generation with form data:", formData);
+        log.info("🚀 Starting topic generation with form data:", formData);
 
         // Pass form data directly to generateTopics to avoid state sync issues
         await generateTopics(formData);
       } catch (error) {
-        console.error("Error in handleGenerateTopics:", error);
+        log.error("Error in handleGenerateTopics:", error);
       }
     },
     [generateTopics],

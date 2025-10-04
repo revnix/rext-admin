@@ -43,6 +43,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useExport, useExportValidation } from "@/hooks/use-export";
 import { formatFileSize } from "@/lib/export-utils";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type {
   ExportFormat,
@@ -254,7 +255,7 @@ export function ExportDialog({
       }
     } catch (error) {
       // Error handling is done in the hook
-      console.error("Export failed:", error);
+      log.error("Export failed:", error);
     }
   };
 

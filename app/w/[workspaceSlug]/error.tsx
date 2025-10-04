@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { log } from "@/lib/logger";
 
 /**
  * Workspace Error Boundary
@@ -26,7 +27,7 @@ export default function WorkspaceError({
 }) {
   useEffect(() => {
     // Log error to console for debugging
-    console.error("[WorkspaceError] Error caught:", error);
+    log.error("[WorkspaceError] Error caught:", error);
   }, [error]);
 
   return (

@@ -19,6 +19,7 @@ import {
   getContextualErrorMessage,
   isOnline,
 } from "@/lib/error-utils";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type {
   BackendError,
@@ -203,7 +204,7 @@ export function ErrorAlert({
     try {
       onRetry();
     } catch (retryError) {
-      console.error("Retry failed:", retryError);
+      log.error("Retry failed:", retryError);
     } finally {
       setIsRetrying(false);
     }

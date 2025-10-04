@@ -6,6 +6,7 @@
  * value suggestions, and validation.
  */
 
+import { log } from "@/lib/logger";
 import type {
   ContentCreationFormData,
   FieldDependency,
@@ -68,10 +69,7 @@ export class WizardDependencyEngine {
       try {
         return field.visible(this.formData);
       } catch (error) {
-        console.warn(
-          `Error in visibility function for field ${field.id}:`,
-          error,
-        );
+        log.warn(`Error in visibility function for field ${field.id}:`, error);
         return true; // Default to visible on error
       }
     }
@@ -186,7 +184,7 @@ export class WizardDependencyEngine {
       try {
         return field.options(this.formData);
       } catch (error) {
-        console.warn(`Error in options function for field ${field.id}:`, error);
+        log.warn(`Error in options function for field ${field.id}:`, error);
         return [];
       }
     }

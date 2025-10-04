@@ -120,6 +120,26 @@ export class WorkspaceApiService {
   }
 
   /**
+   * Get workspace by slug
+   * This is the preferred method for frontend routing with human-readable URLs
+   */
+  async getWorkspaceBySlug(workspaceSlug: string): Promise<WorkspaceResponse> {
+    // Validate slug format (alphanumeric and hyphens only)
+    if (!/^[a-z0-9-]+$/.test(workspaceSlug)) {
+      throw new WorkspaceApiError(
+        "INVALID_REQUEST",
+        "Invalid workspace slug format",
+        { slug: workspaceSlug },
+      );
+    }
+
+    return this.makeRequest<WorkspaceResponse>(
+      "GET",
+      `/api/v1/workspace/slug/${workspaceSlug}`,
+    );
+  }
+
+  /**
    * Create new workspace (includes website scraping + brand voice extraction)
    */
   async createWorkspace(

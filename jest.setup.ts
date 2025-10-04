@@ -4,8 +4,11 @@
 import "@testing-library/jest-dom";
 
 // Store original console methods for detailed test output
+// biome-ignore lint/suspicious/noConsole: Jest setup requires console access
 const _originalConsoleError = console.error;
+// biome-ignore lint/suspicious/noConsole: Jest setup requires console access
 const _originalConsoleWarn = console.warn;
+// biome-ignore lint/suspicious/noConsole: Jest setup requires console access
 const _originalConsoleLog = console.log;
 
 // Enable all console output for detailed testing

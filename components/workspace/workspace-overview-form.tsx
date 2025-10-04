@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import {
   type WorkspaceFormData,
@@ -119,7 +120,7 @@ export function WorkspaceOverviewForm({
 
       onSuccess?.(updatedWorkspace);
     } catch (error) {
-      console.error("Failed to update workspace:", error);
+      log.error("Failed to update workspace:", error);
       toast.error("Failed to update workspace. Please try again.");
       onError?.(error);
     } finally {

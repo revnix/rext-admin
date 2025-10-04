@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { log } from "@/lib/logger";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 const SAVED_TOPICS_KEY = "saved-topics";
@@ -37,7 +38,7 @@ export const useTopicStorage = (): UseTopicStorageReturn => {
         return Array.isArray(topics) ? topics : [];
       }
     } catch (error) {
-      console.warn("Failed to load saved topics from localStorage:", error);
+      log.warn("Failed to load saved topics from localStorage:", error);
       setError("Failed to load saved topics. Storage may be corrupted.");
     }
 
@@ -51,7 +52,7 @@ export const useTopicStorage = (): UseTopicStorageReturn => {
       localStorage.setItem(SAVED_TOPICS_KEY, JSON.stringify(topics));
       setError(null);
     } catch (error) {
-      console.warn("Failed to save topics to localStorage:", error);
+      log.warn("Failed to save topics to localStorage:", error);
       setError("Failed to save topics. Storage may be full or unavailable.");
     }
   }, []);
@@ -163,7 +164,7 @@ export const useTopicStorage = (): UseTopicStorageReturn => {
 
         setError(null);
       } catch (error) {
-        console.error("Export failed:", error);
+        log.error("Export failed:", error);
         setError(`Failed to export topics as ${format.toUpperCase()}`);
       }
     },

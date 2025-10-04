@@ -68,7 +68,7 @@ import {
   Youtube,
   Zap,
 } from "lucide-react";
-
+import { log } from "@/lib/logger";
 import type { IconMapping, IconResolver } from "@/types/typeform";
 
 // ============================================================================
@@ -324,7 +324,7 @@ export const validateIconMappings = (
   Object.entries(expectedKeys).forEach(([category, keys]) => {
     keys.forEach((key) => {
       if (!hasIcon(category as keyof IconMapping, key)) {
-        console.warn(`Missing icon mapping for ${category}.${key}`);
+        log.warn(`Missing icon mapping for ${category}.${key}`);
       }
     });
   });
@@ -336,15 +336,15 @@ export const validateIconMappings = (
 export const debugIconMappings = (): void => {
   if (process.env.NODE_ENV !== "development") return;
 
-  console.group("🎨 TypeForm Icon Mappings");
+  log.debug("🎨 TypeForm Icon Mappings - START");
 
   Object.entries(iconMapping).forEach(([category, icons]) => {
     if (category !== "defaults" && typeof icons === "object") {
-      console.log(`${category}:`, Object.keys(icons));
+      log.info(`${category}:`, Object.keys(icons));
     }
   });
 
-  console.groupEnd();
+  log.debug("🎨 TypeForm Icon Mappings - END");
 };
 
 // ============================================================================

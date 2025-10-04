@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getContextualAudienceSuggestions } from "@/lib/contextual-suggestions";
+import { log } from "@/lib/logger";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { Industry, TopicBuilderFormData } from "@/types/topic-builder";
 
@@ -99,9 +100,7 @@ export function useContextualSuggestions({
     const industryChanged = previousFormData?.industry !== formData?.industry;
 
     if (industryChanged) {
-      console.log(
-        "🔄 Contextual suggestions updating due to form data changes",
-      );
+      log.info("🔄 Contextual suggestions updating due to form data changes");
 
       // Update audience suggestions if industry changed
       if (industryChanged && formData.industry) {

@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FormField, ValidationInput } from "@/components/ui/form-field";
+import { log } from "@/lib/logger";
 import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 
@@ -108,7 +109,7 @@ export function AddUrlDialog({
       handleDialogChange(false);
       form.reset();
     } catch (error) {
-      console.error("Failed to add URL:", error);
+      log.error("Failed to add URL:", error);
 
       // Handle different error types
       if (error instanceof Error) {

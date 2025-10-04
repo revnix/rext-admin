@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 interface SuccessConfirmationDialogProps {
@@ -31,13 +32,13 @@ export function SuccessConfirmationDialog({
   className,
 }: SuccessConfirmationDialogProps) {
   const handleNavigateToTopics = () => {
-    console.log("Navigating to topics page");
+    log.info("Navigating to topics page");
     onNavigateToTopics();
     onOpenChange(false);
   };
 
   const handleGenerateNew = () => {
-    console.log("Starting new topic generation");
+    log.info("Starting new topic generation");
     onGenerateNew();
     onOpenChange(false);
   };

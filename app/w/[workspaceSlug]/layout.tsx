@@ -13,7 +13,7 @@ export default async function WorkspaceLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ workspaceId: string }>;
+  params: Promise<{ workspaceSlug: string }>;
 }) {
   // Check authentication
   const session = await auth();
@@ -22,10 +22,12 @@ export default async function WorkspaceLayout({
   }
 
   // Await params (Next.js 15 requirement)
-  const { workspaceId } = await params;
+  const { workspaceSlug } = await params;
 
   // Provide workspace context to all child pages
   return (
-    <WorkspaceProvider workspaceId={workspaceId}>{children}</WorkspaceProvider>
+    <WorkspaceProvider workspaceId={workspaceSlug}>
+      {children}
+    </WorkspaceProvider>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import {
   type ForgotPasswordData,
@@ -42,7 +43,7 @@ export function ForgotPasswordForm({
     setSuccess(false);
 
     try {
-      console.log("[Auth Migration] Using direct API call for forgot-password");
+      log.info("[Auth Migration] Using direct API call for forgot-password");
 
       // Direct API call - no auth session needed for forgot password
       const response = await fetch(

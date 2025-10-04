@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
@@ -112,9 +113,9 @@ export const TopicsList = memo(function TopicsList({
     (topicId: string) => {
       try {
         onTopicSave(topicId);
-        console.log(`Topic ${topicId} saved successfully`);
+        log.info(`Topic ${topicId} saved successfully`);
       } catch (error) {
-        console.error(`Failed to save topic ${topicId}:`, error);
+        log.error(`Failed to save topic ${topicId}:`, error);
         throw error;
       }
     },
@@ -124,11 +125,11 @@ export const TopicsList = memo(function TopicsList({
   const handleNavigateToContent = useCallback(
     (topicId: string) => {
       try {
-        console.log(`Navigating to content creation for topic ${topicId}`);
+        log.info(`Navigating to content creation for topic ${topicId}`);
         router.push(`/content/create?topicId=${topicId}`);
         toast.success("Navigating to content creation...");
       } catch (error) {
-        console.error(
+        log.error(
           `Failed to navigate to content creation for topic ${topicId}:`,
           error,
         );
@@ -199,7 +200,7 @@ export const TopicsList = memo(function TopicsList({
             (topic) => !topic.is_saved && !topic._optimisticSaved,
           );
 
-          console.log("Bulk saving topics:", {
+          log.info("Bulk saving topics:", {
             requested: topicIds,
             totalSelected: selectedTopics.length,
             unsaved: unsaved.length,

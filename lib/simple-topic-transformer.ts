@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 import type { TopicData } from "@/types/data-table";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -96,7 +97,7 @@ export function transformTopicsForDisplay(
   topics: GeneratedTopic[],
 ): TopicData[] {
   if (!Array.isArray(topics)) {
-    console.warn("Invalid topics data received:", topics);
+    log.warn("Invalid topics data received:", topics);
     return [];
   }
 

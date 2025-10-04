@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { loadMockReviewers, MOCK_REVIEWERS } from "@/data/mock-reviewers";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
+import { log } from "@/lib/logger";
 import type {
   ContentCreationFormData,
   PartialContentCreationFormData,
@@ -194,7 +195,7 @@ export function ReviewLaunchStep({
       }
     } catch (error) {
       toast.error("Failed to launch content creation");
-      console.error(error);
+      log.error("Failed to launch content creation", error);
     } finally {
       setIsLaunching(false);
     }
@@ -458,7 +459,7 @@ export function ReviewLaunchStep({
         }}
         onLoadReviewers={async () => {
           // Load mock reviewers with simulated delay
-          console.log("Loading team members...");
+          log.info("Loading team members...");
           return await loadMockReviewers(500);
         }}
       />

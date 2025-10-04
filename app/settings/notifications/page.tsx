@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { log } from "@/lib/logger";
 import {
   defaultNotificationPreferences,
   type NotificationPreferences,
@@ -28,10 +29,7 @@ export default function NotificationsSettingsPage() {
         const data = await getNotificationPreferences();
         setPreferences(data);
       } catch (err) {
-        console.error(
-          "[NotificationsSettings] Failed to load preferences:",
-          err,
-        );
+        log.error("[NotificationsSettings] Failed to load preferences:", err);
         setError("Failed to load notification preferences");
         // Set defaults if backend not ready
         setPreferences(defaultNotificationPreferences);

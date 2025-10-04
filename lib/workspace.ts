@@ -1,12 +1,14 @@
+import type { WorkspaceData } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
 
 type WorkspaceWithName = Workspace & { name?: string | null };
+type WorkspaceLike = Workspace | WorkspaceWithName | WorkspaceData;
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
 export const getWorkspaceDisplayTitle = (
-  workspace: Workspace | WorkspaceWithName | null | undefined,
+  workspace: WorkspaceLike | null | undefined,
   fallback = "Workspace",
 ) => {
   if (!workspace) {

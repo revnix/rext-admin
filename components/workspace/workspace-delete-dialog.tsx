@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { WorkspaceData } from "@/types/data-table";
@@ -110,7 +111,7 @@ export function WorkspaceDeleteDialog({
       // Notify parent component
       onDeleted?.(workspace.id);
     } catch (error) {
-      console.error("Failed to delete workspace:", error);
+      log.error("Failed to delete workspace:", error);
 
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";

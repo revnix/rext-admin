@@ -45,6 +45,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { classifyError } from "@/lib/error-utils";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { BackendError } from "@/types/backend";
@@ -212,12 +213,12 @@ export function TopicActions({
       }
 
       // Show success confirmation dialog instead of only inline message
-      console.log(
+      log.info(
         `Topic ${topic.id} saved successfully, showing confirmation dialog`,
       );
       setIsSuccessDialogOpen(true);
     } catch (error) {
-      console.error(`Failed to save topic ${topic.id}:`, error);
+      log.error(`Failed to save topic ${topic.id}:`, error);
 
       // Classify error for user-friendly display
       const classifiedError = classifyError(error);
@@ -249,10 +250,10 @@ export function TopicActions({
         await onEdit(topic.id, updates);
         setIsEditDialogOpen(false);
         editForm.reset(); // Reset form after successful submission
-        console.log(`Topic ${topic.id} updated successfully`);
+        log.info(`Topic ${topic.id} updated successfully`);
         setSuccess("editing", "Topic updated successfully!");
       } catch (error) {
-        console.error(`Failed to update topic ${topic.id}:`, error);
+        log.error(`Failed to update topic ${topic.id}:`, error);
         const classifiedError = classifyError(error);
         setError("editing", classifiedError);
       } finally {
@@ -270,10 +271,10 @@ export function TopicActions({
     try {
       await onRegenerate(topic.id);
       setIsRegenerateDialogOpen(false);
-      console.log(`Topic ${topic.id} regenerated successfully`);
+      log.info(`Topic ${topic.id} regenerated successfully`);
       setSuccess("regenerating", "Topic regenerated successfully!");
     } catch (error) {
-      console.error(`Failed to regenerate topic ${topic.id}:`, error);
+      log.error(`Failed to regenerate topic ${topic.id}:`, error);
       const classifiedError = classifyError(error);
       setError("regenerating", classifiedError);
     } finally {
@@ -290,13 +291,13 @@ export function TopicActions({
     try {
       await onExport([topic], exportFormat);
       setIsExportDialogOpen(false);
-      console.log(`Topic ${topic.id} exported as ${exportFormat}`);
+      log.info(`Topic ${topic.id} exported as ${exportFormat}`);
       setSuccess(
         "exporting",
         `Topic exported as ${exportFormat.toUpperCase()} successfully!`,
       );
     } catch (error) {
-      console.error(`Failed to export topic ${topic.id}:`, error);
+      log.error(`Failed to export topic ${topic.id}:`, error);
       const classifiedError = classifyError(error);
       setError("exporting", classifiedError);
     } finally {
@@ -313,10 +314,10 @@ export function TopicActions({
     try {
       await onDelete(topic.id);
       setIsDeleteDialogOpen(false);
-      console.log(`Topic ${topic.id} deleted successfully`);
+      log.info(`Topic ${topic.id} deleted successfully`);
       setSuccess("deleting", "Topic deleted successfully!");
     } catch (error) {
-      console.error(`Failed to delete topic ${topic.id}:`, error);
+      log.error(`Failed to delete topic ${topic.id}:`, error);
       const classifiedError = classifyError(error);
       setError("deleting", classifiedError);
     } finally {
@@ -331,11 +332,11 @@ export function TopicActions({
       setLoading("navigatingToContent", true);
 
       try {
-        console.log(`Navigating to content creation for topic ${topic.id}`);
+        log.info(`Navigating to content creation for topic ${topic.id}`);
         router.push(`/content/create?topicId=${topic.id}`);
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {
-        console.error(
+        log.error(
           `Failed to navigate to content creation for topic ${topic.id}:`,
           error,
         );
@@ -348,13 +349,13 @@ export function TopicActions({
       // Use provided handler
       try {
         setLoading("navigatingToContent", true);
-        console.log(
+        log.info(
           `Using handler to navigate to content creation for topic ${topic.id}`,
         );
         onNavigateToContent(topic.id);
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {
-        console.error(
+        log.error(
           `Failed to navigate to content creation for topic ${topic.id}:`,
           error,
         );
@@ -666,10 +667,10 @@ export function TopicActions({
           topicTitle={topic.title}
           onNavigateToTopics={
             onNavigateToTopics ||
-            (() => console.log("Navigate to topics not implemented"))
+            (() => log.info("Navigate to topics not implemented"))
           }
           onGenerateNew={
-            onGenerateNew || (() => console.log("Generate new not implemented"))
+            onGenerateNew || (() => log.info("Generate new not implemented"))
           }
         />
       </div>
@@ -1076,10 +1077,10 @@ export function TopicActions({
         topicTitle={topic.title}
         onNavigateToTopics={
           onNavigateToTopics ||
-          (() => console.log("Navigate to topics not implemented"))
+          (() => log.info("Navigate to topics not implemented"))
         }
         onGenerateNew={
-          onGenerateNew || (() => console.log("Generate new not implemented"))
+          onGenerateNew || (() => log.info("Generate new not implemented"))
         }
       />
     </div>

@@ -7,6 +7,7 @@
 
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { log } from "@/lib/logger";
 
 /**
  * Test keyboard navigation sequence for a component
@@ -167,7 +168,7 @@ export function checkColorContrast(
   // For proper contrast testing, integrate with libraries like:
   // - color-contrast-checker
   // - axe-core
-  console.log(`Color contrast check: bg=${backgroundColor}, fg=${color}`);
+  log.info(`Color contrast check: bg=${backgroundColor}, fg=${color}`);
 }
 
 /**
@@ -238,7 +239,7 @@ export function testLandmarkNavigation() {
       expect(element).toBeInTheDocument();
     } catch (_error) {
       // Landmark not found - this might be expected depending on the component
-      console.log(`Landmark "${landmark}" not found - this may be expected`);
+      log.info(`Landmark "${landmark}" not found - this may be expected`);
     }
   });
 }

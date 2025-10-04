@@ -18,6 +18,7 @@ import {
 } from "@/lib/content-creation/dependency-engine";
 import type { Draft } from "@/lib/content-creation/draft-manager";
 import { WIZARD_CONFIG } from "@/lib/content-creation/wizard-config";
+import { log } from "@/lib/logger";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type {
   ContentCreationFormData,
@@ -728,7 +729,7 @@ export function ContentCreationWizard({
         "Content creation started! Your content is being generated. You'll be notified when it's ready.",
       );
     } catch (error) {
-      console.error("Form submission failed:", error);
+      log.error("Form submission failed:", error);
       toast.error(
         `Submission failed - ${error instanceof Error ? error.message : "An unexpected error occurred"}`,
       );
@@ -761,7 +762,7 @@ export function ContentCreationWizard({
         onSaveDraft?.(state.formData);
       }
     } catch (error) {
-      console.error("Draft save failed:", error);
+      log.error("Draft save failed:", error);
       toast.error("Save failed - Failed to save your draft. Please try again.");
     }
   }, [
@@ -791,7 +792,7 @@ export function ContentCreationWizard({
           description: `Progress: ${draft.completionPercentage}% complete`,
         });
       } catch (error) {
-        console.error("Failed to load draft:", error);
+        log.error("Failed to load draft:", error);
         toast.error("Failed to load draft");
       }
     },
@@ -804,7 +805,7 @@ export function ContentCreationWizard({
       dispatch({ type: "LOAD_DRAFT", payload: state.formData });
 
       if (debug) {
-        console.log(
+        log.info(
           "Draft saved:",
           draft.title,
           `${draft.completionPercentage}% complete`,

@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { workspaceApiService } from "@/services";
 import {
@@ -69,14 +70,14 @@ export function WorkspaceSwitcher() {
   const handleWorkspaceSelect = (workspace: Workspace) => {
     setCurrentWorkspace(workspace);
     addToRecentWorkspaces(workspace.id);
-    router.push(`/w/${workspace.id}/topics`);
+    router.push(`/w/${workspace.slug}/topics`);
   };
 
   // Use current workspace or first available workspace
   const displayWorkspace = currentWorkspace || workspaces[0] || null;
 
   // Debug logging
-  console.log("WorkspaceSwitcher Debug:", {
+  log.info("WorkspaceSwitcher Debug:", {
     isLoading,
     workspacesLength: workspaces.length,
     recentWorkspacesCount: recentWorkspaces.length,

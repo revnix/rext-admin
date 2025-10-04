@@ -68,6 +68,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useExportTemplates } from "@/hooks/use-export-templates";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type {
   CsvColumn,
@@ -237,7 +238,7 @@ export function ExportFormatCustomization({
       setSaveDialogOpen(false);
       saveForm.reset();
     } catch (error) {
-      console.error("Error saving template:", error);
+      log.error("Error saving template:", error);
     }
   };
 

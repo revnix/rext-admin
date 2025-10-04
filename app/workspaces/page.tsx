@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { log } from "@/lib/logger";
 import { workspaceApiService } from "@/services";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
@@ -58,6 +59,7 @@ export default function WorkspacePage() {
   ).map((workspace: Workspace) => ({
     id: workspace.id,
     title: workspace.name || workspace.title || "Untitled Workspace", // Handle name/title mapping
+    slug: workspace.slug, // Include slug for URL navigation
     description: workspace.description,
     url: workspace.url,
     created_at: workspace.created_at,
@@ -86,7 +88,7 @@ export default function WorkspacePage() {
           </div>
           <div className="flex flex-col">
             <Link
-              href={`/w/${row.id}/topics`}
+              href={`/w/${row.slug}/topics`}
               className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
               onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
             >
@@ -211,7 +213,7 @@ export default function WorkspacePage() {
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.id}/topics`);
+        router.push(`/w/${row.slug}/topics`);
       },
       tooltip: "View workspace details",
       primary: true,
@@ -277,7 +279,7 @@ export default function WorkspacePage() {
             queryClient.invalidateQueries({ queryKey: ["workspaces"] });
           }}
           onError={(error) => {
-            console.error("Failed to delete workspace:", error);
+            log.error("Failed to delete workspace:", error);
             toast.error("Failed to delete workspace. Please try again.");
           }}
         />

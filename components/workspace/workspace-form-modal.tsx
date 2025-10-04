@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { log } from "@/lib/logger";
 import {
   type WorkspaceFormData,
   workspaceFormSchema,
@@ -101,8 +102,8 @@ export function WorkspaceFormModal() {
 
   // Form submission handler (actual API calls will be implemented in next subtask)
   const onSubmit = (data: WorkspaceFormData) => {
-    console.log("Form submitted with data:", data);
-    console.log(
+    log.info("Form submitted with data:", data);
+    log.info(
       "Validation passed - API calls will be implemented in subtask 1.1.3",
     );
     // API integration will be implemented in subtask 1.1.3

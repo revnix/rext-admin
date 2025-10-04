@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
+import { log } from "@/lib/logger";
 
 /**
  * Session Timeout Warning Component
@@ -29,7 +30,7 @@ export function SessionTimeoutWarning() {
   // Handle session expiry
   useEffect(() => {
     if (sessionExpired && session) {
-      console.log("[Auth] Session expired, redirecting to login");
+      log.info("[Auth] Session expired, redirecting to login");
       signOut({ redirect: true, callbackUrl: "/login?session=expired" });
     }
   }, [sessionExpired, session]);
@@ -37,19 +38,19 @@ export function SessionTimeoutWarning() {
   const handleExtendSession = async () => {
     setIsExtending(true);
     try {
-      console.log("[Auth] Extending session...");
+      log.info("[Auth] Extending session...");
       // Force session update which will trigger token refresh
       await update();
-      console.log("[Auth] Session extended successfully");
+      log.info("[Auth] Session extended successfully");
     } catch (error) {
-      console.error("[Auth] Failed to extend session:", error);
+      log.error("[Auth] Failed to extend session:", error);
     } finally {
       setIsExtending(false);
     }
   };
 
   const handleLogout = async () => {
-    console.log("[Auth] User chose to logout");
+    log.info("[Auth] User chose to logout");
     await signOut({ redirect: true, callbackUrl: "/login" });
   };
 

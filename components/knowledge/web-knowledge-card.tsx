@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { log } from "@/lib/logger";
 import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 import type { WebKnowledge } from "@/types/workspace";
@@ -119,7 +120,7 @@ export function WebKnowledgeCard({
       removeItem(item.id);
       toast.success("Web knowledge deleted successfully");
     } catch (error) {
-      console.error("Failed to delete web knowledge:", error);
+      log.error("Failed to delete web knowledge:", error);
       toast.error("Failed to delete web knowledge");
     } finally {
       setIsDeleting(false);
@@ -138,7 +139,7 @@ export function WebKnowledgeCard({
       toast.success("Web knowledge updated successfully");
       setIsEditing(false);
     } catch (error) {
-      console.error("Failed to update web knowledge:", error);
+      log.error("Failed to update web knowledge:", error);
       toast.error("Failed to update web knowledge");
     } finally {
       setIsUpdating(false);
@@ -371,7 +372,7 @@ export function WebKnowledgeListItem({
       removeItem(item.id);
       toast.success("Web knowledge deleted successfully");
     } catch (error) {
-      console.error("Failed to delete web knowledge:", error);
+      log.error("Failed to delete web knowledge:", error);
       toast.error("Failed to delete web knowledge");
     } finally {
       setIsDeleting(false);

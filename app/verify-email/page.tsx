@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { log } from "@/lib/logger";
 
 function VerifyEmailContent() {
   const [isVerifying, setIsVerifying] = useState(true);
@@ -29,7 +30,7 @@ function VerifyEmailContent() {
       }
 
       try {
-        console.log("[Auth Migration] Using direct API call for verify-email");
+        log.info("[Auth Migration] Using direct API call for verify-email");
 
         // Direct API call - no auth session needed for email verification
         const response = await fetch(

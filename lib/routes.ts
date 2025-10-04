@@ -1,71 +1,73 @@
 /**
  * Route Helper Utilities for Workspace-Scoped URLs
  *
- * Centralized route generation following the /w/{workspace-id}/* pattern.
- * Provides type-safe URL generation and workspace ID extraction.
+ * Centralized route generation following the /w/{workspace-slug}/* pattern.
+ * Provides type-safe URL generation and workspace slug extraction.
  */
 
 /**
  * Workspace-scoped route generators
+ * Now using workspace slug for human-readable URLs
  */
 export const workspaceRoutes = {
   /**
    * Root workspace route - redirects to topics
    */
-  root: (workspaceId: string) => `/w/${workspaceId}`,
+  root: (workspaceSlug: string) => `/w/${workspaceSlug}`,
 
   /**
    * Topics routes
    */
-  topics: (workspaceId: string) => `/w/${workspaceId}/topics`,
-  topicDetail: (workspaceId: string, topicId: string) =>
-    `/w/${workspaceId}/topics/${topicId}`,
-  topicCreate: (workspaceId: string) => `/w/${workspaceId}/topics/create`,
+  topics: (workspaceSlug: string) => `/w/${workspaceSlug}/topics`,
+  topicDetail: (workspaceSlug: string, topicId: string) =>
+    `/w/${workspaceSlug}/topics/${topicId}`,
+  topicCreate: (workspaceSlug: string) => `/w/${workspaceSlug}/topics/create`,
 
   /**
    * Content routes
    */
-  content: (workspaceId: string) => `/w/${workspaceId}/content`,
-  contentDetail: (workspaceId: string, contentId: string) =>
-    `/w/${workspaceId}/content/${contentId}`,
-  contentCreate: (workspaceId: string) => `/w/${workspaceId}/content/create`,
-  contentProgress: (workspaceId: string, contentId: string) =>
-    `/w/${workspaceId}/content/progress/${contentId}`,
+  content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
+  contentDetail: (workspaceSlug: string, contentId: string) =>
+    `/w/${workspaceSlug}/content/${contentId}`,
+  contentCreate: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/content/create`,
+  contentProgress: (workspaceSlug: string, contentId: string) =>
+    `/w/${workspaceSlug}/content/progress/${contentId}`,
 
   /**
    * Users route
    */
-  users: (workspaceId: string) => `/w/${workspaceId}/users`,
+  users: (workspaceSlug: string) => `/w/${workspaceSlug}/users`,
 
   /**
    * Analytics route
    */
-  analytics: (workspaceId: string) => `/w/${workspaceId}/analytics`,
+  analytics: (workspaceSlug: string) => `/w/${workspaceSlug}/analytics`,
 
   /**
    * Settings routes
    */
-  settings: (workspaceId: string) => `/w/${workspaceId}/settings`,
-  settingsGeneral: (workspaceId: string) =>
-    `/w/${workspaceId}/settings/general`,
-  settingsSecurity: (workspaceId: string) =>
-    `/w/${workspaceId}/settings/security`,
-  settingsNotifications: (workspaceId: string) =>
-    `/w/${workspaceId}/settings/notifications`,
+  settings: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
+  settingsGeneral: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/settings/general`,
+  settingsSecurity: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/settings/security`,
+  settingsNotifications: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/settings/notifications`,
 
   /**
    * Knowledge routes (tab-based within workspace detail)
    */
-  knowledge: (workspaceId: string, view?: string) => {
-    const base = `/w/${workspaceId}?tab=knowledge`;
+  knowledge: (workspaceSlug: string, view?: string) => {
+    const base = `/w/${workspaceSlug}?tab=knowledge`;
     return view ? `${base}&view=${view}` : base;
   },
-  knowledgeWeb: (workspaceId: string) =>
-    `/w/${workspaceId}?tab=knowledge&view=web`,
-  knowledgeFiles: (workspaceId: string) =>
-    `/w/${workspaceId}?tab=knowledge&view=files`,
-  knowledgeText: (workspaceId: string) =>
-    `/w/${workspaceId}?tab=knowledge&view=text`,
+  knowledgeWeb: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}?tab=knowledge&view=web`,
+  knowledgeFiles: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}?tab=knowledge&view=files`,
+  knowledgeText: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}?tab=knowledge&view=text`,
 } as const;
 
 /**

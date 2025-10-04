@@ -14,6 +14,7 @@ import {
   type DraftSaveOptions,
   draftManager,
 } from "@/lib/content-creation/draft-manager";
+import { log } from "@/lib/logger";
 import type { PartialContentCreationFormData } from "@/types/content-creation";
 
 // ============================================================================
@@ -163,7 +164,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
       }));
     } catch (error) {
       setState((prev) => ({ ...prev, isDraftsLoading: false }));
-      console.error("Failed to refresh drafts:", error);
+      log.error("Failed to refresh drafts:", error);
     }
   }, []);
 
@@ -197,7 +198,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
             description: `Progress: ${completionPercentage}% complete`,
           });
         } else if (debug && options.isAutoSave) {
-          console.log(
+          log.info(
             `Auto-saved: ${draft.title} (${completionPercentage}% complete)`,
           );
         }
@@ -215,12 +216,12 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
           error.message.includes("No changes detected")
         ) {
           if (debug) {
-            console.log("Auto-save skipped: no changes detected");
+            log.info("Auto-save skipped: no changes detected");
           }
           return null;
         }
 
-        console.error("Failed to save draft:", error);
+        log.error("Failed to save draft:", error);
 
         if (showToasts) {
           toast.error("Failed to save draft", {
@@ -264,7 +265,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
       } catch (error) {
         setState((prev) => ({ ...prev, isLoading: false }));
 
-        console.error("Failed to load draft:", error);
+        log.error("Failed to load draft:", error);
 
         if (showToasts) {
           toast.error("Failed to load draft", {
@@ -297,7 +298,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
         // Refresh drafts list
         await refreshDrafts();
       } catch (error) {
-        console.error("Failed to delete draft:", error);
+        log.error("Failed to delete draft:", error);
 
         if (showToasts) {
           toast.error("Failed to delete draft", {
@@ -325,7 +326,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
         toast.success("All drafts cleared");
       }
     } catch (error) {
-      console.error("Failed to clear drafts:", error);
+      log.error("Failed to clear drafts:", error);
 
       if (showToasts) {
         toast.error("Failed to clear drafts", {
@@ -359,12 +360,12 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
           }));
 
           if (debug) {
-            console.log("Auto-save completed:", draft.title);
+            log.info("Auto-save completed:", draft.title);
           }
         },
         // onError
         (error) => {
-          console.error("Auto-save error:", error);
+          log.error("Auto-save error:", error);
 
           if (showToasts && !error.message.includes("No changes detected")) {
             toast.error("Auto-save failed", {
@@ -394,7 +395,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
     try {
       return await draftManager.draftExists(draftId);
     } catch (error) {
-      console.error("Failed to check draft existence:", error);
+      log.error("Failed to check draft existence:", error);
       return false;
     }
   }, []);
@@ -404,7 +405,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
       try {
         return await draftManager.getDraftInfo(draftId);
       } catch (error) {
-        console.error("Failed to get draft info:", error);
+        log.error("Failed to get draft info:", error);
         return null;
       }
     },
@@ -429,7 +430,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
         },
       }));
     } catch (error) {
-      console.error("Failed to get storage stats:", error);
+      log.error("Failed to get storage stats:", error);
     }
   }, []);
 

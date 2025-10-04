@@ -1,3 +1,5 @@
+import { log } from "@/lib/logger";
+
 /**
  * Content Creation Wizard Validation System
  *
@@ -356,7 +358,7 @@ export function validateField(
         warnings.push(...result.warnings);
       }
     } catch (error) {
-      console.error(`Validation error for field ${fieldId}:`, error);
+      log.error(`Validation error for field ${fieldId}:`, error);
       isValid = false;
       errors.push("Validation error occurred");
     }

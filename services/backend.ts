@@ -145,7 +145,7 @@ export class BackendService {
    *   // ... other required fields
    * };
    * const result = await backendService.generateTopics(formData);
-   * console.log(`Generated ${result.topics.length} topics`);
+   * log.info(`Generated ${result.topics.length} topics`);
    * ```
    */
   async generateTopics(
@@ -205,7 +205,7 @@ export class BackendService {
    *   { id: "1", title: "AI in Healthcare", angle: "Future prospects", ... }
    * ];
    * const result = await backendService.saveTopics(topics);
-   * console.log(`Saved ${result.saved_count} topics successfully`);
+   * log.info(`Saved ${result.saved_count} topics successfully`);
    * ```
    */
   async saveTopics(
@@ -238,7 +238,7 @@ export class BackendService {
    * ```typescript
    * const topicIds = ["topic_1", "topic_2"];
    * const result = await backendService.deleteTopics(topicIds);
-   * console.log(`Deleted ${result.deleted_count} topics successfully`);
+   * log.info(`Deleted ${result.deleted_count} topics successfully`);
    * ```
    */
   async deleteTopics(

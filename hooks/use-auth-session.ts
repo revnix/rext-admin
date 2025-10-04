@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { log } from "@/lib/logger";
 
 /**
  * Backward-compatible auth hook using AuthJS
@@ -49,7 +50,7 @@ export function useAuthSession() {
   }, [status]);
 
   const logout = async () => {
-    console.log(
+    log.info(
       `[Auth] User logging out after ${activityCount} interactions. Last active: ${new Date(lastActivity).toLocaleTimeString()}`,
     );
     await signOut({ redirect: false });

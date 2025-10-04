@@ -1,5 +1,6 @@
 import { Download, FileText, Printer, Share2 } from "lucide-react";
 import React from "react";
+import { log } from "@/lib/logger";
 import type { ExportOptions, TableLevelAction } from "@/types/data-table";
 
 /**
@@ -81,7 +82,7 @@ export function exportToCSV<T extends Record<string, unknown>>(
       URL.revokeObjectURL(url);
     }
   } catch (error) {
-    console.error("Failed to export CSV:", error);
+    log.error("Failed to export CSV:", error);
     throw error;
   }
 }
@@ -134,7 +135,7 @@ export function exportToJSON<T extends Record<string, unknown>>(
       URL.revokeObjectURL(url);
     }
   } catch (error) {
-    console.error("Failed to export JSON:", error);
+    log.error("Failed to export JSON:", error);
     throw error;
   }
 }
@@ -190,7 +191,7 @@ export function printTable(title?: string): void {
     printWindow.print();
     printWindow.close();
   } catch (error) {
-    console.error("Failed to print table:", error);
+    log.error("Failed to print table:", error);
     throw error;
   }
 }
@@ -233,7 +234,7 @@ export function createCommonTableActions<T extends Record<string, unknown>>(
           exportToCSV(data, filename, exportOptions);
         }
       } catch (error) {
-        console.error("Export failed:", error);
+        log.error("Export failed:", error);
         // You could show a toast notification here
       }
     },
@@ -254,7 +255,7 @@ export function createCommonTableActions<T extends Record<string, unknown>>(
           exportToJSON(data, filename, exportOptions);
         }
       } catch (error) {
-        console.error("Export failed:", error);
+        log.error("Export failed:", error);
         // You could show a toast notification here
       }
     },
@@ -274,7 +275,7 @@ export function createCommonTableActions<T extends Record<string, unknown>>(
           printTable("Table Data");
         }
       } catch (error) {
-        console.error("Print failed:", error);
+        log.error("Print failed:", error);
         // You could show a toast notification here
       }
     },

@@ -8,6 +8,7 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { useTopics } from "@/hooks/use-topics";
+import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
 import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -26,7 +27,7 @@ export default function WorkspaceTopicsPage() {
         refetch(),
       ]);
     } catch (error) {
-      console.error("Retry failed:", error);
+      log.error("Retry failed:", error);
     }
   };
 

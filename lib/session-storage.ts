@@ -1,3 +1,5 @@
+import { log } from "@/lib/logger";
+
 /**
  * Session Storage Utility
  *
@@ -44,7 +46,7 @@ export const generateSessionId = (): string => {
       return crypto.randomUUID();
     }
   } catch (_error) {
-    console.warn("crypto.randomUUID() not available, using fallback");
+    log.warn("crypto.randomUUID() not available, using fallback");
   }
 
   // Fallback: timestamp + random number
@@ -78,7 +80,7 @@ export const saveSession = (
   data: Omit<SessionData, "createdAt" | "expiresAt">,
 ): void => {
   if (!isBrowser()) {
-    console.warn("Session storage not available: not in browser environment");
+    log.warn("Session storage not available: not in browser environment");
     return;
   }
 
@@ -93,12 +95,12 @@ export const saveSession = (
     const key = getSessionKey(data.id);
     localStorage.setItem(key, JSON.stringify(sessionData));
 
-    console.log(`Session saved: ${data.id}`, {
+    log.info(`Session saved: ${data.id}`, {
       topicsCount: data.topics.length,
       expiresAt: new Date(sessionData.expiresAt).toISOString(),
     });
   } catch (error) {
-    console.error("Failed to save session:", error);
+    log.error("Failed to save session:", error);
     throw new Error(
       "Unable to save session. Storage may be full or unavailable.",
     );
@@ -113,7 +115,7 @@ export const saveSession = (
  */
 export const getSession = (id: string): SessionData | null => {
   if (!isBrowser()) {
-    console.warn("Session storage not available: not in browser environment");
+    log.warn("Session storage not available: not in browser environment");
     return null;
   }
 
@@ -129,12 +131,12 @@ export const getSession = (id: string): SessionData | null => {
 
     // Check if session has expired
     if (Date.now() > sessionData.expiresAt) {
-      console.log(`Session expired, removing: ${id}`);
+      log.info(`Session expired, removing: ${id}`);
       localStorage.removeItem(key);
       return null;
     }
 
-    console.log(`Session retrieved: ${id}`, {
+    log.info(`Session retrieved: ${id}`, {
       topicsCount: sessionData.topics.length,
       timeRemaining:
         Math.round((sessionData.expiresAt - Date.now()) / (1000 * 60 * 60)) +
@@ -143,13 +145,13 @@ export const getSession = (id: string): SessionData | null => {
 
     return sessionData;
   } catch (error) {
-    console.error("Failed to retrieve session:", error);
+    log.error("Failed to retrieve session:", error);
     // Remove corrupted session data
     try {
       const key = getSessionKey(id);
       localStorage.removeItem(key);
     } catch (cleanupError) {
-      console.error("Failed to cleanup corrupted session:", cleanupError);
+      log.error("Failed to cleanup corrupted session:", cleanupError);
     }
     return null;
   }
@@ -169,14 +171,14 @@ export const updateSession = (
   append: boolean = true,
 ): SessionData | null => {
   if (!isBrowser()) {
-    console.warn("Session storage not available: not in browser environment");
+    log.warn("Session storage not available: not in browser environment");
     return null;
   }
 
   try {
     const existingSession = getSession(id);
     if (!existingSession) {
-      console.warn(`Session not found for update: ${id}`);
+      log.warn(`Session not found for update: ${id}`);
       return null;
     }
 
@@ -194,7 +196,7 @@ export const updateSession = (
     const key = getSessionKey(id);
     localStorage.setItem(key, JSON.stringify(updatedSession));
 
-    console.log(`Session updated: ${id}`, {
+    log.info(`Session updated: ${id}`, {
       previousTopicsCount: existingSession.topics.length,
       newTopicsCount: newTopics.length,
       totalTopicsCount: updatedTopics.length,
@@ -203,7 +205,7 @@ export const updateSession = (
 
     return updatedSession;
   } catch (error) {
-    console.error("Failed to update session:", error);
+    log.error("Failed to update session:", error);
     throw new Error(
       "Unable to update session. Storage may be full or unavailable.",
     );
@@ -215,16 +217,16 @@ export const updateSession = (
  */
 export const removeSession = (id: string): void => {
   if (!isBrowser()) {
-    console.warn("Session storage not available: not in browser environment");
+    log.warn("Session storage not available: not in browser environment");
     return;
   }
 
   try {
     const key = getSessionKey(id);
     localStorage.removeItem(key);
-    console.log(`Session removed: ${id}`);
+    log.info(`Session removed: ${id}`);
   } catch (error) {
-    console.error("Failed to remove session:", error);
+    log.error("Failed to remove session:", error);
   }
 };
 
@@ -235,7 +237,7 @@ export const removeSession = (id: string): void => {
  */
 export const getAllSessions = (): SessionData[] => {
   if (!isBrowser()) {
-    console.warn("Session storage not available: not in browser environment");
+    log.warn("Session storage not available: not in browser environment");
     return [];
   }
 
@@ -265,10 +267,7 @@ export const getAllSessions = (): SessionData[] => {
 
         sessions.push(sessionData);
       } catch (_parseError) {
-        console.error(
-          "Failed to parse session data, marking for removal:",
-          key,
-        );
+        log.error("Failed to parse session data, marking for removal:", key);
         keysToRemove.push(key);
       }
     }
@@ -278,17 +277,17 @@ export const getAllSessions = (): SessionData[] => {
       try {
         localStorage.removeItem(key);
       } catch (removeError) {
-        console.error("Failed to remove expired session:", removeError);
+        log.error("Failed to remove expired session:", removeError);
       }
     });
 
-    console.log(
+    log.info(
       `Retrieved ${sessions.length} active sessions, cleaned up ${keysToRemove.length} expired sessions`,
     );
 
     return sessions.sort((a, b) => b.createdAt - a.createdAt); // Most recent first
   } catch (error) {
-    console.error("Failed to retrieve sessions:", error);
+    log.error("Failed to retrieve sessions:", error);
     return [];
   }
 };
@@ -300,7 +299,7 @@ export const getAllSessions = (): SessionData[] => {
  */
 export const cleanupExpiredSessions = (): void => {
   if (!isBrowser()) {
-    console.warn("Session storage not available: not in browser environment");
+    log.warn("Session storage not available: not in browser environment");
     return;
   }
 
@@ -330,15 +329,15 @@ export const cleanupExpiredSessions = (): void => {
         // Remove corrupted data
         localStorage.removeItem(key);
         cleanedCount++;
-        console.warn("Removed corrupted session data:", key);
+        log.warn("Removed corrupted session data:", key);
       }
     }
 
     if (cleanedCount > 0) {
-      console.log(`Cleaned up ${cleanedCount} expired sessions`);
+      log.info(`Cleaned up ${cleanedCount} expired sessions`);
     }
   } catch (error) {
-    console.error("Failed to cleanup expired sessions:", error);
+    log.error("Failed to cleanup expired sessions:", error);
   }
 };
 
@@ -381,7 +380,7 @@ export const getSessionMetadata = (id: string): SessionMetadata | null => {
       contentType: "unknown", // content_type field removed from interface
     };
   } catch (error) {
-    console.error("Failed to retrieve session metadata:", error);
+    log.error("Failed to retrieve session metadata:", error);
     return null;
   }
 };
@@ -435,13 +434,13 @@ export const getAllSessionMetadata = (): SessionMetadata[] => {
       try {
         localStorage.removeItem(key);
       } catch (removeError) {
-        console.error("Failed to remove expired session:", removeError);
+        log.error("Failed to remove expired session:", removeError);
       }
     });
 
     return metadata.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
-    console.error("Failed to retrieve session metadata:", error);
+    log.error("Failed to retrieve session metadata:", error);
     return [];
   }
 };

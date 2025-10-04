@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useRef } from "react";
+import { log } from "@/lib/logger";
 
 interface PerformanceMonitorProps {
   componentName: string;
@@ -22,7 +23,7 @@ export const PerformanceMonitor = memo(function PerformanceMonitor({
       const totalLifetime = unmountTime - mountTime.current;
 
       if (process.env.NODE_ENV === "development") {
-        console.log(
+        log.info(
           `[Performance] ${componentName} lifetime: ${totalLifetime.toFixed(2)}ms`,
         );
       }
@@ -39,7 +40,7 @@ export const PerformanceMonitor = memo(function PerformanceMonitor({
     const renderTime = renderEndTime - renderStartTime.current;
 
     if (process.env.NODE_ENV === "development" && renderTime > 16) {
-      console.warn(
+      log.warn(
         `[Performance] ${componentName} slow render: ${renderTime.toFixed(2)}ms`,
       );
     }

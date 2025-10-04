@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { type Resolver, type UseFormReturn, useForm } from "react-hook-form";
 import { useContextualSuggestions } from "@/hooks/use-contextual-suggestions";
 import { getContextualTopicSuggestions } from "@/lib/contextual-suggestions";
+import { log } from "@/lib/logger";
 import { announceToScreenReader } from "@/lib/typeform-utils";
 import {
   STEP_VALIDATION_SCHEMAS,
@@ -289,7 +290,7 @@ export function useWizardNavigation({
 
   // Navigation: Next
   const onNext = useCallback((): boolean => {
-    console.log(
+    log.info(
       "🔄 onNext called, currentQuestionIndex:",
       currentQuestionIndex,
       "questions.length:",
@@ -297,13 +298,13 @@ export function useWizardNavigation({
     );
     const validation = validateCurrentQuestion();
     if (!validation.isValid) {
-      console.log("❌ Validation failed:", validation.errors);
+      log.info("❌ Validation failed:", validation.errors);
       return false;
     }
 
     if (currentQuestionIndex >= questions.length - 1) {
       // Complete the wizard
-      console.log("🏁 Last question reached, completing wizard");
+      log.info("🏁 Last question reached, completing wizard");
       setIsSubmitting(true);
       onComplete(formData);
       return true;
@@ -350,7 +351,7 @@ export function useWizardNavigation({
         setReturnToReviewIndex(reviewIndex);
         setOriginalFormData(structuredClone(formData)); // Deep clone for comparison
         setCurrentQuestionIndex(questionIndex);
-        console.log(
+        log.info(
           "🔄 Entered edit mode, returning to review index:",
           reviewIndex,
         );
@@ -367,7 +368,7 @@ export function useWizardNavigation({
         ? JSON.stringify(formData) !== JSON.stringify(originalFormData)
         : false;
 
-      console.log("💾 Save and return - hasChanges:", hasChanges);
+      log.info("💾 Save and return - hasChanges:", hasChanges);
 
       setNavigationMode("normal");
       setCurrentQuestionIndex(returnToReviewIndex);
@@ -403,7 +404,7 @@ export function useWizardNavigation({
   // Log contextual suggestions updates for debugging (Task 7.3)
   useEffect(() => {
     if (contextualSuggestions.audienceSuggestions.length > 0) {
-      console.log("🎯 Contextual suggestions updated:", {
+      log.info("🎯 Contextual suggestions updated:", {
         audienceSuggestions: contextualSuggestions.audienceSuggestions,
         industry: formData.industry,
         purpose: formData.purpose,

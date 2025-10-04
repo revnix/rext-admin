@@ -16,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 export function LoginForm({
@@ -36,12 +37,7 @@ export function LoginForm({
     setError("");
 
     try {
-      console.log(
-        "[AuthJS] Signing in user:",
-        email,
-        "Remember me:",
-        rememberMe,
-      );
+      log.info("[AuthJS] Signing in user:", email, "Remember me:", rememberMe);
 
       const result = await signIn("credentials", {
         email,
@@ -50,7 +46,7 @@ export function LoginForm({
         rememberMe: rememberMe.toString(), // Pass to JWT callback
       });
 
-      console.log("[AuthJS] Sign in result:", result);
+      log.info("[AuthJS] Sign in result:", result);
 
       if (result?.error) {
         setError("Invalid email or password");
@@ -61,7 +57,7 @@ export function LoginForm({
       const redirect = searchParams.get("redirect") || "/dashboard";
       router.push(redirect);
     } catch (error) {
-      console.error("[AuthJS] Sign in failed:", error);
+      log.error("[AuthJS] Sign in failed:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

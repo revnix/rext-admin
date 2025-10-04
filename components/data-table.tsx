@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { log } from "@/lib/logger";
 import type { Column, ColumnFilter, RowAction } from "@/types/data-table";
 
 interface EmptyStateAction {
@@ -307,17 +308,17 @@ export function DataTable<
     {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row) => console.log("View:", row),
+      onClick: (row) => log.info("View:", row),
     },
     {
       label: "Edit",
       icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row) => console.log("Edit:", row),
+      onClick: (row) => log.info("Edit:", row),
     },
     {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => console.log("Delete:", row),
+      onClick: (row) => log.info("Delete:", row),
       variant: "destructive" as const,
     },
   ];

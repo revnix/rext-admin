@@ -1,385 +1,52 @@
 "use client";
 
-import {
-  Calendar,
-  Copy,
-  Edit3,
-  Eye,
-  FileText,
-  Plus,
-  Settings,
-  Trash2,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 
-import Link from "next/link";
-import { ContentStatusBadge } from "@/components/content/content-status-badge";
-import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
-import { Button } from "@/components/ui/button";
-import { usePageTitle } from "@/hooks/use-page-title";
-import type { ContentStatus } from "@/types/content";
-import { STATUS_FILTER_OPTIONS } from "@/types/content";
-import type { ContentData, RowAction } from "@/types/data-table";
+/**
+ * Legacy Content Page - DEPRECATED
+ *
+ * This page redirects to workspace-scoped content page.
+ * All content should be accessed via /w/{workspaceSlug}/content
+ */
+export default function LegacyContentPage() {
+  const router = useRouter();
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const recentWorkspaces = useWorkspaceStore((state) => state.recentWorkspaces);
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
 
-export default function ContentPage() {
-  const breadcrumbs = [
-    { label: "Content", href: "#" },
-    { label: "Generated Content" },
-  ];
+  useEffect(() => {
+    // If user has a current workspace, redirect to its content page
+    if (currentWorkspace?.slug) {
+      router.push(`/w/${currentWorkspace.slug}/content`);
+      return;
+    }
 
-  // Update page title and description
-  usePageTitle(
-    "Content Library",
-    "Manage your published and scheduled content. View performance metrics, edit content, and organize your content pipeline.",
-  );
+    // If user has recent workspaces, redirect to the most recent one's content page
+    if (recentWorkspaces && recentWorkspaces.length > 0) {
+      const recentWorkspace = workspaceList.find(
+        (ws) => ws.id === recentWorkspaces[0],
+      );
+      if (recentWorkspace?.slug) {
+        router.push(`/w/${recentWorkspace.slug}/content`);
+        return;
+      }
+    }
 
-  // Content data with enhanced status system
-  const contentData: ContentData[] = [
-    {
-      id: "1",
-      title: "The Future of AI in Content Marketing: 2024 Trends",
-      type: "Blog Post",
-      contentType: "Article",
-      status: "published" as ContentStatus,
-      publishedTo: "Company Blog",
-      publishDate: "2024-01-22 10:00",
-      scheduledDate: null,
-      flowName: "AI Blog Post Generator",
-      flowId: "flow_001",
-      wordCount: 2847,
-      readTime: "12 min read",
-      engagement: {
-        views: 3247,
-        likes: 156,
-        shares: 43,
-      },
-      seoScore: 89,
-      author: "AI Assistant",
-      humanReviewer: "Sarah Johnson",
-      keywords: ["AI", "content marketing", "2024 trends", "automation"],
-      platforms: ["Website", "LinkedIn"],
-      lastModified: "2024-01-22 09:45",
-      created: "2024-01-22 08:30",
-      content:
-        "The landscape of content marketing is rapidly evolving with AI at the forefront...",
-    },
-    {
-      id: "2",
-      title: "Customer Success Story: Revnix Solutions",
-      type: "Case Study",
-      contentType: "Case Study",
-      status: "scheduled" as ContentStatus,
-      publishedTo: "",
-      publishDate: null,
-      scheduledDate: "2024-01-25 14:00",
-      flowName: "Case Study Generator",
-      flowId: "flow_003",
-      wordCount: 1923,
-      readTime: "8 min read",
-      engagement: {
-        views: 0,
-        likes: 0,
-        shares: 0,
-      },
-      seoScore: 76,
-      author: "AI Assistant",
-      humanReviewer: "Mike Chen",
-      keywords: ["customer success", "case study", "ROI", "implementation"],
-      platforms: ["Website", "Sales Materials"],
-      lastModified: "2024-01-21 16:30",
-      created: "2024-01-21 15:00",
-      content:
-        "Discover how Revnix Solutions transformed their content workflow...",
-    },
-    {
-      id: "3",
-      title: "5 LinkedIn Post Topics for Tech Companies",
-      type: "Social Media",
-      contentType: "Social Post",
-      status: "published" as ContentStatus,
-      publishedTo: "LinkedIn",
-      publishDate: "2024-01-21 09:00",
-      scheduledDate: null,
-      flowName: "LinkedIn Content Creator",
-      flowId: "flow_002",
-      wordCount: 456,
-      readTime: "2 min read",
-      engagement: {
-        views: 1834,
-        likes: 89,
-        shares: 23,
-      },
-      seoScore: 65,
-      author: "AI Assistant",
-      humanReviewer: "David Park",
-      keywords: ["LinkedIn", "B2B", "social media", "engagement"],
-      platforms: ["LinkedIn"],
-      lastModified: "2024-01-21 08:45",
-      created: "2024-01-21 08:00",
-      content:
-        "Here are 5 proven LinkedIn post topics that drive engagement for tech companies...",
-    },
-    {
-      id: "4",
-      title: "Email Newsletter: Weekly AI Roundup",
-      type: "Email",
-      contentType: "Newsletter",
-      status: "draft" as ContentStatus,
-      publishedTo: "",
-      publishDate: null,
-      scheduledDate: "2024-01-24 10:00",
-      flowName: "Newsletter Generator",
-      flowId: "flow_004",
-      wordCount: 892,
-      readTime: "4 min read",
-      engagement: {
-        views: 0,
-        likes: 0,
-        shares: 0,
-      },
-      seoScore: 0,
-      author: "AI Assistant",
-      humanReviewer: "Emma Davis",
-      keywords: ["AI news", "newsletter", "weekly roundup", "technology"],
-      platforms: ["Email"],
-      lastModified: "2024-01-23 14:20",
-      created: "2024-01-23 13:30",
-      content: "This week's AI developments that matter to your business...",
-    },
-    {
-      id: "5",
-      title: "Product Launch Announcement",
-      type: "Press Release",
-      contentType: "Press Release",
-      status: "review" as ContentStatus,
-      publishedTo: "",
-      publishDate: null,
-      scheduledDate: "2024-01-26 09:00",
-      flowName: "Press Release Writer",
-      flowId: "flow_005",
-      wordCount: 1456,
-      readTime: "6 min read",
-      engagement: {
-        views: 0,
-        likes: 0,
-        shares: 0,
-      },
-      seoScore: 82,
-      author: "AI Assistant",
-      humanReviewer: "Lisa Wong",
-      keywords: ["product launch", "press release", "innovation", "technology"],
-      platforms: ["Press", "Website"],
-      lastModified: "2024-01-23 11:15",
-      created: "2024-01-23 10:00",
-      content:
-        "Revolutionary AI-powered platform launches to transform content creation...",
-    },
-    {
-      id: "6",
-      title: "How to Build a Sustainable Content Strategy",
-      type: "Blog Post",
-      contentType: "Guide",
-      status: "generating" as ContentStatus,
-      publishedTo: "",
-      publishDate: null,
-      scheduledDate: null,
-      flowName: "Content Strategy Generator",
-      flowId: "flow_006",
-      wordCount: 0,
-      readTime: "TBD",
-      engagement: {
-        views: 0,
-        likes: 0,
-        shares: 0,
-      },
-      seoScore: 0,
-      author: "AI Assistant",
-      humanReviewer: "Alex Kim",
-      keywords: ["content strategy", "sustainability", "planning", "marketing"],
-      platforms: ["Website", "Medium"],
-      lastModified: "2024-01-23 16:45",
-      created: "2024-01-23 16:30",
-      content: "",
-    },
-    {
-      id: "7",
-      title: "Market Research Report: Q1 2024",
-      type: "Report",
-      contentType: "Research",
-      status: "generated" as ContentStatus,
-      publishedTo: "",
-      publishDate: null,
-      scheduledDate: null,
-      flowName: "Research Report Generator",
-      flowId: "flow_007",
-      wordCount: 3421,
-      readTime: "15 min read",
-      engagement: {
-        views: 0,
-        likes: 0,
-        shares: 0,
-      },
-      seoScore: 78,
-      author: "AI Assistant",
-      humanReviewer: "Rachel Green",
-      keywords: ["market research", "Q1 2024", "analysis", "trends"],
-      platforms: ["Internal", "Website"],
-      lastModified: "2024-01-23 18:20",
-      created: "2024-01-23 17:45",
-      content: "Comprehensive analysis of market trends and opportunities...",
-    },
-    {
-      id: "8",
-      title: "SEO Best Practices 2024",
-      type: "Blog Post",
-      contentType: "Tutorial",
-      status: "failed" as ContentStatus,
-      publishedTo: "",
-      publishDate: null,
-      scheduledDate: null,
-      flowName: "SEO Tutorial Generator",
-      flowId: "flow_008",
-      wordCount: 0,
-      readTime: "TBD",
-      engagement: {
-        views: 0,
-        likes: 0,
-        shares: 0,
-      },
-      seoScore: 0,
-      author: "AI Assistant",
-      humanReviewer: "Tom Wilson",
-      keywords: ["SEO", "best practices", "2024", "optimization"],
-      platforms: ["Website", "YouTube"],
-      lastModified: "2024-01-23 19:15",
-      created: "2024-01-23 19:00",
-      content: "",
-    },
-  ];
+    // If no workspace context, redirect to workspaces selection page
+    router.push("/workspaces");
+  }, [currentWorkspace, recentWorkspaces, workspaceList, router]);
 
-  const columns = [
-    {
-      key: "title",
-      header: "Title",
-      width: "300px",
-      cell: (value: unknown, row: ContentData) => (
-        <Link
-          href={`/content/${row.id}`}
-          className="font-medium text-foreground leading-tight hover:text-primary transition-colors"
-        >
-          {String(value || "")}
-        </Link>
-      ),
-    },
-    { key: "type", header: "Type", width: "120px" },
-    {
-      key: "status",
-      header: "Status",
-      width: "120px",
-      cell: (_value: unknown, row: ContentData) => (
-        <ContentStatusBadge status={row.status} />
-      ),
-      filterable: true,
-      filterType: "select" as const,
-      filterOptions: STATUS_FILTER_OPTIONS.map((option) => option.value),
-    },
-    { key: "publishedTo", header: "Published To", width: "120px" },
-    { key: "wordCount", header: "Words", width: "80px" },
-    { key: "seoScore", header: "SEO Score", width: "90px" },
-    { key: "humanReviewer", header: "Reviewer", width: "120px" },
-    { key: "publishDate", header: "Published", width: "130px" },
-    { key: "created", header: "Created", width: "130px" },
-  ];
-
-  const emptyActions = [
-    {
-      label: "Create Content",
-      icon: <Plus className="h-4 w-4" />,
-      href: "/content/create",
-    },
-  ];
-
-  const tableActions = (
-    <div className="flex items-center gap-2">
-      <Button asChild variant="default">
-        <Link href="/content/create">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Content
-        </Link>
-      </Button>
-      <Button asChild variant="outline">
-        <Link href="/content/settings">
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Link>
-      </Button>
-    </div>
-  );
-
-  const rowActions: RowAction<ContentData>[] = [
-    {
-      label: "View",
-      icon: <Eye className="h-4 w-4" />,
-      href: (row: ContentData) => `/content/${row.id}`,
-      tooltip: "View content details",
-    },
-    {
-      label: "Edit",
-      icon: <Edit3 className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("Edit content:", row.title),
-      tooltip: "Edit this content",
-    },
-    {
-      label: "Copy",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("Copy content:", row.title),
-      tooltip: "Duplicate this content",
-    },
-    {
-      label: "Schedule",
-      icon: <Calendar className="h-4 w-4" />,
-      onClick: (row: ContentData) =>
-        console.log("Schedule content:", row.title),
-      tooltip: "Schedule for publication",
-    },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("Delete content:", row.title),
-      variant: "destructive" as const,
-      requiresConfirmation: true,
-      confirmationTitle: "Delete Content",
-      confirmationDescription:
-        "Are you sure you want to delete this content? This action cannot be undone.",
-    },
-  ];
-
+  // Show loading state while redirecting
   return (
-    <PageLayout
-      title="Generated Content"
-      description="View, edit, and manage all AI-generated content across your flows and platforms."
-      breadcrumbs={breadcrumbs}
-    >
-      <DataTable<ContentData>
-        columns={columns}
-        data={contentData}
-        emptyTitle="No content available"
-        emptyDescription="Content will be automatically generated and managed through your configured flows."
-        emptyActions={emptyActions}
-        emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search content by title, type, status, platform..."
-        actions={tableActions}
-        rowActions={rowActions}
-        pageSize={10}
-        searchFields={[
-          "title",
-          "type",
-          "status",
-          "publishedTo",
-          "humanReviewer",
-          "keywords",
-        ]}
-      />
-    </PageLayout>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">
+          Redirecting to workspace content...
+        </p>
+      </div>
+    </div>
   );
 }

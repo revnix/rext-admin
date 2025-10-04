@@ -3,6 +3,7 @@
 import { AlertTriangle } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { log } from "@/lib/logger";
 
 // Hook component to access router
 function RouterRefreshButton() {
@@ -44,7 +45,7 @@ export class TopicBuilderErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { componentName = "TopicBuilder" } = this.props;
 
-    console.error(
+    log.error(
       `[${componentName}] Error boundary caught an error:`,
       error,
       errorInfo,

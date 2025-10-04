@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { STATUS_FILTER_OPTIONS } from "@/types/content";
@@ -178,26 +179,25 @@ export default function WorkspaceContentPage() {
     {
       label: "Edit",
       icon: <Edit3 className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("Edit content:", row.title),
+      onClick: (row: ContentData) => log.info("Edit content:", row.title),
       tooltip: "Edit this content",
     },
     {
       label: "Copy",
       icon: <Copy className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("Copy content:", row.title),
+      onClick: (row: ContentData) => log.info("Copy content:", row.title),
       tooltip: "Duplicate this content",
     },
     {
       label: "Schedule",
       icon: <Calendar className="h-4 w-4" />,
-      onClick: (row: ContentData) =>
-        console.log("Schedule content:", row.title),
+      onClick: (row: ContentData) => log.info("Schedule content:", row.title),
       tooltip: "Schedule for publication",
     },
     {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: ContentData) => console.log("Delete content:", row.title),
+      onClick: (row: ContentData) => log.info("Delete content:", row.title),
       variant: "destructive" as const,
       requiresConfirmation: true,
       confirmationTitle: "Delete Content",

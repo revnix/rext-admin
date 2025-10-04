@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { classifyError, isOnline } from "@/lib/error-utils";
+import { log } from "@/lib/logger";
 import { generateSessionId, saveSession } from "@/lib/session-storage";
 import {
   createInitialFormData,
@@ -139,7 +140,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         return draft;
       }
     } catch (error) {
-      console.warn("Failed to load draft from localStorage:", error);
+      log.warn("Failed to load draft from localStorage:", error);
     }
 
     return null;
@@ -160,7 +161,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
         setHasDraft(true);
       } catch (error) {
-        console.warn("Failed to save draft to localStorage:", error);
+        log.warn("Failed to save draft to localStorage:", error);
       }
     },
     [formData, currentStep],
@@ -173,7 +174,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       localStorage.removeItem(STORAGE_KEY);
       setHasDraft(false);
     } catch (error) {
-      console.warn("Failed to clear draft from localStorage:", error);
+      log.warn("Failed to clear draft from localStorage:", error);
     }
   }, []);
 
@@ -373,7 +374,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       for (let i = 1; i < step; i++) {
         const validation = validateStep(i);
         if (!validation.isValid) {
-          console.warn(
+          log.warn(
             `Cannot navigate to step ${step}: Step ${i} validation failed`,
             validation.errors,
           );
@@ -426,30 +427,30 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           formData: dataToUse,
         });
 
-        console.log("Processing mutation result:", result);
-        console.log("Result has topics:", !!result.topics);
-        console.log("Topics is array:", Array.isArray(result.topics));
-        console.log("Topics length:", result.topics?.length);
+        log.info("Processing mutation result:", result);
+        log.info("Result has topics:", !!result.topics);
+        log.info("Topics is array:", Array.isArray(result.topics));
+        log.info("Topics length:", result.topics?.length);
 
         if (result.topics && Array.isArray(result.topics)) {
-          console.log("Setting generated topics...");
+          log.info("Setting generated topics...");
           setGeneratedTopics(result.topics);
           setGenerationError(null); // Clear any previous errors
 
           // Auto-save session and navigate to results page
           try {
-            console.log("Generating session ID...");
+            log.info("Generating session ID...");
             const sessionId = generateSessionId();
-            console.log("Session ID generated:", sessionId);
+            log.info("Session ID generated:", sessionId);
 
-            console.log("Saving session...");
+            log.info("Saving session...");
             saveSession({
               id: sessionId,
               topics: result.topics,
               formData: dataToUse,
             });
 
-            console.log(`Session saved successfully: ${sessionId}`, {
+            log.info(`Session saved successfully: ${sessionId}`, {
               topicCount: result.topics.length,
               formData: dataToUse,
             });
@@ -457,7 +458,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             // Navigate to workspace-scoped results page
             const workspaceId = currentWorkspace?.id;
             if (!workspaceId) {
-              console.error("Cannot navigate: No workspace selected");
+              log.error("Cannot navigate: No workspace selected");
               toast.error("No workspace selected", {
                 description:
                   "Please select a workspace before generating topics",
@@ -465,15 +466,15 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
               return;
             }
 
-            console.log("Navigating to workspace-scoped results page...");
+            log.info("Navigating to workspace-scoped results page...");
             router.push(`/w/${workspaceId}/topics/create/results/${sessionId}`);
           } catch (sessionError) {
-            console.error("Failed to save session:", sessionError);
+            log.error("Failed to save session:", sessionError);
             // Don't throw, just log the error and continue
             // User will still see results in current page
           }
         } else {
-          console.error("Invalid result format:", result);
+          log.error("Invalid result format:", result);
           throw new Error("Invalid response format from topic generation API");
         }
       } catch (error) {
@@ -486,7 +487,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             ? (error as BackendError)
             : classifyError(error);
 
-        console.error("Topic generation failed:", classifiedError);
+        log.error("Topic generation failed:", classifiedError);
 
         setGenerationError(classifiedError);
 
@@ -521,7 +522,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   const cancelGeneration = useCallback(() => {
     if (generateMutation.isPending) {
       // The mutation doesn't have a built-in cancel method, but we can handle it gracefully
-      console.log("Generation cancellation requested (mutation will complete)");
+      log.info("Generation cancellation requested (mutation will complete)");
 
       // Clear local states for UX
       setGenerationError(null);
@@ -535,7 +536,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       });
 
       // Enhanced logging for analytics
-      console.log("ANALYTICS: Topic generation cancelled", {
+      log.info("ANALYTICS: Topic generation cancelled", {
         timestamp: new Date().toISOString(),
         userAgent:
           typeof window !== "undefined"
@@ -550,7 +551,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
     // Legacy support: also handle direct fetch cancellation if still active
     if (abortController && currentRequestId) {
-      console.log(`Cancelling direct fetch request: ${currentRequestId}`);
+      log.info(`Cancelling direct fetch request: ${currentRequestId}`);
       abortController.abort();
       setIsGenerating(false);
       setCurrentRequestId(null);
@@ -572,7 +573,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   // Session management methods
   const saveGeneratedTopicsAsSession = useCallback((): string | null => {
     if (generatedTopics.length === 0) {
-      console.warn("No topics to save as session");
+      log.warn("No topics to save as session");
       return null;
     }
 
@@ -584,13 +585,13 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         formData: formData,
       });
 
-      console.log(`Manual session save successful: ${sessionId}`, {
+      log.info(`Manual session save successful: ${sessionId}`, {
         topicCount: generatedTopics.length,
       });
 
       return sessionId;
     } catch (error) {
-      console.error("Failed to save session manually:", error);
+      log.error("Failed to save session manually:", error);
       return null;
     }
   }, [generatedTopics, formData]);
@@ -599,14 +600,14 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
     (sessionId: string): void => {
       const workspaceId = currentWorkspace?.id;
       if (!workspaceId) {
-        console.error("Cannot navigate: No workspace selected");
+        log.error("Cannot navigate: No workspace selected");
         toast.error("No workspace selected", {
           description: "Please select a workspace before navigating to results",
         });
         return;
       }
 
-      console.log(`Navigating to workspace-scoped results page: ${sessionId}`);
+      log.info(`Navigating to workspace-scoped results page: ${sessionId}`);
       router.push(`/w/${workspaceId}/topics/create/results/${sessionId}`);
     },
     [router, currentWorkspace],

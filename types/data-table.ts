@@ -201,6 +201,7 @@ export interface RuleData extends BaseTableRow {
 export interface WorkspaceData extends BaseTableRow {
   title: string; // Display name for workspace
   name?: string; // API field name (mapped to title)
+  slug: string; // URL-safe identifier for workspace
   description?: string;
   url: string;
   created_at: string;

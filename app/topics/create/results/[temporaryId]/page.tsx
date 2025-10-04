@@ -30,6 +30,7 @@ import {
   useTopicBulkSaveMutation,
   useTopicSaveMutation,
 } from "@/hooks/useTopicMutations";
+import { log } from "@/lib/logger";
 import { getSession, updateSession } from "@/lib/session-storage";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
@@ -71,7 +72,7 @@ export default function ResultsPage() {
 
   // Show warning if workspace isn't loaded (user should use workspace-scoped route)
   if (!isWorkspaceLoading && !workspaceId) {
-    console.warn(
+    log.warn(
       "No workspace selected. Please use workspace-scoped route: /w/[workspaceId]/topics/create",
     );
   }
@@ -99,12 +100,12 @@ export default function ResultsPage() {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        console.log(`Loading session data for temporaryId: ${temporaryId}`);
+        log.info(`Loading session data for temporaryId: ${temporaryId}`);
 
         const sessionData = getSession(temporaryId);
 
         if (!sessionData) {
-          console.warn(`No session found for temporaryId: ${temporaryId}`);
+          log.warn(`No session found for temporaryId: ${temporaryId}`);
           setState((prev) => ({
             ...prev,
             isLoading: false,
@@ -114,7 +115,7 @@ export default function ResultsPage() {
           return;
         }
 
-        console.log(`Session loaded successfully:`, {
+        log.info(`Session loaded successfully:`, {
           topicCount: sessionData.topics.length,
           formData: sessionData.formData,
           expiresAt: new Date(sessionData.expiresAt).toISOString(),
@@ -127,7 +128,7 @@ export default function ResultsPage() {
           error: null,
         }));
       } catch (error) {
-        console.error("Failed to load session:", error);
+        log.error("Failed to load session:", error);
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -151,25 +152,25 @@ export default function ResultsPage() {
   // Event handlers for topic operations
   const handleTopicSave = async (topicId: string) => {
     if (!state.session) {
-      console.error("No session available for topic save");
+      log.error("No session available for topic save");
       return;
     }
 
     const topic = state.session.topics.find((t) => t.id === topicId);
     if (!topic) {
-      console.error("Topic not found:", topicId);
+      log.error("Topic not found:", topicId);
       return;
     }
 
     // Check if topic is already saved to prevent duplicates
     if (topic.is_saved || topic._optimisticSaved) {
-      console.log("Topic already saved, skipping:", topicId);
+      log.info("Topic already saved, skipping:", topicId);
       toast.info("This topic is already saved to your library");
       return;
     }
 
     try {
-      console.log("Saving topic to API:", { id: topicId, title: topic.title });
+      log.info("Saving topic to API:", { id: topicId, title: topic.title });
 
       // Use the proper API mutation
       await topicSaveMutation.mutateAsync(topic);
@@ -177,22 +178,22 @@ export default function ResultsPage() {
       // Also save to localStorage as backup
       saveTopic(topic);
 
-      console.log("Topic saved successfully:", topicId);
+      log.info("Topic saved successfully:", topicId);
     } catch (error) {
-      console.error("Error saving topic:", error);
+      log.error("Error saving topic:", error);
       // Fallback to localStorage save if API fails
       try {
         saveTopic(topic);
-        console.log("Fallback: Topic saved to localStorage only:", topicId);
+        log.info("Fallback: Topic saved to localStorage only:", topicId);
       } catch (fallbackError) {
-        console.error("Fallback save also failed:", fallbackError);
+        log.error("Fallback save also failed:", fallbackError);
       }
     }
   };
 
   const handleBulkSave = async (topicIds: string[]) => {
     if (!state.session) {
-      console.error("No session available for bulk save");
+      log.error("No session available for bulk save");
       return;
     }
 
@@ -207,12 +208,12 @@ export default function ResultsPage() {
       );
 
       if (allTopicsToConsider.length === 0) {
-        console.warn("No topics found to save");
+        log.warn("No topics found to save");
         return;
       }
 
       if (unsavedTopics.length === 0) {
-        console.log("All selected topics are already saved");
+        log.info("All selected topics are already saved");
         toast.info("All selected topics are already saved to your library");
         return;
       }
@@ -220,13 +221,13 @@ export default function ResultsPage() {
       const alreadySavedCount =
         allTopicsToConsider.length - unsavedTopics.length;
       if (alreadySavedCount > 0) {
-        console.log(`Skipping ${alreadySavedCount} already saved topics`);
+        log.info(`Skipping ${alreadySavedCount} already saved topics`);
         toast.info(
           `Skipping ${alreadySavedCount} topic${alreadySavedCount !== 1 ? "s" : ""} already saved. Saving ${unsavedTopics.length} new topic${unsavedTopics.length !== 1 ? "s" : ""}.`,
         );
       }
 
-      console.log("Starting bulk save to API:", {
+      log.info("Starting bulk save to API:", {
         requestedIds: topicIds,
         totalRequested: allTopicsToConsider.length,
         alreadySaved: alreadySavedCount,
@@ -245,9 +246,9 @@ export default function ResultsPage() {
       // Also save to localStorage as backup
       saveTopics(unsavedTopics);
 
-      console.log("Bulk save completed successfully");
+      log.info("Bulk save completed successfully");
     } catch (error) {
-      console.error("Error during bulk save:", error);
+      log.error("Error during bulk save:", error);
       // Fallback to localStorage save if API fails
       try {
         const allTopicsToConsider = state.session.topics.filter((topic) =>
@@ -258,10 +259,10 @@ export default function ResultsPage() {
         );
         if (unsavedTopics.length > 0) {
           saveTopics(unsavedTopics);
-          console.log("Fallback: Saved unsaved topics to localStorage only");
+          log.info("Fallback: Saved unsaved topics to localStorage only");
         }
       } catch (fallbackError) {
-        console.error("Fallback save also failed:", fallbackError);
+        log.error("Fallback save also failed:", fallbackError);
       }
     }
   };
@@ -271,13 +272,13 @@ export default function ResultsPage() {
     updates: Partial<GeneratedTopic>,
   ) => {
     // TODO: Implement topic editing functionality
-    console.log("Editing topic:", topicId, updates);
+    log.info("Editing topic:", topicId, updates);
     // In a real implementation, this would update the topic in state/API
   };
 
   const handleTopicRegenerate = async (topicId: string) => {
     // TODO: Implement single topic regeneration
-    console.log("Regenerating topic:", topicId);
+    log.info("Regenerating topic:", topicId);
     // In a real implementation, this would call the API to regenerate just this topic
   };
 
@@ -286,17 +287,17 @@ export default function ResultsPage() {
     format: "json" | "csv",
   ) => {
     exportTopics(format);
-    console.log("Exporting saved topics:", format);
+    log.info("Exporting saved topics:", format);
   };
 
   const handleTopicDelete = async (topicId: string) => {
     removeTopic(topicId);
-    console.log("Topic deleted from localStorage:", topicId);
+    log.info("Topic deleted from localStorage:", topicId);
   };
 
   const handleGenerateMore = async (additionalCount: number) => {
     if (!state.session?.formData) {
-      console.error("❌ No form data available for generating more topics");
+      log.error("❌ No form data available for generating more topics");
       return;
     }
 
@@ -305,7 +306,7 @@ export default function ResultsPage() {
       clearNewlyAddedHighlights(); // Clear any existing highlights
 
       // Generate more topics using the stored form data
-      console.log(
+      log.info(
         `🔄 Generating ${additionalCount} more topics with session settings`,
       );
 
@@ -334,7 +335,7 @@ export default function ResultsPage() {
             session: updatedSession,
           }));
 
-          console.log(
+          log.info(
             `✅ Successfully generated and persisted ${result.topics.length} more topics`,
             {
               totalTopicsNow: updatedSession.topics.length,
@@ -353,7 +354,7 @@ export default function ResultsPage() {
               : null,
           }));
 
-          console.warn(
+          log.warn(
             `⚠️ Could not persist to session storage, updated local state only`,
           );
         }
@@ -366,7 +367,7 @@ export default function ResultsPage() {
         throw new Error("Invalid response format from topic generation API");
       }
     } catch (error) {
-      console.error("❌ Error generating more topics:", error);
+      log.error("❌ Error generating more topics:", error);
       // The mutation already handles error toasts
     } finally {
       setIsGeneratingMore(false);
@@ -374,8 +375,8 @@ export default function ResultsPage() {
   };
 
   const handleStartOver = () => {
-    console.log("🔄 Start Over button clicked - opening dialog");
-    console.log("Current dialog state:", showStartOverDialog);
+    log.info("🔄 Start Over button clicked - opening dialog");
+    log.info("Current dialog state:", showStartOverDialog);
     // Temporarily skip dialog for testing
     if (
       confirm(
@@ -388,18 +389,16 @@ export default function ResultsPage() {
   };
 
   const handleConfirmStartOver = () => {
-    console.log("✅ Confirm Start Over clicked - executing reset");
+    log.info("✅ Confirm Start Over clicked - executing reset");
     try {
       // Reset wizard state and navigate to create page
       resetWizard();
-      console.log(
-        "🔄 Starting over: Wizard reset, navigating to topic builder",
-      );
+      log.info("🔄 Starting over: Wizard reset, navigating to topic builder");
       setShowStartOverDialog(false);
       // Navigate to create page without full refresh
       router.push("/topics/create");
     } catch (error) {
-      console.error("❌ Error resetting wizard:", error);
+      log.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
     }
   };
@@ -446,7 +445,7 @@ export default function ResultsPage() {
   };
 
   const handleSessionRecover = (sessionId: string) => {
-    console.log(`Attempting to recover session: ${sessionId}`);
+    log.info(`Attempting to recover session: ${sessionId}`);
     router.push(`/topics/create/results/${sessionId}`);
   };
 
@@ -575,7 +574,7 @@ export default function ResultsPage() {
               onRetry={clearStorageError}
               onGoBack={() => clearStorageError()}
               onContactSupport={() => {
-                console.log("Storage error - contact support clicked");
+                log.info("Storage error - contact support clicked");
               }}
             />
           </div>
@@ -658,7 +657,7 @@ export default function ResultsPage() {
       <Dialog
         open={showStartOverDialog}
         onOpenChange={(open) => {
-          console.log("🔄 Dialog state changed:", open);
+          log.info("🔄 Dialog state changed:", open);
           setShowStartOverDialog(open);
         }}
       >

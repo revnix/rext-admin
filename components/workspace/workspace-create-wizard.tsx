@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
+import { log } from "@/lib/logger";
 import {
   type WorkspaceFormData,
   workspaceFormSchema,
@@ -184,7 +185,7 @@ export function WorkspaceCreateWizard() {
       setWizardData((prev) => ({ ...prev, urlPreview }));
       toast.success("Website analyzed successfully!");
     } catch (error) {
-      console.error("URL analysis failed:", error);
+      log.error("URL analysis failed:", error);
       toast.error(
         "Failed to analyze website. You can still continue with manual setup.",
       );
@@ -223,7 +224,7 @@ export function WorkspaceCreateWizard() {
       setWizardData((prev) => ({ ...prev, brandVoice }));
       toast.success("Brand voice extracted successfully!");
     } catch (error) {
-      console.error("Brand voice extraction failed:", error);
+      log.error("Brand voice extraction failed:", error);
       toast.error(
         "Failed to extract brand voice. You can edit these details later.",
       );
@@ -250,9 +251,9 @@ export function WorkspaceCreateWizard() {
       queryClient.invalidateQueries({ queryKey: ["workspaces", "switcher"] });
 
       // Navigate to the new workspace topics page
-      router.push(`/w/${workspace.id}/topics`);
+      router.push(`/w/${workspace.slug}/topics`);
     } catch (error) {
-      console.error("Failed to create workspace:", error);
+      log.error("Failed to create workspace:", error);
       toast.error("Failed to create workspace. Please try again.");
     } finally {
       setIsCreating(false);

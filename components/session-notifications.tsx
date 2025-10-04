@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { log } from "@/lib/logger";
 import { getAllSessionMetadata } from "@/lib/session-storage";
 import { cn } from "@/lib/utils";
 import type { SessionData, SessionMetadata } from "@/types/session";
@@ -210,7 +211,7 @@ export function SessionNotifications({
       setAvailableSessions(filtered);
       setShowRecoveryDialog(true);
     } catch (error) {
-      console.error("Failed to load available sessions:", error);
+      log.error("Failed to load available sessions:", error);
     }
   };
 

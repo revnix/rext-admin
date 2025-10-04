@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { log } from "@/lib/logger";
 import { generateRequestId } from "@/lib/response-utils";
 
 interface ErrorBoundaryState {
@@ -189,7 +190,7 @@ export class ErrorBoundary extends React.Component<
     const errorId = this.state.errorId || "unknown";
     const requestId = this.state.requestId || "unknown";
 
-    console.error("ErrorBoundary caught an error:", {
+    log.error("ErrorBoundary caught an error:", {
       errorId,
       requestId,
       message: error.message,

@@ -27,7 +27,10 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noConsole": {
+          "level": "error"
+        }
       }
     },
     "domains": {

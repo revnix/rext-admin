@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { log } from "@/lib/logger";
 import type {
   CurrentStep,
   GeneratedTopic,
@@ -380,12 +381,12 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         // Enhanced hydration control for SSR compatibility
         skipHydration: false,
         onRehydrateStorage: (_state) => {
-          console.log("Hydration starts for topic-builder-store");
+          log.info("Hydration starts for topic-builder-store");
           return (state, error) => {
             if (error) {
-              console.error("An error happened during hydration:", error);
+              log.error("An error happened during hydration:", error);
             } else {
-              console.log("Hydration finished for topic-builder-store");
+              log.info("Hydration finished for topic-builder-store");
               state?.setHasHydrated(true);
             }
           };

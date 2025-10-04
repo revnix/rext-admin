@@ -247,6 +247,7 @@ describe("saveSession", () => {
 
     saveSession(mockSessionData);
     expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    // biome-ignore lint/suspicious/noConsole: Test assertion for console warning
     expect(console.warn).toHaveBeenCalledWith(
       "Session storage not available: not in browser environment",
     );
@@ -310,6 +311,7 @@ describe("getSession", () => {
 
     const retrieved = getSession("test-id");
     expect(retrieved).toBeNull();
+    // biome-ignore lint/suspicious/noConsole: Test assertion for console warning
     expect(console.warn).toHaveBeenCalledWith(
       "Session storage not available: not in browser environment",
     );
@@ -338,6 +340,7 @@ describe("removeSession", () => {
     });
 
     expect(() => removeSession("test-id")).not.toThrow();
+    // biome-ignore lint/suspicious/noConsole: Test assertion for console error
     expect(console.error).toHaveBeenCalledWith(
       "Failed to remove session:",
       expect.any(Error),

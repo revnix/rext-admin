@@ -153,7 +153,7 @@ export function useIsSuperAdmin(): boolean {
  * @example
  * const user = usePermissionUser();
  * if (user) {
- *   console.log(`User ${user.name} has role: ${user.role}`);
+ *   log.info(`User ${user.name} has role: ${user.role}`);
  * }
  */
 export function usePermissionUser(): UserWithPermissions | null {

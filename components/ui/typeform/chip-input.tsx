@@ -19,6 +19,7 @@ import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 export interface ChipInputProps {
@@ -121,7 +122,7 @@ export function ChipInput({
   // Error boundary for fallback functionality
   const triggerFallback = React.useCallback(
     (error: Error) => {
-      console.error("ChipInput error, falling back to text input:", error);
+      log.error("ChipInput error, falling back to text input:", error);
       setIsFallbackMode(true);
       announce("Switched to text input mode due to an error");
       onFallbackTriggered?.(error);
@@ -140,7 +141,7 @@ export function ChipInput({
       try {
         operation();
       } catch (error) {
-        console.error(`ChipInput operation failed (${context}):`, error);
+        log.error(`ChipInput operation failed (${context}):`, error);
         triggerFallback(error as Error);
       }
     },
@@ -236,18 +237,18 @@ export function ChipInput({
           const chipAdded = addChip(inputValue);
           if (chipAdded) {
             setLastEnterTime(now);
-            console.log("🏷️ Chip added, ready for step advance on next enter");
+            log.info("🏷️ Chip added, ready for step advance on next enter");
           }
         } else {
           // Enter on empty input: check for dual enter timing
           if (lastEnterTime && now - lastEnterTime <= DUAL_ENTER_TIMEOUT) {
             // Second enter within timeout: advance step
-            console.log("⏭️ Dual enter detected, advancing step");
+            log.info("⏭️ Dual enter detected, advancing step");
             setLastEnterTime(null);
             onStepAdvance?.();
           } else {
             // Single enter on empty input: advance step immediately
-            console.log("⏭️ Enter on empty input, advancing step");
+            log.info("⏭️ Enter on empty input, advancing step");
             onStepAdvance?.();
           }
         }
@@ -539,11 +540,7 @@ export function ControlledChipInput({
 }: ControlledChipInputProps) {
   const handleFallbackTriggered = React.useCallback(
     (error: Error) => {
-      console.warn(
-        "ChipInput fallback triggered for field:",
-        field.name,
-        error,
-      );
+      log.warn("ChipInput fallback triggered for field:", field.name, error);
       props.onFallbackTriggered?.(error);
     },
     [field.name, props.onFallbackTriggered],

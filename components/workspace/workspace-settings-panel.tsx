@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-
+import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Workspace } from "@/types/workspace";
 import { DEFAULT_WORKSPACE_SETTINGS } from "@/types/workspace";
@@ -97,7 +97,7 @@ export function WorkspaceSettingsPanel({
       toast.success("Workspace settings updated successfully");
       setHasChanges(false);
     } catch (error) {
-      console.error("Failed to update workspace settings:", error);
+      log.error("Failed to update workspace settings:", error);
       toast.error("Failed to update workspace settings. Please try again.");
     } finally {
       setIsSubmitting(false);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { log } from '@/lib/logger';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -116,7 +117,7 @@ export default function TasksPage() {
         const response_data = await response.json();
         setTasksData(response_data.data);
       } catch (err) {
-        console.error("Error loading tasks:", err);
+        log.error("Error loading tasks:", err);
         setError(err instanceof Error ? err.message : "Failed to load tasks");
       } finally {
         setLoading(false);

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { log } from "@/lib/logger";
 
 interface OAuthButtonsProps {
   callbackUrl?: string;
@@ -25,7 +26,7 @@ export function OAuthButtons({
 
       await signIn(provider, { callbackUrl });
     } catch (error) {
-      console.error(`[OAuth] ${provider} sign in error:`, error);
+      log.error(`[OAuth] ${provider} sign in error:`, error);
     } finally {
       if (provider === "google") {
         setIsGoogleLoading(false);

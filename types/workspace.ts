@@ -20,6 +20,7 @@ export interface Workspace {
   id: string; // UUID
   title: string; // unique, required
   name?: string; // alternative to title (backend uses name)
+  slug: string; // URL-safe identifier for workspace
   description?: string; // optional
   url: string; // required
   created_at: string; // DateTime ISO string

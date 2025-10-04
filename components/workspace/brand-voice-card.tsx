@@ -27,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { BrandVoice, Workspace } from "@/types/workspace";
 
@@ -66,7 +67,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
       return success;
     }
   } catch (error) {
-    console.error("Failed to copy to clipboard:", error);
+    log.error("Failed to copy to clipboard:", error);
     return false;
   }
 }

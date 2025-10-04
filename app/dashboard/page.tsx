@@ -9,6 +9,8 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
@@ -20,8 +22,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const recentWorkspaces = useWorkspaceStore((state) => state.recentWorkspaces);
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+
+  // Redirect to workspace selection or last workspace
+  useEffect(() => {
+    // If user has a current workspace, redirect to its topics page
+    if (currentWorkspace?.slug) {
+      router.push(`/w/${currentWorkspace.slug}/topics`);
+      return;
+    }
+
+    // If user has recent workspaces, redirect to the most recent one
+    if (recentWorkspaces && recentWorkspaces.length > 0) {
+      const recentWorkspace = workspaceList.find(
+        (ws) => ws.id === recentWorkspaces[0],
+      );
+      if (recentWorkspace?.slug) {
+        router.push(`/w/${recentWorkspace.slug}/topics`);
+        return;
+      }
+    }
+
+    // If no workspace context, redirect to workspaces selection page
+    router.push("/workspaces");
+  }, [currentWorkspace, recentWorkspaces, workspaceList, router]);
+
   const breadcrumbs = [{ label: "Dashboard" }];
 
   // Update page title and description

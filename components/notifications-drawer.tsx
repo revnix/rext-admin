@@ -20,6 +20,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { log } from "@/lib/logger";
 
 interface NotificationAction {
   label: string;
@@ -59,12 +60,12 @@ const sampleNotifications: Notification[] = [
       {
         label: "View Logs",
         variant: "outline",
-        onClick: () => console.log("Opening logs for flow"),
+        onClick: () => log.info("Opening logs for flow"),
       },
       {
         label: "Retry Flow",
         variant: "default",
-        onClick: () => console.log("Retrying flow execution"),
+        onClick: () => log.info("Retrying flow execution"),
       },
     ],
   },
@@ -80,12 +81,12 @@ const sampleNotifications: Notification[] = [
       {
         label: "Retry Connection",
         variant: "default",
-        onClick: () => console.log("Retrying Slack connection"),
+        onClick: () => log.info("Retrying Slack connection"),
       },
       {
         label: "Update Credentials",
         variant: "outline",
-        onClick: () => console.log("Opening credentials update"),
+        onClick: () => log.info("Opening credentials update"),
       },
     ],
   },
@@ -128,7 +129,7 @@ const sampleNotifications: Notification[] = [
       {
         label: "Download",
         variant: "default",
-        onClick: () => console.log("Downloading export file"),
+        onClick: () => log.info("Downloading export file"),
       },
     ],
   },
@@ -144,12 +145,12 @@ const sampleNotifications: Notification[] = [
       {
         label: "Upgrade Plan",
         variant: "default",
-        onClick: () => console.log("Opening upgrade plan"),
+        onClick: () => log.info("Opening upgrade plan"),
       },
       {
         label: "Manage Storage",
         variant: "outline",
-        onClick: () => console.log("Opening storage management"),
+        onClick: () => log.info("Opening storage management"),
       },
     ],
   },
@@ -218,12 +219,12 @@ const sampleNotifications: Notification[] = [
       {
         label: "Continue Project",
         variant: "default",
-        onClick: () => console.log("Continue project"),
+        onClick: () => log.info("Continue project"),
       },
       {
         label: "Archive",
         variant: "destructive",
-        onClick: () => console.log("Archive project"),
+        onClick: () => log.info("Archive project"),
       },
     ],
   },

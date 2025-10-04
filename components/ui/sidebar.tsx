@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
@@ -123,7 +124,7 @@ function SidebarProvider({
           );
         }
       } catch (error) {
-        console.warn("Failed to set sidebar cookie:", error);
+        log.warn("Failed to set sidebar cookie:", error);
       }
     },
     [setOpenProp, open],

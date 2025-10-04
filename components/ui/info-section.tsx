@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type { InfoItem, InfoSectionProps } from "@/types/detail-page";
 
@@ -74,9 +75,9 @@ const InfoSection = React.forwardRef<HTMLDivElement, InfoSectionComponentProps>(
       try {
         await navigator.clipboard.writeText(text);
         // You might want to add a toast notification here
-        console.log("Copied to clipboard:", text);
+        log.info("Copied to clipboard:", text);
       } catch (error) {
-        console.error("Failed to copy to clipboard:", error);
+        log.error("Failed to copy to clipboard:", error);
       }
     };
 

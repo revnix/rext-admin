@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { log } from "@/lib/logger";
 import {
   type NotificationPreferences,
   notificationPreferencesSchema,
@@ -50,7 +51,7 @@ export function NotificationPreferencesForm({
       toast.success("Notification preferences updated successfully");
     } catch (error) {
       toast.error("Failed to update preferences");
-      console.error("[NotificationPreferences] Update failed:", error);
+      log.error("[NotificationPreferences] Update failed:", error);
     } finally {
       setIsLoading(false);
     }

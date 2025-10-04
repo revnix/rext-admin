@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useEffect } from "react";
+import { log } from "@/lib/logger";
 import { workspaceApiService } from "@/services";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Workspace } from "@/types/workspace";
@@ -12,7 +13,9 @@ import type { Workspace } from "@/types/workspace";
  */
 interface WorkspaceContextType {
   workspace: Workspace | undefined;
-  workspaceId: string;
+  workspaceId: string; // UUID - The actual workspace ID (workspace.id)
+  workspaceSlug: string; // Slug - The URL-friendly identifier (workspace.slug)
+  identifier: string; // The identifier used in the URL (could be UUID or slug for backward compat)
   isLoading: boolean;
   error: Error | null;
 }
@@ -27,7 +30,7 @@ const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
  */
 interface WorkspaceProviderProps {
   children: ReactNode;
-  workspaceId: string;
+  workspaceId: string; // This will be the slug from URL params
 }
 
 /**
@@ -55,7 +58,13 @@ export function WorkspaceProvider({
     (state) => state.addToRecentWorkspaces,
   );
 
-  console.log("[WorkspaceProvider] Initializing for workspace:", workspaceId);
+  log.info("[WorkspaceProvider] Initializing for workspace:", workspaceId);
+
+  // Determine if workspaceId is a UUID or a slug
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    );
 
   // Query workspace data
   const {
@@ -65,8 +74,16 @@ export function WorkspaceProvider({
   } = useQuery({
     queryKey: ["workspace", workspaceId],
     queryFn: async () => {
-      console.log("[WorkspaceProvider] Fetching workspace:", workspaceId);
-      return workspaceApiService.getWorkspace(workspaceId);
+      log.info(
+        "[WorkspaceProvider] Fetching workspace:",
+        workspaceId,
+        "isUuid:",
+        isUuid,
+      );
+      // Use appropriate method based on identifier type
+      return isUuid
+        ? workspaceApiService.getWorkspace(workspaceId)
+        : workspaceApiService.getWorkspaceBySlug(workspaceId);
     },
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -78,7 +95,7 @@ export function WorkspaceProvider({
   // Sync with Zustand store when workspace data changes
   useEffect(() => {
     if (workspace) {
-      console.log("[WorkspaceProvider] Workspace loaded:", workspace.title);
+      log.info("[WorkspaceProvider] Workspace loaded:", workspace.title);
       setCurrentWorkspace(workspace);
       addToRecentWorkspaces(workspace.id);
     }
@@ -87,7 +104,7 @@ export function WorkspaceProvider({
   // Handle invalid workspace - redirect to workspace list
   useEffect(() => {
     if (error && !isLoading) {
-      console.error(
+      log.error(
         "[WorkspaceProvider] Failed to load workspace, redirecting:",
         error,
       );
@@ -97,7 +114,9 @@ export function WorkspaceProvider({
 
   const contextValue: WorkspaceContextType = {
     workspace,
-    workspaceId,
+    workspaceId: workspace?.id || "", // UUID
+    workspaceSlug: workspace?.slug || "", // Slug
+    identifier: workspaceId, // Original URL param
     isLoading,
     error: error as Error | null,
   };
@@ -119,9 +138,19 @@ export function WorkspaceProvider({
  * @example
  * ```tsx
  * function MyComponent() {
- *   const { workspace, workspaceId, isLoading } = useWorkspace();
+ *   const { workspace, workspaceId, workspaceSlug, isLoading } = useWorkspace();
  *
  *   if (isLoading) return <div>Loading...</div>;
+ *
+ *   // Access UUID
+ *   log.info('UUID:', workspaceId);
+ *
+ *   // Access slug for URLs
+ *   router.push(`/w/${workspaceSlug}/topics`);
+ *
+ *   // Or use from workspace object
+ *   log.info('UUID:', workspace.id);
+ *   log.info('Slug:', workspace.slug);
  *
  *   return <div>{workspace?.title}</div>;
  * }

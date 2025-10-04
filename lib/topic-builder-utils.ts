@@ -10,6 +10,7 @@ import {
   getAudienceOptionsForIndustry,
   YMYL_INDUSTRIES,
 } from "@/data/topic-builder-options";
+import { log } from "@/lib/logger";
 import { STEP_VALIDATION_SCHEMAS } from "@/types/schemas";
 import type { SelectOption } from "@/types/shared";
 import type {
@@ -40,7 +41,7 @@ import type {
  */
 export const detectYMYL = (industry: string): boolean => {
   if (!industry || typeof industry !== "string") {
-    console.warn("detectYMYL: Invalid industry input provided:", industry);
+    log.warn("detectYMYL: Invalid industry input provided:", industry);
     return false;
   }
 
@@ -56,7 +57,7 @@ export const detectYMYL = (industry: string): boolean => {
       ymylIndustry.toLowerCase().includes(industryLower),
   );
 
-  console.log(`YMYL Detection - Industry: "${industry}" → YMYL: ${isYMYL}`);
+  log.info(`YMYL Detection - Industry: "${industry}" → YMYL: ${isYMYL}`);
 
   return isYMYL;
 };
@@ -87,7 +88,7 @@ export const getAudienceOptions = (industry: string): SelectOption[] => {
  */
 export const getAudienceForIndustry = (industry: string): string[] => {
   if (!industry || typeof industry !== "string") {
-    console.warn(
+    log.warn(
       "getAudienceForIndustry: Invalid industry input provided:",
       industry,
     );
@@ -679,7 +680,7 @@ export const sanitizeInput = (input: string): string => {
  * @returns Serializable object ready for API transmission
  */
 export const prepareFormDataForAPI = (formData: TopicBuilderFormData) => {
-  console.log("Raw form data:", formData);
+  log.info("Raw form data:", formData);
 
   // Just return the form data - backend service handles transformation
   const apiData = {
@@ -687,7 +688,7 @@ export const prepareFormDataForAPI = (formData: TopicBuilderFormData) => {
     timestamp: new Date().toISOString(),
   };
 
-  console.log("Prepared API data:", apiData);
+  log.info("Prepared API data:", apiData);
   return apiData;
 };
 
@@ -725,7 +726,7 @@ export const logValidationResult = (
   result: ValidationResult,
   formData: TopicBuilderFormData,
 ): void => {
-  console.log(`Form Validation - Step ${step}:`, {
+  log.info(`Form Validation - Step ${step}:`, {
     isValid: result.isValid,
     errors: result.errors,
     warnings: result.warnings,
@@ -847,7 +848,7 @@ export const validateStep = (
     const errors = result.error.issues.map((issue) => issue.message);
     return { isValid: false, errors };
   } catch (error) {
-    console.error(`Error validating step ${step}:`, error);
+    log.error(`Error validating step ${step}:`, error);
     return { isValid: false, errors: ["Validation error occurred"] };
   }
 };

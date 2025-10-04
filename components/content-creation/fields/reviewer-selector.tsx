@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { log } from "@/lib/logger";
 
 interface ReviewerUser {
   id: string;
@@ -90,7 +91,7 @@ export function ReviewerSelector({
         try {
           await onLoadReviewers();
         } catch (error) {
-          console.error("Failed to load reviewers:", error);
+          log.error("Failed to load reviewers:", error);
         } finally {
           setIsLoading(false);
         }
