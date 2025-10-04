@@ -93,12 +93,14 @@ wrext-admin/
 
 **Impact**: Runtime errors, reduced IDE assistance, harder debugging
 
-### 3. Console Statement Proliferation 🟡
+### 3. Console Statement Proliferation & Auth Logging Issues 🟡
 - **348 console statements** across 75 files
 - Logger implementation exists but underutilized
 - Debug statements in production code
+- **Auth flow logs sensitive data**: `auth.config.ts:13` and `auth.config.ts:101-168` emit email addresses and token state to serverless stdout
+- **PII in logs**: Violates least-privilege logging in Vercel/Edge environments
 
-**Impact**: Performance degradation, no structured logging
+**Impact**: Performance degradation, no structured logging, potential PII exposure in provider logs
 
 ---
 
@@ -108,6 +110,8 @@ wrext-admin/
 - **14 eslint-disable/ts-ignore** comments
 - **Multiple TODO comments** indicating incomplete features
 - Concentrated in knowledge management components
+- **Placeholder UI**: Dashboard metrics show hardcoded `"--"` values (`app/dashboard/page.tsx:33`)
+- **Testing misalignment**: Most Jest suites target legacy helpers, critical paths lack coverage
 
 ### 5. Bundle & Performance 🟡
 - Webpack optimization commented out in next.config.ts
@@ -118,6 +122,13 @@ wrext-admin/
 - `canvas-confetti` - Potentially unused
 - `date-fns-jalali` - Unused import
 - Several Radix UI components may be unused
+
+### 7. Authentication & Storage Issues 🔴
+- **Duplicate token storage**: NextAuth session already has tokens, but also persisting to `localStorage` (`stores/auth-store.ts:16`)
+- **Increased theft risk**: localStorage makes tokens vulnerable to XSS
+- **Fetch wrapper issues**: `lib/auth-utils.ts:49` adds JSON headers even for GET/DELETE, breaking multipart forms
+- **React Query misconfiguration**: `retry: false` globally and refetches on every mount/focus (`lib/query-client.ts:17-37`)
+- **Mutation hooks anti-pattern**: `hooks/useTopicMutations.ts:101` bypasses `useQueryClient()`, breaking context scoping
 
 ---
 
@@ -403,6 +414,44 @@ interface LogContext {
 4. **Month 2**: Migrate to monorepo structure
 5. **Month 3**: Full integration with CI/CD
 
+### 11. Service Layer Consolidation 🔄
+**Current Issues**:
+- `BackendService` and `WorkspaceApiService` duplicate interceptors, dedup maps, sanitizers, and retry logic
+- Multiple HTTP clients with overlapping functionality (`services/backend.ts:42-186`, `services/workspace-api.ts:1-120`)
+
+**Solution**:
+```typescript
+// lib/http-client.ts - Shared HTTP client
+export class HTTPClient {
+  constructor(private baseURL: string, private options?: ClientOptions) {}
+
+  // Shared interceptors, retries, sanitization
+  async request<T>(config: RequestConfig): Promise<T> {
+    // Unified request pipeline
+  }
+}
+
+// Services become thin wrappers
+export class BackendService {
+  constructor(private client: HTTPClient) {}
+
+  async getWorkspace(id: string) {
+    return this.client.get(`/workspaces/${id}`);
+  }
+}
+```
+
+### 12. Zustand Store Improvements 📦
+**Issues**:
+- Each store embeds boilerplate hydration checks
+- Duplicate persist configurations
+- Stores return entire state objects (performance issue)
+
+**Recommendations**:
+- Wrap Zustand's `persist` once with SSR guards
+- Expose selectors instead of full state
+- Centralize versioning and migration strategies
+
 ---
 
 ## Security Posture
@@ -445,25 +494,52 @@ The codebase is **production-ready** but requires immediate attention to testing
 
 ---
 
+## Additional Insights from Codex Analysis
+
+### Critical Security & Storage Issues
+1. **Token Storage Duplication**: Tokens stored in both NextAuth session AND localStorage
+2. **Auth Logging**: Sensitive data (emails, tokens) logged to serverless stdout
+3. **Fetch Wrapper Problems**: Forces JSON headers on all requests, breaking multipart forms
+4. **React Query Misconfiguration**: Disabled retries and excessive refetching
+
+### Service Layer Consolidation Needed
+- `BackendService` and `WorkspaceApiService` have massive duplication
+- Extract shared HTTP client with pluggable strategies
+- Multiple sanitizers and metrics fields unused
+
+### Recommended Fixes
+1. **Secure Auth Surface**: Move tokens out of localStorage or encrypt them
+2. **Fix React Query**: Re-enable retries with backoff
+3. **Unify HTTP Clients**: Single composable request pipeline
+4. **Replace Console Logs**: Use structured logging with severity filters
+5. **Fix Naming Inconsistency**: Mixed casing in hooks causing filesystem issues
+
 ## Action Plan
 
 ### Week 1
+- [ ] Fix auth token storage (remove from localStorage)
+- [ ] Replace console.log in auth flows
 - [ ] Set up proper test infrastructure
 - [ ] Write tests for authentication flow
 - [ ] Begin replacing `any` types
 - [ ] Set up structured logging
 
 ### Week 2-4
+- [ ] Consolidate HTTP service layers
+- [ ] Fix React Query configuration
 - [ ] Achieve 40% test coverage
 - [ ] Complete type safety audit
 - [ ] Enable bundle optimizations
 - [ ] Implement code splitting
+- [ ] Fix fetch wrapper headers issue
 
 ### Month 2-3
 - [ ] Reach 70% test coverage
 - [ ] Add E2E tests
 - [ ] Implement monitoring
 - [ ] Complete all P1 recommendations
+- [ ] Unify Zustand store patterns
+- [ ] Replace placeholder dashboard widgets
 
 ---
 
