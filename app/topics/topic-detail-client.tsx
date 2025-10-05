@@ -78,7 +78,12 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
     setIsDeleting(true);
     try {
       await deleteMutation.mutateAsync([generatedTopic.id]);
-      router.push("/topics");
+      // Navigate to workspace-scoped topics page
+      if (currentWorkspace?.slug) {
+        router.push(`/w/${currentWorkspace.slug}/topics`);
+      } else {
+        router.push("/workspaces");
+      }
     } catch (error) {
       detailLogger.error("Failed to delete topic", {
         topic_id: generatedTopic.id,

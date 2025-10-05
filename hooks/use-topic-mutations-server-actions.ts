@@ -11,6 +11,7 @@ import {
   updateTopic,
 } from "@/app/topics/actions";
 import { logger } from "@/lib/logger";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import type { TopicData } from "@/types/data-table";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -33,10 +34,17 @@ import type { GeneratedTopic } from "@/types/topic-builder";
  */
 export function useTopicDeleteServerAction() {
   const queryClient = useQueryClient();
+  const workspaceContext = useWorkspaceOptional();
+  const workspaceSlug = workspaceContext?.workspaceSlug;
 
   return useMutation({
     mutationFn: async (topicIds: string[]) => {
+      if (!workspaceSlug) {
+        throw new Error("Workspace context is required");
+      }
+
       const formData = new FormData();
+      formData.set("workspaceId", workspaceSlug);
 
       if (topicIds.length === 1) {
         formData.set("topicId", topicIds[0]);
@@ -209,11 +217,18 @@ export function useTopicSaveServerAction() {
  */
 export function useTopicUpdateServerAction() {
   const queryClient = useQueryClient();
+  const workspaceContext = useWorkspaceOptional();
+  const workspaceSlug = workspaceContext?.workspaceSlug;
 
   return useMutation({
     mutationFn: async (updateData: UpdateTopicData) => {
+      if (!workspaceSlug) {
+        throw new Error("Workspace context is required");
+      }
+
       const formData = new FormData();
       formData.set("updateData", JSON.stringify(updateData));
+      formData.set("workspaceId", workspaceSlug);
       return await updateTopic(formData);
     },
 

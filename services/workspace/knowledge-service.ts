@@ -19,7 +19,6 @@ import type {
   AddWebKnowledgeRequest,
   FileKnowledge,
   TextKnowledge,
-  UpdateTextKnowledgeRequest,
   WebKnowledge,
   WorkspaceApiConfig,
   WorkspaceApiContext,
@@ -78,20 +77,25 @@ export class KnowledgeService {
   // WEB KNOWLEDGE OPERATIONS
   // ============================================================================
 
-  async listWebKnowledge(): Promise<{ web_knowledge: WebKnowledge[] }> {
+  async listWebKnowledge(
+    workspaceId: string,
+  ): Promise<{ web_knowledge: WebKnowledge[] }> {
+    this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ web_knowledge: WebKnowledge[] }>(
       "GET",
-      "/api/v1/workspace/web_knowledge/all",
+      `/api/v1/workspace/web_knowledge/all?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
   async getWebKnowledge(
     webId: string,
+    workspaceId: string,
   ): Promise<{ web_knowledge: WebKnowledge }> {
     this.validateUuid(webId, "web_id");
+    this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "GET",
-      `/api/v1/workspace/web_knowledge/${webId}`,
+      `/api/v1/workspace/web_knowledge/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
@@ -118,7 +122,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "PUT",
-      `/api/v1/workspace/web_knowledge/update/${workspaceId}/${webId}?title=${encodeURIComponent(title)}`,
+      `/api/v1/workspace/web_knowledge/update/${webId}?workspace_id=${encodeURIComponent(workspaceId)}&title=${encodeURIComponent(title)}`,
     );
   }
 
@@ -131,7 +135,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/web_knowledge/delete/${workspaceId}/${webId}`,
+      `/api/v1/workspace/web_knowledge/delete/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
@@ -139,20 +143,25 @@ export class KnowledgeService {
   // FILE KNOWLEDGE OPERATIONS
   // ============================================================================
 
-  async listFileKnowledge(): Promise<{ file_knowledge: FileKnowledge[] }> {
+  async listFileKnowledge(
+    workspaceId: string,
+  ): Promise<{ file_knowledge: FileKnowledge[] }> {
+    this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ file_knowledge: FileKnowledge[] }>(
       "GET",
-      "/api/v1/workspace/file/all",
+      `/api/v1/workspace/file/all?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
   async getFileKnowledge(
     fileId: string,
+    workspaceId: string,
   ): Promise<{ file_knowledge: FileKnowledge }> {
     this.validateUuid(fileId, "file_id");
+    this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ file_knowledge: FileKnowledge }>(
       "GET",
-      `/api/v1/workspace/file/${fileId}`,
+      `/api/v1/workspace/file/${fileId}?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
@@ -181,7 +190,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/file/delete/${workspaceId}/${fileId}`,
+      `/api/v1/workspace/file/delete/${fileId}?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
@@ -189,23 +198,26 @@ export class KnowledgeService {
   // TEXT KNOWLEDGE OPERATIONS
   // ============================================================================
 
-  async listTextKnowledge(): Promise<{ text_knowledge: TextKnowledge[] }> {
+  async listTextKnowledge(
+    workspaceId: string,
+  ): Promise<{ text_knowledge: TextKnowledge[] }> {
+    this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ text_knowledge: TextKnowledge[] }>(
       "GET",
-      "/api/v1/workspace/text/all",
+      `/api/v1/workspace/text/all?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
   async getTextKnowledge(
-    workspaceId: string,
     textId: string,
+    workspaceId: string,
   ): Promise<{ text_knowledge: TextKnowledge }> {
-    this.validateUuid(workspaceId, "workspace_id");
     this.validateUuid(textId, "text_id");
+    this.validateUuid(workspaceId, "workspace_id");
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "GET",
-      `/api/v1/workspace/text/${workspaceId}/${textId}`,
+      `/api/v1/workspace/text/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
@@ -223,32 +235,29 @@ export class KnowledgeService {
   }
 
   async updateTextKnowledge(
-    workspaceId: string,
     textId: string,
-    data: UpdateTextKnowledgeRequest,
+    workspaceId: string,
+    newContent: string,
   ): Promise<{ text_knowledge: TextKnowledge }> {
-    this.validateUuid(workspaceId, "workspace_id");
     this.validateUuid(textId, "text_id");
-    this.validateTextKnowledgeUpdateData(data);
-    const sanitizedData = this.sanitizeTextKnowledgeUpdateData(data);
+    this.validateUuid(workspaceId, "workspace_id");
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "PUT",
-      `/api/v1/workspace/text/update/${workspaceId}/${textId}`,
-      sanitizedData,
+      `/api/v1/workspace/text/update/${textId}?workspace_id=${encodeURIComponent(workspaceId)}&new_content=${encodeURIComponent(newContent)}`,
     );
   }
 
   async deleteTextKnowledge(
-    workspaceId: string,
     textId: string,
+    workspaceId: string,
   ): Promise<{ success: boolean }> {
-    this.validateUuid(workspaceId, "workspace_id");
     this.validateUuid(textId, "text_id");
+    this.validateUuid(workspaceId, "workspace_id");
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/text/delete/${workspaceId}/${textId}`,
+      `/api/v1/workspace/text/delete/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
     );
   }
 
@@ -576,29 +585,6 @@ export class KnowledgeService {
     }
   }
 
-  private validateTextKnowledgeUpdateData(
-    data: UpdateTextKnowledgeRequest,
-  ): void {
-    if (
-      data.title !== undefined &&
-      (!data.title || data.title.trim().length === 0)
-    ) {
-      throw new KnowledgeServiceError(
-        "INVALID_REQUEST",
-        "Title cannot be empty",
-      );
-    }
-    if (
-      data.content !== undefined &&
-      (!data.content || data.content.trim().length === 0)
-    ) {
-      throw new KnowledgeServiceError(
-        "INVALID_REQUEST",
-        "Content cannot be empty",
-      );
-    }
-  }
-
   private isValidUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
@@ -632,26 +618,6 @@ export class KnowledgeService {
         ?.map((tag) => InputSanitizer.sanitizeText(tag.trim()))
         .filter(Boolean),
     };
-  }
-
-  private sanitizeTextKnowledgeUpdateData(
-    data: UpdateTextKnowledgeRequest,
-  ): UpdateTextKnowledgeRequest {
-    const result: UpdateTextKnowledgeRequest = {};
-
-    if (data.title !== undefined) {
-      result.title = InputSanitizer.sanitizeText(data.title.trim());
-    }
-    if (data.content !== undefined) {
-      result.content = InputSanitizer.sanitizeText(data.content.trim());
-    }
-    if (data.tags !== undefined) {
-      result.tags = data.tags
-        .map((tag) => InputSanitizer.sanitizeText(tag.trim()))
-        .filter(Boolean);
-    }
-
-    return result;
   }
 
   public cancelAllRequests(): void {

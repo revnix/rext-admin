@@ -254,6 +254,65 @@ export interface SaveTopicResponse {
 }
 
 /**
+ * Response from updating a topic in the backend.
+ *
+ * @property success - Whether the update operation succeeded
+ * @property updated_count - Number of topics updated (typically 1)
+ * @property topic_id - ID of the updated topic
+ * @property topic_title - Title of the updated topic
+ * @property updated_fields - Array of field names that were updated
+ * @property approved - Current approval status of the topic
+ * @property message - Human-readable status message from the backend
+ *
+ * @example
+ * ```typescript
+ * const response: UpdateTopicResponse = {
+ *   success: true,
+ *   updated_count: 1,
+ *   topic_id: "abc-123",
+ *   topic_title: "AI in Healthcare",
+ *   updated_fields: ["approved", "updated_at"],
+ *   approved: true,
+ *   message: "Topic updated successfully"
+ * };
+ * ```
+ */
+export interface UpdateTopicResponse {
+  success: boolean;
+  updated_count: number;
+  topic_id: string;
+  topic_title: string;
+  updated_fields: string[];
+  approved?: boolean;
+  message: string;
+}
+
+/**
+ * Response from deleting topics from the backend.
+ *
+ * @property success - Whether the delete operation succeeded
+ * @property deleted_count - Number of topics deleted
+ * @property message - Human-readable status message from the backend
+ * @property topic_ids - Array of deleted topic IDs
+ *
+ * @example
+ * ```typescript
+ * const response: DeleteTopicResponse = {
+ *   success: true,
+ *   deleted_count: 2,
+ *   message: "Successfully deleted 2 topics",
+ *   topic_ids: ["abc-123", "def-456"]
+ * };
+ * ```
+ */
+export interface DeleteTopicResponse {
+  success: boolean;
+  deleted_count: number;
+  message: string;
+  topic_ids: string[];
+}
+
+/**
  * Response containing all saved topics retrieved from the backend.
  *
  * @property topics - Array of all saved topics with complete metadata

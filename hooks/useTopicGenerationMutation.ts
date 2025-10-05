@@ -40,6 +40,7 @@ interface TopicGenerationError {
  */
 interface TopicGenerationVariables {
   formData: TopicBuilderFormData;
+  workspaceId?: string;
   requestId?: string;
 }
 
@@ -73,10 +74,12 @@ export function useTopicGenerationMutation() {
   >({
     mutationFn: async ({
       formData,
+      workspaceId,
       requestId = generateRequestId("topic_generation"),
     }): Promise<TopicGenerationResponse> => {
       generationLogger.info("Starting topic generation", {
         requestId,
+        workspaceId,
         topics_count_requested: formData.num_topics ?? 5,
       });
 
@@ -84,10 +87,14 @@ export function useTopicGenerationMutation() {
         // Use backend service directly (no API route proxying)
         generationLogger.info("Calling backend service generateTopics", {
           requestId,
+          workspaceId,
           formData,
         });
 
-        const result = await backendService.generateTopics(formData);
+        const result = await backendService.generateTopics(
+          formData,
+          workspaceId,
+        );
 
         generationLogger.info("Backend service returned result", {
           requestId,

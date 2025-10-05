@@ -26,16 +26,13 @@ export class WebKnowledgeService {
   private readonly log = logger.forComponent("WebKnowledgeService");
 
   /**
-   * List all web knowledge entries
+   * @deprecated Use listForWorkspace(workspaceId) instead
+   * Global listing is no longer supported by the API
    */
   async list(): Promise<WebKnowledge[]> {
-    try {
-      const response = await workspaceApiService.listWebKnowledge();
-      return response.web_knowledge;
-    } catch (error) {
-      this.log.error("Failed to list web knowledge", { error });
-      throw error;
-    }
+    throw new Error(
+      "Global knowledge listing is no longer supported. Use listForWorkspace(workspaceId) instead.",
+    );
   }
 
   /**
@@ -57,10 +54,19 @@ export class WebKnowledgeService {
 
   /**
    * Get specific web knowledge by ID
+   * @deprecated Use getById(webId, workspaceId) with workspaceId parameter
    */
-  async getById(webId: string): Promise<WebKnowledge> {
+  async getById(webId: string, workspaceId?: string): Promise<WebKnowledge> {
+    if (!workspaceId) {
+      throw new Error(
+        "workspaceId is required. Use getById(webId, workspaceId) instead.",
+      );
+    }
     try {
-      const response = await workspaceApiService.getWebKnowledge(webId);
+      const response = await workspaceApiService.getWebKnowledge(
+        webId,
+        workspaceId,
+      );
       return response.web_knowledge;
     } catch (error) {
       this.log.error("Failed to get web knowledge", { webId, error });
@@ -192,16 +198,13 @@ export class FileKnowledgeService {
   private readonly log = logger.forComponent("FileKnowledgeService");
 
   /**
-   * List all file knowledge entries
+   * @deprecated Use listForWorkspace(workspaceId) instead
+   * Global listing is no longer supported by the API
    */
   async list(): Promise<FileKnowledge[]> {
-    try {
-      const response = await workspaceApiService.listFileKnowledge();
-      return response.file_knowledge;
-    } catch (error) {
-      this.log.error("Failed to list file knowledge", { error });
-      throw error;
-    }
+    throw new Error(
+      "Global knowledge listing is no longer supported. Use listForWorkspace(workspaceId) instead.",
+    );
   }
 
   /**
@@ -223,10 +226,19 @@ export class FileKnowledgeService {
 
   /**
    * Get specific file knowledge by ID
+   * @deprecated Use getById(fileId, workspaceId) with workspaceId parameter
    */
-  async getById(fileId: string): Promise<FileKnowledge> {
+  async getById(fileId: string, workspaceId?: string): Promise<FileKnowledge> {
+    if (!workspaceId) {
+      throw new Error(
+        "workspaceId is required. Use getById(fileId, workspaceId) instead.",
+      );
+    }
     try {
-      const response = await workspaceApiService.getFileKnowledge(fileId);
+      const response = await workspaceApiService.getFileKnowledge(
+        fileId,
+        workspaceId,
+      );
       return response.file_knowledge;
     } catch (error) {
       this.log.error("Failed to get file knowledge", { fileId, error });
@@ -365,16 +377,13 @@ export class TextKnowledgeService {
   private readonly log = logger.forComponent("TextKnowledgeService");
 
   /**
-   * List all text knowledge entries
+   * @deprecated Use listForWorkspace(workspaceId) instead
+   * Global listing is no longer supported by the API
    */
   async list(): Promise<TextKnowledge[]> {
-    try {
-      const response = await workspaceApiService.listTextKnowledge();
-      return response.text_knowledge;
-    } catch (error) {
-      this.log.error("Failed to list text knowledge", { error });
-      throw error;
-    }
+    throw new Error(
+      "Global knowledge listing is no longer supported. Use listForWorkspace(workspaceId) instead.",
+    );
   }
 
   /**
@@ -560,27 +569,16 @@ export class KnowledgeService {
       this.log.info("Getting all knowledge for workspace", { workspaceId });
 
       const [webItems, fileItems, textItems] = await Promise.all([
-        this.web.list(),
-        this.file.list(),
-        this.text.list(),
+        this.web.listForWorkspace(workspaceId),
+        this.file.listForWorkspace(workspaceId),
+        this.text.listForWorkspace(workspaceId),
       ]);
 
-      // Filter by workspace and combine
-      const filteredWeb = webItems.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-      const filteredFiles = fileItems.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-      const filteredText = textItems.filter(
-        (item) => item.workspace_id === workspaceId,
-      );
-
       return {
-        web: filteredWeb,
-        files: filteredFiles,
-        text: filteredText,
-        total: filteredWeb.length + filteredFiles.length + filteredText.length,
+        web: webItems,
+        files: fileItems,
+        text: textItems,
+        total: webItems.length + fileItems.length + textItems.length,
       };
     } catch (error) {
       this.log.error("Failed to get all knowledge for workspace", {

@@ -3,53 +3,46 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { logger } from "@/lib/logger";
+import { BackendService } from "@/services/backend";
+import type { GeneratedTopic } from "@/types/topic-builder";
 
-const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:2024";
-const API_KEY = process.env.NEXT_PUBLIC_CONTENT_API_KEY;
-
-if (!API_KEY) {
-  throw new Error(
-    "NEXT_PUBLIC_CONTENT_API_KEY environment variable is required",
-  );
-}
-
-// Ensure API_KEY is never undefined for TypeScript
-const VALIDATED_API_KEY = API_KEY;
-
+/**
+ * Delete a single topic using BackendService
+ *
+ * @param formData - FormData containing topicId and workspaceId
+ * @returns Promise resolving to delete operation results
+ * @throws {Error} When topic ID or workspace ID is missing, or deletion fails
+ *
+ * @example
+ * ```typescript
+ * const formData = new FormData();
+ * formData.set("topicId", "topic_123");
+ * formData.set("workspaceId", "workspace_abc");
+ * const result = await deleteTopic(formData);
+ * ```
+ */
 export async function deleteTopic(formData: FormData) {
   const topicId = formData.get("topicId") as string;
+  const workspaceId = formData.get("workspaceId") as string;
 
   if (!topicId) {
     throw new Error("Topic ID is required");
   }
 
+  if (!workspaceId) {
+    throw new Error("Workspace ID is required");
+  }
+
   try {
-    logger.info("Deleting topic via server action", { topicId });
+    logger.info("Deleting topic via server action", { topicId, workspaceId });
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/topic/delete-topic`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "content-api-key": VALIDATED_API_KEY,
-      },
-      body: JSON.stringify({ topic_ids: [topicId] }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      logger.error("Failed to delete topic", {
-        topicId,
-        status: response.status,
-        error: errorData.error || `HTTP ${response.status}`,
-      });
-      throw new Error(`Failed to delete topic: ${response.status}`);
-    }
-
-    const result = await response.json();
+    const backendService = new BackendService();
+    const result = await backendService.deleteTopics([topicId], workspaceId);
 
     logger.info("Successfully deleted topic", {
       topicId,
-      deleted_count: result.deleted_count || 1,
+      workspaceId,
+      deleted_count: result.deleted_count,
     });
 
     // Revalidate the topics page to reflect the deletion
@@ -57,22 +50,43 @@ export async function deleteTopic(formData: FormData) {
 
     return {
       success: true,
-      deleted_count: result.deleted_count || 1,
+      deleted_count: result.deleted_count,
     };
   } catch (error) {
     logger.error("Server action delete topic failed", {
       topicId,
+      workspaceId,
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
 }
 
+/**
+ * Delete multiple topics using BackendService
+ *
+ * @param formData - FormData containing topicIds (JSON array) and workspaceId
+ * @returns Promise resolving to delete operation results
+ * @throws {Error} When topic IDs or workspace ID is missing, or deletion fails
+ *
+ * @example
+ * ```typescript
+ * const formData = new FormData();
+ * formData.set("topicIds", JSON.stringify(["topic_1", "topic_2"]));
+ * formData.set("workspaceId", "workspace_abc");
+ * const result = await deleteTopics(formData);
+ * ```
+ */
 export async function deleteTopics(formData: FormData) {
   const topicIdsJson = formData.get("topicIds") as string;
+  const workspaceId = formData.get("workspaceId") as string;
 
   if (!topicIdsJson) {
     throw new Error("Topic IDs are required");
+  }
+
+  if (!workspaceId) {
+    throw new Error("Workspace ID is required");
   }
 
   let topicIds: string[];
@@ -89,33 +103,17 @@ export async function deleteTopics(formData: FormData) {
   try {
     logger.info("Deleting multiple topics via server action", {
       topicIds,
+      workspaceId,
       count: topicIds.length,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/topic/delete-topic`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "content-api-key": VALIDATED_API_KEY,
-      },
-      body: JSON.stringify({ topic_ids: topicIds }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      logger.error("Failed to delete topics", {
-        topicIds,
-        status: response.status,
-        error: errorData.error || `HTTP ${response.status}`,
-      });
-      throw new Error(`Failed to delete topics: ${response.status}`);
-    }
-
-    const result = await response.json();
+    const backendService = new BackendService();
+    const result = await backendService.deleteTopics(topicIds, workspaceId);
 
     logger.info("Successfully deleted topics", {
       topicIds,
-      deleted_count: result.deleted_count || topicIds.length,
+      workspaceId,
+      deleted_count: result.deleted_count,
     });
 
     // Revalidate the topics page to reflect the deletions
@@ -123,11 +121,12 @@ export async function deleteTopics(formData: FormData) {
 
     return {
       success: true,
-      deleted_count: result.deleted_count || topicIds.length,
+      deleted_count: result.deleted_count,
     };
   } catch (error) {
     logger.error("Server action delete topics failed", {
       topicIds,
+      workspaceId,
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;
@@ -157,11 +156,31 @@ export interface UpdateTopicData {
   approved?: boolean;
 }
 
+/**
+ * Update a topic using BackendService
+ *
+ * @param formData - FormData containing updateData (JSON object) and workspaceId
+ * @returns Promise resolving to update operation results
+ * @throws {Error} When update data, topic ID, or workspace ID is missing, or update fails
+ *
+ * @example
+ * ```typescript
+ * const formData = new FormData();
+ * formData.set("updateData", JSON.stringify({ topic_id: "123", approved: true }));
+ * formData.set("workspaceId", "workspace_abc");
+ * const result = await updateTopic(formData);
+ * ```
+ */
 export async function updateTopic(formData: FormData) {
   const updateDataJson = formData.get("updateData") as string;
+  const workspaceId = formData.get("workspaceId") as string;
 
   if (!updateDataJson) {
     throw new Error("Update data is required");
+  }
+
+  if (!workspaceId) {
+    throw new Error("Workspace ID is required");
   }
 
   let updateData: UpdateTopicData;
@@ -178,6 +197,7 @@ export async function updateTopic(formData: FormData) {
   try {
     logger.info("Updating topic via server action", {
       topicId: updateData.topic_id,
+      workspaceId,
       fields: Object.keys(updateData).filter(
         (key) =>
           key !== "topic_id" &&
@@ -185,29 +205,19 @@ export async function updateTopic(formData: FormData) {
       ),
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/topic/update-topic`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "content-api-key": VALIDATED_API_KEY,
-      },
-      body: JSON.stringify(updateData),
-    });
+    const backendService = new BackendService();
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      logger.error("Failed to update topic", {
-        topicId: updateData.topic_id,
-        status: response.status,
-        error: errorData.error || `HTTP ${response.status}`,
-      });
-      throw new Error(`Failed to update topic: ${response.status}`);
-    }
-
-    const result = await response.json();
+    // Extract topic_id and pass remaining fields as update data
+    const { topic_id, ...fieldsToUpdate } = updateData;
+    const result = await backendService.updateTopic(
+      topic_id,
+      fieldsToUpdate,
+      workspaceId,
+    );
 
     logger.info("Successfully updated topic", {
-      topicId: updateData.topic_id,
+      topicId: topic_id,
+      workspaceId,
       updated_count: result.updated_count,
       updated_fields: result.updated_fields,
     });
@@ -217,24 +227,44 @@ export async function updateTopic(formData: FormData) {
 
     return {
       success: true,
-      updated_count: result.updated_count || 1,
-      updated_fields: result.updated_fields || [],
+      updated_count: result.updated_count,
+      updated_fields: result.updated_fields,
     };
   } catch (error) {
     logger.error("Server action update topic failed", {
       topicId: updateData.topic_id,
+      workspaceId,
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
 }
 
-// Convenience function for approving topics
+/**
+ * Approve a topic - convenience wrapper around updateTopic
+ *
+ * @param formData - FormData containing topicId and workspaceId
+ * @returns Promise resolving to update operation results
+ * @throws {Error} When topic ID or workspace ID is missing, or approval fails
+ *
+ * @example
+ * ```typescript
+ * const formData = new FormData();
+ * formData.set("topicId", "topic_123");
+ * formData.set("workspaceId", "workspace_abc");
+ * const result = await approveTopic(formData);
+ * ```
+ */
 export async function approveTopic(formData: FormData) {
   const topicId = formData.get("topicId") as string;
+  const workspaceId = formData.get("workspaceId") as string;
 
   if (!topicId) {
     throw new Error("Topic ID is required");
+  }
+
+  if (!workspaceId) {
+    throw new Error("Workspace ID is required");
   }
 
   // Create a new FormData with the update structure
@@ -246,68 +276,74 @@ export async function approveTopic(formData: FormData) {
       approved: true,
     }),
   );
+  updateFormData.set("workspaceId", workspaceId);
 
   return await updateTopic(updateFormData);
 }
 
+/**
+ * Save generated topics using BackendService
+ *
+ * @param formData - FormData containing topicsData (JSON array) and workspaceId
+ * @returns Promise that redirects to topics page on success
+ * @throws {Error} When topics data or workspace ID is missing, or save fails
+ *
+ * @example
+ * ```typescript
+ * const formData = new FormData();
+ * formData.set("topicsData", JSON.stringify([{ id: "1", title: "Topic", ... }]));
+ * formData.set("workspaceId", "workspace_abc");
+ * await saveTopic(formData); // Redirects on success
+ * ```
+ */
 export async function saveTopic(formData: FormData) {
-  const topicDataJson = formData.get("topicData") as string;
+  const topicsDataJson = formData.get("topicsData") as string;
+  const workspaceId = formData.get("workspaceId") as string;
 
-  if (!topicDataJson) {
-    throw new Error("Topic data is required");
+  if (!topicsDataJson) {
+    throw new Error("Topics data is required");
   }
 
-  let topicData: SaveTopicData;
+  if (!workspaceId) {
+    throw new Error("Workspace ID is required");
+  }
+
+  let topicsData: GeneratedTopic[];
   try {
-    topicData = JSON.parse(topicDataJson);
+    topicsData = JSON.parse(topicsDataJson);
   } catch {
-    throw new Error("Invalid topic data format");
+    throw new Error("Invalid topics data format");
   }
 
-  if (!topicData.title) {
-    throw new Error("Topic title is required");
+  if (!Array.isArray(topicsData) || topicsData.length === 0) {
+    throw new Error("At least one topic is required");
   }
 
   try {
-    logger.info("Saving topic via server action", {
-      title: topicData.title,
+    logger.info("Saving topics via server action", {
+      workspaceId,
+      count: topicsData.length,
+      firstTitle: topicsData[0]?.title,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/topic/save-topic`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "content-api-key": VALIDATED_API_KEY,
-      },
-      body: JSON.stringify(topicData),
+    const backendService = new BackendService();
+    const result = await backendService.saveTopics(topicsData, workspaceId);
+
+    logger.info("Successfully saved topics", {
+      workspaceId,
+      saved_count: result.saved_count,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      logger.error("Failed to save topic", {
-        title: topicData.title,
-        status: response.status,
-        error: errorData.error || `HTTP ${response.status}`,
-      });
-      throw new Error(`Failed to save topic: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    logger.info("Successfully saved topic", {
-      title: topicData.title,
-      saved_count: result.saved_count || 1,
-    });
-
-    // Revalidate the topics page to show the new topic
+    // Revalidate the topics page to show the new topics
     revalidatePath("/topics");
 
     // Redirect to topics list after successful save
     redirect("/topics");
   } catch (error) {
     // Don't redirect on error, let the client handle it
-    logger.error("Server action save topic failed", {
-      title: topicData.title,
+    logger.error("Server action save topics failed", {
+      workspaceId,
+      count: topicsData.length,
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;

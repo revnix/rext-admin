@@ -47,7 +47,7 @@ export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
   const temporaryId = params.temporaryId as string;
-  const urlWorkspaceId = params.workspaceId as string; // Extract from URL
+  const urlWorkspaceSlug = params.workspaceSlug as string; // Extract from URL
   const [showStartOverDialog, setShowStartOverDialog] = useState(false);
   const currentWorkspace = useCurrentWorkspace();
 
@@ -67,12 +67,12 @@ export default function ResultsPage() {
   } = useTopicBuilderStore();
   const generateMoreMutation = useTopicGenerationMutation();
 
-  // Prefer workspace ID from URL params (most reliable), fallback to currentWorkspace
-  const workspaceId = urlWorkspaceId || currentWorkspace?.id || "";
-  const _isWorkspaceLoading = !urlWorkspaceId && !currentWorkspace;
+  // Prefer workspace slug from URL params (most reliable), fallback to currentWorkspace
+  const workspaceId = urlWorkspaceSlug || currentWorkspace?.id || "";
+  const _isWorkspaceLoading = !urlWorkspaceSlug && !currentWorkspace;
 
   log.info("[WorkspaceResults] Workspace ID:", {
-    urlWorkspaceId,
+    urlWorkspaceSlug,
     currentWorkspaceId: currentWorkspace?.id,
     finalWorkspaceId: workspaceId,
   });
@@ -396,7 +396,7 @@ export default function ResultsPage() {
       log.info("🔄 Starting over: Wizard reset, navigating to topic builder");
       setShowStartOverDialog(false);
       // Navigate to create page without full refresh
-      router.push("/topics/create");
+      router.push(`/w/${urlWorkspaceSlug}/topics/create`);
     } catch (error) {
       log.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
@@ -408,7 +408,7 @@ export default function ResultsPage() {
   };
 
   const handleNavigateToTopics = () => {
-    router.push("/topics");
+    router.push(`/w/${urlWorkspaceSlug}/topics`);
   };
 
   const handleRetryLoad = () => {

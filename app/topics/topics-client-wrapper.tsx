@@ -16,6 +16,7 @@ import {
   useTopicDeleteServerAction,
 } from "@/hooks/use-topic-mutations-server-actions";
 import { logger } from "@/lib/logger";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
 
 interface TopicsClientWrapperProps {
@@ -37,6 +38,10 @@ export function TopicsClientWrapper({
   const deleteMutation = useTopicDeleteServerAction();
   const approveMutation = useTopicApproveServerAction();
   const topicsLogger = logger.forComponent("TopicsClientWrapper");
+
+  // Get workspace context (optional because this component is used in both workspace and legacy routes)
+  const workspaceContext = useWorkspaceOptional();
+  const workspaceSlug = workspaceContext?.workspaceSlug;
 
   // Handle topic deletion using server actions
   const handleTopicDelete = async (topicId: string, _topicName: string) => {
@@ -72,7 +77,15 @@ export function TopicsClientWrapper({
       header: "Topic Title",
       width: "320px",
       cell: (value, row) => (
-        <TitleDisplay value={value} row={row} href={`/topics/${row.id}`} />
+        <TitleDisplay
+          value={value}
+          row={row}
+          href={
+            workspaceSlug
+              ? `/w/${workspaceSlug}/topics/${row.id}`
+              : `/topics/${row.id}`
+          }
+        />
       ),
       searchable: true,
     },
@@ -125,7 +138,10 @@ export function TopicsClientWrapper({
     {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
-      href: (row: TopicData) => `/topics/${row.id}`,
+      href: (row: TopicData) =>
+        workspaceSlug
+          ? `/w/${workspaceSlug}/topics/${row.id}`
+          : `/topics/${row.id}`,
       tooltip: "View topic details",
       showLabel: true,
     },

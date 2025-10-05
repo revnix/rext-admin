@@ -22,6 +22,10 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
         Authorization: `Bearer ${session.user.accessToken}`,
       };
     }
+    log.warn("[AuthJS] No access token in server session", {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+    });
     return {};
   }
 
@@ -32,6 +36,10 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
       Authorization: `Bearer ${session.user.accessToken}`,
     };
   }
+  log.warn("[AuthJS] No access token in client session", {
+    hasSession: !!session,
+    hasUser: !!session?.user,
+  });
   return {};
 }
 

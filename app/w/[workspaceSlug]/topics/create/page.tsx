@@ -9,19 +9,19 @@ import { useWorkspace } from "@/providers/workspace-provider";
 export default function WorkspaceTopicCreatePage({
   params,
 }: {
-  params: Promise<{ workspaceId: string }>;
+  params: Promise<{ workspaceSlug: string }>;
 }) {
   const resolvedParams = use(params);
-  const { workspaceId } = resolvedParams;
+  const { workspaceSlug } = resolvedParams;
   const { workspace } = useWorkspace();
 
   const breadcrumbs = [
     { label: "Workspaces", href: "/workspaces" },
     {
       label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceId),
+      href: workspaceRoutes.root(workspaceSlug),
     },
-    { label: "Topics", href: workspaceRoutes.topics(workspaceId) },
+    { label: "Topics", href: workspaceRoutes.topics(workspaceSlug) },
     { label: "Create" },
   ];
 

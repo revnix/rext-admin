@@ -20,21 +20,15 @@ const browserLogger = pino({
 });
 
 // Server logger configuration
+// NOTE: pino-pretty is disabled to prevent worker thread issues in Next.js 15
+// Logs will appear as JSON in development, which is compatible with Next.js
 const serverLogger = pino({
   level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
   formatters: {
     level: (label) => ({ level: label }),
   },
-  transport: isDevelopment
-    ? {
-        target: "pino-pretty",
-        options: {
-          colorize: true,
-          ignore: "pid,hostname",
-          translateTime: "SYS:standard",
-        },
-      }
-    : undefined,
+  // Transport disabled - prevents worker thread errors in Next.js 15
+  // Use JSON logs in all environments for compatibility
 });
 
 const pinoLogger = isClient ? browserLogger : serverLogger;

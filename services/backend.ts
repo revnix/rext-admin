@@ -150,11 +150,17 @@ export class BackendService {
    */
   async generateTopics(
     formData: TopicBuilderFormData,
+    workspaceId?: string,
   ): Promise<BackendTopicGenerationResponse> {
     this.validateConfig();
 
     const requestId = generateRequestId();
     const payload = this.transformFormDataToBackendFormat(formData);
+
+    // Build endpoint with workspace_id query parameter if provided
+    const endpoint = workspaceId
+      ? `/api/v1/topic/generate-topic?workspace_id=${encodeURIComponent(workspaceId)}`
+      : "/api/v1/topic/generate-topic";
 
     // Request deduplication based on form data
     if (this.config.enableDeduplication) {
@@ -166,7 +172,7 @@ export class BackendService {
       }
 
       const requestPromise = this.executeSingleRequest(
-        "/api/v1/topic/generate-topic",
+        endpoint,
         payload,
         requestId,
       );
@@ -185,11 +191,7 @@ export class BackendService {
       return requestPromise;
     }
 
-    return this.executeSingleRequest(
-      "/api/v1/topic/generate-topic",
-      payload,
-      requestId,
-    );
+    return this.executeSingleRequest(endpoint, payload, requestId);
   }
 
   /**
@@ -273,6 +275,71 @@ export class BackendService {
   }
 
   /**
+   * Update a topic in the backend API.
+   *
+   * @param topicId - ID of the topic to update
+   * @param updateData - Partial topic data with fields to update
+   * @param workspaceId - ID of the workspace the topic belongs to
+   * @returns Promise resolving to update operation results
+   * @throws {Error} When the update operation fails
+   *
+   * @example
+   * ```typescript
+   * const result = await backendService.updateTopic(
+   *   "topic_123",
+   *   { approved: true, title: "New Title" },
+   *   "workspace_abc"
+   * );
+   * log.info(`Updated ${result.updated_fields.join(", ")}`);
+   * ```
+   */
+  async updateTopic(
+    topicId: string,
+    updateData: {
+      title?: string;
+      angle?: string;
+      description?: string;
+      channel_fit?: string[];
+      audience_fit?: string[];
+      why_it_works?: string;
+      tags?: string[];
+      approved?: boolean;
+    },
+    workspaceId: string,
+  ): Promise<{
+    success: boolean;
+    updated_count: number;
+    topic_id: string;
+    topic_title: string;
+    updated_fields: string[];
+    approved?: boolean;
+    message: string;
+  }> {
+    this.validateConfig();
+
+    const requestId = generateRequestId();
+    const payload = {
+      topic_id: topicId,
+      ...updateData,
+    };
+
+    return this.executeSingleGenericRequest(
+      `/api/v1/topic/update-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
+      payload,
+      requestId,
+      "PUT",
+    ) as Promise<{
+      success: boolean;
+      updated_count: number;
+      topic_id: string;
+      topic_title: string;
+      updated_fields: string[];
+      approved?: boolean;
+      message: string;
+    }>;
+  }
+
+  /**
    * Get all topics from the backend API.
    *
    * @returns Promise<GeneratedTopic[]> - Array of topics from backend
@@ -281,15 +348,15 @@ export class BackendService {
     this.validateConfig();
 
     const requestId = generateRequestId();
+    const { authenticatedFetch } = await import("@/lib/auth-utils");
 
-    const response = await fetch(
+    const response = await authenticatedFetch(
       `${this.config.baseUrl}/api/v1/topic/get-topics?workspace_id=${encodeURIComponent(workspaceId)}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
         },
       },
     );
@@ -316,16 +383,16 @@ export class BackendService {
     this.validateConfig();
 
     const requestId = generateRequestId();
+    const { authenticatedFetch } = await import("@/lib/auth-utils");
 
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${this.config.baseUrl}/api/v1/topic/get-topic/${topicId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             "X-Request-ID": requestId,
-            "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
           },
         },
       );
@@ -387,6 +454,7 @@ export class BackendService {
     payload: BackendTopicGenerationPayload,
     requestId: string,
   ): Promise<Response> {
+    const { authenticatedFetch } = await import("@/lib/auth-utils");
     const url = `${this.config.baseUrl}${endpoint}`;
     const controller = new AbortController();
 
@@ -412,12 +480,11 @@ export class BackendService {
     }, this.config.timeout);
 
     try {
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -829,12 +896,13 @@ export class BackendService {
     }, this.config.timeout);
 
     try {
-      const response = await fetch(url, {
+      const { authenticatedFetch } = await import("@/lib/auth-utils");
+
+      const response = await authenticatedFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
           "X-Request-ID": requestId,
-          "content-api-key": process.env.NEXT_PUBLIC_CONTENT_API_KEY || "",
         },
         ...(method !== "GET" && { body: JSON.stringify(payload) }),
         signal: controller.signal,

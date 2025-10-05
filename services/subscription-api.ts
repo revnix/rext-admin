@@ -29,9 +29,12 @@ const API_BASE_URL =
  * Get all available subscription plans
  */
 export async function getSubscriptionPlans(): Promise<SubscriptionListResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/subscriptions/plans`, {
-    method: "GET",
-  });
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/v1/subscriptions/plans`,
+    {
+      method: "GET",
+    },
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch subscription plans");
@@ -47,7 +50,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionListResponse> 
 export async function getSubscriptionPlan(
   planId: string,
 ): Promise<SubscriptionPlan> {
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${API_BASE_URL}/api/v1/subscriptions/plans/${planId}`,
     {
       method: "GET",

@@ -1,10 +1,9 @@
 "use client";
 
-import { notFound } from "next/navigation";
-import { use } from "react";
-import { useTopic } from "@/hooks/use-topics";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useEffect } from "react";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
-import { TopicDetailClient } from "../topic-detail-client";
 
 type TopicDetailPageProps = {
   params: Promise<{
@@ -13,27 +12,22 @@ type TopicDetailPageProps = {
 };
 
 export default function TopicDetailPage({ params }: TopicDetailPageProps) {
-  const { id } = use(params);
+  const router = useRouter();
   const currentWorkspace = useCurrentWorkspace();
-  const workspaceId = currentWorkspace?.id || "";
+  const { id } = use(params);
 
-  const { data: topic, isLoading, error } = useTopic(id, workspaceId);
+  useEffect(() => {
+    if (currentWorkspace?.slug) {
+      router.replace(`/w/${currentWorkspace.slug}/topics/${id}`);
+      return;
+    }
+    // No workspace selected, redirect to workspace selector
+    router.replace("/workspaces");
+  }, [currentWorkspace, id, router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    throw error;
-  }
-
-  if (!topic) {
-    notFound();
-  }
-
-  return <TopicDetailClient topic={topic} />;
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
 }

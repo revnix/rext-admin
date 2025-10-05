@@ -144,7 +144,9 @@ export default function ContentProgressPage() {
   };
 
   const handleGoBack = () => {
-    router.push("/content");
+    // This page should redirect to workspace-scoped version or be removed
+    // For now, redirect to workspaces selector
+    router.push("/workspaces");
   };
 
   if (isLoading) {

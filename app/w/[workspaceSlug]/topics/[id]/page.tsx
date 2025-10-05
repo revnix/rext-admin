@@ -7,7 +7,7 @@ import { useTopic } from "@/hooks/use-topics";
 
 type WorkspaceTopicDetailPageProps = {
   params: Promise<{
-    workspaceId: string;
+    workspaceSlug: string;
     id: string;
   }>;
 };
@@ -15,8 +15,8 @@ type WorkspaceTopicDetailPageProps = {
 export default function WorkspaceTopicDetailPage({
   params,
 }: WorkspaceTopicDetailPageProps) {
-  const { id, workspaceId } = use(params);
-  const { data: topic, isLoading, error } = useTopic(id, workspaceId);
+  const { id, workspaceSlug } = use(params);
+  const { data: topic, isLoading, error } = useTopic(id, workspaceSlug);
 
   if (isLoading) {
     return (

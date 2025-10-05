@@ -7,7 +7,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 
 type WorkspaceContentDetailPageProps = {
   params: Promise<{
-    workspaceId: string;
+    workspaceSlug: string;
     id: string;
   }>;
 };
@@ -15,16 +15,16 @@ type WorkspaceContentDetailPageProps = {
 export default function WorkspaceContentDetailPage({
   params,
 }: WorkspaceContentDetailPageProps) {
-  const { workspaceId, id } = use(params);
+  const { workspaceSlug, id } = use(params);
   const { workspace } = useWorkspace();
 
   const breadcrumbs = [
     { label: "Workspaces", href: "/workspaces" },
     {
       label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceId),
+      href: workspaceRoutes.root(workspaceSlug),
     },
-    { label: "Content", href: workspaceRoutes.content(workspaceId) },
+    { label: "Content", href: workspaceRoutes.content(workspaceSlug) },
     { label: "Detail" },
   ];
 

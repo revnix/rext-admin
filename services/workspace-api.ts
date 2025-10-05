@@ -96,12 +96,12 @@ export class WorkspaceApiService {
   // KNOWLEDGE OPERATIONS - Delegate to KnowledgeService
   // ============================================================================
 
-  async listWebKnowledge() {
-    return this.knowledgeService.listWebKnowledge();
+  async listWebKnowledge(workspaceId: string) {
+    return this.knowledgeService.listWebKnowledge(workspaceId);
   }
 
-  async getWebKnowledge(webId: string) {
-    return this.knowledgeService.getWebKnowledge(webId);
+  async getWebKnowledge(webId: string, workspaceId: string) {
+    return this.knowledgeService.getWebKnowledge(webId, workspaceId);
   }
 
   async addWebKnowledge(data: AddWebKnowledgeRequest) {
@@ -116,12 +116,12 @@ export class WorkspaceApiService {
     return this.knowledgeService.deleteWebKnowledge(workspaceId, webId);
   }
 
-  async listFileKnowledge() {
-    return this.knowledgeService.listFileKnowledge();
+  async listFileKnowledge(workspaceId: string) {
+    return this.knowledgeService.listFileKnowledge(workspaceId);
   }
 
-  async getFileKnowledge(fileId: string) {
-    return this.knowledgeService.getFileKnowledge(fileId);
+  async getFileKnowledge(fileId: string, workspaceId: string) {
+    return this.knowledgeService.getFileKnowledge(fileId, workspaceId);
   }
 
   async addFileKnowledge(data: AddFileKnowledgeRequest) {
@@ -132,8 +132,8 @@ export class WorkspaceApiService {
     return this.knowledgeService.deleteFileKnowledge(workspaceId, fileId);
   }
 
-  async listTextKnowledge() {
-    return this.knowledgeService.listTextKnowledge();
+  async listTextKnowledge(workspaceId: string) {
+    return this.knowledgeService.listTextKnowledge(workspaceId);
   }
 
   async getTextKnowledge(workspaceId: string, textId: string) {
@@ -149,7 +149,14 @@ export class WorkspaceApiService {
     textId: string,
     data: UpdateTextKnowledgeRequest,
   ) {
-    return this.knowledgeService.updateTextKnowledge(workspaceId, textId, data);
+    if (!data.content) {
+      throw new Error("Content is required for text knowledge update");
+    }
+    return this.knowledgeService.updateTextKnowledge(
+      textId,
+      workspaceId,
+      data.content,
+    );
   }
 
   async deleteTextKnowledge(workspaceId: string, textId: string) {
