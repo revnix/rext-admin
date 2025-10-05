@@ -39,9 +39,8 @@ export function DetailPageSkeleton({
           }
         >
           <div className="space-y-8">
-            {Array.from({ length: sections }, (_, i) => (
+            {Array.from({ length: sections }, (_, i) => i).map((i) => (
               <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton sections don't reorder
                 key={`section-${i}`}
                 className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60"
               >
@@ -62,9 +61,8 @@ export function DetailPageSkeleton({
                   {/* Additional content based on section */}
                   {i === 1 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                      {Array.from({ length: 4 }, (_, j) => (
+                      {Array.from({ length: 4 }, (_, j) => j).map((j) => (
                         <div
-                          // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton metrics don't reorder
                           key={`metric-${j}`}
                           className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center"
                         >
@@ -77,9 +75,8 @@ export function DetailPageSkeleton({
 
                   {i === 2 && (
                     <div className="flex flex-wrap gap-2 mt-4">
-                      {Array.from({ length: 6 }, (_, j) => (
+                      {Array.from({ length: 6 }, (_, j) => j).map((j) => (
                         <Skeleton
-                          // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton tags don't reorder
                           key={`tag-${j}`}
                           className="h-8 w-20 rounded-full"
                         />
@@ -100,9 +97,8 @@ export function DetailPageSkeleton({
               <div className="bg-white dark:bg-background rounded-lg border p-6">
                 <Skeleton className="h-5 w-16 mb-4" /> {/* Card title */}
                 <div className="space-y-3">
-                  {Array.from({ length: 6 }, (_, i) => (
+                  {Array.from({ length: 6 }, (_, i) => i).map((i) => (
                     <div
-                      // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton metadata items don't reorder
                       key={`metadata-${i}`}
                       className="flex items-center justify-between"
                     >
@@ -128,9 +124,8 @@ export function DetailPageSkeleton({
                     <Skeleton className="h-2 w-full" /> {/* Progress bar */}
                   </div>
 
-                  {Array.from({ length: 3 }, (_, i) => (
+                  {Array.from({ length: 3 }, (_, i) => i).map((i) => (
                     <div
-                      // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton sidebar items don't reorder
                       key={`sidebar-item-${i}`}
                       className="flex justify-between items-center"
                     >

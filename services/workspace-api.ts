@@ -26,7 +26,6 @@ import type {
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
-import { BrandVoiceService } from "./workspace/brand-voice-service";
 import { KnowledgeService } from "./workspace/knowledge-service";
 import { MembersService } from "./workspace/members-service";
 import { WorkspaceService } from "./workspace/workspace-service";
@@ -46,13 +45,11 @@ export class WorkspaceApiService {
   private workspaceService: WorkspaceService;
   private knowledgeService: KnowledgeService;
   private membersService: MembersService;
-  private brandVoiceService: BrandVoiceService;
 
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     this.workspaceService = new WorkspaceService(config);
     this.knowledgeService = new KnowledgeService(config);
     this.membersService = new MembersService(config);
-    this.brandVoiceService = new BrandVoiceService(config);
   }
 
   // ============================================================================

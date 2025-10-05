@@ -95,7 +95,7 @@ export interface FormPersistenceResult<T> {
 /**
  * Hook for persisting form data to localStorage
  */
-export function useFormPersistence<T extends Record<string, any>>(
+export function useFormPersistence<T extends Record<string, unknown>>(
   key: string,
   defaultValues: T,
   options: FormPersistenceOptions<T> = {},
@@ -205,7 +205,7 @@ export function useFormPersistence<T extends Record<string, any>>(
  * <input {...form.getFieldProps('name')} />
  * ```
  */
-export function usePersistedForm<T extends Record<string, any>>(
+export function usePersistedForm<T extends Record<string, unknown>>(
   key: string,
   defaultValues: T,
   options?: FormPersistenceOptions<T>,

@@ -10,6 +10,7 @@
  * - Sorting and filtering
  */
 
+import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
@@ -72,8 +73,8 @@ export interface BaseActions<T extends BaseKnowledge> {
 
 export type KnowledgeStore<
   T extends BaseKnowledge,
-  TState = {},
-  TActions = {},
+  TState = Record<string, never>,
+  TActions = Record<string, never>,
 > = BaseState<T> & BaseActions<T> & TState & TActions;
 
 // ============================================================================
@@ -81,9 +82,9 @@ export type KnowledgeStore<
 // ============================================================================
 
 export interface StoreConfig<
-  _T extends BaseKnowledge,
-  TState = {},
-  TActions = {},
+  TItem extends BaseKnowledge,
+  TState = Record<string, never>,
+  TActions = Record<string, never>,
 > {
   storeName: string;
   defaultSortBy: string;
@@ -93,11 +94,16 @@ export interface StoreConfig<
   customState?: TState;
 
   // Optional custom actions
-  customActions?: (set: any, get: any) => TActions;
+  customActions?: (
+    set: Parameters<StateCreator<BaseState<TItem> & TState & TActions>>[0],
+    get: Parameters<StateCreator<BaseState<TItem> & TState & TActions>>[1],
+  ) => TActions;
 
   // Optional persistence config
   persistConfig?: {
-    partialize?: (state: any) => any;
+    partialize?: (
+      state: BaseState<TItem> & TState & TActions,
+    ) => Partial<BaseState<TItem> & TState & TActions>;
   };
 }
 
@@ -107,8 +113,8 @@ export interface StoreConfig<
 
 export function createKnowledgeStore<
   T extends BaseKnowledge,
-  TState extends Record<string, any> = {},
-  TActions extends Record<string, any> = {},
+  TState = Record<string, never>,
+  TActions = Record<string, never>,
 >(config: StoreConfig<T, TState, TActions>) {
   const {
     storeName,
@@ -137,52 +143,80 @@ export function createKnowledgeStore<
             ...customState,
 
             // Base actions
-            setItems: (items: T[]) => set({ items } as any),
+            setItems: (items: T[]) =>
+              set({ items } as Partial<KnowledgeStore<T, TState, TActions>>),
 
             addItem: (item: T) =>
-              set((state: any) => ({
-                items: [item, ...state.items],
-              })),
+              set(
+                (state) =>
+                  ({
+                    items: [item, ...(state as BaseState<T>).items],
+                  }) as Partial<KnowledgeStore<T, TState, TActions>>,
+              ),
 
             updateItem: (id: string, updates: Partial<T>) =>
-              set((state: any) => ({
-                items: state.items.map((item: any) =>
-                  item.id === id ? { ...item, ...updates } : item,
-                ),
-              })),
+              set(
+                (state) =>
+                  ({
+                    items: (state as BaseState<T>).items.map((item) =>
+                      item.id === id ? { ...item, ...updates } : item,
+                    ),
+                  }) as Partial<KnowledgeStore<T, TState, TActions>>,
+              ),
 
             removeItem: (id: string) =>
-              set((state: any) => ({
-                items: state.items.filter((item: any) => item.id !== id),
-                selectedItems: state.selectedItems.filter(
-                  (itemId: string) => itemId !== id,
-                ),
-              })),
+              set((state) => {
+                const typedState = state as BaseState<T>;
+                return {
+                  items: typedState.items.filter((item) => item.id !== id),
+                  selectedItems: typedState.selectedItems.filter(
+                    (itemId: string) => itemId !== id,
+                  ),
+                } as Partial<KnowledgeStore<T, TState, TActions>>;
+              }),
 
             setLoading: (loading: boolean) =>
-              set({ isLoading: loading } as any),
-            setError: (error: string | null) => set({ error } as any),
+              set({ isLoading: loading } as Partial<
+                KnowledgeStore<T, TState, TActions>
+              >),
+            setError: (error: string | null) =>
+              set({ error } as Partial<KnowledgeStore<T, TState, TActions>>),
             setSearchQuery: (query: string) =>
-              set({ searchQuery: query } as any),
+              set({ searchQuery: query } as Partial<
+                KnowledgeStore<T, TState, TActions>
+              >),
 
             setSorting: (sortBy: string, sortOrder: "asc" | "desc") =>
-              set({ sortBy, sortOrder } as any),
+              set({ sortBy, sortOrder } as Partial<
+                KnowledgeStore<T, TState, TActions>
+              >),
 
             toggleSelection: (id: string) =>
-              set((state: any) => ({
-                selectedItems: state.selectedItems.includes(id)
-                  ? state.selectedItems.filter(
-                      (itemId: string) => itemId !== id,
-                    )
-                  : [...state.selectedItems, id],
-              })),
+              set((state) => {
+                const typedState = state as BaseState<T>;
+                return {
+                  selectedItems: typedState.selectedItems.includes(id)
+                    ? typedState.selectedItems.filter(
+                        (itemId: string) => itemId !== id,
+                      )
+                    : [...typedState.selectedItems, id],
+                } as Partial<KnowledgeStore<T, TState, TActions>>;
+              }),
 
             selectAll: () =>
-              set((state: any) => ({
-                selectedItems: state.items.map((item: any) => item.id),
-              })),
+              set(
+                (state) =>
+                  ({
+                    selectedItems: (state as BaseState<T>).items.map(
+                      (item) => item.id,
+                    ),
+                  }) as Partial<KnowledgeStore<T, TState, TActions>>,
+              ),
 
-            deselectAll: () => set({ selectedItems: [] } as any),
+            deselectAll: () =>
+              set({ selectedItems: [] } as Partial<
+                KnowledgeStore<T, TState, TActions>
+              >),
 
             reset: () =>
               set({
@@ -192,20 +226,20 @@ export function createKnowledgeStore<
                 error: null,
                 searchQuery: "",
                 ...customState,
-              } as any),
+              } as unknown as Partial<KnowledgeStore<T, TState, TActions>>),
 
             // Custom actions
             ...(customActions ? customActions(set, get) : {}),
-          }) as any,
+          }) as unknown as KnowledgeStore<T, TState, TActions>,
         {
           name: storeName,
           storage: createJSONStorage(() => getStorage()),
           partialize:
             persistConfig?.partialize ||
-            ((state: any) => ({
-              searchQuery: state.searchQuery,
-              sortBy: state.sortBy,
-              sortOrder: state.sortOrder,
+            ((state) => ({
+              searchQuery: (state as BaseState<T>).searchQuery,
+              sortBy: (state as BaseState<T>).sortBy,
+              sortOrder: (state as BaseState<T>).sortOrder,
             })),
         },
       ),
@@ -228,6 +262,6 @@ export type InferStoreActions<TStore> = TStore extends ReturnType<
   typeof create<infer S>
 >
   ? {
-      [K in keyof S]: S[K] extends (...args: any[]) => any ? K : never;
+      [K in keyof S]: S[K] extends (...args: never[]) => unknown ? K : never;
     }[keyof S]
   : never;

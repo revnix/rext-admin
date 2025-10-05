@@ -6,7 +6,7 @@
  */
 
 import type { FileKnowledge } from "@/types/workspace";
-import { createKnowledgeStore } from "./create-knowledge-store";
+import { type BaseState, createKnowledgeStore } from "./create-knowledge-store";
 
 // ============================================================================
 // FILE-SPECIFIC STATE & ACTIONS
@@ -55,59 +55,77 @@ export const useFileKnowledgeStore = createKnowledgeStore<
   },
 
   customActions: (set) => ({
-    setTypeFilter: (type) => set({ typeFilter: type } as any),
+    setTypeFilter: (type) =>
+      set({ typeFilter: type } as Partial<FileKnowledgeCustomState>),
 
     startUpload: (fileId, fileName) =>
-      set((state: any) => ({
+      set((state) => ({
         uploadProgress: {
-          ...state.uploadProgress,
+          ...(state as BaseState<FileKnowledge> & FileKnowledgeCustomState)
+            .uploadProgress,
           [fileId]: {
             fileId,
             fileName,
             progress: 0,
-            status: "uploading",
+            status: "uploading" as const,
           },
         },
         isUploading: true,
       })),
 
     updateUploadProgress: (fileId, progress) =>
-      set((state: any) => ({
-        uploadProgress: {
-          ...state.uploadProgress,
-          [fileId]: {
-            ...state.uploadProgress[fileId],
-            progress,
-            status: progress === 100 ? "processing" : "uploading",
+      set((state) => {
+        const typedState = state as BaseState<FileKnowledge> &
+          FileKnowledgeCustomState;
+        const status: "processing" | "uploading" =
+          progress === 100 ? "processing" : "uploading";
+        return {
+          uploadProgress: {
+            ...typedState.uploadProgress,
+            [fileId]: {
+              ...typedState.uploadProgress[fileId],
+              progress,
+              status,
+            },
           },
-        },
-      })),
+        };
+      }),
 
     completeUpload: (fileId, item) =>
-      set((state: any) => {
-        const { [fileId]: _removed, ...restProgress } = state.uploadProgress;
+      set((state) => {
+        const typedState = state as BaseState<FileKnowledge> &
+          FileKnowledgeCustomState;
+        const { [fileId]: _removed, ...restProgress } =
+          typedState.uploadProgress;
         return {
           uploadProgress: restProgress,
           isUploading: Object.keys(restProgress).length > 0,
-          items: [item, ...state.items],
+          items: [item, ...typedState.items],
         };
       }),
 
     failUpload: (fileId, error) =>
-      set((state: any) => ({
-        uploadProgress: {
-          ...state.uploadProgress,
-          [fileId]: {
-            ...state.uploadProgress[fileId],
-            status: "failed",
-            error,
+      set((state) => {
+        const typedState = state as BaseState<FileKnowledge> &
+          FileKnowledgeCustomState;
+        return {
+          uploadProgress: {
+            ...typedState.uploadProgress,
+            [fileId]: {
+              ...typedState.uploadProgress[fileId],
+              status: "failed" as const,
+              error,
+            },
           },
-        },
-      })),
+        };
+      }),
 
     removeUpload: (fileId) =>
-      set((state: any) => {
-        const { [fileId]: _removed, ...restProgress } = state.uploadProgress;
+      set((state) => {
+        const typedState = state as BaseState<FileKnowledge> &
+          FileKnowledgeCustomState;
+        const { [fileId]: _removed, ...restProgress } =
+          typedState.uploadProgress;
         return {
           uploadProgress: restProgress,
           isUploading: Object.keys(restProgress).length > 0,
@@ -116,11 +134,12 @@ export const useFileKnowledgeStore = createKnowledgeStore<
   }),
 
   persistConfig: {
-    partialize: (state: any) => ({
+    partialize: (state) => ({
       searchQuery: state.searchQuery,
       sortBy: state.sortBy,
       sortOrder: state.sortOrder,
-      typeFilter: state.typeFilter,
+      typeFilter: (state as BaseState<FileKnowledge> & FileKnowledgeCustomState)
+        .typeFilter,
     }),
   },
 });

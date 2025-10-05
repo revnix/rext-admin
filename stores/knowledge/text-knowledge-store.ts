@@ -6,7 +6,11 @@
  */
 
 import type { TextKnowledge } from "@/types/workspace";
-import { createKnowledgeStore } from "./create-knowledge-store";
+import {
+  type BaseActions,
+  type BaseState,
+  createKnowledgeStore,
+} from "./create-knowledge-store";
 
 // ============================================================================
 // TEXT-SPECIFIC STATE & ACTIONS
@@ -51,13 +55,17 @@ export const useTextKnowledgeStore = createKnowledgeStore<
   },
 
   customActions: (set, get) => ({
-    setSaving: (saving) => set({ isSaving: saving } as any),
+    setSaving: (saving) =>
+      set({ isSaving: saving } as Partial<TextKnowledgeCustomState>),
 
-    setTagFilter: (tag) => set({ tagFilter: tag } as any),
+    setTagFilter: (tag) =>
+      set({ tagFilter: tag } as Partial<TextKnowledgeCustomState>),
 
     startEdit: (id) =>
-      set((state: any) => {
-        const item = state.items.find((item: any) => item.id === id);
+      set((state) => {
+        const typedState = state as BaseState<TextKnowledge> &
+          TextKnowledgeCustomState;
+        const item = typedState.items.find((item) => item.id === id);
         return {
           editingItem: id,
           editFormData: item ? { ...item } : {},
@@ -66,19 +74,26 @@ export const useTextKnowledgeStore = createKnowledgeStore<
       }),
 
     updateEditForm: (updates) =>
-      set((state: any) => ({
-        editFormData: { ...state.editFormData, ...updates },
-      })),
+      set((state) => {
+        const typedState = state as BaseState<TextKnowledge> &
+          TextKnowledgeCustomState;
+        return {
+          editFormData: { ...typedState.editFormData, ...updates },
+        };
+      }),
 
     cancelEdit: () =>
       set({
         editingItem: null,
         editFormData: {},
         isEditing: false,
-      } as any),
+      } as Partial<TextKnowledgeCustomState>),
 
     saveEdit: () => {
-      const state = get() as any;
+      const state = get() as BaseState<TextKnowledge> &
+        BaseActions<TextKnowledge> &
+        TextKnowledgeCustomState &
+        TextKnowledgeCustomActions;
       if (state.editingItem && state.editFormData.id) {
         state.updateItem(state.editingItem, state.editFormData);
         state.cancelEdit();
@@ -87,11 +102,12 @@ export const useTextKnowledgeStore = createKnowledgeStore<
   }),
 
   persistConfig: {
-    partialize: (state: any) => ({
+    partialize: (state) => ({
       searchQuery: state.searchQuery,
       sortBy: state.sortBy,
       sortOrder: state.sortOrder,
-      tagFilter: state.tagFilter,
+      tagFilter: (state as BaseState<TextKnowledge> & TextKnowledgeCustomState)
+        .tagFilter,
     }),
   },
 });

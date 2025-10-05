@@ -38,11 +38,12 @@ export const useWebKnowledgeStore = createKnowledgeStore<
   },
 
   customActions: (set) => ({
-    setAdding: (adding) => set({ isAdding: adding } as any),
+    setAdding: (adding) =>
+      set({ isAdding: adding } as Partial<WebKnowledgeCustomState>),
   }),
 
   persistConfig: {
-    partialize: (state: any) => ({
+    partialize: (state) => ({
       searchQuery: state.searchQuery,
       sortBy: state.sortBy,
       sortOrder: state.sortOrder,

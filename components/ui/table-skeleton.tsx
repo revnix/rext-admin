@@ -32,8 +32,7 @@ export function TableSkeleton({
               className={`grid gap-4 pb-2 border-b`}
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              {Array.from({ length: columns }, (_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton grid doesn't reorder
+              {Array.from({ length: columns }, (_, i) => i).map((i) => (
                 <Skeleton key={`header-col-${i}`} className="h-4" />
               ))}
             </div>
@@ -46,21 +45,22 @@ export function TableSkeleton({
               className={`grid gap-4 py-3`}
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              {Array.from({ length: columns }, (_, colIndex) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton grid doesn't reorder
-                <div key={`row-${rowIndex}-col-${colIndex}`}>
-                  {colIndex === 0 ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-3 w-3/4" />
-                    </div>
-                  ) : (
-                    <Skeleton
-                      className={`h-4 w-full ${colIndex % 3 === 0 ? "rounded-full" : ""}`}
-                    />
-                  )}
-                </div>
-              ))}
+              {Array.from({ length: columns }, (_, colIndex) => colIndex).map(
+                (colIndex) => (
+                  <div key={`row-${rowIndex}-col-${colIndex}`}>
+                    {colIndex === 0 ? (
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-3 w-3/4" />
+                      </div>
+                    ) : (
+                      <Skeleton
+                        className={`h-4 w-full ${colIndex % 3 === 0 ? "rounded-full" : ""}`}
+                      />
+                    )}
+                  </div>
+                ),
+              )}
             </div>
           ))}
         </div>

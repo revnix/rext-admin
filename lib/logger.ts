@@ -63,18 +63,21 @@ type ComponentLogger = {
 // Create a wrapper that swaps pino's (obj, msg) to old logger's (msg, obj) signature
 export const logger = {
   debug: (message: string, data?: unknown, ...args: unknown[]) => {
+    const sanitized = sanitize(data) as Record<string, unknown> | null;
     const mergedData =
-      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+      args.length > 0 ? { ...(sanitized || {}), args } : sanitized || {};
     pinoLogger.debug(mergedData, message);
   },
   info: (message: string, data?: unknown, ...args: unknown[]) => {
+    const sanitized = sanitize(data) as Record<string, unknown> | null;
     const mergedData =
-      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+      args.length > 0 ? { ...(sanitized || {}), args } : sanitized || {};
     pinoLogger.info(mergedData, message);
   },
   warn: (message: string, data?: unknown, ...args: unknown[]) => {
+    const sanitized = sanitize(data) as Record<string, unknown> | null;
     const mergedData =
-      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+      args.length > 0 ? { ...(sanitized || {}), args } : sanitized || {};
     pinoLogger.warn(mergedData, message);
   },
   error: (
@@ -83,8 +86,9 @@ export const logger = {
     data?: unknown,
     ...args: unknown[]
   ) => {
+    const sanitized = sanitize(data) as Record<string, unknown> | null;
     const mergedData =
-      args.length > 0 ? { ...sanitize(data), args } : sanitize(data) || {};
+      args.length > 0 ? { ...(sanitized || {}), args } : sanitized || {};
     pinoLogger.error(
       {
         ...mergedData,
@@ -96,18 +100,22 @@ export const logger = {
   },
   forComponent: (component: string): ComponentLogger => ({
     debug: (message: string, data?: unknown) => {
-      pinoLogger.debug({ ...sanitize(data), component }, message);
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
+      pinoLogger.debug({ ...(sanitized || {}), component }, message);
     },
     info: (message: string, data?: unknown) => {
-      pinoLogger.info({ ...sanitize(data), component }, message);
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
+      pinoLogger.info({ ...(sanitized || {}), component }, message);
     },
     warn: (message: string, data?: unknown) => {
-      pinoLogger.warn({ ...sanitize(data), component }, message);
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
+      pinoLogger.warn({ ...(sanitized || {}), component }, message);
     },
     error: (message: string, error?: Error | unknown, data?: unknown) => {
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
       pinoLogger.error(
         {
-          ...sanitize(data),
+          ...(sanitized || {}),
           component,
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
@@ -121,8 +129,9 @@ export const logger = {
       url: string,
       data?: unknown,
     ) => {
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
       pinoLogger.info(
-        { ...sanitize(data), component, requestId },
+        { ...(sanitized || {}), component, requestId },
         `${method} ${url}`,
       );
     },
@@ -132,15 +141,17 @@ export const logger = {
       duration?: number,
       data?: unknown,
     ) => {
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
       const level = status >= 400 ? "error" : status >= 300 ? "warn" : "info";
       pinoLogger[level](
-        { ...sanitize(data), component, requestId },
+        { ...(sanitized || {}), component, requestId },
         `Response ${status}${duration ? ` (${duration}ms)` : ""}`,
       );
     },
     performance: (operation: string, duration: number, data?: unknown) => {
+      const sanitized = sanitize(data) as Record<string, unknown> | null;
       pinoLogger.debug(
-        { ...sanitize(data), component: `perf:${component}` },
+        { ...(sanitized || {}), component: `perf:${component}` },
         `${operation} completed in ${duration}ms`,
       );
     },
@@ -160,17 +171,15 @@ const SENSITIVE_KEYS = [
   "access_token",
 ];
 
-// biome-ignore lint/suspicious/noExplicitAny: Required for dynamic object sanitization
-export function sanitize(obj: any): any {
+export function sanitize(obj: unknown): unknown {
   if (typeof obj !== "object" || obj === null) return obj;
 
   if (Array.isArray(obj)) {
     return obj.map(sanitize);
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: Dynamic object construction
-  const sanitized: any = {};
-  for (const [key, value] of Object.entries(obj)) {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
     if (
       SENSITIVE_KEYS.some((sensitive) => key.toLowerCase().includes(sensitive))
     ) {
