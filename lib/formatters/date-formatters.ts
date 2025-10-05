@@ -10,9 +10,9 @@
 import {
   format,
   formatDistanceToNow,
+  isDate,
   isValid,
   parseISO,
-  isDate,
 } from "date-fns";
 
 /**
@@ -105,7 +105,7 @@ export const dateFormat = {
    */
   relative: (
     date: string | Date | null | undefined,
-    options?: { addSuffix?: boolean }
+    options?: { addSuffix?: boolean },
   ): string => {
     const parsed = parseDate(date);
     if (!parsed) return "";
@@ -162,7 +162,7 @@ export const dateFormat = {
    */
   custom: (
     date: string | Date | null | undefined,
-    formatString: string
+    formatString: string,
   ): string => {
     const parsed = parseDate(date);
     if (!parsed) return "";
@@ -189,7 +189,7 @@ export const formatDate = (dateString: string): string => {
  */
 export const formatDateCustom = (
   dateString: string,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string => {
   const parsed = parseDate(dateString);
   if (!parsed) return "";

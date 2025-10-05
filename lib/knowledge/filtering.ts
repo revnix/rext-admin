@@ -7,6 +7,7 @@
  */
 
 import { format } from "date-fns";
+import { MAX_PREVIEW_LENGTH } from "@/components/knowledge/unified/types";
 import type {
   KnowledgeFilterState,
   UnifiedKnowledgeItem,
@@ -17,7 +18,6 @@ import type {
   TextKnowledge,
   WebKnowledge,
 } from "@/types/workspace";
-import { MAX_PREVIEW_LENGTH } from "@/components/knowledge/unified/types";
 
 /**
  * Formats a preview string with truncation

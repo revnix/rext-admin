@@ -19,12 +19,12 @@ import type { FileKnowledge } from "@/types/workspace";
 import {
   BaseKnowledgeCard,
   BaseKnowledgeListItem,
-  type KnowledgeCardConfig,
-  type StatusConfig,
-  formatFileSize,
-  getFileExtension,
   formatCountLocale,
   formatDate,
+  formatFileSize,
+  getFileExtension,
+  type KnowledgeCardConfig,
+  type StatusConfig,
 } from "./shared";
 
 interface FileKnowledgeCardProps {
@@ -144,11 +144,16 @@ export function FileKnowledgeCard({
     getMetadataSections: (item) => [
       {
         id: "statistics",
-        condition: item.status === "completed" && !!(item.char_count || item.word_count),
+        condition:
+          item.status === "completed" && !!(item.char_count || item.word_count),
         content: (
           <div className="text-xs text-muted-foreground space-y-1">
-            {item.word_count && <div>{formatCountLocale(item.word_count)} words</div>}
-            {item.char_count && <div>{formatCountLocale(item.char_count)} characters</div>}
+            {item.word_count && (
+              <div>{formatCountLocale(item.word_count)} words</div>
+            )}
+            {item.char_count && (
+              <div>{formatCountLocale(item.char_count)} characters</div>
+            )}
           </div>
         ),
       },

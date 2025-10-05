@@ -6,11 +6,11 @@
  * and display of knowledge items from all sources.
  */
 
-export { UnifiedKnowledgeList } from "./UnifiedKnowledgeList";
-export { FilterBar } from "./FilterBar";
 export { ActiveFiltersBar } from "./ActiveFiltersBar";
+export { DropdownSort } from "./DropdownSort";
+export { FilterBar } from "./FilterBar";
 export { KnowledgeCard } from "./KnowledgeCard";
 export { KnowledgeRow } from "./KnowledgeRow";
 export { KnowledgeSkeleton } from "./KnowledgeSkeleton";
-export { DropdownSort } from "./DropdownSort";
 export * from "./types";
+export { UnifiedKnowledgeList } from "./UnifiedKnowledgeList";

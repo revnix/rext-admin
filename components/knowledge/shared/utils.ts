@@ -40,7 +40,7 @@ export const formatDate = (dateString: string): string => {
  */
 export const formatDateCustom = (
   dateString: string,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string => {
   return new Date(dateString).toLocaleDateString("en-US", options);
 };
@@ -50,7 +50,7 @@ export const formatDateCustom = (
  */
 export const truncateContent = (
   content: string,
-  maxLength: number = 150
+  maxLength: number = 150,
 ): string => {
   if (content.length <= maxLength) return content;
   return `${content.slice(0, maxLength).trim()}...`;
@@ -59,7 +59,10 @@ export const truncateContent = (
 /**
  * Get file extension from filename or MIME type
  */
-export const getFileExtension = (fileName: string, mimeType: string): string => {
+export const getFileExtension = (
+  fileName: string,
+  mimeType: string,
+): string => {
   const extension = fileName.split(".").pop();
   if (extension) return extension.toUpperCase();
 

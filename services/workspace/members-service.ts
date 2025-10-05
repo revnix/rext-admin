@@ -1,0 +1,436 @@
+/**
+ * Members Service - Workspace Member Management
+ *
+ * Handles workspace member and invitation operations
+ */
+
+import { apiErrorHandler } from "@/lib/api-error-middleware";
+import { authenticatedFetch } from "@/lib/auth-utils";
+import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
+import { logger } from "@/lib/logger";
+import type {
+  WorkspaceApiConfig,
+  WorkspaceApiContext,
+  WorkspaceErrorCode,
+} from "@/types/workspace";
+
+export class MembersServiceError extends Error {
+  constructor(
+    public readonly code: WorkspaceErrorCode,
+    public readonly message: string,
+    public readonly details?: Record<string, unknown>,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "MembersServiceError";
+  }
+
+  static fromResponse(
+    response: unknown,
+    statusCode: number,
+  ): MembersServiceError {
+    const responseObj = response as Record<string, unknown>;
+    const code =
+      (responseObj.error_code as WorkspaceErrorCode) || "INVALID_REQUEST";
+    const message =
+      (responseObj.error as string) || "An unknown error occurred";
+    const details = (responseObj.details as Record<string, unknown>) || {};
+
+    return new MembersServiceError(code, message, details, statusCode);
+  }
+}
+
+export class MembersService {
+  private readonly config: WorkspaceApiConfig;
+  private readonly log = logger.forComponent("MembersService");
+  private readonly activeRequests = new Map<string, AbortController>();
+
+  constructor(config: Partial<WorkspaceApiConfig> = {}) {
+    this.config = {
+      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024",
+      timeout: 30000,
+      enableRequestDeduplication: true,
+      ...config,
+    };
+  }
+
+  // ============================================================================
+  // WORKSPACE MEMBERS OPERATIONS
+  // ============================================================================
+
+  async getWorkspaceMembers(workspaceId: string): Promise<{
+    members: Array<{
+      id: string;
+      user_id: string;
+      workspace_id: string;
+      status: string;
+      is_default: boolean;
+      joined_at: string | null;
+      last_activity_at: string | null;
+      user: {
+        id: string;
+        email: string;
+        display_name: string;
+        is_verified: boolean;
+      };
+    }>;
+    total_count: number;
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    return this.makeRequest(
+      "GET",
+      `/api/v1/workspace/${workspaceId}/members`,
+    );
+  }
+
+  async addWorkspaceMember(
+    workspaceId: string,
+    email: string,
+  ): Promise<{
+    member: {
+      id: string;
+      user_id: string;
+      email: string;
+      display_name: string;
+      status: string;
+    };
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    if (!email || !this.isValidEmail(email)) {
+      throw new MembersServiceError("INVALID_REQUEST", "Valid email is required");
+    }
+
+    return this.makeRequest(
+      "POST",
+      `/api/v1/workspace/${workspaceId}/members`,
+      { email },
+    );
+  }
+
+  async removeWorkspaceMember(
+    workspaceId: string,
+    memberId: string,
+  ): Promise<{ member_id: string }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    this.validateUuid(memberId, "member_id");
+
+    return this.makeRequest(
+      "DELETE",
+      `/api/v1/workspace/${workspaceId}/members/${memberId}`,
+    );
+  }
+
+  async changeMemberRole(
+    workspaceId: string,
+    memberId: string,
+    roleId: string,
+  ): Promise<{
+    member_id: string;
+    user_id: string;
+    workspace_id: string;
+    role_id: string;
+    role_name: string;
+    updated_by: string;
+    updated_at: string;
+  }> {
+    this.validateUuid(workspaceId, "workspace_id");
+    this.validateUuid(memberId, "member_id");
+    this.validateUuid(roleId, "role_id");
+
+    return this.makeRequest(
+      "PUT",
+      `/api/v1/workspace/${workspaceId}/members/${memberId}/role`,
+      { role_id: roleId },
+    );
+  }
+
+  // ============================================================================
+  // WORKSPACE INVITATIONS OPERATIONS
+  // ============================================================================
+
+  async createInvitation(data: {
+    workspace_id: string;
+    email: string;
+    role_id: string;
+    expires_in_days?: number;
+  }): Promise<{
+    invitation: {
+      id: string;
+      workspace_id: string;
+      email: string;
+      role_id: string;
+      status: string;
+      expires_at: string;
+      created_at: string;
+    };
+  }> {
+    this.validateUuid(data.workspace_id, "workspace_id");
+    this.validateUuid(data.role_id, "role_id");
+    if (!data.email || !this.isValidEmail(data.email)) {
+      throw new MembersServiceError("INVALID_REQUEST", "Valid email is required");
+    }
+
+    return this.makeRequest("POST", "/api/v1/workspace/invitations/", data);
+  }
+
+  async acceptInvitation(token: string): Promise<{
+    workspace_member: {
+      id: string;
+      workspace_id: string;
+      user_id: string;
+      role_id: string;
+      status: string;
+    };
+  }> {
+    if (!token || token.trim().length === 0) {
+      throw new MembersServiceError(
+        "INVALID_REQUEST",
+        "Invitation token is required",
+      );
+    }
+
+    return this.makeRequest("POST", "/api/v1/workspace/invitations/accept", {
+      token,
+    });
+  }
+
+  async revokeInvitation(invitationId: string): Promise<{
+    invitation_id: string;
+    status: string;
+  }> {
+    this.validateUuid(invitationId, "invitation_id");
+
+    return this.makeRequest(
+      "POST",
+      `/api/v1/workspace/invitations/${invitationId}/revoke`,
+    );
+  }
+
+  async listSentInvitations(workspaceId?: string): Promise<{
+    invitations: Array<{
+      id: string;
+      workspace_id: string;
+      email: string;
+      role_id: string;
+      status: string;
+      expires_at: string;
+      created_at: string;
+      workspace_name?: string;
+      role_name?: string;
+    }>;
+    total_count: number;
+  }> {
+    const endpoint = workspaceId
+      ? `/api/v1/workspace/invitations/sent?workspace_id=${workspaceId}`
+      : "/api/v1/workspace/invitations/sent";
+
+    return this.makeRequest("GET", endpoint);
+  }
+
+  async listReceivedInvitations(): Promise<{
+    invitations: Array<{
+      id: string;
+      workspace_id: string;
+      email: string;
+      role_id: string;
+      status: string;
+      expires_at: string;
+      created_at: string;
+      workspace_name?: string;
+      role_name?: string;
+      invitation_token?: string;
+    }>;
+    total_count: number;
+  }> {
+    return this.makeRequest("GET", "/api/v1/workspace/invitations/received");
+  }
+
+  async createBulkInvitations(data: {
+    workspace_id: string;
+    emails: string[];
+    role_id: string;
+    expires_in_days?: number;
+  }): Promise<{
+    total_requested: number;
+    successful: number;
+    failed: number;
+    results: Array<{
+      email: string;
+      success: boolean;
+      invitation_id?: string;
+      error_message?: string;
+    }>;
+  }> {
+    this.validateUuid(data.workspace_id, "workspace_id");
+    this.validateUuid(data.role_id, "role_id");
+
+    if (!data.emails || data.emails.length === 0) {
+      throw new MembersServiceError(
+        "INVALID_REQUEST",
+        "At least one email is required",
+      );
+    }
+
+    if (data.emails.length > 50) {
+      throw new MembersServiceError(
+        "INVALID_REQUEST",
+        "Maximum 50 emails allowed per request",
+      );
+    }
+
+    return this.makeRequest("POST", "/api/v1/workspace/invitations/bulk", data);
+  }
+
+  // ============================================================================
+  // PRIVATE HELPER METHODS
+  // ============================================================================
+
+  private async makeRequest<T>(
+    method: string,
+    endpoint: string,
+    body?: unknown,
+  ): Promise<T> {
+    const requestId = generateRequestId();
+    const context = this.createRequestContext(requestId);
+    const controller = new AbortController();
+    this.activeRequests.set(requestId, controller);
+
+    try {
+      return await this.executeRequest<T>(
+        method,
+        endpoint,
+        body,
+        controller.signal,
+        context,
+      );
+    } finally {
+      this.activeRequests.delete(requestId);
+    }
+  }
+
+  private async executeRequest<T>(
+    method: string,
+    endpoint: string,
+    body: unknown,
+    signal: AbortSignal,
+    context: WorkspaceApiContext,
+  ): Promise<T> {
+    const url = `${this.config.baseUrl}${endpoint}`;
+
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "X-Request-ID": context.requestId,
+        "X-Timestamp": context.timestamp,
+      };
+
+      const signals = [signal];
+      if (this.config.timeout) {
+        signals.push(AbortSignal.timeout(this.config.timeout));
+      }
+      const combinedSignal =
+        signals.length > 1 ? AbortSignal.any(signals) : signal;
+
+      const response = await authenticatedFetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: combinedSignal,
+      });
+
+      if (!response.ok) {
+        await this.handleErrorResponse(response, context, 0);
+      }
+
+      let data: unknown;
+      if (
+        response.status === 204 ||
+        response.headers.get("content-length") === "0"
+      ) {
+        data = {};
+      } else {
+        data = await response.json();
+      }
+
+      const responseData = data as { success?: boolean; data?: T };
+      if (responseData?.success && responseData.data) {
+        return responseData.data;
+      }
+
+      return data as T;
+    } catch (error) {
+      await this.handleRequestError(error, context, 0);
+      throw error;
+    }
+  }
+
+  private async handleErrorResponse(
+    response: Response,
+    context: WorkspaceApiContext,
+    duration: number,
+  ): Promise<never> {
+    const errorData = await response.json().catch(() => ({}));
+
+    this.log.error("Members request failed", {
+      requestId: context.requestId,
+      status: response.status,
+      statusText: response.statusText,
+      duration,
+      errorData: sanitizeErrorForLogging(errorData),
+    });
+
+    throw MembersServiceError.fromResponse(errorData, response.status);
+  }
+
+  private async handleRequestError(
+    error: unknown,
+    context: WorkspaceApiContext,
+    duration: number,
+  ): Promise<never> {
+    await apiErrorHandler.handleError(error, {
+      showToast: true,
+      logError: true,
+      throwError: true,
+      context: {
+        requestId: context.requestId,
+        duration,
+        timestamp: context.timestamp,
+      },
+    });
+
+    throw error;
+  }
+
+  private createRequestContext(requestId: string): WorkspaceApiContext {
+    return {
+      requestId,
+      timestamp: new Date().toISOString(),
+      userId: undefined,
+    };
+  }
+
+  private validateUuid(id: string, fieldName: string): void {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!id || !uuidRegex.test(id)) {
+      throw new MembersServiceError(
+        "INVALID_REQUEST",
+        `Invalid ${fieldName}: must be a valid UUID`,
+      );
+    }
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  public cancelAllRequests(): void {
+    for (const [_requestId, controller] of this.activeRequests) {
+      controller.abort();
+    }
+    this.activeRequests.clear();
+  }
+}
+
+export const membersService = new MembersService();

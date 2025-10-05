@@ -8,14 +8,14 @@ import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  buildDuplicateReasonIndex,
-  findKnowledgeDuplicates,
-} from "@/lib/knowledge-duplicates";
-import {
   aggregateCounts,
   applyFilters,
   buildUnifiedItems,
 } from "@/lib/knowledge/filtering";
+import {
+  buildDuplicateReasonIndex,
+  findKnowledgeDuplicates,
+} from "@/lib/knowledge-duplicates";
 import { cn } from "@/lib/utils";
 import {
   fileKnowledgeService,
@@ -239,7 +239,9 @@ export function UnifiedKnowledgeList({
 
   // Extract available filter options
   const availableStatuses = useMemo(() => {
-    const statuses = new Set<import("@/types/knowledge").UnifiedKnowledgeStatus>();
+    const statuses = new Set<
+      import("@/types/knowledge").UnifiedKnowledgeStatus
+    >();
     unifiedItems.forEach((item) => {
       if (item.status) {
         statuses.add(item.status);

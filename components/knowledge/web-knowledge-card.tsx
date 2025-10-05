@@ -20,11 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDeleteHandler } from "@/hooks/useDeleteHandler";
@@ -95,7 +91,7 @@ export function WebKnowledgeCard({
   const updateItem = useWebKnowledgeStore((state) => state.updateItem);
 
   // Use the delete handler hook
-  const { handleDelete: deleteWebKnowledge, isDeleting } = useDeleteHandler({
+  const { handleDelete: deleteWebKnowledge } = useDeleteHandler({
     deleteFunction: (id) => webKnowledgeService.delete(item.workspace_id, id),
     resourceName: "web knowledge",
     onSuccess: () => {
@@ -170,11 +166,16 @@ export function WebKnowledgeCard({
     getMetadataSections: (item) => [
       {
         id: "statistics",
-        condition: item.status === "completed" && !!(item.char_count || item.word_count),
+        condition:
+          item.status === "completed" && !!(item.char_count || item.word_count),
         content: (
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            {item.word_count && <span>{numberFormat.compact(item.word_count)} words</span>}
-            {item.char_count && <span>{numberFormat.compact(item.char_count)} characters</span>}
+            {item.word_count && (
+              <span>{numberFormat.compact(item.word_count)} words</span>
+            )}
+            {item.char_count && (
+              <span>{numberFormat.compact(item.char_count)} characters</span>
+            )}
           </div>
         ),
       },
@@ -183,7 +184,8 @@ export function WebKnowledgeCard({
         condition: item.status === "failed",
         content: (
           <div className="text-xs text-destructive bg-destructive/10 p-2 rounded">
-            Failed to scrape content from this URL. Please check if the URL is accessible and try again.
+            Failed to scrape content from this URL. Please check if the URL is
+            accessible and try again.
           </div>
         ),
       },
@@ -203,7 +205,9 @@ export function WebKnowledgeCard({
         content: (
           <div className="text-xs text-muted-foreground">
             Added {dateFormat.short(item.created_at)}
-            {item.updated_at && <span> • Updated {dateFormat.short(item.updated_at)}</span>}
+            {item.updated_at && (
+              <span> • Updated {dateFormat.short(item.updated_at)}</span>
+            )}
           </div>
         ),
       },
@@ -309,7 +313,7 @@ export function WebKnowledgeListItem({
   });
 
   const listConfig = {
-    ...({
+    ...{
       primaryIcon: Globe,
       getTitle: (item: WebKnowledge) => item.title || "Untitled",
       getDescription: (item: WebKnowledge) => (
@@ -353,7 +357,7 @@ export function WebKnowledgeListItem({
         await deleteWebKnowledge(item.id);
       },
       className: "cursor-pointer hover:bg-muted/50",
-    }),
+    },
     getCompactMetadata: (item: WebKnowledge) => (
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <a
@@ -369,8 +373,12 @@ export function WebKnowledgeListItem({
         </a>
         {item.status === "completed" && (
           <>
-            {item.word_count && <span>{numberFormat.compact(item.word_count)} words</span>}
-            {item.char_count && <span>{numberFormat.compact(item.char_count)} chars</span>}
+            {item.word_count && (
+              <span>{numberFormat.compact(item.word_count)} words</span>
+            )}
+            {item.char_count && (
+              <span>{numberFormat.compact(item.char_count)} chars</span>
+            )}
           </>
         )}
         <span>Added {dateFormat.short(item.created_at)}</span>

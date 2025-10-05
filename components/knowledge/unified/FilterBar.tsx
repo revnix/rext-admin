@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import {
   Calendar as CalendarIcon,
   Check,
@@ -30,8 +29,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { toDateString } from "@/lib/knowledge/filtering";
+import { cn } from "@/lib/utils";
 import type {
   KnowledgeFilterState,
   UnifiedKnowledgeStatus,
@@ -211,9 +210,7 @@ export function FilterBar({
                           <Checkbox
                             id={statusId}
                             checked={statusFilters.includes(status)}
-                            onCheckedChange={() =>
-                              onToggleStatusFilter(status)
-                            }
+                            onCheckedChange={() => onToggleStatusFilter(status)}
                           />
                           <Label
                             htmlFor={statusId}

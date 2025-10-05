@@ -25,25 +25,23 @@
  * Benefit: Better separation of concerns, easier maintenance and testing
  */
 
-export { UnifiedKnowledgeList as AllKnowledgeList } from "./unified/UnifiedKnowledgeList";
-export type { UnifiedKnowledgeListProps as AllKnowledgeListProps } from "./unified/UnifiedKnowledgeList";
-
 // Re-export sub-components for advanced usage
 export {
-  FilterBar,
   ActiveFiltersBar,
+  DropdownSort,
+  FilterBar,
   KnowledgeCard,
   KnowledgeRow,
   KnowledgeSkeleton,
-  DropdownSort,
 } from "./unified";
-
 // Re-export types and constants
 export type * from "./unified/types";
 export {
-  KNOWLEDGE_TYPE_LABELS,
-  STATUS_LABELS,
-  STATUS_CLASSES,
-  TYPE_COLORS,
   DUPLICATE_REASON_LABELS,
+  KNOWLEDGE_TYPE_LABELS,
+  STATUS_CLASSES,
+  STATUS_LABELS,
+  TYPE_COLORS,
 } from "./unified/types";
+export type { UnifiedKnowledgeListProps as AllKnowledgeListProps } from "./unified/UnifiedKnowledgeList";
+export { UnifiedKnowledgeList as AllKnowledgeList } from "./unified/UnifiedKnowledgeList";

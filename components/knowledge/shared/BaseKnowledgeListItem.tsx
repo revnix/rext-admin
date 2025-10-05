@@ -13,10 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type {
-  BaseKnowledgeItem,
-  KnowledgeListItemConfig,
-} from "./types";
+import type { BaseKnowledgeItem, KnowledgeListItemConfig } from "./types";
 
 interface BaseKnowledgeListItemProps<T extends BaseKnowledgeItem> {
   item: T;
@@ -50,7 +47,7 @@ export function BaseKnowledgeListItem<T extends BaseKnowledgeItem>({
       await config.onDelete(item);
     } catch (error) {
       toast.error(
-        `Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     } finally {
       setIsDeleting(false);
@@ -59,9 +56,11 @@ export function BaseKnowledgeListItem<T extends BaseKnowledgeItem>({
 
   // Separate actions into regular and delete
   const regularActions = actions.filter(
-    (action) => action.variant !== "destructive"
+    (action) => action.variant !== "destructive",
   );
-  const deleteAction = actions.find((action) => action.variant === "destructive");
+  const deleteAction = actions.find(
+    (action) => action.variant === "destructive",
+  );
 
   // Check if we should use inline actions or dropdown
   const useInlineActions = inlineActions.length > 0;
@@ -113,9 +112,9 @@ export function BaseKnowledgeListItem<T extends BaseKnowledgeItem>({
       >
         {useInlineActions ? (
           <>
-            {inlineActions.map((action, index) => (
+            {inlineActions.map((action) => (
               <Button
-                key={index}
+                key={action.label}
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {
@@ -180,9 +179,9 @@ export function BaseKnowledgeListItem<T extends BaseKnowledgeItem>({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {regularActions.map((action, index) => (
+              {regularActions.map((action) => (
                 <DropdownMenuItem
-                  key={index}
+                  key={action.label}
                   onClick={(e) => {
                     e.stopPropagation();
                     action.onClick(e);
@@ -198,7 +197,9 @@ export function BaseKnowledgeListItem<T extends BaseKnowledgeItem>({
               )}
               {deleteAction && (
                 <ConfirmationDialog
-                  title={deleteAction.confirmationConfig?.title || "Delete Item"}
+                  title={
+                    deleteAction.confirmationConfig?.title || "Delete Item"
+                  }
                   description={
                     deleteAction.confirmationConfig?.description ||
                     "Are you sure? This action cannot be undone."

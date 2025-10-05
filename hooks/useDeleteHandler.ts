@@ -51,7 +51,7 @@ export interface UseDeleteHandlerOptions<TData = void> {
  * Return value from the delete handler hook
  * @template TData - The type of data returned from the delete operation
  */
-export interface UseDeleteHandlerReturn<TData = void> {
+export interface UseDeleteHandlerReturn<_TData = void> {
   /**
    * Execute the delete operation
    * @param id - The ID of the resource to delete
@@ -112,7 +112,7 @@ export interface UseDeleteHandlerReturn<TData = void> {
  * ```
  */
 export function useDeleteHandler<TData = void>(
-  options: UseDeleteHandlerOptions<TData>
+  options: UseDeleteHandlerOptions<TData>,
 ): UseDeleteHandlerReturn<TData> {
   const {
     deleteFunction,

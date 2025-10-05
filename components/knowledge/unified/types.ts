@@ -7,8 +7,8 @@
  */
 
 import type {
-  UnifiedKnowledgeStatus,
   KnowledgeDuplicateReason,
+  UnifiedKnowledgeStatus,
 } from "@/types/knowledge";
 import type { KnowledgeType } from "@/types/workspace";
 

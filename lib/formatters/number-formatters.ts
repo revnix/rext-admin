@@ -81,7 +81,7 @@ export const numberFormat = {
    */
   currency: (
     num: number | null | undefined,
-    currency: string = "USD"
+    currency: string = "USD",
   ): string => {
     if (num === null || num === undefined || Number.isNaN(num)) {
       return new Intl.NumberFormat("en-US", {
@@ -109,7 +109,7 @@ export const numberFormat = {
   percent: (
     num: number | null | undefined,
     decimals: number = 0,
-    isDecimal: boolean = false
+    isDecimal: boolean = false,
   ): string => {
     if (num === null || num === undefined || Number.isNaN(num)) return "0%";
 

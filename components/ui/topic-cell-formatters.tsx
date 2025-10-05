@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { type ReactNode, useId } from "react";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge as SharedStatusBadge } from "@/components/ui/status-badge";
 import {
   Tooltip,
   TooltipContent,
@@ -29,59 +30,20 @@ import type { TopicData } from "@/types/data-table";
 
 /**
  * Status Badge Cell Formatter
+ * Uses the shared StatusBadge component for consistency
  */
 export function StatusBadge({ value }: { value: unknown }): ReactNode {
   const status = String(value || "unknown");
-  const displayText = status.charAt(0).toUpperCase() + status.slice(1);
-
-  let variant: "default" | "secondary" | "outline" = "outline";
-  let className = "";
-
-  switch (status.toLowerCase()) {
-    case "generated":
-      variant = "outline";
-      className = "border-blue-200 text-blue-800";
-      break;
-    case "saving":
-      variant = "secondary";
-      className = "text-yellow-800 border-yellow-200 animate-pulse";
-      break;
-    case "saved":
-      variant = "default";
-      className = "text-green-800 border-green-200";
-      break;
-    case "published":
-      variant = "default";
-      className = "text-purple-800 border-purple-200";
-      break;
-    case "archived":
-      variant = "secondary";
-      className = "text-muted-foreground";
-      break;
-    default:
-      className = "text-muted-foreground";
-  }
-
-  return (
-    <Badge variant={variant} className={className}>
-      {displayText}
-    </Badge>
-  );
+  return <SharedStatusBadge status={status} size="sm" />;
 }
 
 /**
  * Priority Badge Cell Formatter
+ * Uses the shared StatusBadge component for consistency
  */
 export function PriorityBadge({ value }: { value: unknown }): ReactNode {
   const priority = String(value || "medium");
-  const displayText = priority.charAt(0).toUpperCase() + priority.slice(1);
-  const colorClass = getPriorityColorClass(priority);
-
-  return (
-    <Badge variant="outline" className={colorClass}>
-      {displayText}
-    </Badge>
-  );
+  return <SharedStatusBadge status={priority} size="sm" />;
 }
 
 /**

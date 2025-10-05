@@ -20,10 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type {
-  BaseKnowledgeItem,
-  KnowledgeCardConfig,
-} from "./types";
+import type { BaseKnowledgeItem, KnowledgeCardConfig } from "./types";
 
 interface BaseKnowledgeCardProps<T extends BaseKnowledgeItem> {
   item: T;
@@ -57,7 +54,7 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
       await config.onDelete(item);
     } catch (error) {
       toast.error(
-        `Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     } finally {
       setIsDeleting(false);
@@ -66,9 +63,11 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
 
   // Separate actions into regular and delete
   const regularActions = actions.filter(
-    (action) => action.variant !== "destructive"
+    (action) => action.variant !== "destructive",
   );
-  const deleteAction = actions.find((action) => action.variant === "destructive");
+  const deleteAction = actions.find(
+    (action) => action.variant === "destructive",
+  );
 
   return (
     <Card
@@ -115,9 +114,9 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {regularActions.map((action, index) => (
+              {regularActions.map((action) => (
                 <DropdownMenuItem
-                  key={index}
+                  key={action.label}
                   onClick={(e) => {
                     e.stopPropagation();
                     action.onClick(e);
@@ -133,7 +132,9 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
               )}
               {deleteAction && (
                 <ConfirmationDialog
-                  title={deleteAction.confirmationConfig?.title || "Delete Item"}
+                  title={
+                    deleteAction.confirmationConfig?.title || "Delete Item"
+                  }
                   description={
                     deleteAction.confirmationConfig?.description ||
                     "Are you sure? This action cannot be undone."

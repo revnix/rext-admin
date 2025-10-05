@@ -2,8 +2,8 @@
 
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { toDateString } from "@/lib/knowledge/filtering";
+import { cn } from "@/lib/utils";
 import type {
   KnowledgeDuplicateReason,
   UnifiedKnowledgeItem,

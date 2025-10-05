@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  Calendar,
-  Edit2,
-  FileText,
-  Tag,
-  Trash2,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Calendar, Edit2, FileText, Tag, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useDeleteHandler } from "@/hooks/useDeleteHandler";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { numberFormat } from "@/lib/formatters/number-formatters";
@@ -63,7 +55,9 @@ export function TextKnowledgeCard({
         <Calendar className="h-3 w-3" />
         {dateFormat.short(item.created_at)}
         {item.updated_at && item.updated_at !== item.created_at && (
-          <span className="text-xs">• Updated {dateFormat.short(item.updated_at)}</span>
+          <span className="text-xs">
+            • Updated {dateFormat.short(item.updated_at)}
+          </span>
         )}
       </div>
     ),
@@ -122,8 +116,12 @@ export function TextKnowledgeCard({
         condition: !!(item.word_count || item.char_count),
         content: (
           <div className="text-xs text-muted-foreground space-y-1">
-            {item.word_count && <div>{numberFormat.integer(item.word_count)} words</div>}
-            {item.char_count && <div>{numberFormat.integer(item.char_count)} characters</div>}
+            {item.word_count && (
+              <div>{numberFormat.integer(item.word_count)} words</div>
+            )}
+            {item.char_count && (
+              <div>{numberFormat.integer(item.char_count)} characters</div>
+            )}
           </div>
         ),
       },
@@ -167,7 +165,9 @@ export function TextKnowledgeListItem({
     getDescription: (item: TextKnowledge) => (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>{dateFormat.short(item.created_at)}</span>
-        {item.word_count && <span>• {numberFormat.integer(item.word_count)} words</span>}
+        {item.word_count && (
+          <span>• {numberFormat.integer(item.word_count)} words</span>
+        )}
         {item.updated_at && item.updated_at !== item.created_at && (
           <span>• Updated {dateFormat.short(item.updated_at)}</span>
         )}
