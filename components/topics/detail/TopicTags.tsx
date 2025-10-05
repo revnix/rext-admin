@@ -27,7 +27,11 @@ export function TopicTags({ topic }: TopicTagsProps) {
       {/* Keywords & Tags - Takes 1 column */}
       <DetailGridItem span={1} className="flex">
         {hasTags ? (
-          <DetailCard variant="accent" gradient className="flex-1 flex flex-col">
+          <DetailCard
+            variant="accent"
+            gradient
+            className="flex-1 flex flex-col"
+          >
             <SectionHeader
               title="Keywords & Tags"
               icon={<Hash className="w-5 h-5" />}

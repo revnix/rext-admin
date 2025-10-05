@@ -41,13 +41,13 @@ export const STEP_6_FIELDS: WizardField[] = [
 // ============================================================================
 
 export const validateStep6 = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): ValidationResult => {
   const errors: string[] = [];
 
   if (formData.enableHumansInLoop && !formData.humanReviewers?.length) {
     errors.push(
-      "Please select at least one reviewer when human review is enabled"
+      "Please select at least one reviewer when human review is enabled",
     );
   }
 
@@ -61,8 +61,7 @@ export const validateStep6 = (
 export const STEP_6: WizardStep = {
   id: "review-launch",
   title: "Review & Launch",
-  description:
-    "Set up human review process and finalize your content creation",
+  description: "Set up human review process and finalize your content creation",
   fields: STEP_6_FIELDS,
   validate: validateStep6,
   requiredFieldCount: 0,

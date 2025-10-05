@@ -4,12 +4,10 @@
  * Handles brand voice analysis and management
  */
 
-import { logger } from "@/lib/logger";
 import type { WorkspaceApiConfig } from "@/types/workspace";
 
 export class BrandVoiceService {
-  private readonly config: WorkspaceApiConfig;
-  private readonly log = logger.forComponent("BrandVoiceService");
+  private config: Partial<WorkspaceApiConfig>;
 
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     this.config = {

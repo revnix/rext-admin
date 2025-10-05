@@ -80,7 +80,7 @@ export const getStepById = (stepId: string): WizardStep | undefined => {
  * Get field by ID across all steps
  */
 export const getFieldById = (
-  fieldId: keyof PartialContentCreationFormData
+  fieldId: keyof PartialContentCreationFormData,
 ): WizardField | undefined => {
   for (const step of WIZARD_STEPS) {
     const field = step.fields.find((f) => f.id === fieldId);
@@ -93,10 +93,10 @@ export const getFieldById = (
  * Calculate wizard completion percentage
  */
 export const calculateCompletionPercentage = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): number => {
   const allFields = WIZARD_STEPS.flatMap((step) =>
-    step.fields.filter((field) => field.required)
+    step.fields.filter((field) => field.required),
   );
   const completedFields = allFields.filter((field) => {
     const value = formData[field.id];
@@ -110,7 +110,7 @@ export const calculateCompletionPercentage = (
  * Get next incomplete required field
  */
 export const getNextIncompleteField = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): WizardField | null => {
   for (const step of WIZARD_STEPS) {
     for (const field of step.fields) {

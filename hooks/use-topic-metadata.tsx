@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { CheckCircle, Clock, Sparkles, UserCheck } from "lucide-react";
-import type { GeneratedTopic } from "@/types/topic-builder";
-import type { MetadataItem } from "@/types/detail-page";
+import { useMemo } from "react";
 import { dateFormat } from "@/lib/formatters/date-formatters";
+import type { MetadataItem } from "@/types/detail-page";
+import type { GeneratedTopic } from "@/types/topic-builder";
 
 /**
  * Hook for building topic metadata items for display

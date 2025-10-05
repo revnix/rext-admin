@@ -22,7 +22,11 @@
  * ```
  */
 
-import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
+import {
+  type QueryKey,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
@@ -133,7 +137,7 @@ export function useOptimisticMutation<
       return { previousData };
     },
 
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, _context) => {
       // Show success toast
       if (successMessage) {
         const message =
@@ -181,7 +185,11 @@ export function useOptimisticMutation<
 
       // Call custom error callback
       if (onError) {
-        await onError(error, variables, context as { previousData: TCachedData });
+        await onError(
+          error,
+          variables,
+          context as { previousData: TCachedData },
+        );
       }
 
       log.error("Optimistic mutation failed", {

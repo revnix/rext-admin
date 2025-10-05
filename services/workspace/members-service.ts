@@ -77,10 +77,7 @@ export class MembersService {
     total_count: number;
   }> {
     this.validateUuid(workspaceId, "workspace_id");
-    return this.makeRequest(
-      "GET",
-      `/api/v1/workspace/${workspaceId}/members`,
-    );
+    return this.makeRequest("GET", `/api/v1/workspace/${workspaceId}/members`);
   }
 
   async addWorkspaceMember(
@@ -97,7 +94,10 @@ export class MembersService {
   }> {
     this.validateUuid(workspaceId, "workspace_id");
     if (!email || !this.isValidEmail(email)) {
-      throw new MembersServiceError("INVALID_REQUEST", "Valid email is required");
+      throw new MembersServiceError(
+        "INVALID_REQUEST",
+        "Valid email is required",
+      );
     }
 
     return this.makeRequest(
@@ -167,7 +167,10 @@ export class MembersService {
     this.validateUuid(data.workspace_id, "workspace_id");
     this.validateUuid(data.role_id, "role_id");
     if (!data.email || !this.isValidEmail(data.email)) {
-      throw new MembersServiceError("INVALID_REQUEST", "Valid email is required");
+      throw new MembersServiceError(
+        "INVALID_REQUEST",
+        "Valid email is required",
+      );
     }
 
     return this.makeRequest("POST", "/api/v1/workspace/invitations/", data);

@@ -51,7 +51,7 @@ export interface ConfirmDialogOptions {
 
 export interface ConfirmDialogResult {
   confirm: () => Promise<boolean>;
-  ConfirmDialog: () => JSX.Element;
+  ConfirmDialog: () => React.ReactElement;
   isOpen: boolean;
 }
 
@@ -59,7 +59,7 @@ export interface ConfirmDialogResult {
  * Hook for creating a confirmation dialog with Promise-based API
  */
 export function useConfirmDialog(
-  options: ConfirmDialogOptions
+  options: ConfirmDialogOptions,
 ): ConfirmDialogResult {
   const {
     title,
@@ -95,7 +95,7 @@ export function useConfirmDialog(
     setIsOpen(false);
   }, []);
 
-  const ConfirmDialog = useCallback((): JSX.Element => {
+  const ConfirmDialog = useCallback((): React.ReactElement => {
     return (
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
         <AlertDialogContent>

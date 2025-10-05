@@ -11,16 +11,16 @@
 "use client";
 
 import { useMutationWithToast, useOptimisticMutation } from "@/hooks/mutations";
-import { withRetry, RetryPresets } from "@/lib/api";
+import { RetryPresets, withRetry } from "@/lib/api";
 import {
-  workspaceService,
   knowledgeService,
   membersService,
+  workspaceService,
 } from "@/services/workspace";
 import type {
+  AddWebKnowledgeRequest,
   CreateWorkspaceRequest,
   UpdateWorkspaceRequest,
-  AddWebKnowledgeRequest,
   Workspace,
 } from "@/types/workspace";
 
@@ -135,7 +135,8 @@ export function useAddMemberMutation(workspaceId: string) {
     Awaited<ReturnType<typeof membersService.addWorkspaceMember>>,
     string // email
   >({
-    mutationFn: (email) => membersService.addWorkspaceMember(workspaceId, email),
+    mutationFn: (email) =>
+      membersService.addWorkspaceMember(workspaceId, email),
     successMessage: (data) => `Added ${data.member.display_name} to workspace`,
     errorMessage: "Failed to add member",
     invalidateQueries: [["workspace", workspaceId, "members"]],
@@ -152,9 +153,7 @@ export async function fetchWorkspaceWithRetry(workspaceId: string) {
     ...RetryPresets.standard,
     operationName: "fetch workspace",
     component: "WorkspaceDetails",
-    onRetry: (error, attempt, delay) => {
-      console.log(`Retrying workspace fetch (attempt ${attempt + 1}) in ${delay}ms`);
-    },
+    onRetry: (_error, _attempt, _delay) => {},
   });
 }
 

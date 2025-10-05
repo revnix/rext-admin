@@ -10,8 +10,8 @@ import { TopicMetadata } from "@/components/topics/detail/TopicMetadata";
 import { TopicTags } from "@/components/topics/detail/TopicTags";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useTopicMetadata } from "@/hooks/use-topic-metadata";
-import { useTopicScoring } from "@/hooks/use-topic-scoring";
 import { useTopicApproveServerAction } from "@/hooks/use-topic-mutations-server-actions";
+import { useTopicScoring } from "@/hooks/use-topic-scoring";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import { logger } from "@/lib/logger";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
@@ -44,7 +44,8 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
   );
 
   // Use custom hooks for scoring and metadata
-  const { overallScore, rating, colorClasses } = useTopicScoring(generatedTopic);
+  const { overallScore, rating, colorClasses } =
+    useTopicScoring(generatedTopic);
   const metadata = useTopicMetadata(generatedTopic);
 
   // Handle topic actions

@@ -11,10 +11,6 @@
  * - services/workspace/brand-voice-service.ts for brand voice operations
  */
 
-import { WorkspaceService } from "./workspace/workspace-service";
-import { KnowledgeService } from "./workspace/knowledge-service";
-import { MembersService } from "./workspace/members-service";
-import { BrandVoiceService } from "./workspace/brand-voice-service";
 import type {
   AddFileKnowledgeRequest,
   AddTextKnowledgeRequest,
@@ -27,10 +23,13 @@ import type {
   UpdateWorkspaceRequest,
   WebKnowledge,
   WorkspaceApiConfig,
-  WorkspaceErrorCode,
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
+import { BrandVoiceService } from "./workspace/brand-voice-service";
+import { KnowledgeService } from "./workspace/knowledge-service";
+import { MembersService } from "./workspace/members-service";
+import { WorkspaceService } from "./workspace/workspace-service";
 
 // Re-export errors
 export { WorkspaceServiceError as WorkspaceApiError } from "./workspace/workspace-service";

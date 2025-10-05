@@ -7,12 +7,7 @@
 "use client";
 
 import { AlertTriangle, Info } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TemplateValidation } from "@/types/export-customization";
 
 interface ValidationDisplayProps {

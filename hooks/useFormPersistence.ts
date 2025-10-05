@@ -98,7 +98,7 @@ export interface FormPersistenceResult<T> {
 export function useFormPersistence<T extends Record<string, any>>(
   key: string,
   defaultValues: T,
-  options: FormPersistenceOptions<T> = {}
+  options: FormPersistenceOptions<T> = {},
 ): FormPersistenceResult<T> {
   const {
     debounceDelay = 500,
@@ -120,9 +120,7 @@ export function useFormPersistence<T extends Record<string, any>>(
         onDraftLoaded?.(parsed);
         return parsed;
       }
-    } catch (error) {
-      console.error("Failed to load form draft:", error);
-    }
+    } catch (_error) {}
     return defaultValues;
   });
 
@@ -142,9 +140,7 @@ export function useFormPersistence<T extends Record<string, any>>(
         localStorage.setItem(storageKey, JSON.stringify(values));
         setHasDraft(true);
         onDraftSaved?.(values);
-      } catch (error) {
-        console.error("Failed to save form draft:", error);
-      }
+      } catch (_error) {}
     }, debounceDelay);
 
     return () => clearTimeout(timer);
@@ -153,7 +149,7 @@ export function useFormPersistence<T extends Record<string, any>>(
   // Track if form has been modified
   useEffect(() => {
     const isModified = Object.keys(defaultValues).some(
-      (key) => values[key] !== defaultValues[key]
+      (key) => values[key] !== defaultValues[key],
     );
     setIsDirty(isModified);
   }, [values, defaultValues]);
@@ -177,9 +173,7 @@ export function useFormPersistence<T extends Record<string, any>>(
       setHasDraft(false);
       setValuesInternal(defaultValues);
       setIsDirty(false);
-    } catch (error) {
-      console.error("Failed to clear form draft:", error);
-    }
+    } catch (_error) {}
   }, [storageKey, defaultValues]);
 
   const reset = useCallback(() => {
@@ -214,18 +208,20 @@ export function useFormPersistence<T extends Record<string, any>>(
 export function usePersistedForm<T extends Record<string, any>>(
   key: string,
   defaultValues: T,
-  options?: FormPersistenceOptions<T>
+  options?: FormPersistenceOptions<T>,
 ) {
   const persistence = useFormPersistence(key, defaultValues, options);
 
   const getFieldProps = useCallback(
     (name: keyof T) => ({
       value: persistence.values[name],
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+      ) => {
         persistence.setValue(name, e.target.value as T[keyof T]);
       },
     }),
-    [persistence]
+    [persistence],
   );
 
   return {

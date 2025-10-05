@@ -17,7 +17,7 @@ import type { SelectOption, ValidationResult } from "@/types/shared";
 // ============================================================================
 
 export const getContentLengthOptions = (
-  contentType?: string
+  contentType?: string,
 ): SelectOption[] => {
   const options: Record<string, SelectOption[]> = {
     Thread: [
@@ -152,7 +152,7 @@ export const STEP_4_FIELDS: WizardField[] = [
 // ============================================================================
 
 export const validateStep4 = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): ValidationResult => {
   const errors: string[] = [];
 

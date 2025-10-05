@@ -60,7 +60,7 @@ export function useDebounce<T>(value: T, delay: number): T {
  */
 export function useDebouncedValue<T>(
   value: T,
-  delay: number
+  delay: number,
 ): { debouncedValue: T; isDebouncing: boolean } {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const [isDebouncing, setIsDebouncing] = useState(false);

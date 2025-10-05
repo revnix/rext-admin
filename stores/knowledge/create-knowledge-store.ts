@@ -70,14 +70,21 @@ export interface BaseActions<T extends BaseKnowledge> {
   reset: () => void;
 }
 
-export type KnowledgeStore<T extends BaseKnowledge, TState = {}, TActions = {}> =
-  BaseState<T> & BaseActions<T> & TState & TActions;
+export type KnowledgeStore<
+  T extends BaseKnowledge,
+  TState = {},
+  TActions = {},
+> = BaseState<T> & BaseActions<T> & TState & TActions;
 
 // ============================================================================
 // FACTORY CONFIGURATION
 // ============================================================================
 
-export interface StoreConfig<T extends BaseKnowledge, TState = {}, TActions = {}> {
+export interface StoreConfig<
+  _T extends BaseKnowledge,
+  TState = {},
+  TActions = {},
+> {
   storeName: string;
   defaultSortBy: string;
   defaultSortOrder?: "asc" | "desc";
@@ -86,10 +93,7 @@ export interface StoreConfig<T extends BaseKnowledge, TState = {}, TActions = {}
   customState?: TState;
 
   // Optional custom actions
-  customActions?: (
-    set: any,
-    get: any
-  ) => TActions;
+  customActions?: (set: any, get: any) => TActions;
 
   // Optional persistence config
   persistConfig?: {
@@ -104,10 +108,8 @@ export interface StoreConfig<T extends BaseKnowledge, TState = {}, TActions = {}
 export function createKnowledgeStore<
   T extends BaseKnowledge,
   TState extends Record<string, any> = {},
-  TActions extends Record<string, any> = {}
->(
-  config: StoreConfig<T, TState, TActions>
-) {
+  TActions extends Record<string, any> = {},
+>(config: StoreConfig<T, TState, TActions>) {
   const {
     storeName,
     defaultSortBy,
@@ -120,87 +122,95 @@ export function createKnowledgeStore<
   return create<KnowledgeStore<T, TState, TActions>>()(
     devtools(
       persist(
-        (set, get) => ({
-          // Base state
-          items: [],
-          selectedItems: [],
-          isLoading: false,
-          error: null,
-          searchQuery: "",
-          sortBy: defaultSortBy,
-          sortOrder: defaultSortOrder,
+        (set, get) =>
+          ({
+            // Base state
+            items: [],
+            selectedItems: [],
+            isLoading: false,
+            error: null,
+            searchQuery: "",
+            sortBy: defaultSortBy,
+            sortOrder: defaultSortOrder,
 
-          // Custom state
-          ...customState,
+            // Custom state
+            ...customState,
 
-          // Base actions
-          setItems: (items: T[]) => set({ items } as any),
+            // Base actions
+            setItems: (items: T[]) => set({ items } as any),
 
-          addItem: (item: T) =>
-            set((state: any) => ({
-              items: [item, ...state.items],
-            })),
+            addItem: (item: T) =>
+              set((state: any) => ({
+                items: [item, ...state.items],
+              })),
 
-          updateItem: (id: string, updates: Partial<T>) =>
-            set((state: any) => ({
-              items: state.items.map((item: any) =>
-                item.id === id ? { ...item, ...updates } : item
-              ),
-            })),
+            updateItem: (id: string, updates: Partial<T>) =>
+              set((state: any) => ({
+                items: state.items.map((item: any) =>
+                  item.id === id ? { ...item, ...updates } : item,
+                ),
+              })),
 
-          removeItem: (id: string) =>
-            set((state: any) => ({
-              items: state.items.filter((item: any) => item.id !== id),
-              selectedItems: state.selectedItems.filter(
-                (itemId: string) => itemId !== id
-              ),
-            })),
+            removeItem: (id: string) =>
+              set((state: any) => ({
+                items: state.items.filter((item: any) => item.id !== id),
+                selectedItems: state.selectedItems.filter(
+                  (itemId: string) => itemId !== id,
+                ),
+              })),
 
-          setLoading: (loading: boolean) => set({ isLoading: loading } as any),
-          setError: (error: string | null) => set({ error } as any),
-          setSearchQuery: (query: string) => set({ searchQuery: query } as any),
+            setLoading: (loading: boolean) =>
+              set({ isLoading: loading } as any),
+            setError: (error: string | null) => set({ error } as any),
+            setSearchQuery: (query: string) =>
+              set({ searchQuery: query } as any),
 
-          setSorting: (sortBy: string, sortOrder: "asc" | "desc") => set({ sortBy, sortOrder } as any),
+            setSorting: (sortBy: string, sortOrder: "asc" | "desc") =>
+              set({ sortBy, sortOrder } as any),
 
-          toggleSelection: (id: string) =>
-            set((state: any) => ({
-              selectedItems: state.selectedItems.includes(id)
-                ? state.selectedItems.filter((itemId: string) => itemId !== id)
-                : [...state.selectedItems, id],
-            })),
+            toggleSelection: (id: string) =>
+              set((state: any) => ({
+                selectedItems: state.selectedItems.includes(id)
+                  ? state.selectedItems.filter(
+                      (itemId: string) => itemId !== id,
+                    )
+                  : [...state.selectedItems, id],
+              })),
 
-          selectAll: () =>
-            set((state: any) => ({
-              selectedItems: state.items.map((item: any) => item.id),
-            })),
+            selectAll: () =>
+              set((state: any) => ({
+                selectedItems: state.items.map((item: any) => item.id),
+              })),
 
-          deselectAll: () => set({ selectedItems: [] } as any),
+            deselectAll: () => set({ selectedItems: [] } as any),
 
-          reset: () =>
-            set({
-              items: [],
-              selectedItems: [],
-              isLoading: false,
-              error: null,
-              searchQuery: "",
-              ...customState,
-            } as any),
+            reset: () =>
+              set({
+                items: [],
+                selectedItems: [],
+                isLoading: false,
+                error: null,
+                searchQuery: "",
+                ...customState,
+              } as any),
 
-          // Custom actions
-          ...(customActions ? customActions(set, get) : {}),
-        } as any),
+            // Custom actions
+            ...(customActions ? customActions(set, get) : {}),
+          }) as any,
         {
           name: storeName,
           storage: createJSONStorage(() => getStorage()),
-          partialize: persistConfig?.partialize || ((state: any) => ({
-            searchQuery: state.searchQuery,
-            sortBy: state.sortBy,
-            sortOrder: state.sortOrder,
-          })),
-        }
+          partialize:
+            persistConfig?.partialize ||
+            ((state: any) => ({
+              searchQuery: state.searchQuery,
+              sortBy: state.sortBy,
+              sortOrder: state.sortOrder,
+            })),
+        },
       ),
-      { name: storeName }
-    )
+      { name: storeName },
+    ),
   );
 }
 
@@ -208,11 +218,15 @@ export function createKnowledgeStore<
 // HELPER TYPES FOR STORE CREATION
 // ============================================================================
 
-export type InferStoreState<TStore> = TStore extends ReturnType<typeof create<infer S>>
+export type InferStoreState<TStore> = TStore extends ReturnType<
+  typeof create<infer S>
+>
   ? S
   : never;
 
-export type InferStoreActions<TStore> = TStore extends ReturnType<typeof create<infer S>>
+export type InferStoreActions<TStore> = TStore extends ReturnType<
+  typeof create<infer S>
+>
   ? {
       [K in keyof S]: S[K] extends (...args: any[]) => any ? K : never;
     }[keyof S]

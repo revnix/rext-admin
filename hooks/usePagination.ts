@@ -119,7 +119,7 @@ export function usePagination(options: PaginationOptions): PaginationResult {
       const validPage = Math.min(Math.max(1, page), totalPages);
       setCurrentPage(validPage);
     },
-    [totalPages]
+    [totalPages],
   );
 
   const goToFirstPage = useCallback(() => {
@@ -169,7 +169,7 @@ export function usePagination(options: PaginationOptions): PaginationResult {
     (page: number): boolean => {
       return page === validCurrentPage;
     },
-    [validCurrentPage]
+    [validCurrentPage],
   );
 
   return {

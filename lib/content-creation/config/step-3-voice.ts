@@ -18,7 +18,7 @@ import type { SelectOption, ValidationResult } from "@/types/shared";
 
 export const getToneOptions = (
   audienceType?: string[],
-  readingLevel?: string
+  readingLevel?: string,
 ): SelectOption[] => {
   const allTones = [
     { label: "Professional", value: "Professional" },
@@ -35,13 +35,13 @@ export const getToneOptions = (
   if (audienceType?.includes("Enterprises") || readingLevel === "Advanced") {
     return allTones
       .filter((tone) =>
-        ["Professional", "Technical", "Serious"].includes(tone.value)
+        ["Professional", "Technical", "Serious"].includes(tone.value),
       )
       .concat(
         allTones.filter(
           (tone) =>
-            !["Professional", "Technical", "Serious"].includes(tone.value)
-        )
+            !["Professional", "Technical", "Serious"].includes(tone.value),
+        ),
       );
   }
 
@@ -50,8 +50,8 @@ export const getToneOptions = (
       .filter((tone) => ["Casual", "Friendly", "Simple"].includes(tone.value))
       .concat(
         allTones.filter(
-          (tone) => !["Casual", "Friendly", "Simple"].includes(tone.value)
-        )
+          (tone) => !["Casual", "Friendly", "Simple"].includes(tone.value),
+        ),
       );
   }
 
@@ -113,7 +113,7 @@ export const STEP_3_FIELDS: WizardField[] = [
 // ============================================================================
 
 export const validateStep3 = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): ValidationResult => {
   const errors: string[] = [];
 

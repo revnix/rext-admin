@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import type { GeneratedTopic } from "@/types/topic-builder";
 import {
   calculateOverallScore,
   getScoreColorClasses,
   getScoreRating,
 } from "@/lib/topics/scoring-utils";
+import type { GeneratedTopic } from "@/types/topic-builder";
 
 /**
  * Hook for calculating and managing topic scoring

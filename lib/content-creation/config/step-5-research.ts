@@ -131,7 +131,7 @@ export const STEP_5_FIELDS: WizardField[] = [
 // ============================================================================
 
 export const validateStep5 = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): ValidationResult => {
   const errors: string[] = [];
 

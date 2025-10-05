@@ -15,8 +15,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  getScoreColorClasses,
+  scoreToPercentage,
+} from "@/lib/topics/scoring-utils";
 import type { GeneratedTopic } from "@/types/topic-builder";
-import { getScoreColorClasses, scoreToPercentage } from "@/lib/topics/scoring-utils";
 
 interface ScoreItem {
   label: string;
@@ -41,8 +44,7 @@ export function TopicScoreBreakdown({ scores }: TopicScoreBreakdownProps) {
       label: "Relevance",
       value: scoreToPercentage(scores.relevance || 0),
       weight: "20%",
-      tooltip:
-        "How well the topic matches your specified criteria and goals",
+      tooltip: "How well the topic matches your specified criteria and goals",
       icon: <Crosshair className="w-3.5 h-3.5" />,
     },
     {
@@ -57,16 +59,14 @@ export function TopicScoreBreakdown({ scores }: TopicScoreBreakdownProps) {
       label: "Reader Interest",
       value: scoreToPercentage(scores.reader_interest || 0),
       weight: "15%",
-      tooltip:
-        "Expected audience engagement and appeal to your target readers",
+      tooltip: "Expected audience engagement and appeal to your target readers",
       icon: <Eye className="w-3.5 h-3.5" />,
     },
     {
       label: "Trend Level",
       value: scoreToPercentage(scores.trend_level || 0),
       weight: "15%",
-      tooltip:
-        "How current and trending the topic is in your industry",
+      tooltip: "How current and trending the topic is in your industry",
       icon: <Flame className="w-3.5 h-3.5" />,
     },
     {
@@ -81,16 +81,14 @@ export function TopicScoreBreakdown({ scores }: TopicScoreBreakdownProps) {
       label: "Actionable",
       value: scoreToPercentage(scores.actionable_potential || 0),
       weight: "10%",
-      tooltip:
-        "How practical and implementable the content advice will be",
+      tooltip: "How practical and implementable the content advice will be",
       icon: <Wrench className="w-3.5 h-3.5" />,
     },
     {
       label: "Brand Alignment",
       value: scoreToPercentage(scores.brand_alignment || 0),
       weight: "10%",
-      tooltip:
-        "How well the topic fits with your brand values and messaging",
+      tooltip: "How well the topic fits with your brand values and messaging",
       icon: <Building className="w-3.5 h-3.5" />,
     },
     {
@@ -119,7 +117,9 @@ export function TopicScoreBreakdown({ scores }: TopicScoreBreakdownProps) {
               <TooltipTrigger asChild>
                 <div className="flex items-center justify-between py-1 cursor-help hover:bg-muted/10 rounded-md px-1 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded-md shadow-sm ${colors.background} ${colors.text}`}>
+                    <div
+                      className={`p-1.5 rounded-md shadow-sm ${colors.background} ${colors.text}`}
+                    >
                       {score.icon}
                     </div>
                     <span className="text-sm font-medium text-foreground">

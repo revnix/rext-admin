@@ -58,7 +58,7 @@ export const getAudienceTypeOptions = (industry?: string): SelectOption[] => {
 
   if (industry && industryFilters[industry]) {
     return baseOptions.filter((option) =>
-      industryFilters[industry].includes(option.value)
+      industryFilters[industry].includes(option.value),
     );
   }
 
@@ -158,7 +158,7 @@ export const STEP_2_FIELDS: WizardField[] = [
 // ============================================================================
 
 export const validateStep2 = (
-  formData: PartialContentCreationFormData
+  formData: PartialContentCreationFormData,
 ): ValidationResult => {
   const errors: string[] = [];
 

@@ -21,11 +21,19 @@
  * ```
  */
 
-import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
+import {
+  type QueryKey,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
-export interface UseMutationWithToastOptions<TData, TVariables, TError = Error> {
+export interface UseMutationWithToastOptions<
+  TData,
+  TVariables,
+  TError = Error,
+> {
   /**
    * The mutation function to execute
    */
@@ -86,7 +94,11 @@ const log = logger.forComponent("useMutationWithToast");
 /**
  * Hook for mutations with automatic toast notifications and query invalidation
  */
-export function useMutationWithToast<TData = unknown, TVariables = void, TError = Error>({
+export function useMutationWithToast<
+  TData = unknown,
+  TVariables = void,
+  TError = Error,
+>({
   mutationFn,
   successMessage,
   errorMessage,
@@ -111,7 +123,10 @@ export function useMutationWithToast<TData = unknown, TVariables = void, TError 
 
       log.debug("Mutation started", {
         mutationKey,
-        variables: typeof variables === "object" ? Object.keys(variables as object) : undefined,
+        variables:
+          typeof variables === "object"
+            ? Object.keys(variables as object)
+            : undefined,
       });
     },
 
@@ -124,7 +139,9 @@ export function useMutationWithToast<TData = unknown, TVariables = void, TError 
       // Show success toast
       if (successMessage) {
         const message =
-          typeof successMessage === "function" ? successMessage(data) : successMessage;
+          typeof successMessage === "function"
+            ? successMessage(data)
+            : successMessage;
         toast.success(message);
       }
 
@@ -201,6 +218,8 @@ export function useMutationWithToast<TData = unknown, TVariables = void, TError 
 /**
  * Type-safe mutation result
  */
-export type MutationWithToastResult<TData, TVariables, TError = Error> = ReturnType<
-  typeof useMutationWithToast<TData, TVariables, TError>
->;
+export type MutationWithToastResult<
+  TData,
+  TVariables,
+  TError = Error,
+> = ReturnType<typeof useMutationWithToast<TData, TVariables, TError>>;

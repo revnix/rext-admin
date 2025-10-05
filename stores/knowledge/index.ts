@@ -5,48 +5,45 @@
  * generic factory pattern implementation.
  */
 
-// Factory
-export { createKnowledgeStore } from "./create-knowledge-store";
+// Re-export remaining stores from main knowledge-store.ts for compatibility
+export {
+  useCurrentKnowledgeType,
+  useCurrentWorkspaceId,
+  useGlobalKnowledgeSearchStore,
+  useKnowledgeFilterStore,
+  useUnifiedKnowledgeStore,
+} from "../knowledge-store";
 export type {
+  BaseActions,
   BaseKnowledge,
   BaseState,
-  BaseActions,
   KnowledgeStore,
   StoreConfig,
 } from "./create-knowledge-store";
-
-// Web Knowledge Store
-export {
-  useWebKnowledgeStore,
-  useWebKnowledgeItems,
-  useWebKnowledgeSelected,
-  useWebKnowledgeLoading,
-  useWebKnowledgeAdding,
-} from "./web-knowledge-store";
-
+// Factory
+export { createKnowledgeStore } from "./create-knowledge-store";
+export type { FileUploadProgress } from "./file-knowledge-store";
 // File Knowledge Store
 export {
-  useFileKnowledgeStore,
   useFileKnowledgeItems,
   useFileKnowledgeSelected,
+  useFileKnowledgeStore,
   useFileKnowledgeUploading,
   useFileUploadProgress,
 } from "./file-knowledge-store";
-export type { FileUploadProgress } from "./file-knowledge-store";
 
 // Text Knowledge Store
 export {
-  useTextKnowledgeStore,
+  useTextKnowledgeEditing,
   useTextKnowledgeItems,
   useTextKnowledgeSelected,
-  useTextKnowledgeEditing,
+  useTextKnowledgeStore,
 } from "./text-knowledge-store";
-
-// Re-export remaining stores from main knowledge-store.ts for compatibility
+// Web Knowledge Store
 export {
-  useUnifiedKnowledgeStore,
-  useGlobalKnowledgeSearchStore,
-  useKnowledgeFilterStore,
-  useCurrentKnowledgeType,
-  useCurrentWorkspaceId,
-} from "../knowledge-store";
+  useWebKnowledgeAdding,
+  useWebKnowledgeItems,
+  useWebKnowledgeLoading,
+  useWebKnowledgeSelected,
+  useWebKnowledgeStore,
+} from "./web-knowledge-store";

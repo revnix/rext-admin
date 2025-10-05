@@ -23,7 +23,6 @@ import {
   getContentTypeColorClass,
   getDescriptionPreview,
   getEffortColorClass,
-  getPriorityColorClass,
   getScoreColorClass,
 } from "@/lib/topic-display-utils";
 import type { TopicData } from "@/types/data-table";

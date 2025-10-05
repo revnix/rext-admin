@@ -22,7 +22,6 @@
 
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import { sanitizeErrorForLogging } from "@/lib/error-utils";
 
 export interface ErrorHandlerContext<T> {
   /**
@@ -107,8 +106,7 @@ export async function withErrorHandler<T>(
     // Show toast notification
     if (showToast) {
       const message =
-        toastMessage ||
-        `Failed to ${operationName}: ${standardError.message}`;
+        toastMessage || `Failed to ${operationName}: ${standardError.message}`;
       toast.error(message);
     }
 
@@ -182,8 +180,7 @@ export function withErrorHandlerSync<T>(
 
     if (showToast) {
       const message =
-        toastMessage ||
-        `Failed to ${operationName}: ${standardError.message}`;
+        toastMessage || `Failed to ${operationName}: ${standardError.message}`;
       toast.error(message);
     }
 

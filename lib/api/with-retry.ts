@@ -21,7 +21,6 @@
  */
 
 import { logger } from "@/lib/logger";
-import { sanitizeErrorForLogging } from "@/lib/error-utils";
 
 export interface RetryOptions {
   /**
@@ -68,7 +67,7 @@ const log = logger.forComponent("RetryUtility");
 /**
  * Default retry logic - retry on network errors and 5xx status codes
  */
-function defaultShouldRetry(error: Error, attempt: number): boolean {
+function defaultShouldRetry(error: Error, _attempt: number): boolean {
   // Don't retry if max attempts reached (checked separately)
   // Retry on network errors
   if (
@@ -97,7 +96,7 @@ function defaultShouldRetry(error: Error, attempt: number): boolean {
 function defaultBackoff(attempt: number, baseDelay: number): number {
   // Exponential backoff: baseDelay * (2 ^ attempt)
   // Add jitter to prevent thundering herd
-  const exponentialDelay = baseDelay * Math.pow(2, attempt);
+  const exponentialDelay = baseDelay * 2 ** attempt;
   const jitter = Math.random() * 1000; // Random 0-1000ms jitter
   return exponentialDelay + jitter;
 }
@@ -124,10 +123,13 @@ export async function withRetry<T>(
 
   while (attempt <= maxRetries) {
     try {
-      log.debug(`Attempting ${operationName} (attempt ${attempt + 1}/${maxRetries + 1})`, {
-        component,
-        attempt,
-      });
+      log.debug(
+        `Attempting ${operationName} (attempt ${attempt + 1}/${maxRetries + 1})`,
+        {
+          component,
+          attempt,
+        },
+      );
 
       const result = await operation();
 
@@ -144,11 +146,14 @@ export async function withRetry<T>(
         error instanceof Error ? error : new Error(String(error));
       lastError = standardError;
 
-      log.warn(`${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1})`, {
-        component,
-        attempt,
-        error: standardError.message,
-      });
+      log.warn(
+        `${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1})`,
+        {
+          component,
+          attempt,
+          error: standardError.message,
+        },
+      );
 
       // Check if we should retry
       const isLastAttempt = attempt === maxRetries;
@@ -156,11 +161,14 @@ export async function withRetry<T>(
 
       if (!canRetry) {
         if (isLastAttempt) {
-          log.error(`${operationName} failed after ${maxRetries + 1} attempts`, {
-            component,
-            totalAttempts: maxRetries + 1,
-            error: standardError.message,
-          });
+          log.error(
+            `${operationName} failed after ${maxRetries + 1} attempts`,
+            {
+              component,
+              totalAttempts: maxRetries + 1,
+              error: standardError.message,
+            },
+          );
         } else {
           log.error(`${operationName} failed (not retrying)`, {
             component,
@@ -200,7 +208,10 @@ export async function withRetry<T>(
   }
 
   // This should never be reached, but TypeScript requires it
-  throw lastError || new Error(`${operationName} failed after ${maxRetries + 1} attempts`);
+  throw (
+    lastError ||
+    new Error(`${operationName} failed after ${maxRetries + 1} attempts`)
+  );
 }
 
 /**

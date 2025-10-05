@@ -25,10 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type {
-  CsvColumn,
-  CsvCustomization,
-} from "@/types/export-customization";
+import type { CsvColumn, CsvCustomization } from "@/types/export-customization";
 
 interface CsvExportOptionsProps {
   customization: CsvCustomization;

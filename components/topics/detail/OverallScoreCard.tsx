@@ -37,7 +37,9 @@ export function OverallScoreCard({
           variant="spacious"
           className="mb-0"
         />
-        <div className={`px-2 py-1 rounded-full text-xs font-medium ${colorClasses.badge}`}>
+        <div
+          className={`px-2 py-1 rounded-full text-xs font-medium ${colorClasses.badge}`}
+        >
           {rating}
         </div>
       </div>
