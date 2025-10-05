@@ -4,32 +4,24 @@ import {
   Calendar,
   Edit2,
   FileText,
-  MoreHorizontal,
   Tag,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useDeleteHandler } from "@/hooks/useDeleteHandler";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { numberFormat } from "@/lib/formatters/number-formatters";
 import { textKnowledgeService } from "@/services/knowledge-api";
 import { useTextKnowledgeStore } from "@/stores/knowledge-store";
 import type { TextKnowledge } from "@/types/workspace";
+import {
+  BaseKnowledgeCard,
+  BaseKnowledgeListItem,
+  type KnowledgeCardConfig,
+  truncateContent,
+} from "./shared";
 
 interface TextKnowledgeCardProps {
   item: TextKnowledge;
@@ -45,150 +37,109 @@ interface TextKnowledgeListItemProps {
   isSelected?: boolean;
 }
 
-// Helper function to truncate content for preview
-const truncateContent = (content: string, maxLength: number = 150) => {
-  if (content.length <= maxLength) return content;
-  return `${content.slice(0, maxLength).trim()}...`;
-};
-
-// Helper function to format date
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
-
 export function TextKnowledgeCard({
   item,
   onSelect,
   onEdit,
   isSelected = false,
 }: TextKnowledgeCardProps) {
-  const [_isDeleting, setIsDeleting] = useState(false);
   const removeItem = useTextKnowledgeStore((state) => state.removeItem);
 
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await textKnowledgeService.delete(item.workspace_id, item.id);
+  // Use the delete handler hook
+  const { handleDelete: deleteTextKnowledge } = useDeleteHandler({
+    deleteFunction: (id) => textKnowledgeService.delete(item.workspace_id, id),
+    resourceName: "text note",
+    successMessage: `Text note "${item.title}" deleted successfully`,
+    onSuccess: () => {
       removeItem(item.id);
-      toast.success(`Text note "${item.title}" deleted successfully`);
-    } catch (error) {
-      toast.error(
-        `Failed to delete text note: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    },
+  });
 
-  return (
-    <Card
-      className={`h-full transition-all hover:shadow-md ${
-        isSelected ? "ring-2 ring-primary" : ""
-      } ${onSelect ? "cursor-pointer" : ""}`}
-      onClick={() => onSelect?.(item.id)}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-base font-medium leading-snug line-clamp-2">
-              {item.title}
-            </CardTitle>
-            <CardDescription className="text-sm mt-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {formatDate(item.created_at)}
-                {item.updated_at && item.updated_at !== item.created_at && (
-                  <span className="text-xs">
-                    • Updated {formatDate(item.updated_at)}
-                  </span>
-                )}
-              </div>
-            </CardDescription>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit?.(item);
-                }}
-              >
-                <Edit2 className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <ConfirmationDialog
-                title="Delete Text Note"
-                description={`Are you sure you want to delete "${item.title}"? This action cannot be undone.`}
-                confirmText="Delete"
-                variant="destructive"
-                onConfirm={handleDelete}
-              >
-                <DropdownMenuItem
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-destructive focus:text-destructive"
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </ConfirmationDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          {/* Content Preview */}
+  const cardConfig: KnowledgeCardConfig<TextKnowledge> = {
+    primaryIcon: FileText,
+    getTitle: (item) => item.title,
+    getDescription: (item) => (
+      <div className="flex items-center gap-1">
+        <Calendar className="h-3 w-3" />
+        {dateFormat.short(item.created_at)}
+        {item.updated_at && item.updated_at !== item.created_at && (
+          <span className="text-xs">• Updated {dateFormat.short(item.updated_at)}</span>
+        )}
+      </div>
+    ),
+    getStatusConfig: () => null, // Text knowledge doesn't have status
+    getActions: (item) => [
+      {
+        icon: Edit2,
+        label: "Edit",
+        onClick: (e) => {
+          e.stopPropagation();
+          onEdit?.(item);
+        },
+      },
+      {
+        icon: Trash2,
+        label: "Delete",
+        variant: "destructive" as const,
+        onClick: () => {},
+        confirmationConfig: {
+          title: "Delete Text Note",
+          description: `Are you sure you want to delete "${item.title}"? This action cannot be undone.`,
+          confirmText: "Delete",
+        },
+      },
+    ],
+    getMetadataSections: (item) => [
+      {
+        id: "content-preview",
+        content: (
           <div className="text-sm text-muted-foreground line-clamp-3">
             {truncateContent(item.content)}
           </div>
-
-          {/* Tags */}
-          {item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {item.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  <Tag className="mr-1 h-2 w-2" />
-                  {tag}
-                </Badge>
-              ))}
-              {item.tags.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{item.tags.length - 3} more
-                </Badge>
-              )}
-            </div>
-          )}
-
-          {/* Statistics */}
-          <div className="text-xs text-muted-foreground space-y-1">
-            {item.word_count && (
-              <div>{item.word_count.toLocaleString()} words</div>
-            )}
-            {item.char_count && (
-              <div>{item.char_count.toLocaleString()} characters</div>
+        ),
+      },
+      {
+        id: "tags",
+        condition: !!(item.tags && item.tags.length > 0),
+        content: (
+          <div className="flex flex-wrap gap-1">
+            {item.tags?.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                <Tag className="mr-1 h-2 w-2" />
+                {tag}
+              </Badge>
+            ))}
+            {item.tags && item.tags.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{item.tags.length - 3} more
+              </Badge>
             )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        ),
+      },
+      {
+        id: "statistics",
+        condition: !!(item.word_count || item.char_count),
+        content: (
+          <div className="text-xs text-muted-foreground space-y-1">
+            {item.word_count && <div>{numberFormat.integer(item.word_count)} words</div>}
+            {item.char_count && <div>{numberFormat.integer(item.char_count)} characters</div>}
+          </div>
+        ),
+      },
+    ],
+    onDelete: async (item) => {
+      await deleteTextKnowledge(item.id);
+    },
+  };
+
+  return (
+    <BaseKnowledgeCard
+      item={item}
+      config={cardConfig}
+      onSelect={onSelect}
+      isSelected={isSelected}
+    />
   );
 }
 
@@ -198,61 +149,84 @@ export function TextKnowledgeListItem({
   onEdit,
   isSelected = false,
 }: TextKnowledgeListItemProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
   const removeItem = useTextKnowledgeStore((state) => state.removeItem);
 
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await textKnowledgeService.delete(item.workspace_id, item.id);
+  // Use the delete handler hook for list view
+  const { handleDelete: deleteTextKnowledge } = useDeleteHandler({
+    deleteFunction: (id) => textKnowledgeService.delete(item.workspace_id, id),
+    resourceName: "text note",
+    successMessage: `Text note "${item.title}" deleted successfully`,
+    onSuccess: () => {
       removeItem(item.id);
-      toast.success(`Text note "${item.title}" deleted successfully`);
-    } catch (error) {
-      toast.error(
-        `Failed to delete text note: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    },
+  });
 
-  return (
-    <button
-      type="button"
-      className={`flex items-start gap-4 p-4 border rounded-lg transition-all hover:shadow-sm ${
-        isSelected ? "ring-2 ring-primary" : ""
-      } ${onSelect ? "cursor-pointer" : ""} w-full text-left`}
-      onClick={() => onSelect?.(item.id)}
-      disabled={!onSelect}
-    >
-      {/* Icon */}
-      <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0 mt-1" />
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-medium truncate text-base">{item.title}</h4>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-              <span>{formatDate(item.created_at)}</span>
-              {item.word_count && (
-                <span>• {item.word_count.toLocaleString()} words</span>
-              )}
-              {item.updated_at && item.updated_at !== item.created_at && (
-                <span>• Updated {formatDate(item.updated_at)}</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Content Preview */}
-        <div className="text-sm text-muted-foreground mb-2 line-clamp-2">
+  const listConfig = {
+    primaryIcon: FileText,
+    getTitle: (item: TextKnowledge) => item.title,
+    getDescription: (item: TextKnowledge) => (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>{dateFormat.short(item.created_at)}</span>
+        {item.word_count && <span>• {numberFormat.integer(item.word_count)} words</span>}
+        {item.updated_at && item.updated_at !== item.created_at && (
+          <span>• Updated {dateFormat.short(item.updated_at)}</span>
+        )}
+      </div>
+    ),
+    getStatusConfig: () => null,
+    getActions: (item: TextKnowledge) => [
+      {
+        icon: Edit2,
+        label: "Edit",
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onEdit?.(item);
+        },
+      },
+      {
+        icon: Trash2,
+        label: "Delete",
+        variant: "destructive" as const,
+        onClick: () => {},
+        confirmationConfig: {
+          title: "Delete Text Note",
+          description: `Are you sure you want to delete "${item.title}"? This action cannot be undone.`,
+          confirmText: "Delete",
+        },
+      },
+    ],
+    getInlineActions: (item: TextKnowledge) => [
+      {
+        icon: Edit2,
+        label: "Edit",
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onEdit?.(item);
+        },
+      },
+      {
+        icon: Trash2,
+        label: "Delete",
+        variant: "destructive" as const,
+        onClick: () => {},
+        confirmationConfig: {
+          title: "Delete Text Note",
+          description: `Are you sure you want to delete "${item.title}"? This action cannot be undone.`,
+          confirmText: "Delete",
+        },
+      },
+    ],
+    getMetadataSections: () => [],
+    onDelete: async (item: TextKnowledge) => {
+      await deleteTextKnowledge(item.id);
+    },
+    getCompactMetadata: (item: TextKnowledge) => (
+      <div className="space-y-2">
+        <div className="text-sm text-muted-foreground line-clamp-2">
           {truncateContent(item.content, 200)}
         </div>
-
-        {/* Tags */}
         {item.tags && item.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
+          <div className="flex flex-wrap gap-1">
             {item.tags.slice(0, 5).map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs">
                 <Tag className="mr-1 h-2 w-2" />
@@ -267,49 +241,15 @@ export function TextKnowledgeListItem({
           </div>
         )}
       </div>
+    ),
+  };
 
-      {/* Actions */}
-      <div
-        className="flex items-center gap-1"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-          }
-        }}
-        role="toolbar"
-        aria-label="Text knowledge actions"
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit?.(item);
-          }}
-          className="h-8"
-        >
-          <Edit2 className="h-4 w-4" />
-          <span className="sr-only">Edit</span>
-        </Button>
-        <ConfirmationDialog
-          title="Delete Text Note"
-          description={`Are you sure you want to delete "${item.title}"? This action cannot be undone.`}
-          confirmText="Delete"
-          variant="destructive"
-          onConfirm={handleDelete}
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={isDeleting}
-            className="h-8 text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete</span>
-          </Button>
-        </ConfirmationDialog>
-      </div>
-    </button>
+  return (
+    <BaseKnowledgeListItem
+      item={item}
+      config={listConfig}
+      onSelect={onSelect}
+      isSelected={isSelected}
+    />
   );
 }

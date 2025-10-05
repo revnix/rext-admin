@@ -37,9 +37,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDeleteHandler } from "@/hooks/useDeleteHandler";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useTopicApproveServerAction } from "@/hooks/use-topic-mutations-server-actions";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import { logger } from "@/lib/logger";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { MetadataItem, SidebarConfig } from "@/types/detail-page";
@@ -162,14 +164,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
         {
           label: "Generated On",
           value: generatedTopic.created_at
-            ? new Date(generatedTopic.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
+            ? dateFormat.shortWithTime(generatedTopic.created_at)
             : "Not available",
           icon: <Sparkles className="h-4 w-4" />,
         },
@@ -178,17 +173,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
           value:
             generatedTopic.updated_at &&
             generatedTopic.updated_at !== generatedTopic.created_at
-              ? new Date(generatedTopic.updated_at).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  },
-                )
+              ? dateFormat.shortWithTime(generatedTopic.updated_at)
               : "No updates",
           icon: <Clock className="h-4 w-4" />,
         },
@@ -196,17 +181,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
           ? [
               {
                 label: "Approved On",
-                value: new Date(generatedTopic.approved_at).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  },
-                ),
+                value: dateFormat.shortWithTime(generatedTopic.approved_at),
                 icon: <CheckCircle className="h-4 w-4" />,
               },
             ]

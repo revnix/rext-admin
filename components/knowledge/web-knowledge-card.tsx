@@ -8,31 +8,11 @@ import {
   ExternalLink,
   Globe,
   Loader2,
-  MoreHorizontal,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,18 +23,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDeleteHandler } from "@/hooks/useDeleteHandler";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { numberFormat } from "@/lib/formatters/number-formatters";
 import { log } from "@/lib/logger";
 import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 import type { WebKnowledge } from "@/types/workspace";
+import {
+  BaseKnowledgeCard,
+  BaseKnowledgeListItem,
+  type KnowledgeCardConfig,
+  type StatusConfig,
+} from "./shared";
 
 interface WebKnowledgeCardProps {
   item: WebKnowledge;
@@ -63,37 +48,37 @@ interface WebKnowledgeCardProps {
 }
 
 // Status configuration for display
-const statusConfig = {
+const statusConfig: Record<WebKnowledge["status"], StatusConfig> = {
   pending: {
     icon: Clock,
     label: "Pending",
-    variant: "secondary" as const,
+    variant: "secondary",
     color: "text-slate-500",
   },
   scraping: {
     icon: Loader2,
     label: "Scraping",
-    variant: "default" as const,
+    variant: "default",
     color: "text-blue-500",
     animate: true,
   },
   processing: {
     icon: Loader2,
     label: "Processing",
-    variant: "default" as const,
+    variant: "default",
     color: "text-blue-500",
     animate: true,
   },
   completed: {
     icon: CheckCircle,
     label: "Completed",
-    variant: "default" as const,
+    variant: "default",
     color: "text-green-500",
   },
   failed: {
     icon: AlertCircle,
     label: "Failed",
-    variant: "destructive" as const,
+    variant: "destructive",
     color: "text-red-500",
   },
 };
@@ -103,29 +88,20 @@ export function WebKnowledgeCard({
   onSelect,
   isSelected = false,
 }: WebKnowledgeCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title || "");
   const [isUpdating, setIsUpdating] = useState(false);
   const removeItem = useWebKnowledgeStore((state) => state.removeItem);
   const updateItem = useWebKnowledgeStore((state) => state.updateItem);
 
-  const status = statusConfig[item.status];
-  const StatusIcon = status.icon;
-
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await webKnowledgeService.delete(item.workspace_id, item.id);
+  // Use the delete handler hook
+  const { handleDelete: deleteWebKnowledge, isDeleting } = useDeleteHandler({
+    deleteFunction: (id) => webKnowledgeService.delete(item.workspace_id, id),
+    resourceName: "web knowledge",
+    onSuccess: () => {
       removeItem(item.id);
-      toast.success("Web knowledge deleted successfully");
-    } catch (error) {
-      log.error("Failed to delete web knowledge:", error);
-      toast.error("Failed to delete web knowledge");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    },
+  });
 
   const handleUpdate = async () => {
     if (!editTitle.trim()) {
@@ -146,210 +122,172 @@ export function WebKnowledgeCard({
     }
   };
 
-  const handleCardClick = () => {
-    if (onSelect) {
-      onSelect(item.id);
-    }
+  const cardConfig: KnowledgeCardConfig<WebKnowledge> = {
+    primaryIcon: Globe,
+    getTitle: (item) => item.title || "Untitled",
+    getDescription: (item) => (
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:underline inline-flex items-center gap-1 text-xs line-clamp-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Globe className="h-3 w-3" />
+        {item.url}
+        <ExternalLink className="h-3 w-3" />
+      </a>
+    ),
+    getStatusConfig: (item) => statusConfig[item.status],
+    getActions: (item) => [
+      {
+        icon: ExternalLink,
+        label: "Open URL",
+        onClick: (e) => {
+          e.stopPropagation();
+          window.open(item.url, "_blank");
+        },
+      },
+      {
+        icon: Edit2,
+        label: "Edit Title",
+        onClick: () => {},
+        // This is a special case - we handle it with a custom Dialog component
+      },
+      {
+        icon: Trash2,
+        label: "Delete",
+        variant: "destructive" as const,
+        onClick: () => {},
+        confirmationConfig: {
+          title: "Delete Web Knowledge",
+          description:
+            "Are you sure you want to delete this web knowledge? This will remove the URL and all associated content from your workspace. This action cannot be undone.",
+          confirmText: "Delete",
+        },
+      },
+    ],
+    getMetadataSections: (item) => [
+      {
+        id: "statistics",
+        condition: item.status === "completed" && !!(item.char_count || item.word_count),
+        content: (
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            {item.word_count && <span>{numberFormat.compact(item.word_count)} words</span>}
+            {item.char_count && <span>{numberFormat.compact(item.char_count)} characters</span>}
+          </div>
+        ),
+      },
+      {
+        id: "error",
+        condition: item.status === "failed",
+        content: (
+          <div className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+            Failed to scrape content from this URL. Please check if the URL is accessible and try again.
+          </div>
+        ),
+      },
+      {
+        id: "processing",
+        condition: item.status === "scraping" || item.status === "processing",
+        content: (
+          <div className="text-xs text-muted-foreground">
+            {item.status === "scraping"
+              ? "Extracting content from the webpage..."
+              : "Processing content for vector storage..."}
+          </div>
+        ),
+      },
+      {
+        id: "timestamps",
+        content: (
+          <div className="text-xs text-muted-foreground">
+            Added {dateFormat.short(item.created_at)}
+            {item.updated_at && <span> • Updated {dateFormat.short(item.updated_at)}</span>}
+          </div>
+        ),
+      },
+    ],
+    onDelete: async (item) => {
+      await deleteWebKnowledge(item.id);
+    },
+    className: "cursor-pointer",
   };
 
-  const formatCount = (count?: number) => {
-    if (!count) return "0";
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}k`;
-    }
-    return count.toString();
+  // We need to customize the actions to include the Edit dialog
+  // Since the base component doesn't support custom action rendering,
+  // we'll need to render the card with modified actions
+  const modifiedConfig = {
+    ...cardConfig,
+    getActions: (item: WebKnowledge) => {
+      const baseActions = cardConfig.getActions(item);
+      return baseActions.map((action) => {
+        if (action.label === "Edit Title") {
+          return {
+            ...action,
+            onClick: (e: React.MouseEvent) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            },
+          };
+        }
+        return action;
+      });
+    },
   };
 
   return (
-    <Card
-      className={`cursor-pointer transition-all hover:shadow-md ${
-        isSelected ? "ring-2 ring-primary" : ""
-      }`}
-      onClick={handleCardClick}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <StatusIcon
-                className={`h-4 w-4 ${status.color} ${
-                  "animate" in status && status.animate ? "animate-spin" : ""
-                }`}
+    <>
+      <BaseKnowledgeCard
+        item={item}
+        config={modifiedConfig}
+        onSelect={onSelect}
+        isSelected={isSelected}
+      />
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Edit Web Knowledge</DialogTitle>
+            <DialogDescription>
+              Update the title for this web knowledge item.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Enter title"
               />
-              <Badge variant={status.variant} className="text-xs">
-                {status.label}
-              </Badge>
             </div>
-            <CardTitle className="text-sm font-medium truncate">
-              {item.title || "Untitled"}
-            </CardTitle>
-            <CardDescription className="text-xs line-clamp-1">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline inline-flex items-center gap-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Globe className="h-3 w-3" />
-                {item.url}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </CardDescription>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(item.url, "_blank");
-                }}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open URL
-              </DropdownMenuItem>
-              <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit Title
-                  </DropdownMenuItem>
-                </DialogTrigger>
-                <DialogContent onClick={(e) => e.stopPropagation()}>
-                  <DialogHeader>
-                    <DialogTitle>Edit Web Knowledge</DialogTitle>
-                    <DialogDescription>
-                      Update the title for this web knowledge item.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Title</Label>
-                      <Input
-                        id="title"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        placeholder="Enter title"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditTitle(item.title || "");
-                        setIsEditing(false);
-                      }}
-                      disabled={isUpdating}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleUpdate} disabled={isUpdating}>
-                      {isUpdating ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <DropdownMenuSeparator />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Web Knowledge</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this web knowledge? This
-                      will remove the URL and all associated content from your
-                      workspace. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isDeleting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Deleting...
-                        </>
-                      ) : (
-                        "Delete"
-                      )}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {/* Content Statistics */}
-          {item.status === "completed" &&
-            (item.char_count || item.word_count) && (
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                {item.word_count && (
-                  <span>{formatCount(item.word_count)} words</span>
-                )}
-                {item.char_count && (
-                  <span>{formatCount(item.char_count)} characters</span>
-                )}
-              </div>
-            )}
-
-          {/* Error Message */}
-          {item.status === "failed" && (
-            <div className="text-xs text-destructive bg-destructive/10 p-2 rounded">
-              Failed to scrape content from this URL. Please check if the URL is
-              accessible and try again.
-            </div>
-          )}
-
-          {/* Processing Information */}
-          {(item.status === "scraping" || item.status === "processing") && (
-            <div className="text-xs text-muted-foreground">
-              {item.status === "scraping"
-                ? "Extracting content from the webpage..."
-                : "Processing content for vector storage..."}
-            </div>
-          )}
-
-          {/* Timestamps */}
-          <div className="text-xs text-muted-foreground">
-            Added {new Date(item.created_at).toLocaleDateString()}
-            {item.updated_at && (
-              <span>
-                {" "}
-                • Updated {new Date(item.updated_at).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditTitle(item.title || "");
+                setIsEditing(false);
+              }}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -359,146 +297,93 @@ export function WebKnowledgeListItem({
   onSelect,
   isSelected = false,
 }: WebKnowledgeCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
   const removeItem = useWebKnowledgeStore((state) => state.removeItem);
 
-  const status = statusConfig[item.status];
-  const StatusIcon = status.icon;
-
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await webKnowledgeService.delete(item.workspace_id, item.id);
+  // Use the delete handler hook for list view
+  const { handleDelete: deleteWebKnowledge } = useDeleteHandler({
+    deleteFunction: (id) => webKnowledgeService.delete(item.workspace_id, id),
+    resourceName: "web knowledge",
+    onSuccess: () => {
       removeItem(item.id);
-      toast.success("Web knowledge deleted successfully");
-    } catch (error) {
-      log.error("Failed to delete web knowledge:", error);
-      toast.error("Failed to delete web knowledge");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    },
+  });
 
-  const handleItemClick = () => {
-    if (onSelect) {
-      onSelect(item.id);
-    }
-  };
-
-  const formatCount = (count?: number) => {
-    if (!count) return "0";
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}k`;
-    }
-    return count.toString();
+  const listConfig = {
+    ...({
+      primaryIcon: Globe,
+      getTitle: (item: WebKnowledge) => item.title || "Untitled",
+      getDescription: (item: WebKnowledge) => (
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline inline-flex items-center gap-1 truncate max-w-[300px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Globe className="h-3 w-3" />
+          {item.url}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      ),
+      getStatusConfig: (item: WebKnowledge) => statusConfig[item.status],
+      getActions: (item: WebKnowledge) => [
+        {
+          icon: ExternalLink,
+          label: "Open URL",
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            window.open(item.url, "_blank");
+          },
+        },
+        {
+          icon: Trash2,
+          label: "Delete",
+          variant: "destructive" as const,
+          onClick: () => {},
+          confirmationConfig: {
+            title: "Delete Web Knowledge",
+            description:
+              "Are you sure you want to delete this web knowledge? This will remove the URL and all associated content from your workspace. This action cannot be undone.",
+            confirmText: "Delete",
+          },
+        },
+      ],
+      getMetadataSections: () => [],
+      onDelete: async (item: WebKnowledge) => {
+        await deleteWebKnowledge(item.id);
+      },
+      className: "cursor-pointer hover:bg-muted/50",
+    }),
+    getCompactMetadata: (item: WebKnowledge) => (
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline inline-flex items-center gap-1 truncate max-w-[300px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Globe className="h-3 w-3" />
+          {item.url}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+        {item.status === "completed" && (
+          <>
+            {item.word_count && <span>{numberFormat.compact(item.word_count)} words</span>}
+            {item.char_count && <span>{numberFormat.compact(item.char_count)} chars</span>}
+          </>
+        )}
+        <span>Added {dateFormat.short(item.created_at)}</span>
+      </div>
+    ),
   };
 
   return (
-    <button
-      type="button"
-      className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors text-left w-full ${
-        isSelected ? "ring-2 ring-primary" : ""
-      }`}
-      onClick={handleItemClick}
-    >
-      <div className="flex items-center gap-2">
-        <StatusIcon
-          className={`h-4 w-4 ${status.color} ${
-            "animate" in status && status.animate ? "animate-spin" : ""
-          }`}
-        />
-        <Badge variant={status.variant} className="text-xs">
-          {status.label}
-        </Badge>
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-medium truncate">{item.title || "Untitled"}</h3>
-        </div>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline inline-flex items-center gap-1 truncate max-w-[300px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Globe className="h-3 w-3" />
-            {item.url}
-            <ExternalLink className="h-3 w-3" />
-          </a>
-          {item.status === "completed" && (
-            <>
-              {item.word_count && (
-                <span>{formatCount(item.word_count)} words</span>
-              )}
-              {item.char_count && (
-                <span>{formatCount(item.char_count)} chars</span>
-              )}
-            </>
-          )}
-          <span>Added {new Date(item.created_at).toLocaleDateString()}</span>
-        </div>
-      </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(item.url, "_blank");
-            }}
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open URL
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Web Knowledge</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this web knowledge? This will
-                  remove the URL and all associated content from your workspace.
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </button>
+    <BaseKnowledgeListItem
+      item={item}
+      config={listConfig}
+      onSelect={onSelect}
+      isSelected={isSelected}
+    />
   );
 }
