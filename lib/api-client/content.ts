@@ -26,12 +26,12 @@ export function createContentNamespace(client: ApiClient) {
       },
     ) => {
       const params = new URLSearchParams();
+      params.append("workspace_id", workspaceId);
       if (options?.status) params.append("status", options.status);
       if (options?.limit) params.append("limit", options.limit.toString());
       if (options?.offset) params.append("offset", options.offset.toString());
 
-      const queryString = params.toString();
-      const endpoint = `/api/v1/content/${workspaceId}${queryString ? `?${queryString}` : ""}`;
+      const endpoint = `/api/v1/content/?${params.toString()}`;
 
       return client.request<ContentListResponse>(endpoint, {
         method: "GET",
@@ -43,7 +43,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     get: async (workspaceId: string, contentId: string) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/${workspaceId}/${contentId}`,
+        `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
         },
@@ -54,14 +54,17 @@ export function createContentNamespace(client: ApiClient) {
      * Create new content
      */
     create: async (workspaceId: string, data: CreateContentRequest) => {
-      return client.request<ContentResponse>(`/api/v1/content/${workspaceId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          workspace_id: workspaceId,
-        }),
-      });
+      return client.request<ContentResponse>(
+        `/api/v1/content/?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            workspace_id: workspaceId,
+          }),
+        },
+      );
     },
 
     /**
@@ -73,7 +76,7 @@ export function createContentNamespace(client: ApiClient) {
       data: UpdateContentRequest,
     ) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/${workspaceId}/${contentId}`,
+        `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -87,7 +90,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     delete: async (workspaceId: string, contentId: string) => {
       return client.request<void>(
-        `/api/v1/content/${workspaceId}/${contentId}`,
+        `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "DELETE",
         },
