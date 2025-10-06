@@ -26,8 +26,8 @@ import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-
 import { WorkspaceOverviewForm } from "@/components/workspace/workspace-overview-form";
 import { WorkspaceSettingsPanel } from "@/components/workspace/workspace-settings-panel";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { apiClient } from "@/lib/api-client";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
-import { workspaceApiService } from "@/services";
 import {
   useKnowledgeFilterStore,
   useUnifiedKnowledgeStore,
@@ -71,7 +71,7 @@ export default function WorkspaceDetailPage() {
     refetch,
   } = useQuery({
     queryKey: ["workspace", workspaceId],
-    queryFn: () => workspaceApiService.getWorkspace(workspaceId),
+    queryFn: () => apiClient.workspaces.get(workspaceId),
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

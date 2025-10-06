@@ -10,12 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
   defaultNotificationPreferences,
   type NotificationPreferences,
 } from "@/schemas/notification-schemas";
-import { getNotificationPreferences } from "@/services/notification-api";
 
 export default function NotificationsSettingsPage() {
   const [preferences, setPreferences] =
@@ -26,7 +26,7 @@ export default function NotificationsSettingsPage() {
   useEffect(() => {
     async function loadPreferences() {
       try {
-        const data = await getNotificationPreferences();
+        const data = await apiClient.notifications.getPreferences();
         setPreferences(data);
       } catch (err) {
         log.error("[NotificationsSettings] Failed to load preferences:", err);

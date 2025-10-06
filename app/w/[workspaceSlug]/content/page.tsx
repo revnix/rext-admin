@@ -24,6 +24,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { ContentStatus } from "@/types/content";
 import { STATUS_FILTER_OPTIONS } from "@/types/content";
 import type { ContentData, RowAction } from "@/types/data-table";
 
@@ -55,7 +56,7 @@ export default function WorkspaceContentPage() {
       title: item.title,
       type: item.metadata?.content_type || "Article",
       contentType: item.content_format || "Markdown",
-      status: item.status,
+      status: (item.status as ContentStatus) || "draft",
       publishedTo: item.metadata?.target_platform || "-",
       publishDate: item.updated_at || null,
       scheduledDate: null,

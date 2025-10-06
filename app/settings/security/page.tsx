@@ -34,8 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsAdmin, usePermissionUser } from "@/hooks/use-permission";
-import { getLoginHistory, getSecurityStats } from "@/services";
-import { sessionApiService } from "@/services/session-api";
+import { apiClient } from "@/lib/api-client";
 
 export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
@@ -52,7 +51,7 @@ export default function SecuritySettingsPage() {
     error: sessionsError,
   } = useQuery({
     queryKey: ["user-sessions"],
-    queryFn: () => sessionApiService.listSessions(),
+    queryFn: () => apiClient.sessions.list(),
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
@@ -63,7 +62,7 @@ export default function SecuritySettingsPage() {
     error: statsError,
   } = useQuery({
     queryKey: ["security-stats"],
-    queryFn: getSecurityStats,
+    queryFn: () => apiClient.security.getStats(),
     enabled: isAdmin,
     refetchInterval: 60000, // Refresh every minute
   });
@@ -75,15 +74,14 @@ export default function SecuritySettingsPage() {
     error: historyError,
   } = useQuery({
     queryKey: ["login-history", user?.id],
-    queryFn: () => getLoginHistory(user?.id || ""),
+    queryFn: () => apiClient.security.getLoginHistory(),
     enabled: !!user?.id,
     refetchInterval: 60000,
   });
 
   // Revoke single session mutation
   const revokeMutation = useMutation({
-    mutationFn: (sessionId: string) =>
-      sessionApiService.revokeSession(sessionId),
+    mutationFn: (sessionId: string) => apiClient.sessions.revoke(sessionId),
     onMutate: (sessionId) => {
       setRevokingSessionId(sessionId);
     },
@@ -101,7 +99,7 @@ export default function SecuritySettingsPage() {
 
   // Revoke all sessions mutation
   const revokeAllMutation = useMutation({
-    mutationFn: () => sessionApiService.revokeAllSessions(),
+    mutationFn: () => apiClient.sessions.revokeAll(),
     onSuccess: (data) => {
       toast.success(`Logged out from ${data.revoked_count} devices`);
       queryClient.invalidateQueries({ queryKey: ["user-sessions"] });
@@ -358,8 +356,8 @@ export default function SecuritySettingsPage() {
                 <div>
                   <CardTitle>Active Sessions</CardTitle>
                   <CardDescription>
-                    {sessionData?.active_count || 0} active sessions across all
-                    devices
+                    {sessionData?.sessions?.length || 0} active sessions across
+                    all devices
                   </CardDescription>
                 </div>
                 {otherSessions.length > 0 && (
@@ -391,12 +389,12 @@ export default function SecuritySettingsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <div className="rounded-full bg-primary/10 p-2">
-                        {getDeviceIcon(currentSession.device_type)}
+                        {getDeviceIcon(currentSession.device)}
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">
-                            {currentSession.device_name || "Unknown Device"}
+                            {currentSession.device || "Unknown Device"}
                           </p>
                           <Badge variant="default">Current Session</Badge>
                         </div>
@@ -407,19 +405,15 @@ export default function SecuritySettingsPage() {
                               {currentSession.ip_address}
                             </span>
                           )}
-                          {(currentSession.city || currentSession.country) && (
-                            <span>
-                              {[currentSession.city, currentSession.country]
-                                .filter(Boolean)
-                                .join(", ")}
-                            </span>
+                          {currentSession.location && (
+                            <span>{currentSession.location}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           <span>
                             Last active:{" "}
-                            {formatTimestamp(currentSession.last_activity_at)}
+                            {formatTimestamp(currentSession.last_active)}
                           </span>
                         </div>
                       </div>
@@ -438,11 +432,11 @@ export default function SecuritySettingsPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-4">
                             <div className="rounded-full bg-muted p-2">
-                              {getDeviceIcon(session.device_type)}
+                              {getDeviceIcon(session.device)}
                             </div>
                             <div className="space-y-1">
                               <p className="font-medium">
-                                {session.device_name || "Unknown Device"}
+                                {session.device || "Unknown Device"}
                               </p>
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 {session.ip_address && (
@@ -451,19 +445,15 @@ export default function SecuritySettingsPage() {
                                     {session.ip_address}
                                   </span>
                                 )}
-                                {(session.city || session.country) && (
-                                  <span>
-                                    {[session.city, session.country]
-                                      .filter(Boolean)
-                                      .join(", ")}
-                                  </span>
+                                {session.location && (
+                                  <span>{session.location}</span>
                                 )}
                               </div>
                               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                 <Clock className="h-3 w-3" />
                                 <span>
                                   Last active:{" "}
-                                  {formatTimestamp(session.last_activity_at)}
+                                  {formatTimestamp(session.last_active)}
                                 </span>
                               </div>
                             </div>
@@ -528,7 +518,7 @@ export default function SecuritySettingsPage() {
                         Total Logins
                       </p>
                       <p className="text-2xl font-bold">
-                        {loginHistory.total_logins}
+                        {loginHistory.total_count}
                       </p>
                     </div>
                     <div className="rounded-lg border p-3">
@@ -536,8 +526,8 @@ export default function SecuritySettingsPage() {
                         Last Login
                       </p>
                       <p className="text-sm font-medium">
-                        {loginHistory.last_login_at
-                          ? formatTimestamp(loginHistory.last_login_at)
+                        {loginHistory.history[0]?.created_at
+                          ? formatTimestamp(loginHistory.history[0]?.created_at)
                           : "Never"}
                       </p>
                     </div>
@@ -546,7 +536,7 @@ export default function SecuritySettingsPage() {
                         Failed Attempts
                       </p>
                       <p className="text-2xl font-bold">
-                        {loginHistory.failed_login_attempts}
+                        {loginHistory.history.filter((h) => !h.success).length}
                       </p>
                     </div>
                   </div>
@@ -556,26 +546,26 @@ export default function SecuritySettingsPage() {
                   {/* Recent Login Events */}
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Recent Activity</p>
-                    {loginHistory.login_history.length === 0 ? (
+                    {loginHistory.history.length === 0 ? (
                       <p className="text-center text-sm text-muted-foreground py-8">
                         No login history available
                       </p>
                     ) : (
                       <div className="space-y-2">
-                        {loginHistory.login_history.map((event, idx) => (
+                        {loginHistory.history.map((event, idx) => (
                           <div
-                            key={`${event.timestamp}-${idx}`}
+                            key={`${event.created_at}-${idx}`}
                             className="flex items-center justify-between rounded-lg border p-3"
                           >
                             <div className="flex items-center gap-3">
                               <div
                                 className={`rounded-full p-2 ${
-                                  event.status === "success"
+                                  event.success
                                     ? "bg-green-100 dark:bg-green-950"
                                     : "bg-red-100 dark:bg-red-950"
                                 }`}
                               >
-                                {event.status === "success" ? (
+                                {event.success ? (
                                   <TrendingUp className="h-4 w-4 text-green-600" />
                                 ) : (
                                   <TrendingDown className="h-4 w-4 text-red-600" />
@@ -584,25 +574,23 @@ export default function SecuritySettingsPage() {
                               <div>
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm font-medium">
-                                    {event.status === "success"
+                                    {event.success
                                       ? "Successful Login"
                                       : "Failed Login Attempt"}
                                   </p>
                                   <Badge
                                     variant={
-                                      event.status === "success"
-                                        ? "default"
-                                        : "destructive"
+                                      event.success ? "default" : "destructive"
                                     }
                                     className="text-xs"
                                   >
-                                    {event.status}
+                                    {event.success ? "Success" : "Failed"}
                                   </Badge>
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                   <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    {formatLoginEventTime(event.timestamp)}
+                                    {formatLoginEventTime(event.created_at)}
                                   </span>
                                   {event.ip_address && (
                                     <span className="flex items-center gap-1">
@@ -611,9 +599,9 @@ export default function SecuritySettingsPage() {
                                     </span>
                                   )}
                                 </div>
-                                {event.user_agent && (
+                                {event.browser && (
                                   <p className="text-xs text-muted-foreground truncate max-w-md">
-                                    {event.user_agent}
+                                    {event.browser}
                                   </p>
                                 )}
                               </div>

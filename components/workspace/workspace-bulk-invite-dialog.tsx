@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { roleApiService, workspaceApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 
 const bulkInviteFormSchema = z.object({
   emails_text: z
@@ -55,10 +55,9 @@ interface WorkspaceBulkInviteDialogProps {
 }
 
 interface InvitationResult {
+  id: string;
   email: string;
-  success: boolean;
-  invitation_id?: string;
-  error_message?: string;
+  status: string;
 }
 
 export function WorkspaceBulkInviteDialog({
@@ -74,7 +73,7 @@ export function WorkspaceBulkInviteDialog({
   // Fetch available roles
   const { data: rolesResponse, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["roles"],
-    queryFn: () => roleApiService.listRoles(),
+    queryFn: () => apiClient.roles.list(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -104,7 +103,7 @@ export function WorkspaceBulkInviteDialog({
   const createBulkInvitationsMutation = useMutation({
     mutationFn: (data: BulkInviteFormValues) => {
       const emails = parseEmails(data.emails_text);
-      return workspaceApiService.createBulkInvitations({
+      return apiClient.invitations.createBulk({
         workspace_id: workspaceId,
         emails,
         role_id: data.role_id,
@@ -112,13 +111,13 @@ export function WorkspaceBulkInviteDialog({
       });
     },
     onSuccess: (data) => {
-      setResults(data.results);
+      setResults(data.invitations);
 
-      if (data.failed === 0) {
-        toast.success(`Successfully sent ${data.successful} invitations`);
+      if (data.failed_count === 0) {
+        toast.success(`Successfully sent ${data.success_count} invitations`);
       } else {
         toast.warning(
-          `Sent ${data.successful} invitations, ${data.failed} failed`,
+          `Sent ${data.success_count} invitations, ${data.failed_count} failed`,
         );
       }
 
@@ -127,7 +126,7 @@ export function WorkspaceBulkInviteDialog({
       });
       queryClient.invalidateQueries({ queryKey: ["sent-invitations"] });
 
-      if (data.failed === 0) {
+      if (data.failed_count === 0) {
         // Only close if all succeeded
         setTimeout(() => {
           form.reset();
@@ -204,20 +203,20 @@ export function WorkspaceBulkInviteDialog({
                   key={`${result.email}-${index}`}
                   className="flex items-start gap-2 p-3 rounded-md border"
                 >
-                  {result.success ? (
+                  {result.status === "success" ? (
                     <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{result.email}</p>
-                    {result.success ? (
+                    {result.status === "success" ? (
                       <p className="text-sm text-green-600">
                         Invitation sent successfully
                       </p>
                     ) : (
                       <p className="text-sm text-destructive">
-                        {result.error_message}
+                        {result.status}
                       </p>
                     )}
                   </div>
@@ -231,8 +230,9 @@ export function WorkspaceBulkInviteDialog({
                   Total: {results.length} emails processed
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {results.filter((r) => r.success).length} successful,{" "}
-                  {results.filter((r) => !r.success).length} failed
+                  {results.filter((r) => r.status === "success").length}{" "}
+                  successful,{" "}
+                  {results.filter((r) => r.status !== "success").length} failed
                 </p>
               </div>
               <Button onClick={handleClose}>Close</Button>

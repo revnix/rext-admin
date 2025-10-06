@@ -23,8 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiClient } from "@/lib/api-client";
 import { type ProfileFormData, profileSchema } from "@/schemas/profile-schemas";
-import { getProfile, updateProfile } from "@/services/profile-api";
 import { AvatarUpload } from "./avatar-upload";
 
 const LANGUAGES = [
@@ -53,7 +53,7 @@ export function ProfileForm() {
   // Fetch profile
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile"],
-    queryFn: getProfile,
+    queryFn: () => apiClient.profile.get(),
   });
 
   // Form
@@ -72,7 +72,13 @@ export function ProfileForm() {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: updateProfile,
+    mutationFn: (data: {
+      first_name: string;
+      last_name: string;
+      display_name?: string;
+      language?: string;
+      timezone?: string;
+    }) => apiClient.profile.update(data),
     onSuccess: () => {
       toast.success("Profile updated successfully");
       queryClient.invalidateQueries({ queryKey: ["profile"] });

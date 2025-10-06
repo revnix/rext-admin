@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AuditLogApiService } from "@/services/audit-log-api";
+import { apiClient } from "@/lib/api-client";
 import type { AuditLogFilters } from "@/types/audit-log";
 import {
   AuditActions,
@@ -51,7 +51,14 @@ export function ActivityLog() {
   // Fetch audit logs
   const { data, isLoading, error } = useQuery({
     queryKey: ["audit-logs", filters],
-    queryFn: () => AuditLogApiService.getMyAuditLogs(filters),
+    queryFn: () =>
+      apiClient.auditLogs.getMyLogs({
+        action: filters.action,
+        start_date: filters.date_from,
+        end_date: filters.date_to,
+        limit: filters.limit,
+        offset: filters.offset,
+      }),
     refetchInterval: 60000, // Refresh every minute
   });
 

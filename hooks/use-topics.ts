@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { backendService } from "@/services/backend";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 const topicsLogger = logger.forComponent("useTopics");
@@ -17,12 +17,11 @@ export function useTopics(workspaceId: string) {
   return useQuery({
     queryKey: ["topics", workspaceId],
     queryFn: async (): Promise<GeneratedTopic[]> => {
-      topicsLogger.info(
-        "Fetching workspace-scoped topics from backend via BackendService",
-        { workspace_id: workspaceId },
-      );
+      topicsLogger.info("Fetching workspace-scoped topics from backend", {
+        workspace_id: workspaceId,
+      });
 
-      const topics = await backendService.getTopics(workspaceId);
+      const topics = await apiClient.topics.list(workspaceId);
 
       topicsLogger.info("Successfully fetched topics", {
         count: topics.length,
@@ -48,12 +47,12 @@ export function useTopic(id: string, workspaceId: string) {
     queryFn: async (): Promise<GeneratedTopic | null> => {
       if (!id || !workspaceId) return null;
 
-      topicsLogger.info("Fetching single topic via BackendService", {
+      topicsLogger.info("Fetching single topic", {
         topic_id: id,
         workspace_id: workspaceId,
       });
 
-      const topic = await backendService.getTopic(id, workspaceId);
+      const topic = await apiClient.topics.get(id, workspaceId);
 
       topicsLogger.info("Successfully fetched topic", {
         topic_id: id,

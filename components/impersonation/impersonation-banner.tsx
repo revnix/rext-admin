@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { impersonationApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 
 /**
@@ -21,16 +21,23 @@ export function ImpersonationBanner() {
   const { setTokens } = useAuthStore();
 
   // Check impersonation status
-  const { data: status, isLoading } = useQuery({
+  const {
+    data: status,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["impersonation-status"],
-    queryFn: () => impersonationApiService.getImpersonationStatus(),
+    queryFn: () => apiClient.impersonation.getStatus(),
     refetchInterval: 30000, // Refetch every 30 seconds
     staleTime: 20000, // Consider stale after 20 seconds
+    retry: false, // Don't retry if endpoint doesn't exist (404)
+    // Gracefully handle errors (endpoint not implemented yet)
+    throwOnError: false,
   });
 
   // Stop impersonation mutation
   const stopImpersonationMutation = useMutation({
-    mutationFn: () => impersonationApiService.stopImpersonation(),
+    mutationFn: () => apiClient.impersonation.stop(),
     onSuccess: (data) => {
       // Update tokens to original user
       setTokens(data.access_token, data.refresh_token);
@@ -54,8 +61,8 @@ export function ImpersonationBanner() {
     stopImpersonationMutation.mutate();
   };
 
-  // Don't show anything if loading or not impersonating
-  if (isLoading || !status?.is_impersonating) {
+  // Don't show anything if loading, error (endpoint not implemented), or not impersonating
+  if (isLoading || isError || !status?.is_impersonating) {
     return null;
   }
 

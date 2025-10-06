@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { requestDataExport } from "@/services/account-api";
+import { apiClient } from "@/lib/api-client";
 import type { DataExportRequest } from "@/types/account";
 
 export function PrivacySettings() {
@@ -20,7 +20,8 @@ export function PrivacySettings() {
   });
 
   const exportMutation = useMutation({
-    mutationFn: requestDataExport,
+    mutationFn: (data: DataExportRequest) =>
+      apiClient.account.requestDataExport(data),
     onSuccess: (data) => {
       toast.success(
         data.message || "Your data export will be sent to your email shortly.",

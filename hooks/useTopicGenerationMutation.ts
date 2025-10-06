@@ -2,9 +2,9 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
 import { generateRequestId } from "@/lib/response-utils";
-import { backendService } from "@/services/backend";
 import { getErrorInfo } from "@/types/api";
 import type { BackendErrorCode } from "@/types/consistent-response";
 import type {
@@ -84,19 +84,16 @@ export function useTopicGenerationMutation() {
       });
 
       try {
-        // Use backend service directly (no API route proxying)
-        generationLogger.info("Calling backend service generateTopics", {
+        // Use API client directly (no API route proxying)
+        generationLogger.info("Calling apiClient generateTopics", {
           requestId,
           workspaceId,
           formData,
         });
 
-        const result = await backendService.generateTopics(
-          formData,
-          workspaceId,
-        );
+        const result = await apiClient.topics.generate(formData, workspaceId);
 
-        generationLogger.info("Backend service returned result", {
+        generationLogger.info("API client returned result", {
           requestId,
           result,
           topics_generated: result.topics?.length || 0,

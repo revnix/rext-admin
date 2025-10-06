@@ -3,9 +3,9 @@
 import { Calendar, Edit2, FileText, Tag, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useDeleteHandler } from "@/hooks/useDeleteHandler";
+import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { numberFormat } from "@/lib/formatters/number-formatters";
-import { textKnowledgeService } from "@/services/knowledge-api";
 import { useTextKnowledgeStore } from "@/stores/knowledge-store";
 import type { TextKnowledge } from "@/types/workspace";
 import {
@@ -39,7 +39,8 @@ export function TextKnowledgeCard({
 
   // Use the delete handler hook
   const { handleDelete: deleteTextKnowledge } = useDeleteHandler({
-    deleteFunction: (id) => textKnowledgeService.delete(item.workspace_id, id),
+    deleteFunction: (id) =>
+      apiClient.knowledge.deleteText(item.workspace_id, id),
     resourceName: "text note",
     successMessage: `Text note "${item.title}" deleted successfully`,
     onSuccess: () => {
@@ -151,7 +152,8 @@ export function TextKnowledgeListItem({
 
   // Use the delete handler hook for list view
   const { handleDelete: deleteTextKnowledge } = useDeleteHandler({
-    deleteFunction: (id) => textKnowledgeService.delete(item.workspace_id, id),
+    deleteFunction: (id) =>
+      apiClient.knowledge.deleteText(item.workspace_id, id),
     resourceName: "text note",
     successMessage: `Text note "${item.title}" deleted successfully`,
     onSuccess: () => {

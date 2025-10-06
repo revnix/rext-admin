@@ -131,17 +131,8 @@ export {
   ImpersonationApiService,
   impersonationApiService,
 } from "./impersonation-api";
-// Export knowledge API services
-export {
-  FileKnowledgeService,
-  fileKnowledgeService,
-  KnowledgeService,
-  knowledgeService,
-  TextKnowledgeService,
-  textKnowledgeService,
-  WebKnowledgeService,
-  webKnowledgeService,
-} from "./knowledge-api";
+// Knowledge API services have been migrated to apiClient
+// Use: import { apiClient } from '@/lib/api-client'; apiClient.knowledge.*
 export type {
   Permission,
   PermissionListResponse,
@@ -153,42 +144,12 @@ export {
   RoleApiService,
   roleApiService,
 } from "./role-api";
-// Export security monitoring API service
-export {
-  getFailedLogins,
-  getLockedAccounts,
-  getLoginHistory,
-  getSecurityStats,
-  resetFailedAttempts,
-  SecurityApiService,
-  unlockAccount,
-} from "./security-api";
-// Export session API service
-export {
-  listSessions,
-  revokeAllSessions,
-  revokeSession,
-  sessionApiService,
-} from "./session-api";
-// Export subscription API service
-export {
-  cancelSubscription,
-  createSubscriptionPlan,
-  deleteSubscriptionPlan,
-  getMySubscription,
-  getSubscriptionHistory,
-  getSubscriptionPlan,
-  getSubscriptionPlans,
-  getTrialStatus,
-  getUsageStats,
-  SubscriptionApiService,
-  subscribe,
-  updateSubscriptionPlan,
-  upgradeSubscription,
-} from "./subscription-api";
-// Export workspace API service
-export {
-  WorkspaceApiError,
-  WorkspaceApiService,
-  workspaceApiService,
-} from "./workspace-api";
+// Security monitoring API has been migrated to apiClient
+// Use: import { apiClient } from '@/lib/api-client'; apiClient.security.*
+// Session API has been migrated to apiClient
+// Use: import { apiClient } from '@/lib/api-client'; apiClient.sessions.*
+// Subscription API has been migrated to apiClient
+// Use: import { apiClient } from '@/lib/api-client'; apiClient.subscriptions.*
+// Workspace API has been migrated to apiClient
+// Use: import { apiClient } from '@/lib/api-client'; apiClient.workspaces.*
+// Note: WorkspaceApiError is now WorkspaceServiceError from "./workspace/workspace-service"

@@ -27,10 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  type EmailTemplate,
-  emailTemplateAPI,
-} from "@/services/email-template-api";
+import { apiClient, type EmailTemplate } from "@/lib/api-client";
 
 const templateTypes = [
   {
@@ -83,8 +80,8 @@ export function EmailTemplateEditor({
   );
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<{
-    subject: string;
-    body: string;
+    rendered_subject: string;
+    rendered_body: string;
   } | null>(null);
 
   const {
@@ -107,20 +104,20 @@ export function EmailTemplateEditor({
   // Get available variables for selected type
   const { data: variables, isLoading: variablesLoading } = useQuery({
     queryKey: ["template-variables", selectedType],
-    queryFn: () => emailTemplateAPI.getTemplateVariables(selectedType),
+    queryFn: () => apiClient.emailTemplates.getVariables(selectedType),
   });
 
   // Get default template
   const { data: defaultTemplate, isLoading: defaultLoading } = useQuery({
     queryKey: ["default-template", selectedType],
-    queryFn: () => emailTemplateAPI.getDefaultTemplate(selectedType),
+    queryFn: () => apiClient.emailTemplates.getDefault(selectedType),
     enabled: !template,
   });
 
   // Preview mutation
   const previewMutation = useMutation({
     mutationFn: async () => {
-      const result = await emailTemplateAPI.previewTemplate({
+      const result = await apiClient.emailTemplates.preview({
         template_type: selectedType,
         subject: currentSubject,
         body: currentBody,
@@ -140,9 +137,9 @@ export function EmailTemplateEditor({
   const saveMutation = useMutation({
     mutationFn: async (data: TemplateFormData) => {
       if (template) {
-        return emailTemplateAPI.updateTemplate(template.id, data);
+        return apiClient.emailTemplates.update(template.id, data);
       }
-      return emailTemplateAPI.createTemplate({
+      return apiClient.emailTemplates.create({
         workspace_id: workspaceId,
         template_type: selectedType,
         ...data,
@@ -347,28 +344,25 @@ export function EmailTemplateEditor({
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {variables &&
-                Object.entries(variables).map(([key, description]) => (
-                  <Button
-                    key={key}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => insertVariable(key)}
-                    className="font-mono"
-                  >
-                    {"{"}
-                    {"{"}
-                    {key}
-                    {"}"}
-                    {"}"}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {Array.isArray(description)
-                        ? description[0]
-                        : description}
-                    </span>
-                  </Button>
-                ))}
+              {variables?.variables?.map((variable) => (
+                <Button
+                  key={variable.name}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertVariable(variable.name)}
+                  className="font-mono"
+                >
+                  {"{"}
+                  {"{"}
+                  {variable.name}
+                  {"}"}
+                  {"}"}
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {variable.description}
+                  </span>
+                </Button>
+              ))}
             </div>
           )}
         </CardContent>
@@ -387,14 +381,14 @@ export function EmailTemplateEditor({
             <div className="space-y-2">
               <Label>Subject:</Label>
               <div className="rounded-md border bg-muted p-3">
-                {previewData.subject}
+                {previewData.rendered_subject}
               </div>
             </div>
             <Separator />
             <div className="space-y-2">
               <Label>Body:</Label>
               <div className="whitespace-pre-wrap rounded-md border bg-muted p-4">
-                {previewData.body}
+                {previewData.rendered_body}
               </div>
             </div>
           </CardContent>

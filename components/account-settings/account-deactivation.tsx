@@ -21,8 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { deactivateAccount } from "@/services/account-api";
-import { getProfile } from "@/services/profile-api";
+import { apiClient } from "@/lib/api-client";
 
 export function AccountDeactivation() {
   const [reason, setReason] = useState("");
@@ -32,11 +31,12 @@ export function AccountDeactivation() {
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
-    queryFn: getProfile,
+    queryFn: () => apiClient.profile.get(),
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: deactivateAccount,
+    mutationFn: (data: { reason?: string; confirm: boolean }) =>
+      apiClient.account.deactivate(data),
     onSuccess: async (data) => {
       toast.success(
         data.message ||

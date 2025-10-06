@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { textKnowledgeService } from "@/services/knowledge-api";
+import { apiClient } from "@/lib/api-client";
 import { useTextKnowledgeStore } from "@/stores/knowledge-store";
 import type { Workspace } from "@/types/workspace";
 import { AddTextDialog } from "./add-text-dialog";
@@ -161,8 +161,8 @@ export function TextKnowledgeList({
     queryKey: ["textKnowledge", workspaceId],
     queryFn: () =>
       workspaceId
-        ? textKnowledgeService.listForWorkspace(workspaceId)
-        : textKnowledgeService.list(),
+        ? apiClient.knowledge.listText(workspaceId)
+        : apiClient.knowledge.listText(workspaceId),
     staleTime: 30000,
     enabled: !!workspaceId,
   });
@@ -226,7 +226,7 @@ export function TextKnowledgeList({
       const deletePromises = selectedItems.map((textId) => {
         const textItem = items.find((item) => item.id === textId);
         if (textItem) {
-          return textKnowledgeService.delete(textItem.workspace_id, textId);
+          return apiClient.knowledge.deleteText(textItem.workspace_id, textId);
         }
         return Promise.resolve();
       });

@@ -1,0 +1,134 @@
+/**
+ * Unified API Client
+ *
+ * Single source of truth for all API interactions across the frontend.
+ * Replaces BackendService, ContentApiService, WorkspaceApiService, etc.
+ *
+ * Usage:
+ *   import { apiClient } from '@/lib/api-client';
+ *
+ *   const topics = await apiClient.topics.list(workspaceId);
+ *   const workspace = await apiClient.workspaces.get(workspaceId);
+ */
+
+import {
+  createAuditLogsNamespace,
+  createEmailTemplatesNamespace,
+  createImpersonationNamespace,
+  type EmailTemplate,
+} from "./admin";
+
+// Re-export types for convenience
+export type { EmailTemplate };
+
+import { createContentNamespace } from "./content";
+import { ApiClient } from "./core";
+import { createKnowledgeNamespace } from "./knowledge";
+import { createInvitationsNamespace, createMembersNamespace } from "./members";
+import { createAccountNamespace, createProfileNamespace } from "./profile";
+import { createRolesNamespace } from "./roles";
+import {
+  createNotificationsNamespace,
+  createSecurityNamespace,
+  createSessionsNamespace,
+} from "./settings";
+import { createSubscriptionsNamespace } from "./subscriptions";
+import { createTopicsNamespace } from "./topics";
+import { createWorkspacesNamespace } from "./workspaces";
+
+// ============================================================================
+// UNIFIED API CLIENT INSTANCE
+// ============================================================================
+
+/**
+ * Create and configure the unified API client
+ */
+function createApiClient() {
+  const client = new ApiClient();
+
+  return {
+    // Core request method (for custom requests if needed)
+    request: client.request.bind(client),
+
+    // Feature namespaces
+    topics: createTopicsNamespace(client),
+    content: createContentNamespace(client),
+    workspaces: createWorkspacesNamespace(client),
+    knowledge: createKnowledgeNamespace(client),
+    members: createMembersNamespace(client),
+    invitations: createInvitationsNamespace(client),
+    roles: createRolesNamespace(client),
+    subscriptions: createSubscriptionsNamespace(client),
+    profile: createProfileNamespace(client),
+    account: createAccountNamespace(client),
+
+    // Admin namespaces
+    impersonation: createImpersonationNamespace(client),
+    auditLogs: createAuditLogsNamespace(client),
+    emailTemplates: createEmailTemplatesNamespace(client),
+
+    // Settings namespaces
+    notifications: createNotificationsNamespace(client),
+    sessions: createSessionsNamespace(client),
+    security: createSecurityNamespace(client),
+
+    // Utility methods
+    cancelAllRequests: () => client.cancelAllRequests(),
+    getActiveRequestsCount: () => client.getActiveRequestsCount(),
+  };
+}
+
+// ============================================================================
+// SINGLETON INSTANCE
+// ============================================================================
+
+/**
+ * Unified API Client - Single instance for the entire application
+ *
+ * @example
+ * ```typescript
+ * // Topics
+ * const topics = await apiClient.topics.list(workspaceId);
+ * await apiClient.topics.generate(formData);
+ *
+ * // Content
+ * const content = await apiClient.content.list(workspaceId);
+ * await apiClient.content.create(workspaceId, data);
+ *
+ * // Workspaces
+ * const workspaces = await apiClient.workspaces.list();
+ * await apiClient.workspaces.update(workspaceId, data);
+ *
+ * // Knowledge
+ * const webKnowledge = await apiClient.knowledge.listWeb(workspaceId);
+ * await apiClient.knowledge.addFile(data);
+ *
+ * // Members & Invitations
+ * const members = await apiClient.members.list(workspaceId);
+ * await apiClient.invitations.create(data);
+ *
+ * // Profile & Account
+ * const profile = await apiClient.profile.get();
+ * await apiClient.account.requestDataExport();
+ *
+ * // Admin
+ * await apiClient.impersonation.start(userId);
+ * const logs = await apiClient.auditLogs.getMyLogs();
+ * const templates = await apiClient.emailTemplates.list(workspaceId);
+ *
+ * // Settings
+ * const prefs = await apiClient.notifications.getPreferences();
+ * const sessions = await apiClient.sessions.list();
+ * const stats = await apiClient.security.getStats();
+ * ```
+ */
+export const apiClient = createApiClient();
+
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
+export type ApiClientInstance = ReturnType<typeof createApiClient>;
+
+// Re-export core types
+export { ApiError } from "./core";

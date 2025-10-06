@@ -2,10 +2,10 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
 import { generateRequestId } from "@/lib/response-utils";
-import { backendService } from "@/services/backend";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import { getErrorInfo } from "@/types/api";
 import type { BackendErrorCode } from "@/types/consistent-response";
@@ -115,8 +115,8 @@ export function useTopicSaveMutation(workspaceId: string) {
       const requestId = generateRequestId("topic_save");
 
       try {
-        // Use backend service directly with workspace_id
-        const result = await backendService.saveTopics([topic], workspaceId);
+        // Use API client to save topics
+        const result = await apiClient.topics.save([topic], workspaceId);
 
         // Transform to expected response format
         const response: SaveTopicResponse = {
@@ -249,8 +249,8 @@ export function useTopicBulkSaveMutation(workspaceId: string) {
       const requestId = generateRequestId("topic_bulk_save");
 
       try {
-        // Use backend service directly with workspace_id
-        const result = await backendService.saveTopics(topics, workspaceId);
+        // Use API client to save topics
+        const result = await apiClient.topics.save(topics, workspaceId);
 
         const response: SaveTopicResponse = {
           success: result.success,
@@ -363,8 +363,8 @@ export function useTopicDeleteMutation(workspaceId: string) {
       const requestId = generateRequestId("topic_delete");
 
       try {
-        // Use backend service directly with workspace_id
-        const result = await backendService.deleteTopics(topicIds, workspaceId);
+        // Use API client to delete topics
+        const result = await apiClient.topics.delete(topicIds, workspaceId);
 
         const response: DeleteTopicResponse = {
           success: result.success,

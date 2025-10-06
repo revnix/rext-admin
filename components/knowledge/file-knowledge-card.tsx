@@ -13,7 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { fileKnowledgeService } from "@/services/knowledge-api";
+import { apiClient } from "@/lib/api-client";
 import { useFileKnowledgeStore } from "@/stores/knowledge-store";
 import type { FileKnowledge } from "@/types/workspace";
 import {
@@ -167,7 +167,7 @@ export function FileKnowledgeCard({
       },
     ],
     onDelete: async (item) => {
-      await fileKnowledgeService.delete(item.workspace_id, item.id);
+      await apiClient.knowledge.deleteFile(item.workspace_id, item.id);
       removeItem(item.id);
       toast.success(`File "${item.name}" deleted successfully`);
     },
@@ -260,7 +260,7 @@ export function FileKnowledgeListItem({
     ],
     getMetadataSections: () => [],
     onDelete: async (item: FileKnowledge) => {
-      await fileKnowledgeService.delete(item.workspace_id, item.id);
+      await apiClient.knowledge.deleteFile(item.workspace_id, item.id);
       removeItem(item.id);
       toast.success(`File "${item.name}" deleted successfully`);
     },

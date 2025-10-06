@@ -20,7 +20,7 @@ import { FormField, ValidationInput } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { textKnowledgeService } from "@/services/knowledge-api";
+import { apiClient } from "@/lib/api-client";
 import { useTextKnowledgeStore } from "@/stores/knowledge-store";
 
 // Validation schema
@@ -114,7 +114,7 @@ export function EditTextDialog({
 
       try {
         setIsSaving(true);
-        const updatedItem = await textKnowledgeService.update(
+        const updatedItem = await apiClient.knowledge.updateText(
           workspaceId,
           textId,
           {

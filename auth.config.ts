@@ -142,6 +142,12 @@ export default {
   },
   callbacks: {
     async jwt({ token, user, account }) {
+      // If there's a refresh error, return null to force sign out
+      if (token.error === "RefreshAccessTokenError") {
+        log.error("[Auth] Refresh error detected, clearing session");
+        return null as unknown as JWT; // Force sign out
+      }
+
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -270,6 +276,7 @@ export default {
     },
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const hasRefreshError = auth?.error === "RefreshAccessTokenError";
       const isOnAuthPage = ["/login", "/signup", "/forgot-password"].some(
         (path) => nextUrl.pathname.startsWith(path),
       );
@@ -277,6 +284,13 @@ export default {
 
       // Allow access to public pages
       if (isOnPublicPage) return true;
+
+      // If refresh error, force redirect to login
+      if (hasRefreshError && !isOnAuthPage) {
+        return Response.redirect(
+          new URL("/login?error=SessionExpired", nextUrl),
+        );
+      }
 
       // Redirect authenticated users away from auth pages
       if (isLoggedIn && isOnAuthPage) {

@@ -1,0 +1,128 @@
+/**
+ * Core API Client
+ *
+ * Base client class with generic request handling
+ */
+
+import { authenticatedFetch } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
+
+const log = logger.forComponent("ApiClient");
+
+// ============================================================================
+// ERROR HANDLING
+// ============================================================================
+
+/**
+ * Custom API error class with status code and context
+ */
+export class ApiError extends Error {
+  constructor(
+    public readonly statusCode: number,
+    public readonly message: string,
+    public readonly code?: string,
+    public readonly context?: unknown,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// ============================================================================
+// MAIN API CLIENT CLASS
+// ============================================================================
+
+export class ApiClient {
+  private readonly baseUrl: string;
+  private readonly activeRequests = new Map<string, AbortController>();
+
+  constructor() {
+    this.baseUrl =
+      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://127.0.0.1:2024";
+  }
+
+  /**
+   * Generic request method for all API calls
+   */
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    try {
+      const response = await authenticatedFetch(url, options);
+
+      // Handle HTTP errors
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        let errorData: unknown = null;
+
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          // Not JSON, use text
+        }
+
+        const parsedError = errorData as {
+          error?: { message?: string; code?: string };
+          message?: string;
+        };
+
+        throw new ApiError(
+          response.status,
+          parsedError?.error?.message ||
+            parsedError?.message ||
+            `Request failed: ${response.statusText}`,
+          parsedError?.error?.code,
+          errorData,
+        );
+      }
+
+      // Parse successful response
+      const result = await response.json();
+
+      // Handle new consistent format: { success: true, data: {...}, meta: {...} }
+      if (result && typeof result === "object" && "success" in result) {
+        if (result.success === false && "error" in result) {
+          throw new ApiError(
+            result.error?.status_code || response.status,
+            result.error?.message || "Request failed",
+            result.error?.code,
+            result.error?.details,
+          );
+        }
+
+        if (result.success && "data" in result) {
+          return result.data as T;
+        }
+      }
+
+      // Legacy format or direct data
+      return result as T;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      log.error("Request failed", { error, endpoint });
+      throw error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  /**
+   * Cancel all active requests
+   */
+  cancelAllRequests(): void {
+    this.activeRequests.forEach((controller) => {
+      controller.abort();
+    });
+    this.activeRequests.clear();
+  }
+
+  /**
+   * Get count of active requests
+   */
+  getActiveRequestsCount(): number {
+    return this.activeRequests.size;
+  }
+}

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { apiClient } from "@/lib/api-client";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
-import { workspaceApiService } from "@/services/workspace-api";
 import type {
   BrandVoiceRefreshState,
   KnowledgeManagementState,
@@ -533,7 +533,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
 
           try {
-            const response = await workspaceApiService.createWorkspace({
+            const response = await apiClient.workspaces.create({
               title: data.title,
               description: data.description || "",
               url: data.url,
@@ -565,14 +565,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
 
           try {
-            const response = await workspaceApiService.updateWorkspace(
-              workspaceId,
-              {
-                title: data.title,
-                description: data.description || "",
-                url: data.url,
-              },
-            );
+            const response = await apiClient.workspaces.update(workspaceId, {
+              title: data.title,
+              description: data.description || "",
+              url: data.url,
+            });
 
             const workspace = response.workspace;
 
@@ -605,7 +602,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
 
           try {
-            await workspaceApiService.deleteWorkspace(workspaceId);
+            await apiClient.workspaces.delete(workspaceId);
 
             // Remove from store
             set((state) => ({
@@ -638,7 +635,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
           try {
             const response =
-              await workspaceApiService.duplicateWorkspace(sourceWorkspaceId);
+              await apiClient.workspaces.duplicate(sourceWorkspaceId);
 
             const duplicatedWorkspace = response.workspace;
 
@@ -666,7 +663,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
 
           try {
-            const response = await workspaceApiService.listWorkspaces();
+            const response = await apiClient.workspaces.list();
             const workspaces = response.workspaces;
 
             set((state) => ({
@@ -691,8 +688,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
 
           try {
-            const response =
-              await workspaceApiService.getWorkspace(workspaceId);
+            const response = await apiClient.workspaces.get(workspaceId);
             const workspace = response.workspace;
 
             // Update workspace in list if it exists, otherwise add it
@@ -739,7 +735,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             }));
 
             const response =
-              await workspaceApiService.refreshBrandVoice(workspaceId);
+              await apiClient.workspaces.refreshBrandVoice(workspaceId);
 
             // Update current workspace if it matches
             const currentWorkspace = _get().currentWorkspace;
