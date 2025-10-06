@@ -24,10 +24,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDeleteHandler } from "@/hooks/useDeleteHandler";
+import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { numberFormat } from "@/lib/formatters/number-formatters";
 import { log } from "@/lib/logger";
-import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 import type { WebKnowledge } from "@/types/workspace";
 import {
@@ -92,7 +92,8 @@ export function WebKnowledgeCard({
 
   // Use the delete handler hook
   const { handleDelete: deleteWebKnowledge } = useDeleteHandler({
-    deleteFunction: (id) => webKnowledgeService.delete(item.workspace_id, id),
+    deleteFunction: (id) =>
+      apiClient.knowledge.deleteWeb(item.workspace_id, id),
     resourceName: "web knowledge",
     onSuccess: () => {
       removeItem(item.id);
@@ -106,7 +107,11 @@ export function WebKnowledgeCard({
     }
     try {
       setIsUpdating(true);
-      await webKnowledgeService.update(item.workspace_id, item.id, editTitle);
+      await apiClient.knowledge.updateWeb(
+        item.workspace_id,
+        item.id,
+        editTitle,
+      );
       updateItem(item.id, { ...item, title: editTitle });
       toast.success("Web knowledge updated successfully");
       setIsEditing(false);
@@ -305,7 +310,8 @@ export function WebKnowledgeListItem({
 
   // Use the delete handler hook for list view
   const { handleDelete: deleteWebKnowledge } = useDeleteHandler({
-    deleteFunction: (id) => webKnowledgeService.delete(item.workspace_id, id),
+    deleteFunction: (id) =>
+      apiClient.knowledge.deleteWeb(item.workspace_id, id),
     resourceName: "web knowledge",
     onSuccess: () => {
       removeItem(item.id);

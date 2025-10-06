@@ -17,8 +17,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FormField, ValidationInput } from "@/components/ui/form-field";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 
 // Validation schema
@@ -92,10 +92,10 @@ export function AddUrlDialog({
       }
 
       // Add the URL
-      const newWebKnowledge = await webKnowledgeService.add({
-        workspace_id: workspaceId,
-        url: data.url,
-      });
+      const newWebKnowledge = await apiClient.knowledge.addWeb(
+        workspaceId,
+        data.url,
+      );
 
       // Update the store
       addItem(newWebKnowledge);

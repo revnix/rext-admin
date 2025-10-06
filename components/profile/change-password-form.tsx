@@ -17,11 +17,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api-client";
 import {
   type ChangePasswordFormData,
   changePasswordSchema,
 } from "@/schemas/profile-schemas";
-import { changePassword } from "@/services/profile-api";
 
 export function ChangePasswordForm() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -40,7 +40,11 @@ export function ChangePasswordForm() {
 
   // Change password mutation
   const changePwdMutation = useMutation({
-    mutationFn: changePassword,
+    mutationFn: (data: {
+      current_password: string;
+      new_password: string;
+      confirm_password: string;
+    }) => apiClient.profile.changePassword(data),
     onSuccess: () => {
       toast.success("Password changed successfully");
       form.reset();

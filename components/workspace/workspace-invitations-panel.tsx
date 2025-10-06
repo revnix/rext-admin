@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { workspaceApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 
 interface WorkspaceInvitationsPanelProps {
   workspaceId: string;
@@ -84,7 +84,7 @@ export function WorkspaceInvitationsPanel({
     refetch,
   } = useQuery({
     queryKey: ["sent-invitations", workspaceId],
-    queryFn: () => workspaceApiService.listSentInvitations(workspaceId),
+    queryFn: () => apiClient.invitations.listSent(workspaceId),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
@@ -93,7 +93,7 @@ export function WorkspaceInvitationsPanel({
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
     mutationFn: (invitationId: string) =>
-      workspaceApiService.revokeInvitation(invitationId),
+      apiClient.invitations.revoke(invitationId),
     onSuccess: () => {
       toast.success("Invitation revoked successfully");
       queryClient.invalidateQueries({

@@ -15,12 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
   type NotificationPreferences,
   notificationPreferencesSchema,
 } from "@/schemas/notification-schemas";
-import { updateNotificationPreferences } from "@/services/notification-api";
 
 interface NotificationPreferencesFormProps {
   initialPreferences: NotificationPreferences;
@@ -47,7 +47,7 @@ export function NotificationPreferencesForm({
   const onSubmit = async (data: NotificationPreferences) => {
     setIsLoading(true);
     try {
-      await updateNotificationPreferences(data);
+      await apiClient.notifications.updatePreferences(data);
       toast.success("Notification preferences updated successfully");
     } catch (error) {
       toast.error("Failed to update preferences");

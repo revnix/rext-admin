@@ -33,8 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { webKnowledgeService } from "@/services/knowledge-api";
 import { useWebKnowledgeStore } from "@/stores/knowledge-store";
 import type { WebKnowledgeStatus, Workspace } from "@/types/workspace";
 import { AddUrlDialog } from "./add-url-dialog";
@@ -175,7 +175,7 @@ export function WebKnowledgeList({
     refetch,
   } = useQuery({
     queryKey: ["web-knowledge", workspaceId],
-    queryFn: () => webKnowledgeService.listForWorkspace(workspaceId),
+    queryFn: () => apiClient.knowledge.listWeb(workspaceId),
     staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!workspaceId,
   });
@@ -242,7 +242,7 @@ export function WebKnowledgeList({
         selectedItems.map((id) => {
           const item = items.find((i) => i.id === id);
           return item
-            ? webKnowledgeService.delete(item.workspace_id, item.id)
+            ? apiClient.knowledge.deleteWeb(item.workspace_id, item.id)
             : Promise.resolve();
         }),
       );

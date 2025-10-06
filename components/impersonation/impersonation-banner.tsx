@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { impersonationApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 
 /**
@@ -23,14 +23,14 @@ export function ImpersonationBanner() {
   // Check impersonation status
   const { data: status, isLoading } = useQuery({
     queryKey: ["impersonation-status"],
-    queryFn: () => impersonationApiService.getImpersonationStatus(),
+    queryFn: () => apiClient.impersonation.getStatus(),
     refetchInterval: 30000, // Refetch every 30 seconds
     staleTime: 20000, // Consider stale after 20 seconds
   });
 
   // Stop impersonation mutation
   const stopImpersonationMutation = useMutation({
-    mutationFn: () => impersonationApiService.stopImpersonation(),
+    mutationFn: () => apiClient.impersonation.stop(),
     onSuccess: (data) => {
       // Update tokens to original user
       setTokens(data.access_token, data.refresh_token);

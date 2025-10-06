@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { roleApiService, workspaceApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 
 const inviteFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -62,7 +62,7 @@ export function WorkspaceInviteDialog({
   // Fetch available roles
   const { data: rolesResponse, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["roles"],
-    queryFn: () => roleApiService.listRoles(),
+    queryFn: () => apiClient.roles.list(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -80,7 +80,7 @@ export function WorkspaceInviteDialog({
   // Create invitation mutation
   const createInvitationMutation = useMutation({
     mutationFn: (data: InviteFormValues) =>
-      workspaceApiService.createInvitation({
+      apiClient.invitations.create({
         workspace_id: workspaceId,
         email: data.email,
         role_id: data.role_id,

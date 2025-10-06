@@ -22,14 +22,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  cancelSubscription,
-  getMySubscription,
-  getSubscriptionHistory,
-  getSubscriptionPlans,
-  getTrialStatus,
-  getUsageStats,
-} from "@/services";
+import { apiClient } from "@/lib/api-client";
 import {
   formatLimit,
   isSubscriptionActive,
@@ -53,20 +46,20 @@ export default function SubscriptionPage() {
     error: subscriptionError,
   } = useQuery<UserSubscription>({
     queryKey: ["subscription"],
-    queryFn: getMySubscription,
+    queryFn: () => apiClient.subscriptions.getCurrentPlan(),
   });
 
   // Fetch usage stats
   const { data: usage, isLoading: usageLoading } = useQuery<UsageStats>({
     queryKey: ["usage"],
-    queryFn: getUsageStats,
+    queryFn: () => apiClient.subscriptions.getUsageStats(),
     enabled: !!subscription,
   });
 
   // Fetch trial status
   const { data: trialStatus } = useQuery<TrialStatus>({
     queryKey: ["trial-status"],
-    queryFn: getTrialStatus,
+    queryFn: () => apiClient.subscriptions.getTrialStatus(),
     enabled: !!subscription,
   });
 
@@ -75,7 +68,7 @@ export default function SubscriptionPage() {
     subscriptions: SubscriptionHistoryEntry[];
   }>({
     queryKey: ["subscription-history"],
-    queryFn: () => getSubscriptionHistory(10, 0),
+    queryFn: () => apiClient.subscriptions.getHistory(10, 0),
   });
 
   // Fetch available plans
@@ -83,14 +76,13 @@ export default function SubscriptionPage() {
     plans: SubscriptionPlan[];
   }>({
     queryKey: ["subscription-plans"],
-    queryFn: getSubscriptionPlans,
+    queryFn: apiClient.subscriptions.getPlans,
     enabled: showPlans,
   });
 
   // Cancel subscription mutation
   const cancelMutation = useMutation({
-    mutationFn: (reason: string) =>
-      cancelSubscription({ reason, cancel_immediately: false }),
+    mutationFn: (reason: string) => apiClient.subscriptions.cancel({ reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
       toast.success("Subscription cancelled", {

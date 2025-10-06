@@ -20,8 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { workspaceApiService } from "@/services";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
 import type { Workspace, WorkspaceListResponse } from "@/types/workspace";
@@ -49,7 +49,7 @@ export default function WorkspacePage() {
     refetch,
   } = useQuery({
     queryKey: ["workspaces"],
-    queryFn: () => workspaceApiService.listWorkspaces(),
+    queryFn: () => apiClient.workspaces.list(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

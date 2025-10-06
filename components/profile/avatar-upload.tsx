@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { deleteAvatar, uploadAvatar } from "@/services/profile-api";
+import { apiClient } from "@/lib/api-client";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -23,7 +23,11 @@ export function AvatarUpload({
 
   // Upload mutation
   const uploadMutation = useMutation({
-    mutationFn: uploadAvatar,
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      return apiClient.profile.uploadAvatar(formData);
+    },
     onSuccess: () => {
       toast.success("Avatar uploaded successfully");
       queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -36,7 +40,7 @@ export function AvatarUpload({
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: deleteAvatar,
+    mutationFn: () => apiClient.profile.deleteAvatar(),
     onSuccess: () => {
       toast.success("Avatar deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["profile"] });

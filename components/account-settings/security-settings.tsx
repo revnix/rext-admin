@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { Clock, LogIn, Mail, Shield } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getProfile } from "@/services/profile-api";
+import { apiClient } from "@/lib/api-client";
 
 export function SecuritySettings() {
   const {
@@ -14,7 +14,7 @@ export function SecuritySettings() {
     error,
   } = useQuery({
     queryKey: ["profile"],
-    queryFn: getProfile,
+    queryFn: () => apiClient.profile.get(),
   });
 
   if (isLoading) {

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiClient } from "@/lib/api-client";
 import {
   aggregateCounts,
   applyFilters,
@@ -17,11 +18,6 @@ import {
   findKnowledgeDuplicates,
 } from "@/lib/knowledge-duplicates";
 import { cn } from "@/lib/utils";
-import {
-  fileKnowledgeService,
-  textKnowledgeService,
-  webKnowledgeService,
-} from "@/services/knowledge-api";
 import {
   useFileKnowledgeStore,
   useKnowledgeFilterStore,
@@ -100,21 +96,21 @@ export function UnifiedKnowledgeList({
   // Data queries
   const webQuery = useQuery({
     queryKey: ["web-knowledge", workspaceId],
-    queryFn: () => webKnowledgeService.listForWorkspace(workspaceId),
+    queryFn: () => apiClient.knowledge.listWeb(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
   });
 
   const fileQuery = useQuery({
     queryKey: ["file-knowledge", workspaceId],
-    queryFn: () => fileKnowledgeService.listForWorkspace(workspaceId),
+    queryFn: () => apiClient.knowledge.listFiles(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
   });
 
   const textQuery = useQuery({
     queryKey: ["text-knowledge", workspaceId],
-    queryFn: () => textKnowledgeService.listForWorkspace(workspaceId),
+    queryFn: () => apiClient.knowledge.listText(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
   });

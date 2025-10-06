@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { workspaceApiService } from "@/services";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Workspace } from "@/types/workspace";
 
@@ -82,8 +82,8 @@ export function WorkspaceProvider({
       );
       // Use appropriate method based on identifier type
       return isUuid
-        ? workspaceApiService.getWorkspace(workspaceId)
-        : workspaceApiService.getWorkspaceBySlug(workspaceId);
+        ? apiClient.workspaces.get(workspaceId)
+        : apiClient.workspaces.getBySlug(workspaceId);
     },
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { contentApiService } from "@/services/content-api";
+import { apiClient } from "@/lib/api-client";
 import type {
   CreateContentRequest,
   UpdateContentRequest,
@@ -14,7 +14,7 @@ import type {
 export function useContent(workspaceId: string, status?: string) {
   return useQuery({
     queryKey: ["content", workspaceId, status],
-    queryFn: () => contentApiService.listContent(workspaceId, { status }),
+    queryFn: () => apiClient.content.list(workspaceId, { status }),
     enabled: !!workspaceId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -27,7 +27,7 @@ export function useContent(workspaceId: string, status?: string) {
 export function useContentDetail(workspaceId: string, contentId: string) {
   return useQuery({
     queryKey: ["content", workspaceId, contentId],
-    queryFn: () => contentApiService.getContent(workspaceId, contentId),
+    queryFn: () => apiClient.content.get(workspaceId, contentId),
     enabled: !!workspaceId && !!contentId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -47,7 +47,7 @@ export function useCreateContent() {
     }: {
       workspaceId: string;
       data: CreateContentRequest;
-    }) => contentApiService.createContent(workspaceId, data),
+    }) => apiClient.content.create(workspaceId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["content", variables.workspaceId],
@@ -75,7 +75,7 @@ export function useUpdateContent() {
       workspaceId: string;
       contentId: string;
       data: UpdateContentRequest;
-    }) => contentApiService.updateContent(workspaceId, contentId, data),
+    }) => apiClient.content.update(workspaceId, contentId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["content", variables.workspaceId],
@@ -104,7 +104,7 @@ export function useDeleteContent() {
     }: {
       workspaceId: string;
       contentId: string;
-    }) => contentApiService.deleteContent(workspaceId, contentId),
+    }) => apiClient.content.delete(workspaceId, contentId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["content", variables.workspaceId],

@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { roleApiService, workspaceApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 
 const changeRoleFormSchema = z.object({
   role_id: z.string().min(1, "Please select a role"),
@@ -75,7 +75,7 @@ export function WorkspaceChangeRoleDialog({
   // Fetch available roles
   const { data: rolesResponse, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["roles"],
-    queryFn: () => roleApiService.listRoles(),
+    queryFn: () => apiClient.roles.list(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -92,14 +92,14 @@ export function WorkspaceChangeRoleDialog({
   const changeRoleMutation = useMutation({
     mutationFn: (data: ChangeRoleFormValues) => {
       if (!member) throw new Error("Member not found");
-      return workspaceApiService.changeMemberRole(
+      return apiClient.members.changeRole(
         member.workspace_id,
         member.id,
         data.role_id,
       );
     },
-    onSuccess: (data) => {
-      toast.success(`Role updated to ${data.role_name}`);
+    onSuccess: () => {
+      toast.success("Role updated successfully");
       queryClient.invalidateQueries({
         queryKey: ["workspace-members", member?.workspace_id],
       });

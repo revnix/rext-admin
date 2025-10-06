@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { impersonationApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 
 interface User {
@@ -49,8 +49,7 @@ export function ImpersonationStartDialog({
 
   // Start impersonation mutation
   const startImpersonationMutation = useMutation({
-    mutationFn: (userId: string) =>
-      impersonationApiService.startImpersonation(userId),
+    mutationFn: (userId: string) => apiClient.impersonation.start(userId),
     onSuccess: (data) => {
       // Update tokens to impersonated user
       setTokens(data.access_token, data.refresh_token);

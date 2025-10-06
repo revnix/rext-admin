@@ -7,7 +7,6 @@ import {
 import { logger } from "@/lib/logger";
 import { InputSanitizer } from "@/lib/sanitization";
 import { generateSessionId } from "@/lib/session-storage";
-import { transformTopicsForBackend } from "@/lib/transformation-utils";
 import type {
   BackendConfig,
   BackendError,
@@ -214,19 +213,8 @@ export class BackendService {
     topics: GeneratedTopic[],
     workspaceId: string,
   ): Promise<SaveTopicResponse> {
-    this.validateConfig();
-
-    const requestId = generateRequestId();
-
-    // Transform GeneratedTopic[] to backend SaveTopicRequest format and add workspace_id
-    const payload = transformTopicsForBackend(topics, workspaceId);
-
-    return this.executeSingleGenericRequest(
-      "/api/v1/topic/save-topic",
-      payload,
-      requestId,
-      "POST",
-    ) as Promise<SaveTopicResponse>;
+    const { apiClient } = await import("@/lib/api-client");
+    return apiClient.topics.save(topics, workspaceId);
   }
 
   /**
@@ -252,26 +240,12 @@ export class BackendService {
     message: string;
     topic_ids: string[];
   }> {
-    this.validateConfig();
-
     if (!topicIds || topicIds.length === 0) {
       throw new Error("No topic IDs provided for deletion");
     }
 
-    const requestId = generateRequestId();
-    const payload = { topic_ids: topicIds };
-
-    return this.executeSingleGenericRequest(
-      `/api/v1/topic/delete-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
-      payload,
-      requestId,
-      "DELETE",
-    ) as Promise<{
-      success: boolean;
-      deleted_count: number;
-      message: string;
-      topic_ids: string[];
-    }>;
+    const { apiClient } = await import("@/lib/api-client");
+    return apiClient.topics.delete(topicIds, workspaceId);
   }
 
   /**
@@ -315,28 +289,8 @@ export class BackendService {
     approved?: boolean;
     message: string;
   }> {
-    this.validateConfig();
-
-    const requestId = generateRequestId();
-    const payload = {
-      topic_id: topicId,
-      ...updateData,
-    };
-
-    return this.executeSingleGenericRequest(
-      `/api/v1/topic/update-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
-      payload,
-      requestId,
-      "PUT",
-    ) as Promise<{
-      success: boolean;
-      updated_count: number;
-      topic_id: string;
-      topic_title: string;
-      updated_fields: string[];
-      approved?: boolean;
-      message: string;
-    }>;
+    const { apiClient } = await import("@/lib/api-client");
+    return apiClient.topics.update(topicId, updateData, workspaceId);
   }
 
   /**
@@ -345,28 +299,8 @@ export class BackendService {
    * @returns Promise<GeneratedTopic[]> - Array of topics from backend
    */
   async getTopics(workspaceId: string): Promise<GeneratedTopic[]> {
-    this.validateConfig();
-
-    const requestId = generateRequestId();
-    const { authenticatedFetch } = await import("@/lib/auth-utils");
-
-    const response = await authenticatedFetch(
-      `${this.config.baseUrl}/api/v1/topic/get-topics?workspace_id=${encodeURIComponent(workspaceId)}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Request-ID": requestId,
-        },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch topics: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.data?.topics || [];
+    const { apiClient } = await import("@/lib/api-client");
+    return apiClient.topics.list(workspaceId);
   }
 
   /**
@@ -380,40 +314,8 @@ export class BackendService {
     topicId: string,
     workspaceId: string,
   ): Promise<GeneratedTopic | null> {
-    this.validateConfig();
-
-    const requestId = generateRequestId();
-    const { authenticatedFetch } = await import("@/lib/auth-utils");
-
-    try {
-      const response = await authenticatedFetch(
-        `${this.config.baseUrl}/api/v1/topic/get-topic/${topicId}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Request-ID": requestId,
-          },
-        },
-      );
-
-      if (response.status === 404) {
-        return null;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch topic: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || data;
-    } catch (error) {
-      // Return null for 404 errors (topic not found)
-      if (error instanceof Error && error.message.includes("404")) {
-        return null;
-      }
-      throw error;
-    }
+    const { apiClient } = await import("@/lib/api-client");
+    return apiClient.topics.get(topicId, workspaceId);
   }
 
   /**
@@ -824,235 +726,6 @@ export class BackendService {
     });
 
     return validatedResponse;
-  }
-
-  /**
-   * Execute request without retry logic for generic payloads
-   */
-  private async executeSingleGenericRequest<T, R>(
-    endpoint: string,
-    payload: T,
-    requestId: string,
-    method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
-  ): Promise<R> {
-    try {
-      this.log.debug("Single generic request", {
-        requestId,
-        endpoint,
-      });
-
-      const response = await this.makeGenericRequest(
-        endpoint,
-        payload,
-        requestId,
-        method,
-      );
-      const result = await this.validateGenericResponse<R>(response);
-
-      // Success - clean up any stored controllers
-      this.activeRequests.delete(requestId);
-      return result;
-    } catch (error) {
-      const classifiedError = classifyError(error, requestId, 1);
-      this.logError(`Generic request failed for ${requestId}`, classifiedError);
-
-      // Clean up and throw the error
-      this.activeRequests.delete(requestId);
-      throw classifiedError;
-    }
-  }
-
-  /**
-   * Make HTTP request for generic payloads
-   */
-  private async makeGenericRequest<T>(
-    endpoint: string,
-    payload: T,
-    requestId: string,
-    method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
-  ): Promise<Response> {
-    const url = `${this.config.baseUrl}${endpoint}`;
-    const controller = new AbortController();
-
-    // Store controller for potential cancellation
-    this.activeRequests.set(requestId, controller);
-
-    // Set up timeout
-    this.log.debug("Setting up request timeout", {
-      requestId,
-      endpoint,
-      timeout_ms: this.config.timeout,
-      timeout_minutes: Math.round((this.config.timeout / 60000) * 10) / 10,
-    });
-
-    const timeoutId = setTimeout(() => {
-      this.log.warn("Request timed out", {
-        requestId,
-        endpoint,
-        timeout_ms: this.config.timeout,
-      });
-      controller.abort();
-      this.activeRequests.delete(requestId);
-    }, this.config.timeout);
-
-    try {
-      const { authenticatedFetch } = await import("@/lib/auth-utils");
-
-      const response = await authenticatedFetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Request-ID": requestId,
-        },
-        ...(method !== "GET" && { body: JSON.stringify(payload) }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      this.activeRequests.delete(requestId);
-      throw error;
-    }
-  }
-
-  /**
-   * Validate generic backend response and transform external API format
-   */
-  private async validateGenericResponse<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error");
-
-      // Try to parse error text as JSON to get structured error
-      let errorData: unknown = null;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        // If not JSON, use the text as-is
-      }
-
-      // Create a structured error with status code
-      interface ErrorData {
-        error?: { message?: string };
-        message?: string;
-      }
-      const parsedError = errorData as ErrorData;
-      const error = new Error(
-        parsedError?.error?.message ||
-          parsedError?.message ||
-          `Backend API error: ${response.status} ${response.statusText}`,
-      ) as Error & { statusCode?: number; context?: unknown };
-
-      error.statusCode = response.status;
-      error.context = errorData;
-
-      throw error;
-    }
-
-    const result = await response.json();
-
-    // Handle new consistent format with error responses: { success: false, error: {...}, meta: {...} }
-    if (
-      result &&
-      typeof result === "object" &&
-      "success" in result &&
-      result.success === false &&
-      "error" in result
-    ) {
-      // This is an error response in the new format
-      const errorInfo = result.error || {};
-
-      // Create a structured error with the proper status code
-      const error = new Error(
-        errorInfo.message || "Failed to save topics",
-      ) as Error & { statusCode?: number; context?: unknown };
-
-      error.statusCode = errorInfo.status_code || response.status;
-      error.context = {
-        ...errorInfo.context,
-        errorCode: errorInfo.code,
-        errorMessage: errorInfo.message,
-        severity: errorInfo.severity,
-      };
-
-      throw error;
-    }
-
-    // Transform external API response format to internal SaveTopicResponse format
-
-    // Handle new consistent format: { success: true, data: {...}, meta: {...} }
-    if (
-      result &&
-      typeof result === "object" &&
-      "success" in result &&
-      "data" in result
-    ) {
-      const isSuccess = result.success === true;
-      const data = result.data || {};
-
-      // Transform to internal format
-      const transformedResult = {
-        success: isSuccess,
-        saved_count: data.saved_count || 0,
-        message:
-          data.message ||
-          (isSuccess ? "Topics saved successfully" : "Failed to save topics"),
-        saved_topic_ids: data.saved_topic_ids || [],
-        total_requested: data.total_requested || 0,
-        // Ensure all fields are available for proper response handling
-        successful_saves: data.saved_count || 0,
-        failed_saves: Math.max(
-          0,
-          (data.total_requested || 0) - (data.saved_count || 0),
-        ),
-        request_id: data.request_id || "unknown",
-      };
-
-      this.log.debug("Transformed new API response format", {
-        original: result,
-        transformed: transformedResult,
-      });
-
-      return transformedResult as T;
-    }
-
-    // Handle legacy format: { status: "success", message: "..." }
-    if (
-      result &&
-      typeof result === "object" &&
-      "status" in result &&
-      "message" in result
-    ) {
-      const isSuccess = result.status === "success";
-
-      // Extract saved count from message like "2 topics saved successfully."
-      let savedCount = 0;
-      if (isSuccess && result.message && typeof result.message === "string") {
-        const match = result.message.match(/(\d+)\s+topics?\s+saved/i);
-        if (match) {
-          savedCount = parseInt(match[1], 10);
-        }
-      }
-
-      // Transform to internal format
-      const transformedResult = {
-        success: isSuccess,
-        saved_count: savedCount,
-        message:
-          result.message ||
-          (isSuccess ? "Topics saved successfully" : "Failed to save topics"),
-      };
-
-      this.log.debug("Transformed legacy API response", {
-        original: result,
-        transformed: transformedResult,
-      });
-
-      return transformedResult as T;
-    }
-
-    return result as T;
   }
 
   /**

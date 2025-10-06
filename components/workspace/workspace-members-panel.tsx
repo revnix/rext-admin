@@ -29,7 +29,7 @@ import { WorkspaceBulkInviteDialog } from "@/components/workspace/workspace-bulk
 import { WorkspaceChangeRoleDialog } from "@/components/workspace/workspace-change-role-dialog";
 import { WorkspaceInviteDialog } from "@/components/workspace/workspace-invite-dialog";
 import { WorkspaceRemoveMemberDialog } from "@/components/workspace/workspace-remove-member-dialog";
-import { workspaceApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceMembersPanelProps {
@@ -105,7 +105,7 @@ export function WorkspaceMembersPanel({
     refetch,
   } = useQuery({
     queryKey: ["workspace-members", workspace.id],
-    queryFn: () => workspaceApiService.getWorkspaceMembers(workspace.id),
+    queryFn: () => apiClient.members.list(workspace.id),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 

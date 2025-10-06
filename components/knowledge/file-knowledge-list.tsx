@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fileKnowledgeService } from "@/services/knowledge-api";
+import { apiClient } from "@/lib/api-client";
 import { useFileKnowledgeStore } from "@/stores/knowledge-store";
 import type { FileKnowledgeStatus, Workspace } from "@/types/workspace";
 import { ExportDialog } from "./export-dialog";
@@ -146,8 +146,8 @@ export function FileKnowledgeList({
     queryKey: ["fileKnowledge", workspaceId],
     queryFn: () =>
       workspaceId
-        ? fileKnowledgeService.listForWorkspace(workspaceId)
-        : fileKnowledgeService.list(),
+        ? apiClient.knowledge.listFiles(workspaceId)
+        : apiClient.knowledge.listFiles(workspaceId),
     staleTime: 30000,
     enabled: !!workspaceId,
   });
@@ -200,7 +200,7 @@ export function FileKnowledgeList({
       const deletePromises = selectedItems.map((fileId) => {
         const file = items.find((item) => item.id === fileId);
         if (file) {
-          return fileKnowledgeService.delete(file.workspace_id, fileId);
+          return apiClient.knowledge.deleteFile(file.workspace_id, fileId);
         }
         return Promise.resolve();
       });

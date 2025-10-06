@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { fileKnowledgeService } from "@/services/knowledge-api";
 import { useFileKnowledgeStore } from "@/stores/knowledge-store";
 import type { FileKnowledge } from "@/types/workspace";
 
@@ -113,10 +113,9 @@ export function FileUploadZone({
           );
         }, 200);
 
-        const result = await fileKnowledgeService.upload({
-          workspace_id: workspaceId,
-          file: uploadingFile.file,
-        });
+        const formData = new FormData();
+        formData.append("file", uploadingFile.file);
+        const result = await apiClient.knowledge.addFile(workspaceId, formData);
 
         clearInterval(progressInterval);
 

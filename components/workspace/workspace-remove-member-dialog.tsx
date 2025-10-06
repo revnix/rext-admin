@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { workspaceApiService } from "@/services";
+import { apiClient } from "@/lib/api-client";
 
 interface WorkspaceMember {
   id: string;
@@ -56,7 +56,7 @@ export function WorkspaceRemoveMemberDialog({
     }: {
       workspaceId: string;
       memberId: string;
-    }) => workspaceApiService.removeWorkspaceMember(workspaceId, memberId),
+    }) => apiClient.members.remove(workspaceId, memberId),
     onSuccess: (_, variables) => {
       toast.success("Member removed successfully");
       queryClient.invalidateQueries({

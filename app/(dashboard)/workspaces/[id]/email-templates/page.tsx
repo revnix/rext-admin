@@ -40,10 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmailTemplateEditor } from "@/components/workspace/email-template-editor";
-import {
-  type EmailTemplate,
-  emailTemplateAPI,
-} from "@/services/email-template-api";
+import { apiClient, type EmailTemplate } from "@/lib/api-client";
 
 const templateTypeLabels: Record<string, string> = {
   workspace_invitation: "Workspace Invitation",
@@ -72,14 +69,14 @@ export default function EmailTemplatesPage() {
     error,
   } = useQuery({
     queryKey: ["email-templates", workspaceId],
-    queryFn: () => emailTemplateAPI.listTemplates(workspaceId),
+    queryFn: () => apiClient.emailTemplates.list(workspaceId),
     enabled: !!workspaceId,
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (templateId: string) =>
-      emailTemplateAPI.deleteTemplate(templateId),
+      apiClient.emailTemplates.delete(templateId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["email-templates", workspaceId],
@@ -100,7 +97,7 @@ export default function EmailTemplatesPage() {
     }: {
       templateId: string;
       isActive: boolean;
-    }) => emailTemplateAPI.updateTemplate(templateId, { is_active: !isActive }),
+    }) => apiClient.emailTemplates.update(templateId, { is_active: !isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["email-templates", workspaceId],
@@ -165,7 +162,7 @@ export default function EmailTemplatesPage() {
         </Button>
       </div>
 
-      {templates && templates.length === 0 ? (
+      {templates?.templates?.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Mail className="h-12 w-12 text-muted-foreground" />
@@ -181,7 +178,7 @@ export default function EmailTemplatesPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {templates?.map((template) => (
+          {templates?.templates?.map((template) => (
             <Card key={template.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
