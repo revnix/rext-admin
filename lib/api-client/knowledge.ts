@@ -22,7 +22,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     listWeb: async (workspaceId: string) => {
       return client.request<WebKnowledge[]>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/web`,
+        `/api/v1/workspace/web_knowledge/all?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
         },
@@ -38,9 +38,12 @@ export function createKnowledgeNamespace(client: ApiClient) {
         url: string;
         title: string;
         created_at: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`, {
-        method: "GET",
-      });
+      }>(
+        `/api/v1/workspace/web_knowledge/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -48,11 +51,11 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     addWeb: async (workspaceId: string, url: string, title?: string) => {
       return client.request<WebKnowledge>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/web`,
+        `/api/v1/workspace/web_knowledge/add?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, title }),
+          body: JSON.stringify({ workspace_id: workspaceId, url, title }),
         },
       );
     },
@@ -65,11 +68,14 @@ export function createKnowledgeNamespace(client: ApiClient) {
         id: string;
         url: string;
         title: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-      });
+      }>(
+        `/api/v1/workspace/web_knowledge/update/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        },
+      );
     },
 
     /**
@@ -77,7 +83,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     deleteWeb: async (workspaceId: string, webId: string) => {
       return client.request<void>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`,
+        `/api/v1/workspace/web_knowledge/delete/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "DELETE",
         },
@@ -93,7 +99,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     listFiles: async (workspaceId: string) => {
       return client.request<FileKnowledge[]>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/files`,
+        `/api/v1/workspace/file/all?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
         },
@@ -109,9 +115,12 @@ export function createKnowledgeNamespace(client: ApiClient) {
         filename: string;
         file_path: string;
         created_at: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/files/${fileId}`, {
-        method: "GET",
-      });
+      }>(
+        `/api/v1/workspace/file/${fileId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -119,7 +128,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     addFile: async (workspaceId: string, file: FormData) => {
       return client.request<FileKnowledge>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/files`,
+        `/api/v1/workspace/file/add?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           body: file, // FormData handles its own content-type
@@ -132,7 +141,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     deleteFile: async (workspaceId: string, fileId: string) => {
       return client.request<void>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/files/${fileId}`,
+        `/api/v1/workspace/file/delete/${fileId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "DELETE",
         },
@@ -148,7 +157,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     listText: async (workspaceId: string) => {
       return client.request<TextKnowledge[]>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/text`,
+        `/api/v1/workspace/text/all?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
         },
@@ -164,23 +173,23 @@ export function createKnowledgeNamespace(client: ApiClient) {
         title: string;
         content: string;
         created_at: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`, {
-        method: "GET",
-      });
+      }>(
+        `/api/v1/workspace/text/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
      * Add text knowledge
      */
-    addText: async (workspaceId: string, title: string, content: string) => {
-      return client.request<TextKnowledge>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/text`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content }),
-        },
-      );
+    addText: async (workspaceId: string, _title: string, content: string) => {
+      return client.request<TextKnowledge>(`/api/v1/workspace/text/add-text`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspace_id: workspaceId, content }),
+      });
     },
 
     /**
@@ -195,11 +204,14 @@ export function createKnowledgeNamespace(client: ApiClient) {
         id: string;
         title: string;
         content: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      }>(
+        `/api/v1/workspace/text/update/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
     },
 
     /**
@@ -207,7 +219,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
      */
     deleteText: async (workspaceId: string, textId: string) => {
       return client.request<void>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`,
+        `/api/v1/workspace/text/delete/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "DELETE",
         },

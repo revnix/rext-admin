@@ -93,8 +93,10 @@ export function createWorkspacesNamespace(client: ApiClient) {
 
     /**
      * Duplicate workspace
+     * WARNING: Backend endpoint does not exist. Needs implementation.
      */
     duplicate: async (sourceWorkspaceId: string) => {
+      // TODO: Backend needs to implement workspace duplication endpoint
       return client.request<WorkspaceResponse>(
         `/api/v1/workspaces/${sourceWorkspaceId}/duplicate`,
         {
@@ -105,8 +107,12 @@ export function createWorkspacesNamespace(client: ApiClient) {
 
     /**
      * Refresh brand voice for workspace
+     * Note: Backend only supports UPDATE, not automatic refresh from URL scraping
      */
     refreshBrandVoice: async (workspaceId: string) => {
+      // This endpoint might not exist - backend only has PUT /workspace/brand-voice
+      // which requires brand voice data in the body
+      // Keeping for backwards compatibility but may need backend implementation
       return client.request<{
         success: boolean;
         message: string;

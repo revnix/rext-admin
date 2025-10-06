@@ -6,6 +6,19 @@
  */
 
 /**
+ * Valid workspace page segments
+ */
+export const WORKSPACE_PAGES = [
+  "topics",
+  "content",
+  "analytics",
+  "users",
+  "settings",
+] as const;
+
+export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
+
+/**
  * Workspace-scoped route generators
  * Now using workspace slug for human-readable URLs
  */
@@ -98,6 +111,57 @@ export function extractWorkspaceId(pathname: string): string | null {
  */
 export function isWorkspacePath(pathname: string): boolean {
   return pathname.startsWith("/w/");
+}
+
+/**
+ * Extract workspace page segment from pathname
+ *
+ * @param pathname - The URL pathname to parse
+ * @returns The page segment if found and valid, null otherwise
+ *
+ * @example
+ * extractWorkspacePageSegment('/w/ws-123/topics') // 'topics'
+ * extractWorkspacePageSegment('/w/ws-123/content/123') // 'content'
+ * extractWorkspacePageSegment('/w/ws-123') // null
+ * extractWorkspacePageSegment('/workspaces') // null
+ */
+export function extractWorkspacePageSegment(
+  pathname: string,
+): WorkspacePageSegment | null {
+  const match = pathname.match(/^\/w\/[^/]+\/([^/?]+)/);
+  const segment = match ? match[1] : null;
+  return segment && WORKSPACE_PAGES.includes(segment as WorkspacePageSegment)
+    ? (segment as WorkspacePageSegment)
+    : null;
+}
+
+/**
+ * Build workspace path for a given page segment
+ *
+ * @param workspaceSlug - The workspace slug
+ * @param pageSegment - The page segment (topics, content, etc.)
+ * @returns The full workspace path
+ *
+ * @example
+ * buildWorkspacePath('my-workspace', 'topics') // '/w/my-workspace/topics'
+ * buildWorkspacePath('my-workspace', 'content') // '/w/my-workspace/content'
+ */
+export function buildWorkspacePath(
+  workspaceSlug: string,
+  pageSegment: WorkspacePageSegment,
+): string {
+  const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
+    topics: workspaceRoutes.topics,
+    content: workspaceRoutes.content,
+    analytics: workspaceRoutes.analytics,
+    users: workspaceRoutes.users,
+    settings: workspaceRoutes.settings,
+  };
+
+  const routeFn = routeMap[pageSegment];
+  return routeFn
+    ? routeFn(workspaceSlug)
+    : workspaceRoutes.topics(workspaceSlug);
 }
 
 /**

@@ -12,7 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { log } from "@/lib/logger";
+import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
 import { TopicsHeader } from "./TopicsHeader";
@@ -72,6 +74,7 @@ export const TopicsList = memo(function TopicsList({
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
 
   const router = useRouter();
+  const currentWorkspace = useCurrentWorkspace();
 
   // Handler for topic selection
   const handleTopicSelect = useCallback(
@@ -126,7 +129,13 @@ export const TopicsList = memo(function TopicsList({
     (topicId: string) => {
       try {
         log.info(`Navigating to content creation for topic ${topicId}`);
-        router.push(`/content/create?topicId=${topicId}`);
+        const workspaceSlug = currentWorkspace?.slug;
+        if (!workspaceSlug) {
+          throw new Error("No workspace selected");
+        }
+        router.push(
+          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topicId}`,
+        );
         toast.success("Navigating to content creation...");
       } catch (error) {
         log.error(
@@ -136,7 +145,7 @@ export const TopicsList = memo(function TopicsList({
         toast.error("Failed to navigate to content creation");
       }
     },
-    [router],
+    [router, currentWorkspace],
   );
 
   const handleViewDetails = useCallback(

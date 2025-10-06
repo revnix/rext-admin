@@ -58,6 +58,9 @@ interface WorkspaceState {
   // Recently used workspaces for quick access
   recentWorkspaces: string[]; // workspace IDs
 
+  // Last workspace page path for preserving navigation on workspace switch
+  lastWorkspacePath: string | null; // e.g., 'topics', 'content', 'analytics'
+
   // Workspace settings
   workspaceSettings: Record<string, WorkspaceSettings>; // keyed by workspace ID
 
@@ -140,6 +143,12 @@ interface WorkspaceState {
   addToRecentWorkspaces: (workspaceId: string) => void;
   removeFromRecentWorkspaces: (workspaceId: string) => void;
   clearRecentWorkspaces: () => void;
+
+  // ============================================================================
+  // WORKSPACE PATH TRACKING ACTIONS
+  // ============================================================================
+
+  setLastWorkspacePath: (path: string | null) => void;
 
   // ============================================================================
   // OPTIMISTIC UPDATE ACTIONS
@@ -225,6 +234,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         // Recent workspaces
         recentWorkspaces: [],
+
+        // Last workspace path
+        lastWorkspacePath: null,
 
         // Workspace settings
         workspaceSettings: {},
@@ -486,6 +498,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         clearRecentWorkspaces: () => {
           set({ recentWorkspaces: [] });
+        },
+
+        // ============================================================================
+        // WORKSPACE PATH TRACKING ACTIONS
+        // ============================================================================
+
+        setLastWorkspacePath: (path) => {
+          set({ lastWorkspacePath: path });
         },
 
         // ============================================================================
@@ -874,7 +894,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         storage: createJSONStorage(() => getStorage()),
         // Only persist UI preferences, not server data
         partialize: (state) => ({
+          currentWorkspace: state.currentWorkspace,
           recentWorkspaces: state.recentWorkspaces,
+          lastWorkspacePath: state.lastWorkspacePath,
           workspaceSettings: state.workspaceSettings,
           _hasHydrated: state._hasHydrated,
         }),

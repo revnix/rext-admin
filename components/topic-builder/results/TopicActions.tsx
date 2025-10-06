@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { classifyError } from "@/lib/error-utils";
 import { log } from "@/lib/logger";
+import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { BackendError } from "@/types/backend";
@@ -333,7 +334,13 @@ export function TopicActions({
 
       try {
         log.info(`Navigating to content creation for topic ${topic.id}`);
-        router.push(`/content/create?topicId=${topic.id}`);
+        const workspaceSlug = currentWorkspace?.slug;
+        if (!workspaceSlug) {
+          throw new Error("No workspace selected");
+        }
+        router.push(
+          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topic.id}`,
+        );
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {
         log.error(

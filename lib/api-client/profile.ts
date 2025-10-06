@@ -27,7 +27,7 @@ export function createProfileNamespace(client: ApiClient) {
         timezone?: string;
         created_at: string;
         updated_at: string;
-      }>("/api/v1/profile", {
+      }>("/api/v1/user/profile", {
         method: "GET",
       });
     },
@@ -54,8 +54,8 @@ export function createProfileNamespace(client: ApiClient) {
         bio?: string;
         language?: string;
         timezone?: string;
-      }>("/api/v1/profile", {
-        method: "PUT",
+      }>("/api/v1/user/profile", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -72,7 +72,7 @@ export function createProfileNamespace(client: ApiClient) {
       return client.request<{
         success: boolean;
         message: string;
-      }>("/api/v1/profile/password", {
+      }>("/api/v1/user/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -85,7 +85,7 @@ export function createProfileNamespace(client: ApiClient) {
     uploadAvatar: async (file: FormData) => {
       return client.request<{
         avatar_url: string;
-      }>("/api/v1/profile/avatar", {
+      }>("/api/v1/user/avatar/upload", {
         method: "POST",
         body: file, // FormData handles its own content-type
       });
@@ -95,7 +95,7 @@ export function createProfileNamespace(client: ApiClient) {
      * Delete avatar
      */
     deleteAvatar: async () => {
-      return client.request<void>("/api/v1/profile/avatar", {
+      return client.request<void>("/api/v1/user/avatar", {
         method: "DELETE",
       });
     },

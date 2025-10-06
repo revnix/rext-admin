@@ -59,10 +59,7 @@ export function createContentNamespace(client: ApiClient) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...data,
-            workspace_id: workspaceId,
-          }),
+          body: JSON.stringify(data),
         },
       );
     },

@@ -19,7 +19,7 @@ export function createNotificationsNamespace(client: ApiClient) {
      */
     getPreferences: async () => {
       return client.request<NotificationPreferences>(
-        "/api/v1/settings/notifications",
+        "/api/v1/user/preferences/notifications",
         {
           method: "GET",
         },
@@ -33,9 +33,9 @@ export function createNotificationsNamespace(client: ApiClient) {
       preferences: Partial<NotificationPreferences>,
     ) => {
       return client.request<NotificationPreferences>(
-        "/api/v1/settings/notifications",
+        "/api/v1/user/preferences/notifications",
         {
-          method: "PUT",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(preferences),
         },
@@ -65,7 +65,7 @@ export function createSessionsNamespace(client: ApiClient) {
           created_at: string;
           is_current: boolean;
         }>;
-      }>("/api/v1/settings/sessions", {
+      }>("/api/v1/user/sessions", {
         method: "GET",
       });
     },
@@ -77,7 +77,7 @@ export function createSessionsNamespace(client: ApiClient) {
       return client.request<{
         success: boolean;
         message: string;
-      }>(`/api/v1/settings/sessions/${sessionId}`, {
+      }>(`/api/v1/user/sessions/${sessionId}`, {
         method: "DELETE",
       });
     },
@@ -90,8 +90,8 @@ export function createSessionsNamespace(client: ApiClient) {
         success: boolean;
         message: string;
         revoked_count: number;
-      }>("/api/v1/settings/sessions/revoke-all", {
-        method: "POST",
+      }>("/api/v1/user/sessions", {
+        method: "DELETE",
       });
     },
   };
@@ -100,20 +100,26 @@ export function createSessionsNamespace(client: ApiClient) {
 // ============================================================================
 // SECURITY
 // ============================================================================
+// NOTE: These endpoints are not currently implemented in the backend
+// Backend has /api/v1/security/* endpoints that are admin-only for monitoring
+// User-facing 2FA and security settings endpoints need to be implemented
 
 export function createSecurityNamespace(client: ApiClient) {
   return {
     /**
      * Get security stats
+     * WARNING: Backend endpoint does not exist. Needs implementation.
      */
     getStats: async () => {
-      return client.request<SecurityStats>("/api/v1/settings/security/stats", {
+      // TODO: Backend needs to implement /api/v1/user/security/stats
+      return client.request<SecurityStats>("/api/v1/user/security/stats", {
         method: "GET",
       });
     },
 
     /**
      * Get login history
+     * WARNING: Backend endpoint does not exist. Needs implementation.
      */
     getLoginHistory: async (options?: { limit?: number; offset?: number }) => {
       const params = new URLSearchParams();
@@ -121,7 +127,8 @@ export function createSecurityNamespace(client: ApiClient) {
       if (options?.offset) params.append("offset", options.offset.toString());
 
       const queryString = params.toString();
-      const endpoint = `/api/v1/settings/security/login-history${queryString ? `?${queryString}` : ""}`;
+      // TODO: Backend needs to implement /api/v1/user/security/login-history
+      const endpoint = `/api/v1/user/security/login-history${queryString ? `?${queryString}` : ""}`;
 
       return client.request<{
         history: Array<{
@@ -141,25 +148,29 @@ export function createSecurityNamespace(client: ApiClient) {
 
     /**
      * Enable two-factor authentication
+     * WARNING: Backend endpoint does not exist. Needs implementation.
      */
     enableTwoFactor: async () => {
+      // TODO: Backend needs to implement /api/v1/user/security/2fa/enable
       return client.request<{
         secret: string;
         qr_code: string;
         backup_codes: string[];
-      }>("/api/v1/settings/security/2fa/enable", {
+      }>("/api/v1/user/security/2fa/enable", {
         method: "POST",
       });
     },
 
     /**
      * Verify and confirm two-factor authentication
+     * WARNING: Backend endpoint does not exist. Needs implementation.
      */
     verifyTwoFactor: async (code: string) => {
+      // TODO: Backend needs to implement /api/v1/user/security/2fa/verify
       return client.request<{
         success: boolean;
         message: string;
-      }>("/api/v1/settings/security/2fa/verify", {
+      }>("/api/v1/user/security/2fa/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
@@ -168,12 +179,14 @@ export function createSecurityNamespace(client: ApiClient) {
 
     /**
      * Disable two-factor authentication
+     * WARNING: Backend endpoint does not exist. Needs implementation.
      */
     disableTwoFactor: async (password: string) => {
+      // TODO: Backend needs to implement /api/v1/user/security/2fa/disable
       return client.request<{
         success: boolean;
         message: string;
-      }>("/api/v1/settings/security/2fa/disable", {
+      }>("/api/v1/user/security/2fa/disable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),

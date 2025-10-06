@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building2, ChevronsUpDown, Clock, Plus } from "lucide-react";
+import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 import {
@@ -12,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -23,27 +22,26 @@ import {
 } from "@/components/ui/sidebar";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
-import {
-  useRecentWorkspaces,
-  useWorkspaceStore,
-} from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Workspace } from "@/types/workspace";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
   const setWorkspaceList = useWorkspaceStore((state) => state.setWorkspaceList);
-  const addToRecentWorkspaces = useWorkspaceStore(
-    (state) => state.addToRecentWorkspaces,
+  const setLastWorkspacePath = useWorkspaceStore(
+    (state) => state.setLastWorkspacePath,
   );
-
-  // Get recent workspaces for quick access
-  const recentWorkspaces = useRecentWorkspaces();
+  const lastWorkspacePath = useWorkspaceStore(
+    (state) => state.lastWorkspacePath,
+  );
 
   // Fetch all workspaces for the switcher
   const { data: workspaceListResponse, isLoading } = useQuery({
@@ -54,12 +52,6 @@ export function WorkspaceSwitcher() {
 
   const workspaces = workspaceListResponse?.workspaces || [];
 
-  // Separate recent workspaces from remaining workspaces to avoid duplicates
-  const recentWorkspaceIds = new Set(recentWorkspaces.map((ws) => ws.id));
-  const remainingWorkspaces = workspaces.filter(
-    (workspace) => !recentWorkspaceIds.has(workspace.id),
-  );
-
   // Update local store when API data changes
   React.useEffect(() => {
     if (workspaces.length > 0) {
@@ -67,10 +59,50 @@ export function WorkspaceSwitcher() {
     }
   }, [workspaces, setWorkspaceList]);
 
+  // Track current workspace path for preserving navigation
+  React.useEffect(() => {
+    const currentPageSegment = extractWorkspacePageSegment(pathname);
+    if (currentPageSegment) {
+      setLastWorkspacePath(currentPageSegment);
+    }
+  }, [pathname, setLastWorkspacePath]);
+
   const handleWorkspaceSelect = (workspace: Workspace) => {
     setCurrentWorkspace(workspace);
-    addToRecentWorkspaces(workspace.id);
-    router.push(`/w/${workspace.slug}/topics`);
+
+    // Extract current page segment from pathname
+    const currentPageSegment = extractWorkspacePageSegment(pathname);
+
+    // Determine target path: preserve current page or use last visited page or default to topics
+    let targetPageSegment = currentPageSegment || null;
+
+    // If no current page, try to use last visited path if it's a valid page segment
+    if (!targetPageSegment && lastWorkspacePath) {
+      type ValidSegment =
+        | "topics"
+        | "content"
+        | "analytics"
+        | "users"
+        | "settings";
+      const validSegments: readonly ValidSegment[] = [
+        "topics",
+        "content",
+        "analytics",
+        "users",
+        "settings",
+      ];
+      if (validSegments.includes(lastWorkspacePath as ValidSegment)) {
+        targetPageSegment = lastWorkspacePath as ValidSegment;
+      }
+    }
+
+    // Default to topics if still no valid segment
+    const finalSegment = targetPageSegment || "topics";
+
+    // Build new path with same page in new workspace
+    const newPath = buildWorkspacePath(workspace.slug, finalSegment);
+
+    router.push(newPath);
   };
 
   // Use current workspace or first available workspace
@@ -80,10 +112,10 @@ export function WorkspaceSwitcher() {
   log.info("WorkspaceSwitcher Debug:", {
     isLoading,
     workspacesLength: workspaces.length,
-    recentWorkspacesCount: recentWorkspaces.length,
-    remainingWorkspacesCount: remainingWorkspaces.length,
     currentWorkspace: getWorkspaceDisplayTitle(currentWorkspace),
     displayWorkspace: getWorkspaceDisplayTitle(displayWorkspace),
+    currentPath: pathname,
+    lastWorkspacePath,
     hasData: !!workspaceListResponse,
   });
 
@@ -153,59 +185,40 @@ export function WorkspaceSwitcher() {
               </>
             ) : (
               <>
-                {/* Recent Workspaces Section */}
-                {recentWorkspaces.length > 0 && (
-                  <>
-                    <DropdownMenuLabel className="text-muted-foreground text-xs flex items-center gap-1">
-                      <Clock className="size-3" />
-                      Recent
-                    </DropdownMenuLabel>
-                    {recentWorkspaces.map((workspace, index) => (
-                      <DropdownMenuItem
-                        key={`recent-${workspace.id}`}
-                        onClick={() => handleWorkspaceSelect(workspace)}
-                        className="gap-2 p-2"
-                      >
-                        <div className="flex size-6 items-center justify-center rounded-md border">
-                          <Building2 className="size-3.5 shrink-0" />
-                        </div>
-                        {getWorkspaceDisplayTitle(
-                          workspace,
-                          "Untitled Workspace",
-                        )}
-                        <DropdownMenuShortcut>
-                          ⌘R{index + 1}
-                        </DropdownMenuShortcut>
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-
                 {/* All Workspaces Section */}
                 <DropdownMenuLabel className="text-muted-foreground text-xs">
-                  {recentWorkspaces.length > 0
-                    ? "All Workspaces"
-                    : "Workspaces"}
+                  Workspaces
                 </DropdownMenuLabel>
-                {(recentWorkspaces.length > 0
-                  ? remainingWorkspaces
-                  : workspaces
-                ).map((workspace, index) => (
-                  <DropdownMenuItem
-                    key={workspace.id}
-                    onClick={() => handleWorkspaceSelect(workspace)}
-                    className="gap-2 p-2"
-                  >
-                    <div className="flex size-6 items-center justify-center rounded-md border">
-                      <Building2 className="size-3.5 shrink-0" />
-                    </div>
-                    {getWorkspaceDisplayTitle(workspace, "Untitled Workspace")}
-                    <DropdownMenuShortcut>
-                      ⌘{recentWorkspaces.length + index + 1}
-                    </DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                ))}
+                {workspaces.map((workspace) => {
+                  const isActive = currentWorkspace?.id === workspace.id;
+                  return (
+                    <DropdownMenuItem
+                      key={workspace.id}
+                      onClick={() => handleWorkspaceSelect(workspace)}
+                      className="gap-2 p-2"
+                    >
+                      <div className="flex size-6 items-center justify-center rounded-md border">
+                        <Building2 className="size-3.5 shrink-0" />
+                      </div>
+                      <div className="flex flex-col flex-1 gap-0.5">
+                        <span className="text-sm">
+                          {getWorkspaceDisplayTitle(
+                            workspace,
+                            "Untitled Workspace",
+                          )}
+                        </span>
+                        {workspace.slug && (
+                          <span className="text-xs text-muted-foreground">
+                            {workspace.slug}
+                          </span>
+                        )}
+                      </div>
+                      {isActive && (
+                        <Check className="size-4 text-primary shrink-0" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
               </>
             )}
             <DropdownMenuSeparator />
