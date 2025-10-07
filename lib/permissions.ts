@@ -101,33 +101,33 @@ export const ROLES = {
  */
 export const PERMISSIONS = {
   // User management
-  USER_CREATE: "user:create",
-  USER_READ: "user:read",
-  USER_UPDATE: "user:update",
-  USER_DELETE: "user:delete",
+  USER_CREATE: "user.create",
+  USER_READ: "user.read",
+  USER_UPDATE: "user.update",
+  USER_DELETE: "user.delete",
 
   // Role management
-  ROLE_CREATE: "role:create",
-  ROLE_READ: "role:read",
-  ROLE_UPDATE: "role:update",
-  ROLE_DELETE: "role:delete",
+  ROLE_CREATE: "role.create",
+  ROLE_READ: "role.read",
+  ROLE_UPDATE: "role.update",
+  ROLE_DELETE: "role.delete",
 
   // Permission management
-  PERMISSION_CREATE: "permission:create",
-  PERMISSION_READ: "permission:read",
-  PERMISSION_UPDATE: "permission:update",
-  PERMISSION_DELETE: "permission:delete",
+  PERMISSION_CREATE: "permission.create",
+  PERMISSION_READ: "permission.read",
+  PERMISSION_UPDATE: "permission.update",
+  PERMISSION_DELETE: "permission.delete",
 
   // Workspace management
-  WORKSPACE_CREATE: "workspace:create",
-  WORKSPACE_READ: "workspace:read",
-  WORKSPACE_UPDATE: "workspace:update",
-  WORKSPACE_DELETE: "workspace:delete",
+  WORKSPACE_CREATE: "workspace.create",
+  WORKSPACE_READ: "workspace.read",
+  WORKSPACE_UPDATE: "workspace.update",
+  WORKSPACE_DELETE: "workspace.delete",
 
   // System administration
-  SYSTEM_SETTINGS_READ: "system:settings:read",
-  SYSTEM_SETTINGS_UPDATE: "system:settings:update",
-  SYSTEM_AUDIT_LOG_READ: "system:audit_log:read",
+  SYSTEM_SETTINGS_READ: "system.settings.read",
+  SYSTEM_SETTINGS_UPDATE: "system.settings.update",
+  SYSTEM_AUDIT_LOG_READ: "system.audit_log.read",
 } as const;
 
 /**

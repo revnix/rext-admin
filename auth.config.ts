@@ -101,9 +101,17 @@ export default {
             data.user.email,
             "Remember me:",
             rememberMe,
+            "Roles:",
+            data.user.roles,
           );
 
-          // Return user object with backend tokens
+          // Extract primary role (first in list) for role-based checks
+          const primaryRole =
+            data.user.roles && data.user.roles.length > 0
+              ? data.user.roles[0]
+              : undefined;
+
+          // Return user object with backend tokens, role, and permissions
           return {
             id: data.user.id,
             email: data.user.email,
@@ -111,6 +119,8 @@ export default {
             image: data.user.avatar_url || null,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
+            role: primaryRole,
+            permissions: data.user.permissions || [],
             rememberMe,
           };
         } catch (error) {
@@ -158,6 +168,8 @@ export default {
           token.picture = user.image;
           token.accessToken = user.accessToken;
           token.refreshToken = user.refreshToken;
+          token.role = user.role;
+          token.permissions = user.permissions;
           token.rememberMe = user.rememberMe;
           // Set expiry: 30 days if remember me, 24 hours otherwise
           const expiryDuration = user.rememberMe
@@ -170,6 +182,8 @@ export default {
             "Expires in:",
             expiryDuration / (24 * 60 * 60 * 1000),
             "days",
+            "Role:",
+            token.role,
           );
         } else {
           // For OAuth providers, register/login user with backend
@@ -228,6 +242,8 @@ export default {
               token.picture = user.image;
               token.accessToken = registerData.access_token;
               token.refreshToken = registerData.refresh_token;
+              token.role = registerData.user.roles?.[0];
+              token.permissions = registerData.user.permissions || [];
             } else {
               // User exists, use their data
               const loginResponseData = await loginResponse.json();
@@ -240,6 +256,8 @@ export default {
               token.picture = loginData.user.avatar_url || user.image;
               token.accessToken = loginData.access_token;
               token.refreshToken = loginData.refresh_token;
+              token.role = loginData.user.roles?.[0];
+              token.permissions = loginData.user.permissions || [];
             }
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
@@ -270,6 +288,8 @@ export default {
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
         session.user.refreshToken = token.refreshToken as string;
+        session.user.role = token.role as string | undefined;
+        session.user.permissions = token.permissions as string[] | undefined;
         session.error = token.error as string | undefined;
       }
       return session;

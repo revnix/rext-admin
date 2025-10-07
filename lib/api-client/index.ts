@@ -34,6 +34,7 @@ import {
 } from "./settings";
 import { createSubscriptionsNamespace } from "./subscriptions";
 import { createTopicsNamespace } from "./topics";
+import { createUsersNamespace } from "./users";
 import { createWorkspacesNamespace } from "./workspaces";
 
 // ============================================================================
@@ -63,6 +64,7 @@ function createApiClient() {
     account: createAccountNamespace(client),
 
     // Admin namespaces
+    users: createUsersNamespace(client),
     impersonation: createImpersonationNamespace(client),
     auditLogs: createAuditLogsNamespace(client),
     emailTemplates: createEmailTemplatesNamespace(client),
