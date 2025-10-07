@@ -38,7 +38,7 @@ export default function WorkspaceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const workspaceId = params.id as string;
+  const workspaceSlug = params.slug as string;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get current tab from URL parameters, default to 'overview'
@@ -48,7 +48,7 @@ export default function WorkspaceDetailPage() {
   const handleTabChange = (tab: string) => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set("tab", tab);
-    router.push(`/workspaces/${workspaceId}?${newParams.toString()}`, {
+    router.push(`/workspaces/${workspaceSlug}?${newParams.toString()}`, {
       scroll: false,
     });
   };
@@ -63,16 +63,16 @@ export default function WorkspaceDetailPage() {
     (state) => state.resetFilters,
   );
 
-  // Query workspace data
+  // Query workspace data by slug
   const {
     data: workspaceResponse,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: () => apiClient.workspaces.get(workspaceId),
-    enabled: !!workspaceId,
+    queryKey: ["workspace", workspaceSlug],
+    queryFn: () => apiClient.workspaces.getBySlug(workspaceSlug),
+    enabled: !!workspaceSlug,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -83,12 +83,11 @@ export default function WorkspaceDetailPage() {
   useEffect(() => {
     if (workspace) {
       setCurrentWorkspace(workspace);
-      setCurrentWorkspaceId(workspaceId);
+      setCurrentWorkspaceId(workspace.id);
       resetKnowledgeFilters();
     }
   }, [
     workspace,
-    workspaceId,
     setCurrentWorkspace,
     setCurrentWorkspaceId,
     resetKnowledgeFilters,
@@ -209,18 +208,18 @@ export default function WorkspaceDetailPage() {
 
               <TabsContent value="knowledge" className="space-y-6">
                 {/* Global Search */}
-                <GlobalKnowledgeSearch workspaceId={workspaceId} />
+                <GlobalKnowledgeSearch workspaceId={workspace?.id || ""} />
 
                 {/* All Knowledge Combined */}
                 <AllKnowledgeList
-                  workspaceId={workspaceId}
+                  workspaceId={workspace?.id || ""}
                   workspace={workspace}
                 />
               </TabsContent>
 
               <TabsContent value="members" className="space-y-6">
                 <WorkspaceMembersPanel workspace={workspace} />
-                <WorkspaceInvitationsPanel workspaceId={workspaceId} />
+                <WorkspaceInvitationsPanel workspaceId={workspace?.id || ""} />
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-6">

@@ -973,3 +973,31 @@ export const useRecentWorkspaces = () => {
     .map((id) => workspaceList.find((workspace) => workspace.id === id))
     .filter(Boolean) as Workspace[];
 };
+
+/**
+ * Hook to get current workspace ID
+ * Returns null if no workspace is currently selected
+ */
+export const useCurrentWorkspaceId = () => {
+  return useWorkspaceStore((state) => state.currentWorkspace?.id ?? null);
+};
+
+/**
+ * Hook to get current workspace slug
+ * Returns null if no workspace is currently selected
+ */
+export const useCurrentWorkspaceSlug = () => {
+  return useWorkspaceStore((state) => state.currentWorkspace?.slug ?? null);
+};
+
+/**
+ * Hook to get current workspace data (ID and slug together)
+ * Useful for components that need both values
+ */
+export const useCurrentWorkspaceData = () => {
+  return useWorkspaceStore((state) => ({
+    id: state.currentWorkspace?.id ?? null,
+    slug: state.currentWorkspace?.slug ?? null,
+    workspace: state.currentWorkspace,
+  }));
+};

@@ -183,9 +183,15 @@ export function UnifiedKnowledgeList({
     setDateValue(selection);
   }, [dateRange.from, dateRange.to]);
 
-  // Build unified items from all sources
+  // Build unified items from all sources with empty array fallbacks
   const unifiedItems = useMemo(
-    () => buildUnifiedItems(workspaceId, webItems, fileItems, textItems),
+    () =>
+      buildUnifiedItems(
+        workspaceId,
+        webItems || [],
+        fileItems || [],
+        textItems || [],
+      ),
     [workspaceId, webItems, fileItems, textItems],
   );
 

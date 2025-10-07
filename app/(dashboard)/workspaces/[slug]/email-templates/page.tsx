@@ -52,7 +52,7 @@ const templateTypeLabels: Record<string, string> = {
 
 export default function EmailTemplatesPage() {
   const params = useParams();
-  const workspaceId = params?.id as string;
+  const workspaceSlug = params?.slug as string;
   const queryClient = useQueryClient();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -62,6 +62,15 @@ export default function EmailTemplatesPage() {
   const [deletingTemplate, setDeletingTemplate] =
     useState<EmailTemplate | null>(null);
 
+  // Fetch workspace by slug to get ID
+  const { data: workspaceResponse } = useQuery({
+    queryKey: ["workspace", workspaceSlug],
+    queryFn: () => apiClient.workspaces.getBySlug(workspaceSlug),
+    enabled: !!workspaceSlug,
+  });
+
+  const workspaceId = workspaceResponse?.workspace?.id;
+
   // Fetch templates
   const {
     data: templates,
@@ -69,7 +78,12 @@ export default function EmailTemplatesPage() {
     error,
   } = useQuery({
     queryKey: ["email-templates", workspaceId],
-    queryFn: () => apiClient.emailTemplates.list(workspaceId),
+    queryFn: () => {
+      if (!workspaceId) {
+        throw new Error("Workspace ID is required");
+      }
+      return apiClient.emailTemplates.list(workspaceId);
+    },
     enabled: !!workspaceId,
   });
 
@@ -260,42 +274,46 @@ export default function EmailTemplatesPage() {
       )}
 
       {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Email Template</DialogTitle>
-            <DialogDescription>
-              Create a custom email template for your workspace notifications
-            </DialogDescription>
-          </DialogHeader>
-          <EmailTemplateEditor
-            workspaceId={workspaceId}
-            onSave={handleSaveComplete}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog
-        open={!!editingTemplate}
-        onOpenChange={(open) => !open && setEditingTemplate(null)}
-      >
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Email Template</DialogTitle>
-            <DialogDescription>
-              Update your custom email template
-            </DialogDescription>
-          </DialogHeader>
-          {editingTemplate && (
+      {workspaceId && (
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create Email Template</DialogTitle>
+              <DialogDescription>
+                Create a custom email template for your workspace notifications
+              </DialogDescription>
+            </DialogHeader>
             <EmailTemplateEditor
               workspaceId={workspaceId}
-              template={editingTemplate}
               onSave={handleSaveComplete}
             />
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Dialog */}
+      {workspaceId && (
+        <Dialog
+          open={!!editingTemplate}
+          onOpenChange={(open) => !open && setEditingTemplate(null)}
+        >
+          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Email Template</DialogTitle>
+              <DialogDescription>
+                Update your custom email template
+              </DialogDescription>
+            </DialogHeader>
+            {editingTemplate && (
+              <EmailTemplateEditor
+                workspaceId={workspaceId}
+                template={editingTemplate}
+                onSave={handleSaveComplete}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Delete Confirmation */}
       <AlertDialog

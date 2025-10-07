@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
   Eye,
   FileText,
   Globe,
@@ -31,6 +32,7 @@ export default function WorkspacePage() {
   const queryClient = useQueryClient();
   const [deleteDialogWorkspace, setDeleteDialogWorkspace] =
     useState<WorkspaceData | null>(null);
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
@@ -87,13 +89,20 @@ export default function WorkspacePage() {
             </div>
           </div>
           <div className="flex flex-col">
-            <Link
-              href={`/w/${row.slug}/topics`}
-              className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
-              onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
-            >
-              {String(value || "")}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/workspaces/${row.slug}`}
+                className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
+                onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
+              >
+                {String(value || "")}
+              </Link>
+              {currentWorkspace?.id === row.id && (
+                <Badge variant="default" className="text-xs px-1.5 py-0">
+                  Current
+                </Badge>
+              )}
+            </div>
             {row.description && (
               <span className="text-xs text-muted-foreground line-clamp-1 mt-1">
                 {row.description}
@@ -209,14 +218,25 @@ export default function WorkspacePage() {
   // Define row actions
   const rowActions: RowAction<WorkspaceData>[] = [
     {
+      label: "Select",
+      icon: <Check className="h-4 w-4" />,
+      onClick: (row: WorkspaceData) => {
+        setCurrentWorkspace(row as unknown as Workspace);
+        toast.success(`Switched to ${row.title}`);
+      },
+      tooltip: "Set as current workspace",
+      primary: true,
+      // Hide select button if workspace is already current
+      disabled: (row: WorkspaceData) => currentWorkspace?.id === row.id,
+    },
+    {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.slug}/topics`);
+        router.push(`/workspaces/${row.slug}`);
       },
       tooltip: "View workspace details",
-      primary: true,
     },
     {
       label: "Delete",

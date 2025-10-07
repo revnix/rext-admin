@@ -51,7 +51,12 @@ export const buildUnifiedItems = (
 ): UnifiedKnowledgeItem[] => {
   const items: UnifiedKnowledgeItem[] = [];
 
-  webItems
+  // Defensive checks: ensure arrays are valid
+  const safeWebItems = Array.isArray(webItems) ? webItems : [];
+  const safeFileItems = Array.isArray(fileItems) ? fileItems : [];
+  const safeTextItems = Array.isArray(textItems) ? textItems : [];
+
+  safeWebItems
     .filter((item) => item.workspace_id === workspaceId)
     .forEach((item) => {
       items.push({
@@ -71,7 +76,7 @@ export const buildUnifiedItems = (
       });
     });
 
-  fileItems
+  safeFileItems
     .filter((item) => item.workspace_id === workspaceId)
     .forEach((item) => {
       const displayName =
@@ -95,7 +100,7 @@ export const buildUnifiedItems = (
       });
     });
 
-  textItems
+  safeTextItems
     .filter((item) => item.workspace_id === workspaceId)
     .forEach((item) => {
       items.push({
