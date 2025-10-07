@@ -52,7 +52,7 @@ export function createTopicsNamespace(client: ApiClient) {
         wizardMode?: string;
         industry: string;
         industry_other?: string | null;
-        audience?: string[];
+        audience: string[]; // Required field (matches backend schema)
         purpose?: string[];
         purpose_other?: string | null;
         num_topics: number;
@@ -64,8 +64,10 @@ export function createTopicsNamespace(client: ApiClient) {
         ? `/api/v1/topic/generate-topic?workspace_id=${encodeURIComponent(workspaceId)}`
         : "/api/v1/topic/generate-topic";
 
+      // Ensure audience field is always present (required by backend)
       const payload = {
         ...formData,
+        audience: formData.audience || [], // Ensure audience is always an array
         timestamp: new Date().toISOString(),
       };
 
@@ -91,16 +93,19 @@ export function createTopicsNamespace(client: ApiClient) {
         saved_count: number;
         message: string;
         saved_topic_ids?: string[];
-      }>("/api/v1/topic/save-topic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topics: topics.map((topic) => ({
-            ...topic,
-            workspace_id: workspaceId,
-          })),
-        }),
-      });
+      }>(
+        `/api/v1/topic/save-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topics: topics.map((topic) => ({
+              ...topic,
+              workspace_id: workspaceId,
+            })),
+          }),
+        },
+      );
     },
 
     /**

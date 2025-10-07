@@ -84,6 +84,7 @@ afterAll(() => {
 const mockFormData: TopicBuilderFormData = {
   wizardMode: "industry-first",
   industry: "technology",
+  audience: ["business-leaders"],
   purpose: ["educate-inform"],
   num_topics: 10,
 };

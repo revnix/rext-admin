@@ -608,6 +608,7 @@ export const createInitialFormData = (): TopicBuilderFormData => {
   return {
     industry: "business", // Smart default - now first to match new flow
     wizardMode: "industry-first",
+    audience: [], // Required field - initialize as empty array
     purpose: [],
     num_topics: 5,
   };

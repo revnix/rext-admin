@@ -86,6 +86,7 @@ export interface UseWizardNavigationReturn {
 const getDefaultFormData = (): TopicBuilderFormData => ({
   industry: "business", // Smart default for broad applicability - now first
   wizardMode: "industry-first", // Default: "I want to explore my industry"
+  audience: [], // Required field - initialize as empty array
   purpose: ["educate-inform"], // Smart default
   num_topics: 5,
 });

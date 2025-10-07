@@ -433,6 +433,7 @@ describe("updateFormDataForIndustryChange", () => {
       wizardMode: "industry-first",
       industry: "other",
       industry_other: "Custom Industry",
+      audience: ["business-leaders"],
       purpose: ["educate-inform"],
       num_topics: 5,
     };
@@ -446,6 +447,7 @@ describe("updateFormDataForIndustryChange", () => {
     const formData: TopicBuilderFormData = {
       wizardMode: "industry-first",
       industry: "technology",
+      audience: ["business-leaders"],
       purpose: ["educate-inform"],
       num_topics: 5,
     };
@@ -494,6 +496,7 @@ describe("buildPromptFromFormData", () => {
     const formData: TopicBuilderFormData = {
       wizardMode: "industry-first",
       industry: "technology",
+      audience: ["business-leaders"],
       purpose: ["educate-inform"],
       num_topics: 5,
     };
@@ -508,6 +511,7 @@ describe("buildPromptFromFormData", () => {
       wizardMode: "subject-first",
       subject: "Machine Learning",
       industry: "technology",
+      audience: ["business-leaders"],
       purpose: ["educate-inform"],
       num_topics: 5,
     };

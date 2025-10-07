@@ -75,8 +75,8 @@ export interface TopicBuilderFormData {
   industry_other?: string;
 
   /** Audience and targeting configuration */
-  /** Target audience description or persona chips */
-  audience?: string[];
+  /** Target audience description or persona chips (required) */
+  audience: string[];
 
   /** Content goals and style preferences */
   /** Primary purposes/goals of the content */

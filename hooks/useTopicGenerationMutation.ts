@@ -83,6 +83,35 @@ export function useTopicGenerationMutation() {
         topics_count_requested: formData.num_topics ?? 5,
       });
 
+      // Validate workspace_id is provided
+      if (!workspaceId) {
+        generationLogger.error("No workspace ID provided", { requestId });
+        throw {
+          error: "Workspace ID is required for topic generation",
+          error_code: "missing_required_field",
+          details: "Please select a workspace before generating topics",
+          request_id: requestId,
+        } as TopicGenerationError;
+      }
+
+      // Validate audience field is provided (required by backend)
+      if (!formData.audience || formData.audience.length === 0) {
+        generationLogger.error(
+          "Audience field is required but missing or empty",
+          {
+            requestId,
+            formData,
+          },
+        );
+        throw {
+          error: "Audience is required for topic generation",
+          error_code: "missing_required_field",
+          details:
+            "Please select at least one audience type before generating topics",
+          request_id: requestId,
+        } as TopicGenerationError;
+      }
+
       try {
         // Use API client directly (no API route proxying)
         generationLogger.info("Calling apiClient generateTopics", {

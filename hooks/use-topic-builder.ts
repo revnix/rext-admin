@@ -422,10 +422,27 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       // Use override data if provided, otherwise use current state
       const dataToUse = overrideFormData || formData;
 
+      // Get workspace ID from current workspace
+      const workspaceId = currentWorkspace?.id;
+
+      // Validate workspace is selected before attempting generation
+      if (!workspaceId) {
+        const noWorkspaceError = classifyError(
+          new Error("No workspace selected. Please select a workspace first."),
+        );
+        setGenerationError(noWorkspaceError);
+        toast.error("No workspace selected", {
+          description: "Please select a workspace before generating topics",
+          duration: 5000,
+        });
+        return;
+      }
+
       try {
-        // Use the TanStack Query mutation
+        // Use the TanStack Query mutation with workspace ID
         const result = await generateMutation.mutateAsync({
           formData: dataToUse,
+          workspaceId, // Pass workspace ID to mutation
         });
 
         log.info("Processing mutation result:", result);
@@ -509,6 +526,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       router,
       generateMutation,
       currentWorkspace?.slug,
+      currentWorkspace?.id,
     ],
   );
 
