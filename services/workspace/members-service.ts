@@ -77,7 +77,10 @@ export class MembersService {
     total_count: number;
   }> {
     this.validateUuid(workspaceId, "workspace_id");
-    return this.makeRequest("GET", `/api/v1/workspace/members?workspace_id=${workspaceId}`);
+    return this.makeRequest(
+      "GET",
+      `/api/v1/workspace/members?workspace_id=${workspaceId}`,
+    );
   }
 
   async addWorkspaceMember(
