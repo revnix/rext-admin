@@ -14,7 +14,7 @@ import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 export default function WorkspaceTopicsPage() {
-  const { workspace, workspaceId } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
 
   const { data: topics, isLoading, error, refetch } = useTopics(workspaceId);
@@ -41,7 +41,7 @@ export default function WorkspaceTopicsPage() {
     { label: "Workspaces", href: "/workspaces" },
     {
       label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceId),
+      href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Topics" },
   ];
@@ -50,13 +50,13 @@ export default function WorkspaceTopicsPage() {
     {
       label: "Generate Topics",
       icon: <Plus className="h-4 w-4" />,
-      href: workspaceRoutes.topicCreate(workspaceId),
+      href: workspaceRoutes.topicCreate(workspaceSlug),
     },
   ];
 
   const tableActions = (
     <Button asChild>
-      <Link href={workspaceRoutes.topicCreate(workspaceId)}>
+      <Link href={workspaceRoutes.topicCreate(workspaceSlug)}>
         <Plus className="h-4 w-4 mr-2" />
         Generate Topics
       </Link>

@@ -6,13 +6,13 @@ import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 export default function WorkspaceAnalyticsPage() {
-  const { workspace, workspaceId } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
 
   const breadcrumbs = [
     { label: "Workspaces", href: "/workspaces" },
     {
       label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceId),
+      href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Analytics" },
   ];

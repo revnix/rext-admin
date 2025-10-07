@@ -87,7 +87,24 @@ export function WorkspaceProvider({
     },
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1, // Only retry once for invalid workspaces
+    retry: (failureCount, error) => {
+      // Don't retry for 404, 401, or 403 errors
+      const errorMessage = (error as Error)?.message || "";
+      if (
+        errorMessage.includes("404") ||
+        errorMessage.includes("401") ||
+        errorMessage.includes("403") ||
+        errorMessage.includes("not found") ||
+        errorMessage.includes("Not Found") ||
+        errorMessage.includes("Unauthorized") ||
+        errorMessage.includes("Forbidden")
+      ) {
+        return false;
+      }
+      // Retry up to 2 times for other errors (network issues, etc.)
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff, max 3s
   });
 
   const workspace = workspaceResponse?.workspace;
@@ -102,13 +119,36 @@ export function WorkspaceProvider({
   }, [workspace, setCurrentWorkspace, addToRecentWorkspaces]);
 
   // Handle invalid workspace - redirect to workspace list
+  // Only redirect for permission errors (401/403) or workspace not found (404)
+  // Don't redirect for temporary network issues to prevent unwanted redirects
   useEffect(() => {
     if (error && !isLoading) {
-      log.error(
-        "[WorkspaceProvider] Failed to load workspace, redirecting:",
-        error,
-      );
-      router.push("/workspaces");
+      // Check if error is a permission/auth error or not found that warrants redirect
+      const errorMessage = error?.message || "";
+      const isAuthError =
+        errorMessage.includes("401") ||
+        errorMessage.includes("403") ||
+        errorMessage.includes("Unauthorized") ||
+        errorMessage.includes("Forbidden");
+      const isNotFoundError =
+        errorMessage.includes("404") ||
+        errorMessage.includes("not found") ||
+        errorMessage.includes("Not Found");
+
+      if (isAuthError || isNotFoundError) {
+        log.error(
+          "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
+          error,
+        );
+        router.push("/workspaces");
+      } else {
+        // For other errors (network, temporary issues), just log but don't redirect
+        // This prevents unwanted redirects during form interactions
+        log.warn(
+          "[WorkspaceProvider] Workspace fetch error (not redirecting):",
+          error,
+        );
+      }
     }
   }, [error, isLoading, router]);
 

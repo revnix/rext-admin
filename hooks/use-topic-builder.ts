@@ -456,10 +456,10 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
               formData: dataToUse,
             });
 
-            // Navigate to workspace-scoped results page
-            const workspaceId = currentWorkspace?.id;
-            if (!workspaceId) {
-              log.error("Cannot navigate: No workspace selected");
+            // Navigate to workspace-scoped results page using slug
+            const workspaceSlug = currentWorkspace?.slug;
+            if (!workspaceSlug) {
+              log.error("Cannot navigate: No workspace selected or slug missing");
               toast.error("No workspace selected", {
                 description:
                   "Please select a workspace before generating topics",
@@ -468,7 +468,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             }
 
             log.info("Navigating to workspace-scoped results page...");
-            router.push(`/w/${workspaceId}/topics/create/results/${sessionId}`);
+            router.push(`/w/${workspaceSlug}/topics/create/results/${sessionId}`);
           } catch (sessionError) {
             log.error("Failed to save session:", sessionError);
             // Don't throw, just log the error and continue
@@ -504,7 +504,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       connectionStatus,
       router,
       generateMutation,
-      currentWorkspace?.id,
+      currentWorkspace?.slug,
     ],
   );
 
@@ -599,9 +599,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
   const navigateToResults = useCallback(
     (sessionId: string): void => {
-      const workspaceId = currentWorkspace?.id;
-      if (!workspaceId) {
-        log.error("Cannot navigate: No workspace selected");
+      const workspaceSlug = currentWorkspace?.slug;
+      if (!workspaceSlug) {
+        log.error("Cannot navigate: No workspace selected or slug missing");
         toast.error("No workspace selected", {
           description: "Please select a workspace before navigating to results",
         });
@@ -609,7 +609,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       }
 
       log.info(`Navigating to workspace-scoped results page: ${sessionId}`);
-      router.push(`/w/${workspaceId}/topics/create/results/${sessionId}`);
+      router.push(`/w/${workspaceSlug}/topics/create/results/${sessionId}`);
     },
     [router, currentWorkspace],
   );

@@ -29,13 +29,13 @@ import { STATUS_FILTER_OPTIONS } from "@/types/content";
 import type { ContentData, RowAction } from "@/types/data-table";
 
 export default function WorkspaceContentPage() {
-  const { workspace, workspaceId } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
 
   const breadcrumbs = [
     { label: "Workspaces", href: "/workspaces" },
     {
       label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceId),
+      href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Content" },
   ];
@@ -148,20 +148,20 @@ export default function WorkspaceContentPage() {
     {
       label: "Create Content",
       icon: <Plus className="h-4 w-4" />,
-      href: workspaceRoutes.contentCreate(workspaceId),
+      href: workspaceRoutes.contentCreate(workspaceSlug),
     },
   ];
 
   const tableActions = (
     <div className="flex items-center gap-2">
       <Button asChild variant="default">
-        <Link href={workspaceRoutes.contentCreate(workspaceId)}>
+        <Link href={workspaceRoutes.contentCreate(workspaceSlug)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Content
         </Link>
       </Button>
       <Button asChild variant="outline">
-        <Link href={workspaceRoutes.settings(workspaceId)}>
+        <Link href={workspaceRoutes.settings(workspaceSlug)}>
           <Settings className="h-4 w-4 mr-2" />
           Settings
         </Link>
@@ -174,7 +174,7 @@ export default function WorkspaceContentPage() {
       label: "View",
       icon: <Eye className="h-4 w-4" />,
       href: (row: ContentData) =>
-        workspaceRoutes.contentDetail(workspaceId, row.id),
+        workspaceRoutes.contentDetail(workspaceSlug, row.id),
       tooltip: "View content details",
     },
     {
