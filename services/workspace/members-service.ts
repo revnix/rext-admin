@@ -77,7 +77,7 @@ export class MembersService {
     total_count: number;
   }> {
     this.validateUuid(workspaceId, "workspace_id");
-    return this.makeRequest("GET", `/api/v1/workspace/${workspaceId}/members`);
+    return this.makeRequest("GET", `/api/v1/workspace/members?workspace_id=${workspaceId}`);
   }
 
   async addWorkspaceMember(
@@ -102,7 +102,7 @@ export class MembersService {
 
     return this.makeRequest(
       "POST",
-      `/api/v1/workspace/${workspaceId}/members`,
+      `/api/v1/workspace/members?workspace_id=${workspaceId}`,
       { email },
     );
   }
@@ -116,7 +116,7 @@ export class MembersService {
 
     return this.makeRequest(
       "DELETE",
-      `/api/v1/workspace/${workspaceId}/members/${memberId}`,
+      `/api/v1/workspace/members/${memberId}?workspace_id=${workspaceId}`,
     );
   }
 
@@ -139,7 +139,7 @@ export class MembersService {
 
     return this.makeRequest(
       "PUT",
-      `/api/v1/workspace/${workspaceId}/members/${memberId}/role`,
+      `/api/v1/workspace/members/${memberId}/role?workspace_id=${workspaceId}`,
       { role_id: roleId },
     );
   }

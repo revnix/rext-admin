@@ -99,7 +99,7 @@ export class WorkspaceService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<WorkspaceResponse>(
       "GET",
-      `/api/v1/workspace/${workspaceId}`,
+      `/api/v1/workspace/detail?workspace_id=${workspaceId}`,
     );
   }
 
@@ -150,7 +150,7 @@ export class WorkspaceService {
 
     return this.makeRequest<WorkspaceResponse>(
       "PUT",
-      `/api/v1/workspace/update/${workspaceId}`,
+      `/api/v1/workspace/update?workspace_id=${workspaceId}`,
       sanitizedData,
     );
   }
@@ -162,7 +162,7 @@ export class WorkspaceService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/delete/${workspaceId}`,
+      `/api/v1/workspace/delete?workspace_id=${workspaceId}`,
     );
   }
 
