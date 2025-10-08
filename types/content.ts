@@ -123,11 +123,29 @@ export interface ContentMetadataSchema {
  * SEO data schema for content
  */
 export interface ContentSEODataSchema {
+  /**
+   * Primary SEO keywords for content optimization
+   * @minLength 1 - At least one keyword is required by backend
+   */
   content_primary_keywords: string[];
+
+  /** Secondary/supporting keywords for SEO */
   content_secondary_keywords?: string[];
+
+  /**
+   * Meta description for SEO and social sharing
+   * @minLength 1 - Cannot be empty (backend validation)
+   * @maxLength 160 - Recommended SEO limit
+   */
   content_meta_description: string;
+
+  /** Search intent categories (informational, transactional, etc.) */
   content_search_intent?: string[];
+
+  /** SEO quality score (0-100) */
   content_seo_score?: number;
+
+  /** Content readability score */
   content_readability_score?: number;
 }
 

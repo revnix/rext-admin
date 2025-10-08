@@ -40,6 +40,37 @@ export default function WorkspaceContentCreatePage({
         formData,
       });
 
+      // Generate placeholder SEO data if missing
+      const primaryKeywords =
+        formData.primaryKeywords && formData.primaryKeywords.length > 0
+          ? formData.primaryKeywords
+          : [formData.contentType || "content"]; // Fallback to content type
+
+      const metaDescription =
+        formData.primaryKeywords && formData.primaryKeywords.length > 0
+          ? `${formData.contentType} about ${formData.primaryKeywords.slice(0, 3).join(", ")} for ${formData.audienceType?.[0] || "readers"}`
+          : `${formData.contentType} content for ${formData.industry || "general"} industry`;
+
+      // Validate required SEO fields before API call
+      if (!primaryKeywords || primaryKeywords.length === 0) {
+        log.error("Primary keywords validation failed", {
+          primaryKeywords,
+          formData,
+        });
+        toast.error(
+          "Unable to generate content: Primary keywords are required. Please add at least one keyword.",
+        );
+        return;
+      }
+
+      if (!metaDescription || metaDescription.trim().length === 0) {
+        log.error("Meta description validation failed", { metaDescription });
+        toast.error(
+          "Unable to generate content: Meta description is required.",
+        );
+        return;
+      }
+
       // Map wizard form data to API request format
       const createRequest = {
         workspace_id: workspaceId,
@@ -64,11 +95,16 @@ export default function WorkspaceContentCreatePage({
               : undefined,
         },
         seo_data: {
-          content_primary_keywords: formData.primaryKeywords,
-          content_search_intent: formData.searchIntent,
-          content_meta_description: "", // Will be generated
+          content_primary_keywords: primaryKeywords,
+          content_search_intent: formData.searchIntent || [],
+          content_meta_description: metaDescription.slice(0, 160), // Limit to 160 chars
         },
       };
+
+      log.info("Content creation request prepared", {
+        primaryKeywords,
+        metaDescriptionLength: metaDescription.length,
+      });
 
       // Call backend API to create content
       const response = await apiClient.content.create(

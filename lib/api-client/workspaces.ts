@@ -54,10 +54,16 @@ export function createWorkspacesNamespace(client: ApiClient) {
       description?: string;
       url: string;
     }) => {
+      // Backend expects 'name' instead of 'title'
+      const payload = {
+        name: data.title,
+        description: data.description,
+        url: data.url,
+      };
       return client.request<WorkspaceResponse>("/api/v1/workspaces", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
     },
 
@@ -72,12 +78,19 @@ export function createWorkspacesNamespace(client: ApiClient) {
         url?: string;
       },
     ) => {
+      // Backend expects 'name' instead of 'title'
+      const payload: Record<string, unknown> = {};
+      if (data.title !== undefined) payload.name = data.title;
+      if (data.description !== undefined)
+        payload.description = data.description;
+      if (data.url !== undefined) payload.url = data.url;
+
       return client.request<WorkspaceResponse>(
         `/api/v1/workspaces/${workspaceId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         },
       );
     },
