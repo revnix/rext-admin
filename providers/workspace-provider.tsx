@@ -39,9 +39,13 @@ interface WorkspaceProviderProps {
  * Fetches and provides workspace context to all child components.
  * Automatically syncs with Zustand store and handles invalid workspaces.
  *
+ * IMPORTANT: When workspaceId is a slug (not UUID), the workspaceSlug is
+ * immediately available in context without waiting for API fetch. This ensures
+ * navigation and routing work instantly even before full workspace data loads.
+ *
  * @example
  * ```tsx
- * <WorkspaceProvider workspaceId={params.workspaceId}>
+ * <WorkspaceProvider workspaceId={params.workspaceSlug}>
  *   <YourComponent />
  * </WorkspaceProvider>
  * ```
@@ -109,6 +113,32 @@ export function WorkspaceProvider({
 
   const workspace = workspaceResponse?.workspace;
 
+  // Immediately set a preliminary workspace in store using the slug from URL
+  // This ensures workspace context is available even before API call completes
+  useEffect(() => {
+    // Only set preliminary workspace if:
+    // 1. We have a slug (not UUID)
+    // 2. We don't have the full workspace yet
+    // 3. We're not currently loading (prevents race conditions)
+    if (!isUuid && workspaceId && !workspace && !isLoading) {
+      const preliminaryWorkspace: Workspace = {
+        id: "", // Will be filled when API returns
+        slug: workspaceId, // From URL
+        title: workspaceId, // Use slug as title temporarily
+        description: "",
+        url: "",
+        created_at: "",
+        updated_at: "",
+      };
+
+      log.info(
+        "[WorkspaceProvider] Setting preliminary workspace from slug:",
+        workspaceId,
+      );
+      setCurrentWorkspace(preliminaryWorkspace);
+    }
+  }, [workspaceId, isUuid, workspace, isLoading, setCurrentWorkspace]);
+
   // Sync with Zustand store when workspace data changes
   useEffect(() => {
     if (workspace) {
@@ -152,10 +182,14 @@ export function WorkspaceProvider({
     }
   }, [error, isLoading, router]);
 
+  // Immediately provide the slug from URL if it's not a UUID
+  // This allows components to use workspaceSlug for navigation without waiting for API
+  const immediateSlug = !isUuid ? workspaceId : workspace?.slug || "";
+
   const contextValue: WorkspaceContextType = {
     workspace,
-    workspaceId: workspace?.id || "", // UUID
-    workspaceSlug: workspace?.slug || "", // Slug
+    workspaceId: workspace?.id || "", // UUID - only available after fetch
+    workspaceSlug: immediateSlug, // Slug - immediately available from URL
     identifier: workspaceId, // Original URL param
     isLoading,
     error: error as Error | null,
@@ -175,22 +209,23 @@ export function WorkspaceProvider({
  *
  * @throws Error if used outside WorkspaceProvider
  *
+ * IMPORTANT: workspaceSlug is immediately available from URL (no loading wait).
+ * Use it for navigation and routing. workspaceId (UUID) only available after API fetch.
+ *
  * @example
  * ```tsx
  * function MyComponent() {
  *   const { workspace, workspaceId, workspaceSlug, isLoading } = useWorkspace();
  *
- *   if (isLoading) return <div>Loading...</div>;
+ *   // ✅ workspaceSlug is IMMEDIATELY available (from URL)
+ *   // Use for navigation without waiting for API
+ *   const topicsUrl = workspaceRoutes.topicCreate(workspaceSlug);
  *
- *   // Access UUID
+ *   // ⏳ workspaceId (UUID) only available after isLoading = false
+ *   if (isLoading) return <div>Loading workspace details...</div>;
+ *
+ *   // Now you can use workspaceId for API calls
  *   log.info('UUID:', workspaceId);
- *
- *   // Access slug for URLs
- *   router.push(`/w/${workspaceSlug}/topics`);
- *
- *   // Or use from workspace object
- *   log.info('UUID:', workspace.id);
- *   log.info('Slug:', workspace.slug);
  *
  *   return <div>{workspace?.title}</div>;
  * }
