@@ -4,13 +4,7 @@ import { BookOpen, Target, Trophy, Users } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
@@ -21,8 +15,8 @@ import {
   READING_LEVEL_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
 import type { WizardStepProps } from "@/types/content-creation";
-import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
 import { OptionGridLayout } from "../layouts/option-grid-layout";
+import { QuestionAnswerLayout } from "../layouts/question-answer-layout";
 
 interface AudienceGoalsStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -116,55 +110,40 @@ export function AudienceGoalsStep({
       <div className="grid gap-8 w-full">
         {/* Audience Size Selection */}
         {audienceSizeField && (
-          <Card
-            className={`transition-colors ${errors.audienceSize && touched.audienceSize ? "border-destructive" : ""}`}
+          <QuestionAnswerLayout
+            question={{
+              label: "Audience Size",
+              description:
+                "What's the approximate size of your target audience?",
+              icon: Users,
+            }}
+            hasError={!!(errors.audienceSize && touched.audienceSize)}
+            error={errors.audienceSize}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Audience Size
-              </CardTitle>
-              <CardDescription>
-                What's the approximate size of your target audience?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                options={AUDIENCE_SIZE_OPTIONS}
-                value={formData.audienceSize || ""}
-                onValueChange={(value) => {
-                  onFieldChange("audienceSize", value);
-                  onFieldTouch("audienceSize");
-                }}
-                columns={3}
-              />
-
-              {errors.audienceSize && touched.audienceSize && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{errors.audienceSize}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+            <RadioGroup
+              options={AUDIENCE_SIZE_OPTIONS}
+              value={formData.audienceSize || ""}
+              onValueChange={(value) => {
+                onFieldChange("audienceSize", value);
+                onFieldTouch("audienceSize");
+              }}
+              columns={3}
+            />
+          </QuestionAnswerLayout>
         )}
 
         {/* Audience Type Multi-Selection */}
         {audienceTypeField && (
-          <Card
-            className={`transition-colors ${errors.audienceType && touched.audienceType ? "border-destructive" : ""}`}
+          <QuestionAnswerLayout
+            question={{
+              label: "Who's your audience?",
+              description: `Select up to 3 audience types that best describe your target audience${formData.industry ? ` (filtered for ${formData.industry})` : ""}`,
+              icon: Target,
+            }}
+            hasError={!!(errors.audienceType && touched.audienceType)}
+            error={errors.audienceType}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Who's your audience?
-              </CardTitle>
-              <CardDescription>
-                Select up to 3 audience types that best describe your target
-                audience
-                {formData.industry && ` (filtered for ${formData.industry})`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <div className="space-y-4">
               <OptionGridLayout>
                 {audienceTypeOptions.map((option) => {
                   const isSelected =
@@ -221,35 +200,25 @@ export function AudienceGoalsStep({
               <div className="text-sm text-muted-foreground">
                 {formData.audienceType?.length || 0} / 3 selected
               </div>
-
-              {errors.audienceType && touched.audienceType && (
-                <Alert variant="destructive">
-                  <AlertDescription>{errors.audienceType}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          </QuestionAnswerLayout>
         )}
 
         {/* Reading Level Selection */}
         {readingLevelField && (
-          <AutoFilledFieldWrapper
+          <QuestionAnswerLayout
+            question={{
+              label: "Reading Level",
+              description: "How technical or complex should the content be?",
+              icon: BookOpen,
+            }}
             isAutoFilled={
               formData._topicPrefillingMetadata?.prefilledFields
                 ?.readingLevel || false
             }
             isModified={touched.readingLevel || false}
-            label="Reading Level"
-            description="How technical or complex should the content be?"
-            icon={<BookOpen className="h-5 w-5" />}
-            className={`transition-colors ${errors.readingLevel && touched.readingLevel ? "border-destructive" : ""}`}
-            errorContent={
-              errors.readingLevel && touched.readingLevel ? (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{errors.readingLevel}</AlertDescription>
-                </Alert>
-              ) : undefined
-            }
+            hasError={!!(errors.readingLevel && touched.readingLevel)}
+            error={errors.readingLevel}
           >
             <RadioGroup
               options={READING_LEVEL_OPTIONS}
@@ -260,27 +229,24 @@ export function AudienceGoalsStep({
               }}
               columns={3}
             />
-          </AutoFilledFieldWrapper>
+          </QuestionAnswerLayout>
         )}
 
         {/* Content Goals Multi-Selection */}
         {goalsField && (
-          <AutoFilledFieldWrapper
+          <QuestionAnswerLayout
+            question={{
+              label: "Content Goals",
+              description:
+                "What do you want to achieve with this content? Select up to 3 goals",
+              icon: Trophy,
+            }}
             isAutoFilled={
               formData._topicPrefillingMetadata?.prefilledFields?.goals || false
             }
             isModified={touched.goals || false}
-            label="Content Goals"
-            description="What do you want to achieve with this content? Select up to 3 goals"
-            icon={<Trophy className="h-5 w-5" />}
-            className={`transition-colors ${errors.goals && touched.goals ? "border-destructive" : ""}`}
-            errorContent={
-              errors.goals && touched.goals ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{errors.goals}</AlertDescription>
-                </Alert>
-              ) : undefined
-            }
+            hasError={!!(errors.goals && touched.goals)}
+            error={errors.goals}
           >
             <div className="space-y-4">
               <OptionGridLayout>
@@ -342,7 +308,7 @@ export function AudienceGoalsStep({
                 {formData.goals?.length || 0} / 3 selected
               </div>
             </div>
-          </AutoFilledFieldWrapper>
+          </QuestionAnswerLayout>
         )}
       </div>
 

@@ -468,7 +468,7 @@ export function ReviewLaunchStep({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5" />
+            <Rocket className="h-5 w-5 text-primary" />
             Launch Options
           </CardTitle>
           <CardDescription>
@@ -495,7 +495,7 @@ export function ReviewLaunchStep({
               />
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Rocket className="h-5 w-5" />
+                  <Rocket className="h-5 w-5 text-primary" />
                   <span className="font-medium">Generate Now</span>
                   <Badge variant="default" className="text-xs">
                     Recommended
@@ -526,7 +526,7 @@ export function ReviewLaunchStep({
               />
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Download className="h-5 w-5" />
+                  <Download className="h-5 w-5 text-primary" />
                   <span className="font-medium">Save as Draft</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -550,7 +550,7 @@ export function ReviewLaunchStep({
               />
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+                  <Clock className="h-5 w-5 text-primary" />
                   <span className="font-medium">Schedule for Later</span>
                   <Badge variant="outline" className="text-xs">
                     Coming Soon

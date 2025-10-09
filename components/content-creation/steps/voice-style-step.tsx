@@ -4,13 +4,7 @@ import { Globe, Languages, MessageSquare } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,8 +20,8 @@ import {
   REGION_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
 import type { WizardStepProps } from "@/types/content-creation";
-import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
 import { OptionGridLayout } from "../layouts/option-grid-layout";
+import { QuestionAnswerLayout } from "../layouts/question-answer-layout";
 
 interface VoiceStyleStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -128,23 +122,19 @@ export function VoiceStyleStep({
       <div className="grid gap-8 w-full">
         {/* Tone Multi-Selection */}
         {toneField && (
-          <AutoFilledFieldWrapper
+          <QuestionAnswerLayout
+            question={{
+              label: "How should it sound?",
+              description:
+                "Select up to 3 tones that match your brand and audience",
+              icon: MessageSquare,
+            }}
             isAutoFilled={
               formData._topicPrefillingMetadata?.prefilledFields?.tone || false
             }
             isModified={touched.tone || false}
-            label="How should it sound?"
-            description="Select up to 3 tones that match your brand and audience"
-            icon={<MessageSquare className="h-5 w-5 text-primary" />}
-            className={errors.tone && touched.tone ? "wizard-card-error" : ""}
-            errorContent={
-              errors.tone && touched.tone ? (
-                <div className="wizard-field-error mt-4">
-                  <MessageSquare className="h-4 w-4" />
-                  {errors.tone}
-                </div>
-              ) : undefined
-            }
+            hasError={!!(errors.tone && touched.tone)}
+            error={errors.tone}
           >
             <div className="space-y-4">
               {formData.audienceType && formData.audienceType.length > 0 && (
@@ -245,29 +235,30 @@ export function VoiceStyleStep({
                 {formData.tone?.length === 0 && " (recommended: 1-3 tones)"}
               </div>
             </div>
-          </AutoFilledFieldWrapper>
+          </QuestionAnswerLayout>
         )}
 
         {/* Location & Language Combined */}
         {(regionField || languageField) && (
-          <Card
-            className={`transition-colors ${
-              (errors.region && touched.region) ||
-              (errors.language && touched.language)
-                ? "border-destructive"
-                : ""
-            }`}
+          <QuestionAnswerLayout
+            question={{
+              label: "Location & Language",
+              description: "Geographic focus and content language settings",
+              icon: Globe,
+            }}
+            hasError={
+              !!(
+                (errors.region && touched.region) ||
+                (errors.language && touched.language)
+              )
+            }
+            error={
+              (errors.region && touched.region && errors.region) ||
+              (errors.language && touched.language && errors.language) ||
+              undefined
+            }
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Location & Language
-              </CardTitle>
-              <CardDescription>
-                Geographic focus and content language settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Target Region */}
                 {regionField && (
@@ -368,8 +359,8 @@ export function VoiceStyleStep({
                   </AlertDescription>
                 </Alert>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </QuestionAnswerLayout>
         )}
       </div>
 

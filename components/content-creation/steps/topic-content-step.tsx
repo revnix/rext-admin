@@ -3,13 +3,7 @@
 import { Building2, FileText, Globe } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
@@ -23,8 +17,8 @@ import {
 import { useCurrentWorkspace } from "@/stores/workspace-store";
 import type { WizardAction, WizardStepProps } from "@/types/content-creation";
 import type { GeneratedTopic } from "@/types/topic-builder";
-import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
 import { TopicSelector } from "../fields/topic-selector";
+import { QuestionAnswerLayout } from "../layouts/question-answer-layout";
 
 interface TopicContentStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -248,26 +242,19 @@ export function TopicContentStep({
 
         {/* Enhanced Platform Selection */}
         {platformField && (
-          <AutoFilledFieldWrapper
+          <QuestionAnswerLayout
+            question={{
+              label: "Select Platform",
+              description: "Where will this content be published?",
+              icon: Globe,
+            }}
             isAutoFilled={
               formData._topicPrefillingMetadata?.prefilledFields?.platform ||
               false
             }
             isModified={touched.platform || false}
-            label="Select Platform"
-            description="Where will this content be published?"
-            icon={<Globe className="h-5 w-5 text-primary" />}
-            className={
-              errors.platform && touched.platform ? "wizard-card-error" : ""
-            }
-            errorContent={
-              errors.platform && touched.platform ? (
-                <div className="wizard-field-error mt-4">
-                  <Globe className="h-4 w-4" />
-                  {errors.platform}
-                </div>
-              ) : undefined
-            }
+            hasError={!!(errors.platform && touched.platform)}
+            error={errors.platform}
           >
             <RadioGroup
               options={PLATFORM_OPTIONS}
@@ -275,66 +262,47 @@ export function TopicContentStep({
               onValueChange={handlePlatformChange}
               columns={2}
             />
-          </AutoFilledFieldWrapper>
+          </QuestionAnswerLayout>
         )}
 
         {/* Enhanced Content Type Selection */}
         {contentTypeField && formData.platform && (
-          <Card
-            className={`wizard-card ${errors.contentType && touched.contentType ? "wizard-card-error" : ""}`}
+          <QuestionAnswerLayout
+            question={{
+              label: "Content Type",
+              description: "What type of content do you want to create?",
+              icon: FileText,
+            }}
+            hasError={!!(errors.contentType && touched.contentType)}
+            error={errors.contentType}
           >
-            <CardHeader className="pb-4">
-              <CardTitle className="wizard-field-label">
-                <FileText className="h-5 w-5 text-primary" />
-                Content Type
-              </CardTitle>
-              <CardDescription className="wizard-field-description">
-                What type of content do you want to create?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                options={contentTypeOptions}
-                value={formData.contentType || ""}
-                onValueChange={(value) => {
-                  onFieldChange("contentType", value);
-                  onFieldTouch("contentType");
-                }}
-                columns={3}
-              />
-
-              {errors.contentType && touched.contentType && (
-                <div className="wizard-field-error mt-4">
-                  <FileText className="h-4 w-4" />
-                  {errors.contentType}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <RadioGroup
+              options={contentTypeOptions}
+              value={formData.contentType || ""}
+              onValueChange={(value) => {
+                onFieldChange("contentType", value);
+                onFieldTouch("contentType");
+              }}
+              columns={3}
+            />
+          </QuestionAnswerLayout>
         )}
 
         {/* Enhanced Industry Selection */}
         {industryField && (
-          <AutoFilledFieldWrapper
+          <QuestionAnswerLayout
+            question={{
+              label: "Industry",
+              description: "Your business industry",
+              icon: Building2,
+            }}
             isAutoFilled={
               formData._topicPrefillingMetadata?.prefilledFields?.industry ||
               false
             }
             isModified={touched.industry || false}
-            label="Industry"
-            description="Your business industry (pre-filled from topic but can be changed)"
-            icon={<Building2 className="h-5 w-5 text-primary" />}
-            className={
-              errors.industry && touched.industry ? "wizard-card-error" : ""
-            }
-            errorContent={
-              errors.industry && touched.industry ? (
-                <div className="wizard-field-error mt-4">
-                  <Building2 className="h-4 w-4" />
-                  {errors.industry}
-                </div>
-              ) : undefined
-            }
+            hasError={!!(errors.industry && touched.industry)}
+            error={errors.industry}
           >
             <div className="space-y-4">
               <RadioGroup
@@ -364,7 +332,7 @@ export function TopicContentStep({
                 </div>
               )}
             </div>
-          </AutoFilledFieldWrapper>
+          </QuestionAnswerLayout>
         )}
       </div>
 

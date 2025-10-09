@@ -8,13 +8,7 @@ import {
 } from "@/components/content-creation/fields";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +29,7 @@ import type {
   ContentCreationFormData,
   WizardStepProps,
 } from "@/types/content-creation";
-import { AutoFilledFieldWrapper } from "../fields/auto-filled-field-wrapper";
+import { QuestionAnswerLayout } from "../layouts/question-answer-layout";
 
 interface ContentStructureStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
@@ -238,28 +232,20 @@ export function ContentStructureStep({
       <div className="grid gap-8 w-full">
         {/* Content Length Selection */}
         {contentLengthField && (
-          <AutoFilledFieldWrapper
+          <QuestionAnswerLayout
+            question={{
+              label: "How long should it be?",
+              description:
+                "Choose a preset length or specify custom requirements",
+              icon: FileText,
+            }}
             isAutoFilled={
               formData._topicPrefillingMetadata?.prefilledFields
                 ?.contentLength || false
             }
             isModified={touched.contentLength || false}
-            label="How long should it be?"
-            description="Choose a preset length or specify custom requirements"
-            icon={<FileText className="h-5 w-5 text-primary" />}
-            className={
-              errors.contentLength && touched.contentLength
-                ? "wizard-card-error"
-                : ""
-            }
-            errorContent={
-              errors.contentLength && touched.contentLength ? (
-                <div className="wizard-field-error mt-4">
-                  <FileText className="h-4 w-4" />
-                  {errors.contentLength}
-                </div>
-              ) : undefined
-            }
+            hasError={!!(errors.contentLength && touched.contentLength)}
+            error={errors.contentLength}
           >
             <div className="space-y-4">
               {formData.contentType && (
@@ -347,7 +333,7 @@ export function ContentStructureStep({
                 </div>
               )}
             </div>
-          </AutoFilledFieldWrapper>
+          </QuestionAnswerLayout>
         )}
 
         {/* Primary Keywords */}
@@ -435,17 +421,15 @@ export function ContentStructureStep({
           structureFields.includeSummary ||
           structureFields.includeCTA ||
           structureFields.includeKeyTakeaways) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <List className="h-5 w-5" />
-                Content Structure
-              </CardTitle>
-              <CardDescription>
-                Choose additional sections to include in your content
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <QuestionAnswerLayout
+            question={{
+              label: "Content Structure",
+              description:
+                "Choose additional sections to include in your content",
+              icon: List,
+            }}
+          >
+            <div className="space-y-6">
               {/* Table of Contents (conditional) */}
               {includeTOCField && showStructureOptions() && (
                 <div className="flex items-center space-x-3">
@@ -544,8 +528,8 @@ export function ContentStructureStep({
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </QuestionAnswerLayout>
         )}
 
         {/* Smart Recommendations */}
