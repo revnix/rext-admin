@@ -949,6 +949,30 @@ export function ContentCreationWizard({
           <Card className="wizard-card min-h-[600px] w-full max-w-none">
             <CardContent className="p-0">
               <div className="flex flex-col xl:flex-row">
+                {/* Enhanced Sidebar - Now on LEFT */}
+                <div className="xl:w-80 bg-gradient-to-b from-muted/20 to-muted/30 p-6 xl:border-r border-border/50">
+                  <div className="space-y-6">
+                    {/* Enhanced Step Progress */}
+                    <WizardSidebarProgress
+                      currentStep={state.currentStep}
+                      steps={WIZARD_CONFIG.steps}
+                      stepStatuses={WIZARD_CONFIG.steps.map((_, index) => {
+                        if (index < state.currentStep) return "completed";
+                        if (index === state.currentStep) return "current";
+                        return "pending";
+                      })}
+                      stepCompletions={sidebarCompletions}
+                      stepValidations={sidebarValidations}
+                      stepFeedbackState={sidebarFeedback}
+                      overallCompletion={enhancedProgress.overallCompletion}
+                      completedFields={enhancedProgress.completedFields}
+                      totalFields={enhancedProgress.totalFields}
+                      onStepClick={handleGoToStep}
+                      canSkipCurrentStep={currentStepConfig?.optional || false}
+                    />
+                  </div>
+                </div>
+
                 {/* Step Content */}
                 <div className="flex-1 p-6 lg:p-10 w-full max-w-none">
                   <AnimatePresence mode="wait">
@@ -981,30 +1005,6 @@ export function ContentCreationWizard({
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
-
-                {/* Enhanced Sidebar */}
-                <div className="xl:w-80 bg-gradient-to-b from-muted/20 to-muted/30 p-6 xl:border-l border-border/50">
-                  <div className="space-y-6">
-                    {/* Enhanced Step Progress */}
-                    <WizardSidebarProgress
-                      currentStep={state.currentStep}
-                      steps={WIZARD_CONFIG.steps}
-                      stepStatuses={WIZARD_CONFIG.steps.map((_, index) => {
-                        if (index < state.currentStep) return "completed";
-                        if (index === state.currentStep) return "current";
-                        return "pending";
-                      })}
-                      stepCompletions={sidebarCompletions}
-                      stepValidations={sidebarValidations}
-                      stepFeedbackState={sidebarFeedback}
-                      overallCompletion={enhancedProgress.overallCompletion}
-                      completedFields={enhancedProgress.completedFields}
-                      totalFields={enhancedProgress.totalFields}
-                      onStepClick={handleGoToStep}
-                      canSkipCurrentStep={currentStepConfig?.optional || false}
-                    />
-                  </div>
                 </div>
               </div>
             </CardContent>

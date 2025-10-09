@@ -12,12 +12,6 @@ import { AlertCircle, AlertTriangle, Check, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type {
   WizardStep,
@@ -85,7 +79,7 @@ function SidebarStepItem({
   step,
   stepIndex,
   status,
-  completion,
+  completion: _completion,
   validation,
   isClickable,
   onClick,
@@ -163,112 +157,57 @@ function SidebarStepItem({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <motion.div
-            className={cn(
-              "p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
-              getStatusStyles(),
-              !isClickable && "opacity-60 cursor-not-allowed",
-            )}
-            onClick={() => isClickable && onClick()}
-            whileHover={isClickable ? { scale: 1.02 } : {}}
-            whileTap={isClickable ? { scale: 0.98 } : {}}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {getStatusIcon()}
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "text-sm font-medium truncate",
-                      status === "current" && "text-foreground",
-                      status === "completed" && "text-emerald-700",
-                      hasErrors && "text-rose-700",
-                      status === "pending" &&
-                        !hasErrors &&
-                        !hasWarnings &&
-                        "text-muted-foreground",
-                    )}
-                  >
-                    {step.title}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status badges */}
-              <div className="flex flex-col gap-1">
-                {hasErrors && (
-                  <Badge
-                    variant="destructive"
-                    className="text-[10px] px-1 py-0"
-                  >
-                    {errorCount}
-                  </Badge>
-                )}
-                {hasWarnings && (
-                  <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                    {warningCount}
-                  </Badge>
-                )}
-                {step.optional && status !== "completed" && (
-                  <Badge variant="outline" className="text-[10px] px-1 py-0">
-                    Optional
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            {(completion > 0 || status === "current") && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">
-                    {status === "completed" ? 100 : completion}%
-                  </span>
-                </div>
-                <Progress
-                  value={status === "completed" ? 100 : completion}
-                  className="h-1"
-                />
-              </div>
-            )}
-          </motion.div>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="max-w-xs">
-          <div className="space-y-2">
-            <p className="font-medium">{step.title}</p>
-            <p className="text-xs text-muted-foreground">{step.description}</p>
-            <div className="flex flex-wrap gap-1">
-              {(step.requiredFieldCount || 0) > 0 && (
-                <Badge variant="outline" className="text-[10px]">
-                  {step.requiredFieldCount} required
-                </Badge>
+    <motion.div
+      className={cn(
+        "p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+        getStatusStyles(),
+        !isClickable && "opacity-60 cursor-not-allowed",
+      )}
+      onClick={() => isClickable && onClick()}
+      whileHover={isClickable ? { scale: 1.02 } : {}}
+      whileTap={isClickable ? { scale: 0.98 } : {}}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {getStatusIcon()}
+          <div className="min-w-0 flex-1">
+            <p
+              className={cn(
+                "text-sm font-medium truncate",
+                status === "current" && "text-foreground",
+                status === "completed" && "text-emerald-700",
+                hasErrors && "text-rose-700",
+                status === "pending" &&
+                  !hasErrors &&
+                  !hasWarnings &&
+                  "text-muted-foreground",
               )}
-              {step.optional && (
-                <Badge variant="secondary" className="text-[10px]">
-                  Optional
-                </Badge>
-              )}
-              {hasErrors && (
-                <Badge variant="destructive" className="text-[10px]">
-                  {errorCount} error
-                  {errorCount !== 1 ? "s" : ""}
-                </Badge>
-              )}
-              {hasWarnings && (
-                <Badge variant="secondary" className="text-[10px]">
-                  {warningCount} warning
-                  {warningCount !== 1 ? "s" : ""}
-                </Badge>
-              )}
-            </div>
+            >
+              {step.title}
+            </p>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </div>
+
+        {/* Status badges */}
+        <div className="flex flex-col gap-1">
+          {hasErrors && (
+            <Badge variant="destructive" className="text-[10px] px-1 py-0">
+              {errorCount}
+            </Badge>
+          )}
+          {hasWarnings && (
+            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+              {warningCount}
+            </Badge>
+          )}
+          {step.optional && status !== "completed" && (
+            <Badge variant="outline" className="text-[10px] px-1 py-0">
+              Optional
+            </Badge>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -286,8 +225,8 @@ export function WizardSidebarProgress({
   stepValidations,
   stepFeedbackState,
   overallCompletion,
-  completedFields,
-  totalFields,
+  completedFields: _completedFields,
+  totalFields: _totalFields,
   onStepClick,
   canSkipCurrentStep = false,
   steps,
@@ -313,15 +252,6 @@ export function WizardSidebarProgress({
         </div>
 
         <Progress value={overallCompletion} className="h-2" />
-
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>
-            Step {currentStep + 1} of {stepStatuses.length}
-          </span>
-          <span>
-            {completedFields} / {totalFields} fields
-          </span>
-        </div>
 
         {canSkipCurrentStep && (
           <div className="flex justify-center">
@@ -367,30 +297,6 @@ export function WizardSidebarProgress({
             </motion.div>
           );
         })}
-      </div>
-
-      {/* Summary stats */}
-      <div className="pt-3 border-t space-y-2">
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div className="text-center">
-            <div className="font-medium text-green-600">
-              {stepStatuses.filter((s) => s === "completed").length}
-            </div>
-            <div className="text-muted-foreground">Completed</div>
-          </div>
-          <div className="text-center">
-            <div className="font-medium text-red-600">
-              {steps.reduce((acc, step) => {
-                const validation = stepValidations[step.id];
-                if (!validation) return acc;
-                const feedback = stepFeedbackState?.[step.id];
-                const shouldShowErrors = feedback?.showErrors ?? true;
-                return acc + (validation.hasErrors && shouldShowErrors ? 1 : 0);
-              }, 0)}
-            </div>
-            <div className="text-muted-foreground">With Errors</div>
-          </div>
-        </div>
       </div>
     </div>
   );
