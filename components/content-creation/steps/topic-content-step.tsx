@@ -103,6 +103,13 @@ export function TopicContentStep({
     }
   }, [contentTypeField, contentTypeOptions, formData.contentType]);
 
+  // Auto-select "Website" platform when topic is selected
+  useEffect(() => {
+    if (formData.topicId && !formData.platform) {
+      onFieldChangeRef.current("platform", "Website");
+    }
+  }, [formData.topicId, formData.platform]);
+
   // Handle topic selection
   const handleTopicSelect = useCallback(
     async (topic: GeneratedTopic) => {
@@ -240,8 +247,8 @@ export function TopicContentStep({
           />
         )}
 
-        {/* Enhanced Platform Selection */}
-        {platformField && (
+        {/* Enhanced Platform Selection - Only shown after topic selected */}
+        {platformField && formData.topicId && (
           <QuestionAnswerLayout
             question={{
               label: "Select Platform",
@@ -288,8 +295,8 @@ export function TopicContentStep({
           </QuestionAnswerLayout>
         )}
 
-        {/* Enhanced Industry Selection */}
-        {industryField && (
+        {/* Enhanced Industry Selection - Only shown after topic selected */}
+        {industryField && formData.topicId && (
           <QuestionAnswerLayout
             question={{
               label: "Industry",
