@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Clock,
@@ -17,7 +18,8 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ReviewerSelector } from "@/components/content-creation/fields";
+import { UserMultiSelect } from "@/components/content-creation/fields";
+import { QuestionAnswerLayout } from "@/components/content-creation/layouts/question-answer-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,9 +33,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { loadMockReviewers, MOCK_REVIEWERS } from "@/data/mock-reviewers";
+import { apiClient } from "@/lib/api-client";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import { log } from "@/lib/logger";
+import { useWorkspace } from "@/providers/workspace-provider";
 import type {
   ContentCreationFormData,
   PartialContentCreationFormData,
@@ -78,6 +81,28 @@ export function ReviewLaunchStep({
   const [_expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(),
   );
+
+  // Get current workspace
+  const { workspaceId } = useWorkspace();
+
+  // Fetch workspace members for reviewer selection
+  const { data: membersResponse, isLoading: isLoadingMembers } = useQuery({
+    queryKey: ["workspace-members", workspaceId],
+    queryFn: () => apiClient.members.list(workspaceId),
+    enabled: !!workspaceId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Transform workspace members to user format for UserMultiSelect
+  const availableReviewers = useMemo(() => {
+    if (!membersResponse?.members) return [];
+    return membersResponse.members.map((member) => ({
+      id: member.user_id,
+      name: member.user.display_name,
+      email: member.user.email,
+      avatar: undefined, // No avatar in current API response
+    }));
+  }, [membersResponse]);
 
   // Calculate completion status
   const completionStats = useMemo(() => {
@@ -442,27 +467,81 @@ export function ReviewLaunchStep({
       </div>
 
       {/* Human Review Configuration */}
-      <ReviewerSelector
-        selectedReviewers={formData.humanReviewers}
-        enableHumansInLoop={formData.enableHumansInLoop}
-        availableReviewers={MOCK_REVIEWERS}
-        maxReviewers={3}
-        onChange={(reviewers, enabled) => {
-          onFieldChange("humanReviewers", reviewers);
-          onFieldChange("enableHumansInLoop", enabled);
-          onFieldTouch("humanReviewers");
-          onFieldTouch("enableHumansInLoop");
+      <QuestionAnswerLayout
+        question={{
+          label: "Human Review (Optional)",
+          description:
+            "Select team members to review content before publication",
+          icon: Users,
         }}
-        onTouch={() => {
-          onFieldTouch("humanReviewers");
-          onFieldTouch("enableHumansInLoop");
-        }}
-        onLoadReviewers={async () => {
-          // Load mock reviewers with simulated delay
-          log.info("Loading team members...");
-          return await loadMockReviewers(500);
-        }}
-      />
+      >
+        <div className="space-y-4">
+          {/* Enable Toggle */}
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              id="enableHumansInLoop"
+              checked={formData.enableHumansInLoop || false}
+              onCheckedChange={(checked) => {
+                onFieldChange("enableHumansInLoop", !!checked);
+                onFieldTouch("enableHumansInLoop");
+              }}
+            />
+            <div className="space-y-0.5 flex-1">
+              <Label
+                htmlFor="enableHumansInLoop"
+                className="font-medium cursor-pointer flex items-center gap-2"
+              >
+                <Shield className="h-4 w-4" />
+                Enable Human Review
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Have team members review content before it goes live
+              </p>
+            </div>
+          </div>
+
+          {/* Reviewer Selection (when enabled) */}
+          {formData.enableHumansInLoop && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                Select Reviewers ({formData.humanReviewers?.length || 0}/3)
+              </Label>
+              {isLoadingMembers ? (
+                <div className="text-sm text-muted-foreground">
+                  Loading team members...
+                </div>
+              ) : availableReviewers.length === 0 ? (
+                <Alert>
+                  <Users className="h-4 w-4" />
+                  <AlertDescription>
+                    No team members available. Invite members to your workspace
+                    to enable human review.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <>
+                  <UserMultiSelect
+                    users={availableReviewers}
+                    value={formData.humanReviewers || []}
+                    onChange={(reviewers) => {
+                      onFieldChange("humanReviewers", reviewers);
+                      onFieldTouch("humanReviewers");
+                    }}
+                    placeholder="Select team members..."
+                    maxSelection={3}
+                  />
+                  {(formData.humanReviewers?.length || 0) > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Selected reviewers will be notified when content is ready
+                      for review.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </QuestionAnswerLayout>
 
       {/* Launch Options */}
       <Card>

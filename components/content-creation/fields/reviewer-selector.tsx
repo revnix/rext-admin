@@ -62,6 +62,9 @@ interface ReviewerSelectorProps {
 /**
  * Human-in-Loop Reviewer Selection Interface
  *
+ * @deprecated This component is deprecated in favor of UserMultiSelect + QuestionAnswerLayout.
+ * Use UserMultiSelect for a simpler, more consistent interface that matches the wizard design.
+ *
  * Allows users to enable human review and select specific reviewers
  * for content validation before publication. Includes search, filtering,
  * and team-based suggestions.

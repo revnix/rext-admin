@@ -6,7 +6,6 @@ import {
   KeywordTagInput,
   MultiSelectCheckboxGrid,
 } from "@/components/content-creation/fields";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";

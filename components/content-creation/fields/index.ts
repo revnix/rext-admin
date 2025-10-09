@@ -12,3 +12,4 @@ export { MultiSelectCheckboxGrid } from "./multi-select-checkbox-grid";
 export { ReviewerSelector } from "./reviewer-selector";
 export { ToggleFieldGroup } from "./toggle-field-group";
 export { ToneSelector } from "./tone-selector";
+export { UserMultiSelect } from "./user-multi-select";
