@@ -5,8 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTopics } from "@/hooks/use-topics";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import {
@@ -311,22 +317,27 @@ export function TopicContentStep({
             hasError={!!(errors.industry && touched.industry)}
             error={errors.industry}
           >
-            <div className="space-y-4">
-              <RadioGroup
-                options={industryOptions}
-                value={industrySelection}
-                onValueChange={handleIndustrySelect}
-                columns={3}
-              />
+            <div className="flex gap-3">
+              <div className="w-1/2">
+                <Select
+                  value={industrySelection}
+                  onValueChange={handleIndustrySelect}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your industry..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {showCustomIndustryInput && (
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="custom-industry"
-                    className="text-sm font-medium text-muted-foreground"
-                  >
-                    Specify your industry
-                  </Label>
+                <div className="w-1/2">
                   <Input
                     id="custom-industry"
                     value={formData.industry || ""}

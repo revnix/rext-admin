@@ -153,15 +153,10 @@ export function VoiceStyleStep({
                   const isDisabled =
                     !isSelected && (formData.tone?.length || 0) >= 3;
 
-                  // Check if this is a suggested tone (appears first in filtered results)
-                  const isSuggested = toneOptions
-                    .slice(0, 3)
-                    .some((suggested) => suggested.value === option.value);
-
                   return (
                     <Label
                       key={option.value}
-                      className={`relative flex items-center justify-center border rounded-lg p-3 cursor-pointer transition-colors ${
+                      className={`flex items-center space-x-3 border rounded-lg p-3 cursor-pointer transition-colors ${
                         isSelected
                           ? "border-primary bg-primary/5"
                           : isDisabled
@@ -176,18 +171,11 @@ export function VoiceStyleStep({
                         onChange={(e) =>
                           handleToneChange(option.value, e.target.checked)
                         }
-                        className="sr-only"
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                       />
-                      <div className="text-center">
-                        <span className="font-medium text-sm">
-                          {option.label}
-                        </span>
-                        {isSuggested && !isSelected && (
-                          <div className="absolute -top-1 -right-1">
-                            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                          </div>
-                        )}
-                      </div>
+                      <span className="font-medium text-sm">
+                        {option.label}
+                      </span>
                     </Label>
                   );
                 })}
