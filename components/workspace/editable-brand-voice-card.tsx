@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Textarea } from "@/components/ui/textarea";
+import { BrandVoiceRefreshControl } from "@/components/workspace/brand-voice-refresh-control";
 import { apiClient } from "@/lib/api-client";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Workspace } from "@/types/workspace";
@@ -49,7 +50,9 @@ export function EditableBrandVoiceCard({
     toFormData(brandVoice),
   );
 
-  const { brandVoiceRefresh, refreshBrandVoice } = useWorkspaceStore();
+  const brandVoiceRefresh = useWorkspaceStore(
+    (state) => state.brandVoiceRefresh,
+  );
 
   // Update mutation
   const updateMutation = useMutation({
@@ -81,15 +84,6 @@ export function EditableBrandVoiceCard({
       setFormData(toFormData(brandVoice));
     }
   }, [brandVoice, isEditing]);
-
-  const handleRefresh = async () => {
-    try {
-      await refreshBrandVoice(workspace.id);
-      toast.success("Brand voice refreshed successfully");
-    } catch (_error) {
-      toast.error("Failed to refresh brand voice");
-    }
-  };
 
   const handleSave = () => {
     updateMutation.mutate(formData);
@@ -139,17 +133,21 @@ export function EditableBrandVoiceCard({
             Brand voice will be automatically extracted when you add content to
             this workspace.
           </p>
-          <Button
-            onClick={handleRefresh}
-            disabled={brandVoiceRefresh.isRefreshing}
+          <BrandVoiceRefreshControl
+            workspaceId={workspace.id}
+            buttonVariant="default"
+            buttonSize="default"
           >
-            {brandVoiceRefresh.isRefreshing ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Extract Brand Voice
-          </Button>
+            <span className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span>Extract Brand Voice</span>
+            </span>
+          </BrandVoiceRefreshControl>
+          {brandVoiceRefresh.refreshError && (
+            <p className="mt-4 text-sm text-destructive">
+              {brandVoiceRefresh.refreshError}
+            </p>
+          )}
         </div>
       </DetailCard>
     );
@@ -192,17 +190,16 @@ export function EditableBrandVoiceCard({
             </>
           ) : (
             <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={brandVoiceRefresh.isRefreshing}
+              <BrandVoiceRefreshControl
+                workspaceId={workspace.id}
+                buttonVariant="outline"
+                buttonSize="sm"
               >
-                <RefreshCw
-                  className={`h-4 w-4 mr-2 ${brandVoiceRefresh.isRefreshing ? "animate-spin" : ""}`}
-                />
-                Refresh
-              </Button>
+                <span className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  <span>Refresh</span>
+                </span>
+              </BrandVoiceRefreshControl>
               <Button
                 variant="outline"
                 size="sm"
@@ -215,6 +212,12 @@ export function EditableBrandVoiceCard({
           )}
         </div>
       </div>
+
+      {brandVoiceRefresh.refreshError && (
+        <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+          {brandVoiceRefresh.refreshError}
+        </div>
+      )}
 
       <div className="space-y-6">
         {/* About */}

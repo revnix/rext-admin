@@ -52,14 +52,23 @@ export async function authenticatedFetch(
   options: RequestInit = {},
 ): Promise<Response> {
   const authHeaders = await getAuthHeaders();
+  const isFormDataBody =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  const headers = new Headers(options.headers);
+  Object.entries(authHeaders).forEach(([key, value]) => {
+    if (value) {
+      headers.set(key, value);
+    }
+  });
+
+  if (!isFormDataBody && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const response = await fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders,
-      ...options.headers,
-    },
+    headers,
   });
 
   // Handle 401 Unauthorized - session expired

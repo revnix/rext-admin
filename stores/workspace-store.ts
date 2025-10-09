@@ -113,7 +113,7 @@ interface WorkspaceState {
   // BRAND VOICE REFRESH ACTIONS
   // ============================================================================
 
-  refreshBrandVoice: (workspaceId: string) => Promise<void>;
+  refreshBrandVoice: (workspaceId: string) => Promise<string>;
   setBrandVoiceRefreshState: (state: Partial<BrandVoiceRefreshState>) => void;
 
   // UI preferences removed - DataTable handles its own state
@@ -259,8 +259,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         // Brand voice refresh state
         brandVoiceRefresh: {
           isRefreshing: false,
-          showComparison: false,
-          previousBrandVoice: undefined,
+          operationId: undefined,
           refreshError: undefined,
         },
 
@@ -786,46 +785,27 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             const response =
               await apiClient.workspaces.refreshBrandVoice(workspaceId);
 
-            // Update current workspace if it matches
-            const currentWorkspace = _get().currentWorkspace;
-            if (currentWorkspace && currentWorkspace.id === workspaceId) {
-              set((_state) => ({
-                currentWorkspace: {
-                  ...currentWorkspace,
-                  brand_voice: response.brand_voice,
-                },
-                brandVoiceRefresh: {
-                  isRefreshing: false,
-                  showComparison: response.changes_detected,
-                  previousBrandVoice: response.previous_brand_voice,
-                  refreshError: undefined,
-                },
-              }));
-            } else {
-              // Just update the refresh state if workspace doesn't match
-              set((_state) => ({
-                brandVoiceRefresh: {
-                  isRefreshing: false,
-                  showComparison: response.changes_detected,
-                  previousBrandVoice: response.previous_brand_voice,
-                  refreshError: undefined,
-                },
-              }));
-            }
+            const operationId = response.operation_id;
 
-            // Also update workspace in list if it exists
             set((state) => ({
-              workspaceList: state.workspaceList.map((w) =>
-                w.id === workspaceId
-                  ? { ...w, brand_voice: response.brand_voice }
-                  : w,
-              ),
+              brandVoiceRefresh: {
+                ...state.brandVoiceRefresh,
+                isRefreshing: true,
+                operationId,
+              },
+              currentOperation: {
+                operationId,
+                workspaceId,
+              },
             }));
+
+            return operationId;
           } catch (error) {
             set((state) => ({
               brandVoiceRefresh: {
                 ...state.brandVoiceRefresh,
                 isRefreshing: false,
+                operationId: undefined,
                 refreshError:
                   error instanceof Error
                     ? error.message

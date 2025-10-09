@@ -77,10 +77,7 @@ export class MembersService {
     total_count: number;
   }> {
     this.validateUuid(workspaceId, "workspace_id");
-    return this.makeRequest(
-      "GET",
-      `/api/v1/workspace/members?workspace_id=${workspaceId}`,
-    );
+    return this.makeRequest("GET", `/api/v1/workspaces/${workspaceId}/members`);
   }
 
   async addWorkspaceMember(
@@ -105,7 +102,7 @@ export class MembersService {
 
     return this.makeRequest(
       "POST",
-      `/api/v1/workspace/members?workspace_id=${workspaceId}`,
+      `/api/v1/workspaces/${workspaceId}/members`,
       { email },
     );
   }
@@ -119,7 +116,7 @@ export class MembersService {
 
     return this.makeRequest(
       "DELETE",
-      `/api/v1/workspace/members/${memberId}?workspace_id=${workspaceId}`,
+      `/api/v1/workspaces/${workspaceId}/members/${memberId}`,
     );
   }
 
@@ -141,8 +138,8 @@ export class MembersService {
     this.validateUuid(roleId, "role_id");
 
     return this.makeRequest(
-      "PUT",
-      `/api/v1/workspace/members/${memberId}/role?workspace_id=${workspaceId}`,
+      "PATCH",
+      `/api/v1/workspaces/${workspaceId}/members/${memberId}/role`,
       { role_id: roleId },
     );
   }
@@ -176,7 +173,15 @@ export class MembersService {
       );
     }
 
-    return this.makeRequest("POST", "/api/v1/workspace/invitations/", data);
+    return this.makeRequest(
+      "POST",
+      `/api/v1/workspaces/${data.workspace_id}/invitations`,
+      {
+        email: data.email,
+        role_id: data.role_id,
+        expiry_days: data.expires_in_days,
+      },
+    );
   }
 
   async acceptInvitation(token: string): Promise<{
@@ -200,19 +205,25 @@ export class MembersService {
     });
   }
 
-  async revokeInvitation(invitationId: string): Promise<{
+  async revokeInvitation(
+    workspaceId: string,
+    invitationId: string,
+    reason?: string,
+  ): Promise<{
     invitation_id: string;
     status: string;
   }> {
+    this.validateUuid(workspaceId, "workspace_id");
     this.validateUuid(invitationId, "invitation_id");
 
     return this.makeRequest(
-      "POST",
-      `/api/v1/workspace/invitations/${invitationId}/revoke`,
+      "DELETE",
+      `/api/v1/workspaces/${workspaceId}/invitations/${invitationId}`,
+      reason ? { reason } : undefined,
     );
   }
 
-  async listSentInvitations(workspaceId?: string): Promise<{
+  async listSentInvitations(workspaceId: string): Promise<{
     invitations: Array<{
       id: string;
       workspace_id: string;
@@ -226,11 +237,11 @@ export class MembersService {
     }>;
     total_count: number;
   }> {
-    const endpoint = workspaceId
-      ? `/api/v1/workspace/invitations/sent?workspace_id=${workspaceId}`
-      : "/api/v1/workspace/invitations/sent";
-
-    return this.makeRequest("GET", endpoint);
+    this.validateUuid(workspaceId, "workspace_id");
+    return this.makeRequest(
+      "GET",
+      `/api/v1/workspaces/${workspaceId}/invitations`,
+    );
   }
 
   async listReceivedInvitations(): Promise<{
@@ -284,7 +295,15 @@ export class MembersService {
       );
     }
 
-    return this.makeRequest("POST", "/api/v1/workspace/invitations/bulk", data);
+    return this.makeRequest(
+      "POST",
+      `/api/v1/workspaces/${data.workspace_id}/invitations/bulk`,
+      {
+        emails: data.emails,
+        role_id: data.role_id,
+        expiry_days: data.expires_in_days,
+      },
+    );
   }
 
   // ============================================================================

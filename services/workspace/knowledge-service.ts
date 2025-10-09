@@ -19,6 +19,7 @@ import type {
   AddWebKnowledgeRequest,
   FileKnowledge,
   TextKnowledge,
+  UpdateTextKnowledgeRequest,
   WebKnowledge,
   WorkspaceApiConfig,
   WorkspaceApiContext,
@@ -83,7 +84,7 @@ export class KnowledgeService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ web_knowledge: WebKnowledge[] }>(
       "GET",
-      `/api/v1/workspace/web_knowledge/all?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/web`,
     );
   }
 
@@ -95,7 +96,7 @@ export class KnowledgeService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "GET",
-      `/api/v1/workspace/web_knowledge/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`,
     );
   }
 
@@ -107,7 +108,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
       "POST",
-      "/api/v1/workspace/web_knowledge/add",
+      `/api/v1/workspaces/${data.workspace_id}/knowledge/web`,
       sanitizedData,
     );
   }
@@ -121,8 +122,9 @@ export class KnowledgeService {
     this.validateUuid(webId, "web_id");
 
     return this.makeRequest<{ web_knowledge: WebKnowledge }>(
-      "PUT",
-      `/api/v1/workspace/web_knowledge/update/${webId}?workspace_id=${encodeURIComponent(workspaceId)}&title=${encodeURIComponent(title)}`,
+      "PATCH",
+      `/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`,
+      { title },
     );
   }
 
@@ -135,7 +137,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/web_knowledge/delete/${webId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`,
     );
   }
 
@@ -149,7 +151,7 @@ export class KnowledgeService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ file_knowledge: FileKnowledge[] }>(
       "GET",
-      `/api/v1/workspace/file/all?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/files`,
     );
   }
 
@@ -161,7 +163,7 @@ export class KnowledgeService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ file_knowledge: FileKnowledge }>(
       "GET",
-      `/api/v1/workspace/file/${fileId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/files/${fileId}`,
     );
   }
 
@@ -171,12 +173,11 @@ export class KnowledgeService {
     this.validateFileKnowledgeData(data);
 
     const formData = new FormData();
-    formData.append("workspace_id", data.workspace_id);
     formData.append("file", data.file);
 
     return this.makeFileRequest<{ file_knowledge: FileKnowledge }>(
       "POST",
-      "/api/v1/workspace/file/add",
+      `/api/v1/workspaces/${data.workspace_id}/knowledge/files`,
       formData,
     );
   }
@@ -190,7 +191,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/file/delete/${fileId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/files/${fileId}`,
     );
   }
 
@@ -204,7 +205,7 @@ export class KnowledgeService {
     this.validateUuid(workspaceId, "workspace_id");
     return this.makeRequest<{ text_knowledge: TextKnowledge[] }>(
       "GET",
-      `/api/v1/workspace/text/all?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/text`,
     );
   }
 
@@ -217,7 +218,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "GET",
-      `/api/v1/workspace/text/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`,
     );
   }
 
@@ -229,7 +230,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
       "POST",
-      "/api/v1/workspace/text/add-text",
+      `/api/v1/workspaces/${data.workspace_id}/knowledge/text`,
       sanitizedData,
     );
   }
@@ -237,14 +238,23 @@ export class KnowledgeService {
   async updateTextKnowledge(
     textId: string,
     workspaceId: string,
-    newContent: string,
+    data: UpdateTextKnowledgeRequest,
   ): Promise<{ text_knowledge: TextKnowledge }> {
     this.validateUuid(textId, "text_id");
     this.validateUuid(workspaceId, "workspace_id");
+    const sanitized = this.sanitizeUpdateTextKnowledgeData(data);
+
+    if (Object.keys(sanitized).length === 0) {
+      throw new KnowledgeServiceError(
+        "INVALID_REQUEST",
+        "At least one field (title, content, tags) must be provided",
+      );
+    }
 
     return this.makeRequest<{ text_knowledge: TextKnowledge }>(
-      "PUT",
-      `/api/v1/workspace/text/update/${textId}?workspace_id=${encodeURIComponent(workspaceId)}&new_content=${encodeURIComponent(newContent)}`,
+      "PATCH",
+      `/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`,
+      sanitized,
     );
   }
 
@@ -257,7 +267,7 @@ export class KnowledgeService {
 
     return this.makeRequest<{ success: boolean }>(
       "DELETE",
-      `/api/v1/workspace/text/delete/${textId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+      `/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`,
     );
   }
 
@@ -288,7 +298,7 @@ export class KnowledgeService {
         text_count: number;
         total_count: number;
       };
-    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/all`);
+    }>("GET", `/api/v1/workspaces/${workspaceId}/knowledge`);
   }
 
   async getWorkspaceWebKnowledge(
@@ -299,7 +309,7 @@ export class KnowledgeService {
     return this.makeRequest<{
       web_knowledge: WebKnowledge[];
       total_count: number;
-    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/web`);
+    }>("GET", `/api/v1/workspaces/${workspaceId}/knowledge/web`);
   }
 
   async getWorkspaceFileKnowledge(
@@ -310,7 +320,7 @@ export class KnowledgeService {
     return this.makeRequest<{
       file_knowledge: FileKnowledge[];
       total_count: number;
-    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/files`);
+    }>("GET", `/api/v1/workspaces/${workspaceId}/knowledge/files`);
   }
 
   async getWorkspaceTextKnowledge(
@@ -321,7 +331,7 @@ export class KnowledgeService {
     return this.makeRequest<{
       text_knowledge: TextKnowledge[];
       total_count: number;
-    }>("GET", `/api/v1/workspace/${workspaceId}/knowledge/text`);
+    }>("GET", `/api/v1/workspaces/${workspaceId}/knowledge/text`);
   }
 
   // ============================================================================
@@ -598,26 +608,61 @@ export class KnowledgeService {
   // SANITIZATION METHODS
   // ============================================================================
 
-  private sanitizeWebKnowledgeData(
-    data: AddWebKnowledgeRequest,
-  ): AddWebKnowledgeRequest {
-    return {
-      workspace_id: data.workspace_id,
+  private sanitizeWebKnowledgeData(data: AddWebKnowledgeRequest): {
+    url: string;
+    title?: string;
+  } {
+    const sanitized: { url: string; title?: string } = {
       url: data.url.trim(),
     };
+
+    if (data.title && data.title.trim().length > 0) {
+      sanitized.title = InputSanitizer.sanitizeText(data.title.trim());
+    }
+
+    return sanitized;
   }
 
-  private sanitizeTextKnowledgeData(
-    data: AddTextKnowledgeRequest,
-  ): AddTextKnowledgeRequest {
+  private sanitizeTextKnowledgeData(data: AddTextKnowledgeRequest): {
+    title: string;
+    content: string;
+    tags?: string[];
+  } {
     return {
-      workspace_id: data.workspace_id,
       title: InputSanitizer.sanitizeText(data.title.trim()),
       content: InputSanitizer.sanitizeText(data.content.trim()),
       tags: data.tags
         ?.map((tag) => InputSanitizer.sanitizeText(tag.trim()))
         .filter(Boolean),
     };
+  }
+
+  private sanitizeUpdateTextKnowledgeData(data: UpdateTextKnowledgeRequest): {
+    title?: string;
+    content?: string;
+    tags?: string[];
+  } {
+    const sanitized: { title?: string; content?: string; tags?: string[] } = {};
+
+    if (data.title && data.title.trim().length > 0) {
+      sanitized.title = InputSanitizer.sanitizeText(data.title.trim());
+    }
+
+    if (data.content && data.content.trim().length > 0) {
+      sanitized.content = InputSanitizer.sanitizeText(data.content.trim());
+    }
+
+    if (data.tags) {
+      const cleanedTags = data.tags
+        .map((tag) => InputSanitizer.sanitizeText(tag.trim()))
+        .filter(Boolean);
+
+      if (cleanedTags.length > 0) {
+        sanitized.tags = cleanedTags;
+      }
+    }
+
+    return sanitized;
   }
 
   public cancelAllRequests(): void {

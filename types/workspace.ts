@@ -212,6 +212,7 @@ export interface CreateWorkspaceResponse {
 export interface AddWebKnowledgeRequest {
   workspace_id: string;
   url: string;
+  title?: string;
 }
 
 /**
@@ -476,9 +477,7 @@ export interface RefreshBrandVoiceRequest {
  * Response from brand voice refresh operation
  */
 export interface RefreshBrandVoiceResponse {
-  brand_voice: BrandVoice;
-  changes_detected: boolean;
-  previous_brand_voice?: BrandVoice;
+  operation_id: string;
 }
 
 /**
@@ -486,7 +485,6 @@ export interface RefreshBrandVoiceResponse {
  */
 export interface BrandVoiceRefreshState {
   isRefreshing: boolean;
-  showComparison: boolean;
-  previousBrandVoice?: BrandVoice;
+  operationId?: string;
   refreshError?: string;
 }

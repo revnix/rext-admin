@@ -93,7 +93,7 @@ export function WorkspaceInvitationsPanel({
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
     mutationFn: (invitationId: string) =>
-      apiClient.invitations.revoke(invitationId),
+      apiClient.invitations.revoke(workspaceId, invitationId),
     onSuccess: () => {
       toast.success("Invitation revoked successfully");
       queryClient.invalidateQueries({

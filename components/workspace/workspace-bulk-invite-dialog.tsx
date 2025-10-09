@@ -57,7 +57,8 @@ interface WorkspaceBulkInviteDialogProps {
 interface InvitationResult {
   id: string;
   email: string;
-  status: string;
+  status: "pending" | "failed";
+  error_message?: string;
 }
 
 export function WorkspaceBulkInviteDialog({
@@ -103,30 +104,38 @@ export function WorkspaceBulkInviteDialog({
   const createBulkInvitationsMutation = useMutation({
     mutationFn: (data: BulkInviteFormValues) => {
       const emails = parseEmails(data.emails_text);
-      return apiClient.invitations.createBulk({
-        workspace_id: workspaceId,
+      return apiClient.invitations.createBulk(workspaceId, {
         emails,
         role_id: data.role_id,
-        expires_in_days: data.expires_in_days,
+        expiry_days: data.expires_in_days,
       });
     },
     onSuccess: (data) => {
-      setResults(data.invitations);
+      setResults(
+        data.results.map((result) => ({
+          id: result.invitation_id ?? `${result.email}-${Date.now()}`,
+          email: result.email,
+          status: result.success ? "pending" : "failed",
+          error_message: result.error_message,
+        })),
+      );
 
-      if (data.failed_count === 0) {
-        toast.success(`Successfully sent ${data.success_count} invitations`);
+      if (data.failed === 0) {
+        toast.success(`Successfully sent ${data.successful} invitations`);
       } else {
         toast.warning(
-          `Sent ${data.success_count} invitations, ${data.failed_count} failed`,
+          `Sent ${data.successful} invitations, ${data.failed} failed`,
         );
       }
 
       queryClient.invalidateQueries({
         queryKey: ["workspace-members", workspaceId],
       });
-      queryClient.invalidateQueries({ queryKey: ["sent-invitations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["sent-invitations", workspaceId],
+      });
 
-      if (data.failed_count === 0) {
+      if (data.failed === 0) {
         // Only close if all succeeded
         setTimeout(() => {
           form.reset();
@@ -203,20 +212,20 @@ export function WorkspaceBulkInviteDialog({
                   key={`${result.email}-${index}`}
                   className="flex items-start gap-2 p-3 rounded-md border"
                 >
-                  {result.status === "success" ? (
+                  {result.status === "pending" ? (
                     <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{result.email}</p>
-                    {result.status === "success" ? (
+                    {result.status === "pending" ? (
                       <p className="text-sm text-green-600">
                         Invitation sent successfully
                       </p>
                     ) : (
                       <p className="text-sm text-destructive">
-                        {result.status}
+                        {result.error_message ?? "Failed to send invitation"}
                       </p>
                     )}
                   </div>
@@ -230,9 +239,9 @@ export function WorkspaceBulkInviteDialog({
                   Total: {results.length} emails processed
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {results.filter((r) => r.status === "success").length}{" "}
+                  {results.filter((r) => r.status === "pending").length}{" "}
                   successful,{" "}
-                  {results.filter((r) => r.status !== "success").length} failed
+                  {results.filter((r) => r.status !== "pending").length} failed
                 </p>
               </div>
               <Button onClick={handleClose}>Close</Button>

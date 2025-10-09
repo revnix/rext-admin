@@ -199,22 +199,10 @@ export class WorkspaceService {
   ): Promise<RefreshBrandVoiceResponse> {
     this.validateUuid(workspaceId, "workspace_id");
 
-    // Mock implementation - simulate backend processing
-    return new Promise((resolve) => {
-      setTimeout(
-        () => {
-          const changesDetected = Math.random() > 0.3;
-          resolve({
-            brand_voice: this.generateMockUpdatedBrandVoice(workspaceId),
-            changes_detected: changesDetected,
-            previous_brand_voice: changesDetected
-              ? this.generateMockPreviousBrandVoice(workspaceId)
-              : undefined,
-          });
-        },
-        2000 + Math.random() * 3000,
-      );
-    });
+    return this.makeRequest<RefreshBrandVoiceResponse>(
+      "POST",
+      `/api/v1/workspaces/${workspaceId}/brand-voice/refresh`,
+    );
   }
 
   // ============================================================================
@@ -231,71 +219,6 @@ export class WorkspaceService {
     } else {
       return `${originalTitle} (Copy)`;
     }
-  }
-
-  private generateMockUpdatedBrandVoice(workspaceId: string) {
-    const mockVariations = [
-      {
-        about:
-          "An innovative tech company focused on AI-driven solutions and cutting-edge automation tools.",
-        customer_profile:
-          "Forward-thinking businesses and entrepreneurs seeking intelligent automation and data-driven insights.",
-        selling_position:
-          "Leading provider of intelligent automation tools that transform business operations through AI.",
-        target_audience: [
-          "Tech Leaders",
-          "Business Owners",
-          "Innovation Teams",
-          "Digital Transformation Managers",
-        ],
-        brand_voice: [
-          "Professional",
-          "Innovative",
-          "Trustworthy",
-          "Results-Driven",
-          "Forward-Thinking",
-        ],
-        competitors: [
-          "TechCorp",
-          "AI Solutions Inc",
-          "AutomateNow",
-          "SmartFlow",
-        ],
-        content_strategy: [
-          "Thought Leadership",
-          "Case Studies",
-          "Product Demos",
-          "Industry Insights",
-        ],
-      },
-    ];
-
-    const selectedVariation =
-      mockVariations[Math.floor(Math.random() * mockVariations.length)];
-
-    return {
-      id: generateRequestId(),
-      workspace_id: workspaceId,
-      ...selectedVariation,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  }
-
-  private generateMockPreviousBrandVoice(workspaceId: string) {
-    return {
-      id: generateRequestId(),
-      workspace_id: workspaceId,
-      about: "A technology company providing business solutions.",
-      customer_profile: "Businesses looking for software solutions.",
-      selling_position: "Reliable technology solutions for modern businesses.",
-      target_audience: ["Business Owners", "IT Teams"],
-      brand_voice: ["Professional", "Reliable", "Practical"],
-      competitors: ["TechCorp", "BusinessSoft"],
-      content_strategy: ["Product Updates", "Case Studies"],
-      created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    };
   }
 
   private async makeRequest<T>(

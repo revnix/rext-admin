@@ -30,7 +30,7 @@ export function createMembersNamespace(client: ApiClient) {
           };
         }>;
         total_count: number;
-      }>(`/api/v1/workspace/${workspaceId}/members`, {
+      }>(`/api/v1/workspaces/${workspaceId}/members`, {
         method: "GET",
       });
     },
@@ -47,7 +47,7 @@ export function createMembersNamespace(client: ApiClient) {
           display_name: string;
           status: string;
         };
-      }>(`/api/v1/workspace/${workspaceId}/members`, {
+      }>(`/api/v1/workspaces/${workspaceId}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -58,8 +58,8 @@ export function createMembersNamespace(client: ApiClient) {
      * Remove workspace member
      */
     remove: async (workspaceId: string, memberId: string) => {
-      return client.request<void>(
-        `/api/v1/workspace/${workspaceId}/members/${memberId}`,
+      return client.request<{ member_id: string }>(
+        `/api/v1/workspaces/${workspaceId}/members/${memberId}`,
         {
           method: "DELETE",
         },
@@ -79,8 +79,8 @@ export function createMembersNamespace(client: ApiClient) {
           id: string;
           role_id: string;
         };
-      }>(`/api/v1/workspace/${workspaceId}/members/${memberId}/role`, {
-        method: "PUT",
+      }>(`/api/v1/workspaces/${workspaceId}/members/${memberId}/role`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role_id: roleId }),
       });
@@ -93,60 +93,69 @@ export function createInvitationsNamespace(client: ApiClient) {
     /**
      * Create invitation
      */
-    create: async (data: {
-      workspace_id: string;
-      email: string;
-      role_id: string;
-      expires_in_days?: number;
-    }) => {
+    create: async (
+      workspaceId: string,
+      data: {
+        email: string;
+        role_id: string;
+        expiry_days?: number;
+      },
+    ) => {
       return client.request<{
         invitation: {
           id: string;
-          token: string;
           email: string;
           workspace_id: string;
           role_id: string;
           expires_at: string;
         };
-      }>("/api/v1/workspace/invitations", {
+      }>(`/api/v1/workspaces/${workspaceId}/invitations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          email: data.email,
+          role_id: data.role_id,
+          expiry_days: data.expiry_days,
+        }),
       });
     },
 
     /**
      * Create bulk invitations
      */
-    createBulk: async (data: {
-      workspace_id: string;
-      emails: string[];
-      role_id: string;
-      expires_in_days?: number;
-    }) => {
+    createBulk: async (
+      workspaceId: string,
+      data: {
+        emails: string[];
+        role_id: string;
+        expiry_days?: number;
+      },
+    ) => {
       return client.request<{
-        invitations: Array<{
-          id: string;
+        total_requested: number;
+        successful: number;
+        failed: number;
+        results: Array<{
           email: string;
-          status: string;
+          success: boolean;
+          invitation_id?: string;
+          error_message?: string;
         }>;
-        success_count: number;
-        failed_count: number;
-      }>("/api/v1/workspace/invitations/bulk", {
+      }>(`/api/v1/workspaces/${workspaceId}/invitations/bulk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          emails: data.emails,
+          role_id: data.role_id,
+          expiry_days: data.expiry_days,
+        }),
       });
     },
 
     /**
      * List sent invitations
      */
-    listSent: async (workspaceId?: string) => {
-      const endpoint = workspaceId
-        ? `/api/v1/workspace/invitations/sent?workspace_id=${encodeURIComponent(workspaceId)}`
-        : "/api/v1/workspace/invitations/sent";
-
+    listSent: async (workspaceId: string) => {
       return client.request<{
         invitations: Array<{
           id: string;
@@ -159,7 +168,8 @@ export function createInvitationsNamespace(client: ApiClient) {
           workspace_name?: string;
           role_name?: string;
         }>;
-      }>(endpoint, {
+        total_count: number;
+      }>(`/api/v1/workspaces/${workspaceId}/invitations`, {
         method: "GET",
       });
     },
@@ -197,13 +207,19 @@ export function createInvitationsNamespace(client: ApiClient) {
     /**
      * Revoke invitation
      */
-    revoke: async (invitationId: string) => {
-      return client.request<void>(
-        `/api/v1/workspace/invitations/${invitationId}`,
-        {
-          method: "DELETE",
-        },
-      );
+    revoke: async (
+      workspaceId: string,
+      invitationId: string,
+      reason?: string,
+    ) => {
+      return client.request<{
+        invitation_id: string;
+        status: string;
+      }>(`/api/v1/workspaces/${workspaceId}/invitations/${invitationId}`, {
+        method: "DELETE",
+        headers: reason ? { "Content-Type": "application/json" } : undefined,
+        body: reason ? JSON.stringify({ reason }) : undefined,
+      });
     },
   };
 }

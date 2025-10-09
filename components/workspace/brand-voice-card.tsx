@@ -27,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { BrandVoiceRefreshControl } from "@/components/workspace/brand-voice-refresh-control";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { BrandVoice, Workspace } from "@/types/workspace";
@@ -248,40 +249,12 @@ function TemporalInfo({ brandVoice }: { brandVoice: BrandVoice }) {
   );
 }
 
-// Refresh brand voice button component
-function RefreshBrandVoiceButton({ workspaceId }: { workspaceId: string }) {
-  const { brandVoiceRefresh, refreshBrandVoice } = useWorkspaceStore();
-
-  const handleRefresh = async () => {
-    try {
-      await refreshBrandVoice(workspaceId);
-      toast.success("Brand voice refreshed successfully");
-    } catch (_error) {
-      toast.error("Failed to refresh brand voice");
-    }
-  };
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleRefresh}
-      disabled={brandVoiceRefresh.isRefreshing}
-      className="flex items-center gap-2"
-      title="Re-analyze workspace content to refresh brand voice"
-    >
-      <RefreshCw
-        className={`h-4 w-4 ${brandVoiceRefresh.isRefreshing ? "animate-spin" : ""}`}
-      />
-      {brandVoiceRefresh.isRefreshing ? "Refreshing..." : "Refresh"}
-    </Button>
-  );
-}
-
 // Main brand voice card component
 export function BrandVoiceCard({ workspace }: BrandVoiceCardProps) {
   const brandVoice = workspace.brand_voice;
-  const { brandVoiceRefresh } = useWorkspaceStore();
+  const brandVoiceRefresh = useWorkspaceStore(
+    (state) => state.brandVoiceRefresh,
+  );
 
   // Empty state
   if (!brandVoice) {
@@ -317,7 +290,12 @@ export function BrandVoiceCard({ workspace }: BrandVoiceCardProps) {
               workspace content
             </CardDescription>
           </div>
-          <RefreshBrandVoiceButton workspaceId={workspace.id} />
+          <BrandVoiceRefreshControl workspaceId={workspace.id}>
+            <span className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </span>
+          </BrandVoiceRefreshControl>
         </div>
       </CardHeader>
 

@@ -38,7 +38,9 @@ import { useWorkspaceForm, useWorkspaceStore } from "@/stores/workspace-store";
  */
 export function WorkspaceFormModal() {
   const workspaceForm = useWorkspaceForm();
-  const { closeWorkspaceForm } = useWorkspaceStore();
+  const closeWorkspaceForm = useWorkspaceStore(
+    (state) => state.closeWorkspaceForm,
+  );
 
   // Set up React Hook Form with Zod validation
   const form = useForm<WorkspaceFormData>({

@@ -120,19 +120,12 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
-     * Refresh brand voice for workspace
-     * Note: Backend only supports UPDATE, not automatic refresh from URL scraping
+     * Trigger background refresh of workspace brand voice.
+     * Returns operation identifier for SSE tracking.
      */
     refreshBrandVoice: async (workspaceId: string) => {
-      // This endpoint might not exist - backend only has PUT /workspace/brand-voice
-      // which requires brand voice data in the body
-      // Keeping for backwards compatibility but may need backend implementation
       return client.request<{
-        success: boolean;
-        message: string;
-        brand_voice?: BrandVoice;
-        previous_brand_voice?: BrandVoice;
-        changes_detected: boolean;
+        operation_id: string;
       }>(`/api/v1/workspaces/${workspaceId}/brand-voice/refresh`, {
         method: "POST",
       });

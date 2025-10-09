@@ -38,7 +38,7 @@ import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { NavGroup } from "@/types/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { currentWorkspace } = useWorkspaceStore();
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
 
   // Generate dynamic URLs based on current workspace
   const getKnowledgeUrl = (view?: string) => {

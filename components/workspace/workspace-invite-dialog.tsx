@@ -80,18 +80,19 @@ export function WorkspaceInviteDialog({
   // Create invitation mutation
   const createInvitationMutation = useMutation({
     mutationFn: (data: InviteFormValues) =>
-      apiClient.invitations.create({
-        workspace_id: workspaceId,
+      apiClient.invitations.create(workspaceId, {
         email: data.email,
         role_id: data.role_id,
-        expires_in_days: data.expires_in_days,
+        expiry_days: data.expires_in_days,
       }),
     onSuccess: () => {
       toast.success("Invitation sent successfully");
       queryClient.invalidateQueries({
         queryKey: ["workspace-members", workspaceId],
       });
-      queryClient.invalidateQueries({ queryKey: ["sent-invitations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["sent-invitations", workspaceId],
+      });
       form.reset();
       onOpenChange(false);
       onInvited?.();
