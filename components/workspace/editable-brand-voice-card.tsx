@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Brain, Edit2, Loader2, Plus, RefreshCw, Save, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Textarea } from "@/components/ui/textarea";
+import { apiClient } from "@/lib/api-client";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { Workspace } from "@/types/workspace";
 
@@ -28,54 +29,44 @@ interface BrandVoiceFormData {
   content_strategy: string[];
 }
 
+const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
+  about: voice?.about ?? "",
+  customer_profile: voice?.customer_profile ?? "",
+  selling_position: voice?.selling_position ?? "",
+  target_audience: voice?.target_audience ?? [],
+  brand_voice: voice?.brand_voice ?? [],
+  competitors: voice?.competitors ?? [],
+  content_strategy: voice?.content_strategy ?? [],
+});
+
 export function EditableBrandVoiceCard({
   workspace,
 }: EditableBrandVoiceCardProps) {
   const queryClient = useQueryClient();
   const brandVoice = workspace.brand_voice;
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<BrandVoiceFormData>({
-    about: brandVoice?.about || "",
-    customer_profile: brandVoice?.customer_profile || "",
-    selling_position: brandVoice?.selling_position || "",
-    target_audience: brandVoice?.target_audience || [],
-    brand_voice: brandVoice?.brand_voice || [],
-    competitors: brandVoice?.competitors || [],
-    content_strategy: brandVoice?.content_strategy || [],
-  });
+  const [formData, setFormData] = useState<BrandVoiceFormData>(() =>
+    toFormData(brandVoice),
+  );
 
   const { brandVoiceRefresh, refreshBrandVoice } = useWorkspaceStore();
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: BrandVoiceFormData) => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/workspace/${workspace.id}/brand-voice`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-          body: JSON.stringify({
-            about: data.about,
-            customer_profile: data.customer_profile,
-            selling_position: data.selling_position,
-            target_audience: data.target_audience,
-            brand_voice: data.brand_voice,
-            competitors: data.competitors,
-            content_pillar: data.content_strategy,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update brand voice");
-      }
-
-      return response.json();
+      return apiClient.workspaces.updateBrandVoice(workspace.id, {
+        about: data.about,
+        customer_profile: data.customer_profile,
+        selling_position: data.selling_position,
+        target_audience: data.target_audience,
+        brand_voice: data.brand_voice,
+        competitors: data.competitors,
+        content_strategy: data.content_strategy,
+      });
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      const updated = response.brand_voice;
+      setFormData(toFormData(updated));
       queryClient.invalidateQueries({ queryKey: ["workspace", workspace.id] });
       toast.success("Brand voice updated successfully");
       setIsEditing(false);
@@ -84,6 +75,12 @@ export function EditableBrandVoiceCard({
       toast.error("Failed to update brand voice");
     },
   });
+
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(toFormData(brandVoice));
+    }
+  }, [brandVoice, isEditing]);
 
   const handleRefresh = async () => {
     try {
@@ -99,15 +96,7 @@ export function EditableBrandVoiceCard({
   };
 
   const handleCancel = () => {
-    setFormData({
-      about: brandVoice?.about || "",
-      customer_profile: brandVoice?.customer_profile || "",
-      selling_position: brandVoice?.selling_position || "",
-      target_audience: brandVoice?.target_audience || [],
-      brand_voice: brandVoice?.brand_voice || [],
-      competitors: brandVoice?.competitors || [],
-      content_strategy: brandVoice?.content_strategy || [],
-    });
+    setFormData(toFormData(brandVoice));
     setIsEditing(false);
   };
 

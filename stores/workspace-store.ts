@@ -67,6 +67,12 @@ interface WorkspaceState {
   // Brand voice refresh state
   brandVoiceRefresh: BrandVoiceRefreshState;
 
+  // Operation tracking for SSE (transient, not persisted)
+  currentOperation: {
+    operationId: string;
+    workspaceId: string;
+  } | null;
+
   // SSR hydration state
   _hasHydrated: boolean;
 
@@ -79,6 +85,15 @@ interface WorkspaceState {
   updateWorkspaceInList: (updatedWorkspace: Workspace) => void;
   removeWorkspaceFromList: (workspaceId: string) => void;
   addWorkspaceToList: (workspace: Workspace) => void;
+
+  // Operation tracking actions
+  setCurrentOperation: (
+    operation: {
+      operationId: string;
+      workspaceId: string;
+    } | null,
+  ) => void;
+  clearCurrentOperation: () => void;
 
   // ============================================================================
   // ASYNC WORKSPACE CRUD ACTIONS
@@ -249,6 +264,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           refreshError: undefined,
         },
 
+        // Operation tracking (transient, not persisted)
+        currentOperation: null,
+
         // SSR hydration
         _hasHydrated: false,
 
@@ -272,6 +290,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
             return newState;
           });
+        },
+
+        setCurrentOperation: (operation) => {
+          set({ currentOperation: operation });
+        },
+
+        clearCurrentOperation: () => {
+          set({ currentOperation: null });
         },
 
         setWorkspaceList: (workspaces) => {
@@ -553,18 +579,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }));
 
           try {
-            const response = await apiClient.workspaces.create({
-              title: data.title,
-              description: data.description || "",
-              url: data.url,
-            });
+            const { workspace, operation_id } =
+              await apiClient.workspaces.create({
+                title: data.title,
+                description: data.description || "",
+                url: data.url,
+              });
 
-            const workspace = response.workspace;
-
-            // Optimistically add to store
+            // Optimistically add to store and set operation context for SSE
             set((state) => ({
               workspaceList: [workspace, ...state.workspaceList],
               currentWorkspace: workspace,
+              currentOperation: {
+                operationId: operation_id,
+                workspaceId: workspace.id,
+              },
               loadingStates: { ...state.loadingStates, creating: false },
             }));
 
@@ -972,6 +1001,13 @@ export const useRecentWorkspaces = () => {
   return recentWorkspaceIds
     .map((id) => workspaceList.find((workspace) => workspace.id === id))
     .filter(Boolean) as Workspace[];
+};
+
+/**
+ * Hook to get current operation (for SSE tracking)
+ */
+export const useCurrentOperation = () => {
+  return useWorkspaceStore((state) => state.currentOperation);
 };
 
 /**

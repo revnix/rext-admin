@@ -180,6 +180,14 @@ export type {
   ValidationResult,
 } from "./shared";
 // ============================================================================
+// SSE TYPES
+// ============================================================================
+export type {
+  SSEConnectionStatus,
+  SSEEvent,
+  SSEEventStatus,
+} from "./sse";
+// ============================================================================
 // TOPIC BUILDER TYPES
 // ============================================================================
 // ============================================================================
@@ -224,6 +232,7 @@ export type {
   AddWebKnowledgeRequest,
   BrandVoice,
   CreateWorkspaceRequest,
+  CreateWorkspaceResponse,
   FileKnowledge,
   FileKnowledgeStatus,
   KnowledgeItem,

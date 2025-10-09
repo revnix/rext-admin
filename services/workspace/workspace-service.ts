@@ -14,6 +14,7 @@ import { logger } from "@/lib/logger";
 import { InputSanitizer } from "@/lib/sanitization";
 import type {
   CreateWorkspaceRequest,
+  CreateWorkspaceResponse,
   RefreshBrandVoiceResponse,
   UpdateWorkspaceRequest,
   WorkspaceApiConfig,
@@ -126,11 +127,11 @@ export class WorkspaceService {
    */
   async createWorkspace(
     data: CreateWorkspaceRequest,
-  ): Promise<WorkspaceResponse> {
+  ): Promise<CreateWorkspaceResponse> {
     this.validateWorkspaceData(data);
     const sanitizedData = this.sanitizeWorkspaceData(data);
 
-    return this.makeRequest<WorkspaceResponse>(
+    return this.makeRequest<CreateWorkspaceResponse>(
       "POST",
       "/api/v1/workspace/create",
       sanitizedData,
@@ -171,7 +172,7 @@ export class WorkspaceService {
    */
   async duplicateWorkspace(
     sourceWorkspaceId: string,
-  ): Promise<WorkspaceResponse> {
+  ): Promise<CreateWorkspaceResponse> {
     this.validateUuid(sourceWorkspaceId, "workspace_id");
 
     const sourceResponse = await this.getWorkspace(sourceWorkspaceId);

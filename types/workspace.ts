@@ -189,6 +189,19 @@ export interface WorkspaceResponse {
   workspace: Workspace;
 }
 
+/**
+ * Response for creating a workspace with background processing metadata.
+ *
+ * Matches backend `created()` payload which includes both workspace data and
+ * an `operation_id` used to subscribe to SSE progress updates. `message` is
+ * optional because the backend helper injects it when available.
+ */
+export interface CreateWorkspaceResponse {
+  workspace: Workspace;
+  operation_id: string;
+  message?: string;
+}
+
 // ============================================================================
 // KNOWLEDGE MANAGEMENT API TYPES
 // ============================================================================

@@ -6,6 +6,7 @@
 
 import type {
   BrandVoice,
+  CreateWorkspaceResponse,
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
@@ -60,7 +61,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         description: data.description,
         url: data.url,
       };
-      return client.request<WorkspaceResponse>("/api/v1/workspaces", {
+      return client.request<CreateWorkspaceResponse>("/api/v1/workspaces", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -134,6 +135,40 @@ export function createWorkspacesNamespace(client: ApiClient) {
         changes_detected: boolean;
       }>(`/api/v1/workspaces/${workspaceId}/brand-voice/refresh`, {
         method: "POST",
+      });
+    },
+
+    /**
+     * Update brand voice for workspace
+     */
+    updateBrandVoice: async (
+      workspaceId: string,
+      data: {
+        about?: string;
+        customer_profile?: string;
+        selling_position?: string;
+        target_audience?: string[];
+        brand_voice?: string[];
+        competitors?: string[];
+        content_strategy?: string[];
+      },
+    ) => {
+      const payload = {
+        about: data.about ?? "",
+        customer_profile: data.customer_profile ?? "",
+        selling_position: data.selling_position ?? "",
+        target_audience: data.target_audience ?? [],
+        brand_voice: data.brand_voice ?? [],
+        competitors: data.competitors ?? [],
+        content_pillar: data.content_strategy ?? [],
+      };
+
+      return client.request<{
+        brand_voice: BrandVoice;
+      }>(`/api/v1/workspaces/${workspaceId}/brand-voice`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
     },
   };
