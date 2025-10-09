@@ -816,7 +816,7 @@ export function ContentCreationWizard({
   );
 
   // Smart navigation handlers
-  const handleGoToFirstError = useCallback(() => {
+  const _handleGoToFirstError = useCallback(() => {
     const nextIncompleteStep = dependencyEngine.getNextIncompleteStep();
     if (nextIncompleteStep) {
       const stepIndex = WIZARD_CONFIG.steps.findIndex(
@@ -828,7 +828,7 @@ export function ContentCreationWizard({
     }
   }, [dependencyEngine]);
 
-  const handleGoToFirstIncomplete = useCallback(() => {
+  const _handleGoToFirstIncomplete = useCallback(() => {
     // Find first step with validation errors
     for (let i = 0; i < WIZARD_CONFIG.steps.length; i++) {
       const step = WIZARD_CONFIG.steps[i];
@@ -840,7 +840,7 @@ export function ContentCreationWizard({
     }
   }, [dependencyEngine]);
 
-  const handleSkipStep = useCallback(() => {
+  const _handleSkipStep = useCallback(() => {
     const currentStepConfig = WIZARD_CONFIG.steps[state.currentStep];
     if (currentStepConfig?.optional) {
       dispatch({ type: "NEXT_STEP" });
@@ -998,8 +998,6 @@ export function ContentCreationWizard({
                           onFieldTouch={handleFieldTouch}
                           dependencyEngine={dependencyEngine}
                           dispatch={dispatch}
-                          onLaunch={onSubmit}
-                          onSaveDraft={handleSaveDraft}
                           onGoToStep={handleGoToStep}
                         />
                       </motion.div>

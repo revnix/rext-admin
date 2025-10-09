@@ -1,12 +1,7 @@
 "use client";
 
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
-import type {
-  ContentCreationFormData,
-  PartialContentCreationFormData,
-  WizardAction,
-  WizardStepProps,
-} from "@/types/content-creation";
+import type { WizardAction, WizardStepProps } from "@/types/content-creation";
 import { AudienceGoalsStep } from "./steps/audience-goals-step";
 import { ContentStructureStep } from "./steps/content-structure-step";
 import { ResearchSettingsStep } from "./steps/research-settings-step";
@@ -17,8 +12,6 @@ import { VoiceStyleStep } from "./steps/voice-style-step";
 interface WizardStepRendererProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
   dispatch: React.Dispatch<WizardAction>;
-  onLaunch?: (formData: ContentCreationFormData) => Promise<void>;
-  onSaveDraft?: (formData: PartialContentCreationFormData) => Promise<void>;
   onGoToStep?: (stepIndex: number) => void;
 }
 
@@ -38,8 +31,6 @@ export function WizardStepRenderer({
   onFieldTouch,
   dependencyEngine,
   dispatch,
-  onLaunch,
-  onSaveDraft,
   onGoToStep,
 }: WizardStepRendererProps) {
   // Route to the appropriate step component based on step ID
