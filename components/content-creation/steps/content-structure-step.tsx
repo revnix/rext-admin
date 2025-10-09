@@ -13,13 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
 import {
   getContentLengthOptions,
@@ -61,9 +54,6 @@ export function ContentStructureStep({
   const [customValue, setCustomValue] = useState<number>(
     formData.contentLength?.custom?.value || 500,
   );
-  const [customUnit, setCustomUnit] = useState<
-    "words" | "characters" | "tweets"
-  >(formData.contentLength?.custom?.unit || "words");
 
   // Get visible fields for this step
   const visibleFields = dependencyEngine.getVisibleFields(step);
@@ -91,39 +81,17 @@ export function ContentStructureStep({
     [formData.contentType],
   );
 
-  // Get available units based on content type
-  const availableUnits = useMemo(() => {
-    const baseUnits = ["words", "characters"];
-    if (formData.contentType === "Thread" || formData.contentType === "Post") {
-      return [...baseUnits, "tweets"];
-    }
-    return baseUnits;
-  }, [formData.contentType]);
-
-  // Extended options including custom
-  const extendedLengthOptions = useMemo(
-    () => [
-      ...contentLengthOptions,
-      {
-        label: "Custom",
-        value: "custom",
-        description: "Set your own length requirements",
-      },
-    ],
-    [contentLengthOptions],
-  );
-
   // Handle content length selection (both preset and custom)
   const handleLengthOptionChange = useCallback(
     (value: string) => {
-      if (value === "custom") {
+      if (value === "Custom") {
         setShowCustomInput(true);
         // Set initial custom length if not already set
         const newLength = {
           type: "custom" as const,
           custom: {
             value: customValue,
-            unit: customUnit,
+            unit: "words" as const,
           },
         };
         onFieldChange("contentLength", newLength);
@@ -135,7 +103,7 @@ export function ContentStructureStep({
         onFieldTouch("contentLength");
       }
     },
-    [customValue, customUnit, onFieldChange, onFieldTouch],
+    [customValue, onFieldChange, onFieldTouch],
   );
 
   // Handle custom value changes
@@ -148,31 +116,14 @@ export function ContentStructureStep({
           type: "custom" as const,
           custom: {
             value: numValue,
-            unit: customUnit,
+            unit: "words" as const,
           },
         };
         onFieldChange("contentLength", newLength);
         onFieldTouch("contentLength");
       }
     },
-    [customUnit, onFieldChange, onFieldTouch],
-  );
-
-  // Handle custom unit changes
-  const handleCustomUnitChange = useCallback(
-    (unit: "words" | "characters" | "tweets") => {
-      setCustomUnit(unit);
-      const newLength = {
-        type: "custom" as const,
-        custom: {
-          value: customValue,
-          unit,
-        },
-      };
-      onFieldChange("contentLength", newLength);
-      onFieldTouch("contentLength");
-    },
-    [customValue, onFieldChange, onFieldTouch],
+    [onFieldChange, onFieldTouch],
   );
 
   // Handle toggle changes
@@ -208,7 +159,7 @@ export function ContentStructureStep({
     if (formData.contentLength?.type === "preset") {
       return formData.contentLength.preset;
     } else if (formData.contentLength?.type === "custom") {
-      return "custom";
+      return "Custom";
     }
     return "";
   }, [formData.contentLength]);
@@ -255,7 +206,7 @@ export function ContentStructureStep({
               )}
 
               <RadioGroup
-                options={extendedLengthOptions.map((option) => ({
+                options={contentLengthOptions.map((option) => ({
                   label: option.label,
                   value: option.value,
                   description: option.description,
@@ -267,68 +218,24 @@ export function ContentStructureStep({
 
               {/* Inline Custom Length Input */}
               {showCustomInput && (
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/50 transition-all duration-300">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">
-                      Custom Length Settings
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="custom-length-value" className="text-sm">
-                        Length
-                      </Label>
-                      <Input
-                        id="custom-length-value"
-                        type="number"
-                        min="1"
-                        max="10000"
-                        value={customValue}
-                        onChange={(e) =>
-                          handleCustomValueChange(e.target.value)
-                        }
-                        placeholder="Enter length..."
-                        className={customValueError ? "border-destructive" : ""}
-                      />
-                      {customValueError && (
-                        <p className="text-sm text-destructive">
-                          {customValueError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="custom-length-unit" className="text-sm">
-                        Unit
-                      </Label>
-                      <Select
-                        value={customUnit}
-                        onValueChange={handleCustomUnitChange}
-                      >
-                        <SelectTrigger id="custom-length-unit">
-                          <SelectValue placeholder="Select unit..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableUnits.map((unit) => (
-                            <SelectItem key={unit} value={unit}>
-                              {unit.charAt(0).toUpperCase() + unit.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Custom Length Preview */}
-                  {customValue > 0 && !customValueError && (
-                    <Alert>
-                      <FileText className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Preview:</strong> {customValue} {customUnit}
-                      </AlertDescription>
-                    </Alert>
+                <div className="space-y-2">
+                  <Label htmlFor="custom-length-value" className="text-sm">
+                    Content Length (words)
+                  </Label>
+                  <Input
+                    id="custom-length-value"
+                    type="number"
+                    min="1"
+                    max="10000"
+                    value={customValue}
+                    onChange={(e) => handleCustomValueChange(e.target.value)}
+                    placeholder="e.g., 800"
+                    className={customValueError ? "border-destructive" : ""}
+                  />
+                  {customValueError && (
+                    <p className="text-sm text-destructive">
+                      {customValueError}
+                    </p>
                   )}
                 </div>
               )}

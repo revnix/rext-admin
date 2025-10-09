@@ -267,18 +267,18 @@ export const getToneOptions = (
 /** Region options */
 export const REGION_OPTIONS: SelectOption[] = [
   { label: "International/Global", value: "International/Global" },
-  { label: "United States", value: "United States" },
-  { label: "United Kingdom", value: "United Kingdom" },
-  { label: "Canada", value: "Canada" },
-  { label: "Australia", value: "Australia" },
-  { label: "Germany", value: "Germany" },
-  { label: "France", value: "France" },
   { label: "Other", value: "Other" },
 ];
 
 /** Language options (simplified for now) */
 export const LANGUAGE_OPTIONS: SelectOption[] = [
   { label: "English", value: "English" },
+  {
+    label: "Other",
+    value: "other",
+    disabled: true,
+    tooltip: "Additional languages will be available in future updates",
+  },
 ];
 
 /** Content length options based on content type */

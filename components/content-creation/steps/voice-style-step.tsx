@@ -1,10 +1,11 @@
 "use client";
 
 import { Globe, Languages, MessageSquare } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -51,6 +52,29 @@ export function VoiceStyleStep({
   const toneField = visibleFields.find((f) => f.id === "tone");
   const regionField = visibleFields.find((f) => f.id === "region");
   const languageField = visibleFields.find((f) => f.id === "language");
+
+  // Custom region input state
+  const [showCustomRegionInput, setShowCustomRegionInput] = useState(
+    formData.region === "Other" ||
+      (formData.region && formData.region !== "International/Global"),
+  );
+  const [customRegion, setCustomRegion] = useState(
+    formData.region &&
+      formData.region !== "International/Global" &&
+      formData.region !== "Other"
+      ? formData.region
+      : "",
+  );
+
+  // Set default values on mount
+  useEffect(() => {
+    if (!formData.region) {
+      onFieldChange("region", "International/Global");
+    }
+    if (!formData.language) {
+      onFieldChange("language", "English");
+    }
+  }, [formData.region, formData.language, onFieldChange]);
 
   // Get tone options based on audience type and reading level
   const toneOptions = useMemo(
@@ -256,10 +280,25 @@ export function VoiceStyleStep({
                       Target Region
                     </Label>
                     <Select
-                      value={formData.region || ""}
+                      value={
+                        showCustomRegionInput && customRegion
+                          ? "Other"
+                          : formData.region || "International/Global"
+                      }
                       onValueChange={(value) => {
-                        onFieldChange("region", value);
-                        onFieldTouch("region");
+                        if (value === "Other") {
+                          setShowCustomRegionInput(true);
+                          // Don't set region yet, wait for user to type
+                          if (customRegion) {
+                            onFieldChange("region", customRegion);
+                          }
+                        } else {
+                          // User selected International/Global or another option
+                          setShowCustomRegionInput(false);
+                          setCustomRegion("");
+                          onFieldChange("region", value);
+                          onFieldTouch("region");
+                        }
                       }}
                     >
                       <SelectTrigger>
@@ -268,20 +307,23 @@ export function VoiceStyleStep({
                       <SelectContent>
                         {REGION_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center gap-2">
-                              {option.value === "International/Global" && (
-                                <Globe className="h-4 w-4" />
-                              )}
-                              <span>{option.label}</span>
-                            </div>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.region && touched.region && (
-                      <p className="text-sm text-destructive">
-                        {errors.region}
-                      </p>
+                    {showCustomRegionInput && (
+                      <Input
+                        id="custom-region"
+                        value={customRegion}
+                        placeholder="Enter country/region name"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setCustomRegion(value);
+                          onFieldChange("region", value);
+                        }}
+                        onBlur={() => onFieldTouch("region")}
+                      />
                     )}
                   </div>
                 )}
@@ -294,10 +336,13 @@ export function VoiceStyleStep({
                       Language
                     </Label>
                     <Select
-                      value={formData.language || ""}
+                      value={formData.language || "English"}
                       onValueChange={(value) => {
-                        onFieldChange("language", value);
-                        onFieldTouch("language");
+                        // Prevent selecting disabled option
+                        if (value !== "other") {
+                          onFieldChange("language", value);
+                          onFieldTouch("language");
+                        }
                       }}
                     >
                       <SelectTrigger>
@@ -305,20 +350,26 @@ export function VoiceStyleStep({
                       </SelectTrigger>
                       <SelectContent>
                         {LANGUAGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            disabled={option.disabled}
+                          >
                             <div className="flex items-center gap-2">
-                              <Languages className="h-4 w-4" />
                               <span>{option.label}</span>
+                              {option.disabled && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] ml-auto"
+                                >
+                                  Coming Soon
+                                </Badge>
+                              )}
                             </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.language && touched.language && (
-                      <p className="text-sm text-destructive">
-                        {errors.language}
-                      </p>
-                    )}
                   </div>
                 )}
               </div>
