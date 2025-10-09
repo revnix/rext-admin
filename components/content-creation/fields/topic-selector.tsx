@@ -3,14 +3,8 @@
 import { FileText, Plus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import { QuestionAnswerLayout } from "../layouts/question-answer-layout";
 import { SelectedTopicDisplay } from "./selected-topic-display";
 import { TopicPickerModal } from "./topic-picker-modal";
 
@@ -66,48 +60,29 @@ export function TopicSelector({
   // If no topic selected, show the choose topic card
   return (
     <>
-      <Card className={`wizard-card ${hasError ? "wizard-card-error" : ""}`}>
-        <CardHeader className="pb-4">
-          <CardTitle className="wizard-field-label">
-            <FileText className="h-5 w-5 text-primary" />
-            Select Topic
-          </CardTitle>
-          <CardDescription className="wizard-field-description">
-            Choose the main topic you want to create content about
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <div className="mb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Choose Your Topic</h3>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Browse and select from our library of approved topics to get
-                started with content creation.
-              </p>
-            </div>
-
-            <Button
-              onClick={handleOpenModal}
-              size="lg"
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Choose Topic
-            </Button>
-          </div>
-
-          {/* Validation error */}
-          {hasError && errorMessage && (
-            <div className="wizard-field-error mt-4">
-              <FileText className="h-4 w-4" />
-              {errorMessage}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <QuestionAnswerLayout
+        question={{
+          label: "Select Topic",
+          description: "Choose the main topic for your content",
+          icon: FileText,
+        }}
+        hasError={hasError}
+        error={errorMessage}
+      >
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-sm text-muted-foreground">
+            Browse and select from your library of topics to get started
+          </p>
+          <Button
+            onClick={handleOpenModal}
+            size="default"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Choose Topic
+          </Button>
+        </div>
+      </QuestionAnswerLayout>
 
       <TopicPickerModal
         isOpen={isModalOpen}
