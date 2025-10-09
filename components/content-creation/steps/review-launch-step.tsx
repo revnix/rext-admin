@@ -733,51 +733,6 @@ export function ReviewLaunchStep({
           </div>
         </CardContent>
       </Card>
-
-      {/* Progress summary for this step */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Final Step - Ready to Launch:
-            </span>
-            <div className="flex items-center gap-4">
-              <Badge
-                variant={
-                  completionStats.percentage >= 90 ? "default" : "outline"
-                }
-              >
-                Configuration{" "}
-                {completionStats.percentage >= 90
-                  ? "✓"
-                  : `${completionStats.percentage}%`}
-              </Badge>
-              <Badge variant={agreedToTerms ? "default" : "outline"}>
-                Terms {agreedToTerms ? "✓" : ""}
-              </Badge>
-              <Badge variant={launchOption ? "default" : "outline"}>
-                Launch Option {launchOption ? "✓" : ""}
-              </Badge>
-              <Badge
-                variant={
-                  formData.enableHumansInLoop
-                    ? formData.humanReviewers?.length
-                      ? "default"
-                      : "outline"
-                    : "secondary"
-                }
-              >
-                Human Review{" "}
-                {formData.enableHumansInLoop
-                  ? formData.humanReviewers?.length
-                    ? "✓"
-                    : "Pending"
-                  : "Disabled"}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

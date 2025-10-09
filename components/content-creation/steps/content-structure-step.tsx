@@ -475,34 +475,6 @@ export function ContentStructureStep({
           </Card>
         )}
       </div>
-
-      {/* Progress summary for this step */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Step 4 Progress:</span>
-            <div className="flex items-center gap-4">
-              <Badge variant={formData.contentLength ? "default" : "outline"}>
-                Length {formData.contentLength ? "✓" : ""}
-              </Badge>
-              <Badge
-                variant={
-                  formData.primaryKeywords &&
-                  formData.primaryKeywords.length > 0
-                    ? "default"
-                    : "outline"
-                }
-              >
-                Keywords{" "}
-                {formData.primaryKeywords && formData.primaryKeywords.length > 0
-                  ? `(${formData.primaryKeywords.length})`
-                  : ""}
-              </Badge>
-              <Badge variant="outline">Structure Options</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -353,29 +353,6 @@ export function TopicContentStep({
           </QuestionAnswerLayout>
         )}
       </div>
-
-      {/* Progress summary for this step */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Step 1 Progress:</span>
-            <div className="flex items-center gap-4">
-              <Badge variant={formData.topicId ? "default" : "outline"}>
-                Topic {formData.topicId ? "✓" : ""}
-              </Badge>
-              <Badge variant={formData.platform ? "default" : "outline"}>
-                Platform {formData.platform ? "✓" : ""}
-              </Badge>
-              <Badge variant={formData.contentType ? "default" : "outline"}>
-                Content Type {formData.contentType ? "✓" : ""}
-              </Badge>
-              <Badge variant={formData.industry ? "default" : "outline"}>
-                Industry {formData.industry ? "✓" : ""}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

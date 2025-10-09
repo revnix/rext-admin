@@ -311,44 +311,6 @@ export function AudienceGoalsStep({
           </QuestionAnswerLayout>
         )}
       </div>
-
-      {/* Progress summary for this step */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Step 2 Progress:</span>
-            <div className="flex items-center gap-4">
-              <Badge variant={formData.audienceSize ? "default" : "outline"}>
-                Audience Size {formData.audienceSize ? "✓" : ""}
-              </Badge>
-              <Badge
-                variant={
-                  formData.audienceType && formData.audienceType.length > 0
-                    ? "default"
-                    : "outline"
-                }
-              >
-                Audience Type{" "}
-                {formData.audienceType && formData.audienceType.length > 0
-                  ? "✓"
-                  : ""}
-              </Badge>
-              <Badge variant={formData.readingLevel ? "default" : "outline"}>
-                Reading Level {formData.readingLevel ? "✓" : ""}
-              </Badge>
-              <Badge
-                variant={
-                  formData.goals && formData.goals.length > 0
-                    ? "default"
-                    : "outline"
-                }
-              >
-                Goals {formData.goals && formData.goals.length > 0 ? "✓" : ""}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -449,28 +449,6 @@ export function ResearchSettingsStep({
           </Card>
         )}
       </div>
-
-      {/* Progress summary for this step */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Step 5 Progress:</span>
-            <div className="flex items-center gap-4">
-              <Badge variant={formData.researchLevel ? "default" : "outline"}>
-                Research Level {formData.researchLevel ? "✓" : ""}
-              </Badge>
-              <Badge variant={formData.factChecking ? "default" : "outline"}>
-                Fact Checking {formData.factChecking ? "✓" : ""}
-              </Badge>
-              <Badge
-                variant={formData.contentFreshness ? "default" : "outline"}
-              >
-                Freshness {formData.contentFreshness ? "✓" : ""}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -402,32 +402,6 @@ export function VoiceStyleStep({
           </QuestionAnswerLayout>
         )}
       </div>
-
-      {/* Progress summary for this step */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Step 3 Progress:</span>
-            <div className="flex items-center gap-4">
-              <Badge
-                variant={
-                  formData.tone && formData.tone.length > 0
-                    ? "default"
-                    : "outline"
-                }
-              >
-                Tone {formData.tone && formData.tone.length > 0 ? "✓" : ""}
-              </Badge>
-              <Badge variant={formData.region ? "default" : "outline"}>
-                Region {formData.region ? "✓" : ""}
-              </Badge>
-              <Badge variant={formData.language ? "default" : "outline"}>
-                Language {formData.language ? "✓" : ""}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
