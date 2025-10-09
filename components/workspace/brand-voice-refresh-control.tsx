@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +17,6 @@ import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-prog
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import type { BrandVoiceRefreshState } from "@/types/workspace";
 
 interface BrandVoiceRefreshControlProps {
   workspaceId: string;
@@ -27,33 +27,10 @@ interface BrandVoiceRefreshControlProps {
   children?: React.ReactNode;
 }
 
-interface SelectorReturn {
-  brandVoiceRefresh: BrandVoiceRefreshState;
-  refreshBrandVoice: (workspaceId: string) => Promise<string>;
-  setBrandVoiceRefreshState: (state: Partial<BrandVoiceRefreshState>) => void;
-  clearCurrentOperation: () => void;
-}
-
 /**
  * Shared control that triggers the backend brand voice refresh pipeline
  * and renders progress updates streamed via SSE.
  */
-// Stable selector outside component to prevent re-renders
-const selector = (state: unknown): SelectorReturn => ({
-  brandVoiceRefresh: (state as { brandVoiceRefresh: BrandVoiceRefreshState })
-    .brandVoiceRefresh,
-  refreshBrandVoice: (
-    state as { refreshBrandVoice: SelectorReturn["refreshBrandVoice"] }
-  ).refreshBrandVoice,
-  setBrandVoiceRefreshState: (
-    state as {
-      setBrandVoiceRefreshState: SelectorReturn["setBrandVoiceRefreshState"];
-    }
-  ).setBrandVoiceRefreshState,
-  clearCurrentOperation: (state as { clearCurrentOperation: () => void })
-    .clearCurrentOperation,
-});
-
 export function BrandVoiceRefreshControl({
   workspaceId,
   buttonVariant = "outline",
@@ -63,12 +40,21 @@ export function BrandVoiceRefreshControl({
   children,
 }: BrandVoiceRefreshControlProps) {
   const queryClient = useQueryClient();
+
+  // Use useShallow to properly memoize the selector
   const {
     brandVoiceRefresh,
     refreshBrandVoice,
     setBrandVoiceRefreshState,
     clearCurrentOperation,
-  } = useWorkspaceStore(selector);
+  } = useWorkspaceStore(
+    useShallow((state) => ({
+      brandVoiceRefresh: state.brandVoiceRefresh,
+      refreshBrandVoice: state.refreshBrandVoice,
+      setBrandVoiceRefreshState: state.setBrandVoiceRefreshState,
+      clearCurrentOperation: state.clearCurrentOperation,
+    })),
+  );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
