@@ -6,8 +6,6 @@ import {
   KeywordTagInput,
   MultiSelectCheckboxGrid,
 } from "@/components/content-creation/fields";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -436,43 +434,6 @@ export function ContentStructureStep({
               )}
             </div>
           </QuestionAnswerLayout>
-        )}
-
-        {/* Smart Recommendations */}
-        {(formData.contentLength || formData.goals?.length) && (
-          <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-            <CardHeader>
-              <CardTitle className="text-blue-900 dark:text-blue-100 text-sm">
-                💡 Smart Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-2">
-              {formData.contentLength?.type === "preset" &&
-                formData.contentLength.preset === "Long" && (
-                  <p className="text-blue-800 dark:text-blue-200">
-                    • For long content, consider enabling Table of Contents and
-                    Summary
-                  </p>
-                )}
-              {formData.goals?.includes("Drive SEO") && (
-                <p className="text-blue-800 dark:text-blue-200">
-                  • SEO-focused content benefits from primary keywords and clear
-                  search intent
-                </p>
-              )}
-              {showCTA && (
-                <p className="text-blue-800 dark:text-blue-200">
-                  • Your promotional goals suggest including a call-to-action
-                </p>
-              )}
-              {formData.goals?.includes("Educate") && (
-                <p className="text-blue-800 dark:text-blue-200">
-                  • Educational content works well with key takeaways and
-                  summaries
-                </p>
-              )}
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>

@@ -277,7 +277,6 @@ export const LANGUAGE_OPTIONS: SelectOption[] = [
     label: "Other",
     value: "other",
     disabled: true,
-    tooltip: "Additional languages will be available in future updates",
   },
 ];
 

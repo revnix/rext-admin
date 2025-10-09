@@ -4,7 +4,6 @@ import { Globe, Languages, MessageSquare } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -386,18 +385,6 @@ export function VoiceStyleStep({
                     </AlertDescription>
                   </Alert>
                 )}
-
-              {/* Language expansion note */}
-              {formData.language && (
-                <Alert>
-                  <Languages className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Note:</strong> Additional languages will be
-                    supported in future updates. Currently focusing on
-                    high-quality English content generation.
-                  </AlertDescription>
-                </Alert>
-              )}
             </div>
           </QuestionAnswerLayout>
         )}

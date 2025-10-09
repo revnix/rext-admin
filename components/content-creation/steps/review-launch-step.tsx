@@ -3,50 +3,28 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
-  Clock,
-  Download,
   Edit,
   FileText,
   Globe,
-  Loader2,
   MessageSquare,
-  Rocket,
-  RotateCcw,
   Search,
   Shield,
   Users,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useMemo } from "react";
 import { UserMultiSelect } from "@/components/content-creation/fields";
 import { QuestionAnswerLayout } from "@/components/content-creation/layouts/question-answer-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
-import { log } from "@/lib/logger";
 import { useWorkspace } from "@/providers/workspace-provider";
-import type {
-  ContentCreationFormData,
-  PartialContentCreationFormData,
-  WizardStepProps,
-} from "@/types/content-creation";
+import type { WizardStepProps } from "@/types/content-creation";
 
 interface ReviewLaunchStepProps extends WizardStepProps {
   dependencyEngine: WizardDependencyEngine;
-  onLaunch?: (formData: ContentCreationFormData) => Promise<void>;
-  onSaveDraft?: (formData: PartialContentCreationFormData) => Promise<void>;
   onGoToStep?: (stepIndex: number) => void;
 }
 
@@ -56,9 +34,7 @@ interface ReviewLaunchStepProps extends WizardStepProps {
  * This final step handles:
  * - Comprehensive review of all user selections
  * - Content configuration preview
- * - Validation and readiness checks
- * - Launch options (Generate now, Save draft, Schedule)
- * - Final confirmation and content creation initiation
+ * - Human review configuration
  */
 export function ReviewLaunchStep({
   step,
@@ -69,19 +45,8 @@ export function ReviewLaunchStep({
   onFieldChange,
   onFieldTouch,
   dependencyEngine: _dependencyEngine,
-  onLaunch,
-  onSaveDraft,
   onGoToStep,
 }: ReviewLaunchStepProps) {
-  const [isLaunching, setIsLaunching] = useState(false);
-  const [launchOption, setLaunchOption] = useState<
-    "generate" | "draft" | "schedule"
-  >("generate");
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [_expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(),
-  );
-
   // Get current workspace
   const { workspaceId } = useWorkspace();
 
@@ -103,135 +68,6 @@ export function ReviewLaunchStep({
       avatar: undefined, // No avatar in current API response
     }));
   }, [membersResponse]);
-
-  // Calculate completion status
-  const completionStats = useMemo(() => {
-    const requiredFields = [
-      { key: "topicId", label: "Topic", completed: !!formData.topicId },
-      {
-        key: "contentType",
-        label: "Content Type",
-        completed: !!formData.contentType,
-      },
-      {
-        key: "audienceType",
-        label: "Audience",
-        completed: !!formData.audienceType?.length,
-      },
-      { key: "goals", label: "Goals", completed: !!formData.goals?.length },
-      { key: "tone", label: "Tone", completed: !!formData.tone?.length },
-      { key: "region", label: "Region", completed: !!formData.region },
-      { key: "language", label: "Language", completed: !!formData.language },
-      {
-        key: "contentLength",
-        label: "Content Length",
-        completed: !!formData.contentLength,
-      },
-      {
-        key: "researchLevel",
-        label: "Research Level",
-        completed: !!formData.researchLevel,
-      },
-    ];
-
-    // Add human review as optional but recommended
-    const optionalFields = [
-      {
-        key: "humanReview",
-        label: "Human Review",
-        completed: formData.enableHumansInLoop
-          ? !!formData.humanReviewers?.length
-          : true,
-      },
-    ];
-
-    const allFields = [...requiredFields, ...optionalFields];
-    const completed = allFields.filter((field) => field.completed).length;
-    const total = allFields.length;
-    const percentage = Math.round((completed / total) * 100);
-
-    return {
-      completed,
-      total,
-      percentage,
-      fields: requiredFields,
-      optionalFields,
-    };
-  }, [formData]);
-
-  // Generate estimated completion time
-  const estimatedTime = useMemo(() => {
-    let baseTime = 2; // 2 minutes base
-
-    if (formData.researchLevel === "Comprehensive") baseTime += 2;
-    if (formData.researchLevel === "Expert") baseTime += 4;
-
-    // Handle ContentLengthOption object
-    if (formData.contentLength?.type === "preset") {
-      if (formData.contentLength.preset === "Long") baseTime += 3;
-    } else if (formData.contentLength?.type === "custom") {
-      const wordCount = formData.contentLength.custom?.value || 0;
-      if (wordCount > 2000) baseTime += 3;
-      if (wordCount > 3000) baseTime += 5;
-    }
-
-    if (formData.includeLatestInfo) baseTime += 1;
-    if (formData.includeStatistics) baseTime += 1;
-    if (formData.competitorAnalysis) baseTime += 2;
-
-    return Math.max(baseTime, 2);
-  }, [formData]);
-
-  // Handle section expansion
-  const _toggleSection = useCallback((sectionId: string) => {
-    setExpandedSections((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(sectionId)) {
-        newSet.delete(sectionId);
-      } else {
-        newSet.add(sectionId);
-      }
-      return newSet;
-    });
-  }, []);
-
-  // Handle launch
-  const handleLaunch = useCallback(async () => {
-    if (!agreedToTerms) {
-      toast.error("Please agree to the terms and conditions");
-      return;
-    }
-
-    if (completionStats.percentage < 90) {
-      toast.error("Please complete all required fields before launching");
-      return;
-    }
-
-    setIsLaunching(true);
-
-    try {
-      if (launchOption === "draft") {
-        await onSaveDraft?.(formData);
-        toast.success("Draft saved successfully!");
-      } else {
-        // At this point, we've validated completeness, so cast to complete form data
-        await onLaunch?.(formData as ContentCreationFormData);
-        toast.success("Content creation started!");
-      }
-    } catch (error) {
-      toast.error("Failed to launch content creation");
-      log.error("Failed to launch content creation", error);
-    } finally {
-      setIsLaunching(false);
-    }
-  }, [
-    agreedToTerms,
-    completionStats.percentage,
-    launchOption,
-    formData,
-    onSaveDraft,
-    onLaunch,
-  ]);
 
   // Handle edit step
   const handleEditStep = useCallback(
@@ -475,264 +311,41 @@ export function ReviewLaunchStep({
           icon: Users,
         }}
       >
-        <div className="space-y-4">
-          {/* Enable Toggle */}
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="enableHumansInLoop"
-              checked={formData.enableHumansInLoop || false}
-              onCheckedChange={(checked) => {
-                onFieldChange("enableHumansInLoop", !!checked);
-                onFieldTouch("enableHumansInLoop");
-              }}
-            />
-            <div className="space-y-0.5 flex-1">
-              <Label
-                htmlFor="enableHumansInLoop"
-                className="font-medium cursor-pointer flex items-center gap-2"
-              >
-                <Shield className="h-4 w-4" />
-                Enable Human Review
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Have team members review content before it goes live
-              </p>
+        <div className="space-y-3">
+          {isLoadingMembers ? (
+            <div className="text-sm text-muted-foreground">
+              Loading team members...
             </div>
-          </div>
-
-          {/* Reviewer Selection (when enabled) */}
-          {formData.enableHumansInLoop && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                Select Reviewers ({formData.humanReviewers?.length || 0}/3)
-              </Label>
-              {isLoadingMembers ? (
-                <div className="text-sm text-muted-foreground">
-                  Loading team members...
-                </div>
-              ) : availableReviewers.length === 0 ? (
-                <Alert>
-                  <Users className="h-4 w-4" />
-                  <AlertDescription>
-                    No team members available. Invite members to your workspace
-                    to enable human review.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <>
-                  <UserMultiSelect
-                    users={availableReviewers}
-                    value={formData.humanReviewers || []}
-                    onChange={(reviewers) => {
-                      onFieldChange("humanReviewers", reviewers);
-                      onFieldTouch("humanReviewers");
-                    }}
-                    placeholder="Select team members..."
-                    maxSelection={3}
-                  />
-                  {(formData.humanReviewers?.length || 0) > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Selected reviewers will be notified when content is ready
-                      for review.
-                    </p>
-                  )}
-                </>
+          ) : availableReviewers.length === 0 ? (
+            <Alert>
+              <Users className="h-4 w-4" />
+              <AlertDescription>
+                No team members available. Invite members to your workspace to
+                enable human review.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <UserMultiSelect
+                users={availableReviewers}
+                value={formData.humanReviewers || []}
+                onChange={(reviewers) => {
+                  onFieldChange("humanReviewers", reviewers);
+                  onFieldTouch("humanReviewers");
+                }}
+                placeholder="Select team members (up to 3)..."
+                maxSelection={3}
+              />
+              {(formData.humanReviewers?.length || 0) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Selected reviewers will be notified when content is ready for
+                  review.
+                </p>
               )}
-            </div>
+            </>
           )}
         </div>
       </QuestionAnswerLayout>
-
-      {/* Launch Options */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-primary" />
-            Launch Options
-          </CardTitle>
-          <CardDescription>
-            Choose how you want to create your content
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4">
-            <Label
-              className={`relative flex items-center justify-between border rounded-lg p-4 cursor-pointer transition-colors ${
-                launchOption === "generate"
-                  ? "border-primary bg-primary/5"
-                  : "hover:bg-accent"
-              }`}
-            >
-              <input
-                type="radio"
-                value="generate"
-                checked={launchOption === "generate"}
-                onChange={(e) =>
-                  setLaunchOption(e.target.value as typeof launchOption)
-                }
-                className="sr-only"
-              />
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Rocket className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Generate Now</span>
-                  <Badge variant="default" className="text-xs">
-                    Recommended
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Start content creation immediately. Estimated time: ~
-                  {estimatedTime} minutes
-                </p>
-              </div>
-            </Label>
-
-            <Label
-              className={`relative flex items-center justify-between border rounded-lg p-4 cursor-pointer transition-colors ${
-                launchOption === "draft"
-                  ? "border-primary bg-primary/5"
-                  : "hover:bg-accent"
-              }`}
-            >
-              <input
-                type="radio"
-                value="draft"
-                checked={launchOption === "draft"}
-                onChange={(e) =>
-                  setLaunchOption(e.target.value as typeof launchOption)
-                }
-                className="sr-only"
-              />
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Download className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Save as Draft</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Save configuration for later. You can generate content anytime
-                </p>
-              </div>
-            </Label>
-
-            <Label
-              className={`relative flex items-center justify-between border rounded-lg p-4 cursor-pointer transition-colors opacity-50 cursor-not-allowed`}
-            >
-              <input
-                type="radio"
-                value="schedule"
-                checked={launchOption === "schedule"}
-                onChange={(e) =>
-                  setLaunchOption(e.target.value as typeof launchOption)
-                }
-                className="sr-only"
-                disabled
-              />
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Schedule for Later</span>
-                  <Badge variant="outline" className="text-xs">
-                    Coming Soon
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Schedule content generation for a specific time
-                </p>
-              </div>
-            </Label>
-          </div>
-
-          <Separator />
-
-          {/* Generation Preview */}
-          <Alert>
-            <Clock className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Generation Preview:</strong>
-              <div className="mt-2 space-y-1 text-sm">
-                <p>
-                  • Research Level: {formData.researchLevel} ({estimatedTime}min
-                  estimated)
-                </p>
-                <p>
-                  • Content Length:{" "}
-                  {formData.contentLength?.type === "preset"
-                    ? formData.contentLength.preset
-                    : formData.contentLength?.type === "custom"
-                      ? `${formData.contentLength.custom?.value} ${formData.contentLength.custom?.unit}`
-                      : "Not specified"}
-                </p>
-                <p>• Language: {formData.language}</p>
-                <p>
-                  • Enhancements:{" "}
-                  {[
-                    formData.includeLatestInfo && "Latest Info",
-                    formData.includeExamples && "Examples",
-                    formData.includeStatistics && "Statistics",
-                    formData.includeQuotes && "Quotes",
-                    formData.competitorAnalysis && "Competitor Analysis",
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "None"}
-                </p>
-              </div>
-            </AlertDescription>
-          </Alert>
-
-          {/* Terms Agreement */}
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="terms"
-              checked={agreedToTerms}
-              onCheckedChange={(checked) => setAgreedToTerms(!!checked)}
-            />
-            <div className="space-y-1">
-              <Label
-                htmlFor="terms"
-                className="text-sm font-medium cursor-pointer"
-              >
-                I agree to the terms and conditions
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                By proceeding, you agree that the generated content will be
-                reviewed before publication and that AI-generated content may
-                require human editing for accuracy and quality.
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              size="lg"
-              disabled={
-                completionStats.percentage < 90 || !agreedToTerms || isLaunching
-              }
-              onClick={handleLaunch}
-            >
-              {isLaunching ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Rocket className="h-4 w-4 mr-2" />
-              )}
-              {isLaunching
-                ? "Processing..."
-                : launchOption === "draft"
-                  ? "Save Draft"
-                  : "Launch Content Creation"}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => handleEditStep(0)}
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Start Over
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

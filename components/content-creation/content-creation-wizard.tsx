@@ -1011,11 +1011,10 @@ export function ContentCreationWizard({
           </Card>
         </div>
 
-        {/* Enhanced Navigation */}
+        {/* Navigation */}
         <WizardNavigation
           currentStep={state.currentStep}
           totalSteps={WIZARD_CONFIG.steps.length}
-          currentStepTitle={currentStepConfig?.title}
           canGoNext={!Object.values(state.errors).some((error) => error)}
           canGoBack={state.currentStep > 0}
           canSubmit={enhancedProgress.readyForSubmission}
@@ -1025,29 +1024,7 @@ export function ContentCreationWizard({
           onSaveDraft={handleSaveDraft}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          canSkipStep={currentStepConfig?.optional || false}
-          onSkipStep={handleSkipStep}
-          onGoToFirstError={handleGoToFirstError}
-          onGoToFirstIncomplete={handleGoToFirstIncomplete}
-          nextStepHint={
-            state.currentStep < WIZARD_CONFIG.steps.length - 1
-              ? `Next: ${WIZARD_CONFIG.steps[state.currentStep + 1]?.title}`
-              : undefined
-          }
-          previousStepHint={
-            state.currentStep > 0
-              ? `Previous: ${WIZARD_CONFIG.steps[state.currentStep - 1]?.title}`
-              : undefined
-          }
-          completionHint={`${enhancedProgress.overallCompletion}% complete`}
-          hasErrors={enhancedProgress.totalErrors > 0}
-          hasWarnings={enhancedProgress.totalWarnings > 0}
-          errorCount={enhancedProgress.totalErrors}
-          warningCount={enhancedProgress.totalWarnings}
           isDraftSaving={draftState.isSaving}
-          lastDraftSaved={draftState.lastSaved || undefined}
-          enableKeyboardShortcuts={true}
-          compact={false}
         />
       </div>
     </div>

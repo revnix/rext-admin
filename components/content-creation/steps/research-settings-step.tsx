@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -395,56 +394,6 @@ export function ResearchSettingsStep({
                   • {recommendation}
                 </p>
               ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Research Preview */}
-        {formData.researchLevel && (
-          <Card className="bg-muted/30">
-            <CardHeader>
-              <CardTitle className="text-sm">
-                Research Configuration Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                <Badge variant={formData.researchLevel ? "default" : "outline"}>
-                  Research: {formData.researchLevel}
-                </Badge>
-                <Badge variant={formData.factChecking ? "default" : "outline"}>
-                  Fact Check: {formData.factChecking}
-                </Badge>
-                <Badge
-                  variant={formData.contentFreshness ? "default" : "outline"}
-                >
-                  Freshness: {formData.contentFreshness?.split(" ")[0]}
-                </Badge>
-                <Badge variant="outline">
-                  Enhancements:{" "}
-                  {
-                    [
-                      formData.includeLatestInfo && "Latest",
-                      formData.includeExamples && "Examples",
-                      formData.includeStatistics && "Stats",
-                      formData.includeQuotes && "Quotes",
-                      formData.competitorAnalysis && "Competitors",
-                    ].filter(Boolean).length
-                  }
-                </Badge>
-              </div>
-
-              {formData.researchLevel === "Expert" && (
-                <Alert>
-                  <Search className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Expert Research:</strong> This will provide the most
-                    comprehensive content with 20+ sources, extensive
-                    fact-checking, and detailed analysis. Generation time: 3-5
-                    minutes.
-                  </AlertDescription>
-                </Alert>
-              )}
             </CardContent>
           </Card>
         )}

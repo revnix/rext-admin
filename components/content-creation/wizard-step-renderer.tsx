@@ -126,8 +126,6 @@ export function WizardStepRenderer({
           onFieldChange={onFieldChange}
           onFieldTouch={onFieldTouch}
           dependencyEngine={dependencyEngine}
-          onLaunch={onLaunch}
-          onSaveDraft={onSaveDraft}
           onGoToStep={onGoToStep}
         />
       );

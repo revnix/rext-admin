@@ -4,7 +4,6 @@ import { BookOpen, Target, Trophy, Users } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
 import type { WizardDependencyEngine } from "@/lib/content-creation/dependency-engine";
