@@ -297,13 +297,17 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const isOnAuthPage = ["/login", "/signup", "/forgot-password"].some(
-        (path) => nextUrl.pathname.startsWith(path),
-      );
-      const isOnPublicPage = nextUrl.pathname === "/";
+      const isOnAuthPage = [
+        "/login",
+        "/signup",
+        "/forgot-password",
+        "/reset-password",
+        "/verify-email",
+      ].some((path) => nextUrl.pathname.startsWith(path));
+      const isOnHomePage = nextUrl.pathname === "/";
 
-      // Allow access to public pages
-      if (isOnPublicPage) return true;
+      // Allow homepage to handle its own redirects
+      if (isOnHomePage) return true;
 
       // If refresh error, force redirect to login
       if (hasRefreshError && !isOnAuthPage) {
