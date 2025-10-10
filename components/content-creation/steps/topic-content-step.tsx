@@ -232,10 +232,10 @@ export function TopicContentStep({
 
   return (
     <div className="space-y-8 w-full">
-      {/* Enhanced Step header */}
-      <div className="wizard-section-header">
-        <h2 className="wizard-section-title">{step.title}</h2>
-        <p className="wizard-section-subtitle">{step.description}</p>
+      {/* Step header */}
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">{step.title}</h2>
+        <p className="text-muted-foreground mt-2">{step.description}</p>
       </div>
 
       <div className="grid gap-8 w-full">
