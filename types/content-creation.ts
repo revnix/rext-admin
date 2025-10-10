@@ -219,8 +219,6 @@ export interface WizardConfig {
   steps: WizardStep[];
   /** Global validation rules */
   validation: {
-    /** Minimum completion percentage to allow saving draft */
-    minCompletionForDraft: number;
     /** Fields that must be completed before final submission */
     requiredForSubmission: (keyof ContentCreationFormData)[];
   };
@@ -289,8 +287,6 @@ export type WizardAction =
     }
   | { type: "CLEAR_ERROR"; payload: keyof ContentCreationFormData }
   | { type: "TOUCH_FIELD"; payload: keyof ContentCreationFormData }
-  | { type: "SAVE_DRAFT" }
-  | { type: "LOAD_DRAFT"; payload: PartialContentCreationFormData }
   | { type: "RESET_WIZARD" }
   | { type: "SUBMIT_FORM" }
   | { type: "CLEAR_AUTOFILLED_VALUES" }
@@ -317,8 +313,6 @@ export interface ContentCreationWizardProps {
   initialTopicId?: string | null;
   /** Callback when form is successfully submitted */
   onSubmit?: (data: ContentCreationFormData) => Promise<void>;
-  /** Callback when draft is saved */
-  onSaveDraft?: (data: PartialContentCreationFormData) => Promise<void>;
   /** Callback when wizard is cancelled */
   onCancel?: () => void;
   /** Whether to show debug information */

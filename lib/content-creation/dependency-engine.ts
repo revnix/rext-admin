@@ -319,7 +319,6 @@ export class WizardDependencyEngine {
       { isValid: boolean; completionPercentage: number }
     >;
     overallCompletion: number;
-    readyForDraft: boolean;
     readyForSubmission: boolean;
   } {
     const wizardValidationResult = validateWizard(
@@ -369,7 +368,6 @@ export class WizardDependencyEngine {
       warnings: Object.keys(warnings).length > 0 ? warnings : undefined,
       stepResults,
       overallCompletion: wizardValidationResult.overallCompletion,
-      readyForDraft: wizardValidationResult.readyForDraft,
       readyForSubmission: wizardValidationResult.readyForSubmission,
     };
   }

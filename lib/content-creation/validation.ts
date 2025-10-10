@@ -52,7 +52,6 @@ export interface WizardValidationResult extends ValidationResult {
   steps: StepValidationResult[];
   overallCompletion: number;
   readyForSubmission: boolean;
-  readyForDraft: boolean;
   criticalErrors: string[];
 }
 
@@ -472,7 +471,6 @@ export function validateWizard(
 
   const overallCompletion =
     totalFields > 0 ? Math.round((totalValidFields / totalFields) * 100) : 100;
-  const readyForDraft = overallCompletion >= 60 && criticalErrors.length === 0;
   const readyForSubmission = overallCompletion >= 90 && allErrors.length === 0;
 
   return {
@@ -481,7 +479,6 @@ export function validateWizard(
     steps: stepResults,
     overallCompletion,
     readyForSubmission,
-    readyForDraft,
     criticalErrors,
   };
 }

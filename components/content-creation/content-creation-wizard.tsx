@@ -9,14 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useDraftManager } from "@/hooks/use-draft-manager";
 import { useTopic } from "@/hooks/use-topics";
 import {
   applyCascadingUpdates,
   createDependencyEngine,
   getChangedFields,
 } from "@/lib/content-creation/dependency-engine";
-import type { Draft } from "@/lib/content-creation/draft-manager";
 import { WIZARD_CONFIG } from "@/lib/content-creation/wizard-config";
 import { log } from "@/lib/logger";
 import { useCurrentWorkspace } from "@/stores/workspace-store";
@@ -113,20 +111,6 @@ function wizardStateReducer(
       return {
         ...state,
         touched: { ...state.touched, [action.payload]: true },
-      };
-
-    case "SAVE_DRAFT":
-      return {
-        ...state,
-        isSaving: true,
-      };
-
-    case "LOAD_DRAFT":
-      return {
-        ...state,
-        formData: action.payload,
-        hasUnsavedChanges: false,
-        lastSaved: new Date(),
       };
 
     case "RESET_WIZARD":
@@ -344,13 +328,12 @@ function wizardStateReducer(
  * Main Content Creation Wizard Component
  *
  * This component manages the entire wizard flow with state management,
- * validation, auto-save, and dependency handling.
+ * validation, and dependency handling.
  */
 export function ContentCreationWizard({
   initialData = {},
   initialTopicId,
   onSubmit,
-  onSaveDraft,
   onCancel,
   debug = false,
 }: ContentCreationWizardProps) {
@@ -371,18 +354,8 @@ export function ContentCreationWizard({
     createDependencyEngine(WIZARD_CONFIG.steps, initialData),
   );
 
-  // Draft management integration
-  const { state: draftState, actions: draftActions } = useDraftManager({
-    autoSave: true,
-    autoSaveInterval: 30000, // 30 seconds
-    minCompletionForAutoSave: 25,
-    showToasts: false, // We'll handle toast notifications manually
-    debug,
-  });
-
-  // Auto-save timer ref and form data tracking
+  // Form data tracking
   const lastFormDataRef = useRef<PartialContentCreationFormData>(initialData);
-  const isInitializedRef = useRef(false);
   // Track last validation errors for the current step to avoid loops
   const lastStepErrorsRef = useRef<Record<string, string | undefined>>({});
 
@@ -433,44 +406,12 @@ export function ContentCreationWizard({
   const enhancedProgress = {
     ...progress,
     overallCompletion: fullValidation.overallCompletion,
-    readyForDraft: fullValidation.readyForDraft,
     readyForSubmission: fullValidation.readyForSubmission,
     totalErrors: Object.keys(fullValidation.errors).length,
     totalWarnings: fullValidation.warnings
       ? Object.keys(fullValidation.warnings).length
       : 0,
   };
-
-  // Initialize auto-save when component mounts
-  useEffect(() => {
-    if (!isInitializedRef.current) {
-      isInitializedRef.current = true;
-
-      // Start auto-save with current data provider
-      draftActions.startAutoSave(() => ({
-        formData: state.formData,
-        currentStep: state.currentStep,
-        completionPercentage: enhancedProgress.overallCompletion,
-      }));
-    }
-
-    return () => {
-      draftActions.stopAutoSave();
-    };
-  }, [
-    draftActions,
-    state.formData,
-    state.currentStep,
-    enhancedProgress.overallCompletion,
-  ]);
-
-  // Update draft manager when form data changes
-  useEffect(() => {
-    if (isInitializedRef.current && state.hasUnsavedChanges) {
-      // The draft manager will handle auto-save timing automatically
-      // We just need to ensure it has the latest data
-    }
-  }, [state.hasUnsavedChanges]);
 
   // Handle cascading updates when fields change
   useEffect(() => {
@@ -736,85 +677,6 @@ export function ContentCreationWizard({
     }
   }, [state.formData, state.currentStep, dependencyEngine, onSubmit]);
 
-  // Manual draft save handler with comprehensive validation
-  const handleSaveDraft = useCallback(async () => {
-    const fullValidation = dependencyEngine.validateAll();
-
-    if (!fullValidation.readyForDraft) {
-      toast.error(
-        `Cannot save draft - Please complete at least 60% of the form (currently ${fullValidation.overallCompletion}%) with no critical errors.`,
-      );
-      return;
-    }
-
-    dispatch({ type: "SAVE_DRAFT" });
-
-    try {
-      const draft = await draftActions.saveDraft(
-        state.formData,
-        state.currentStep,
-        fullValidation.overallCompletion,
-        { isAutoSave: false },
-      );
-
-      if (draft) {
-        dispatch({ type: "LOAD_DRAFT", payload: state.formData });
-        onSaveDraft?.(state.formData);
-      }
-    } catch (error) {
-      log.error("Draft save failed:", error);
-      toast.error("Save failed - Failed to save your draft. Please try again.");
-    }
-  }, [
-    state.formData,
-    state.currentStep,
-    dependencyEngine,
-    draftActions,
-    onSaveDraft,
-  ]);
-
-  // Handle draft loading
-  const _handleLoadDraft = useCallback(
-    async (formData: PartialContentCreationFormData, draft: Draft) => {
-      try {
-        // Update wizard state with loaded data
-        dispatch({ type: "LOAD_DRAFT", payload: formData });
-
-        // Navigate to the step where the draft was saved
-        if (
-          draft.currentStep >= 0 &&
-          draft.currentStep < WIZARD_CONFIG.steps.length
-        ) {
-          dispatch({ type: "GO_TO_STEP", payload: draft.currentStep });
-        }
-
-        toast.success(`Draft loaded: ${draft.title}`, {
-          description: `Progress: ${draft.completionPercentage}% complete`,
-        });
-      } catch (error) {
-        log.error("Failed to load draft:", error);
-        toast.error("Failed to load draft");
-      }
-    },
-    [],
-  );
-
-  // Handle successful draft save
-  const _handleDraftSaved = useCallback(
-    (draft: Draft) => {
-      dispatch({ type: "LOAD_DRAFT", payload: state.formData });
-
-      if (debug) {
-        log.info(
-          "Draft saved:",
-          draft.title,
-          `${draft.completionPercentage}% complete`,
-        );
-      }
-    },
-    [state.formData, debug],
-  );
-
   // Smart navigation handlers
   const _handleGoToFirstError = useCallback(() => {
     const nextIncompleteStep = dependencyEngine.getNextIncompleteStep();
@@ -895,55 +757,6 @@ export function ContentCreationWizard({
           </Alert>
         )}
 
-        {/* Enhanced Auto-save Status */}
-        {(state.hasUnsavedChanges || draftState.lastSaved) && (
-          <Alert
-            className={
-              enhancedProgress.readyForDraft
-                ? ""
-                : "border-yellow-200 bg-yellow-50"
-            }
-          >
-            <AlertDescription className="flex items-center justify-between">
-              <div className="space-y-1">
-                {state.hasUnsavedChanges ? (
-                  <div>Unsaved changes will be auto-saved in 30 seconds</div>
-                ) : draftState.lastSaved ? (
-                  <div>
-                    Last auto-saved at{" "}
-                    {new Date(draftState.lastSaved).toLocaleTimeString()}
-                  </div>
-                ) : (
-                  <div>Auto-save enabled</div>
-                )}
-                {!enhancedProgress.readyForDraft && state.hasUnsavedChanges && (
-                  <div className="text-xs text-muted-foreground">
-                    Need {60 - enhancedProgress.overallCompletion}% more
-                    completion for draft save
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {draftState.isSaving && (
-                  <Badge variant="secondary" className="text-xs">
-                    Saving...
-                  </Badge>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSaveDraft}
-                  disabled={
-                    !enhancedProgress.readyForDraft || draftState.isSaving
-                  }
-                >
-                  Save Now
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Main Wizard Content */}
         <div className="wizard-step-container w-full">
           <Card className="wizard-card min-h-[600px] w-full max-w-none">
@@ -1016,13 +829,11 @@ export function ContentCreationWizard({
           canGoNext={!Object.values(state.errors).some((error) => error)}
           canGoBack={state.currentStep > 0}
           canSubmit={enhancedProgress.readyForSubmission}
-          isLoading={state.isSaving || draftState.isSaving}
+          isLoading={state.isSaving}
           onNext={handleNextStep}
           onBack={handlePreviousStep}
-          onSaveDraft={handleSaveDraft}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          isDraftSaving={draftState.isSaving}
         />
       </div>
     </div>

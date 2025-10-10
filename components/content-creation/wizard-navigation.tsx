@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Save, Send, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface WizardNavigationProps {
@@ -19,11 +19,8 @@ interface WizardNavigationProps {
   /** Navigation handlers */
   onNext: () => void;
   onBack: () => void;
-  onSaveDraft: () => void;
   onSubmit: () => void;
   onCancel: () => void;
-  /** Draft state */
-  isDraftSaving?: boolean;
 }
 
 /**
@@ -40,10 +37,8 @@ export function WizardNavigation({
   isLoading,
   onNext,
   onBack,
-  onSaveDraft,
   onSubmit,
   onCancel,
-  isDraftSaving = false,
 }: WizardNavigationProps) {
   const isLastStep = currentStep === totalSteps - 1;
 
@@ -83,17 +78,6 @@ export function WizardNavigation({
           >
             <X className="h-4 w-4" />
             Cancel
-          </Button>
-
-          {/* Save draft button */}
-          <Button
-            variant="outline"
-            onClick={onSaveDraft}
-            disabled={isLoading || isDraftSaving}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" />
-            {isDraftSaving ? "Saving..." : "Save Draft"}
           </Button>
 
           {/* Next/Submit button */}

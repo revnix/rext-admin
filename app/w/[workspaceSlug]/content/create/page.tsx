@@ -126,13 +126,6 @@ export default function WorkspaceContentCreatePage({
     }
   };
 
-  const handleSaveDraft = async (
-    formData: Partial<ContentCreationFormData>,
-  ) => {
-    log.info("Draft saved", { formData });
-    // Draft is handled by the wizard's draft manager
-  };
-
   const handleCancel = () => {
     router.push(workspaceRoutes.content(workspaceSlug));
   };
@@ -146,7 +139,6 @@ export default function WorkspaceContentCreatePage({
       <ContentCreationWizard
         initialTopicId={topicId || undefined}
         onSubmit={handleSubmit}
-        onSaveDraft={handleSaveDraft}
         onCancel={handleCancel}
       />
     </PageLayout>

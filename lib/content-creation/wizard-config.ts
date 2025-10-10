@@ -807,7 +807,6 @@ export const WIZARD_STEPS: WizardStep[] = [
 export const WIZARD_CONFIG: WizardConfig = {
   steps: WIZARD_STEPS,
   validation: {
-    minCompletionForDraft: 25, // Can save draft after completing 25% of fields
     requiredForSubmission: [
       "topicId",
       "platform",
