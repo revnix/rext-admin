@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-prog
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { useSSE } from "@/providers/sse-provider";
 import {
   type WorkspaceFormData,
   workspaceFormSchema,
@@ -74,6 +75,7 @@ const STEPS: Array<{
 export function WorkspaceCreateWizard() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { clearCompletedOperation } = useSSE();
   const [currentStep, setCurrentStep] = useState<WizardStep>("details");
 
   // SSE-related state
@@ -107,30 +109,38 @@ export function WorkspaceCreateWizard() {
   // Watch description for character count
   const watchedDescription = watch("description") || "";
 
+  // Memoize SSE callbacks to prevent infinite re-renders
+  const handleSSEComplete = useCallback((payload: unknown) => {
+    log.info("[Wizard] Pipeline completed", payload);
+
+    // Extract brand voice from payload
+    if (payload && typeof payload === "object" && "brand_voice" in payload) {
+      setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
+    }
+
+    // Move to review step
+    setCurrentStep("review");
+    toast.success("Workspace analysis complete!");
+  }, []);
+
+  const handleSSEError = useCallback((error: string) => {
+    log.error("[Wizard] Pipeline failed", error);
+    toast.error(`Analysis failed: ${error}`);
+
+    // Could navigate back to details or show retry option
+    // For now, still allow user to proceed to review with partial data
+    setCurrentStep("review");
+  }, []);
+
   // SSE Connection for progress tracking
-  const { events, latestEvent, isConnected } = useSSEChannel(operationId, {
-    onComplete: (payload: unknown) => {
-      log.info("[Wizard] Pipeline completed", payload);
-
-      // Extract brand voice from payload
-      if (payload && typeof payload === "object" && "brand_voice" in payload) {
-        setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
-      }
-
-      // Move to review step
-      setCurrentStep("review");
-      toast.success("Workspace analysis complete!");
+  const { events, latestEvent, isConnected, disconnect } = useSSEChannel(
+    operationId,
+    {
+      onComplete: handleSSEComplete,
+      onError: handleSSEError,
+      autoConnect: true,
     },
-    onError: (error) => {
-      log.error("[Wizard] Pipeline failed", error);
-      toast.error(`Analysis failed: ${error}`);
-
-      // Could navigate back to details or show retry option
-      // For now, still allow user to proceed to review with partial data
-      setCurrentStep("review");
-    },
-    autoConnect: true,
-  });
+  );
 
   // Get current step info
   const currentStepInfo =
@@ -156,13 +166,13 @@ export function WorkspaceCreateWizard() {
       setWorkspaceSlug(workspace.slug);
 
       // Get operation_id from store (set by createWorkspace)
-      // Need to use a small delay to ensure store has updated
-      setTimeout(() => {
-        const operation = useWorkspaceStore.getState().currentOperation;
-        if (operation?.operationId) {
-          setOperationId(operation.operationId); // Triggers SSE connection via useSSEChannel
-        }
-      }, 100);
+      const operation = useWorkspaceStore.getState().currentOperation;
+      if (operation?.operationId) {
+        log.info("[Wizard] Setting operation ID", {
+          operationId: operation.operationId,
+        });
+        setOperationId(operation.operationId); // Triggers SSE connection via useSSEChannel
+      }
 
       // Move to progress screen
       setCurrentStep("progress");
@@ -219,6 +229,27 @@ export function WorkspaceCreateWizard() {
       router.push(`/w/${workspaceSlug}/topics`);
     }
   };
+
+  // Disconnect SSE when moving to review step
+  useEffect(() => {
+    if (currentStep === "review" && isConnected) {
+      log.info("[Wizard] Disconnecting SSE after reaching review step");
+      disconnect();
+    }
+  }, [currentStep, isConnected, disconnect]);
+
+  // Cleanup SSE connection and clear completed operations on unmount
+  useEffect(() => {
+    return () => {
+      if (operationId) {
+        log.info("[Wizard] Cleaning up SSE connection on unmount", {
+          operationId,
+        });
+        disconnect();
+        clearCompletedOperation(operationId);
+      }
+    };
+  }, [operationId, disconnect, clearCompletedOperation]);
 
   // Calculate overall progress from SSE events
   const overallProgress = latestEvent?.progress || 0;

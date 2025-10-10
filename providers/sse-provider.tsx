@@ -18,6 +18,7 @@ interface SSEContextType {
     onEvent: (event: SSEEvent) => void,
     onStatus?: (status: SSEConnectionStatus) => void,
   ) => () => void;
+  clearCompletedOperation: (operationId: string) => void;
 }
 
 const SSEContext = createContext<SSEContextType | null>(null);
@@ -39,6 +40,19 @@ const RETRY_BASE_DELAY_MS = 1000;
 const RETRY_MAX_DELAY_MS = 10_000;
 
 const TERMINAL_STEPS = new Set(["pipeline.completed", "pipeline.failed"]);
+
+// Track completed operations to prevent reconnection attempts
+const completedOperations = new Set<string>();
+
+// Track active subscriptions to prevent multiple connections to same operation
+const activeSubscriptions = new Map<
+  string,
+  {
+    abortController: AbortController;
+    subscriberCount: number;
+    unsubscribe: () => void;
+  }
+>();
 
 function resolveBaseUrl(explicitBaseUrl?: string): string {
   if (explicitBaseUrl && explicitBaseUrl.trim().length > 0) {
@@ -70,6 +84,70 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       if (!operationId) {
         sseLogger.warn("Attempted to subscribe without an operation ID");
         return () => undefined;
+      }
+
+      // Check if operation was already completed
+      if (completedOperations.has(operationId)) {
+        sseLogger.info("Operation already completed, notifying immediately", {
+          operationId,
+        });
+
+        // Immediately fire the completion event
+        // This mimics what would happen if we connected and received the completion event
+        const completionEvent: SSEEvent = {
+          id: `${operationId}_completed`,
+          operation_id: operationId,
+          scope: "workspace",
+          step: "pipeline.completed",
+          status: "completed",
+          message: "Operation already completed",
+          progress: 100,
+          timestamp: new Date().toISOString(),
+          payload: undefined, // We don't have the payload since we didn't reconnect
+        };
+
+        // Call onEvent with the completion event
+        setTimeout(() => {
+          onEvent?.(completionEvent);
+        }, 0);
+
+        // Notify status
+        onStatus?.({
+          connected: false,
+          retryCount: 0,
+        });
+
+        return () => undefined;
+      }
+
+      // Check if there's already an active subscription for this operation
+      const existingSubscription = activeSubscriptions.get(operationId);
+      if (existingSubscription) {
+        sseLogger.info("Reusing existing SSE subscription", {
+          operationId,
+          subscriberCount: existingSubscription.subscriberCount,
+        });
+
+        // Increment subscriber count
+        existingSubscription.subscriberCount++;
+
+        // Return a function that decrements the count
+        return () => {
+          existingSubscription.subscriberCount--;
+          sseLogger.info("Decremented subscriber count", {
+            operationId,
+            remainingSubscribers: existingSubscription.subscriberCount,
+          });
+
+          // If this was the last subscriber, clean up
+          if (existingSubscription.subscriberCount === 0) {
+            sseLogger.info("Last subscriber disconnected, cleaning up", {
+              operationId,
+            });
+            existingSubscription.unsubscribe();
+            activeSubscriptions.delete(operationId);
+          }
+        };
       }
 
       let isActive = true;
@@ -125,12 +203,17 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               operationId,
               url,
               retryCount,
+              hasAuthHeader: !!authHeaders.Authorization,
+              authHeaderPreview: authHeaders.Authorization
+                ? `Bearer ${authHeaders.Authorization.substring(7, 17)}...`
+                : "none",
             });
 
             await fetchEventSource(url, {
               signal: controller.signal,
               headers,
               openWhenHidden: true,
+              credentials: "include", // Include cookies for session
               onopen: async (response) => {
                 if (response.ok) {
                   sseLogger.info("SSE connection opened successfully", {
@@ -152,15 +235,47 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                 });
 
                 if (status >= 400 && status < 500) {
-                  sseLogger.error("Client error, stopping reconnection", {
-                    operationId,
-                    status,
-                  });
-                  stop({
-                    connected: false,
-                    retryCount,
-                    error: errorMessage,
-                  });
+                  // Special handling for 422 - likely means operation is completed
+                  if (status === 422) {
+                    sseLogger.info("Operation likely completed (422 status)", {
+                      operationId,
+                    });
+                    // Mark as completed to prevent reconnection
+                    completedOperations.add(operationId);
+                    stop({
+                      connected: false,
+                      retryCount,
+                      // Don't show error for completed operations
+                    });
+                    // Don't throw for 422 - just return to exit the loop gracefully
+                    return;
+                  } else if (status === 429) {
+                    // Rate limit exceeded - stop trying
+                    sseLogger.error(
+                      "Rate limit exceeded, stopping all reconnection attempts",
+                      {
+                        operationId,
+                        status,
+                      },
+                    );
+                    stop({
+                      connected: false,
+                      retryCount,
+                      error: "Rate limit exceeded. Please try again later.",
+                    });
+                    // Exit the loop completely for rate limit errors
+                    return;
+                  } else {
+                    sseLogger.error("Client error, stopping reconnection", {
+                      operationId,
+                      status,
+                    });
+                    stop({
+                      connected: false,
+                      retryCount,
+                      error: errorMessage,
+                    });
+                  }
                   throw new Error(errorMessage);
                 }
 
@@ -171,8 +286,27 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   return;
                 }
 
+                // Debug: Log the raw message structure
+                sseLogger.debug("Raw SSE message", {
+                  operationId,
+                  hasEvent: "event" in message,
+                  hasId: "id" in message,
+                  messageKeys: Object.keys(message),
+                  dataType: typeof message.data,
+                  dataLength: message.data?.length,
+                });
+
                 try {
                   const event: SSEEvent = JSON.parse(message.data);
+
+                  sseLogger.debug("Received SSE event", {
+                    operationId,
+                    event: {
+                      step: event.step,
+                      status: event.status,
+                      progress: event.progress,
+                    },
+                  });
 
                   onEvent(event);
 
@@ -181,6 +315,9 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     event.step.endsWith(".failed");
 
                   if (terminalStep || event.status === "failed") {
+                    // Mark operation as completed to prevent reconnection
+                    completedOperations.add(operationId);
+
                     const errorMessage =
                       typeof event.payload?.error === "string"
                         ? event.payload.error
@@ -188,21 +325,74 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                           ? event.message
                           : undefined;
 
-                    stop({
-                      connected: false,
-                      retryCount,
-                      error: errorMessage,
-                    });
+                    // For successful completion, don't pass an error
+                    if (event.status === "completed") {
+                      stop({
+                        connected: false,
+                        retryCount,
+                        error: undefined,
+                      });
+                    } else {
+                      stop({
+                        connected: false,
+                        retryCount,
+                        error: errorMessage,
+                      });
+                    }
+
+                    // Return early to prevent the connection from being treated as closed unexpectedly
+                    return;
                   }
                 } catch (error) {
-                  sseLogger.error("Failed to parse SSE event", error, {
+                  // Log the parse error but don't stop the connection
+                  const errorMessage =
+                    error instanceof Error ? error.message : String(error);
+
+                  // Try to extract the actual data if it looks like SSE format
+                  let actualData = message.data;
+                  if (
+                    typeof actualData === "string" &&
+                    actualData.includes("\ndata: ")
+                  ) {
+                    const dataMatch = actualData.match(/\ndata: (.+)/);
+                    if (dataMatch) {
+                      actualData = dataMatch[1];
+                      // Try parsing the extracted data
+                      try {
+                        const event: SSEEvent = JSON.parse(actualData);
+                        sseLogger.info(
+                          "Recovered SSE event from malformed message",
+                          {
+                            operationId,
+                            step: event.step,
+                          },
+                        );
+                        onEvent(event);
+                        return;
+                      } catch (_retryError) {
+                        // Continue to log the original error
+                      }
+                    }
+                  }
+
+                  sseLogger.error("Failed to parse SSE event", {
                     operationId,
-                    raw: message.data,
+                    error: errorMessage,
+                    dataLength: message.data?.length,
+                    dataPreview: message.data?.substring(0, 100),
                   });
+                  // Don't throw the error - continue processing other events
                 }
               },
               onclose: () => {
                 if (isActive && !controller.signal.aborted) {
+                  // Check if the operation was completed before throwing an error
+                  if (completedOperations.has(operationId)) {
+                    sseLogger.info("SSE connection closed after completion", {
+                      operationId,
+                    });
+                    return;
+                  }
                   throw new Error("SSE connection closed unexpectedly");
                 }
               },
@@ -229,6 +419,26 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
             const errorMessage =
               error instanceof Error ? error.message : String(error);
+
+            // Check if error is rate limit related
+            if (
+              errorMessage.includes("429") ||
+              errorMessage.toLowerCase().includes("rate limit")
+            ) {
+              sseLogger.error(
+                "Rate limit error detected, stopping reconnection",
+                {
+                  operationId,
+                  error: errorMessage,
+                },
+              );
+              stop({
+                connected: false,
+                retryCount,
+                error: "Rate limit exceeded. Please try again later.",
+              });
+              break;
+            }
 
             sseLogger.warn("SSE connection error", {
               operationId,
@@ -271,19 +481,42 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
       void connect();
 
-      return () => {
+      // Create the unsubscribe function
+      const unsubscribe = () => {
         sseLogger.info("Unsubscribing from SSE operation", { operationId });
         stop();
+        // Remove from active subscriptions map
+        activeSubscriptions.delete(operationId);
       };
+
+      // Store this subscription in the active subscriptions map
+      activeSubscriptions.set(operationId, {
+        abortController,
+        subscriberCount: 1,
+        unsubscribe,
+      });
+
+      sseLogger.info("Created new SSE subscription", {
+        operationId,
+        activeSubscriptions: activeSubscriptions.size,
+      });
+
+      return unsubscribe;
     },
     [resolvedBaseUrl],
   );
 
+  const clearCompletedOperation = useCallback((operationId: string) => {
+    completedOperations.delete(operationId);
+    sseLogger.info("Cleared completed operation", { operationId });
+  }, []);
+
   const contextValue = useMemo<SSEContextType>(
     () => ({
       subscribe,
+      clearCompletedOperation,
     }),
-    [subscribe],
+    [subscribe, clearCompletedOperation],
   );
 
   return (

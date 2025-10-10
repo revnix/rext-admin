@@ -59,19 +59,38 @@ export function useSSEChannel(
       if (!errorMessage) {
         return;
       }
+      // Don't show error for "Operation already completed" messages
+      if (errorMessage.includes("already completed")) {
+        sseChannelLogger.info("Operation already completed", {
+          operationId: operationIdRef.current,
+        });
+        return;
+      }
       sseChannelLogger.error("SSE channel error", {
         errorMessage,
-        operationId,
+        operationId: operationIdRef.current,
       });
       onError?.(errorMessage);
     },
-    [onError, operationId],
+    [onError],
   );
 
   const handleEvent = useCallback(
     (event: SSEEvent) => {
-      sseChannelLogger.debug("Received event", event);
-      setEvents((prev) => [...prev, event]);
+      sseChannelLogger.debug("Received event", {
+        operationId: operationIdRef.current,
+        step: event.step,
+        status: event.status,
+        progress: event.progress,
+      });
+      setEvents((prev) => {
+        const updated = [...prev, event];
+        sseChannelLogger.debug("Events array updated", {
+          operationId: operationIdRef.current,
+          totalEvents: updated.length,
+        });
+        return updated;
+      });
       setLatestEvent(event);
       onEvent?.(event);
 
@@ -97,7 +116,7 @@ export function useSSEChannel(
   const handleStatus = useCallback(
     (newStatus: SSEConnectionStatus) => {
       sseChannelLogger.debug("Connection status update", {
-        operationId,
+        operationId: operationIdRef.current,
         status: newStatus,
       });
       setStatus(newStatus);
@@ -106,7 +125,7 @@ export function useSSEChannel(
         handleError(newStatus.error);
       }
     },
-    [handleError, operationId],
+    [handleError],
   );
 
   const connect = useCallback(() => {
@@ -158,7 +177,7 @@ export function useSSEChannel(
 
   // Auto-connect when operation ID becomes available
   useEffect(() => {
-    if (!autoConnect || !operationId) {
+    if (!autoConnect || !operationId || !subscribe) {
       return;
     }
 
@@ -172,18 +191,36 @@ export function useSSEChannel(
 
     sseChannelLogger.info("Auto-connecting to SSE channel", { operationId });
 
-    // Clear any existing subscription
+    // Clear any existing subscription BEFORE creating a new one
     if (unsubscribeRef.current) {
+      sseChannelLogger.info(
+        "Cleaning up existing subscription before creating new one",
+        {
+          previousOperationId: operationIdRef.current,
+          newOperationId: operationId,
+        },
+      );
       unsubscribeRef.current();
       unsubscribeRef.current = null;
     }
 
-    // Subscribe
-    unsubscribeRef.current = subscribe(operationId, handleEvent, handleStatus);
-    operationIdRef.current = operationId;
+    // Small delay to prevent race conditions during rapid re-renders
+    const timeoutId = setTimeout(() => {
+      // Check if still the same operation ID and no subscription exists
+      if (operationId && !unsubscribeRef.current) {
+        sseChannelLogger.info("Creating SSE subscription", { operationId });
+        unsubscribeRef.current = subscribe(
+          operationId,
+          handleEvent,
+          handleStatus,
+        );
+        operationIdRef.current = operationId;
+      }
+    }, 100); // Small delay to prevent race conditions
 
     // Cleanup on unmount or when dependencies change
     return () => {
+      clearTimeout(timeoutId);
       sseChannelLogger.info("Cleaning up SSE connection", { operationId });
       if (unsubscribeRef.current) {
         unsubscribeRef.current();

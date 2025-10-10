@@ -9,11 +9,28 @@ import { getSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { log } from "@/lib/logger";
 
+// Cache for auth headers to avoid excessive session checks
+let authHeadersCache: {
+  headers: Record<string, string>;
+  timestamp: number;
+} | null = null;
+const CACHE_TTL_MS = 10000; // Cache for 10 seconds
+
 /**
  * Get authentication headers for API requests
  * Works in both client and server components
  */
-export async function getAuthHeaders(): Promise<Record<string, string>> {
+export async function getAuthHeaders(
+  skipCache: boolean = false,
+): Promise<Record<string, string>> {
+  // Check cache first (only on client-side)
+  if (typeof window !== "undefined" && !skipCache && authHeadersCache) {
+    const now = Date.now();
+    if (now - authHeadersCache.timestamp < CACHE_TTL_MS) {
+      return authHeadersCache.headers;
+    }
+  }
+
   // Server-side: use auth()
   if (typeof window === "undefined") {
     const session = await auth();
@@ -31,16 +48,30 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 
   // Client-side: use getSession()
   const session = await getSession();
+  const headers: Record<string, string> = {};
+
   if (session?.user?.accessToken) {
-    return {
-      Authorization: `Bearer ${session.user.accessToken}`,
-    };
+    headers.Authorization = `Bearer ${session.user.accessToken}`;
+    log.debug("[AuthJS] Got access token from session", {
+      tokenLength: session.user.accessToken.length,
+      tokenPreview: `${session.user.accessToken.substring(0, 10)}...`,
+    });
+  } else {
+    log.warn("[AuthJS] No access token in client session", {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      sessionKeys: session ? Object.keys(session) : [],
+      userKeys: session?.user ? Object.keys(session.user) : [],
+    });
   }
-  log.warn("[AuthJS] No access token in client session", {
-    hasSession: !!session,
-    hasUser: !!session?.user,
-  });
-  return {};
+
+  // Cache the headers on client-side
+  authHeadersCache = {
+    headers,
+    timestamp: Date.now(),
+  };
+
+  return headers;
 }
 
 /**

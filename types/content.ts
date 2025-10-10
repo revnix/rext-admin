@@ -161,6 +161,7 @@ export interface CreateContentRequest {
   status?: ContentStatus;
   content_language?: string;
   assigned_to_user_id?: string;
+  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
 }
@@ -176,6 +177,7 @@ export interface UpdateContentRequest {
   content_language?: string;
   assigned_to_user_id?: string;
   topic_id?: string;
+  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
 }
@@ -197,6 +199,7 @@ export interface ContentResponse {
   content_format: string;
   status: ContentStatus;
   content_language: string;
+  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   created_at: string;
   updated_at?: string;
   deleted_at?: string;
