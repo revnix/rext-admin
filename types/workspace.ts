@@ -402,67 +402,6 @@ export const FILE_CONSTRAINTS = {
 } as const;
 
 // ============================================================================
-// WORKSPACE SETTINGS TYPES
-// ============================================================================
-
-/**
- * Workspace settings for user preferences and configuration
- */
-export interface WorkspaceSettings {
-  // Display preferences
-  defaultView: "overview" | "search" | "knowledge";
-  showAnalytics: boolean;
-  showBrandVoice: boolean;
-
-  // Content management
-  autoExtractBrandVoice: boolean;
-  duplicateDetection: boolean;
-  contentIndexing: boolean;
-
-  // Notifications
-  processingNotifications: boolean;
-  errorNotifications: boolean;
-  weeklyReports: boolean;
-
-  // Privacy & Access
-  workspaceVisibility: "private" | "team" | "public";
-  allowDuplication: boolean;
-  requireApprovalForChanges: boolean;
-}
-
-/**
- * Default workspace settings
- */
-export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
-  // Display preferences
-  defaultView: "overview",
-  showAnalytics: true,
-  showBrandVoice: true,
-
-  // Content management
-  autoExtractBrandVoice: true,
-  duplicateDetection: true,
-  contentIndexing: true,
-
-  // Notifications
-  processingNotifications: true,
-  errorNotifications: true,
-  weeklyReports: false,
-
-  // Privacy & Access
-  workspaceVisibility: "private",
-  allowDuplication: true,
-  requireApprovalForChanges: false,
-} as const;
-
-/**
- * Request payload for updating workspace settings
- */
-export interface UpdateWorkspaceSettingsRequest {
-  settings: Partial<WorkspaceSettings>;
-}
-
-// ============================================================================
 // BRAND VOICE REFRESH TYPES
 // ============================================================================
 

@@ -91,14 +91,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/workspaces",
           icon: ChartBarIcon,
         },
-        {
-          title: "Settings",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.settings(currentWorkspace.slug)
-            : "/workspaces",
-          icon: Settings2,
-          anyPermission: [PERMISSIONS.WORKSPACE_UPDATE],
-        },
       ],
     },
     {

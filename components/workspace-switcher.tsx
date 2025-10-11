@@ -82,14 +82,12 @@ export function WorkspaceSwitcher() {
         | "topics"
         | "content"
         | "analytics"
-        | "users"
-        | "settings";
+        | "users";
       const validSegments: readonly ValidSegment[] = [
         "topics",
         "content",
         "analytics",
         "users",
-        "settings",
       ];
       if (validSegments.includes(lastWorkspacePath as ValidSegment)) {
         targetPageSegment = lastWorkspacePath as ValidSegment;

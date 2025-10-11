@@ -9,7 +9,6 @@ import {
   FileText,
   Loader2,
   Plus,
-  Settings,
   Trash2,
 } from "lucide-react";
 
@@ -158,12 +157,6 @@ export default function WorkspaceContentPage() {
         <Link href={workspaceRoutes.contentCreate(workspaceSlug)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Content
-        </Link>
-      </Button>
-      <Button asChild variant="outline">
-        <Link href={workspaceRoutes.settings(workspaceSlug)}>
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
         </Link>
       </Button>
     </div>

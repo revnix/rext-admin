@@ -7,7 +7,6 @@ import {
   Globe,
   Home,
   Search,
-  Settings,
   Upload,
 } from "lucide-react";
 import Link from "next/link";
@@ -81,12 +80,6 @@ const getWorkspaceNavItems = (workspaceId: string) => [
     url: `/workspaces/${workspaceId}?tab=overview&section=analytics`,
     icon: BarChart3,
     description: "Content statistics and insights",
-  },
-  {
-    title: "Settings",
-    url: `/workspaces/${workspaceId}?tab=settings`,
-    icon: Settings,
-    description: "Workspace configuration and preferences",
   },
 ];
 

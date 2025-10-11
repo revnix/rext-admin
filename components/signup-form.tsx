@@ -51,6 +51,7 @@ export function SignupForm({
           body: JSON.stringify({
             first_name: data.firstName,
             last_name: data.lastName,
+            username: data.username,
             email: data.email,
             password: data.password,
           }),
@@ -135,6 +136,21 @@ export function SignupForm({
                 {errors.lastName && (
                   <p className="text-sm text-red-600">
                     {errors.lastName.message}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="johndoe"
+                  {...register("username")}
+                  disabled={isLoading || success}
+                />
+                {errors.username && (
+                  <p className="text-sm text-red-600">
+                    {errors.username.message}
                   </p>
                 )}
               </div>

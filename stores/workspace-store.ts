@@ -10,9 +10,7 @@ import type {
   WorkspaceFormData,
   WorkspaceFormState,
   WorkspaceLoadingStates,
-  WorkspaceSettings,
 } from "@/types/workspace";
-import { DEFAULT_WORKSPACE_SETTINGS } from "@/types/workspace";
 
 // SSR-safe storage implementation
 const getStorage = () => {
@@ -60,9 +58,6 @@ interface WorkspaceState {
 
   // Last workspace page path for preserving navigation on workspace switch
   lastWorkspacePath: string | null; // e.g., 'topics', 'content', 'analytics'
-
-  // Workspace settings
-  workspaceSettings: Record<string, WorkspaceSettings>; // keyed by workspace ID
 
   // Brand voice refresh state
   brandVoiceRefresh: BrandVoiceRefreshState;
@@ -176,17 +171,6 @@ interface WorkspaceState {
   revertOptimisticUpdate: (workspace: Workspace) => void;
 
   // ============================================================================
-  // WORKSPACE SETTINGS ACTIONS
-  // ============================================================================
-
-  getWorkspaceSettings: (workspaceId: string) => WorkspaceSettings;
-  updateWorkspaceSettings: (
-    workspaceId: string,
-    settings: Partial<WorkspaceSettings>,
-  ) => void;
-  resetWorkspaceSettings: (workspaceId: string) => void;
-
-  // ============================================================================
   // UTILITY ACTIONS
   // ============================================================================
 
@@ -252,9 +236,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         // Last workspace path
         lastWorkspacePath: null,
-
-        // Workspace settings
-        workspaceSettings: {},
 
         // Brand voice refresh state
         brandVoiceRefresh: {
@@ -826,42 +807,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         },
 
         // ============================================================================
-        // WORKSPACE SETTINGS ACTIONS
-        // ============================================================================
-
-        getWorkspaceSettings: (workspaceId) => {
-          const state = _get();
-          return (
-            state.workspaceSettings[workspaceId] || DEFAULT_WORKSPACE_SETTINGS
-          );
-        },
-
-        updateWorkspaceSettings: (workspaceId, settings) => {
-          set((state) => {
-            const currentSettings =
-              state.workspaceSettings[workspaceId] ||
-              DEFAULT_WORKSPACE_SETTINGS;
-            return {
-              ...state,
-              workspaceSettings: {
-                ...state.workspaceSettings,
-                [workspaceId]: { ...currentSettings, ...settings },
-              },
-            };
-          });
-        },
-
-        resetWorkspaceSettings: (workspaceId) => {
-          set((state) => ({
-            ...state,
-            workspaceSettings: {
-              ...state.workspaceSettings,
-              [workspaceId]: { ...DEFAULT_WORKSPACE_SETTINGS },
-            },
-          }));
-        },
-
-        // ============================================================================
         // UTILITY ACTIONS
         // ============================================================================
 
@@ -890,7 +835,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               duplicating: false,
             },
             recentWorkspaces: [],
-            workspaceSettings: {},
           });
         },
 
@@ -906,7 +850,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           currentWorkspace: state.currentWorkspace,
           recentWorkspaces: state.recentWorkspaces,
           lastWorkspacePath: state.lastWorkspacePath,
-          workspaceSettings: state.workspaceSettings,
           _hasHydrated: state._hasHydrated,
         }),
         onRehydrateStorage: () => (state) => {

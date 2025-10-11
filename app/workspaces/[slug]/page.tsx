@@ -24,7 +24,6 @@ import { WorkspaceInvitationsPanel } from "@/components/workspace/workspace-invi
 import { WorkspaceKnowledgeSummaryCard } from "@/components/workspace/workspace-knowledge-summary-card";
 import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-panel";
 import { WorkspaceOverviewForm } from "@/components/workspace/workspace-overview-form";
-import { WorkspaceSettingsPanel } from "@/components/workspace/workspace-settings-panel";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
@@ -186,7 +185,6 @@ export default function WorkspaceDetailPage() {
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
                 <TabsTrigger value="members">Members</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -220,10 +218,6 @@ export default function WorkspaceDetailPage() {
               <TabsContent value="members" className="space-y-6">
                 <WorkspaceMembersPanel workspace={workspace} />
                 <WorkspaceInvitationsPanel workspaceId={workspace?.id || ""} />
-              </TabsContent>
-
-              <TabsContent value="settings" className="space-y-6">
-                <WorkspaceSettingsPanel workspace={workspace} />
               </TabsContent>
             </Tabs>
           </>

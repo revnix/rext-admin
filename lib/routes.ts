@@ -13,7 +13,6 @@ export const WORKSPACE_PAGES = [
   "content",
   "analytics",
   "users",
-  "settings",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -56,17 +55,6 @@ export const workspaceRoutes = {
    * Analytics route
    */
   analytics: (workspaceSlug: string) => `/w/${workspaceSlug}/analytics`,
-
-  /**
-   * Settings routes
-   */
-  settings: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
-  settingsGeneral: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/settings/general`,
-  settingsSecurity: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/settings/security`,
-  settingsNotifications: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/settings/notifications`,
 
   /**
    * Knowledge routes (tab-based within workspace detail)
@@ -155,7 +143,6 @@ export function buildWorkspacePath(
     content: workspaceRoutes.content,
     analytics: workspaceRoutes.analytics,
     users: workspaceRoutes.users,
-    settings: workspaceRoutes.settings,
   };
 
   const routeFn = routeMap[pageSegment];
@@ -180,12 +167,12 @@ export function isValidWorkspaceId(workspaceId: string): boolean {
  * Get workspace detail tab URL
  *
  * @param workspaceId - The workspace ID
- * @param tab - The tab name (overview, knowledge, members, settings)
+ * @param tab - The tab name (overview, knowledge, members)
  * @returns The workspace detail URL with tab parameter
  */
 export function getWorkspaceTabUrl(
   workspaceId: string,
-  tab: "overview" | "knowledge" | "members" | "settings",
+  tab: "overview" | "knowledge" | "members",
 ): string {
   return `/w/${workspaceId}?tab=${tab}`;
 }
