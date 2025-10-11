@@ -11,7 +11,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
@@ -94,7 +102,7 @@ export function WorkspaceCreateWizard() {
     defaultValues: {
       title: "",
       url: "",
-      description: "",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
     mode: "onChange",
   });
@@ -103,11 +111,7 @@ export function WorkspaceCreateWizard() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-    watch,
   } = form;
-
-  // Watch description for character count
-  const watchedDescription = watch("description") || "";
 
   // Memoize SSE callbacks to prevent infinite re-renders
   const handleSSEComplete = useCallback((payload: unknown) => {
@@ -156,7 +160,7 @@ export function WorkspaceCreateWizard() {
       const workspace = await createWorkspace({
         title: data.title,
         url: data.url,
-        description: data.description || "",
+        timezone: data.timezone,
       });
 
       log.info("[Wizard] Workspace created", workspace);
@@ -311,25 +315,84 @@ export function WorkspaceCreateWizard() {
                 </p>
               </div>
 
-              {/* Description Field */}
+              {/* Timezone Field */}
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-base font-medium">
-                  Description (Optional)
+                <Label htmlFor="timezone" className="text-base font-medium">
+                  Timezone{" "}
+                  <span className="text-muted-foreground">(Optional)</span>
                 </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Brief description of your workspace or company"
-                  {...register("description")}
-                  className={`resize-none ${errors.description ? "border-destructive" : ""}`}
-                  rows={3}
-                />
-                {errors.description && (
+                <Select
+                  value={form.watch("timezone") || ""}
+                  onValueChange={(value) =>
+                    form.setValue("timezone", value, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger className="text-lg h-12">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>North America</SelectLabel>
+                      <SelectItem value="America/New_York">
+                        Eastern Time (ET)
+                      </SelectItem>
+                      <SelectItem value="America/Chicago">
+                        Central Time (CT)
+                      </SelectItem>
+                      <SelectItem value="America/Denver">
+                        Mountain Time (MT)
+                      </SelectItem>
+                      <SelectItem value="America/Los_Angeles">
+                        Pacific Time (PT)
+                      </SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Europe</SelectLabel>
+                      <SelectItem value="Europe/London">
+                        London (GMT)
+                      </SelectItem>
+                      <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+                      <SelectItem value="Europe/Berlin">
+                        Berlin (CET)
+                      </SelectItem>
+                      <SelectItem value="Europe/Istanbul">
+                        Istanbul (TRT)
+                      </SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Asia</SelectLabel>
+                      <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
+                      <SelectItem value="Asia/Karachi">
+                        Karachi (PKT)
+                      </SelectItem>
+                      <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
+                      <SelectItem value="Asia/Singapore">
+                        Singapore (SGT)
+                      </SelectItem>
+                      <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Australia & Pacific</SelectLabel>
+                      <SelectItem value="Australia/Sydney">
+                        Sydney (AEDT)
+                      </SelectItem>
+                      <SelectItem value="Pacific/Auckland">
+                        Auckland (NZDT)
+                      </SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Other</SelectLabel>
+                      <SelectItem value="UTC">UTC</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {errors.timezone && (
                   <p className="text-sm text-destructive">
-                    {errors.description.message}
+                    {errors.timezone.message}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  {watchedDescription.length}/1000 characters
+                <p className="text-sm text-muted-foreground">
+                  Detected: {Intl.DateTimeFormat().resolvedOptions().timeZone}
                 </p>
               </div>
 

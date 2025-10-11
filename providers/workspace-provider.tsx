@@ -125,7 +125,7 @@ export function WorkspaceProvider({
         id: "", // Will be filled when API returns
         slug: workspaceId, // From URL
         title: workspaceId, // Use slug as title temporarily
-        description: "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         url: "",
         created_at: "",
         updated_at: "",

@@ -18,8 +18,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import {
@@ -52,9 +60,10 @@ export function WorkspaceOverviewForm({
     [workspace],
   );
 
-  const workspaceDescription = useMemo(
-    () => workspace.description ?? "",
-    [workspace.description],
+  const workspaceTimezone = useMemo(
+    () =>
+      workspace.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    [workspace.timezone],
   );
 
   const workspaceUrl = useMemo(() => workspace.url || "", [workspace.url]);
@@ -63,7 +72,7 @@ export function WorkspaceOverviewForm({
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
       title: workspaceTitle,
-      description: workspaceDescription,
+      timezone: workspaceTimezone,
       url: workspaceUrl,
     },
     mode: "onChange",
@@ -73,24 +82,21 @@ export function WorkspaceOverviewForm({
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isDirty, isValid },
   } = form;
-
-  const descriptionValue = watch("description") || "";
 
   useEffect(() => {
     reset({
       title: workspaceTitle,
-      description: workspaceDescription,
+      timezone: workspaceTimezone,
       url: workspaceUrl,
     });
-  }, [workspaceTitle, workspaceDescription, workspaceUrl, reset]);
+  }, [workspaceTitle, workspaceTimezone, workspaceUrl, reset]);
 
   const handleReset = () => {
     reset({
       title: workspaceTitle,
-      description: workspaceDescription,
+      timezone: workspaceTimezone,
       url: workspaceUrl,
     });
   };
@@ -98,10 +104,7 @@ export function WorkspaceOverviewForm({
   const onSubmit = async (data: WorkspaceFormData) => {
     setIsSubmitting(true);
     try {
-      const updatedWorkspace = await updateWorkspace(workspace.id, {
-        ...data,
-        description: data.description ?? "",
-      });
+      const updatedWorkspace = await updateWorkspace(workspace.id, data);
 
       await queryClient.invalidateQueries({
         queryKey: ["workspace", workspace.id],
@@ -114,7 +117,9 @@ export function WorkspaceOverviewForm({
 
       reset({
         title: getWorkspaceDisplayTitle(updatedWorkspace, ""),
-        description: updatedWorkspace.description ?? "",
+        timezone:
+          updatedWorkspace.timezone ??
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
         url: updatedWorkspace.url || "",
       });
 
@@ -133,7 +138,7 @@ export function WorkspaceOverviewForm({
       <CardHeader>
         <CardTitle className="text-lg">Workspace Details</CardTitle>
         <CardDescription>
-          Update the title, description, and URL for this workspace
+          Update the title, timezone, and URL for this workspace
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -174,21 +179,73 @@ export function WorkspaceOverviewForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="workspace-description">Description</Label>
-            <Textarea
-              id="workspace-description"
-              placeholder="Optional description for your workspace"
-              rows={4}
-              {...register("description")}
+            <Label htmlFor="workspace-timezone">Timezone</Label>
+            <Select
+              value={form.watch("timezone") || ""}
+              onValueChange={(value) =>
+                form.setValue("timezone", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
               disabled={isSubmitting}
-              className={errors.description ? "border-destructive" : undefined}
-            />
-            <p className="text-xs text-muted-foreground">
-              {descriptionValue.length}/1000 characters
-            </p>
-            {errors.description && (
+            >
+              <SelectTrigger id="workspace-timezone">
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>North America</SelectLabel>
+                  <SelectItem value="America/New_York">
+                    Eastern Time (ET)
+                  </SelectItem>
+                  <SelectItem value="America/Chicago">
+                    Central Time (CT)
+                  </SelectItem>
+                  <SelectItem value="America/Denver">
+                    Mountain Time (MT)
+                  </SelectItem>
+                  <SelectItem value="America/Los_Angeles">
+                    Pacific Time (PT)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Europe</SelectLabel>
+                  <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                  <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+                  <SelectItem value="Europe/Berlin">Berlin (CET)</SelectItem>
+                  <SelectItem value="Europe/Istanbul">
+                    Istanbul (TRT)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Asia</SelectLabel>
+                  <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
+                  <SelectItem value="Asia/Karachi">Karachi (PKT)</SelectItem>
+                  <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
+                  <SelectItem value="Asia/Singapore">
+                    Singapore (SGT)
+                  </SelectItem>
+                  <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Australia & Pacific</SelectLabel>
+                  <SelectItem value="Australia/Sydney">
+                    Sydney (AEDT)
+                  </SelectItem>
+                  <SelectItem value="Pacific/Auckland">
+                    Auckland (NZDT)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Other</SelectLabel>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {errors.timezone && (
               <p className="text-sm text-destructive" role="alert">
-                {errors.description.message}
+                {errors.timezone.message}
               </p>
             )}
           </div>

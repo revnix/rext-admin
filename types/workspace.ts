@@ -21,7 +21,7 @@ export interface Workspace {
   title: string; // unique, required
   name?: string; // alternative to title (backend uses name)
   slug: string; // URL-safe identifier for workspace
-  description?: string; // optional
+  timezone?: string; // optional IANA timezone
   url: string; // required
   created_at: string; // DateTime ISO string
   updated_at?: string; // DateTime ISO string
@@ -159,7 +159,7 @@ export type WorkspaceStatus = "active" | "inactive" | "archived" | "deleted";
  */
 export interface CreateWorkspaceRequest {
   title: string;
-  description?: string;
+  timezone?: string;
   url: string;
 }
 
@@ -168,7 +168,7 @@ export interface CreateWorkspaceRequest {
  */
 export interface UpdateWorkspaceRequest {
   title?: string;
-  description?: string;
+  timezone?: string;
   url?: string;
 }
 
@@ -251,7 +251,7 @@ export interface UpdateTextKnowledgeRequest {
  */
 export interface WorkspaceFormData {
   title: string;
-  description: string;
+  timezone?: string;
   url: string;
 }
 
@@ -383,7 +383,6 @@ export interface KnowledgeManagementState {
 export const WORKSPACE_CONSTRAINTS = {
   TITLE_MIN_LENGTH: 1,
   TITLE_MAX_LENGTH: 200,
-  DESCRIPTION_MAX_LENGTH: 1000,
   URL_PATTERN: /^https?:\/\/.+/,
 } as const;
 

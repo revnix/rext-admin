@@ -163,10 +163,7 @@ export default function WorkspaceDetailPage() {
   return (
     <PageLayout
       title={workspace ? workspaceTitle : "Loading..."}
-      description={
-        workspace?.description ||
-        "Manage knowledge, content, and brand voice for this workspace"
-      }
+      description="Manage knowledge, content, and brand voice for this workspace"
       breadcrumbs={breadcrumbs}
       actions={actions}
     >

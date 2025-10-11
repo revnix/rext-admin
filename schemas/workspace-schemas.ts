@@ -26,6 +26,15 @@ const urlSchema = z
     },
   );
 
+// Timezone validation schema with IANA timezone support
+const timezoneSchema = z
+  .string()
+  .optional()
+  .refine(
+    (tz) => !tz || Intl.supportedValuesOf("timeZone").includes(tz),
+    "Please select a valid timezone",
+  );
+
 // Main workspace form validation schema
 export const workspaceFormSchema = z.object({
   title: z
@@ -34,28 +43,23 @@ export const workspaceFormSchema = z.object({
     .max(200, "Title must be 200 characters or less")
     .trim(),
 
-  description: z
-    .string()
-    .max(1000, "Description must be 1000 characters or less")
-    .trim()
-    .optional()
-    .or(z.literal("")), // Allow empty string
-
   url: urlSchema,
+
+  timezone: timezoneSchema,
 });
 
 // Create workspace API request schema
 export const createWorkspaceRequestSchema = z.object({
   title: z.string().min(1).max(200).trim(),
-  description: z.string().max(1000).trim().optional(),
   url: urlSchema,
+  timezone: timezoneSchema,
 });
 
 // Update workspace API request schema
 export const updateWorkspaceRequestSchema = z.object({
   title: z.string().min(1).max(200).trim().optional(),
-  description: z.string().max(1000).trim().optional(),
   url: urlSchema.optional(),
+  timezone: timezoneSchema,
 });
 
 // Type inference for forms
@@ -71,5 +75,4 @@ export type UpdateWorkspaceRequest = z.infer<
 export const WORKSPACE_VALIDATION = {
   TITLE_MIN_LENGTH: 1,
   TITLE_MAX_LENGTH: 200,
-  DESCRIPTION_MAX_LENGTH: 1000,
 } as const;

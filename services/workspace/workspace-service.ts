@@ -182,9 +182,7 @@ export class WorkspaceService {
 
     const duplicateData: CreateWorkspaceRequest = {
       title: duplicateTitle,
-      description: sourceWorkspace.description
-        ? `${sourceWorkspace.description} (Duplicated from ${sourceWorkspace.title})`
-        : `Duplicated from ${sourceWorkspace.title}`,
+      timezone: sourceWorkspace.timezone,
       url: sourceWorkspace.url,
     };
 
@@ -391,13 +389,6 @@ export class WorkspaceService {
     if (!data.url || !this.isValidUrl(data.url)) {
       throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
     }
-
-    if (data.description && data.description.length > 1000) {
-      throw new WorkspaceServiceError(
-        "INVALID_REQUEST",
-        "Description must be 1000 characters or less",
-      );
-    }
   }
 
   private validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
@@ -419,13 +410,6 @@ export class WorkspaceService {
     if (data.url !== undefined && !this.isValidUrl(data.url)) {
       throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
     }
-
-    if (data.description !== undefined && data.description.length > 1000) {
-      throw new WorkspaceServiceError(
-        "INVALID_REQUEST",
-        "Description must be 1000 characters or less",
-      );
-    }
   }
 
   private isValidUrl(url: string): boolean {
@@ -446,9 +430,7 @@ export class WorkspaceService {
   ): Record<string, unknown> {
     return {
       name: InputSanitizer.sanitizeText(data.title.trim()),
-      description: data.description
-        ? InputSanitizer.sanitizeText(data.description.trim())
-        : undefined,
+      timezone: data.timezone,
       url: data.url.trim(),
     };
   }
@@ -461,8 +443,8 @@ export class WorkspaceService {
     if (data.title !== undefined) {
       result.name = InputSanitizer.sanitizeText(data.title.trim());
     }
-    if (data.description !== undefined) {
-      result.description = InputSanitizer.sanitizeText(data.description.trim());
+    if (data.timezone !== undefined) {
+      result.timezone = data.timezone;
     }
     if (data.url !== undefined) {
       result.url = data.url.trim();

@@ -62,7 +62,7 @@ export default function WorkspacePage() {
     id: workspace.id,
     title: workspace.name || workspace.title || "Untitled Workspace", // Handle name/title mapping
     slug: workspace.slug, // Include slug for URL navigation
-    description: workspace.description,
+    timezone: workspace.timezone,
     url: workspace.url,
     created_at: workspace.created_at,
     updated_at: workspace.updated_at,
@@ -103,11 +103,11 @@ export default function WorkspacePage() {
                 </Badge>
               )}
             </div>
-            {row.description && (
+            {row.timezone ? (
               <span className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                {row.description}
+                {String(row.timezone)}
               </span>
-            )}
+            ) : null}
           </div>
         </div>
       ),
@@ -266,7 +266,7 @@ export default function WorkspacePage() {
         actions={tableActions}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={["title", "url", "description", "owner"]}
+        searchFields={["title", "url", "timezone", "owner"]}
         isLoading={isLoading}
         tableId="workspaces"
       />

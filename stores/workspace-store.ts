@@ -183,7 +183,7 @@ interface WorkspaceState {
  */
 const initialWorkspaceFormData: WorkspaceFormData = {
   title: "",
-  description: "",
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   url: "",
 };
 
@@ -336,7 +336,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               data: workspace
                 ? {
                     title: getWorkspaceDisplayTitle(workspace),
-                    description: workspace.description || "",
+                    timezone:
+                      workspace.timezone ||
+                      Intl.DateTimeFormat().resolvedOptions().timeZone,
                     url: workspace.url,
                   }
                 : initialWorkspaceFormData,
@@ -562,7 +564,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             const { workspace, operation_id } =
               await apiClient.workspaces.create({
                 title: data.title,
-                description: data.description || "",
+                timezone: data.timezone,
                 url: data.url,
               });
 
@@ -596,7 +598,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           try {
             const response = await apiClient.workspaces.update(workspaceId, {
               title: data.title,
-              description: data.description || "",
+              timezone: data.timezone,
               url: data.url,
             });
 

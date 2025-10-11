@@ -14,7 +14,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { log } from "@/lib/logger";
 import {
   type WorkspaceFormData,
@@ -47,7 +55,7 @@ export function WorkspaceFormModal() {
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
       title: "",
-      description: "",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       url: "",
     },
     mode: "onChange", // Enable real-time validation
@@ -58,18 +66,16 @@ export function WorkspaceFormModal() {
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
     reset,
-    watch,
   } = form;
-
-  // Watch description for character count
-  const watchedDescription = watch("description") || "";
 
   // Sync form with workspace store data when modal opens
   useEffect(() => {
     if (workspaceForm.isOpen) {
       reset({
         title: workspaceForm.data.title || "",
-        description: workspaceForm.data.description || "",
+        timezone:
+          workspaceForm.data.timezone ||
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
         url: workspaceForm.data.url || "",
       });
     }
@@ -172,26 +178,78 @@ export function WorkspaceFormModal() {
             </p>
           </div>
 
-          {/* Description Field */}
+          {/* Timezone Field */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
-              Description
+            <Label htmlFor="timezone" className="text-sm font-medium">
+              Timezone
             </Label>
-            <Textarea
-              id="description"
-              placeholder="Optional description for your workspace"
-              {...register("description")}
+            <Select
+              value={form.watch("timezone") || ""}
+              onValueChange={(value) =>
+                form.setValue("timezone", value, { shouldValidate: true })
+              }
               disabled={isSubmitting}
-              className={`resize-none ${errors.description ? "border-destructive" : ""}`}
-              rows={3}
-            />
-            {errors.description && (
+            >
+              <SelectTrigger id="timezone">
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>North America</SelectLabel>
+                  <SelectItem value="America/New_York">
+                    Eastern Time (ET)
+                  </SelectItem>
+                  <SelectItem value="America/Chicago">
+                    Central Time (CT)
+                  </SelectItem>
+                  <SelectItem value="America/Denver">
+                    Mountain Time (MT)
+                  </SelectItem>
+                  <SelectItem value="America/Los_Angeles">
+                    Pacific Time (PT)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Europe</SelectLabel>
+                  <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                  <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+                  <SelectItem value="Europe/Berlin">Berlin (CET)</SelectItem>
+                  <SelectItem value="Europe/Istanbul">
+                    Istanbul (TRT)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Asia</SelectLabel>
+                  <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
+                  <SelectItem value="Asia/Karachi">Karachi (PKT)</SelectItem>
+                  <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
+                  <SelectItem value="Asia/Singapore">
+                    Singapore (SGT)
+                  </SelectItem>
+                  <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Australia & Pacific</SelectLabel>
+                  <SelectItem value="Australia/Sydney">
+                    Sydney (AEDT)
+                  </SelectItem>
+                  <SelectItem value="Pacific/Auckland">
+                    Auckland (NZDT)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Other</SelectLabel>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {errors.timezone && (
               <p className="text-sm text-destructive" role="alert">
-                {errors.description.message}
+                {errors.timezone.message}
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              {watchedDescription.length}/1000 characters
+              Detected: {Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>
           </div>
 

@@ -138,7 +138,7 @@ export function WorkspaceSwitcher() {
                 <span className="truncate text-xs">
                   {isLoading
                     ? "Fetching workspaces..."
-                    : displayWorkspace?.description ||
+                    : displayWorkspace?.timezone ||
                       "Choose a workspace to start"}
                 </span>
               </div>
