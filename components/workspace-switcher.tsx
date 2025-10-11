@@ -78,11 +78,7 @@ export function WorkspaceSwitcher() {
 
     // If no current page, try to use last visited path if it's a valid page segment
     if (!targetPageSegment && lastWorkspacePath) {
-      type ValidSegment =
-        | "topics"
-        | "content"
-        | "analytics"
-        | "users";
+      type ValidSegment = "topics" | "content" | "analytics" | "users";
       const validSegments: readonly ValidSegment[] = [
         "topics",
         "content",
