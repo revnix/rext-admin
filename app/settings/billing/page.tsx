@@ -1,0 +1,502 @@
+"use client";
+
+import {
+  AlertCircle,
+  Calendar,
+  CreditCard,
+  ExternalLink,
+  FileText,
+  Folder,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+
+interface UsageMetric {
+  used: number;
+  limit: number | null;
+  percentage: number;
+  unlimited: boolean;
+}
+
+interface UsageData {
+  workspaces: UsageMetric;
+  members: UsageMetric;
+  topics: UsageMetric;
+  knowledge_items: UsageMetric;
+  api_calls: UsageMetric & { reset_date: string | null };
+}
+
+interface SubscriptionData {
+  subscription: any;
+  plan: any;
+  usage: UsageData;
+}
+
+function BillingDashboardContent() {
+  const [data, setData] = useState<SubscriptionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
+
+  const fetchSubscriptionStatus = useCallback(async () => {
+    if (!session?.user?.accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+      const response = await fetch(`${apiUrl}/api/v1/subscriptions/status`, {
+        headers: {
+          Authorization: `Bearer ${session.user.accessToken}`,
+        },
+      });
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setData(result.data);
+      }
+    } catch (_error) {
+      toast.error("Failed to load billing information");
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (session?.user?.accessToken) {
+      fetchSubscriptionStatus();
+    }
+  }, [session, fetchSubscriptionStatus]);
+
+  // Show success message after checkout
+  useEffect(() => {
+    const checkout = searchParams.get("checkout");
+    if (checkout === "success") {
+      toast.success("🎉 Subscription activated successfully!");
+      // Force refresh subscription data
+      if (session?.user?.accessToken) {
+        fetchSubscriptionStatus();
+      }
+      // Clean up URL
+      router.replace("/settings/billing", { scroll: false });
+    } else if (checkout === "cancelled") {
+      toast.info("Checkout was cancelled");
+      router.replace("/settings/billing", { scroll: false });
+    }
+  }, [searchParams, router, session, fetchSubscriptionStatus]);
+
+  const handleCancelSubscription = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to cancel your subscription? You will retain access until the end of your billing period.",
+      )
+    ) {
+      return;
+    }
+
+    if (!session?.user?.accessToken) {
+      toast.error("Please log in to cancel subscription");
+      return;
+    }
+
+    setCancelLoading(true);
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+      const response = await fetch(
+        `${apiUrl}/api/v1/subscriptions/cancel?at_period_end=true`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${session.user.accessToken}`,
+          },
+        },
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(
+          "Your subscription will be cancelled at the end of the billing period.",
+        );
+        fetchSubscriptionStatus();
+      } else {
+        throw new Error(
+          result.error?.message || "Failed to cancel subscription",
+        );
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Cancellation Failed");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    if (!session?.user?.accessToken) {
+      toast.error("Please log in to manage billing");
+      return;
+    }
+
+    setPortalLoading(true);
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+      const response = await fetch(`${apiUrl}/api/v1/subscriptions/portal`, {
+        headers: {
+          Authorization: `Bearer ${session.user.accessToken}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data?.portal_url) {
+        window.open(result.data.portal_url, "_blank");
+      } else {
+        throw new Error(
+          result.error?.message || "Failed to open billing portal",
+        );
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to open billing portal");
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  const formatLimit = (limit: number | null, unlimited: boolean): string => {
+    if (unlimited || limit === null || limit < 0) return "Unlimited";
+    return limit.toLocaleString();
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { variant: any; label: string }> = {
+      active: { variant: "default", label: "Active" },
+      trial: { variant: "secondary", label: "Trial" },
+      cancelled: { variant: "destructive", label: "Cancelled" },
+      expired: { variant: "destructive", label: "Expired" },
+      suspended: { variant: "destructive", label: "Suspended" },
+    };
+
+    const config = statusMap[status] || { variant: "outline", label: status };
+    return <Badge variant={config.variant as any}>{config.label}</Badge>;
+  };
+
+  if (loading) {
+    return (
+      <div className="container max-w-6xl mx-auto py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">
+              Loading billing information...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { subscription, plan, usage } = data || {};
+
+  return (
+    <div className="container max-w-6xl mx-auto py-8 space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Billing & Subscription</h1>
+        <p className="text-muted-foreground">
+          Manage your subscription, view usage, and update payment methods
+        </p>
+      </div>
+
+      {/* Current Plan Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Current Plan
+              </CardTitle>
+              <CardDescription>
+                {subscription
+                  ? "Your active subscription details"
+                  : "You are on the free plan"}
+              </CardDescription>
+            </div>
+            {subscription && getStatusBadge(subscription.status)}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {subscription && plan ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Plan</p>
+                  <p className="text-2xl font-bold">{plan.display_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Price</p>
+                  <p className="text-2xl font-bold">
+                    $
+                    {subscription.billing_period === "monthly"
+                      ? plan.price_monthly
+                      : plan.price_yearly}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /
+                      {subscription.billing_period === "monthly"
+                        ? "month"
+                        : "year"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                {subscription.start_date && (
+                  <div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      Started
+                    </p>
+                    <p className="text-sm font-medium">
+                      {new Date(subscription.start_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                {subscription.end_date && (
+                  <div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {subscription.cancelled_at ? "Ends" : "Renews"}
+                    </p>
+                    <p className="text-sm font-medium">
+                      {new Date(subscription.end_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {subscription.cancelled_at && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Subscription Cancelled</AlertTitle>
+                  <AlertDescription>
+                    Your subscription will end on{" "}
+                    {new Date(subscription.end_date).toLocaleDateString()}. You
+                    can reactivate it anytime before this date.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
+          ) : (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Free Plan</AlertTitle>
+              <AlertDescription>
+                You're currently on the free plan with limited features.
+                <Button
+                  variant="link"
+                  className="px-1"
+                  onClick={() => router.push("/pricing")}
+                >
+                  Upgrade to unlock more
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+        <CardFooter className="flex gap-2">
+          {subscription ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleManageBilling}
+                disabled={portalLoading}
+              >
+                {portalLoading ? "Loading..." : "Manage Billing"}
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+              {!subscription.cancelled_at && (
+                <Button
+                  variant="destructive"
+                  onClick={handleCancelSubscription}
+                  disabled={cancelLoading}
+                >
+                  {cancelLoading ? "Cancelling..." : "Cancel Subscription"}
+                </Button>
+              )}
+            </>
+          ) : (
+            <Button onClick={() => router.push("/pricing")}>View Plans</Button>
+          )}
+        </CardFooter>
+      </Card>
+
+      {/* Usage Metrics */}
+      {usage && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Usage Metrics
+            </CardTitle>
+            <CardDescription>
+              Your current usage across all resources
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Workspaces */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Folder className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Workspaces</span>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {usage.workspaces.used} /{" "}
+                  {formatLimit(
+                    usage.workspaces.limit,
+                    usage.workspaces.unlimited,
+                  )}
+                </span>
+              </div>
+              <Progress value={usage.workspaces.percentage} />
+            </div>
+
+            {/* Members */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Team Members</span>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {usage.members.used} /{" "}
+                  {formatLimit(usage.members.limit, usage.members.unlimited)}
+                </span>
+              </div>
+              <Progress value={usage.members.percentage} />
+            </div>
+
+            {/* Topics */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Topics</span>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {usage.topics.used} /{" "}
+                  {formatLimit(usage.topics.limit, usage.topics.unlimited)}
+                </span>
+              </div>
+              <Progress value={usage.topics.percentage} />
+            </div>
+
+            {/* Knowledge Items */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Knowledge Items</span>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {usage.knowledge_items.used} /{" "}
+                  {formatLimit(
+                    usage.knowledge_items.limit,
+                    usage.knowledge_items.unlimited,
+                  )}
+                </span>
+              </div>
+              <Progress value={usage.knowledge_items.percentage} />
+            </div>
+
+            {/* API Calls */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">API Calls</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">
+                    {usage.api_calls.used} /{" "}
+                    {formatLimit(
+                      usage.api_calls.limit,
+                      usage.api_calls.unlimited,
+                    )}
+                  </p>
+                  {usage.api_calls.reset_date && (
+                    <p className="text-xs text-muted-foreground">
+                      Resets{" "}
+                      {new Date(
+                        usage.api_calls.reset_date,
+                      ).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Progress value={usage.api_calls.percentage} />
+            </div>
+
+            {/* Upgrade Prompt */}
+            {(usage.workspaces.percentage > 80 ||
+              usage.api_calls.percentage > 80 ||
+              usage.members.percentage > 80) &&
+              !subscription && (
+                <Alert>
+                  <TrendingUp className="h-4 w-4" />
+                  <AlertTitle>Approaching Limits</AlertTitle>
+                  <AlertDescription>
+                    You're approaching your usage limits. Consider upgrading
+                    your plan for more resources.
+                    <Button
+                      variant="link"
+                      className="px-1"
+                      onClick={() => router.push("/pricing")}
+                    >
+                      View plans
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+export default function BillingDashboard() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BillingDashboardContent />
+    </Suspense>
+  );
+}
