@@ -6,15 +6,12 @@ import {
   ChartBar as ChartBarIcon,
   Database,
   FileText,
-  Globe,
   LayoutDashboard,
   Library,
   Puzzle,
   Settings2,
   Share2,
   Shield,
-  StickyNote,
-  Upload,
   User,
   UserCog,
   Users,
@@ -40,14 +37,6 @@ import type { NavGroup } from "@/types/navigation";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
 
-  // Generate dynamic URLs based on current workspace
-  const getKnowledgeUrl = (view?: string) => {
-    if (!currentWorkspace || !currentWorkspace.slug) {
-      return "/workspaces"; // Fallback to workspaces list
-    }
-    return workspaceRoutes.knowledge(currentWorkspace.slug, view);
-  };
-
   const navigationGroups: NavGroup[] = [
     {
       groupLabel: "",
@@ -62,6 +51,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Workspace",
       items: [
+        {
+          title: "Overview",
+          url: currentWorkspace?.slug
+            ? `/w/${currentWorkspace.slug}/overview`
+            : "/workspaces",
+          icon: LayoutDashboard,
+        },
         {
           title: "Topics",
           url: currentWorkspace?.slug
@@ -98,25 +94,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Knowledge",
-          url: getKnowledgeUrl(),
+          url: currentWorkspace?.slug
+            ? `/w/${currentWorkspace.slug}/knowledge`
+            : "/workspaces",
           icon: Brain,
-          items: [
-            {
-              title: "Web URLs",
-              url: getKnowledgeUrl("web"),
-              icon: Globe,
-            },
-            {
-              title: "Files",
-              url: getKnowledgeUrl("files"),
-              icon: Upload,
-            },
-            {
-              title: "Text Notes",
-              url: getKnowledgeUrl("text"),
-              icon: StickyNote,
-            },
-          ],
         },
         {
           title: "Integrations",

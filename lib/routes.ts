@@ -57,18 +57,21 @@ export const workspaceRoutes = {
   analytics: (workspaceSlug: string) => `/w/${workspaceSlug}/analytics`,
 
   /**
-   * Knowledge routes (tab-based within workspace detail)
+   * Knowledge routes
    */
-  knowledge: (workspaceSlug: string, view?: string) => {
-    const base = `/w/${workspaceSlug}?tab=knowledge`;
-    return view ? `${base}&view=${view}` : base;
-  },
-  knowledgeWeb: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}?tab=knowledge&view=web`,
-  knowledgeFiles: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}?tab=knowledge&view=files`,
-  knowledgeText: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}?tab=knowledge&view=text`,
+  knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
+  knowledgeDetail: (workspaceSlug: string, kbId: string) =>
+    `/w/${workspaceSlug}/knowledge/${kbId}`,
+
+  /**
+   * Overview route
+   */
+  overview: (workspaceSlug: string) => `/w/${workspaceSlug}/overview`,
+
+  /**
+   * Members route
+   */
+  members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
 } as const;
 
 /**

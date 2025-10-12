@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  BarChart3,
-  Brain,
-  FileText,
-  Globe,
-  Home,
-  Search,
-  Upload,
-} from "lucide-react";
+import { BarChart3, Brain, FileText, Home, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -17,9 +9,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import {
   Tooltip,
@@ -31,53 +20,40 @@ import { useCurrentWorkspace } from "@/stores/workspace-store";
 /**
  * Workspace-specific navigation items
  */
-const getWorkspaceNavItems = (workspaceId: string) => [
+const getWorkspaceNavItems = (workspaceSlug: string) => [
   {
     title: "Overview",
-    url: `/workspaces/${workspaceId}`,
+    url: `/w/${workspaceSlug}/overview`,
     icon: Home,
     description: "Workspace dashboard and summary",
   },
   {
-    title: "Search",
-    url: `/workspaces/${workspaceId}?tab=search`,
-    icon: Search,
-    description: "Search across all knowledge in this workspace",
+    title: "Topics",
+    url: `/w/${workspaceSlug}/topics`,
+    icon: FileText,
+    description: "Manage topics for content generation",
+  },
+  {
+    title: "Content",
+    url: `/w/${workspaceSlug}/content`,
+    icon: FileText,
+    description: "View and manage generated content",
   },
   {
     title: "Knowledge",
-    url: `/workspaces/${workspaceId}?tab=knowledge`,
+    url: `/w/${workspaceSlug}/knowledge`,
     icon: Brain,
     description: "Manage workspace knowledge base",
-    items: [
-      {
-        title: "All Knowledge",
-        url: `/workspaces/${workspaceId}?tab=knowledge&view=all`,
-        description: "View all knowledge items",
-      },
-      {
-        title: "Web URLs",
-        url: `/workspaces/${workspaceId}?tab=knowledge&view=web`,
-        icon: Globe,
-        description: "Scraped web content",
-      },
-      {
-        title: "Files",
-        url: `/workspaces/${workspaceId}?tab=knowledge&view=files`,
-        icon: Upload,
-        description: "Uploaded documents and files",
-      },
-      {
-        title: "Text Notes",
-        url: `/workspaces/${workspaceId}?tab=knowledge&view=text`,
-        icon: FileText,
-        description: "Direct text content entries",
-      },
-    ],
+  },
+  {
+    title: "Users",
+    url: `/w/${workspaceSlug}/users`,
+    icon: Users,
+    description: "Manage workspace team members",
   },
   {
     title: "Analytics",
-    url: `/workspaces/${workspaceId}?tab=overview&section=analytics`,
+    url: `/w/${workspaceSlug}/analytics`,
     icon: BarChart3,
     description: "Content statistics and insights",
   },
@@ -139,11 +115,11 @@ export function WorkspaceSidebarNav() {
   const pathname = usePathname();
 
   // Only render if we have a current workspace and we're on a workspace-related page
-  if (!currentWorkspace || !pathname.startsWith("/workspaces/")) {
+  if (!currentWorkspace || !pathname.startsWith("/w/")) {
     return null;
   }
 
-  const workspaceId = currentWorkspace.id;
+  const workspaceSlug = currentWorkspace.slug;
 
   // Get search params for active state detection
   const searchParams =
@@ -151,97 +127,30 @@ export function WorkspaceSidebarNav() {
       ? new URLSearchParams(window.location.search)
       : undefined;
 
-  const navItems = getWorkspaceNavItems(workspaceId);
+  const navItems = getWorkspaceNavItems(workspaceSlug);
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{currentWorkspace.title}</SidebarGroupLabel>
       <SidebarMenu>
         {navItems.map((item) => {
-          const isParentActive = isNavItemActive(
-            item.url,
-            pathname,
-            searchParams,
+          const isActive = isNavItemActive(item.url, pathname, searchParams);
+
+          return (
+            <SidebarMenuItem key={item.title}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton asChild isActive={isActive}>
+                    <Link href={item.url} aria-label={item.description}>
+                      {item.icon && <item.icon className="h-4 w-4" />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent>{item.description}</TooltipContent>
+              </Tooltip>
+            </SidebarMenuItem>
           );
-          const isChildActive = item.items?.some((subItem) =>
-            isNavItemActive(subItem.url, pathname, searchParams),
-          );
-          const isActive = isParentActive || isChildActive;
-
-          if (item.items) {
-            // Render navigation item with sub-items
-            return (
-              <SidebarMenuItem key={item.title}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isParentActive}
-                      className="mb-1"
-                    >
-                      <Link href={item.url} aria-label={item.description}>
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  <TooltipContent>{item.description}</TooltipContent>
-                </Tooltip>
-
-                {/* Sub-items */}
-                <SidebarMenuSub>
-                  {item.items.map((subItem) => {
-                    const isSubItemActive = isNavItemActive(
-                      subItem.url,
-                      pathname,
-                      searchParams,
-                    );
-
-                    return (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isSubItemActive}
-                            >
-                              <Link
-                                href={subItem.url}
-                                aria-label={subItem.description}
-                              >
-                                {subItem.icon && (
-                                  <subItem.icon className="h-3 w-3" />
-                                )}
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </TooltipTrigger>
-                          <TooltipContent>{subItem.description}</TooltipContent>
-                        </Tooltip>
-                      </SidebarMenuSubItem>
-                    );
-                  })}
-                </SidebarMenuSub>
-              </SidebarMenuItem>
-            );
-          } else {
-            // Render simple navigation item
-            return (
-              <SidebarMenuItem key={item.title}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.url} aria-label={item.description}>
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  <TooltipContent>{item.description}</TooltipContent>
-                </Tooltip>
-              </SidebarMenuItem>
-            );
-          }
         })}
       </SidebarMenu>
     </SidebarGroup>
