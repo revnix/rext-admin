@@ -45,7 +45,6 @@ type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
 interface WorkspaceBrandVoiceFormProps {
   data: Partial<BrandVoice>;
   onSave: (data: BrandVoiceFormData) => Promise<void>;
-  onSkip: () => void;
   isLoading?: boolean;
 }
 
@@ -60,12 +59,10 @@ interface WorkspaceBrandVoiceFormProps {
  * - Tag-based input for arrays (target_audience, brand_voice, competitors, content_strategy)
  * - Form validation with Zod
  * - Loading states during save
- * - Skip option to proceed without editing
  */
 export function WorkspaceBrandVoiceForm({
   data,
   onSave,
-  onSkip,
   isLoading = false,
 }: WorkspaceBrandVoiceFormProps) {
   const form = useForm<BrandVoiceFormData>({
@@ -440,15 +437,11 @@ export function WorkspaceBrandVoiceForm({
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               <Button
-                type="button"
-                variant="outline"
-                onClick={onSkip}
+                type="submit"
                 disabled={isLoading}
-                className="flex-1"
+                className="w-full"
+                size="lg"
               >
-                Skip for Now
-              </Button>
-              <Button type="submit" disabled={isLoading} className="flex-1">
                 {isLoading ? "Saving..." : "Save & Continue"}
               </Button>
             </div>

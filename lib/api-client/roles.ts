@@ -9,7 +9,7 @@ import type { ApiClient } from "./core";
 export function createRolesNamespace(client: ApiClient) {
   return {
     /**
-     * List all roles
+     * List all roles (available roles for invitations)
      */
     list: async () => {
       return client.request<{
@@ -24,7 +24,7 @@ export function createRolesNamespace(client: ApiClient) {
           updated_at: string;
         }>;
         total_count: number;
-      }>("/api/v1/user/roles", {
+      }>("/api/v1/workspaces/available-roles", {
         method: "GET",
       });
     },
@@ -44,7 +44,7 @@ export function createRolesNamespace(client: ApiClient) {
           created_at: string;
           updated_at: string;
         };
-      }>(`/api/v1/user/roles/${roleId}`, {
+      }>(`/api/v1/roles/${roleId}`, {
         method: "GET",
       });
     },
@@ -63,8 +63,8 @@ export function createRolesNamespace(client: ApiClient) {
           action: string;
           created_at: string;
         }>;
-        total_count: number;
-      }>("/api/v1/user/permissions", {
+        count: number;
+      }>("/api/v1/permissions", {
         method: "GET",
       });
     },

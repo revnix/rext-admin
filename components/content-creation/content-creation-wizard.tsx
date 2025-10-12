@@ -334,7 +334,6 @@ export function ContentCreationWizard({
   initialTopicId,
   onSubmit,
   onCancel,
-  debug = false,
 }: ContentCreationWizardProps) {
   // Initialize wizard state
   const [state, dispatch] = useReducer(wizardStateReducer, {

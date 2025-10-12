@@ -84,6 +84,7 @@ export interface BrandVoice {
 export interface WebKnowledge {
   id: string;
   workspace_id: string;
+  knowledge_base_id: string; // FK to knowledge_base
   url: string;
   title?: string;
   status: WebKnowledgeStatus;
@@ -101,6 +102,7 @@ export interface WebKnowledge {
 export interface FileKnowledge {
   id: string;
   workspace_id: string;
+  knowledge_base_id: string; // FK to knowledge_base
   name: string;
   type: string; // MIME type
   size: number; // bytes
@@ -120,6 +122,7 @@ export interface FileKnowledge {
 export interface TextKnowledge {
   id: string;
   workspace_id: string;
+  knowledge_base_id: string; // FK to knowledge_base
   title: string;
   content: string;
   char_count?: number;

@@ -73,6 +73,13 @@ export function WorkspaceProgressTimeline({
   const getStepStatus = (stepId: string): StepStatus => {
     const stepEvents = events.filter((e) => e.step.startsWith(stepId));
 
+    // Special handling for finalization step based on overall progress
+    if (stepId === "pipeline") {
+      if (progress === 100) return "completed";
+      if (progress >= 90) return "in-progress";
+      return "pending";
+    }
+
     if (stepEvents.length === 0) return "pending";
 
     const latestEvent = stepEvents[stepEvents.length - 1];

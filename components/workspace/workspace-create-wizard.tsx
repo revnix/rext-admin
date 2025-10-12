@@ -23,6 +23,7 @@ import {
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
+import { WorkspaceCongratulations } from "@/components/workspace/workspace-congratulations";
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
@@ -52,7 +53,7 @@ import type { BrandVoice } from "@/types/workspace";
  * - Professional guided experience
  */
 
-type WizardStep = "details" | "progress" | "review";
+type WizardStep = "details" | "progress" | "review" | "congratulations";
 
 const STEPS: Array<{
   id: WizardStep;
@@ -64,18 +65,24 @@ const STEPS: Array<{
     id: "details",
     title: "Workspace Details",
     description: "Tell us about your workspace",
-    progress: 33,
+    progress: 25,
   },
   {
     id: "progress",
     title: "Analysis",
     description: "We're analyzing your website",
-    progress: 66,
+    progress: 50,
   },
   {
     id: "review",
     title: "Review & Save",
     description: "Review and edit brand information",
+    progress: 75,
+  },
+  {
+    id: "congratulations",
+    title: "Success",
+    description: "Your workspace is ready",
     progress: 100,
   },
 ];
@@ -122,9 +129,12 @@ export function WorkspaceCreateWizard() {
       setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
     }
 
-    // Move to review step
-    setCurrentStep("review");
-    toast.success("Workspace analysis complete!");
+    // Add delay before transitioning to review
+    // This gives time for finalization step to display (1-2 seconds)
+    setTimeout(() => {
+      setCurrentStep("review");
+      toast.success("Workspace analysis complete!");
+    }, 2000); // 2 second delay
   }, []);
 
   const handleSSEError = useCallback((error: string) => {
@@ -202,16 +212,14 @@ export function WorkspaceCreateWizard() {
       // Update brand voice via API
       await apiClient.workspaces.updateBrandVoice(workspaceId, editedData);
 
-      toast.success("Workspace setup complete!");
-
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId] });
 
-      // Navigate to workspace topics page
-      if (workspaceSlug) {
-        router.push(`/w/${workspaceSlug}/topics`);
-      }
+      // Move to congratulations step instead of navigating immediately
+      setCurrentStep("congratulations");
+
+      // Don't show toast here, congratulations screen is the feedback
     } catch (error) {
       log.error("[Wizard] Failed to save brand voice", error);
       toast.error("Failed to save changes. Please try again.");
@@ -223,15 +231,14 @@ export function WorkspaceCreateWizard() {
   // Step 3: Handle skip (navigate without saving edits)
   const handleSkipReview = () => {
     log.info("[Wizard] Skipping brand voice review");
-    toast.success("Workspace created!");
 
     // Invalidate workspace queries
     queryClient.invalidateQueries({ queryKey: ["workspaces"] });
 
-    // Navigate to workspace topics page
-    if (workspaceSlug) {
-      router.push(`/w/${workspaceSlug}/topics`);
-    }
+    // Move to congratulations step instead of navigating immediately
+    setCurrentStep("congratulations");
+
+    // Don't show toast here, congratulations screen is the feedback
   };
 
   // Disconnect SSE when moving to review step
@@ -457,7 +464,6 @@ export function WorkspaceCreateWizard() {
               <WorkspaceBrandVoiceForm
                 data={extractedBrandVoice}
                 onSave={handleReviewSave}
-                onSkip={handleSkipReview}
                 isLoading={isSaving}
               />
             ) : (
@@ -480,6 +486,18 @@ export function WorkspaceCreateWizard() {
               </div>
             )}
           </QuestionCard>
+        );
+
+      case "congratulations":
+        return (
+          <WorkspaceCongratulations
+            workspaceName={form.getValues("title")}
+            onContinue={() => {
+              if (workspaceSlug) {
+                router.push(`/w/${workspaceSlug}/topics`);
+              }
+            }}
+          />
         );
 
       default:
