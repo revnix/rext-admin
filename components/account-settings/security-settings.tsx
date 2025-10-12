@@ -68,7 +68,9 @@ export function SecuritySettings() {
     {
       icon: Shield,
       label: "Account Status",
-      value: profile.status.charAt(0).toUpperCase() + profile.status.slice(1),
+      value: profile.status
+        ? profile.status.charAt(0).toUpperCase() + profile.status.slice(1)
+        : "Unknown",
       description: "Current status of your account",
       status: profile.status === "active" ? "success" : "warning",
     },

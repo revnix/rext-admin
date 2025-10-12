@@ -115,7 +115,8 @@ export function ProfileForm() {
   }
 
   const userInitials =
-    `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
+    `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""}`.toUpperCase() ||
+    "U";
 
   return (
     <div className="space-y-6">
