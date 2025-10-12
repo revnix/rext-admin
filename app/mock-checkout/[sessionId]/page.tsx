@@ -72,8 +72,10 @@ export default function MockCheckoutPage() {
           throw new Error(errorMessage);
         }
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to complete checkout");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to complete checkout",
+      );
       setProcessing(false);
     }
   };

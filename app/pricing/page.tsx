@@ -115,7 +115,11 @@ export default function PricingPage() {
         );
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to start checkout process");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to start checkout process",
+      );
     } finally {
       setCheckoutLoading(null);
     }

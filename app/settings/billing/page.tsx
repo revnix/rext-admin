@@ -45,8 +45,23 @@ interface UsageData {
 }
 
 interface SubscriptionData {
-  subscription: any;
-  plan: any;
+  subscription: {
+    id: string;
+    status: string;
+    current_period_end: string;
+    cancel_at_period_end: boolean;
+    billing_period: string;
+    start_date: string;
+    end_date: string | null;
+    cancelled_at: string | null;
+  };
+  plan: {
+    id: string;
+    name: string;
+    display_name: string;
+    price_monthly: number;
+    price_yearly: number;
+  };
   usage: UsageData;
 }
 
@@ -148,8 +163,10 @@ function BillingDashboardContent() {
           result.error?.message || "Failed to cancel subscription",
         );
       }
-    } catch (error: any) {
-      toast.error(error.message || "Cancellation Failed");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Cancellation Failed",
+      );
     } finally {
       setCancelLoading(false);
     }
@@ -180,8 +197,12 @@ function BillingDashboardContent() {
           result.error?.message || "Failed to open billing portal",
         );
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to open billing portal");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to open billing portal",
+      );
     } finally {
       setPortalLoading(false);
     }
@@ -193,7 +214,13 @@ function BillingDashboardContent() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: any; label: string }> = {
+    const statusMap: Record<
+      string,
+      {
+        variant: "default" | "secondary" | "destructive" | "outline";
+        label: string;
+      }
+    > = {
       active: { variant: "default", label: "Active" },
       trial: { variant: "secondary", label: "Trial" },
       cancelled: { variant: "destructive", label: "Cancelled" },
@@ -201,8 +228,11 @@ function BillingDashboardContent() {
       suspended: { variant: "destructive", label: "Suspended" },
     };
 
-    const config = statusMap[status] || { variant: "outline", label: status };
-    return <Badge variant={config.variant as any}>{config.label}</Badge>;
+    const config = statusMap[status] || {
+      variant: "outline" as const,
+      label: status,
+    };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   if (loading) {
@@ -308,8 +338,10 @@ function BillingDashboardContent() {
                   <AlertTitle>Subscription Cancelled</AlertTitle>
                   <AlertDescription>
                     Your subscription will end on{" "}
-                    {new Date(subscription.end_date).toLocaleDateString()}. You
-                    can reactivate it anytime before this date.
+                    {subscription.end_date
+                      ? new Date(subscription.end_date).toLocaleDateString()
+                      : "N/A"}
+                    . You can reactivate it anytime before this date.
                   </AlertDescription>
                 </Alert>
               )}
