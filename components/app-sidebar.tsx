@@ -4,10 +4,13 @@ import {
   Bell,
   Brain,
   ChartBar as ChartBarIcon,
+  CreditCard,
   Database,
   FileText,
   LayoutDashboard,
   Library,
+  Mail,
+  Monitor,
   Puzzle,
   Settings2,
   Share2,
@@ -152,10 +155,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
       items: [
         {
+          title: "Dashboard",
+          url: "/admin",
+          icon: LayoutDashboard,
+        },
+        {
           title: "User Management",
           url: "/admin/users",
           icon: UserCog,
           permission: PERMISSIONS.USER_READ,
+        },
+        {
+          title: "Subscriptions",
+          url: "/admin/subscriptions",
+          icon: CreditCard,
+          anyPermission: ["subscription:analytics", "subscription:read"],
+        },
+        {
+          title: "System Monitoring",
+          url: "/admin/monitoring",
+          icon: Monitor,
+          permission: "system:manage",
+        },
+        {
+          title: "Email Analytics",
+          url: "/admin/email-analytics",
+          icon: Mail,
+          anyPermission: ["system:manage", "audit:read"],
         },
         {
           title: "Roles & Permissions",

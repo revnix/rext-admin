@@ -1,4 +1,5 @@
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
+import { PreferencesTab } from "@/components/profile/preferences-tab";
 import { ProfileForm } from "@/components/profile/profile-form";
 import {
   Card,
@@ -55,17 +56,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Customize your experience</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Preferences coming soon...
-              </p>
-            </CardContent>
-          </Card>
+          <PreferencesTab />
         </TabsContent>
       </Tabs>
     </div>

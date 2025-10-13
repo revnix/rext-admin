@@ -160,3 +160,131 @@ export function usePermissionUser(): UserWithPermissions | null {
   const { data: session } = useSession();
   return sessionUserToPermissionUser(session?.user);
 }
+
+/**
+ * Hook to check workspace-scoped permission
+ *
+ * Checks permission from workspace permission store, which is loaded
+ * via useWorkspacePermissions hook.
+ *
+ * @param permission - Permission string to check
+ * @param workspaceId - Workspace ID for scoped permission check
+ * @returns boolean indicating if user has permission in workspace
+ *
+ * @example
+ * const canManageWorkspace = useWorkspacePermission("workspace:manage_settings", workspaceId);
+ */
+export function useWorkspacePermission(
+  permission: string,
+  workspaceId?: string,
+): boolean {
+  const { data: session } = useSession();
+  const user = sessionUserToPermissionUser(session?.user);
+
+  // If no workspace ID, fall back to global permission check
+  if (!workspaceId) {
+    return checkPermission(user, permission);
+  }
+
+  // Super admin has all permissions
+  if (isSuperAdmin(user)) return true;
+
+  // Import permission store dynamically to avoid circular deps
+  // Use workspace permissions from store if available
+  if (typeof window !== "undefined") {
+    // Access store on client side only
+    const { usePermissionStore } = require("@/stores/permission-store");
+    const store = usePermissionStore.getState();
+
+    // Check workspace-specific permissions from store
+    const wsPerms = store.workspacePermissions.get(workspaceId);
+    if (wsPerms?.permissions.includes(permission)) {
+      return true;
+    }
+  }
+
+  // Fallback to global permissions
+  return checkPermission(user, permission);
+}
+
+/**
+ * Hook to check if user has any workspace-scoped permissions
+ *
+ * Checks permissions from workspace permission store.
+ *
+ * @param permissions - Array of permission strings
+ * @param workspaceId - Workspace ID for scoped permission check
+ * @returns boolean indicating if user has at least one permission in workspace
+ */
+export function useAnyWorkspacePermission(
+  permissions: string[],
+  workspaceId?: string,
+): boolean {
+  const { data: session } = useSession();
+  const user = sessionUserToPermissionUser(session?.user);
+
+  if (!workspaceId) {
+    return checkAnyPermission(user, permissions);
+  }
+
+  if (isSuperAdmin(user)) return true;
+
+  // Check workspace permissions from store
+  if (typeof window !== "undefined") {
+    const { usePermissionStore } = require("@/stores/permission-store");
+    const store = usePermissionStore.getState();
+
+    const wsPerms = store.workspacePermissions.get(workspaceId);
+    if (wsPerms) {
+      // Check if user has ANY of the permissions
+      const hasAny = permissions.some((perm) =>
+        wsPerms.permissions.includes(perm),
+      );
+      if (hasAny) return true;
+    }
+  }
+
+  // Fallback to global permissions
+  return checkAnyPermission(user, permissions);
+}
+
+/**
+ * Hook to check if user has all workspace-scoped permissions
+ *
+ * Checks permissions from workspace permission store.
+ *
+ * @param permissions - Array of permission strings
+ * @param workspaceId - Workspace ID for scoped permission check
+ * @returns boolean indicating if user has all permissions in workspace
+ */
+export function useAllWorkspacePermissions(
+  permissions: string[],
+  workspaceId?: string,
+): boolean {
+  const { data: session } = useSession();
+  const user = sessionUserToPermissionUser(session?.user);
+
+  if (!workspaceId) {
+    return checkAllPermissions(user, permissions);
+  }
+
+  if (isSuperAdmin(user)) return true;
+
+  // Check workspace permissions from store
+  if (typeof window !== "undefined") {
+    const { usePermissionStore } = require("@/stores/permission-store");
+    const store = usePermissionStore.getState();
+
+    const wsPerms = store.workspacePermissions.get(workspaceId);
+    if (wsPerms) {
+      // Check if user has ALL of the permissions
+      const hasAll = permissions.every((perm) =>
+        wsPerms.permissions.includes(perm),
+      );
+      if (hasAll) return true;
+    }
+  }
+
+  // Fallback to global permissions
+  return checkAllPermissions(user, permissions);
+}

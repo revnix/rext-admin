@@ -159,5 +159,76 @@ export function createWorkspacesNamespace(client: ApiClient) {
         body: JSON.stringify(payload),
       });
     },
+
+    /**
+     * Get current user's permissions in a specific workspace
+     */
+    getPermissions: async (workspaceId: string) => {
+      return client.request<{
+        workspace_id: string;
+        roles: Array<{
+          name: string;
+          display_name: string;
+          workspace_scoped: boolean;
+          workspace_id: string | null;
+        }>;
+        permissions: string[];
+      }>(`/api/v1/workspaces/${workspaceId}/permissions/me`, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Check if current user has a specific permission in a workspace
+     */
+    checkPermission: async (workspaceId: string, permission: string) => {
+      return client.request<{
+        has_permission: boolean;
+        permission: string;
+        workspace_id: string;
+      }>(
+        `/api/v1/workspaces/${workspaceId}/permissions/check?permission=${permission}`,
+        {
+          method: "GET",
+        },
+      );
+    },
+
+    /**
+     * Refresh current user's permissions in a workspace
+     */
+    refreshPermissions: async (workspaceId: string) => {
+      return client.request<{
+        workspace_id: string;
+        roles: Array<{
+          name: string;
+          display_name: string;
+          workspace_scoped: boolean;
+          workspace_id: string | null;
+        }>;
+        permissions: string[];
+      }>(`/api/v1/workspaces/${workspaceId}/permissions/refresh`, {
+        method: "POST",
+      });
+    },
+
+    /**
+     * Get a workspace member's permissions (admin only)
+     */
+    getMemberPermissions: async (workspaceId: string, userId: string) => {
+      return client.request<{
+        user_id: string;
+        workspace_id: string;
+        roles: Array<{
+          name: string;
+          display_name: string;
+          workspace_scoped: boolean;
+          workspace_id: string | null;
+        }>;
+        permissions: string[];
+      }>(`/api/v1/workspaces/${workspaceId}/members/${userId}/permissions`, {
+        method: "GET",
+      });
+    },
   };
 }

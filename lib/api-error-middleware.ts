@@ -30,6 +30,10 @@ const ERROR_SEVERITY_MAP: Record<WorkspaceErrorCode, ErrorSeverity> = {
   NETWORK_ERROR: "high",
 };
 
+// HTTP Status Code for Permission Denied
+export const HTTP_FORBIDDEN = 403;
+export const HTTP_UNAUTHORIZED = 401;
+
 // ============================================================================
 // USER-FRIENDLY ERROR MESSAGES
 // ============================================================================
@@ -102,6 +106,23 @@ const RECOVERY_ACTIONS: Partial<
         window.location.href = "/workspaces";
       },
       type: "primary",
+    },
+  ],
+
+  PERMISSION_DENIED: () => [
+    {
+      label: "Go to Dashboard",
+      action: () => {
+        window.location.href = "/dashboard";
+      },
+      type: "primary",
+    },
+    {
+      label: "Contact Admin",
+      action: () => {
+        window.location.href = "/settings/account";
+      },
+      type: "secondary",
     },
   ],
 };
@@ -228,6 +249,24 @@ export class ApiErrorHandler {
     // Try to extract error code from error message or properties
     if ("code" in error && typeof error.code === "string") {
       return error.code as WorkspaceErrorCode;
+    }
+
+    // Check for HTTP status codes
+    if ("status" in error) {
+      const status = Number(error.status);
+      if (status === HTTP_FORBIDDEN || status === HTTP_UNAUTHORIZED) {
+        return "PERMISSION_DENIED";
+      }
+    }
+
+    // Check for permission errors in message
+    if (
+      error.message.toLowerCase().includes("permission") ||
+      error.message.includes("403") ||
+      error.message.toLowerCase().includes("forbidden") ||
+      error.message.toLowerCase().includes("unauthorized")
+    ) {
+      return "PERMISSION_DENIED";
     }
 
     // Check for network errors
