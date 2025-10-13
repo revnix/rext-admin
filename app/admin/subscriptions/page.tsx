@@ -27,10 +27,11 @@ export default function SubscriptionAnalyticsPage() {
   const { data: overview, isLoading: overviewLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
     queryFn: async () => {
-      const response = await apiClient.get(
-        "/api/v1/subscriptions/admin/analytics/overview",
-      );
-      return response.data;
+      return apiClient
+        .request<{ data: any }>(
+          "/api/v1/subscriptions/admin/analytics/overview",
+        )
+        .then((res) => res.data);
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -45,10 +46,11 @@ export default function SubscriptionAnalyticsPage() {
       revenuePeriod,
     ],
     queryFn: async () => {
-      const response = await apiClient.get(
-        `/api/v1/subscriptions/admin/analytics/revenue-history?period=${revenuePeriod}`,
-      );
-      return response.data;
+      return apiClient
+        .request<{ data: any }>(
+          `/api/v1/subscriptions/admin/analytics/revenue-history?period=${revenuePeriod}`,
+        )
+        .then((res) => res.data);
     },
   });
 
@@ -56,10 +58,11 @@ export default function SubscriptionAnalyticsPage() {
   const { data: planDistribution, isLoading: distributionLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "plan-distribution"],
     queryFn: async () => {
-      const response = await apiClient.get(
-        "/api/v1/subscriptions/admin/analytics/plan-distribution",
-      );
-      return response.data;
+      return apiClient
+        .request<{ data: any }>(
+          "/api/v1/subscriptions/admin/analytics/plan-distribution",
+        )
+        .then((res) => res.data);
     },
   });
 
@@ -67,10 +70,11 @@ export default function SubscriptionAnalyticsPage() {
   const { data: cohortRetention, isLoading: cohortLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "cohort-retention"],
     queryFn: async () => {
-      const response = await apiClient.get(
-        "/api/v1/subscriptions/admin/analytics/cohort-retention",
-      );
-      return response.data;
+      return apiClient
+        .request<{ data: any }>(
+          "/api/v1/subscriptions/admin/analytics/cohort-retention",
+        )
+        .then((res) => res.data);
     },
   });
 

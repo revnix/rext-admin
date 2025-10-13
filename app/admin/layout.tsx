@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
+import { ImpersonationBanner } from "@/components/admin/impersonation/impersonation-banner";
 import { useIsAdmin } from "@/hooks/use-permission";
 
 /**
@@ -54,6 +55,7 @@ export default function AdminLayout({
   // Render admin content
   return (
     <div className="container mx-auto py-8 max-w-7xl">
+      <ImpersonationBanner />
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Administration</h1>
         <p className="text-muted-foreground mt-2">

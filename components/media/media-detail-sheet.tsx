@@ -54,7 +54,10 @@ export function MediaDetailSheet({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { mutate: deleteMedia, isPending: isDeleting } = useMutation({
-    mutationFn: () => apiClient.media.delete(workspaceId, media?.id),
+    mutationFn: () => {
+      if (!media?.id) throw new Error("Media ID is required");
+      return apiClient.media.delete(workspaceId, media.id);
+    },
     onSuccess: () => {
       toast.success("Media deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["media", workspaceId] });

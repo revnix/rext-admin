@@ -1,6 +1,8 @@
 import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import type * as React from "react";
+import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -96,6 +98,57 @@ function BreadcrumbEllipsis({
       <MoreHorizontal className="size-4" />
       <span className="sr-only">More</span>
     </span>
+  );
+}
+
+/**
+ * High-level breadcrumb component for consistent navigation
+ *
+ * @example
+ * ```tsx
+ * <Breadcrumbs
+ *   items={[
+ *     { label: 'Workspaces', href: '/workspaces' },
+ *     { label: workspace.name, href: `/workspaces/${workspace.id}` },
+ *     { label: 'Settings' }
+ *   ]}
+ * />
+ * ```
+ */
+export function Breadcrumbs({
+  items,
+}: {
+  items: Array<{
+    label: string;
+    href?: string;
+    icon?: ReactNode;
+  }>;
+}) {
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {items.map((item, index) => (
+          <span key={index} className="contents">
+            <BreadcrumbItem>
+              {item.href ? (
+                <BreadcrumbLink asChild>
+                  <Link href={item.href} className="flex items-center gap-1.5">
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage className="flex items-center gap-1.5">
+                  {item.icon}
+                  {item.label}
+                </BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+            {index < items.length - 1 && <BreadcrumbSeparator />}
+          </span>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }
 

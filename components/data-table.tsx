@@ -10,7 +10,6 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -20,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { EmptyState, SearchEmptyState } from "@/components/ui/empty-state";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Input } from "@/components/ui/input";
 import {
@@ -632,62 +632,36 @@ export function DataTable<
             </>
           ) : (
             // No search results
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <Search className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">No results found</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Try adjusting your search terms or clear the search to see all
-                items.
-              </p>
-              <Button variant="outline" onClick={() => handleSearchChange("")}>
-                Clear search
-              </Button>
-            </div>
+            <SearchEmptyState onClear={() => handleSearchChange("")} />
           )
+        ) : displayEmptyActions.length > 0 ? (
+          // Empty State with actions
+          <EmptyState
+            icon={emptyIcon}
+            title={emptyTitle || "No data available"}
+            description={
+              emptyDescription || "Get started by adding your first item."
+            }
+            action={
+              displayEmptyActions[0]
+                ? {
+                    label: displayEmptyActions[0].label,
+                    href: displayEmptyActions[0].href,
+                    onClick: displayEmptyActions[0].onClick,
+                    variant: displayEmptyActions[0].variant,
+                  }
+                : undefined
+            }
+          />
         ) : (
-          // Empty State
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              {emptyIcon || (
-                <div className="h-8 w-8 rounded bg-muted-foreground/20" />
-              )}
-            </div>
-            <h3 className="text-lg font-semibold">
-              {emptyTitle || "No data available"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-              {emptyDescription || "Get started by adding your first item."}
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {displayEmptyActions.map((action) =>
-                action.href ? (
-                  <Button
-                    key={action.label}
-                    variant={action.variant || "default"}
-                    asChild
-                    className="flex items-center gap-2"
-                  >
-                    <Link href={action.href}>
-                      {action.icon}
-                      {action.label}
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    key={action.label}
-                    variant={action.variant || "default"}
-                    onClick={action.onClick}
-                    className="flex items-center gap-2"
-                  >
-                    {action.icon}
-                    {action.label}
-                  </Button>
-                ),
-              )}
-            </div>
-          </div>
+          // Empty State without actions
+          <EmptyState
+            icon={emptyIcon}
+            title={emptyTitle || "No data available"}
+            description={
+              emptyDescription || "Get started by adding your first item."
+            }
+          />
         )}
       </CardContent>
     </Card>
