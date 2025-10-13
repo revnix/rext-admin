@@ -31,9 +31,9 @@ export default function MonitoringPage() {
   const { data: healthData, isLoading: healthLoading } = useQuery({
     queryKey: ["admin", "monitoring", "system-health"],
     queryFn: async () => {
-      return apiClient.request<{ data: any }>(
-        "/api/v1/admin/monitoring/system-health",
-      ).then((res) => res.data);
+      return apiClient
+        .request<{ data: any }>("/api/v1/admin/monitoring/system-health")
+        .then((res) => res.data);
     },
     refetchInterval: 60000, // Refresh every 60 seconds
   });

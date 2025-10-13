@@ -194,11 +194,5 @@ export function ErrorDisplay({
 }) {
   const message = typeof error === "string" ? error : error.message;
 
-  return (
-    <ErrorAlert
-      title="Error"
-      message={message}
-      retry={onRetry}
-    />
-  );
+  return <ErrorAlert title="Error" message={message} retry={onRetry} />;
 }

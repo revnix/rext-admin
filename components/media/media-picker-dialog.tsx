@@ -166,9 +166,9 @@ export function MediaPickerDialog({
 
                 <Select
                   value={fileType}
-                  onValueChange={(value: "all" | "image" | "document" | "video") =>
-                    setFileType(value)
-                  }
+                  onValueChange={(
+                    value: "all" | "image" | "document" | "video",
+                  ) => setFileType(value)}
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="File type" />

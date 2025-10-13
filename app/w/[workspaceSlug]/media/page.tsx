@@ -329,9 +329,9 @@ export default function WorkspaceMediaPage() {
               {/* File Type Filter */}
               <Select
                 value={fileType}
-                onValueChange={(value: "all" | "image" | "document" | "video") =>
-                  setFileType(value)
-                }
+                onValueChange={(
+                  value: "all" | "image" | "document" | "video",
+                ) => setFileType(value)}
               >
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <Filter className="h-4 w-4 mr-2" />
