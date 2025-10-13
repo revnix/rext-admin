@@ -53,17 +53,17 @@ export default function WorkspaceContentPage() {
     (item) => ({
       id: item.id,
       title: item.title,
-      type: item.metadata?.content_type || "Article",
+      type: item.content_metadata?.content_type || "Article",
       contentType: item.content_format || "Markdown",
       status: (item.status as ContentStatus) || "draft",
-      publishedTo: item.metadata?.target_platform || "-",
+      publishedTo: item.content_metadata?.target_platform || "-",
       publishDate: item.updated_at || null,
       scheduledDate: null,
       flowName: "-",
       flowId: "-",
-      wordCount: item.metadata?.content_word_count || 0,
-      readTime: item.metadata?.reading_time_minutes
-        ? `${item.metadata.reading_time_minutes} min`
+      wordCount: item.content_metadata?.content_word_count || 0,
+      readTime: item.content_metadata?.reading_time_minutes
+        ? `${item.content_metadata.reading_time_minutes} min`
         : "-",
       engagement: {
         views: 0,
@@ -74,8 +74,8 @@ export default function WorkspaceContentPage() {
       author: "-",
       humanReviewer: "-",
       keywords: item.seo_data?.content_primary_keywords || [],
-      platforms: item.metadata?.target_platform
-        ? [item.metadata.target_platform]
+      platforms: item.content_metadata?.target_platform
+        ? [item.content_metadata.target_platform]
         : [],
       lastModified: item.updated_at || item.created_at,
       created: item.created_at,

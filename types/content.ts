@@ -183,9 +183,9 @@ export interface UpdateContentRequest {
 }
 
 /**
- * Response schema for single content item
+ * Content item schema
  */
-export interface ContentResponse {
+export interface ContentItem {
   id: string;
   workspace_id: string;
   topic_id?: string;
@@ -203,15 +203,24 @@ export interface ContentResponse {
   created_at: string;
   updated_at?: string;
   deleted_at?: string;
-  metadata?: ContentMetadataSchema;
+  content_metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
+}
+
+/**
+ * Response schema for single content item
+ */
+export interface ContentResponse {
+  content: ContentItem;
+  operation_id?: string; // For SSE subscription during generation
+  message?: string;
 }
 
 /**
  * Response schema for content list
  */
 export interface ContentListResponse {
-  content: ContentResponse[];
+  content: ContentItem[];
   total_count: number;
   workspace_id: string;
   limit: number;

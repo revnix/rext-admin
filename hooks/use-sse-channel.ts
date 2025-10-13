@@ -47,6 +47,17 @@ export function useSSEChannel(
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const operationIdRef = useRef<string | null>(operationId);
 
+  // Use refs for callbacks to avoid recreating them on every render
+  const onEventRef = useRef(onEvent);
+  const onCompleteRef = useRef(onComplete);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onEventRef.current = onEvent;
+    onCompleteRef.current = onComplete;
+    onErrorRef.current = onError;
+  }, [onEvent, onComplete, onError]);
+
   const clearSubscription = useCallback(() => {
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
@@ -70,9 +81,9 @@ export function useSSEChannel(
         errorMessage,
         operationId: operationIdRef.current,
       });
-      onError?.(errorMessage);
+      onErrorRef.current?.(errorMessage);
     },
-    [onError],
+    [], // No dependencies - uses ref
   );
 
   const handleEvent = useCallback(
@@ -92,10 +103,10 @@ export function useSSEChannel(
         return updated;
       });
       setLatestEvent(event);
-      onEvent?.(event);
+      onEventRef.current?.(event);
 
       if (COMPLETION_STEPS.has(event.step)) {
-        onComplete?.(event.payload);
+        onCompleteRef.current?.(event.payload);
       }
 
       if (
@@ -110,7 +121,7 @@ export function useSSEChannel(
         handleError(message);
       }
     },
-    [handleError, onComplete, onEvent],
+    [handleError], // Only depends on handleError which is stable
   );
 
   const handleStatus = useCallback(
@@ -125,7 +136,7 @@ export function useSSEChannel(
         handleError(newStatus.error);
       }
     },
-    [handleError],
+    [handleError], // Only depends on handleError which is stable
   );
 
   const connect = useCallback(() => {
@@ -232,14 +243,6 @@ export function useSSEChannel(
       }));
     };
   }, [autoConnect, handleEvent, handleStatus, operationId, subscribe]);
-
-  // Cleanup on unmount
-  useEffect(
-    () => () => {
-      disconnect();
-    },
-    [disconnect],
-  );
 
   const result = useMemo<UseSSEChannelReturn>(
     () => ({

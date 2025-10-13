@@ -93,5 +93,17 @@ export function createContentNamespace(client: ApiClient) {
         },
       );
     },
+
+    /**
+     * Retry content generation
+     */
+    retry: async (workspaceId: string, contentId: string) => {
+      return client.request<{ content_id: string; status: string }>(
+        `/api/v1/content/${contentId}/retry?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "POST",
+        },
+      );
+    },
   };
 }

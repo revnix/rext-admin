@@ -113,12 +113,23 @@ export default function WorkspaceContentCreatePage({
       );
 
       log.info("Content creation started successfully", response);
+
+      // Validate response has required ID field
+      // Response structure: { content: {...}, operation_id: "...", message: "..." }
+      if (!response?.content?.id) {
+        log.error("Response missing content ID", { response });
+        toast.error("Failed to get content ID from server response");
+        return;
+      }
+
+      const contentId = response.content.id;
+
       toast.success(
-        "Content generation started! You'll be notified when it's ready.",
+        "Content generation started! Redirecting to progress page...",
       );
 
-      // Navigate to content list or progress page
-      router.push(workspaceRoutes.content(workspaceSlug));
+      // Navigate to content detail page to watch progress
+      router.push(workspaceRoutes.contentDetail(workspaceSlug, contentId));
     } catch (error) {
       log.error("Failed to submit content creation", error);
       toast.error("Failed to start content generation. Please try again.");
