@@ -35,6 +35,12 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
     ),
   );
 
+  // Create stable month identifiers
+  const monthColumns = Array.from({ length: maxMonths }, (_, i) => ({
+    id: `month-${i}`,
+    index: i,
+  }));
+
   const getRetentionColor = (retention: number) => {
     if (retention >= 90) return "bg-green-100 text-green-900";
     if (retention >= 80) return "bg-green-50 text-green-800";
@@ -52,8 +58,8 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
               Cohort
             </TableHead>
             <TableHead>Size</TableHead>
-            {Array.from({ length: maxMonths }).map((_, i) => (
-              <TableHead key={i}>Month {i}</TableHead>
+            {monthColumns.map((month) => (
+              <TableHead key={month.id}>Month {month.index}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -64,16 +70,17 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
                 {cohort.cohort}
               </TableCell>
               <TableCell>{cohort.size}</TableCell>
-              {Array.from({ length: maxMonths }).map((_, i) => {
-                const monthKey = `month_${i}`;
+              {monthColumns.map((month) => {
+                const monthKey = `month_${month.index}`;
                 const value = cohort[monthKey];
+                const cellKey = `${cohort.cohort}-${month.id}`;
 
                 if (typeof value !== "number") {
-                  return <TableCell key={i}>-</TableCell>;
+                  return <TableCell key={cellKey}>-</TableCell>;
                 }
 
                 return (
-                  <TableCell key={i} className={getRetentionColor(value)}>
+                  <TableCell key={cellKey} className={getRetentionColor(value)}>
                     {value.toFixed(1)}%
                   </TableCell>
                 );

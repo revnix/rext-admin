@@ -45,23 +45,27 @@ export function TableSkeleton({
   columns?: number;
 }) {
   return (
-    <div className="space-y-3" role="status" aria-label="Loading table data">
+    <output className="space-y-3" aria-label="Loading table data">
       {/* Header row */}
       <div className="flex gap-4">
-        {Array.from({ length: columns }).map((_, j) => (
-          <Skeleton key={`header-${j}`} className="h-10 flex-1" />
-        ))}
+        {Array.from({ length: columns }, (_, j) => `header-col-${j}`).map(
+          (key) => (
+            <Skeleton key={key} className="h-10 flex-1" />
+          ),
+        )}
       </div>
 
       {/* Data rows */}
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={`row-${i}`} className="flex gap-4">
-          {Array.from({ length: columns }).map((_, j) => (
-            <Skeleton key={`cell-${i}-${j}`} className="h-12 flex-1" />
-          ))}
+      {Array.from({ length: rows }, (_, i) => `row-${i}`).map((rowKey) => (
+        <div key={rowKey} className="flex gap-4">
+          {Array.from({ length: columns }, (_, j) => `${rowKey}-col-${j}`).map(
+            (cellKey) => (
+              <Skeleton key={cellKey} className="h-12 flex-1" />
+            ),
+          )}
         </div>
       ))}
-    </div>
+    </output>
   );
 }
 
@@ -79,15 +83,17 @@ export function TableSkeleton({
  */
 export function CardSkeleton() {
   return (
-    <Card role="status" aria-label="Loading card content">
-      <CardHeader>
-        <Skeleton className="h-6 w-1/3" />
-        <Skeleton className="h-4 w-2/3 mt-2" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-32 w-full" />
-      </CardContent>
-    </Card>
+    <output aria-label="Loading card content" className="block">
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-1/3" />
+          <Skeleton className="h-4 w-2/3 mt-2" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
+    </output>
   );
 }
 
@@ -105,18 +111,20 @@ export function CardSkeleton() {
  */
 export function FormSkeleton({ fields = 3 }: { fields?: number }) {
   return (
-    <div className="space-y-6" role="status" aria-label="Loading form">
-      {Array.from({ length: fields }).map((_, i) => (
-        <div key={`field-${i}`} className="space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      ))}
+    <output className="space-y-6" aria-label="Loading form">
+      {Array.from({ length: fields }, (_, i) => `form-field-${i}`).map(
+        (key) => (
+          <div key={key} className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ),
+      )}
       <div className="flex gap-3 mt-8">
         <Skeleton className="h-10 w-24" />
         <Skeleton className="h-10 w-24" />
       </div>
-    </div>
+    </output>
   );
 }
 
@@ -143,10 +151,8 @@ export function LoadingSpinner({
   };
 
   return (
-    <Loader2
-      className={`${sizeClasses[size]} animate-spin`}
-      role="status"
-      aria-label="Loading"
-    />
+    <output aria-label="Loading" className="inline-block">
+      <Loader2 className={`${sizeClasses[size]} animate-spin`} />
+    </output>
   );
 }

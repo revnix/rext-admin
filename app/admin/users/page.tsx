@@ -9,11 +9,11 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { DataTable } from "@/components/data-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
 import { CanAccess } from "@/components/permissions/can-access";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -21,45 +21,41 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
 import { PERMISSIONS } from "@/lib/permissions";
+import type { Column, RowAction } from "@/types/data-table";
+
+interface UserData extends Record<string, unknown> {
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+  status: string;
+  email_verified: boolean;
+  display_name: string | null | undefined;
+  first_name: string | null | undefined;
+  last_name: string | null | undefined;
+  initials: string;
+}
 
 export default function AdminUsersPage() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
 
   // Fetch all users
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => apiClient.users.list(),
   });
 
-  // Filter users based on search query
-  const filteredUsers = data?.users.filter((user) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      user.email.toLowerCase().includes(query) ||
-      user.username.toLowerCase().includes(query) ||
-      user.display_name?.toLowerCase().includes(query) ||
-      user.first_name?.toLowerCase().includes(query) ||
-      user.last_name?.toLowerCase().includes(query)
-    );
-  });
-
-  const handleImpersonate = (user: User) => {
-    setSelectedUser(user);
-    setShowImpersonateDialog(true);
+  const handleImpersonate = (userId: string) => {
+    const user = data?.users.find((u) => u.id === userId);
+    if (user) {
+      setSelectedUser(user);
+      setShowImpersonateDialog(true);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -93,6 +89,120 @@ export default function AdminUsersPage() {
     }
     return user.username.slice(0, 2).toUpperCase();
   };
+
+  // Transform users data for DataTable
+  const tableData: UserData[] = (data?.users || []).map((user) => ({
+    id: user.id,
+    name: user.display_name || user.first_name || user.username,
+    email: user.email,
+    username: user.username,
+    status: user.status,
+    email_verified: user.email_verified,
+    display_name: user.display_name,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    initials: getUserInitials(user),
+  }));
+
+  // Define columns
+  const columns: Column<UserData>[] = [
+    {
+      key: "name",
+      header: "User",
+      width: "250px",
+      cell: (value, row) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+              {row.initials}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium">{value as string}</p>
+            {row.first_name && row.last_name && (
+              <p className="text-sm text-muted-foreground">
+                {row.first_name} {row.last_name}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+      searchable: true,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "email",
+      header: "Email",
+      width: "250px",
+      searchable: true,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "username",
+      header: "Username",
+      width: "150px",
+      cell: (value) => (
+        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+          {value as string}
+        </code>
+      ),
+      searchable: true,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "120px",
+      cell: (value) => getStatusBadge(value as string),
+      filterable: true,
+      filterType: "select",
+      filterOptions: ["active", "inactive", "suspended", "pending"],
+    },
+    {
+      key: "email_verified",
+      header: "Verified",
+      width: "120px",
+      cell: (value) => {
+        const verified = value as boolean;
+        return verified ? (
+          <Badge variant="outline" className="text-green-600 border-green-600">
+            <ShieldCheck className="h-3 w-3 mr-1" />
+            Yes
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-amber-600 border-amber-600">
+            No
+          </Badge>
+        );
+      },
+      filterable: true,
+      filterType: "select",
+      filterOptions: ["true", "false"],
+    },
+  ];
+
+  // Define row actions
+  const rowActions: RowAction<UserData>[] = [
+    {
+      label: "Impersonate",
+      icon: <UserIcon className="h-4 w-4" />,
+      onClick: (row) => handleImpersonate(row.id),
+      primary: true,
+    },
+  ];
+
+  if (error) {
+    return (
+      <ErrorPage
+        title="Failed to load users"
+        message="There was an error loading the user list. Please try again."
+        retry={() => refetch()}
+      />
+    );
+  }
 
   return (
     <CanAccess
@@ -190,118 +300,26 @@ export default function AdminUsersPage() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>All Users</CardTitle>
-                <CardDescription>
-                  View and manage user accounts. Click "Impersonate" to view the
-                  system as that user.
-                </CardDescription>
-              </div>
-              <Input
-                placeholder="Search users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-xs"
-              />
-            </div>
+            <CardTitle>All Users</CardTitle>
+            <CardDescription>
+              View and manage user accounts. Click "Impersonate" to view the
+              system as that user.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                  <p className="mt-4 text-muted-foreground">Loading users...</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8 text-destructive">
-                Failed to load users. Please try again.
-              </div>
-            ) : !filteredUsers || filteredUsers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchQuery
-                  ? "No users match your search."
-                  : "No users found."}
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Username</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Verified</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                {getUserInitials(user)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">
-                                {user.display_name ||
-                                  user.first_name ||
-                                  user.username}
-                              </p>
-                              {user.first_name && user.last_name && (
-                                <p className="text-sm text-muted-foreground">
-                                  {user.first_name} {user.last_name}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                            {user.username}
-                          </code>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell>
-                          {user.email_verified ? (
-                            <Badge
-                              variant="outline"
-                              className="text-green-600 border-green-600"
-                            >
-                              <ShieldCheck className="h-3 w-3 mr-1" />
-                              Yes
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-amber-600 border-amber-600"
-                            >
-                              No
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleImpersonate(user)}
-                          >
-                            <UserIcon className="h-4 w-4 mr-1" />
-                            Impersonate
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+            <DataTable
+              columns={columns}
+              data={tableData}
+              isLoading={isLoading}
+              rowActions={rowActions}
+              emptyTitle="No users found"
+              emptyDescription="There are no registered users in the system."
+              searchPlaceholder="Search by name, email, or username..."
+              searchFields={["name", "email", "username"]}
+              pageSize={10}
+              pageSizeOptions={[10, 25, 50, 100]}
+              tableId="admin-users"
+            />
           </CardContent>
         </Card>
 

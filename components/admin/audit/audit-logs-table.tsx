@@ -40,9 +40,9 @@ interface AuditLog {
   ip_address?: string;
   status?: string;
   created_at: string;
-  old_values?: any;
-  new_values?: any;
-  metadata?: any;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 interface AuditLogsTableProps {
@@ -77,7 +77,10 @@ export function AuditLogsTable({
     if (!status) status = "unknown";
     const config: Record<
       string,
-      { variant: "default" | "secondary" | "destructive"; icon: any }
+      {
+        variant: "default" | "secondary" | "destructive";
+        icon: React.ComponentType<{ className?: string }>;
+      }
     > = {
       success: { variant: "default", icon: CheckCircle },
       failed: { variant: "destructive", icon: XCircle },
@@ -114,9 +117,11 @@ export function AuditLogsTable({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
+        {Array.from({ length: 5 }, (_, i) => `audit-skeleton-${i}`).map(
+          (key) => (
+            <Skeleton key={key} className="h-12 w-full" />
+          ),
+        )}
       </div>
     );
   }
@@ -237,35 +242,35 @@ export function AuditLogsTable({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Action</label>
+                  <div className="text-sm font-medium">Action</div>
                   <div className="mt-1">
                     {getActionBadge(selectedLog.action)}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Status</label>
+                  <div className="text-sm font-medium">Status</div>
                   <div className="mt-1">
                     {getStatusBadge(selectedLog.status)}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Resource Type</label>
+                  <div className="text-sm font-medium">Resource Type</div>
                   <p className="mt-1 text-sm">{selectedLog.resource_type}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Resource ID</label>
+                  <div className="text-sm font-medium">Resource ID</div>
                   <p className="mt-1 text-sm font-mono text-muted-foreground">
                     {selectedLog.resource_id || "N/A"}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">IP Address</label>
+                  <div className="text-sm font-medium">IP Address</div>
                   <p className="mt-1 text-sm font-mono">
                     {selectedLog.ip_address || "N/A"}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Workspace ID</label>
+                  <div className="text-sm font-medium">Workspace ID</div>
                   <p className="mt-1 text-sm font-mono text-muted-foreground">
                     {selectedLog.workspace_id || "N/A"}
                   </p>
@@ -275,7 +280,7 @@ export function AuditLogsTable({
               {selectedLog.metadata &&
                 Object.keys(selectedLog.metadata).length > 0 && (
                   <div>
-                    <label className="text-sm font-medium">Metadata</label>
+                    <div className="text-sm font-medium">Metadata</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
@@ -285,7 +290,7 @@ export function AuditLogsTable({
               {selectedLog.old_values &&
                 Object.keys(selectedLog.old_values).length > 0 && (
                   <div>
-                    <label className="text-sm font-medium">Old Values</label>
+                    <div className="text-sm font-medium">Old Values</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.old_values, null, 2)}
                     </pre>
@@ -295,7 +300,7 @@ export function AuditLogsTable({
               {selectedLog.new_values &&
                 Object.keys(selectedLog.new_values).length > 0 && (
                   <div>
-                    <label className="text-sm font-medium">New Values</label>
+                    <div className="text-sm font-medium">New Values</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.new_values, null, 2)}
                     </pre>

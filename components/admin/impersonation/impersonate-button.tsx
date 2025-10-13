@@ -59,9 +59,10 @@ export function ImpersonateButton({
         window.location.reload();
       }, 100);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       const errorMessage =
-        error.response?.data?.detail || "Failed to start impersonation";
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail || "Failed to start impersonation";
       toast.error(errorMessage);
     },
   });

@@ -18,6 +18,65 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 
+interface AnalyticsOverview {
+  data: {
+    stats: {
+      total_subscriptions: number;
+      active_subscriptions: number;
+      trial_subscriptions: number;
+      mrr: number;
+      arr: number;
+      churn_rate_monthly: number;
+      trial_conversion_rate: number;
+    };
+    revenue_by_plan: unknown[];
+    growth_metrics: {
+      new_revenue_30d: number;
+      growth_rate: number;
+    };
+    recent_subscriptions: Array<{
+      subscription_id: string;
+      user_email: string;
+      user_name: string;
+      plan_name: string;
+      status: string;
+      start_date: string | null;
+    }>;
+  };
+}
+
+interface RevenueHistory {
+  data: Array<{
+    month: string;
+    mrr: number;
+    new_revenue: number;
+    churned_revenue: number;
+    net_revenue: number;
+  }>;
+}
+
+interface PlanDistribution {
+  data: Array<{
+    plan_name: string;
+    plan_display_name: string;
+    subscription_count: number;
+    revenue_monthly: number;
+    revenue_yearly: number;
+    percentage: number;
+  }>;
+}
+
+interface CohortRetention {
+  data: {
+    cohorts: Array<{
+      cohort: string;
+      size: number;
+      month_0: number;
+      [key: string]: number | string;
+    }>;
+  };
+}
+
 export default function SubscriptionAnalyticsPage() {
   const [revenuePeriod, setRevenuePeriod] = useState<
     "3_months" | "6_months" | "12_months"
@@ -28,7 +87,7 @@ export default function SubscriptionAnalyticsPage() {
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: AnalyticsOverview }>(
           "/api/v1/subscriptions/admin/analytics/overview",
         )
         .then((res) => res.data);
@@ -47,7 +106,7 @@ export default function SubscriptionAnalyticsPage() {
     ],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: RevenueHistory }>(
           `/api/v1/subscriptions/admin/analytics/revenue-history?period=${revenuePeriod}`,
         )
         .then((res) => res.data);
@@ -59,7 +118,7 @@ export default function SubscriptionAnalyticsPage() {
     queryKey: ["admin", "subscriptions", "analytics", "plan-distribution"],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: PlanDistribution }>(
           "/api/v1/subscriptions/admin/analytics/plan-distribution",
         )
         .then((res) => res.data);
@@ -71,7 +130,7 @@ export default function SubscriptionAnalyticsPage() {
     queryKey: ["admin", "subscriptions", "analytics", "cohort-retention"],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: CohortRetention }>(
           "/api/v1/subscriptions/admin/analytics/cohort-retention",
         )
         .then((res) => res.data);

@@ -17,9 +17,18 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 
+interface Note {
+  id: string;
+  note: string;
+  category: string;
+  created_by_name?: string;
+  admin_email?: string;
+  created_at: string;
+}
+
 interface CustomerNotesTimelineProps {
   customerId: string;
-  notes: any[];
+  notes: Note[];
   onNoteAdded: () => void;
 }
 
@@ -50,8 +59,11 @@ export function CustomerNotesTimeline({
       setIsAdding(false);
       onNoteAdded();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to add note");
+    onError: (error: unknown) => {
+      const errorMessage =
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail || "Failed to add note";
+      toast.error(errorMessage);
     },
   });
 
@@ -153,7 +165,7 @@ export function CustomerNotesTimeline({
         <CardContent>
           {notes.length > 0 ? (
             <div className="space-y-4">
-              {notes.map((note: any) => (
+              {notes.map((note) => (
                 <div
                   key={note.id}
                   className="border-l-2 border-muted pl-4 pb-4"

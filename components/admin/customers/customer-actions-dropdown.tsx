@@ -33,10 +33,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 
+interface User {
+  status: string;
+  [key: string]: unknown;
+}
+
+interface Subscription {
+  status: string;
+  [key: string]: unknown;
+}
+
 interface CustomerActionsDropdownProps {
   customerId: string;
-  user: any;
-  subscription: any;
+  user: User;
+  subscription: Subscription | null;
   onActionComplete: () => void;
 }
 
@@ -64,7 +74,7 @@ export function CustomerActionsDropdown({
     mutationFn: async (data: {
       action: string;
       reason: string;
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     }) => {
       return await apiClient.request(
         `/api/v1/admin/customers/${customerId}/actions`,
@@ -86,8 +96,9 @@ export function CustomerActionsDropdown({
       setReason("");
       onActionComplete();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to perform action");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      toast.error(err.response?.data?.detail || "Failed to perform action");
     },
   });
 

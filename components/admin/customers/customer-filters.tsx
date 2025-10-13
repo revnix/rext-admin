@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
 
+interface Plan {
+  id: string;
+  display_name: string;
+}
+
 interface CustomerFiltersProps {
   status: string | null;
   planId: string | null;
@@ -30,12 +35,12 @@ export function CustomerFilters({
     queryKey: ["subscription-plans"],
     queryFn: async () => {
       return await apiClient
-        .request<{ data: any }>("/api/v1/subscriptions/plans")
+        .request<{ data: Plan[] }>("/api/v1/subscriptions/plans")
         .then((res) => res.data);
     },
   });
 
-  const plans = plansData?.data || [];
+  const plans = plansData || [];
 
   const hasActiveFilters = status || planId;
 
@@ -81,7 +86,7 @@ export function CustomerFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Plans</SelectItem>
-            {plans.map((plan: any) => (
+            {plans.map((plan) => (
               <SelectItem key={plan.id} value={plan.id}>
                 {plan.display_name}
               </SelectItem>

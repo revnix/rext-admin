@@ -80,6 +80,7 @@ export function DetailPage({
           <nav className="flex space-x-8" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
+                type="button"
                 key={tab.value}
                 onClick={() => onTabChange?.(tab.value)}
                 className={`

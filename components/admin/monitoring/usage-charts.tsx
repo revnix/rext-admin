@@ -64,9 +64,11 @@ export function UsageCharts({
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
+          {Array.from({ length: 4 }, (_, i) => `usage-skeleton-${i}`).map(
+            (key) => (
+              <Skeleton key={key} className="h-32" />
+            ),
+          )}
         </div>
         <Skeleton className="h-96" />
       </div>

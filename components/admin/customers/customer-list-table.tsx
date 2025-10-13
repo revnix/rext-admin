@@ -1,17 +1,9 @@
 "use client";
 
-import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye } from "lucide-react";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import type { Column, RowAction } from "@/types/data-table";
 
 interface Customer {
   user_id: string;
@@ -28,33 +20,29 @@ interface Customer {
   last_active: string | null;
 }
 
-interface Pagination {
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
+interface CustomerData extends Record<string, unknown> {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  status: string;
+  mrr: number;
+  workspaces_count: number;
+  created_at: string;
+  last_active: string;
+  account_status: string;
 }
 
 interface CustomerListTableProps {
   customers: Customer[];
-  pagination?: Pagination;
   isLoading: boolean;
-  onPageChange: (page: number) => void;
   onCustomerClick: (customerId: string) => void;
-  sortBy: string;
-  sortOrder: "asc" | "desc";
-  onSort: (field: string, order: "asc" | "desc") => void;
 }
 
 export function CustomerListTable({
   customers,
-  pagination,
   isLoading,
-  onPageChange,
   onCustomerClick,
-  sortBy,
-  sortOrder,
-  onSort,
 }: CustomerListTableProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Never";
@@ -92,160 +80,166 @@ export function CustomerListTable({
     );
   };
 
-  const handleSort = (field: string) => {
-    if (sortBy === field) {
-      onSort(field, sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      onSort(field, "desc");
-    }
-  };
+  // Transform customers data for DataTable
+  const tableData: CustomerData[] = customers.map((customer) => ({
+    id: customer.user_id,
+    name: customer.name,
+    email: customer.email,
+    plan: customer.subscription?.plan_name || "Free",
+    status: customer.subscription?.status || "free",
+    mrr: customer.subscription?.mrr || 0,
+    workspaces_count: customer.workspaces_count,
+    created_at: formatDate(customer.created_at),
+    last_active: formatDate(customer.last_active),
+    account_status: customer.is_active ? "active" : "inactive",
+  }));
 
-  const SortButton = ({ field, label }: { field: string; label: string }) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleSort(field)}
-      className="h-8 -ml-3"
-    >
-      {label}
-      <ArrowUpDown className="ml-2 h-3 w-3" />
-    </Button>
-  );
+  // Define columns
+  const columns: Column<CustomerData>[] = [
+    {
+      key: "name",
+      header: "Name",
+      width: "200px",
+      cell: (value) => <span className="font-medium">{value as string}</span>,
+      searchable: true,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "email",
+      header: "Email",
+      width: "250px",
+      cell: (value) => (
+        <span className="text-muted-foreground">{value as string}</span>
+      ),
+      searchable: true,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "plan",
+      header: "Plan",
+      width: "120px",
+      cell: (value) => {
+        const plan = value as string;
+        return plan === "Free" ? (
+          <span className="text-sm text-muted-foreground">{plan}</span>
+        ) : (
+          <span className="text-sm">{plan}</span>
+        );
+      },
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "120px",
+      cell: (value) => {
+        const status = value as string;
+        return status === "free" ? (
+          <Badge variant="outline">Free</Badge>
+        ) : (
+          getStatusBadge(status)
+        );
+      },
+      filterable: true,
+      filterType: "select",
+      filterOptions: ["active", "trial", "cancelled", "expired", "free"],
+    },
+    {
+      key: "mrr",
+      header: "MRR",
+      width: "100px",
+      cell: (value) => {
+        const mrr = value as number;
+        return mrr > 0 ? (
+          <span className="font-medium text-right block">
+            {formatCurrency(mrr)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-right block">-</span>
+        );
+      },
+      filterable: true,
+      filterType: "number",
+    },
+    {
+      key: "workspaces_count",
+      header: "Workspaces",
+      width: "100px",
+      cell: (value) => (
+        <div className="text-center">
+          <Badge variant="secondary">{value as number}</Badge>
+        </div>
+      ),
+      filterable: true,
+      filterType: "number",
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      width: "120px",
+      cell: (value) => <span className="text-sm">{value as string}</span>,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "last_active",
+      header: "Last Active",
+      width: "120px",
+      cell: (value) => <span className="text-sm">{value as string}</span>,
+      filterable: true,
+      filterType: "text",
+    },
+    {
+      key: "account_status",
+      header: "Account",
+      width: "100px",
+      cell: (value) => {
+        const status = value as string;
+        return (
+          <div className="text-center">
+            {status === "active" ? (
+              <Badge variant="default" className="bg-green-600">
+                Active
+              </Badge>
+            ) : (
+              <Badge variant="destructive">Inactive</Badge>
+            )}
+          </div>
+        );
+      },
+      filterable: true,
+      filterType: "select",
+      filterOptions: ["active", "inactive"],
+    },
+  ];
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!customers || customers.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        No customers found
-      </div>
-    );
-  }
+  // Define row actions
+  const rowActions: RowAction<CustomerData>[] = [
+    {
+      label: "View Details",
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (row) => onCustomerClick(row.id),
+      primary: true,
+    },
+  ];
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <SortButton field="display_name" label="Name" />
-              </TableHead>
-              <TableHead>
-                <SortButton field="email" label="Email" />
-              </TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">MRR</TableHead>
-              <TableHead className="text-center">Workspaces</TableHead>
-              <TableHead>
-                <SortButton field="created_at" label="Created" />
-              </TableHead>
-              <TableHead>Last Active</TableHead>
-              <TableHead className="text-center">Account</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {customers.map((customer) => (
-              <TableRow
-                key={customer.user_id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onCustomerClick(customer.user_id)}
-              >
-                <TableCell className="font-medium">{customer.name}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {customer.email}
-                </TableCell>
-                <TableCell>
-                  {customer.subscription ? (
-                    <span className="text-sm">
-                      {customer.subscription.plan_name}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Free</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {customer.subscription ? (
-                    getStatusBadge(customer.subscription.status)
-                  ) : (
-                    <Badge variant="outline">Free</Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {customer.subscription ? (
-                    <span className="font-medium">
-                      {formatCurrency(customer.subscription.mrr)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="secondary">{customer.workspaces_count}</Badge>
-                </TableCell>
-                <TableCell className="text-sm">
-                  {formatDate(customer.created_at)}
-                </TableCell>
-                <TableCell className="text-sm">
-                  {formatDate(customer.last_active)}
-                </TableCell>
-                <TableCell className="text-center">
-                  {customer.is_active ? (
-                    <Badge variant="default" className="bg-green-600">
-                      Active
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive">Inactive</Badge>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      {pagination && pagination.total_pages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {(pagination.page - 1) * pagination.per_page + 1} to{" "}
-            {Math.min(pagination.page * pagination.per_page, pagination.total)}{" "}
-            of {pagination.total} customers
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <div className="text-sm font-medium">
-              Page {pagination.page} of {pagination.total_pages}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.total_pages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+    <DataTable
+      columns={columns}
+      data={tableData}
+      isLoading={isLoading}
+      rowActions={rowActions}
+      onRowClick={(row) => onCustomerClick(row.id)}
+      emptyTitle="No customers found"
+      emptyDescription="No customers match your current filters. Try adjusting your search or filters."
+      searchPlaceholder="Search by name or email..."
+      searchFields={["name", "email"]}
+      pageSize={10}
+      pageSizeOptions={[10, 25, 50, 100]}
+      tableId="admin-customers"
+    />
   );
 }

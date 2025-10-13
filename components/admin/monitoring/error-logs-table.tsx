@@ -47,14 +47,21 @@ interface ErrorLog {
   user_id?: string;
   request_id?: string;
   stack_trace?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   resolved: boolean;
   resolved_at?: string;
 }
 
+interface Pagination {
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
 interface ErrorLogsTableProps {
   logs: ErrorLog[];
-  pagination?: any;
+  pagination?: Pagination;
   isLoading: boolean;
   filters: {
     severity?: string;
@@ -62,7 +69,11 @@ interface ErrorLogsTableProps {
     end_date?: string;
   };
   onPageChange: (page: number) => void;
-  onFiltersChange: (filters: any) => void;
+  onFiltersChange: (filters: {
+    severity?: string;
+    start_date?: string;
+    end_date?: string;
+  }) => void;
   onRefresh: () => void;
 }
 
@@ -99,7 +110,10 @@ export function ErrorLogsTable({
   const getSeverityBadge = (severity: string) => {
     const variants: Record<
       string,
-      { variant: "default" | "secondary" | "destructive"; icon: any }
+      {
+        variant: "default" | "secondary" | "destructive";
+        icon: React.ComponentType<{ className?: string }>;
+      }
     > = {
       critical: { variant: "destructive", icon: XCircle },
       error: { variant: "destructive", icon: AlertTriangle },
@@ -132,9 +146,11 @@ export function ErrorLogsTable({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
+        {Array.from({ length: 5 }, (_, i) => `error-skeleton-${i}`).map(
+          (key) => (
+            <Skeleton key={key} className="h-12 w-full" />
+          ),
+        )}
       </div>
     );
   }
@@ -280,14 +296,14 @@ export function ErrorLogsTable({
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Severity</label>
+                <div className="text-sm font-medium">Severity</div>
                 <div className="mt-1">
                   {getSeverityBadge(selectedLog.severity)}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium">Message</label>
+                <div className="text-sm font-medium">Message</div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {selectedLog.message}
                 </p>
@@ -295,7 +311,7 @@ export function ErrorLogsTable({
 
               {selectedLog.stack_trace && (
                 <div>
-                  <label className="text-sm font-medium">Stack Trace</label>
+                  <div className="text-sm font-medium">Stack Trace</div>
                   <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {selectedLog.stack_trace}
                   </pre>
@@ -305,7 +321,7 @@ export function ErrorLogsTable({
               {selectedLog.metadata &&
                 Object.keys(selectedLog.metadata).length > 0 && (
                   <div>
-                    <label className="text-sm font-medium">Metadata</label>
+                    <div className="text-sm font-medium">Metadata</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>

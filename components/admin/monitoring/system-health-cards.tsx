@@ -65,18 +65,20 @@ export function SystemHealthCards({
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-32 mb-2" />
-              <Skeleton className="h-4 w-40" />
-            </CardContent>
-          </Card>
-        ))}
+        {Array.from({ length: 4 }, (_, i) => `health-skeleton-${i}`).map(
+          (key) => (
+            <Card key={key}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-4 w-40" />
+              </CardContent>
+            </Card>
+          ),
+        )}
       </div>
     );
   }

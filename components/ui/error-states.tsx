@@ -135,7 +135,11 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // Log error in development
+    if (process.env.NODE_ENV === "development") {
+      // biome-ignore lint/suspicious/noConsole: Error logging for development debugging
+      console.error("ErrorBoundary caught an error:", error, errorInfo);
+    }
   }
 
   render() {

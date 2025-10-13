@@ -16,6 +16,84 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 
+interface SystemHealthData {
+  database: {
+    status: string;
+    response_time_ms: number;
+    connection_count: number;
+    max_connections: number;
+  };
+  cache: {
+    status: string;
+    hit_rate?: number;
+    memory_used_mb?: number;
+  };
+  api: {
+    status: string;
+    requests_per_minute: number;
+    avg_response_time_ms: number;
+    error_rate: number;
+  };
+  workers: {
+    status: string;
+    active_jobs?: number;
+    failed_jobs_24h?: number;
+  };
+  timestamp: string;
+}
+
+interface ErrorLog {
+  id: string;
+  timestamp: string;
+  severity: string;
+  message: string;
+  source?: string;
+  user_id?: string;
+  request_id?: string;
+  stack_trace?: string;
+  metadata?: Record<string, unknown>;
+  resolved: boolean;
+  resolved_at?: string;
+}
+
+interface ErrorLogData {
+  logs: ErrorLog[];
+  pagination: {
+    total: number;
+    page: number;
+    per_page: number;
+    total_pages: number;
+  };
+}
+
+interface UsageStatsData {
+  period: string;
+  api_calls: {
+    total: number;
+    by_endpoint: Array<{ endpoint: string; count: number }>;
+  };
+  content_generation: {
+    total: number;
+    successful: number;
+    failed: number;
+  };
+  user_activity: {
+    active_users: number;
+    new_users: number;
+    new_workspaces: number;
+    sessions: number;
+  };
+}
+
+interface UsageTrendsData {
+  trends: Array<{
+    date: string;
+    content_created: number;
+    active_users: number;
+    workspaces_created: number;
+  }>;
+}
+
 export default function MonitoringPage() {
   const [errorLogPage, setErrorLogPage] = useState(1);
   const [errorLogFilters, setErrorLogFilters] = useState<{
@@ -32,7 +110,9 @@ export default function MonitoringPage() {
     queryKey: ["admin", "monitoring", "system-health"],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>("/api/v1/admin/monitoring/system-health")
+        .request<{ data: SystemHealthData }>(
+          "/api/v1/admin/monitoring/system-health",
+        )
         .then((res) => res.data);
     },
     refetchInterval: 60000, // Refresh every 60 seconds
@@ -65,7 +145,7 @@ export default function MonitoringPage() {
         params.append("end_date", errorLogFilters.end_date);
 
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: ErrorLogData }>(
           `/api/v1/admin/monitoring/error-logs?${params.toString()}`,
         )
         .then((res) => res.data);
@@ -77,7 +157,7 @@ export default function MonitoringPage() {
     queryKey: ["admin", "monitoring", "usage-stats", usagePeriod],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: UsageStatsData }>(
           `/api/v1/admin/monitoring/usage-stats?period=${usagePeriod}`,
         )
         .then((res) => res.data);
@@ -89,18 +169,20 @@ export default function MonitoringPage() {
     queryKey: ["admin", "monitoring", "usage-trends"],
     queryFn: async () => {
       return apiClient
-        .request<{ data: any }>(
+        .request<{ data: UsageTrendsData }>(
           "/api/v1/admin/monitoring/usage-stats/trends?days=7",
         )
         .then((res) => res.data);
     },
   });
 
-  const health = healthData?.data;
-  const errorLogs = errorLogsData?.data || [];
-  const errorLogsPagination = errorLogsData?.pagination;
-  const usageStats = usageStatsData?.data;
-  const usageTrends = usageTrendsData?.data?.trends || [];
+  const health = healthData;
+  const errorLogs = (errorLogsData as ErrorLogData | undefined)?.logs || [];
+  const errorLogsPagination = (errorLogsData as ErrorLogData | undefined)
+    ?.pagination;
+  const usageStats = usageStatsData;
+  const usageTrends =
+    (usageTrendsData as UsageTrendsData | undefined)?.trends || [];
 
   return (
     <div className="container mx-auto py-8 space-y-8">

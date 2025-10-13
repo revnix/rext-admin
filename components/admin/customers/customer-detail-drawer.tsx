@@ -31,6 +31,56 @@ import { ImpersonateButton } from "../impersonation/impersonate-button";
 import { CustomerActionsDropdown } from "./customer-actions-dropdown";
 import { CustomerNotesTimeline } from "./customer-notes-timeline";
 
+interface Workspace {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+interface CustomerData {
+  user: {
+    id: string;
+    email: string;
+    username?: string;
+    display_name?: string;
+    status: string;
+    is_active?: boolean;
+    created_at: string;
+    last_login?: string;
+  };
+  subscription?: {
+    id: string;
+    plan_name: string;
+    status: string;
+    billing_period?: string;
+    current_period_start?: string;
+    current_period_end?: string;
+    start_date?: string;
+    trial_end_date?: string;
+    cancelled_at?: string;
+    plan?: {
+      price_monthly?: number;
+    };
+  };
+  workspaces: Workspace[];
+  notes: Array<{
+    id: string;
+    note: string;
+    category: string;
+    admin_email?: string;
+    created_at: string;
+  }>;
+  usage?: {
+    api_calls: number;
+    storage_used_mb: number;
+  };
+  usage_stats?: {
+    api_calls: number;
+    storage_used_mb: number;
+  };
+  activity_summary?: Record<string, unknown>;
+}
+
 interface CustomerDetailDrawerProps {
   customerId: string;
   open: boolean;
@@ -49,13 +99,15 @@ export function CustomerDetailDrawer({
     queryKey: ["admin", "customer", customerId],
     queryFn: async () => {
       return await apiClient
-        .request<{ data: any }>(`/api/v1/admin/customers/${customerId}`)
+        .request<{ data: CustomerData }>(
+          `/api/v1/admin/customers/${customerId}`,
+        )
         .then((res) => res.data);
     },
     enabled: open && !!customerId,
   });
 
-  const customerData = data?.data;
+  const customerData = data;
   const user = customerData?.user;
   const subscription = customerData?.subscription;
   const workspaces = customerData?.workspaces || [];
@@ -119,7 +171,7 @@ export function CustomerDetailDrawer({
               <CustomerActionsDropdown
                 customerId={customerId}
                 user={user}
-                subscription={subscription}
+                subscription={subscription || null}
                 onActionComplete={handleActionComplete}
               />
             </div>
@@ -194,7 +246,7 @@ export function CustomerDetailDrawer({
                     Last Login
                   </span>
                   <span className="text-sm">
-                    {formatDate(user.last_login_at)}
+                    {formatDate(user.last_login || null)}
                   </span>
                 </div>
               </CardContent>
@@ -207,7 +259,7 @@ export function CustomerDetailDrawer({
               <CardContent>
                 {workspaces.length > 0 ? (
                   <div className="space-y-2">
-                    {workspaces.map((workspace: any) => (
+                    {workspaces.map((workspace) => (
                       <div
                         key={workspace.id}
                         className="flex justify-between items-center p-2 rounded border"
@@ -241,7 +293,7 @@ export function CustomerDetailDrawer({
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Plan</span>
                     <span className="text-sm font-medium">
-                      {subscription.plan.name}
+                      {subscription.plan_name}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -263,7 +315,7 @@ export function CustomerDetailDrawer({
                       Monthly Price
                     </span>
                     <span className="text-sm font-medium">
-                      {formatCurrency(subscription.plan.price_monthly)}
+                      {formatCurrency(subscription.plan?.price_monthly || 0)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -271,7 +323,7 @@ export function CustomerDetailDrawer({
                       Start Date
                     </span>
                     <span className="text-sm">
-                      {formatDate(subscription.start_date)}
+                      {formatDate(subscription.start_date || null)}
                     </span>
                   </div>
                   {subscription.trial_end_date && (
@@ -321,9 +373,18 @@ export function CustomerDetailDrawer({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {Object.entries(usage).map(([key, value]: [string, any]) => {
-                    if (typeof value === "object" && value.used !== undefined) {
-                      const percentage = value.percentage || 0;
+                  {Object.entries(usage).map(([key, value]) => {
+                    if (
+                      typeof value === "object" &&
+                      value !== null &&
+                      "used" in value
+                    ) {
+                      const usageValue = value as {
+                        used: number;
+                        limit: number;
+                        percentage?: number;
+                      };
+                      const percentage = usageValue.percentage || 0;
                       return (
                         <div key={key}>
                           <div className="flex justify-between mb-2">
@@ -331,8 +392,8 @@ export function CustomerDetailDrawer({
                               {key.replace(/_/g, " ")}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {value.used} /{" "}
-                              {value.limit === -1 ? "∞" : value.limit}
+                              {usageValue.used} /{" "}
+                              {usageValue.limit === -1 ? "∞" : usageValue.limit}
                             </span>
                           </div>
                           <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -377,7 +438,12 @@ export function CustomerDetailDrawer({
                     Last Login
                   </span>
                   <span className="text-sm">
-                    {formatDate(activitySummary?.last_login)}
+                    {formatDate(
+                      (activitySummary?.last_login as
+                        | string
+                        | null
+                        | undefined) || null,
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -385,7 +451,7 @@ export function CustomerDetailDrawer({
                     Content Created
                   </span>
                   <span className="text-sm font-medium">
-                    {activitySummary?.total_content_created || 0}
+                    {(activitySummary?.total_content_created as number) || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -393,7 +459,7 @@ export function CustomerDetailDrawer({
                     Knowledge Items
                   </span>
                   <span className="text-sm font-medium">
-                    {activitySummary?.total_knowledge_items || 0}
+                    {(activitySummary?.total_knowledge_items as number) || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -401,7 +467,7 @@ export function CustomerDetailDrawer({
                     Workspaces
                   </span>
                   <span className="text-sm font-medium">
-                    {activitySummary?.workspaces_count || 0}
+                    {(activitySummary?.workspaces_count as number) || 0}
                   </span>
                 </div>
               </CardContent>

@@ -15,7 +15,7 @@ export function ImpersonationBanner() {
   const [isVisible, setIsVisible] = useState(false);
 
   // Check impersonation status
-  const { data: statusData, refetch } = useQuery({
+  const { data: statusData } = useQuery({
     queryKey: ["impersonation", "status"],
     queryFn: async () => {
       try {
@@ -60,10 +60,11 @@ export function ImpersonationBanner() {
         window.location.reload();
       }, 100);
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail || "Failed to stop impersonation",
-      );
+    onError: (error: unknown) => {
+      const errorMessage =
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail || "Failed to stop impersonation";
+      toast.error(errorMessage);
     },
   });
 

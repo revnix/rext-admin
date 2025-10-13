@@ -24,6 +24,7 @@ const COLORS = [
 
 export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
   const chartData = data.map((plan) => ({
+    id: plan.plan_name,
     name: plan.plan_display_name,
     value: plan.subscription_count,
     revenue: plan.revenue_monthly,
@@ -54,18 +55,22 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
               fill="#8884d8"
               dataKey="value"
             >
-              {chartData.map((_entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
+              {chartData.map((entry, index) => (
+                <Cell key={entry.id} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number, _name: string, props: any) => [
-                `${value} subscriptions (${props.payload.percentage.toFixed(1)}%)`,
-                props.payload.name,
-              ]}
+              formatter={(
+                value: number,
+                _name: string,
+                props: { payload?: { percentage: number; name: string } },
+              ) => {
+                if (!props.payload) return [String(value), ""];
+                return [
+                  `${value} subscriptions (${props.payload.percentage.toFixed(1)}%)`,
+                  props.payload.name,
+                ];
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
