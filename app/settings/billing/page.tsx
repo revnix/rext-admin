@@ -393,7 +393,9 @@ function BillingDashboardContent() {
             </>
           ) : (
             <>
-              <Button onClick={() => router.push("/pricing")}>View Plans</Button>
+              <Button onClick={() => router.push("/pricing")}>
+                View Plans
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowPlans(!showPlans)}
@@ -568,10 +570,12 @@ function BillingDashboardContent() {
                       <Zap className="h-4 w-4" />3 Team Members
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />10 Topics
+                      <Zap className="h-4 w-4" />
+                      10 Topics
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />100 Knowledge Items
+                      <Zap className="h-4 w-4" />
+                      100 Knowledge Items
                     </li>
                   </ul>
                 </CardContent>
@@ -608,16 +612,20 @@ function BillingDashboardContent() {
                       <Zap className="h-4 w-4 text-primary" />5 Workspaces
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />15 Team Members
+                      <Zap className="h-4 w-4 text-primary" />
+                      15 Team Members
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />100 Topics
+                      <Zap className="h-4 w-4 text-primary" />
+                      100 Topics
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />1,000 Knowledge Items
+                      <Zap className="h-4 w-4 text-primary" />
+                      1,000 Knowledge Items
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />Priority Support
+                      <Zap className="h-4 w-4 text-primary" />
+                      Priority Support
                     </li>
                   </ul>
                 </CardContent>
@@ -644,19 +652,24 @@ function BillingDashboardContent() {
                   <Separator />
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />Unlimited Workspaces
+                      <Zap className="h-4 w-4" />
+                      Unlimited Workspaces
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />Unlimited Team Members
+                      <Zap className="h-4 w-4" />
+                      Unlimited Team Members
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />Unlimited Topics
+                      <Zap className="h-4 w-4" />
+                      Unlimited Topics
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />Unlimited Knowledge
+                      <Zap className="h-4 w-4" />
+                      Unlimited Knowledge
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />Dedicated Support
+                      <Zap className="h-4 w-4" />
+                      Dedicated Support
                     </li>
                   </ul>
                 </CardContent>

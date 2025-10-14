@@ -162,7 +162,9 @@ export default function AdminEmailTemplatesPage() {
     <div className="container mx-auto space-y-6 py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">System Email Templates</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            System Email Templates
+          </h1>
           <p className="text-muted-foreground">
             Manage system-wide email templates used across all workspaces
           </p>
@@ -183,8 +185,9 @@ export default function AdminEmailTemplatesPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            These email templates are used system-wide across all workspaces. Changes here affect all users.
-            Ensure templates are professional, compliant, and thoroughly tested before activating.
+            These email templates are used system-wide across all workspaces.
+            Changes here affect all users. Ensure templates are professional,
+            compliant, and thoroughly tested before activating.
           </p>
         </CardContent>
       </Card>
@@ -333,8 +336,9 @@ export default function AdminEmailTemplatesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete System Email Template</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this system template? This action cannot
-              be undone. The system will fall back to the default template for all workspaces.
+              Are you sure you want to delete this system template? This action
+              cannot be undone. The system will fall back to the default
+              template for all workspaces.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
