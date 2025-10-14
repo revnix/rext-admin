@@ -197,7 +197,7 @@ export default function WorkspacePage() {
     {
       label: "Create Workspace",
       icon: <Plus className="h-4 w-4" />,
-      href: "/workspaces/create",
+      href: "/w/create",
     },
   ];
 
@@ -208,7 +208,7 @@ export default function WorkspacePage() {
         <Settings className="h-4 w-4 mr-2" />
         Refresh
       </Button>
-      <Button onClick={() => router.push("/workspaces/create")}>
+      <Button onClick={() => router.push("/w/create")}>
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>
@@ -234,7 +234,7 @@ export default function WorkspacePage() {
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/workspaces/${row.slug}`);
+        router.push(`/w/${row.slug}`);
       },
       tooltip: "View workspace details",
     },

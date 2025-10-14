@@ -1,12 +1,17 @@
-import { redirect } from "next/navigation";
+import { WorkspaceDetail } from "@/components/workspace/workspace-detail";
 
 /**
- * Workspace Root Page
+ * Workspace Detail Page
  *
- * Redirects to the default workspace view (Overview).
- * Users accessing /w/{workspaceSlug} will be automatically redirected to /w/{workspaceSlug}/overview
+ * Shows comprehensive workspace information including:
+ * - Editable workspace details (name, URL, timezone, etc.)
+ * - Knowledge summary with quick stats
+ * - Analytics dashboard with metrics
+ * - Brand voice configuration
  *
- * The overview page serves as the workspace dashboard with statistics, recent activity, and quick actions.
+ * For knowledge and members management, use dedicated pages:
+ * - Knowledge: /w/[workspaceSlug]/knowledge
+ * - Members: /w/[workspaceSlug]/users
  */
 export default async function WorkspaceRootPage({
   params,
@@ -16,6 +21,5 @@ export default async function WorkspaceRootPage({
   // Await params (Next.js 15 requirement)
   const { workspaceSlug } = await params;
 
-  // Redirect to overview as the default workspace view
-  redirect(`/w/${workspaceSlug}/overview`);
+  return <WorkspaceDetail workspaceSlug={workspaceSlug} />;
 }

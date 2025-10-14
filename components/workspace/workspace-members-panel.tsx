@@ -73,13 +73,13 @@ function EmptyMembers() {
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
           <Users className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium mb-2">No members yet</h3>
+        <h3 className="text-lg font-medium mb-2">No users yet</h3>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
-          Invite team members to collaborate on this workspace
+          Invite users to collaborate on this workspace
         </p>
         <Button>
           <UserPlus className="h-4 w-4 mr-2" />
-          Invite Members
+          Invite Users
         </Button>
       </CardContent>
     </Card>
@@ -152,11 +152,11 @@ export function WorkspaceMembersPanel({
           <div>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Workspace Members
+              Workspace Users
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {members.length} {members.length === 1 ? "member" : "members"} in
-              this workspace
+              {members.length} {members.length === 1 ? "user" : "users"} in this
+              workspace
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export function WorkspaceMembersPanel({
                         onClick={() => setMemberToRemove(member)}
                       >
                         <UserMinus className="h-4 w-4 mr-2" />
-                        Remove Member
+                        Remove User
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

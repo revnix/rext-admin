@@ -2,12 +2,15 @@
 
 import {
   BookOpen,
+  Eye,
   FileText,
   LayoutDashboard,
   TrendingUp,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -61,11 +64,21 @@ export default function WorkspaceOverviewPage() {
     );
   }
 
+  const actions = workspace && (
+    <Link href={workspaceRoutes.root(workspaceSlug)}>
+      <Button variant="outline">
+        <Eye className="h-4 w-4 mr-2" />
+        View Details
+      </Button>
+    </Link>
+  );
+
   return (
     <PageLayout
       title={workspace?.title || "Workspace Overview"}
       description="Dashboard and summary for your workspace"
       breadcrumbs={breadcrumbs}
+      actions={actions}
     >
       <div className="space-y-6">
         {/* Stats Cards */}

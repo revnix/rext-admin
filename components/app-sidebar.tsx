@@ -94,7 +94,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.users(currentWorkspace.slug)
             : "/dashboard",
           icon: Users,
-          anyPermission: [PERMISSIONS.USER_READ],
         },
       ],
     },

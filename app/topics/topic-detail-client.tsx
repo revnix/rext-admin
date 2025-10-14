@@ -82,7 +82,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
       if (currentWorkspace?.slug) {
         router.push(`/w/${currentWorkspace.slug}/topics`);
       } else {
-        router.push("/workspaces");
+        router.push("/dashboard");
       }
     } catch (error) {
       detailLogger.error("Failed to delete topic", {
