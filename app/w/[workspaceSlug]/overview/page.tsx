@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
@@ -80,147 +82,171 @@ export default function WorkspaceOverviewPage() {
       breadcrumbs={breadcrumbs}
       actions={actions}
     >
-      <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Members
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+      <CanAccess
+        permission={WORKSPACE_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view this workspace overview.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Team members in workspace
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  workspace.read
+                </code>
               </p>
             </CardContent>
           </Card>
+        }
+      >
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Members
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">-</div>
+                <p className="text-xs text-muted-foreground">
+                  Team members in workspace
+                </p>
+              </CardContent>
+            </Card>
 
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Knowledge Bases
+                </CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">-</div>
+                <p className="text-xs text-muted-foreground">
+                  Active knowledge sources
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Topics</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">-</div>
+                <p className="text-xs text-muted-foreground">
+                  Content topics created
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Generated Content
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">-</div>
+                <p className="text-xs text-muted-foreground">
+                  Articles and posts
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Workspace Details */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Knowledge Bases
-              </CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Workspace Details</CardTitle>
+              <CardDescription>
+                Basic information about this workspace
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Active knowledge sources
-              </p>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Name
+                  </p>
+                  <p className="text-sm">{workspace?.title || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Slug
+                  </p>
+                  <p className="text-sm font-mono text-xs">
+                    {workspace?.slug || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    URL
+                  </p>
+                  <p className="text-sm truncate">{workspace?.url || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Created
+                  </p>
+                  <p className="text-sm">
+                    {workspace?.created_at
+                      ? new Date(workspace.created_at).toLocaleDateString()
+                      : "-"}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
+          {/* Coming Soon */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Topics</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Content topics created
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Generated Content
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                Enhanced Dashboard Coming Soon
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Articles and posts
+              <p className="text-sm text-muted-foreground mb-4">
+                This overview page will soon include:
               </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Real-time statistics and metrics
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Recent activity feed
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Quick actions and shortcuts
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Analytics charts and graphs
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Team activity and contributions
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </div>
-
-        {/* Workspace Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Workspace Details</CardTitle>
-            <CardDescription>
-              Basic information about this workspace
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Name
-                </p>
-                <p className="text-sm">{workspace?.title || "-"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Slug
-                </p>
-                <p className="text-sm font-mono text-xs">
-                  {workspace?.slug || "-"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">URL</p>
-                <p className="text-sm truncate">{workspace?.url || "-"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Created
-                </p>
-                <p className="text-sm">
-                  {workspace?.created_at
-                    ? new Date(workspace.created_at).toLocaleDateString()
-                    : "-"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Coming Soon */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4" />
-              Enhanced Dashboard Coming Soon
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              This overview page will soon include:
-            </p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Real-time statistics and metrics
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Recent activity feed
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Quick actions and shortcuts
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Analytics charts and graphs
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Team activity and contributions
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+      </CanAccess>
     </PageLayout>
   );
 }

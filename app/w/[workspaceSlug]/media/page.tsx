@@ -14,6 +14,7 @@ import { MediaDetailSheet } from "@/components/media/media-detail-sheet";
 import { MediaGrid } from "@/components/media/media-grid";
 import { MediaUploadDialog } from "@/components/media/media-upload-dialog";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
+import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
@@ -164,7 +166,26 @@ export default function WorkspaceMediaPage() {
       breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
-      <div className="space-y-6">
+      <CanAccess
+        permission={MEDIA_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view media in this workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">media:read</code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-6">
         {/* Stats Cards */}
         {usage && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -397,7 +418,8 @@ export default function WorkspaceMediaPage() {
           onOpenChange={(open) => !open && setSelectedMedia(null)}
           onDeleted={handleDeleted}
         />
-      </div>
+        </div>
+      </CanAccess>
     </PageLayout>
   );
 }

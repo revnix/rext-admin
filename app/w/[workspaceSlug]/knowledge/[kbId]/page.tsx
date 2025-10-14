@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Plus, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +22,7 @@ import {
   WorkspaceKnowledgeTable,
 } from "@/components/workspace/workspace-knowledge-table";
 import { apiClient } from "@/lib/api-client";
+import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
@@ -164,9 +166,28 @@ export default function KnowledgeBaseDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
+    <CanAccess
+      permission={KNOWLEDGE_PERMISSIONS.READ}
+      fallback={
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to view this knowledge base.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Required permission:{" "}
+              <code className="text-xs bg-muted px-1 rounded">knowledge.read</code>
+            </p>
+          </CardContent>
+        </Card>
+      }
+    >
+      <div className="space-y-6">
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -290,6 +311,7 @@ export default function KnowledgeBaseDetailPage() {
         onOpenChange={(open) => !open && setItemToDelete(null)}
         onDeleted={handleDeleted}
       />
-    </div>
+      </div>
+    </CanAccess>
   );
 }

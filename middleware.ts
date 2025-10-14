@@ -1,7 +1,56 @@
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-export default auth((_request) => {
+export default auth((request) => {
+  const { nextUrl } = request as NextRequest;
+  // biome-ignore lint/suspicious/noExplicitAny: NextAuth types don't expose auth property
+  const session = (request as any).auth;
+
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+  ];
+
+  const isPublicRoute = publicRoutes.some((route) =>
+    nextUrl.pathname.startsWith(route),
+  );
+
+  // Redirect to login if not authenticated and trying to access protected route
+  if (!session && !isPublicRoute) {
+    const loginUrl = new URL("/login", nextUrl.origin);
+    loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Admin route protection
+  if (nextUrl.pathname.startsWith("/admin")) {
+    const userRoles = session?.user?.roles || [];
+    const isAdmin =
+      userRoles.includes("super_admin") || userRoles.includes("admin");
+
+    if (!isAdmin) {
+      // Redirect non-admins to dashboard
+      return NextResponse.redirect(new URL("/dashboard", nextUrl.origin));
+    }
+  }
+
+  // Workspace route protection - verify user has access
+  // Note: Detailed workspace membership is checked at page level via WorkspaceProvider
+  // This is a basic check to ensure user is authenticated for workspace routes
+  if (nextUrl.pathname.startsWith("/w/") && nextUrl.pathname !== "/w/create") {
+    if (!session) {
+      const loginUrl = new URL("/login", nextUrl.origin);
+      loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Detailed workspace membership verified by WorkspaceProvider on page load
+  }
+
   // Create response
   const response = NextResponse.next();
 

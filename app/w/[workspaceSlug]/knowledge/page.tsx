@@ -5,6 +5,7 @@ import { BookOpen, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +20,7 @@ import { WorkspaceEditKnowledgeBaseDialog } from "@/components/workspace/workspa
 import { WorkspaceKnowledgeBasesTable } from "@/components/workspace/workspace-knowledge-bases-table";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
+import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
@@ -126,7 +128,26 @@ export default function WorkspaceKnowledgePage() {
       breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
-      <div className="space-y-6">
+      <CanAccess
+        permission={KNOWLEDGE_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view knowledge bases in this workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">knowledge:read</code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
@@ -233,7 +254,8 @@ export default function WorkspaceKnowledgePage() {
           onOpenChange={(open) => !open && setKbToDelete(null)}
           onDeleted={handleDeleted}
         />
-      </div>
+        </div>
+      </CanAccess>
     </PageLayout>
   );
 }

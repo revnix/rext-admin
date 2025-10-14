@@ -5,8 +5,15 @@ import { MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +28,7 @@ import { WorkspaceKnowledgeSummaryCard } from "@/components/workspace/workspace-
 import { WorkspaceOverviewForm } from "@/components/workspace/workspace-overview-form";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import {
   useKnowledgeFilterStore,
@@ -151,42 +159,64 @@ export function WorkspaceDetail({ workspaceSlug }: WorkspaceDetailProps) {
       breadcrumbs={breadcrumbs}
       actions={actions}
     >
-      <div className="space-y-6">
-        {isLoading ? (
-          <WorkspaceDetailSkeleton />
-        ) : workspace ? (
-          <>
-            {/* Workspace Details & Knowledge Summary */}
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-              <WorkspaceOverviewForm
-                workspace={workspace}
-                onSuccess={() => refetch()}
-              />
-              <WorkspaceKnowledgeSummaryCard workspace={workspace} />
-            </div>
+      <CanAccess
+        permission={WORKSPACE_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view this workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  workspace.read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-6">
+          {isLoading ? (
+            <WorkspaceDetailSkeleton />
+          ) : workspace ? (
+            <>
+              {/* Workspace Details & Knowledge Summary */}
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                <WorkspaceOverviewForm
+                  workspace={workspace}
+                  onSuccess={() => refetch()}
+                />
+                <WorkspaceKnowledgeSummaryCard workspace={workspace} />
+              </div>
 
-            {/* Analytics Dashboard */}
-            <WorkspaceAnalyticsDashboard workspace={workspace} />
+              {/* Analytics Dashboard */}
+              <WorkspaceAnalyticsDashboard workspace={workspace} />
 
-            {/* Brand Voice */}
-            <EditableBrandVoiceCard workspace={workspace} />
-          </>
-        ) : null}
-      </div>
+              {/* Brand Voice */}
+              <EditableBrandVoiceCard workspace={workspace} />
+            </>
+          ) : null}
+        </div>
 
-      {/* Delete Dialog - Outside PageLayout to avoid conflicts */}
-      {workspace && (
-        <WorkspaceDeleteDialog
-          workspace={workspace}
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          trigger={<span />}
-          onDeleted={() => {
-            setShowDeleteDialog(false);
-            router.push("/dashboard");
-          }}
-        />
-      )}
+        {/* Delete Dialog - Outside PageLayout to avoid conflicts */}
+        {workspace && (
+          <WorkspaceDeleteDialog
+            workspace={workspace}
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            trigger={<span />}
+            onDeleted={() => {
+              setShowDeleteDialog(false);
+              router.push("/dashboard");
+            }}
+          />
+        )}
+      </CanAccess>
     </PageLayout>
   );
 }

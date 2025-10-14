@@ -16,11 +16,20 @@ import Link from "next/link";
 import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { log } from "@/lib/logger";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentStatus } from "@/types/content";
@@ -206,26 +215,48 @@ export default function WorkspaceContentPage() {
       description={`View, edit, and manage AI-generated content for ${workspace?.title || "this workspace"}.`}
       breadcrumbs={breadcrumbs}
     >
-      <DataTable<ContentData>
-        columns={columns}
-        data={contentData}
-        emptyTitle="No content available"
-        emptyDescription="Content will be automatically generated and managed through your configured flows."
-        emptyActions={emptyActions}
-        emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search content by title, type, status, platform..."
-        actions={tableActions}
-        rowActions={rowActions}
-        pageSize={10}
-        searchFields={[
-          "title",
-          "type",
-          "status",
-          "publishedTo",
-          "humanReviewer",
-          "keywords",
-        ]}
-      />
+      <CanAccess
+        permission={CONTENT_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view content in this workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  content:read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <DataTable<ContentData>
+          columns={columns}
+          data={contentData}
+          emptyTitle="No content available"
+          emptyDescription="Content will be automatically generated and managed through your configured flows."
+          emptyActions={emptyActions}
+          emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
+          searchPlaceholder="Search content by title, type, status, platform..."
+          actions={tableActions}
+          rowActions={rowActions}
+          pageSize={10}
+          searchFields={[
+            "title",
+            "type",
+            "status",
+            "publishedTo",
+            "humanReviewer",
+            "keywords",
+          ]}
+        />
+      </CanAccess>
     </PageLayout>
   );
 }

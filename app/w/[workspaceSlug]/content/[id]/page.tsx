@@ -7,13 +7,21 @@ import { toast } from "sonner";
 import { ContentEditor } from "@/components/content/content-editor";
 import { ProgressTimeline } from "@/components/content-generation/progress-timeline";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { GenerationStep } from "@/types/content-generation-progress";
@@ -445,25 +453,51 @@ export default function WorkspaceContentDetailPage({
       description={`Content status: ${content.status}`}
       breadcrumbs={breadcrumbs}
     >
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Content status:{" "}
-              <span className="font-medium">{content.status}</span>
-            </p>
-            <Button
-              variant="outline"
-              onClick={() =>
-                router.push(workspaceRoutes.content(workspaceSlug))
-              }
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Content
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <CanAccess
+        anyPermission={[CONTENT_PERMISSIONS.READ, CONTENT_PERMISSIONS.UPDATE]}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view this content.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  content.read
+                </code>{" "}
+                or{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  content.update
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">
+                Content status:{" "}
+                <span className="font-medium">{content.status}</span>
+              </p>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  router.push(workspaceRoutes.content(workspaceSlug))
+                }
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Content
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </CanAccess>
     </PageLayout>
   );
 }

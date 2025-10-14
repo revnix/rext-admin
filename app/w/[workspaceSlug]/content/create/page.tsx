@@ -5,8 +5,17 @@ import { use } from "react";
 import { toast } from "sonner";
 import { ContentCreationWizard } from "@/components/content-creation/content-creation-wizard";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentCreationFormData } from "@/types/content-creation";
@@ -147,11 +156,33 @@ export default function WorkspaceContentCreatePage({
       description={`Create new content for ${workspace?.title || "workspace"}`}
       breadcrumbs={breadcrumbs}
     >
-      <ContentCreationWizard
-        initialTopicId={topicId || undefined}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-      />
+      <CanAccess
+        permission={CONTENT_PERMISSIONS.CREATE}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to create content in this workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  content.create
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <ContentCreationWizard
+          initialTopicId={topicId || undefined}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      </CanAccess>
     </PageLayout>
   );
 }

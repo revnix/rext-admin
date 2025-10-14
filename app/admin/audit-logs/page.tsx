@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -122,102 +123,104 @@ export default function AuditLogsPage() {
         </>
       }
     >
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
-          <CardDescription>Find specific audit log entries</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Search by email */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by user email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      <AdminGuard>
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Search & Filter</CardTitle>
+            <CardDescription>Find specific audit log entries</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Search by email */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by user email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-          {/* Filters row */}
-          <div className="flex items-center gap-4">
-            <Select
-              value={actionFilter || "all"}
-              onValueChange={(value) =>
-                setActionFilter(value === "all" ? null : value)
-              }
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Actions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Actions</SelectItem>
-                <SelectItem value="user.">User Actions</SelectItem>
-                <SelectItem value="workspace.">Workspace Actions</SelectItem>
-                <SelectItem value="content.">Content Actions</SelectItem>
-                <SelectItem value="subscription.">
-                  Subscription Actions
-                </SelectItem>
-                <SelectItem value="user.impersonate">Impersonation</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={resourceTypeFilter || "all"}
-              onValueChange={(value) =>
-                setResourceTypeFilter(value === "all" ? null : value)
-              }
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Resources" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Resources</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="workspace">Workspace</SelectItem>
-                <SelectItem value="content">Content</SelectItem>
-                <SelectItem value="subscription">Subscription</SelectItem>
-                <SelectItem value="role">Role</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {(actionFilter || resourceTypeFilter || search) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setActionFilter(null);
-                  setResourceTypeFilter(null);
-                  setSearch("");
-                }}
+            {/* Filters row */}
+            <div className="flex items-center gap-4">
+              <Select
+                value={actionFilter || "all"}
+                onValueChange={(value) =>
+                  setActionFilter(value === "all" ? null : value)
+                }
               >
-                Clear Filters
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="All Actions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Actions</SelectItem>
+                  <SelectItem value="user.">User Actions</SelectItem>
+                  <SelectItem value="workspace.">Workspace Actions</SelectItem>
+                  <SelectItem value="content.">Content Actions</SelectItem>
+                  <SelectItem value="subscription.">
+                    Subscription Actions
+                  </SelectItem>
+                  <SelectItem value="user.impersonate">Impersonation</SelectItem>
+                </SelectContent>
+              </Select>
 
-      {/* Audit Logs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Audit Trail ({total.toLocaleString()} entries)</CardTitle>
-          <CardDescription>
-            {totalPages > 0 && `Page ${page + 1} of ${totalPages}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AuditLogsTable
-            logs={logs}
-            isLoading={isLoading}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            onRefresh={refetch}
-          />
-        </CardContent>
-      </Card>
+              <Select
+                value={resourceTypeFilter || "all"}
+                onValueChange={(value) =>
+                  setResourceTypeFilter(value === "all" ? null : value)
+                }
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="All Resources" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Resources</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="workspace">Workspace</SelectItem>
+                  <SelectItem value="content">Content</SelectItem>
+                  <SelectItem value="subscription">Subscription</SelectItem>
+                  <SelectItem value="role">Role</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(actionFilter || resourceTypeFilter || search) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setActionFilter(null);
+                    setResourceTypeFilter(null);
+                    setSearch("");
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Audit Logs Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Audit Trail ({total.toLocaleString()} entries)</CardTitle>
+            <CardDescription>
+              {totalPages > 0 && `Page ${page + 1} of ${totalPages}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AuditLogsTable
+              logs={logs}
+              isLoading={isLoading}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              onRefresh={refetch}
+            />
+          </CardContent>
+        </Card>
+      </AdminGuard>
     </PageLayout>
   );
 }

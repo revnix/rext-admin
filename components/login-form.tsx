@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,28 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Handle URL error parameters (e.g., session expired)
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      const errorMessages: Record<string, string> = {
+        SessionExpired: "Your session has expired. Please log in again.",
+        OAuthSignin: "Error occurred during OAuth sign in.",
+        OAuthCallback: "Error occurred during OAuth callback.",
+        OAuthCreateAccount: "Could not create OAuth account.",
+        EmailCreateAccount: "Could not create email account.",
+        Callback: "Error occurred during callback.",
+        OAuthAccountNotLinked:
+          "To confirm your identity, sign in with the same account you used originally.",
+        EmailSignin: "Check your email for the sign in link.",
+        CredentialsSignin:
+          "Sign in failed. Check the details you provided are correct.",
+        Default: "An error occurred during authentication.",
+      };
+      setError(errorMessages[urlError] || errorMessages.Default);
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -39,17 +61,40 @@ export function LoginForm({
     try {
       log.info("[AuthJS] Signing in user:", email, "Remember me:", rememberMe);
 
+      // Try to get specific error message from backend first
+      // This allows us to show detailed errors like "Account locked" before NextAuth processes it
+      const backendResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        },
+      );
+
+      if (!backendResponse.ok) {
+        // Extract specific error message from backend (e.g., account lockout)
+        const errorData = await backendResponse.json().catch(() => ({}));
+        const errorMessage =
+          errorData?.error?.message ||
+          errorData?.message ||
+          "Invalid email or password. Please check your credentials and try again.";
+        setError(errorMessage);
+        return;
+      }
+
+      // Backend validated successfully, now use NextAuth for session creation
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-        rememberMe: rememberMe.toString(), // Pass to JWT callback
+        rememberMe: rememberMe.toString(),
       });
 
       log.info("[AuthJS] Sign in result:", result);
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Authentication failed. Please try again.");
         return;
       }
 

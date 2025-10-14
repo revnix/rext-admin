@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -176,23 +177,24 @@ export default function AdminEmailTemplatesPage() {
         </Button>
       }
     >
-      <div className="space-y-6">
-        {/* Security Warning */}
-        <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Super Admin Only
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              These email templates are used system-wide across all workspaces.
-              Changes here affect all users. Ensure templates are professional,
-              compliant, and thoroughly tested before activating.
-            </p>
-          </CardContent>
-        </Card>
+      <AdminGuard>
+        <div className="space-y-6">
+          {/* Security Warning */}
+          <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Super Admin Only
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                These email templates are used system-wide across all workspaces.
+                Changes here affect all users. Ensure templates are professional,
+                compliant, and thoroughly tested before activating.
+              </p>
+            </CardContent>
+          </Card>
 
         {templates?.templates?.length === 0 ? (
           <Card>
@@ -363,7 +365,8 @@ export default function AdminEmailTemplatesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+        </div>
+      </AdminGuard>
     </PageLayout>
   );
 }

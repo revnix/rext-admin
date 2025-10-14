@@ -9,6 +9,7 @@ import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-su
 import { RevenueChart } from "@/components/admin/analytics/revenue-chart";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import {
   Card,
   CardContent,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
+import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
 
 interface AnalyticsOverview {
   data: {
@@ -162,108 +164,132 @@ export default function SubscriptionAnalyticsPage() {
       description="Comprehensive insights into subscription performance and revenue metrics"
       breadcrumbs={breadcrumbs}
     >
-      <div className="space-y-8">
-        {/* KPI Cards */}
-        {stats && (
-          <SubscriptionKPIs stats={stats} growthMetrics={growthMetrics} />
-        )}
+      <CanAccess
+        permission={SUBSCRIPTION_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view subscription analytics.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  subscription.read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-8">
+          {/* KPI Cards */}
+          {stats && (
+            <SubscriptionKPIs stats={stats} growthMetrics={growthMetrics} />
+          )}
 
-        {/* Charts and Analytics */}
-        <Tabs defaultValue="revenue" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
-            <TabsTrigger value="distribution">Plan Distribution</TabsTrigger>
-            <TabsTrigger value="retention">Cohort Retention</TabsTrigger>
-            <TabsTrigger value="subscriptions">
-              Recent Subscriptions
-            </TabsTrigger>
-          </TabsList>
+          {/* Charts and Analytics */}
+          <Tabs defaultValue="revenue" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+              <TabsTrigger value="distribution">Plan Distribution</TabsTrigger>
+              <TabsTrigger value="retention">Cohort Retention</TabsTrigger>
+              <TabsTrigger value="subscriptions">
+                Recent Subscriptions
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="revenue" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Revenue Over Time</CardTitle>
-                <CardDescription>
-                  Monthly recurring revenue, new revenue, and churn
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {historyLoading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : (
-                  <RevenueChart
-                    data={revenueHistory?.data || []}
-                    period={revenuePeriod}
-                    onPeriodChange={(p) =>
-                      setRevenuePeriod(p as typeof revenuePeriod)
-                    }
+            <TabsContent value="revenue" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Over Time</CardTitle>
+                  <CardDescription>
+                    Monthly recurring revenue, new revenue, and churn
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (
+                    <RevenueChart
+                      data={revenueHistory?.data || []}
+                      period={revenuePeriod}
+                      onPeriodChange={(p) =>
+                        setRevenuePeriod(p as typeof revenuePeriod)
+                      }
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="distribution" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Subscription Distribution by Plan</CardTitle>
+                  <CardDescription>
+                    Active subscriptions and revenue breakdown by plan
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {distributionLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (
+                    <PlanDistributionChart
+                      data={planDistribution?.data || []}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="retention" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Cohort Retention Analysis</CardTitle>
+                  <CardDescription>
+                    Month-over-month retention rates by cohort
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {cohortLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (
+                    <CohortRetentionMatrix
+                      cohorts={cohortRetention?.data?.cohorts || []}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="subscriptions" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Subscriptions</CardTitle>
+                  <CardDescription>
+                    Latest 10 subscription activations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RecentSubscriptionsTable
+                    subscriptions={recentSubscriptions || []}
                   />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="distribution" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Distribution by Plan</CardTitle>
-                <CardDescription>
-                  Active subscriptions and revenue breakdown by plan
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {distributionLoading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : (
-                  <PlanDistributionChart data={planDistribution?.data || []} />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="retention" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cohort Retention Analysis</CardTitle>
-                <CardDescription>
-                  Month-over-month retention rates by cohort
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {cohortLoading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : (
-                  <CohortRetentionMatrix
-                    cohorts={cohortRetention?.data?.cohorts || []}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="subscriptions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Subscriptions</CardTitle>
-                <CardDescription>
-                  Latest 10 subscription activations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RecentSubscriptionsTable
-                  subscriptions={recentSubscriptions || []}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </CanAccess>
     </PageLayout>
   );
 }

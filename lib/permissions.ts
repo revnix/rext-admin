@@ -102,67 +102,67 @@ export const ROLES = {
 
 // User Management
 export const USER_PERMISSIONS = {
-  READ: "user:read",
-  CREATE: "user:create",
-  UPDATE: "user:update",
-  DELETE: "user:delete",
-  MANAGE_ROLES: "user:manage_roles",
-  IMPERSONATE: "user:impersonate",
+  READ: "user.read",
+  CREATE: "user.create",
+  UPDATE: "user.update",
+  DELETE: "user.delete",
+  MANAGE_ROLES: "user.manage_roles",
+  IMPERSONATE: "user.impersonate",
 } as const;
 
 // Workspace Management
 export const WORKSPACE_PERMISSIONS = {
-  CREATE: "workspace:create",
-  READ: "workspace:read",
-  UPDATE: "workspace:update",
-  DELETE: "workspace:delete",
-  MANAGE_MEMBERS: "workspace:manage_members",
-  MANAGE_SETTINGS: "workspace:manage_settings",
+  CREATE: "workspace.create",
+  READ: "workspace.read",
+  UPDATE: "workspace.update",
+  DELETE: "workspace.delete",
+  MANAGE_MEMBERS: "workspace.manage_members",
+  MANAGE_SETTINGS: "workspace.manage_settings",
 } as const;
 
 // Content Management
 export const CONTENT_PERMISSIONS = {
-  CREATE: "content:create",
-  READ: "content:read",
-  UPDATE: "content:update",
-  DELETE: "content:delete",
-  PUBLISH: "content:publish",
-  MANAGE_WORKFLOW: "content:manage_workflow",
+  CREATE: "content.create",
+  READ: "content.read",
+  UPDATE: "content.update",
+  DELETE: "content.delete",
+  PUBLISH: "content.publish",
+  MANAGE_WORKFLOW: "content.manage_workflow",
 } as const;
 
 // Topic Management
 export const TOPIC_PERMISSIONS = {
-  CREATE: "topic:create",
-  READ: "topic:read",
-  UPDATE: "topic:update",
-  DELETE: "topic:delete",
-  MANAGE: "topic:manage",
+  CREATE: "topic.create",
+  READ: "topic.read",
+  UPDATE: "topic.update",
+  DELETE: "topic.delete",
+  MANAGE: "topic.manage",
 } as const;
 
 // Knowledge Base
 export const KNOWLEDGE_PERMISSIONS = {
-  CREATE: "knowledge:create",
-  READ: "knowledge:read",
-  UPDATE: "knowledge:update",
-  DELETE: "knowledge:delete",
-  MANAGE: "knowledge:manage",
+  CREATE: "knowledge.create",
+  READ: "knowledge.read",
+  UPDATE: "knowledge.update",
+  DELETE: "knowledge.delete",
+  MANAGE: "knowledge.manage",
 } as const;
 
 // Subscription Management
 export const SUBSCRIPTION_PERMISSIONS = {
-  READ: "subscription:read",
-  CREATE: "subscription:create",
-  UPDATE: "subscription:update",
-  CANCEL: "subscription:cancel",
-  ANALYTICS: "subscription:analytics",
+  READ: "subscription.read",
+  CREATE: "subscription.create",
+  UPDATE: "subscription.update",
+  CANCEL: "subscription.cancel",
+  ANALYTICS: "subscription.analytics",
 } as const;
 
 // Media Management
 export const MEDIA_PERMISSIONS = {
-  UPLOAD: "media:upload",
-  READ: "media:read",
-  UPDATE: "media:update",
-  DELETE: "media:delete",
+  UPLOAD: "media.create", // 'create' = upload in backend
+  READ: "media.view", // 'view' = read in backend
+  UPDATE: "media.update",
+  DELETE: "media.delete",
 } as const;
 
 // System/Admin

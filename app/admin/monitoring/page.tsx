@@ -7,6 +7,7 @@ import { ErrorLogsTable } from "@/components/admin/monitoring/error-logs-table";
 import { SystemHealthCards } from "@/components/admin/monitoring/system-health-cards";
 import { UsageCharts } from "@/components/admin/monitoring/usage-charts";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   Card,
   CardContent,
@@ -196,11 +197,12 @@ export default function MonitoringPage() {
       description="Monitor system health, errors, and platform usage"
       breadcrumbs={breadcrumbs}
     >
-      <div className="space-y-8">
-        {/* System Health Cards */}
-        {health && (
-          <SystemHealthCards health={health} isLoading={healthLoading} />
-        )}
+      <AdminGuard>
+        <div className="space-y-8">
+          {/* System Health Cards */}
+          {health && (
+            <SystemHealthCards health={health} isLoading={healthLoading} />
+          )}
 
         {/* Tabs for detailed monitoring */}
         <Tabs defaultValue="health" className="space-y-6">
@@ -425,7 +427,8 @@ export default function MonitoringPage() {
             />
           </TabsContent>
         </Tabs>
-      </div>
+        </div>
+      </AdminGuard>
     </PageLayout>
   );
 }

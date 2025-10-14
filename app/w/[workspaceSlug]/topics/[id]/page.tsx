@@ -3,7 +3,10 @@
 import { notFound } from "next/navigation";
 import { use } from "react";
 import { TopicDetailClient } from "@/app/topics/topic-detail-client";
+import { CanAccess } from "@/components/permissions/can-access";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTopic } from "@/hooks/use-topics";
+import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 
 type WorkspaceTopicDetailPageProps = {
   params: Promise<{
@@ -35,5 +38,27 @@ export default function WorkspaceTopicDetailPage({
   }
 
   // Workspace context is available via useWorkspace hook in child components
-  return <TopicDetailClient topic={topic} />;
+  return (
+    <CanAccess
+      permission={TOPIC_PERMISSIONS.READ}
+      fallback={
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to view this topic.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Required permission:{" "}
+              <code className="text-xs bg-muted px-1 rounded">topic.read</code>
+            </p>
+          </CardContent>
+        </Card>
+      }
+    >
+      <TopicDetailClient topic={topic} />
+    </CanAccess>
+  );
 }
