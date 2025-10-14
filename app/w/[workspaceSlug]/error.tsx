@@ -49,7 +49,7 @@ export default function WorkspaceError({
               Try Again
             </Button>
             <Button asChild variant="outline" className="flex-1">
-              <Link href="/workspaces">
+              <Link href="/dashboard">
                 <Home className="h-4 w-4 mr-2" />
                 Workspaces
               </Link>

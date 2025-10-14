@@ -11,8 +11,10 @@
 export const WORKSPACE_PAGES = [
   "topics",
   "content",
-  "analytics",
   "users",
+  "knowledge",
+  "media",
+  "overview",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -52,11 +54,6 @@ export const workspaceRoutes = {
   users: (workspaceSlug: string) => `/w/${workspaceSlug}/users`,
 
   /**
-   * Analytics route
-   */
-  analytics: (workspaceSlug: string) => `/w/${workspaceSlug}/analytics`,
-
-  /**
    * Knowledge routes
    */
   knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
@@ -69,9 +66,9 @@ export const workspaceRoutes = {
   overview: (workspaceSlug: string) => `/w/${workspaceSlug}/overview`,
 
   /**
-   * Members route
+   * Media route
    */
-  members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
+  media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
 } as const;
 
 /**
@@ -144,14 +141,16 @@ export function buildWorkspacePath(
   const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
     topics: workspaceRoutes.topics,
     content: workspaceRoutes.content,
-    analytics: workspaceRoutes.analytics,
     users: workspaceRoutes.users,
+    knowledge: workspaceRoutes.knowledge,
+    media: workspaceRoutes.media,
+    overview: workspaceRoutes.overview,
   };
 
   const routeFn = routeMap[pageSegment];
   return routeFn
     ? routeFn(workspaceSlug)
-    : workspaceRoutes.topics(workspaceSlug);
+    : workspaceRoutes.overview(workspaceSlug);
 }
 
 /**

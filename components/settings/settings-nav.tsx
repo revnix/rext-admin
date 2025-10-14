@@ -17,18 +17,18 @@ const settingsRoutes = [
     icon: User,
   },
   {
-    label: "Notifications",
-    href: "/settings/notifications",
-    icon: Bell,
-  },
-  {
     label: "Security",
     href: "/settings/security",
     icon: Shield,
   },
   {
-    label: "Subscription",
-    href: "/settings/subscription",
+    label: "Notifications",
+    href: "/settings/notifications",
+    icon: Bell,
+  },
+  {
+    label: "Billing",
+    href: "/settings/billing",
     icon: CreditCard,
   },
 ];

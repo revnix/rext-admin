@@ -70,6 +70,7 @@ function BillingDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -374,6 +375,12 @@ function BillingDashboardContent() {
                 {portalLoading ? "Loading..." : "Manage Billing"}
                 <ExternalLink className="ml-2 h-4 w-4" />
               </Button>
+              <Button
+                variant="default"
+                onClick={() => setShowPlans(!showPlans)}
+              >
+                {showPlans ? "Hide Plans" : "Change Plan"}
+              </Button>
               {!subscription.cancelled_at && (
                 <Button
                   variant="destructive"
@@ -385,7 +392,15 @@ function BillingDashboardContent() {
               )}
             </>
           ) : (
-            <Button onClick={() => router.push("/pricing")}>View Plans</Button>
+            <>
+              <Button onClick={() => router.push("/pricing")}>View Plans</Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowPlans(!showPlans)}
+              >
+                {showPlans ? "Hide Plans" : "Compare Plans"}
+              </Button>
+            </>
           )}
         </CardFooter>
       </Card>
@@ -518,6 +533,144 @@ function BillingDashboardContent() {
                   </AlertDescription>
                 </Alert>
               )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Available Plans Section */}
+      {showPlans && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Plans</CardTitle>
+            <CardDescription>
+              Compare plans and upgrade to unlock more features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-3">
+              {/* Free Plan */}
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle>Free</CardTitle>
+                  <CardDescription>Perfect for getting started</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <span className="text-3xl font-bold">$0</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                  <Separator />
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />1 Workspace
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />3 Team Members
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />10 Topics
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />100 Knowledge Items
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    disabled={!subscription}
+                  >
+                    Current Plan
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Pro Plan */}
+              <Card className="border-2 border-primary">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Pro</CardTitle>
+                      <CardDescription>For growing teams</CardDescription>
+                    </div>
+                    <Badge>Popular</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <span className="text-3xl font-bold">$29</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                  <Separator />
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />5 Workspaces
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />15 Team Members
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />100 Topics
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />1,000 Knowledge Items
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />Priority Support
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    onClick={() => router.push("/pricing")}
+                  >
+                    Upgrade to Pro
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Enterprise Plan */}
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle>Enterprise</CardTitle>
+                  <CardDescription>For large organizations</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <span className="text-3xl font-bold">Custom</span>
+                  </div>
+                  <Separator />
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />Unlimited Workspaces
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />Unlimited Team Members
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />Unlimited Topics
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />Unlimited Knowledge
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />Dedicated Support
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={() => router.push("/pricing")}
+                  >
+                    Contact Sales
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           </CardContent>
         </Card>
       )}

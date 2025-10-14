@@ -132,7 +132,7 @@ export default function WorkspaceMediaPage() {
   };
 
   const breadcrumbs = [
-    { label: "Workspaces", href: "/workspaces" },
+    { label: "Dashboard", href: "/dashboard" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

@@ -73,25 +73,27 @@ export function WorkspaceSwitcher() {
     // Extract current page segment from pathname
     const currentPageSegment = extractWorkspacePageSegment(pathname);
 
-    // Determine target path: preserve current page or use last visited page or default to topics
+    // Determine target path: preserve current page or use last visited page or default to overview
     let targetPageSegment = currentPageSegment || null;
 
     // If no current page, try to use last visited path if it's a valid page segment
     if (!targetPageSegment && lastWorkspacePath) {
-      type ValidSegment = "topics" | "content" | "analytics" | "users";
+      type ValidSegment = "topics" | "content" | "users" | "knowledge" | "media" | "overview";
       const validSegments: readonly ValidSegment[] = [
         "topics",
         "content",
-        "analytics",
         "users",
+        "knowledge",
+        "media",
+        "overview",
       ];
       if (validSegments.includes(lastWorkspacePath as ValidSegment)) {
         targetPageSegment = lastWorkspacePath as ValidSegment;
       }
     }
 
-    // Default to topics if still no valid segment
-    const finalSegment = targetPageSegment || "topics";
+    // Default to overview if still no valid segment
+    const finalSegment = targetPageSegment || "overview";
 
     // Build new path with same page in new workspace
     const newPath = buildWorkspacePath(workspace.slug, finalSegment);
@@ -217,12 +219,12 @@ export function WorkspaceSwitcher() {
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/workspaces" className="gap-2 p-2">
+              <Link href="/w/create" className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <Plus className="size-4" />
                 </div>
                 <div className="text-muted-foreground font-medium">
-                  Manage Workspaces
+                  Create Workspace
                 </div>
               </Link>
             </DropdownMenuItem>

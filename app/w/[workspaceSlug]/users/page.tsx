@@ -9,7 +9,7 @@ export default function WorkspaceUsersPage() {
   const { workspace, workspaceSlug } = useWorkspace();
 
   const breadcrumbs = [
-    { label: "Workspaces", href: "/workspaces" },
+    { label: "Dashboard", href: "/dashboard" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

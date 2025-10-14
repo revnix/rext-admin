@@ -24,7 +24,7 @@ export default function WorkspaceContentCreatePage({
   const topicId = searchParams.get("topicId");
 
   const breadcrumbs = [
-    { label: "Workspaces", href: "/workspaces" },
+    { label: "Dashboard", href: "/dashboard" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

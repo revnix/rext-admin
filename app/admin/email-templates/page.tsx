@@ -10,7 +10,6 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -48,11 +47,19 @@ const templateTypeLabels: Record<string, string> = {
   role_changed: "Role Changed",
   member_removed: "Member Removed",
   welcome: "Welcome",
+  password_reset: "Password Reset",
+  email_verification: "Email Verification",
 };
 
-export default function EmailTemplatesPage() {
-  const params = useParams();
-  const workspaceSlug = params?.slug as string;
+/**
+ * Admin Email Templates Page
+ *
+ * Super admin only page for managing system-wide email templates.
+ * These templates are used across all workspaces for consistent branding.
+ *
+ * Security: Only super admins can access this page.
+ */
+export default function AdminEmailTemplatesPage() {
   const queryClient = useQueryClient();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -62,29 +69,19 @@ export default function EmailTemplatesPage() {
   const [deletingTemplate, setDeletingTemplate] =
     useState<EmailTemplate | null>(null);
 
-  // Fetch workspace by slug to get ID
-  const { data: workspaceResponse } = useQuery({
-    queryKey: ["workspace", workspaceSlug],
-    queryFn: () => apiClient.workspaces.getBySlug(workspaceSlug),
-    enabled: !!workspaceSlug,
-  });
-
-  const workspaceId = workspaceResponse?.workspace?.id;
-
-  // Fetch templates
+  // Fetch system-wide templates (not workspace-specific)
+  // TODO: Update API to support system-wide templates (no workspaceId)
   const {
     data: templates,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["email-templates", workspaceId],
+    queryKey: ["system-email-templates"],
     queryFn: () => {
-      if (!workspaceId) {
-        throw new Error("Workspace ID is required");
-      }
-      return apiClient.emailTemplates.list(workspaceId);
+      // TODO: Replace with system-wide API endpoint
+      // For now, using a placeholder workspace ID
+      return apiClient.emailTemplates.list("system");
     },
-    enabled: !!workspaceId,
   });
 
   // Delete mutation
@@ -93,7 +90,7 @@ export default function EmailTemplatesPage() {
       apiClient.emailTemplates.delete(templateId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["email-templates", workspaceId],
+        queryKey: ["system-email-templates"],
       });
       toast.success("Template deleted successfully");
       setDeletingTemplate(null);
@@ -114,7 +111,7 @@ export default function EmailTemplatesPage() {
     }) => apiClient.emailTemplates.update(templateId, { is_active: !isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["email-templates", workspaceId],
+        queryKey: ["system-email-templates"],
       });
       toast.success("Template status updated");
     },
@@ -125,7 +122,7 @@ export default function EmailTemplatesPage() {
 
   const handleSaveComplete = () => {
     queryClient.invalidateQueries({
-      queryKey: ["email-templates", workspaceId],
+      queryKey: ["system-email-templates"],
     });
     setIsCreateDialogOpen(false);
     setEditingTemplate(null);
@@ -165,9 +162,9 @@ export default function EmailTemplatesPage() {
     <div className="container mx-auto space-y-6 py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Email Templates</h1>
+          <h1 className="text-3xl font-bold tracking-tight">System Email Templates</h1>
           <p className="text-muted-foreground">
-            Customize email notifications for your workspace
+            Manage system-wide email templates used across all workspaces
           </p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -176,13 +173,29 @@ export default function EmailTemplatesPage() {
         </Button>
       </div>
 
+      {/* Security Warning */}
+      <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Super Admin Only
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            These email templates are used system-wide across all workspaces. Changes here affect all users.
+            Ensure templates are professional, compliant, and thoroughly tested before activating.
+          </p>
+        </CardContent>
+      </Card>
+
       {templates?.templates?.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Mail className="h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No custom templates</h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Create custom email templates to personalize notifications
+              Create system-wide email templates for consistent communication
             </p>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -201,7 +214,7 @@ export default function EmailTemplatesPage() {
                       {templateTypeLabels[template.template_type] ||
                         template.template_type}
                       {template.is_default && (
-                        <Badge variant="outline">Default</Badge>
+                        <Badge variant="outline">System Default</Badge>
                       )}
                       {template.is_active ? (
                         <Badge variant="default" className="gap-1">
@@ -274,46 +287,42 @@ export default function EmailTemplatesPage() {
       )}
 
       {/* Create Dialog */}
-      {workspaceId && (
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Email Template</DialogTitle>
-              <DialogDescription>
-                Create a custom email template for your workspace notifications
-              </DialogDescription>
-            </DialogHeader>
-            <EmailTemplateEditor
-              workspaceId={workspaceId}
-              onSave={handleSaveComplete}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create System Email Template</DialogTitle>
+            <DialogDescription>
+              Create a system-wide email template used across all workspaces
+            </DialogDescription>
+          </DialogHeader>
+          <EmailTemplateEditor
+            workspaceId="system"
+            onSave={handleSaveComplete}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
-      {workspaceId && (
-        <Dialog
-          open={!!editingTemplate}
-          onOpenChange={(open) => !open && setEditingTemplate(null)}
-        >
-          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Email Template</DialogTitle>
-              <DialogDescription>
-                Update your custom email template
-              </DialogDescription>
-            </DialogHeader>
-            {editingTemplate && (
-              <EmailTemplateEditor
-                workspaceId={workspaceId}
-                template={editingTemplate}
-                onSave={handleSaveComplete}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog
+        open={!!editingTemplate}
+        onOpenChange={(open) => !open && setEditingTemplate(null)}
+      >
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit System Email Template</DialogTitle>
+            <DialogDescription>
+              Update the system-wide email template
+            </DialogDescription>
+          </DialogHeader>
+          {editingTemplate && (
+            <EmailTemplateEditor
+              workspaceId="system"
+              template={editingTemplate}
+              onSave={handleSaveComplete}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog
@@ -322,10 +331,10 @@ export default function EmailTemplatesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Email Template</AlertDialogTitle>
+            <AlertDialogTitle>Delete System Email Template</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this template? This action cannot
-              be undone. The system will fall back to the default template.
+              Are you sure you want to delete this system template? This action cannot
+              be undone. The system will fall back to the default template for all workspaces.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

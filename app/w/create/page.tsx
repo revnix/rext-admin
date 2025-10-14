@@ -30,8 +30,8 @@ export default function CreateWorkspacePage() {
   );
 
   const breadcrumbs = [
-    { label: "Workspaces", href: "/workspaces" },
-    { label: "Create" },
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Create Workspace" },
   ];
 
   return (
@@ -45,10 +45,10 @@ export default function CreateWorkspacePage() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <ChevronLeft className="h-4 w-4" />
           <Link
-            href="/workspaces"
+            href="/dashboard"
             className="hover:text-foreground transition-colors"
           >
-            Back to Workspaces
+            Back to Dashboard
           </Link>
         </div>
 

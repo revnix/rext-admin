@@ -3,10 +3,9 @@
 import {
   Bell,
   Brain,
-  ChartBar as ChartBarIcon,
   CreditCard,
-  Database,
   FileText,
+  Image,
   LayoutDashboard,
   Library,
   Mail,
@@ -57,51 +56,51 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Overview",
           url: currentWorkspace?.slug
-            ? `/w/${currentWorkspace.slug}/overview`
-            : "/workspaces",
+            ? workspaceRoutes.overview(currentWorkspace.slug)
+            : "/dashboard",
           icon: LayoutDashboard,
         },
         {
           title: "Topics",
           url: currentWorkspace?.slug
             ? workspaceRoutes.topics(currentWorkspace.slug)
-            : "/workspaces",
+            : "/dashboard",
           icon: Library,
         },
         {
           title: "Content",
           url: currentWorkspace?.slug
             ? workspaceRoutes.content(currentWorkspace.slug)
-            : "/workspaces",
+            : "/dashboard",
           icon: FileText,
+        },
+        {
+          title: "Knowledge",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.knowledge(currentWorkspace.slug)
+            : "/dashboard",
+          icon: Brain,
+        },
+        {
+          title: "Media",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.media(currentWorkspace.slug)
+            : "/dashboard",
+          icon: Image,
         },
         {
           title: "Users",
           url: currentWorkspace?.slug
             ? workspaceRoutes.users(currentWorkspace.slug)
-            : "/workspaces",
+            : "/dashboard",
           icon: Users,
           anyPermission: [PERMISSIONS.USER_READ],
-        },
-        {
-          title: "Analytics",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.analytics(currentWorkspace.slug)
-            : "/workspaces",
-          icon: ChartBarIcon,
         },
       ],
     },
     {
-      groupLabel: "Knowledge",
+      groupLabel: "Integrations",
       items: [
-        {
-          title: "Knowledge",
-          url: currentWorkspace?.slug
-            ? `/w/${currentWorkspace.slug}/knowledge`
-            : "/workspaces",
-          icon: Brain,
-        },
         {
           title: "Integrations",
           url: "/integrations",
@@ -122,31 +121,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ],
     },
     {
-      groupLabel: "Manage",
-      items: [
-        {
-          title: "Workspaces",
-          url: "/workspaces",
-          icon: Database,
-          anyPermission: [
-            PERMISSIONS.WORKSPACE_READ,
-            PERMISSIONS.WORKSPACE_CREATE,
-          ],
-        },
-      ],
-    },
-    {
       groupLabel: "Personal",
       items: [
-        {
-          title: "Settings",
-          url: "/settings/general",
-          icon: Settings2,
-        },
         {
           title: "Profile",
           url: "/profile",
           icon: User,
+        },
+        {
+          title: "Settings",
+          url: "/settings/account",
+          icon: Settings2,
         },
       ],
     },
