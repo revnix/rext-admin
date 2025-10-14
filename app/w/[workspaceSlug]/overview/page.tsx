@@ -114,7 +114,11 @@ export default function WorkspaceOverviewPage() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">-</div>
+                <div className="text-2xl font-bold">
+                  {workspace?.team_metrics?.total_members ??
+                    workspace?.members_count ??
+                    0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Team members in workspace
                 </p>
@@ -124,27 +128,39 @@ export default function WorkspaceOverviewPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Knowledge Bases
+                  Knowledge Items
                 </CardTitle>
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">-</div>
+                <div className="text-2xl font-bold">
+                  {workspace?.knowledge_counts?.total_knowledge_items ??
+                    workspace?.knowledge_stats?.total ??
+                    0}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Active knowledge sources
+                  Websites, files, and notes
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Topics</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Words
+                </CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">-</div>
+                <div className="text-2xl font-bold">
+                  {workspace?.content_metrics?.total_words
+                    ? `${(workspace.content_metrics.total_words / 1000).toFixed(
+                        1,
+                      )}k`
+                    : "0"}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Content topics created
+                  Knowledge base content
                 </p>
               </CardContent>
             </Card>
@@ -157,7 +173,9 @@ export default function WorkspaceOverviewPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">-</div>
+                <div className="text-2xl font-bold">
+                  {workspace?.content_count ?? 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Articles and posts
                 </p>

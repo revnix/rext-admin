@@ -179,245 +179,247 @@ export default function WorkspaceMediaPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">media:read</code>
+                <code className="text-xs bg-muted px-1 rounded">
+                  media:read
+                </code>
               </p>
             </CardContent>
           </Card>
         }
       >
         <div className="space-y-6">
-        {/* Stats Cards */}
-        {usage && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Files
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{usage.total_files}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Across all types
-                </p>
-              </CardContent>
-            </Card>
+          {/* Stats Cards */}
+          {usage && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Files
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{usage.total_files}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Across all types
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Storage Used
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatFileSize(usage.total_size)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {usage.usage_percentage.toFixed(1)}% of{" "}
-                  {formatFileSize(usage.storage_limit)}
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Storage Used
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatFileSize(usage.total_size)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {usage.usage_percentage.toFixed(1)}% of{" "}
+                    {formatFileSize(usage.storage_limit)}
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Images
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {usage.by_type.image.count}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatFileSize(usage.by_type.image.size)}
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Images
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {usage.by_type.image.count}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatFileSize(usage.by_type.image.size)}
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {usage.by_type.document.count}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatFileSize(usage.by_type.document.size)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {usage.by_type.document.count}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatFileSize(usage.by_type.document.size)}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-        {/* Storage Quota Warning */}
-        {usage && usage.usage_percentage >= 80 && (
-          <Alert
-            variant={usage.usage_percentage >= 95 ? "destructive" : "default"}
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>
-              {usage.usage_percentage >= 95
-                ? "Storage Limit Reached"
-                : "Storage Almost Full"}
-            </AlertTitle>
-            <AlertDescription>
-              {usage.usage_percentage >= 95 ? (
-                <>
-                  You've used {usage.usage_percentage.toFixed(1)}% of your
-                  storage limit ({formatFileSize(usage.total_size)} /{" "}
-                  {formatFileSize(usage.storage_limit)}). Please delete some
-                  files or upgrade your plan to upload more media.
-                </>
-              ) : (
-                <>
-                  You've used {usage.usage_percentage.toFixed(1)}% of your
-                  storage limit ({formatFileSize(usage.total_size)} /{" "}
-                  {formatFileSize(usage.storage_limit)}). Consider upgrading
-                  your plan soon.
-                </>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Storage Progress Bar */}
-        {usage && (
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">
-                  Storage Usage
-                </CardTitle>
-                <span className="text-sm text-muted-foreground">
-                  {formatFileSize(usage.total_size)} /{" "}
-                  {formatFileSize(usage.storage_limit)}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Progress
-                value={usage.usage_percentage}
-                className={`h-2 ${
-                  usage.usage_percentage >= 95
-                    ? "[&>div]:bg-destructive"
-                    : usage.usage_percentage >= 80
-                      ? "[&>div]:bg-yellow-500"
-                      : ""
-                }`}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                {usage.usage_percentage.toFixed(1)}% used
-                {usage.usage_percentage < 100 && (
+          {/* Storage Quota Warning */}
+          {usage && usage.usage_percentage >= 80 && (
+            <Alert
+              variant={usage.usage_percentage >= 95 ? "destructive" : "default"}
+            >
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>
+                {usage.usage_percentage >= 95
+                  ? "Storage Limit Reached"
+                  : "Storage Almost Full"}
+              </AlertTitle>
+              <AlertDescription>
+                {usage.usage_percentage >= 95 ? (
                   <>
-                    {" "}
-                    • {formatFileSize(usage.storage_limit - usage.total_size)}{" "}
-                    remaining
+                    You've used {usage.usage_percentage.toFixed(1)}% of your
+                    storage limit ({formatFileSize(usage.total_size)} /{" "}
+                    {formatFileSize(usage.storage_limit)}). Please delete some
+                    files or upgrade your plan to upload more media.
+                  </>
+                ) : (
+                  <>
+                    You've used {usage.usage_percentage.toFixed(1)}% of your
+                    storage limit ({formatFileSize(usage.total_size)} /{" "}
+                    {formatFileSize(usage.storage_limit)}). Consider upgrading
+                    your plan soon.
                   </>
                 )}
-              </p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Storage Progress Bar */}
+          {usage && (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium">
+                    Storage Usage
+                  </CardTitle>
+                  <span className="text-sm text-muted-foreground">
+                    {formatFileSize(usage.total_size)} /{" "}
+                    {formatFileSize(usage.storage_limit)}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Progress
+                  value={usage.usage_percentage}
+                  className={`h-2 ${
+                    usage.usage_percentage >= 95
+                      ? "[&>div]:bg-destructive"
+                      : usage.usage_percentage >= 80
+                        ? "[&>div]:bg-yellow-500"
+                        : ""
+                  }`}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  {usage.usage_percentage.toFixed(1)}% used
+                  {usage.usage_percentage < 100 && (
+                    <>
+                      {" "}
+                      • {formatFileSize(usage.storage_limit - usage.total_size)}{" "}
+                      remaining
+                    </>
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Media Files</CardTitle>
+              <CardDescription>
+                {pagination?.total || 0}{" "}
+                {pagination?.total === 1 ? "file" : "files"} in{" "}
+                {workspace?.title || "this workspace"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Filter Bar */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                {/* Search */}
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search by name, tags..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* File Type Filter */}
+                <Select
+                  value={fileType}
+                  onValueChange={(
+                    value: "all" | "image" | "document" | "video",
+                  ) => setFileType(value)}
+                >
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="File type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="image">Images</SelectItem>
+                    <SelectItem value="document">Documents</SelectItem>
+                    <SelectItem value="video">Videos</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Folder Filter */}
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filter by folder..."
+                    value={folder}
+                    onChange={(e) => setFolder(e.target.value)}
+                    className="w-full sm:w-[200px]"
+                  />
+                </div>
+              </div>
+
+              {/* Media Grid */}
+              {error ? (
+                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
+                  <ImageIcon className="h-12 w-12 text-destructive mb-4" />
+                  <p className="text-lg font-medium mb-2 text-destructive">
+                    Failed to load media
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    There was an error loading the media library
+                  </p>
+                  <Button variant="outline" onClick={handleRefresh}>
+                    Try Again
+                  </Button>
+                </div>
+              ) : (
+                <MediaGrid
+                  media={filteredMedia}
+                  onSelect={setSelectedMedia}
+                  isLoading={isLoading}
+                />
+              )}
             </CardContent>
           </Card>
-        )}
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Media Files</CardTitle>
-            <CardDescription>
-              {pagination?.total || 0}{" "}
-              {pagination?.total === 1 ? "file" : "files"} in{" "}
-              {workspace?.title || "this workspace"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              {/* Search */}
-              <div className="flex-1">
-                <Input
-                  placeholder="Search by name, tags..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
+          {/* Upload Dialog */}
+          <MediaUploadDialog
+            workspaceId={workspace?.id || ""}
+            open={showUploadDialog}
+            onOpenChange={setShowUploadDialog}
+            onUploaded={handleUploaded}
+          />
 
-              {/* File Type Filter */}
-              <Select
-                value={fileType}
-                onValueChange={(
-                  value: "all" | "image" | "document" | "video",
-                ) => setFileType(value)}
-              >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="File type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="image">Images</SelectItem>
-                  <SelectItem value="document">Documents</SelectItem>
-                  <SelectItem value="video">Videos</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Folder Filter */}
-              <div className="flex items-center gap-2">
-                <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Filter by folder..."
-                  value={folder}
-                  onChange={(e) => setFolder(e.target.value)}
-                  className="w-full sm:w-[200px]"
-                />
-              </div>
-            </div>
-
-            {/* Media Grid */}
-            {error ? (
-              <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
-                <ImageIcon className="h-12 w-12 text-destructive mb-4" />
-                <p className="text-lg font-medium mb-2 text-destructive">
-                  Failed to load media
-                </p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  There was an error loading the media library
-                </p>
-                <Button variant="outline" onClick={handleRefresh}>
-                  Try Again
-                </Button>
-              </div>
-            ) : (
-              <MediaGrid
-                media={filteredMedia}
-                onSelect={setSelectedMedia}
-                isLoading={isLoading}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Upload Dialog */}
-        <MediaUploadDialog
-          workspaceId={workspace?.id || ""}
-          open={showUploadDialog}
-          onOpenChange={setShowUploadDialog}
-          onUploaded={handleUploaded}
-        />
-
-        {/* Detail Sheet */}
-        <MediaDetailSheet
-          workspaceId={workspace?.id || ""}
-          media={selectedMedia}
-          open={!!selectedMedia}
-          onOpenChange={(open) => !open && setSelectedMedia(null)}
-          onDeleted={handleDeleted}
-        />
+          {/* Detail Sheet */}
+          <MediaDetailSheet
+            workspaceId={workspace?.id || ""}
+            media={selectedMedia}
+            open={!!selectedMedia}
+            onOpenChange={(open) => !open && setSelectedMedia(null)}
+            onDeleted={handleDeleted}
+          />
         </div>
       </CanAccess>
     </PageLayout>

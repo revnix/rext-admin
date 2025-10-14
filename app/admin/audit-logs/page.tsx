@@ -161,7 +161,9 @@ export default function AuditLogsPage() {
                   <SelectItem value="subscription.">
                     Subscription Actions
                   </SelectItem>
-                  <SelectItem value="user.impersonate">Impersonation</SelectItem>
+                  <SelectItem value="user.impersonate">
+                    Impersonation
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
@@ -204,7 +206,9 @@ export default function AuditLogsPage() {
         {/* Audit Logs Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Audit Trail ({total.toLocaleString()} entries)</CardTitle>
+            <CardTitle>
+              Audit Trail ({total.toLocaleString()} entries)
+            </CardTitle>
             <CardDescription>
               {totalPages > 0 && `Page ${page + 1} of ${totalPages}`}
             </CardDescription>

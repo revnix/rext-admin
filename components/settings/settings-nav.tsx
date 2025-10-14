@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CreditCard, Settings, Shield, User } from "lucide-react";
+import { Bell, CreditCard, Laptop, Settings, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,11 @@ const settingsRoutes = [
     label: "Security",
     href: "/settings/security",
     icon: Shield,
+  },
+  {
+    label: "Sessions",
+    href: "/settings/sessions",
+    icon: Laptop,
   },
   {
     label: "Notifications",

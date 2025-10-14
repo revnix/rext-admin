@@ -4,7 +4,13 @@ import { notFound } from "next/navigation";
 import { use } from "react";
 import { TopicDetailClient } from "@/app/topics/topic-detail-client";
 import { CanAccess } from "@/components/permissions/can-access";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useTopic } from "@/hooks/use-topics";
 import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 

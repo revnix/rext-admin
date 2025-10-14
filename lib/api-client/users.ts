@@ -28,6 +28,23 @@ export interface UsersListResponse {
   workspace_id?: string | null;
 }
 
+export interface UserSession {
+  id: string;
+  device_name: string;
+  device_type: "desktop" | "mobile" | "tablet";
+  ip_address: string | null;
+  user_agent: string;
+  created_at: string;
+  last_activity_at: string | null;
+  is_current: boolean;
+}
+
+export interface SessionsResponse {
+  sessions: UserSession[];
+  total_count: number;
+  active_count: number;
+}
+
 export function createUsersNamespace(client: ApiClient) {
   return {
     /**
@@ -48,6 +65,33 @@ export function createUsersNamespace(client: ApiClient) {
     get: async (userId: string): Promise<User> => {
       return client.request<User>(`/api/v1/user/${userId}`, {
         method: "GET",
+      });
+    },
+
+    /**
+     * Get all active sessions for current user
+     */
+    getSessions: async (): Promise<SessionsResponse> => {
+      return client.request<SessionsResponse>("/api/v1/user/sessions", {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Revoke a specific session (logout from that device)
+     */
+    revokeSession: async (sessionId: string): Promise<void> => {
+      return client.request<void>(`/api/v1/user/sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+    },
+
+    /**
+     * Revoke all other sessions (logout from all other devices)
+     */
+    revokeAllOtherSessions: async (): Promise<void> => {
+      return client.request<void>("/api/v1/user/sessions/revoke-all", {
+        method: "POST",
       });
     },
   };

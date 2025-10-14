@@ -82,7 +82,13 @@ export default {
           );
 
           if (!response.ok) {
-            log.error("[AuthJS] Login failed:", response.status);
+            // Extract detailed error message from backend
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage =
+              errorData?.error?.message ||
+              errorData?.message ||
+              "Invalid email or password";
+            log.error("[AuthJS] Login failed:", response.status, errorMessage);
             return null;
           }
 
@@ -186,82 +192,61 @@ export default {
             token.role,
           );
         } else {
-          // For OAuth providers, register/login user with backend
+          // For OAuth providers, use dedicated OAuth login endpoint
           try {
             log.info("[AuthJS] OAuth sign-in with", account?.provider);
 
-            // Check if user exists by calling backend login
-            // For OAuth users, we'll attempt login first
-            const loginResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
+            // Call dedicated OAuth login endpoint
+            // This handles: login existing user, link to existing email, or create new user
+            const oauthResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/oauth/login`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  email: user.email,
-                  // For OAuth users without password, use a placeholder
-                  password: `oauth_${account?.providerAccountId}`,
+                  provider: account?.provider,
+                  provider_account_id: account?.providerAccountId,
+                  provider_email: user.email,
+                  provider_name: user.name || "",
+                  provider_avatar_url: user.image,
+                  // Optional: store OAuth tokens for API calls
+                  access_token: account?.access_token,
+                  refresh_token: account?.refresh_token,
+                  token_expires_at: account?.expires_at
+                    ? new Date(account.expires_at * 1000).toISOString()
+                    : null,
                 }),
               },
             );
 
-            if (!loginResponse.ok) {
-              // User doesn't exist, register them
-              log.info("[AuthJS] OAuth user not found, registering...");
-
-              const [firstName, ...lastNameParts] = (user.name || "").split(
-                " ",
-              );
-              const registerResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    email: user.email,
-                    password: `oauth_${account?.providerAccountId}_temp`,
-                    first_name: firstName || "User",
-                    last_name: lastNameParts.join(" ") || "",
-                  }),
-                },
-              );
-
-              if (!registerResponse.ok) {
-                log.error("[AuthJS] OAuth registration failed");
-                return token;
-              }
-
-              const registerResponseData = await registerResponse.json();
-              // Extract data from wrapped response
-              const registerData =
-                registerResponseData.data || registerResponseData;
-              token.id = registerData.user.id;
-              token.email = registerData.user.email;
-              token.name =
-                `${registerData.user.first_name} ${registerData.user.last_name}`.trim();
-              token.picture = user.image;
-              token.accessToken = registerData.access_token;
-              token.refreshToken = registerData.refresh_token;
-              token.role = registerData.user.roles?.[0];
-              token.permissions = registerData.user.permissions || [];
-            } else {
-              // User exists, use their data
-              const loginResponseData = await loginResponse.json();
-              // Extract data from wrapped response
-              const loginData = loginResponseData.data || loginResponseData;
-              token.id = loginData.user.id;
-              token.email = loginData.user.email;
-              token.name =
-                `${loginData.user.first_name} ${loginData.user.last_name}`.trim();
-              token.picture = loginData.user.avatar_url || user.image;
-              token.accessToken = loginData.access_token;
-              token.refreshToken = loginData.refresh_token;
-              token.role = loginData.user.roles?.[0];
-              token.permissions = loginData.user.permissions || [];
+            if (!oauthResponse.ok) {
+              const errorData = await oauthResponse.json().catch(() => ({}));
+              const errorMessage =
+                errorData?.error?.message ||
+                errorData?.message ||
+                "OAuth login failed";
+              log.error("[AuthJS] OAuth login failed:", errorMessage);
+              return token;
             }
+
+            const oauthResponseData = await oauthResponse.json();
+            // Extract data from wrapped response
+            const oauthData = oauthResponseData.data || oauthResponseData;
+
+            token.id = oauthData.user.id;
+            token.email = oauthData.user.email;
+            token.name =
+              `${oauthData.user.first_name} ${oauthData.user.last_name}`.trim();
+            token.picture = oauthData.user.avatar_url || user.image;
+            token.accessToken = oauthData.access_token;
+            token.refreshToken = oauthData.refresh_token;
+            token.role = oauthData.user.roles?.[0];
+            token.permissions = oauthData.user.permissions || [];
+
+            log.info("[AuthJS] OAuth login successful for user:", token.id);
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
-            // Fall back to OAuth-only data
+            // Fall back to OAuth-only data (no backend tokens)
             token.id = user.id;
             token.email = user.email;
             token.name = user.name;

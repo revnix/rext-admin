@@ -55,6 +55,26 @@ export interface Workspace {
       total_members: number;
     };
   };
+  // Flat analytics fields (backend returns these at root level)
+  knowledge_counts?: {
+    web_knowledge: number;
+    files: number;
+    text_knowledge: number;
+    total_knowledge_items: number;
+  };
+  content_metrics?: {
+    total_words?: number;
+    web_content_words?: number;
+    file_content_words?: number;
+    avg_web_article_words?: number;
+    avg_file_words?: number;
+    estimated_reading_time_minutes?: number;
+  };
+  team_metrics?: {
+    total_members: number;
+  };
+  members_count?: number;
+  content_count?: number;
 }
 
 /**

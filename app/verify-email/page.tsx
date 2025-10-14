@@ -11,15 +11,55 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { log } from "@/lib/logger";
 
 function VerifyEmailContent() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+
+  const handleResend = async () => {
+    if (!resendEmail) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setIsResending(true);
+    setError("");
+    setResendSuccess(false);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/resend-verification`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: resendEmail }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to resend verification");
+      }
+
+      setResendSuccess(true);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to resend verification",
+      );
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   useEffect(() => {
     const verify = async () => {
@@ -33,12 +73,12 @@ function VerifyEmailContent() {
         log.info("[Auth Migration] Using direct API call for verify-email");
 
         // Direct API call - no auth session needed for email verification
+        // Backend expects GET with query parameter
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/verify-email`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/verify-email?token=${encodeURIComponent(token)}`,
           {
-            method: "POST",
+            method: "GET",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
           },
         );
 
@@ -99,16 +139,58 @@ function VerifyEmailContent() {
               </div>
             )}
 
-            {error && !isVerifying && (
+            {error && !isVerifying && !resendSuccess && (
               <div className="space-y-4">
                 <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
                   <p className="font-medium">Verification Failed</p>
                   <p className="text-sm mt-1">{error}</p>
                 </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-3">
+                    Request New Verification Link
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="resend-email">Email Address</Label>
+                      <Input
+                        id="resend-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={resendEmail}
+                        onChange={(e) => setResendEmail(e.target.value)}
+                        disabled={isResending}
+                      />
+                    </div>
+                    <Button
+                      onClick={handleResend}
+                      className="w-full"
+                      disabled={isResending}
+                    >
+                      {isResending ? "Sending..." : "Resend Verification Email"}
+                    </Button>
+                  </div>
+                </div>
+
                 <Link href="/login" className="block">
                   <Button variant="outline" className="w-full">
                     Back to Login
                   </Button>
+                </Link>
+              </div>
+            )}
+
+            {resendSuccess && (
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                  <p className="font-medium">Verification Email Sent!</p>
+                  <p className="text-sm mt-1">
+                    We've sent a new verification link to your email. Please
+                    check your inbox.
+                  </p>
+                </div>
+                <Link href="/login" className="block">
+                  <Button className="w-full">Go to Login</Button>
                 </Link>
               </div>
             )}

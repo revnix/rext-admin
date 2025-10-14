@@ -4,7 +4,13 @@ import { use } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -47,7 +53,9 @@ export default function WorkspaceTopicCreatePage({
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">topic.create</code>
+                <code className="text-xs bg-muted px-1 rounded">
+                  topic.create
+                </code>
               </p>
             </CardContent>
           </Card>

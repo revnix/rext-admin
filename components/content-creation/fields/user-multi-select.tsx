@@ -151,16 +151,21 @@ export function UserMultiSelect({
                 >
                   <div className="flex items-center gap-2 flex-1">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarImage
+                        src={user.avatar}
+                        alt={user.name || user.email}
+                      />
                       <AvatarFallback className="text-xs">
                         {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
+                          ? user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                          : user.email?.charAt(0).toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{user.name}</span>
+                    <span>{user.name || user.email}</span>
                   </div>
                   <Check
                     className={cn(

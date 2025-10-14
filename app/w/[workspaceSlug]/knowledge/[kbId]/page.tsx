@@ -179,7 +179,9 @@ export default function KnowledgeBaseDetailPage() {
           <CardContent>
             <p className="text-sm text-muted-foreground">
               Required permission:{" "}
-              <code className="text-xs bg-muted px-1 rounded">knowledge.read</code>
+              <code className="text-xs bg-muted px-1 rounded">
+                knowledge.read
+              </code>
             </p>
           </CardContent>
         </Card>
@@ -188,129 +190,129 @@ export default function KnowledgeBaseDetailPage() {
       <div className="space-y-6">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {kb?.name || "Loading..."}
-            </h1>
-            {kb?.description && (
-              <p className="text-muted-foreground mt-2">{kb.description}</p>
-            )}
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {kb?.name || "Loading..."}
+              </h1>
+              {kb?.description && (
+                <p className="text-muted-foreground mt-2">{kb.description}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
+            </Button>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Knowledge
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-          </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Knowledge
-          </Button>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{knowledgeItems.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                In this knowledge base
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Websites
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredWeb.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Web pages scraped
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Files & Text
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {filteredFiles.length + filteredText.length}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {filteredFiles.length} files, {filteredText.length} text entries
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Knowledge Items Table */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Items
-            </CardTitle>
+          <CardHeader>
+            <CardTitle>Knowledge Items</CardTitle>
+            <CardDescription>
+              {knowledgeItems.length}{" "}
+              {knowledgeItems.length === 1 ? "item" : "items"} in{" "}
+              {kb?.name || "this knowledge base"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{knowledgeItems.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              In this knowledge base
-            </p>
+            <WorkspaceKnowledgeTable
+              items={knowledgeItems}
+              onEdit={setItemToEdit}
+              onDelete={setItemToDelete}
+              isLoading={isLoading}
+            />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Websites
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredWeb.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Web pages scraped
-            </p>
-          </CardContent>
-        </Card>
+        {/* Dialogs */}
+        <WorkspaceAddKnowledgeDialog
+          workspaceId={workspace?.id || ""}
+          knowledgeBaseId={kbId}
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onAdded={handleAdded}
+        />
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Files & Text
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {filteredFiles.length + filteredText.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredFiles.length} files, {filteredText.length} text entries
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        <WorkspaceEditKnowledgeDialog
+          workspaceId={workspace?.id || ""}
+          item={itemToEdit}
+          open={!!itemToEdit}
+          onOpenChange={(open) => !open && setItemToEdit(null)}
+          onEdited={handleEdited}
+        />
 
-      {/* Knowledge Items Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Knowledge Items</CardTitle>
-          <CardDescription>
-            {knowledgeItems.length}{" "}
-            {knowledgeItems.length === 1 ? "item" : "items"} in{" "}
-            {kb?.name || "this knowledge base"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <WorkspaceKnowledgeTable
-            items={knowledgeItems}
-            onEdit={setItemToEdit}
-            onDelete={setItemToDelete}
-            isLoading={isLoading}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Dialogs */}
-      <WorkspaceAddKnowledgeDialog
-        workspaceId={workspace?.id || ""}
-        knowledgeBaseId={kbId}
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onAdded={handleAdded}
-      />
-
-      <WorkspaceEditKnowledgeDialog
-        workspaceId={workspace?.id || ""}
-        item={itemToEdit}
-        open={!!itemToEdit}
-        onOpenChange={(open) => !open && setItemToEdit(null)}
-        onEdited={handleEdited}
-      />
-
-      <WorkspaceDeleteKnowledgeDialog
-        workspaceId={workspace?.id || ""}
-        item={itemToDelete}
-        open={!!itemToDelete}
-        onOpenChange={(open) => !open && setItemToDelete(null)}
-        onDeleted={handleDeleted}
-      />
+        <WorkspaceDeleteKnowledgeDialog
+          workspaceId={workspace?.id || ""}
+          item={itemToDelete}
+          open={!!itemToDelete}
+          onOpenChange={(open) => !open && setItemToDelete(null)}
+          onDeleted={handleDeleted}
+        />
       </div>
     </CanAccess>
   );

@@ -6,8 +6,17 @@ import { useState } from "react";
 import { CustomerDetailDrawer } from "@/components/admin/customers/customer-detail-drawer";
 import { CustomerListTable } from "@/components/admin/customers/customer-list-table";
 import { PageLayout } from "@/components/page-layout";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export default function CustomersPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
@@ -71,21 +80,41 @@ export default function CustomersPage() {
         </Button>
       }
     >
-      {/* Customer List */}
-      <CustomerListTable
-        customers={customers}
-        isLoading={isLoading}
-        onCustomerClick={handleCustomerClick}
-      />
-
-      {/* Customer Detail Drawer */}
-      {selectedCustomerId && (
-        <CustomerDetailDrawer
-          customerId={selectedCustomerId}
-          open={!!selectedCustomerId}
-          onClose={handleCloseDrawer}
+      <CanAccess
+        permission={PERMISSIONS.USER_READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view customer management.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">user.read</code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        {/* Customer List */}
+        <CustomerListTable
+          customers={customers}
+          isLoading={isLoading}
+          onCustomerClick={handleCustomerClick}
         />
-      )}
+
+        {/* Customer Detail Drawer */}
+        {selectedCustomerId && (
+          <CustomerDetailDrawer
+            customerId={selectedCustomerId}
+            open={!!selectedCustomerId}
+            onClose={handleCloseDrawer}
+          />
+        )}
+      </CanAccess>
     </PageLayout>
   );
 }
