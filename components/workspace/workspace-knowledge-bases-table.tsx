@@ -1,37 +1,21 @@
 "use client";
 
 import { format } from "date-fns";
-import {
-  BookOpen,
-  Edit,
-  FolderOpen,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
+import { BookOpen } from "lucide-react";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
+import type { Column, RowAction } from "@/types/data-table";
+
+interface KnowledgeBaseData extends Record<string, unknown> {
+  id: string;
+  name: string;
+  description: string | null | undefined;
+  type: string;
+  items_count: number;
+  created_at: string;
+  formatted_date: string;
+}
 
 interface WorkspaceKnowledgeBasesTableProps {
   knowledgeBases: KnowledgeBase[];
@@ -44,18 +28,7 @@ interface WorkspaceKnowledgeBasesTableProps {
 /**
  * Workspace Knowledge Bases Table Component
  *
- * Displays knowledge bases in a table format with:
- * - Knowledge base name and description
- * - Type badge (default/custom)
- * - Items count
- * - Created date
- * - Actions (view, edit, delete)
- *
- * Features:
- * - Default KB protection (no delete)
- * - Action dropdown menu
- * - Empty state handling
- * - Loading state support
+ * Displays knowledge bases using the unified DataTable component
  */
 export function WorkspaceKnowledgeBasesTable({
   knowledgeBases,
@@ -79,135 +52,122 @@ export function WorkspaceKnowledgeBasesTable({
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <BookOpen className="h-12 w-12 mx-auto mb-4 animate-pulse" />
-        <p>Loading knowledge bases...</p>
-      </div>
-    );
-  }
+  // Transform data for DataTable
+  const tableData: KnowledgeBaseData[] = knowledgeBases.map((kb) => ({
+    id: kb.id,
+    name: kb.name,
+    description: kb.description,
+    type: kb.type,
+    items_count: kb.items_count,
+    created_at: kb.created_at,
+    formatted_date: format(new Date(kb.created_at), "MMM d, yyyy"),
+  }));
 
-  if (!knowledgeBases || knowledgeBases.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg">
-        <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-lg font-medium mb-2">No knowledge bases yet</p>
-        <p className="text-sm text-muted-foreground">
-          Create your first knowledge base to get started
-        </p>
-      </div>
-    );
-  }
+  // Define columns
+  const columns: Column<KnowledgeBaseData>[] = [
+    {
+      key: "name",
+      header: "Name",
+      width: "300px",
+      cell: (value, row) => (
+        <div className="flex items-start gap-3">
+          <div className="mt-1">
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                const kb = knowledgeBases.find((k) => k.id === row.id);
+                if (kb) onView(kb);
+              }}
+              className="font-medium hover:underline text-left"
+            >
+              {value as string}
+            </button>
+            {row.description && (
+              <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
+                {row.description as string}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+      searchable: true,
+    },
+    {
+      key: "type",
+      header: "Type",
+      width: "120px",
+      cell: (value) => getTypeBadge(value as string),
+    },
+    {
+      key: "items_count",
+      header: "Items",
+      width: "100px",
+      cell: (value) => (
+        <div className="text-right">
+          <span className="font-medium">{value as number}</span>
+        </div>
+      ),
+    },
+    {
+      key: "formatted_date",
+      header: "Created",
+      width: "150px",
+      cell: (value) => (
+        <span className="text-sm text-muted-foreground">{value as string}</span>
+      ),
+    },
+  ];
+
+  // Define row actions
+  const rowActions: RowAction<KnowledgeBaseData>[] = [
+    {
+      label: "View Items",
+      icon: <BookOpen className="h-4 w-4" />,
+      onClick: (row) => {
+        const kb = knowledgeBases.find((k) => k.id === row.id);
+        if (kb) onView(kb);
+      },
+      primary: true,
+    },
+    {
+      label: "Edit Details",
+      onClick: (row) => {
+        const kb = knowledgeBases.find((k) => k.id === row.id);
+        if (kb) onEdit(kb);
+      },
+    },
+    {
+      label: "Delete",
+      onClick: (row) => {
+        const kb = knowledgeBases.find((k) => k.id === row.id);
+        if (kb) onDelete(kb);
+      },
+      variant: "destructive",
+      disabled: (row) => row.type === "default",
+    },
+  ];
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Items</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {knowledgeBases.map((kb) => (
-            <TableRow key={kb.id}>
-              {/* Name & Description */}
-              <TableCell>
-                <div className="flex items-start gap-3">
-                  <div className="mt-1">
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => onView(kb)}
-                      className="font-medium hover:underline text-left"
-                    >
-                      {kb.name}
-                    </button>
-                    {kb.description && (
-                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
-                        {kb.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </TableCell>
-
-              {/* Type Badge */}
-              <TableCell>{getTypeBadge(kb.type)}</TableCell>
-
-              {/* Items Count */}
-              <TableCell className="text-right">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="font-medium">{kb.items_count}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Total knowledge items</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableCell>
-
-              {/* Created Date */}
-              <TableCell>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(kb.created_at), "MMM d, yyyy")}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{format(new Date(kb.created_at), "PPpp")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableCell>
-
-              {/* Actions */}
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onView(kb)}>
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      View Items
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(kb)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Details
-                    </DropdownMenuItem>
-                    {kb.type !== "default" && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onDelete(kb)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={tableData}
+      isLoading={isLoading}
+      rowActions={rowActions}
+      onRowClick={(row) => {
+        const kb = knowledgeBases.find((k) => k.id === row.id);
+        if (kb) onView(kb);
+      }}
+      emptyTitle="No knowledge bases yet"
+      emptyDescription="Create your first knowledge base to get started"
+      emptyIcon={<BookOpen className="h-12 w-12" />}
+      searchPlaceholder="Search knowledge bases..."
+      searchFields={["name", "description"]}
+      pageSize={10}
+      pageSizeOptions={[10, 25, 50]}
+      tableId="workspace-knowledge-bases"
+    />
   );
 }

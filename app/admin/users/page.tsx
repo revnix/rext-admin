@@ -133,16 +133,12 @@ export default function AdminUsersPage() {
         </div>
       ),
       searchable: true,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "email",
       header: "Email",
       width: "250px",
       searchable: true,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "username",
@@ -154,17 +150,12 @@ export default function AdminUsersPage() {
         </code>
       ),
       searchable: true,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "status",
       header: "Status",
       width: "120px",
       cell: (value) => getStatusBadge(value as string),
-      filterable: true,
-      filterType: "select",
-      filterOptions: ["active", "inactive", "suspended", "pending"],
     },
     {
       key: "email_verified",
@@ -183,9 +174,6 @@ export default function AdminUsersPage() {
           </Badge>
         );
       },
-      filterable: true,
-      filterType: "select",
-      filterOptions: ["true", "false"],
     },
   ];
 

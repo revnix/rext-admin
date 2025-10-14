@@ -102,8 +102,6 @@ export function CustomerListTable({
       width: "200px",
       cell: (value) => <span className="font-medium">{value as string}</span>,
       searchable: true,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "email",
@@ -113,8 +111,6 @@ export function CustomerListTable({
         <span className="text-muted-foreground">{value as string}</span>
       ),
       searchable: true,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "plan",
@@ -128,8 +124,6 @@ export function CustomerListTable({
           <span className="text-sm">{plan}</span>
         );
       },
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "status",
@@ -143,9 +137,6 @@ export function CustomerListTable({
           getStatusBadge(status)
         );
       },
-      filterable: true,
-      filterType: "select",
-      filterOptions: ["active", "trial", "cancelled", "expired", "free"],
     },
     {
       key: "mrr",
@@ -161,8 +152,6 @@ export function CustomerListTable({
           <span className="text-muted-foreground text-right block">-</span>
         );
       },
-      filterable: true,
-      filterType: "number",
     },
     {
       key: "workspaces_count",
@@ -173,24 +162,18 @@ export function CustomerListTable({
           <Badge variant="secondary">{value as number}</Badge>
         </div>
       ),
-      filterable: true,
-      filterType: "number",
     },
     {
       key: "created_at",
       header: "Created",
       width: "120px",
       cell: (value) => <span className="text-sm">{value as string}</span>,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "last_active",
       header: "Last Active",
       width: "120px",
       cell: (value) => <span className="text-sm">{value as string}</span>,
-      filterable: true,
-      filterType: "text",
     },
     {
       key: "account_status",
@@ -210,9 +193,6 @@ export function CustomerListTable({
           </div>
         );
       },
-      filterable: true,
-      filterType: "select",
-      filterOptions: ["active", "inactive"],
     },
   ];
 
