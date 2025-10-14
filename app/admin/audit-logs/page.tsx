@@ -5,6 +5,7 @@ import { Download, FileText, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
+import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +26,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 
 export default function AuditLogsPage() {
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Audit Logs" },
+  ];
+
   const [page, setPage] = useState(0);
   const [perPage] = useState(50);
   const [search, setSearch] = useState("");
@@ -99,16 +105,12 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Audit Logs</h1>
-          <p className="text-muted-foreground">
-            View and export all admin actions and system events
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <PageLayout
+      title="Audit Logs"
+      description="View and export all admin actions and system events"
+      breadcrumbs={breadcrumbs}
+      actions={
+        <>
           <Button variant="outline" onClick={() => handleExport("csv")}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -117,9 +119,9 @@ export default function AuditLogsPage() {
             <FileText className="h-4 w-4 mr-2" />
             Export JSON
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -216,6 +218,6 @@ export default function AuditLogsPage() {
           />
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield } from "lucide-react";
+import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   Card,
@@ -12,41 +12,40 @@ import {
 import { PERMISSIONS } from "@/lib/permissions";
 
 export default function AdminRolesPage() {
-  return (
-    <CanAccess
-      anyPermission={[PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ]}
-      fallback={
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to view roles and permissions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Required permissions:{" "}
-              <code className="text-xs bg-muted px-1 rounded">role:read</code>{" "}
-              OR{" "}
-              <code className="text-xs bg-muted px-1 rounded">
-                permission:read
-              </code>
-            </p>
-          </CardContent>
-        </Card>
-      }
-    >
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-primary" />
-          <div>
-            <h2 className="text-2xl font-bold">Roles & Permissions</h2>
-            <p className="text-muted-foreground">
-              Configure system roles and assign permissions
-            </p>
-          </div>
-        </div>
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Roles & Permissions" },
+  ];
 
+  return (
+    <PageLayout
+      title="Roles & Permissions"
+      description="Configure system roles and assign permissions"
+      breadcrumbs={breadcrumbs}
+    >
+      <CanAccess
+        anyPermission={[PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ]}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view roles and permissions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permissions:{" "}
+                <code className="text-xs bg-muted px-1 rounded">role:read</code>{" "}
+                OR{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  permission:read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
         <Card>
           <CardHeader>
             <CardTitle>Coming Soon</CardTitle>
@@ -90,7 +89,7 @@ export default function AdminRolesPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </CanAccess>
+      </CanAccess>
+    </PageLayout>
   );
 }

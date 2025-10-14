@@ -2,6 +2,7 @@
 
 import { BarChart3, Shield, UserCog, Users } from "lucide-react";
 import Link from "next/link";
+import { PageLayout } from "@/components/page-layout";
 import {
   Card,
   CardContent,
@@ -13,6 +14,8 @@ import { usePermissionUser } from "@/hooks/use-permission";
 
 export default function AdminDashboardPage() {
   const user = usePermissionUser();
+
+  const breadcrumbs = [{ label: "Admin" }];
 
   const adminCards = [
     {
@@ -39,86 +42,93 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {adminCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Link key={card.href} href={card.href}>
-              <Card className="hover:border-primary transition-colors cursor-pointer h-full">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Icon className="h-6 w-6 text-primary" />
+    <PageLayout
+      title="Administration"
+      description="Manage users, roles, and system settings"
+      breadcrumbs={breadcrumbs}
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {adminCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Link key={card.href} href={card.href}>
+                <Card className="hover:border-primary transition-colors cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-xl">{card.title}</CardTitle>
                     </div>
-                    <CardTitle className="text-xl">{card.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{card.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome, {user?.name || "Admin"}</CardTitle>
+            <CardDescription>
+              You have administrator access to the system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p>
+                <strong>Role:</strong> {user?.role || "Not set"}
+              </p>
+              <p>
+                <strong>Permissions:</strong>{" "}
+                {user?.permissions && user.permissions.length > 0
+                  ? `${user.permissions.length} permissions`
+                  : "No permissions loaded"}
+              </p>
+              {user?.permissions && user.permissions.length > 0 && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-primary hover:underline">
+                    View all permissions
+                  </summary>
+                  <ul className="mt-2 space-y-1 pl-4">
+                    {user.permissions.map((permission) => (
+                      <li key={permission} className="text-muted-foreground">
+                        • {permission}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-200 bg-yellow-50/50">
+          <CardHeader>
+            <CardTitle className="text-yellow-800">
+              <Users className="inline h-5 w-5 mr-2" />
+              Backend Integration Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-yellow-800">
+            <p>
+              The admin features will be fully functional once the backend
+              includes <code className="bg-yellow-100 px-1 rounded">role</code>{" "}
+              and{" "}
+              <code className="bg-yellow-100 px-1 rounded">permissions</code> in
+              the JWT token during login.
+            </p>
+            <p className="mt-2">
+              Currently, the permission system is ready but needs backend
+              integration to populate user roles and permissions in the session.
+            </p>
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome, {user?.name || "Admin"}</CardTitle>
-          <CardDescription>
-            You have administrator access to the system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <p>
-              <strong>Role:</strong> {user?.role || "Not set"}
-            </p>
-            <p>
-              <strong>Permissions:</strong>{" "}
-              {user?.permissions && user.permissions.length > 0
-                ? `${user.permissions.length} permissions`
-                : "No permissions loaded"}
-            </p>
-            {user?.permissions && user.permissions.length > 0 && (
-              <details className="mt-4">
-                <summary className="cursor-pointer text-primary hover:underline">
-                  View all permissions
-                </summary>
-                <ul className="mt-2 space-y-1 pl-4">
-                  {user.permissions.map((permission) => (
-                    <li key={permission} className="text-muted-foreground">
-                      • {permission}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-yellow-200 bg-yellow-50/50">
-        <CardHeader>
-          <CardTitle className="text-yellow-800">
-            <Users className="inline h-5 w-5 mr-2" />
-            Backend Integration Required
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-yellow-800">
-          <p>
-            The admin features will be fully functional once the backend
-            includes <code className="bg-yellow-100 px-1 rounded">role</code>{" "}
-            and <code className="bg-yellow-100 px-1 rounded">permissions</code>{" "}
-            in the JWT token during login.
-          </p>
-          <p className="mt-2">
-            Currently, the permission system is ready but needs backend
-            integration to populate user roles and permissions in the session.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    </PageLayout>
   );
 }

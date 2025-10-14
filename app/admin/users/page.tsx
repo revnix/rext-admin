@@ -4,13 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Mail,
   ShieldCheck,
-  UserCog,
   User as UserIcon,
   Users as UsersIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { DataTable } from "@/components/data-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
+import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,11 @@ interface UserData extends Record<string, unknown> {
 export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
+
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "User Management" },
+  ];
 
   // Fetch all users
   const { data, isLoading, error, refetch } = useQuery({
@@ -205,156 +210,156 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <CanAccess
-      permission={PERMISSIONS.USER_READ}
-      fallback={
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to view user management.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Required permission:{" "}
-              <code className="text-xs bg-muted px-1 rounded">user.read</code>
-            </p>
-          </CardContent>
-        </Card>
-      }
+    <PageLayout
+      title="User Management"
+      description="Manage system users and impersonation"
+      breadcrumbs={breadcrumbs}
     >
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <UserCog className="h-8 w-8 text-primary" />
-            <div>
-              <h2 className="text-2xl font-bold">User Management</h2>
-              <p className="text-muted-foreground">
-                Manage system users and impersonation
+      <CanAccess
+        permission={PERMISSIONS.USER_READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view user management.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">user.read</code>
               </p>
-            </div>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Users
+                </CardTitle>
+                <UsersIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data?.total_count || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Registered accounts
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Active Users
+                </CardTitle>
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data?.users.filter((u) => u.status === "active").length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Currently active
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Verified</CardTitle>
+                <Mail className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data?.users.filter((u) => u.email_verified).length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Email verified</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                <UserIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data?.users.filter((u) => u.status === "pending").length ||
+                    0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Awaiting verification
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+          {/* Users Table */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <UsersIcon className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>All Users</CardTitle>
+              <CardDescription>
+                View and manage user accounts. Click "Impersonate" to view the
+                system as that user.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.total_count || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Registered accounts
-              </p>
+              <DataTable
+                columns={columns}
+                data={tableData}
+                isLoading={isLoading}
+                rowActions={rowActions}
+                emptyTitle="No users found"
+                emptyDescription="There are no registered users in the system."
+                searchPlaceholder="Search by name, email, or username..."
+                searchFields={["name", "email", "username"]}
+                pageSize={10}
+                pageSizeOptions={[10, 25, 50, 100]}
+                tableId="admin-users"
+              />
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Users
+          {/* Info Card */}
+          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+            <CardHeader>
+              <CardTitle className="text-blue-900 dark:text-blue-100">
+                About Impersonation
               </CardTitle>
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {data?.users.filter((u) => u.status === "active").length || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Currently active</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Verified</CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {data?.users.filter((u) => u.email_verified).length || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Email verified</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <UserIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {data?.users.filter((u) => u.status === "pending").length || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Awaiting verification
+            <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+              <p>
+                <strong>Impersonation</strong> allows you to view the system as
+                another user for troubleshooting and support purposes.
               </p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>All actions are performed as the impersonated user</li>
+                <li>Your session is logged for audit and security purposes</li>
+                <li>A yellow banner will display while impersonating</li>
+                <li>You can stop impersonation at any time</li>
+              </ul>
             </CardContent>
           </Card>
+
+          {/* Impersonation Dialog */}
+          <ImpersonationStartDialog
+            user={selectedUser}
+            open={showImpersonateDialog}
+            onOpenChange={setShowImpersonateDialog}
+            onStarted={() => {
+              // Dialog handles everything, just reset state
+              setSelectedUser(null);
+            }}
+          />
         </div>
-
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-            <CardDescription>
-              View and manage user accounts. Click "Impersonate" to view the
-              system as that user.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={columns}
-              data={tableData}
-              isLoading={isLoading}
-              rowActions={rowActions}
-              emptyTitle="No users found"
-              emptyDescription="There are no registered users in the system."
-              searchPlaceholder="Search by name, email, or username..."
-              searchFields={["name", "email", "username"]}
-              pageSize={10}
-              pageSizeOptions={[10, 25, 50, 100]}
-              tableId="admin-users"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Info Card */}
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="text-blue-900 dark:text-blue-100">
-              About Impersonation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-            <p>
-              <strong>Impersonation</strong> allows you to view the system as
-              another user for troubleshooting and support purposes.
-            </p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>All actions are performed as the impersonated user</li>
-              <li>Your session is logged for audit and security purposes</li>
-              <li>A yellow banner will display while impersonating</li>
-              <li>You can stop impersonation at any time</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Impersonation Dialog */}
-        <ImpersonationStartDialog
-          user={selectedUser}
-          open={showImpersonateDialog}
-          onOpenChange={setShowImpersonateDialog}
-          onStarted={() => {
-            // Dialog handles everything, just reset state
-            setSelectedUser(null);
-          }}
-        />
-      </div>
-    </CanAccess>
+      </CanAccess>
+    </PageLayout>
   );
 }

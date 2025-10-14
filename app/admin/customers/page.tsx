@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import { useState } from "react";
 import { CustomerDetailDrawer } from "@/components/admin/customers/customer-detail-drawer";
 import { CustomerListTable } from "@/components/admin/customers/customer-list-table";
-import { ListPage } from "@/components/layouts/list-page";
+import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 
@@ -13,6 +13,11 @@ export default function CustomersPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
     null,
   );
+
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Customer Management" },
+  ];
 
   interface CustomerResponse {
     user_id: string;
@@ -55,9 +60,10 @@ export default function CustomersPage() {
   };
 
   return (
-    <ListPage
+    <PageLayout
       title="Customer Management"
       description="Manage users, subscriptions, and customer support"
+      breadcrumbs={breadcrumbs}
       actions={
         <Button variant="outline" onClick={handleExport}>
           <Download className="h-4 w-4 mr-2" />
@@ -80,6 +86,6 @@ export default function CustomersPage() {
           onClose={handleCloseDrawer}
         />
       )}
-    </ListPage>
+    </PageLayout>
   );
 }

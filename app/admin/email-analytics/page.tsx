@@ -6,6 +6,7 @@ import { EmailFailuresTable } from "@/components/admin/email/email-failures-tabl
 import { EmailOverviewKPIs } from "@/components/admin/email/email-overview-kpis";
 import { EmailPerformanceTable } from "@/components/admin/email/email-performance-table";
 import { EmailVolumeChart } from "@/components/admin/email/email-volume-chart";
+import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   Card,
@@ -65,6 +66,11 @@ interface EmailFailure {
 }
 
 export default function EmailAnalyticsPage() {
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Email Analytics" },
+  ];
+
   const [dateRange, setDateRange] = useState("30d");
   const [period, setPeriod] = useState("daily");
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -141,17 +147,12 @@ export default function EmailAnalyticsPage() {
 
   return (
     <AdminGuard>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-between space-y-2">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">
-              Email Analytics
-            </h2>
-            <p className="text-muted-foreground">
-              Monitor email delivery, engagement, and performance
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
+      <PageLayout
+        title="Email Analytics"
+        description="Monitor email delivery, engagement, and performance"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <>
             <Select
               value={workspaceId || "all"}
               onValueChange={(value) =>
@@ -180,106 +181,108 @@ export default function EmailAnalyticsPage() {
                 <SelectItem value="90d">Last 90 days</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* KPIs */}
+          <EmailOverviewKPIs data={overviewData} isLoading={overviewLoading} />
 
-        {/* KPIs */}
-        <EmailOverviewKPIs data={overviewData} isLoading={overviewLoading} />
+          {/* Tabs */}
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="templates">By Template</TabsTrigger>
+              <TabsTrigger value="failures">Failures</TabsTrigger>
+            </TabsList>
 
-        {/* Tabs */}
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="templates">By Template</TabsTrigger>
-            <TabsTrigger value="failures">Failures</TabsTrigger>
-          </TabsList>
+            <TabsContent value="overview" className="space-y-4">
+              {/* Volume Chart */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Email Volume Over Time</CardTitle>
+                    <CardDescription>
+                      Emails sent, opened, and clicked over time
+                    </CardDescription>
+                  </div>
+                  <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <EmailVolumeChart
+                    data={timelineData || []}
+                    isLoading={timelineLoading}
+                  />
+                </CardContent>
+              </Card>
 
-          <TabsContent value="overview" className="space-y-4">
-            {/* Volume Chart */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Email Volume Over Time</CardTitle>
+              {/* Email Health Score */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Email Health Score</CardTitle>
                   <CardDescription>
-                    Emails sent, opened, and clicked over time
+                    Overall email system health based on delivery, bounce, and
+                    complaint rates
                   </CardDescription>
-                </div>
-                <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <EmailVolumeChart
-                  data={timelineData || []}
-                  isLoading={timelineLoading}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Email Health Score */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Health Score</CardTitle>
-                <CardDescription>
-                  Overall email system health based on delivery, bounce, and
-                  complaint rates
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {overviewData && (
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">
-                          Health Score
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {calculateHealthScore(overviewData)}%
-                        </span>
-                      </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all ${
-                            calculateHealthScore(overviewData) >= 90
-                              ? "bg-green-500"
-                              : calculateHealthScore(overviewData) >= 70
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
-                          }`}
-                          style={{
-                            width: `${calculateHealthScore(overviewData)}%`,
-                          }}
-                        />
+                </CardHeader>
+                <CardContent>
+                  {overviewData && (
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">
+                            Health Score
+                          </span>
+                          <span className="text-2xl font-bold">
+                            {calculateHealthScore(overviewData)}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              calculateHealthScore(overviewData) >= 90
+                                ? "bg-green-500"
+                                : calculateHealthScore(overviewData) >= 70
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500"
+                            }`}
+                            style={{
+                              width: `${calculateHealthScore(overviewData)}%`,
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="templates" className="space-y-4">
-            <EmailPerformanceTable
-              data={templateData || []}
-              isLoading={templateLoading}
-            />
-          </TabsContent>
+            <TabsContent value="templates" className="space-y-4">
+              <EmailPerformanceTable
+                data={templateData || []}
+                isLoading={templateLoading}
+              />
+            </TabsContent>
 
-          <TabsContent value="failures" className="space-y-4">
-            <EmailFailuresTable
-              data={failuresData || []}
-              isLoading={failuresLoading}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="failures" className="space-y-4">
+              <EmailFailuresTable
+                data={failuresData || []}
+                isLoading={failuresLoading}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </PageLayout>
     </AdminGuard>
   );
 }
