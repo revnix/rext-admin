@@ -1,7 +1,10 @@
 "use client";
 
 import { AccountDeactivation } from "@/components/account-settings/account-deactivation";
+import { OAuthAccounts } from "@/components/account-settings/oauth-accounts";
+import { PasswordChange } from "@/components/account-settings/password-change";
 import { PrivacySettings } from "@/components/account-settings/privacy-settings";
+import { ProfileEdit } from "@/components/account-settings/profile-edit";
 import { SecuritySettings } from "@/components/account-settings/security-settings";
 import {
   Card,
@@ -18,29 +21,70 @@ export default function AccountSettingsPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Account Settings</h2>
         <p className="text-muted-foreground mt-1">
-          Manage your account security, privacy, and data
+          Manage your profile, security, privacy, and account data
         </p>
       </div>
 
-      <Tabs defaultValue="security" className="space-y-6">
+      <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="privacy">Privacy</TabsTrigger>
           <TabsTrigger value="danger">Danger Zone</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="security">
+        <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Security Information</CardTitle>
+              <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                View your account security details and manage authentication
+                Update your personal information and preferences
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <SecuritySettings />
+              <ProfileEdit />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="security">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Information</CardTitle>
+                <CardDescription>
+                  View your account security details and recent activity
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SecuritySettings />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Password</CardTitle>
+                <CardDescription>
+                  Change your password to keep your account secure
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PasswordChange />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>OAuth Accounts</CardTitle>
+                <CardDescription>
+                  Manage connected third-party accounts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <OAuthAccounts />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="privacy">

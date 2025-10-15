@@ -100,26 +100,22 @@ export function createSessionsNamespace(client: ApiClient) {
 // ============================================================================
 // SECURITY
 // ============================================================================
-// NOTE: These endpoints are not currently implemented in the backend
-// Backend has /api/v1/security/* endpoints that are admin-only for monitoring
-// User-facing 2FA and security settings endpoints need to be implemented
+// User-scoped security endpoints for current authenticated user
+// Admin security monitoring endpoints are at /api/v1/security/* (admin-only)
 
 export function createSecurityNamespace(client: ApiClient) {
   return {
     /**
-     * Get security stats
-     * WARNING: Backend endpoint does not exist. Needs implementation.
+     * Get security stats for current user
      */
     getStats: async () => {
-      // TODO: Backend needs to implement /api/v1/user/security/stats
       return client.request<SecurityStats>("/api/v1/user/security/stats", {
         method: "GET",
       });
     },
 
     /**
-     * Get login history
-     * WARNING: Backend endpoint does not exist. Needs implementation.
+     * Get login history for current user
      */
     getLoginHistory: async (options?: { limit?: number; offset?: number }) => {
       const params = new URLSearchParams();
@@ -127,7 +123,6 @@ export function createSecurityNamespace(client: ApiClient) {
       if (options?.offset) params.append("offset", options.offset.toString());
 
       const queryString = params.toString();
-      // TODO: Backend needs to implement /api/v1/user/security/login-history
       const endpoint = `/api/v1/user/security/login-history${queryString ? `?${queryString}` : ""}`;
 
       return client.request<{
@@ -142,6 +137,18 @@ export function createSecurityNamespace(client: ApiClient) {
         }>;
         total_count: number;
       }>(endpoint, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Get active sessions count
+     */
+    getActiveSessionsCount: async () => {
+      return client.request<{
+        user_id: string;
+        active_sessions_count: number;
+      }>("/api/v1/user/security/active-sessions-count", {
         method: "GET",
       });
     },
@@ -190,6 +197,52 @@ export function createSecurityNamespace(client: ApiClient) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
+      });
+    },
+  };
+}
+
+// ============================================================================
+// PREFERENCES
+// ============================================================================
+
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  theme: string;
+  date_format: string;
+  time_format: string;
+  items_per_page: number;
+  sidebar_collapsed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export function createPreferencesNamespace(client: ApiClient) {
+  return {
+    /**
+     * Get user preferences
+     */
+    get: async () => {
+      return client.request<UserPreferences>("/api/v1/user/preferences", {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Update user preferences
+     */
+    update: async (preferences: {
+      theme?: "system" | "light" | "dark";
+      date_format?: "iso" | "us" | "eu" | "relative";
+      time_format?: "24h" | "12h";
+      items_per_page?: number;
+      sidebar_collapsed?: boolean;
+    }) => {
+      return client.request<UserPreferences>("/api/v1/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferences),
       });
     },
   };

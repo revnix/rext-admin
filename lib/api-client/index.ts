@@ -30,6 +30,7 @@ import { createAccountNamespace, createProfileNamespace } from "./profile";
 import { createRolesNamespace } from "./roles";
 import {
   createNotificationsNamespace,
+  createPreferencesNamespace,
   createSecurityNamespace,
   createSessionsNamespace,
 } from "./settings";
@@ -75,6 +76,7 @@ function createApiClient() {
     notifications: createNotificationsNamespace(client),
     sessions: createSessionsNamespace(client),
     security: createSecurityNamespace(client),
+    preferences: createPreferencesNamespace(client),
 
     // Utility methods
     cancelAllRequests: () => client.cancelAllRequests(),
