@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-retention-matrix";
 import { PlanDistributionChart } from "@/components/admin/analytics/plan-distribution-chart";
@@ -10,6 +11,7 @@ import { RevenueChart } from "@/components/admin/analytics/revenue-chart";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -163,6 +165,14 @@ export default function SubscriptionAnalyticsPage() {
       title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
       breadcrumbs={breadcrumbs}
+      actions={
+        <Link href="/admin/subscriptions/plans">
+          <Button variant="outline">
+            <Settings className="mr-2 h-4 w-4" />
+            Manage Plans
+          </Button>
+        </Link>
+      }
     >
       <CanAccess
         permission={SUBSCRIPTION_PERMISSIONS.READ}

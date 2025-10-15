@@ -80,6 +80,25 @@ export default function SubscriptionPage() {
     enabled: showPlans,
   });
 
+  // Upgrade subscription mutation
+  const upgradeMutation = useMutation({
+    mutationFn: (planId: string) =>
+      apiClient.subscriptions.upgrade({ plan_id: planId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["usage"] });
+      toast.success("Plan upgraded successfully", {
+        description: "Your new plan is now active.",
+      });
+      setShowPlans(false);
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to upgrade plan", {
+        description: error.message,
+      });
+    },
+  });
+
   // Cancel subscription mutation
   const cancelMutation = useMutation({
     mutationFn: (reason: string) => apiClient.subscriptions.cancel({ reason }),
@@ -467,9 +486,14 @@ export default function SubscriptionPage() {
                         <Button
                           className="w-full"
                           variant={isCurrent ? "outline" : "default"}
-                          disabled={isCurrent}
+                          disabled={isCurrent || upgradeMutation.isPending}
+                          onClick={() => upgradeMutation.mutate(plan.id)}
                         >
-                          {isCurrent ? "Current Plan" : "Upgrade"}
+                          {upgradeMutation.isPending
+                            ? "Upgrading..."
+                            : isCurrent
+                              ? "Current Plan"
+                              : "Upgrade"}
                         </Button>
                       </div>
                     </CardContent>

@@ -25,7 +25,7 @@ export enum BillingPeriod {
 // SUBSCRIPTION PLAN INTERFACES
 // ============================================================================
 
-export interface SubscriptionPlan {
+export interface SubscriptionPlan extends Record<string, unknown> {
   id: string;
   name: string; // Unique identifier (e.g., "pro", "enterprise")
   display_name: string; // Human-readable name
