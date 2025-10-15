@@ -213,7 +213,39 @@ export function createMediaNamespace(client: ApiClient) {
      */
     async getUsage(workspaceId: string): Promise<StorageUsageResponse> {
       return client.request<StorageUsageResponse>(
-        `/workspaces/${workspaceId}/media/usage`,
+        `/workspaces/${workspaceId}/media/usage/stats`,
+      );
+    },
+
+    /**
+     * Get media usage information (where it's used in content)
+     */
+    async getMediaUsage(
+      workspaceId: string,
+      mediaId: string,
+    ): Promise<{
+      data: {
+        is_used: boolean;
+        featured_in: Array<{
+          id: string;
+          title: string;
+          slug: string;
+          status: string;
+          usage_type: string;
+        }>;
+        used_in_content: Array<{
+          id: string;
+          title: string;
+          slug: string;
+          status: string;
+          usage_type: string;
+          position?: number;
+        }>;
+        total_usages: number;
+      };
+    }> {
+      return client.request(
+        `/workspaces/${workspaceId}/media/${mediaId}/usage`,
       );
     },
   };

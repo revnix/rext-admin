@@ -1,16 +1,21 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
   Copy,
   Download,
+  Edit,
+  ExternalLink,
   FileText,
   Folder,
+  Save,
   Trash2,
   User,
+  X,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -25,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +39,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import type { Media } from "@/lib/api-client/media";
 
@@ -52,6 +60,23 @@ export function MediaDetailSheet({
 }: MediaDetailSheetProps) {
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editAltText, setEditAltText] = useState("");
+  const [editFolder, setEditFolder] = useState("");
+  const [editTags, setEditTags] = useState("");
+
+  // Initialize edit fields when media changes
+  useState(() => {
+    if (media) {
+      setEditTitle(media.title || "");
+      setEditDescription(media.description || "");
+      setEditAltText(media.alt_text || "");
+      setEditFolder(media.folder || "");
+      setEditTags(media.tags.join(", "));
+    }
+  });
 
   const { mutate: deleteMedia, isPending: isDeleting } = useMutation({
     mutationFn: () => {
@@ -68,6 +93,55 @@ export function MediaDetailSheet({
       toast.error(error.message || "Failed to delete media");
     },
   });
+
+  const { mutate: updateMedia, isPending: isUpdating } = useMutation({
+    mutationFn: () => {
+      if (!media?.id) throw new Error("Media ID is required");
+      const tagList = editTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      return apiClient.media.update(workspaceId, media.id, {
+        title: editTitle || undefined,
+        description: editDescription || undefined,
+        alt_text: editAltText || undefined,
+        folder: editFolder || undefined,
+        tags: tagList.length > 0 ? tagList : undefined,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Media updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["media", workspaceId] });
+      setIsEditing(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update media");
+    },
+  });
+
+  const handleCancelEdit = () => {
+    // Reset to original values
+    if (media) {
+      setEditTitle(media.title || "");
+      setEditDescription(media.description || "");
+      setEditAltText(media.alt_text || "");
+      setEditFolder(media.folder || "");
+      setEditTags(media.tags.join(", "));
+    }
+    setIsEditing(false);
+  };
+
+  // Fetch media usage information
+  const { data: usageResponse } = useQuery({
+    queryKey: ["media-usage", workspaceId, media?.id],
+    queryFn: () => {
+      if (!media?.id) return null;
+      return apiClient.media.getMediaUsage(workspaceId, media.id);
+    },
+    enabled: !!workspaceId && !!media?.id && open,
+  });
+
+  const usage = usageResponse?.data;
 
   if (!media) return null;
 
@@ -108,9 +182,29 @@ export function MediaDetailSheet({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>{media.title || media.filename}</SheetTitle>
+            <SheetTitle>
+              {isEditing ? (
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Enter title"
+                  className="text-lg font-semibold"
+                />
+              ) : (
+                media.title || media.filename
+              )}
+            </SheetTitle>
             <SheetDescription>
-              {media.description || "Media file details"}
+              {isEditing ? (
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Enter description"
+                  rows={2}
+                />
+              ) : (
+                media.description || "Media file details"
+              )}
             </SheetDescription>
           </SheetHeader>
 
@@ -136,33 +230,66 @@ export function MediaDetailSheet({
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={copyUrl}
-                disabled={!media.public_url}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy URL
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadFile}
-                disabled={!media.public_url}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
+              {!isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyUrl}
+                    disabled={!media.public_url}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy URL
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadFile}
+                    disabled={!media.public_url}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => updateMedia()}
+                    disabled={isUpdating}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isUpdating ? "Saving..." : "Save"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelEdit}
+                    disabled={isUpdating}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* File Information */}
@@ -227,54 +354,75 @@ export function MediaDetailSheet({
             </div>
 
             {/* Organization */}
-            {(media.folder || media.tags.length > 0) && (
+            {(isEditing || media.folder || media.tags.length > 0) && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">Organization</h3>
 
-                {media.folder && (
-                  <div className="flex items-start gap-2">
-                    <Folder className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Folder</p>
-                      <p className="text-sm">{media.folder}</p>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    Folder
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      value={editFolder}
+                      onChange={(e) => setEditFolder(e.target.value)}
+                      placeholder="e.g., images/products"
+                      className="mt-1"
+                    />
+                  ) : (
+                    media.folder && (
+                      <div className="flex items-start gap-2 mt-1">
+                        <Folder className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                        <p className="text-sm">{media.folder}</p>
+                      </div>
+                    )
+                  )}
+                </div>
 
-                {media.tags.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                      {media.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Description */}
-            {media.description && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold">Description</h3>
-                <p className="text-sm text-muted-foreground">
-                  {media.description}
-                </p>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Tags</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editTags}
+                      onChange={(e) => setEditTags(e.target.value)}
+                      placeholder="tag1, tag2, tag3"
+                      className="mt-1"
+                    />
+                  ) : (
+                    media.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {media.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )
+                  )}
+                </div>
               </div>
             )}
 
             {/* Alt Text (for images) */}
-            {media.alt_text && (
+            {(isEditing && isImage) || media.alt_text ? (
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold">Alt Text</h3>
-                <p className="text-sm text-muted-foreground">
-                  {media.alt_text}
-                </p>
+                <Label className="text-sm font-semibold">
+                  Alt Text {isImage && "(Accessibility)"}
+                </Label>
+                {isEditing ? (
+                  <Textarea
+                    value={editAltText}
+                    onChange={(e) => setEditAltText(e.target.value)}
+                    placeholder="Describe this image for accessibility"
+                    rows={2}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {media.alt_text}
+                  </p>
+                )}
               </div>
-            )}
+            ) : null}
 
             {/* Metadata */}
             <div className="space-y-3">
@@ -321,6 +469,86 @@ export function MediaDetailSheet({
                 </span>
               </div>
             </div>
+
+            {/* Used In (Content References) */}
+            {usage && usage.total_usages > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">
+                  Used In ({usage.total_usages}{" "}
+                  {usage.total_usages === 1 ? "place" : "places"})
+                </h3>
+
+                {usage.featured_in.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Featured Image
+                    </p>
+                    <div className="space-y-2">
+                      {usage.featured_in.map((content) => (
+                        <Link
+                          key={content.id}
+                          href={`/w/${workspaceId}/content/${content.id}`}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {content.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {content.status}
+                            </p>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {usage.used_in_content.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Inline Content
+                    </p>
+                    <div className="space-y-2">
+                      {usage.used_in_content.map((content) => (
+                        <Link
+                          key={`${content.id}-${content.position || 0}`}
+                          href={`/w/${workspaceId}/content/${content.id}`}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {content.title}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-muted-foreground">
+                                {content.status}
+                              </p>
+                              {content.usage_type && (
+                                <Badge variant="outline" className="text-xs">
+                                  {content.usage_type}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {usage && usage.total_usages === 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">Used In</h3>
+                <p className="text-sm text-muted-foreground">
+                  This media file is not currently used in any content.
+                </p>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -331,8 +559,44 @@ export function MediaDetailSheet({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Media</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{media.title || media.filename}"?
-              This action cannot be undone.
+              {usage && usage.total_usages > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-destructive font-medium">
+                    ⚠️ This media file is currently used in {usage.total_usages}{" "}
+                    {usage.total_usages === 1 ? "place" : "places"}!
+                  </p>
+                  <p>
+                    Deleting "{media.title || media.filename}" will break{" "}
+                    {usage.featured_in.length > 0 && (
+                      <span>
+                        {usage.featured_in.length} featured{" "}
+                        {usage.featured_in.length === 1 ? "image" : "images"}
+                      </span>
+                    )}
+                    {usage.featured_in.length > 0 &&
+                      usage.used_in_content.length > 0 &&
+                      " and "}
+                    {usage.used_in_content.length > 0 && (
+                      <span>
+                        {usage.used_in_content.length} inline{" "}
+                        {usage.used_in_content.length === 1
+                          ? "reference"
+                          : "references"}
+                      </span>
+                    )}
+                    .
+                  </p>
+                  <p className="text-sm">
+                    Are you absolutely sure you want to proceed?
+                  </p>
+                </div>
+              ) : (
+                <p>
+                  Are you sure you want to delete "
+                  {media.title || media.filename}"? This action cannot be
+                  undone.
+                </p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -342,7 +606,7 @@ export function MediaDetailSheet({
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Deleting..." : "Delete Anyway"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
