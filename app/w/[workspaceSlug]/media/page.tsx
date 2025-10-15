@@ -1,17 +1,24 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
+  CheckSquare,
   Filter,
-  FolderOpen,
+  Grid3x3,
   Image as ImageIcon,
+  List,
   Plus,
   RefreshCw,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { MediaDetailSheet } from "@/components/media/media-detail-sheet";
+import { MediaFolderSidebar } from "@/components/media/media-folder-sidebar";
 import { MediaGrid } from "@/components/media/media-grid";
+import { MediaList } from "@/components/media/media-list";
 import { MediaUploadDialog } from "@/components/media/media-upload-dialog";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
@@ -52,12 +59,15 @@ export default function WorkspaceMediaPage() {
   // UI states
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Filter states
   const [fileType, setFileType] = useState<
     "all" | "image" | "document" | "video"
   >("all");
-  const [folder, setFolder] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Build query params
@@ -68,10 +78,6 @@ export default function WorkspaceMediaPage() {
 
   if (fileType !== "all") {
     queryParams.file_type = fileType;
-  }
-
-  if (folder) {
-    queryParams.folder = folder;
   }
 
   // Fetch media
@@ -95,22 +101,30 @@ export default function WorkspaceMediaPage() {
   });
 
   const mediaList = response?.data || [];
-  const pagination = response?.pagination;
   const usage = usageResponse?.data;
 
-  // Filter by search query (client-side)
-  const filteredMedia = searchQuery
-    ? mediaList.filter(
-        (m) =>
-          m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          m.original_filename
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          m.tags.some((tag) =>
-            tag.toLowerCase().includes(searchQuery.toLowerCase()),
-          ),
-      )
-    : mediaList;
+  // Filter by folder and search query (client-side)
+  let filteredMedia = mediaList;
+
+  // Filter by folder
+  if (selectedFolder !== null) {
+    filteredMedia = filteredMedia.filter((m) => {
+      const itemFolder = m.folder || "";
+      return itemFolder === selectedFolder;
+    });
+  }
+
+  // Filter by search query
+  if (searchQuery) {
+    filteredMedia = filteredMedia.filter(
+      (m) =>
+        m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.original_filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.tags.some((tag) =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
+    );
+  }
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["media", workspace?.id] });
@@ -123,6 +137,62 @@ export default function WorkspaceMediaPage() {
 
   const handleDeleted = () => {
     handleRefresh();
+  };
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (mediaIds: string[]) =>
+      apiClient.media.bulkDelete(workspace?.id || "", mediaIds),
+    onSuccess: (response) => {
+      toast.success(response.message);
+      handleRefresh();
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete media: ${error.message}`);
+    },
+  });
+
+  // Selection handlers
+  const handleSelectionChange = (mediaId: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(mediaId);
+      } else {
+        newSet.delete(mediaId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredMedia.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredMedia.map((m) => m.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) {
+      toast.error("No media files selected");
+      return;
+    }
+
+    if (
+      confirm(
+        `Are you sure you want to delete ${selectedIds.size} media file(s)?`,
+      )
+    ) {
+      bulkDeleteMutation.mutate(Array.from(selectedIds));
+    }
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -142,8 +212,60 @@ export default function WorkspaceMediaPage() {
     { label: "Media Library" },
   ];
 
-  const headerActions = (
+  const headerActions = selectionMode ? (
     <>
+      <span className="text-sm text-muted-foreground">
+        {selectedIds.size} selected
+      </span>
+      <Button variant="outline" size="sm" onClick={handleSelectAll}>
+        {selectedIds.size === filteredMedia.length
+          ? "Deselect All"
+          : "Select All"}
+      </Button>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleBulkDelete}
+        disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        Delete ({selectedIds.size})
+      </Button>
+      <Button variant="ghost" size="sm" onClick={handleCancelSelection}>
+        <X className="h-4 w-4 mr-2" />
+        Cancel
+      </Button>
+    </>
+  ) : (
+    <>
+      <div className="flex items-center gap-1 border rounded-md">
+        <Button
+          variant={viewMode === "grid" ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setViewMode("grid")}
+          className="rounded-r-none"
+        >
+          <Grid3x3 className="h-4 w-4" />
+          <span className="sr-only">Grid view</span>
+        </Button>
+        <Button
+          variant={viewMode === "list" ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setViewMode("list")}
+          className="rounded-l-none"
+        >
+          <List className="h-4 w-4" />
+          <span className="sr-only">List view</span>
+        </Button>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setSelectionMode(true)}
+      >
+        <CheckSquare className="h-4 w-4 mr-2" />
+        Select
+      </Button>
       <Button
         variant="outline"
         size="sm"
@@ -331,76 +453,90 @@ export default function WorkspaceMediaPage() {
             <CardHeader>
               <CardTitle>Media Files</CardTitle>
               <CardDescription>
-                {pagination?.total || 0}{" "}
-                {pagination?.total === 1 ? "file" : "files"} in{" "}
-                {workspace?.title || "this workspace"}
+                {filteredMedia.length}{" "}
+                {filteredMedia.length === 1 ? "file" : "files"}
+                {selectedFolder !== null &&
+                  ` in ${selectedFolder || "Uncategorized"}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Filter Bar */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                {/* Search */}
+              <div className="flex gap-6">
+                {/* Folder Sidebar */}
+                <MediaFolderSidebar
+                  media={mediaList}
+                  selectedFolder={selectedFolder}
+                  onFolderSelect={setSelectedFolder}
+                />
+
+                {/* Main Content Area */}
                 <div className="flex-1">
-                  <Input
-                    placeholder="Search by name, tags..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
+                  {/* Filter Bar */}
+                  <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    {/* Search */}
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Search by name, tags..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
 
-                {/* File Type Filter */}
-                <Select
-                  value={fileType}
-                  onValueChange={(
-                    value: "all" | "image" | "document" | "video",
-                  ) => setFileType(value)}
-                >
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="File type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="image">Images</SelectItem>
-                    <SelectItem value="document">Documents</SelectItem>
-                    <SelectItem value="video">Videos</SelectItem>
-                  </SelectContent>
-                </Select>
+                    {/* File Type Filter */}
+                    <Select
+                      value={fileType}
+                      onValueChange={(
+                        value: "all" | "image" | "document" | "video",
+                      ) => setFileType(value)}
+                    >
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="File type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="image">Images</SelectItem>
+                        <SelectItem value="document">Documents</SelectItem>
+                        <SelectItem value="video">Videos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Folder Filter */}
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Filter by folder..."
-                    value={folder}
-                    onChange={(e) => setFolder(e.target.value)}
-                    className="w-full sm:w-[200px]"
-                  />
+                  {/* Media Grid/List */}
+                  {error ? (
+                    <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
+                      <ImageIcon className="h-12 w-12 text-destructive mb-4" />
+                      <p className="text-lg font-medium mb-2 text-destructive">
+                        Failed to load media
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        There was an error loading the media library
+                      </p>
+                      <Button variant="outline" onClick={handleRefresh}>
+                        Try Again
+                      </Button>
+                    </div>
+                  ) : viewMode === "grid" ? (
+                    <MediaGrid
+                      media={filteredMedia}
+                      onSelect={setSelectedMedia}
+                      isLoading={isLoading}
+                      selectedIds={selectedIds}
+                      onSelectionChange={handleSelectionChange}
+                      selectionMode={selectionMode}
+                    />
+                  ) : (
+                    <MediaList
+                      media={filteredMedia}
+                      onSelect={setSelectedMedia}
+                      isLoading={isLoading}
+                      selectedIds={selectedIds}
+                      onSelectionChange={handleSelectionChange}
+                      selectionMode={selectionMode}
+                    />
+                  )}
                 </div>
               </div>
-
-              {/* Media Grid */}
-              {error ? (
-                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
-                  <ImageIcon className="h-12 w-12 text-destructive mb-4" />
-                  <p className="text-lg font-medium mb-2 text-destructive">
-                    Failed to load media
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    There was an error loading the media library
-                  </p>
-                  <Button variant="outline" onClick={handleRefresh}>
-                    Try Again
-                  </Button>
-                </div>
-              ) : (
-                <MediaGrid
-                  media={filteredMedia}
-                  onSelect={setSelectedMedia}
-                  isLoading={isLoading}
-                />
-              )}
             </CardContent>
           </Card>
 

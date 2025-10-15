@@ -3,15 +3,26 @@
 import { FileText, Image as ImageIcon, Video } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Media } from "@/lib/api-client/media";
 
 interface MediaGridProps {
   media: Media[];
   onSelect: (media: Media) => void;
   isLoading?: boolean;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (mediaId: string, selected: boolean) => void;
+  selectionMode?: boolean;
 }
 
-export function MediaGrid({ media, onSelect, isLoading }: MediaGridProps) {
+export function MediaGrid({
+  media,
+  onSelect,
+  isLoading,
+  selectedIds,
+  onSelectionChange,
+  selectionMode = false,
+}: MediaGridProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -43,7 +54,14 @@ export function MediaGrid({ media, onSelect, isLoading }: MediaGridProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {media.map((item) => (
-        <MediaCard key={item.id} media={item} onSelect={onSelect} />
+        <MediaCard
+          key={item.id}
+          media={item}
+          onSelect={onSelect}
+          isSelected={selectedIds?.has(item.id) || false}
+          onSelectionChange={onSelectionChange}
+          selectionMode={selectionMode}
+        />
       ))}
     </div>
   );
@@ -52,9 +70,18 @@ export function MediaGrid({ media, onSelect, isLoading }: MediaGridProps) {
 interface MediaCardProps {
   media: Media;
   onSelect: (media: Media) => void;
+  isSelected?: boolean;
+  onSelectionChange?: (mediaId: string, selected: boolean) => void;
+  selectionMode?: boolean;
 }
 
-function MediaCard({ media, onSelect }: MediaCardProps) {
+function MediaCard({
+  media,
+  onSelect,
+  isSelected = false,
+  onSelectionChange,
+  selectionMode = false,
+}: MediaCardProps) {
   const isImage = media.file_type.startsWith("image/");
   const isVideo = media.file_type.startsWith("video/");
   const isDocument =
@@ -69,11 +96,35 @@ function MediaCard({ media, onSelect }: MediaCardProps) {
     return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
+  const handleClick = () => {
+    if (selectionMode && onSelectionChange) {
+      onSelectionChange(media.id, !isSelected);
+    } else {
+      onSelect(media);
+    }
+  };
+
   return (
     <Card
-      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => onSelect(media)}
+      className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${
+        isSelected ? "ring-2 ring-primary" : ""
+      }`}
+      onClick={handleClick}
     >
+      {/* Selection Checkbox */}
+      {selectionMode && onSelectionChange && (
+        <div className="absolute top-2 left-2 z-10">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) =>
+              onSelectionChange(media.id, checked === true)
+            }
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border-2"
+          />
+        </div>
+      )}
+
       {/* Thumbnail/Preview */}
       <div className="aspect-square bg-muted relative">
         {isImage && media.thumbnail_url ? (

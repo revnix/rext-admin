@@ -209,6 +209,33 @@ export function createMediaNamespace(client: ApiClient) {
     },
 
     /**
+     * Bulk delete media files
+     */
+    async bulkDelete(
+      workspaceId: string,
+      mediaIds: string[],
+      permanent = false,
+    ): Promise<{
+      data: {
+        deleted: number;
+        failed: number;
+        errors: string[];
+      };
+      message: string;
+    }> {
+      return client.request<{
+        data: { deleted: number; failed: number; errors: string[] };
+        message: string;
+      }>(
+        `/workspaces/${workspaceId}/media/bulk-delete?permanent=${permanent}`,
+        {
+          method: "POST",
+          body: JSON.stringify(mediaIds),
+        },
+      );
+    },
+
+    /**
      * Get storage usage statistics
      */
     async getUsage(workspaceId: string): Promise<StorageUsageResponse> {
