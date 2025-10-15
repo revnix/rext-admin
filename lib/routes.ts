@@ -69,6 +69,18 @@ export const workspaceRoutes = {
    * Media route
    */
   media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
+
+  /**
+   * Settings routes
+   */
+  settings: {
+    root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
+    general: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/general`,
+    billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
+    team: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/team`,
+    integrations: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/settings/integrations`,
+  },
 } as const;
 
 /**
