@@ -26,6 +26,7 @@ import { ApiClient } from "./core";
 import { createKnowledgeNamespace } from "./knowledge";
 import { createMediaNamespace } from "./media";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
+import { createOnboardingNamespace } from "./onboarding";
 import { createAccountNamespace, createProfileNamespace } from "./profile";
 import { createRolesNamespace } from "./roles";
 import {
@@ -65,6 +66,7 @@ function createApiClient() {
     subscriptions: createSubscriptionsNamespace(client),
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
+    onboarding: createOnboardingNamespace(client),
 
     // Admin namespaces
     users: createUsersNamespace(client),

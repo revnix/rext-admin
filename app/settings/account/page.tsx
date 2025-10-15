@@ -6,6 +6,7 @@ import { PasswordChange } from "@/components/account-settings/password-change";
 import { PrivacySettings } from "@/components/account-settings/privacy-settings";
 import { ProfileEdit } from "@/components/account-settings/profile-edit";
 import { SecuritySettings } from "@/components/account-settings/security-settings";
+import { UIPreferences } from "@/components/account-settings/ui-preferences";
 import {
   Card,
   CardContent,
@@ -88,17 +89,31 @@ export default function AccountSettingsPage() {
         </TabsContent>
 
         <TabsContent value="privacy">
-          <Card>
-            <CardHeader>
-              <CardTitle>Privacy & Data</CardTitle>
-              <CardDescription>
-                Export your data and manage privacy settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PrivacySettings />
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Privacy & Data</CardTitle>
+                <CardDescription>
+                  Export your data and manage privacy settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PrivacySettings />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>UI Preferences</CardTitle>
+                <CardDescription>
+                  Customize your user interface experience
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UIPreferences />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="danger">

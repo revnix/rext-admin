@@ -3,9 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/auth-provider";
+import { OnboardingProvider } from "@/providers/onboarding-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { TooltipProvider } from "@/providers/tooltip-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,7 +73,11 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SSEProvider>
-              <QueryProvider>{children}</QueryProvider>
+              <QueryProvider>
+                <TooltipProvider>
+                  <OnboardingProvider>{children}</OnboardingProvider>
+                </TooltipProvider>
+              </QueryProvider>
             </SSEProvider>
           </AuthProvider>
           <Toaster />
