@@ -14,12 +14,15 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     log.info("[Auth] Refreshing access token...");
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh?refresh_token=${token.refreshToken}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          refresh_token: token.refreshToken,
+        }),
       },
     );
 
@@ -158,10 +161,14 @@ export default {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      // If there's a refresh error, return null to force sign out
+      // If there's a refresh error, return a token with error flag
+      // NextAuth will handle session invalidation based on this error
       if (token.error === "RefreshAccessTokenError") {
-        log.error("[Auth] Refresh error detected, clearing session");
-        return null as unknown as JWT; // Force sign out
+        log.error("[Auth] Refresh error detected, marking session for logout");
+        return {
+          ...token,
+          error: "RefreshAccessTokenError",
+        };
       }
 
       // On initial sign in, store backend tokens

@@ -1,11 +1,16 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import type { Session } from "next-auth";
 import { auth } from "@/auth";
+
+// Extend NextRequest to include auth session from NextAuth middleware
+interface AuthenticatedRequest extends NextRequest {
+  auth: Session | null;
+}
 
 export default auth((request) => {
   const { nextUrl } = request as NextRequest;
-  // biome-ignore lint/suspicious/noExplicitAny: NextAuth types don't expose auth property
-  const session = (request as any).auth;
+  const session = (request as AuthenticatedRequest).auth;
 
   // Public routes that don't require authentication
   const publicRoutes = [
@@ -29,9 +34,8 @@ export default auth((request) => {
 
   // Admin route protection
   if (nextUrl.pathname.startsWith("/admin")) {
-    const userRoles = session?.user?.roles || [];
-    const isAdmin =
-      userRoles.includes("super_admin") || userRoles.includes("admin");
+    const userRole = session?.user?.role || "";
+    const isAdmin = userRole === "super_admin" || userRole === "admin";
 
     if (!isAdmin) {
       // Redirect non-admins to dashboard
