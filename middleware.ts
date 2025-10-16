@@ -1,7 +1,9 @@
+import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { auth } from "@/auth";
+import { getCSPHeader } from "@/lib/csp";
 
 // Extend NextRequest to include auth session from NextAuth middleware
 interface AuthenticatedRequest extends NextRequest {
@@ -55,6 +57,9 @@ export default auth((request) => {
     // Detailed workspace membership verified by WorkspaceProvider on page load
   }
 
+  // Generate cryptographic nonce for CSP
+  const nonce = randomBytes(16).toString("base64");
+
   // Create response
   const response = NextResponse.next();
 
@@ -65,22 +70,12 @@ export default auth((request) => {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "origin-when-cross-origin");
 
-  // Content Security Policy
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
-    "font-src 'self'",
-    "connect-src 'self' http://127.0.0.1:2024 http://localhost:2024",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-  ].join("; ");
-
+  // Content Security Policy (nonce-based, environment-aware)
+  const csp = getCSPHeader(nonce);
   response.headers.set("Content-Security-Policy", csp);
+
+  // Pass nonce to components via header (if needed for inline scripts)
+  response.headers.set("x-nonce", nonce);
 
   // HSTS (only in production)
   if (process.env.NODE_ENV === "production") {
