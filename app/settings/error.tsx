@@ -3,22 +3,20 @@
 import { RouteError } from "@/components/ui/route-error";
 
 /**
- * Workspace Error Boundary
- *
- * Catches errors within workspace-scoped pages.
+ * Settings Error Boundary
  */
-export default function WorkspaceError(props: {
+export default function SettingsError(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
   return (
     <RouteError
       {...props}
-      title="Workspace Error"
-      logContext="WorkspaceError"
+      title="Settings Error"
+      logContext="SettingsError"
       navigationType="link"
       navigationLink="/dashboard"
-      navigationLabel="Workspaces"
+      navigationLabel="Dashboard"
     />
   );
 }

@@ -3,22 +3,20 @@
 import { RouteError } from "@/components/ui/route-error";
 
 /**
- * Workspace Error Boundary
- *
- * Catches errors within workspace-scoped pages.
+ * Admin Error Boundary
  */
-export default function WorkspaceError(props: {
+export default function AdminError(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
   return (
     <RouteError
       {...props}
-      title="Workspace Error"
-      logContext="WorkspaceError"
+      title="Admin Panel Error"
+      logContext="AdminError"
       navigationType="link"
       navigationLink="/dashboard"
-      navigationLabel="Workspaces"
+      navigationLabel="Dashboard"
     />
   );
 }

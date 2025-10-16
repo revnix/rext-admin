@@ -14,6 +14,7 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,12 @@ import { useTextKnowledgeStore } from "@/stores/knowledge";
 import type { Workspace } from "@/types/workspace";
 import { AddTextDialog } from "./add-text-dialog";
 import { EditTextDialog } from "./edit-text-dialog";
-import { ExportDialog } from "./export-dialog";
+
+// Lazy load ExportDialog (large component with complex form logic)
+const ExportDialog = dynamic(() =>
+  import("./export-dialog").then((mod) => ({ default: mod.ExportDialog })),
+);
+
 import {
   TextKnowledgeCard,
   TextKnowledgeListItem,
