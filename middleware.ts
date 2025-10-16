@@ -69,8 +69,20 @@ export default auth((request) => {
   // Generate cryptographic nonce for CSP
   const nonce = generateNonce();
 
-  // Create response
-  const response = NextResponse.next();
+  // Content Security Policy (nonce-based, environment-aware)
+  const csp = getCSPHeader(nonce);
+
+  // CRITICAL: Set nonce in request headers so Next.js can apply it during SSR
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  // Create response with updated request headers
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   // Security headers
   response.headers.set("X-DNS-Prefetch-Control", "on");
@@ -79,8 +91,7 @@ export default auth((request) => {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "origin-when-cross-origin");
 
-  // Content Security Policy (nonce-based, environment-aware)
-  const csp = getCSPHeader(nonce);
+  // Set CSP in response headers for browser enforcement
   response.headers.set("Content-Security-Policy", csp);
 
   // Pass nonce to components via header (if needed for inline scripts)

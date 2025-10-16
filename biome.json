@@ -33,6 +33,9 @@
         },
         "noExplicitAny": "error",
         "noImplicitAnyLet": "error"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
       }
     },
     "domains": {

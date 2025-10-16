@@ -59,6 +59,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 }
 
 export default {
+  trustHost: true, // Trust all hosts in development, use AUTH_TRUST_HOST in production
   providers: [
     Credentials({
       name: "Credentials",

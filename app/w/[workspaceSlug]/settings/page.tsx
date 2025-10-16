@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
  *
  * Redirects to the general settings page
  */
-export default function WorkspaceSettingsPage({
+export default async function WorkspaceSettingsPage({
   params,
 }: {
-  params: { workspaceSlug: string };
+  params: Promise<{ workspaceSlug: string }>;
 }) {
-  redirect(`/w/${params.workspaceSlug}/settings/general`);
+  const { workspaceSlug } = await params;
+  redirect(`/w/${workspaceSlug}/settings/general`);
 }

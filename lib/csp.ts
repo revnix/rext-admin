@@ -13,7 +13,9 @@
  * @returns CSP header string
  */
 export function getCSPHeader(nonce: string): string {
-  const isDev = process.env.NODE_ENV === "development";
+  // Always use unsafe-inline for styles in development to support React inline styles
+  // Next.js dev server always sets NODE_ENV=development
+  const isDev = process.env.NODE_ENV !== "production";
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:2024";
 
@@ -21,11 +23,12 @@ export function getCSPHeader(nonce: string): string {
   const directives = [
     "default-src 'self'",
 
-    // Scripts: Use nonce in production, allow unsafe-eval in dev for hot reload
+    // Scripts: Use nonce with strict-dynamic, allow unsafe-eval in dev for hot reload
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
 
-    // Styles: Use nonce, allow unsafe-inline in dev for hot reload
-    `style-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-inline'" : ""}`,
+    // Styles: ALWAYS allow unsafe-inline (React components use inline styles extensively)
+    // In production, you may want to generate style hashes or use a CSS-in-JS solution
+    `style-src 'self' 'unsafe-inline'`,
 
     // Images: Allow self, data URIs, and blobs
     "img-src 'self' blob: data: https:",

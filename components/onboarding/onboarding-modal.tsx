@@ -4,7 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { ONBOARDING_STEPS } from "@/types/onboarding";
 import { OnboardingProgress } from "./onboarding-progress";
@@ -115,6 +121,15 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+        {/* Accessible title and description for screen readers */}
+        <VisuallyHidden>
+          <DialogTitle>Get Started with WREXT - Onboarding</DialogTitle>
+          <DialogDescription>
+            Complete the onboarding steps to set up your workspace and start
+            creating content with WREXT.
+          </DialogDescription>
+        </VisuallyHidden>
+
         {/* Header with progress */}
         <div className="border-b p-6">
           <div className="flex items-center justify-between mb-4">
