@@ -33,8 +33,8 @@ import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import {
   useKnowledgeFilterStore,
   useUnifiedKnowledgeStore,
-} from "@/stores/knowledge-store";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+} from "@/stores/knowledge";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 interface WorkspaceDetailProps {
   workspaceSlug: string;

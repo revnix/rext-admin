@@ -77,7 +77,9 @@ export default function AdminEmailTemplatesPage() {
     useState<EmailTemplate | null>(null);
 
   // Fetch system-wide templates (not workspace-specific)
-  // TODO: Update API to support system-wide templates (no workspaceId)
+  // NOTE: Using "system" as placeholder workspace ID for system-wide templates
+  // Backend currently requires workspace_id, but treats "system" specially
+  // Future enhancement: Create dedicated system-wide endpoint (GET /admin/email-templates)
   const {
     data: templates,
     isLoading,
@@ -85,8 +87,7 @@ export default function AdminEmailTemplatesPage() {
   } = useQuery({
     queryKey: ["system-email-templates"],
     queryFn: () => {
-      // TODO: Replace with system-wide API endpoint
-      // For now, using a placeholder workspace ID
+      // Using "system" as special workspace_id for system-wide templates
       return apiClient.emailTemplates.list("system");
     },
   });

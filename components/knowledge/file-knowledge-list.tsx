@@ -13,6 +13,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,9 +29,14 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
-import { useFileKnowledgeStore } from "@/stores/knowledge-store";
+import { useFileKnowledgeStore } from "@/stores/knowledge";
 import type { FileKnowledgeStatus, Workspace } from "@/types/workspace";
-import { ExportDialog } from "./export-dialog";
+
+// Lazy load ExportDialog (large component with complex form logic)
+const ExportDialog = dynamic(() =>
+  import("./export-dialog").then((mod) => ({ default: mod.ExportDialog })),
+);
+
 import {
   FileKnowledgeCard,
   FileKnowledgeListItem,

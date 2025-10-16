@@ -21,7 +21,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGlobalKnowledgeSearchStore } from "@/stores/knowledge-store";
+import { useGlobalKnowledgeSearchStore } from "@/stores/knowledge";
 import type { KnowledgeType } from "@/types/workspace";
 
 interface GlobalKnowledgeSearchProps {

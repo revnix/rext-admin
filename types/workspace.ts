@@ -449,3 +449,188 @@ export interface BrandVoiceRefreshState {
   operationId?: string;
   refreshError?: string;
 }
+
+// ============================================================================
+// KNOWLEDGE STORE UTILITY TYPES
+// ============================================================================
+
+/**
+ * File upload progress tracking for file knowledge uploads
+ */
+export interface FileUploadProgress {
+  fileId: string;
+  fileName: string;
+  progress: number;
+  status: "uploading" | "processing" | "completed" | "failed";
+  error?: string;
+}
+
+/**
+ * Global search result for cross-type knowledge search
+ */
+export interface GlobalSearchResult {
+  id: string;
+  type: KnowledgeType;
+  title: string;
+  content: string;
+  url?: string;
+  tags?: string[];
+  created_at: string;
+  updated_at?: string;
+  status?: string;
+  relevanceScore: number;
+  matchedFields: string[];
+  contentPreview: string;
+}
+
+/**
+ * SSR-safe storage implementation for Zustand persist middleware
+ * Returns a dummy storage object during SSR, real localStorage in browser
+ */
+export const getStorage = () => {
+  if (typeof window === "undefined") {
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  return localStorage;
+};
+
+// ============================================================================
+// WORKSPACE STORE STATE INTERFACES
+// ============================================================================
+
+/**
+ * Workspace Context Store State
+ * Manages current workspace context, list, and workspace switching
+ */
+export interface WorkspaceContextState {
+  // Current workspace context
+  currentWorkspace: Workspace | null;
+  workspaceList: Workspace[];
+
+  // Recently used workspaces for quick access
+  recentWorkspaces: string[]; // workspace IDs
+
+  // Last workspace page path for preserving navigation on workspace switch
+  lastWorkspacePath: string | null; // e.g., 'topics', 'content', 'analytics'
+
+  // SSR hydration state
+  _hasHydrated: boolean;
+
+  // Actions
+  setCurrentWorkspace: (workspace: Workspace | null) => void;
+  setWorkspaceList: (workspaces: Workspace[]) => void;
+  updateWorkspaceInList: (updatedWorkspace: Workspace) => void;
+  removeWorkspaceFromList: (workspaceId: string) => void;
+  addWorkspaceToList: (workspace: Workspace) => void;
+  addToRecentWorkspaces: (workspaceId: string) => void;
+  removeFromRecentWorkspaces: (workspaceId: string) => void;
+  clearRecentWorkspaces: () => void;
+  setLastWorkspacePath: (path: string | null) => void;
+  optimisticallyUpdateWorkspace: (
+    workspaceId: string,
+    updates: Partial<Workspace>,
+  ) => void;
+  revertOptimisticUpdate: (workspace: Workspace) => void;
+  setHasHydrated: (hydrated: boolean) => void;
+}
+
+/**
+ * Workspace CRUD Store State
+ * Manages workspace create, read, update, delete operations
+ */
+export interface WorkspaceCrudState {
+  // Loading states
+  loadingStates: WorkspaceLoadingStates;
+
+  // Operation tracking for SSE (transient, not persisted)
+  currentOperation: {
+    operationId: string;
+    workspaceId: string;
+  } | null;
+
+  // Actions
+  createWorkspace: (data: WorkspaceFormData) => Promise<Workspace>;
+  updateWorkspace: (
+    workspaceId: string,
+    data: WorkspaceFormData,
+  ) => Promise<Workspace>;
+  deleteWorkspace: (workspaceId: string) => Promise<void>;
+  duplicateWorkspace: (sourceWorkspaceId: string) => Promise<Workspace>;
+  fetchWorkspaces: () => Promise<Workspace[]>;
+  fetchWorkspace: (workspaceId: string) => Promise<Workspace>;
+  setLoading: (
+    operation: keyof WorkspaceLoadingStates,
+    loading: boolean,
+  ) => void;
+  setCurrentOperation: (
+    operation: {
+      operationId: string;
+      workspaceId: string;
+    } | null,
+  ) => void;
+  clearCurrentOperation: () => void;
+}
+
+/**
+ * Workspace Form Store State
+ * Manages workspace form UI state for creation and editing
+ */
+export interface WorkspaceFormStoreState {
+  workspaceForm: WorkspaceFormState;
+
+  // Actions
+  openWorkspaceForm: (mode: "create" | "edit", workspace?: Workspace) => void;
+  closeWorkspaceForm: () => void;
+  updateWorkspaceFormData: (data: Partial<WorkspaceFormData>) => void;
+  setWorkspaceFormSubmitting: (isSubmitting: boolean) => void;
+  setWorkspaceFormErrors: (errors: Record<string, string>) => void;
+  resetWorkspaceForm: () => void;
+}
+
+/**
+ * Workspace Knowledge Management Store State
+ * Manages knowledge selection, upload modal, and progress tracking
+ */
+export interface WorkspaceKnowledgeState {
+  knowledge: KnowledgeManagementState;
+
+  // Actions
+  setSelectedKnowledgeType: (type: KnowledgeType) => void;
+  toggleKnowledgeSelection: (itemId: string) => void;
+  selectAllKnowledge: (itemIds: string[]) => void;
+  deselectAllKnowledge: () => void;
+  openUploadModal: () => void;
+  closeUploadModal: () => void;
+  setUploadProgress: (fileId: string, progress: number) => void;
+  removeUploadProgress: (fileId: string) => void;
+}
+
+/**
+ * Brand Voice Refresh Store State
+ * Manages brand voice refresh operations
+ */
+export interface BrandVoiceRefreshStoreState {
+  brandVoiceRefresh: BrandVoiceRefreshState;
+
+  // Actions
+  refreshBrandVoice: (workspaceId: string) => Promise<string>;
+  setBrandVoiceRefreshState: (state: Partial<BrandVoiceRefreshState>) => void;
+}
+
+/**
+ * Combined Workspace Store State
+ * Combines all workspace store states into a single interface
+ */
+export interface WorkspaceState
+  extends WorkspaceContextState,
+    WorkspaceCrudState,
+    WorkspaceFormStoreState,
+    WorkspaceKnowledgeState,
+    BrandVoiceRefreshStoreState {
+  // Utility actions
+  resetStore: () => void;
+}

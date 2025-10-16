@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { EmailFailuresTable } from "@/components/admin/email/email-failures-table";
 import { EmailOverviewKPIs } from "@/components/admin/email/email-overview-kpis";
 import { EmailPerformanceTable } from "@/components/admin/email/email-performance-table";
-import { EmailVolumeChart } from "@/components/admin/email/email-volume-chart";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
@@ -15,6 +15,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load EmailVolumeChart component (uses recharts - heavy library ~400KB)
+const EmailVolumeChart = dynamic(
+  () =>
+    import("@/components/admin/email/email-volume-chart").then(
+      (mod) => mod.EmailVolumeChart,
+    ),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    ),
+    ssr: false,
+  },
+);
+
 import {
   Select,
   SelectContent,

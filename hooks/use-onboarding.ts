@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import type {
@@ -10,6 +11,10 @@ import type {
 
 export function useOnboarding() {
   const queryClient = useQueryClient();
+  const { status: sessionStatus } = useSession();
+
+  // Only fetch onboarding data when user is authenticated
+  const isAuthenticated = sessionStatus === "authenticated";
 
   // Fetch onboarding status
   const {
@@ -20,6 +25,11 @@ export function useOnboarding() {
     queryKey: ["onboarding", "status"],
     queryFn: () => apiClient.onboarding.getStatus(),
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false, // Never retry - fail fast on errors
+    refetchOnMount: false, // Don't refetch on mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
+    enabled: isAuthenticated, // Only fetch when authenticated
   });
 
   // Check if should show onboarding
@@ -27,6 +37,11 @@ export function useOnboarding() {
     queryKey: ["onboarding", "should-show"],
     queryFn: () => apiClient.onboarding.shouldShow(),
     staleTime: 1000 * 60 * 5,
+    retry: false, // Never retry - fail fast on errors
+    refetchOnMount: false, // Don't refetch on mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
+    enabled: isAuthenticated, // Only fetch when authenticated
   });
 
   // Update step mutation

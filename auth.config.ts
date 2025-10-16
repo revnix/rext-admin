@@ -14,16 +14,25 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     log.info("[Auth] Refreshing access token...");
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh?refresh_token=${token.refreshToken}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          refresh_token: token.refreshToken,
+        }),
       },
     );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      log.error(
+        "[Auth] Token refresh failed with status:",
+        response.status,
+        errorData,
+      );
       throw new Error("Token refresh failed");
     }
 
@@ -50,6 +59,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 }
 
 export default {
+  trustHost: true, // Trust all hosts in development, use AUTH_TRUST_HOST in production
   providers: [
     Credentials({
       name: "Credentials",
@@ -158,12 +168,6 @@ export default {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      // If there's a refresh error, return null to force sign out
-      if (token.error === "RefreshAccessTokenError") {
-        log.error("[Auth] Refresh error detected, clearing session");
-        return null as unknown as JWT; // Force sign out
-      }
-
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -255,8 +259,19 @@ export default {
         }
       }
 
+      // If there's a previous refresh error, don't retry - just return the error token
+      // This prevents infinite loops
+      if (token.error === "RefreshAccessTokenError") {
+        return token;
+      }
+
       // Return previous token if the access token has not expired yet
       if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+        return token;
+      }
+
+      // Only attempt refresh if we have a refresh token
+      if (!token.refreshToken) {
         return token;
       }
 

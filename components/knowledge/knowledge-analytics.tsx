@@ -18,7 +18,7 @@ import {
   useFileKnowledgeStore,
   useTextKnowledgeStore,
   useWebKnowledgeStore,
-} from "@/stores/knowledge-store";
+} from "@/stores/knowledge";
 import type {
   KnowledgeTypeMetric,
   UnifiedKnowledgeItem,

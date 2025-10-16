@@ -19,7 +19,7 @@ import {
 import { FormField, ValidationInput } from "@/components/ui/form-field";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { useWebKnowledgeStore } from "@/stores/knowledge-store";
+import { useWebKnowledgeStore } from "@/stores/knowledge";
 
 // Validation schema
 const addUrlSchema = z.object({

@@ -65,7 +65,55 @@ export default function CustomersPage() {
   };
 
   const handleExport = async () => {
-    // TODO: Implement CSV export
+    if (!customers || customers.length === 0) {
+      return;
+    }
+
+    // Prepare CSV headers
+    const headers = [
+      "ID",
+      "Username",
+      "Email",
+      "Status",
+      "Subscription",
+      "Created At",
+    ];
+
+    // Convert customers to CSV rows
+    const rows = customers.map((customer) => [
+      customer.user_id,
+      customer.name || "",
+      customer.email || "",
+      customer.is_active ? "active" : "inactive",
+      customer.subscription?.plan_name || "free",
+      customer.created_at
+        ? new Date(customer.created_at).toISOString().split("T")[0]
+        : "",
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+      ),
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `customers-export-${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (

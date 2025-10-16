@@ -2,12 +2,40 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BarChart3, Server } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { ErrorLogsTable } from "@/components/admin/monitoring/error-logs-table";
 import { SystemHealthCards } from "@/components/admin/monitoring/system-health-cards";
-import { UsageCharts } from "@/components/admin/monitoring/usage-charts";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load UsageCharts component (uses recharts - heavy library ~400KB)
+const UsageCharts = dynamic(
+  () =>
+    import("@/components/admin/monitoring/usage-charts").then(
+      (mod) => mod.UsageCharts,
+    ),
+  {
+    loading: () => (
+      <div className="space-y-6">
+        <div className="flex justify-end gap-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
+    ),
+    ssr: false, // Charts don't need SSR
+  },
+);
+
 import {
   Card,
   CardContent,

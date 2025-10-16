@@ -23,7 +23,7 @@ import {
   useKnowledgeFilterStore,
   useTextKnowledgeStore,
   useWebKnowledgeStore,
-} from "@/stores/knowledge-store";
+} from "@/stores/knowledge";
 import { hasActiveKnowledgeFilters } from "@/types/knowledge";
 import type { Workspace } from "@/types/workspace";
 import { KnowledgeDuplicateSummary } from "../knowledge-duplicates";

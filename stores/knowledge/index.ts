@@ -1,18 +1,23 @@
 /**
  * Knowledge Stores - Unified Export
  *
- * Exports all knowledge stores and their utilities from the refactored
- * generic factory pattern implementation.
+ * Exports all knowledge stores and their utilities from both
+ * the factory pattern implementation and individual store files.
  */
 
-// Re-export remaining stores from main knowledge-store.ts for compatibility
-export {
-  useCurrentKnowledgeType,
-  useCurrentWorkspaceId,
-  useGlobalKnowledgeSearchStore,
-  useKnowledgeFilterStore,
-  useUnifiedKnowledgeStore,
-} from "../knowledge-store";
+// ============================================================================
+// TYPES
+// ============================================================================
+export type {
+  FileKnowledge,
+  FileUploadProgress,
+  GlobalSearchResult,
+  KnowledgeType,
+  TextKnowledge,
+  WebKnowledge,
+} from "@/types/workspace";
+export { getStorage } from "@/types/workspace";
+// Factory pattern types
 export type {
   BaseActions,
   BaseKnowledge,
@@ -20,9 +25,37 @@ export type {
   KnowledgeStore,
   StoreConfig,
 } from "./create-knowledge-store";
-// Factory
+// ============================================================================
+// FACTORY PATTERN STORES (Original)
+// ============================================================================
 export { createKnowledgeStore } from "./create-knowledge-store";
-export type { FileUploadProgress } from "./file-knowledge-store";
+// Original factory-based stores
+export {
+  useFileKnowledgeItems as useFileKnowledgeItemsFactory,
+  useFileKnowledgeSelected as useFileKnowledgeSelectedFactory,
+  useFileKnowledgeStore as useFileKnowledgeStoreFactory,
+  useFileKnowledgeUploading as useFileKnowledgeUploadingFactory,
+  useFileUploadProgress as useFileUploadProgressFactory,
+} from "./file-knowledge-store";
+export {
+  useTextKnowledgeEditing as useTextKnowledgeEditingFactory,
+  useTextKnowledgeItems as useTextKnowledgeItemsFactory,
+  useTextKnowledgeSelected as useTextKnowledgeSelectedFactory,
+  useTextKnowledgeStore as useTextKnowledgeStoreFactory,
+} from "./text-knowledge-store";
+
+export {
+  useWebKnowledgeAdding as useWebKnowledgeAddingFactory,
+  useWebKnowledgeItems as useWebKnowledgeItemsFactory,
+  useWebKnowledgeLoading as useWebKnowledgeLoadingFactory,
+  useWebKnowledgeSelected as useWebKnowledgeSelectedFactory,
+  useWebKnowledgeStore as useWebKnowledgeStoreFactory,
+} from "./web-knowledge-store";
+
+// ============================================================================
+// INDIVIDUAL STORES (Refactored - Recommended)
+// ============================================================================
+
 // File Knowledge Store
 export {
   useFileKnowledgeItems,
@@ -30,20 +63,28 @@ export {
   useFileKnowledgeStore,
   useFileKnowledgeUploading,
   useFileUploadProgress,
-} from "./file-knowledge-store";
-
+} from "./use-file-knowledge-store";
+// Global Knowledge Search Store
+export { useGlobalKnowledgeSearchStore } from "./use-global-knowledge-search-store";
+// Knowledge Filter Store
+export { useKnowledgeFilterStore } from "./use-knowledge-filter-store";
 // Text Knowledge Store
 export {
   useTextKnowledgeEditing,
   useTextKnowledgeItems,
   useTextKnowledgeSelected,
   useTextKnowledgeStore,
-} from "./text-knowledge-store";
+} from "./use-text-knowledge-store";
+// Unified Knowledge Store
+export {
+  useCurrentKnowledgeType,
+  useCurrentWorkspaceId,
+  useUnifiedKnowledgeStore,
+} from "./use-unified-knowledge-store";
 // Web Knowledge Store
 export {
-  useWebKnowledgeAdding,
   useWebKnowledgeItems,
   useWebKnowledgeLoading,
   useWebKnowledgeSelected,
   useWebKnowledgeStore,
-} from "./web-knowledge-store";
+} from "./use-web-knowledge-store";

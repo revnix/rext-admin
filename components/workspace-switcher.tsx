@@ -24,7 +24,7 @@ import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 
 export function WorkspaceSwitcher() {

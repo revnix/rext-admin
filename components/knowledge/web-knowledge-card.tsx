@@ -28,7 +28,7 @@ import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { numberFormat } from "@/lib/formatters/number-formatters";
 import { log } from "@/lib/logger";
-import { useWebKnowledgeStore } from "@/stores/knowledge-store";
+import { useWebKnowledgeStore } from "@/stores/knowledge";
 import type { WebKnowledge } from "@/types/workspace";
 import {
   BaseKnowledgeCard,

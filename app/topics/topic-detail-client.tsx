@@ -14,7 +14,7 @@ import { useTopicApproveServerAction } from "@/hooks/use-topic-mutations-server-
 import { useTopicScoring } from "@/hooks/use-topic-scoring";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import { logger } from "@/lib/logger";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { SidebarConfig } from "@/types/detail-page";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
@@ -70,7 +70,15 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
       topic_id: generatedTopic?.id,
       title: generatedTopic?.title,
     });
-    // TODO: Navigate to content creation with topic prefilled
+
+    // Navigate to content creation with topic prefilled
+    if (currentWorkspace?.slug && generatedTopic?.id) {
+      router.push(
+        `/w/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}`,
+      );
+    } else {
+      detailLogger.error("Cannot navigate: Missing workspace slug or topic ID");
+    }
   };
 
   const handleDeleteTopic = async () => {

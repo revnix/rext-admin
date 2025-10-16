@@ -2,7 +2,7 @@
 
 import { CheckCircle, ExternalLink, FileText, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { QuestionAnswerLayout } from "../layouts/question-answer-layout";
 

@@ -5,7 +5,7 @@ import type React from "react";
 import { createContext, useContext, useEffect } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { log } from "@/lib/logger";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 /**
  * Workspace Permission Context

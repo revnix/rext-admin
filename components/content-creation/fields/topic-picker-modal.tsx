@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useTopics } from "@/hooks/use-topics";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { GeneratedTopic } from "@/types/topic-builder";
 
 interface TopicPickerModalProps {

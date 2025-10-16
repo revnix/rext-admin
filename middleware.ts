@@ -1,11 +1,27 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import type { Session } from "next-auth";
 import { auth } from "@/auth";
+import { getCSPHeader } from "@/lib/csp";
+
+/**
+ * Generate a cryptographically secure random nonce using Web Crypto API
+ * (Edge Runtime compatible)
+ */
+function generateNonce(): string {
+  const buffer = new Uint8Array(16);
+  crypto.getRandomValues(buffer);
+  return btoa(String.fromCharCode(...buffer));
+}
+
+// Extend NextRequest to include auth session from NextAuth middleware
+interface AuthenticatedRequest extends NextRequest {
+  auth: Session | null;
+}
 
 export default auth((request) => {
   const { nextUrl } = request as NextRequest;
-  // biome-ignore lint/suspicious/noExplicitAny: NextAuth types don't expose auth property
-  const session = (request as any).auth;
+  const session = (request as AuthenticatedRequest).auth;
 
   // Public routes that don't require authentication
   const publicRoutes = [
@@ -29,9 +45,8 @@ export default auth((request) => {
 
   // Admin route protection
   if (nextUrl.pathname.startsWith("/admin")) {
-    const userRoles = session?.user?.roles || [];
-    const isAdmin =
-      userRoles.includes("super_admin") || userRoles.includes("admin");
+    const userRole = session?.user?.role || "";
+    const isAdmin = userRole === "super_admin" || userRole === "admin";
 
     if (!isAdmin) {
       // Redirect non-admins to dashboard
@@ -51,8 +66,23 @@ export default auth((request) => {
     // Detailed workspace membership verified by WorkspaceProvider on page load
   }
 
-  // Create response
-  const response = NextResponse.next();
+  // Generate cryptographic nonce for CSP
+  const nonce = generateNonce();
+
+  // Content Security Policy (nonce-based, environment-aware)
+  const csp = getCSPHeader(nonce);
+
+  // CRITICAL: Set nonce in request headers so Next.js can apply it during SSR
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  // Create response with updated request headers
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   // Security headers
   response.headers.set("X-DNS-Prefetch-Control", "on");
@@ -61,22 +91,11 @@ export default auth((request) => {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "origin-when-cross-origin");
 
-  // Content Security Policy
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
-    "font-src 'self'",
-    "connect-src 'self' http://127.0.0.1:2024 http://localhost:2024",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-  ].join("; ");
-
+  // Set CSP in response headers for browser enforcement
   response.headers.set("Content-Security-Policy", csp);
+
+  // Pass nonce to components via header (if needed for inline scripts)
+  response.headers.set("x-nonce", nonce);
 
   // HSTS (only in production)
   if (process.env.NODE_ENV === "production") {

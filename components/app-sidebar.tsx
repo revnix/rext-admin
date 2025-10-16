@@ -33,7 +33,7 @@ import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { PERMISSIONS, ROLES } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

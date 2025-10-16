@@ -6,7 +6,7 @@ import { useDeleteHandler } from "@/hooks/useDeleteHandler";
 import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { numberFormat } from "@/lib/formatters/number-formatters";
-import { useTextKnowledgeStore } from "@/stores/knowledge-store";
+import { useTextKnowledgeStore } from "@/stores/knowledge";
 import type { TextKnowledge } from "@/types/workspace";
 import {
   BaseKnowledgeCard,

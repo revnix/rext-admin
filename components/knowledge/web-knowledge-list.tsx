@@ -13,6 +13,7 @@ import {
   Square,
   Trash2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,10 +36,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { useWebKnowledgeStore } from "@/stores/knowledge-store";
+import { useWebKnowledgeStore } from "@/stores/knowledge";
 import type { WebKnowledgeStatus, Workspace } from "@/types/workspace";
 import { AddUrlDialog } from "./add-url-dialog";
-import { ExportDialog } from "./export-dialog";
+
+// Lazy load ExportDialog (large component with complex form logic)
+const ExportDialog = dynamic(() =>
+  import("./export-dialog").then((mod) => ({ default: mod.ExportDialog })),
+);
+
 import { WebKnowledgeCard, WebKnowledgeListItem } from "./web-knowledge-card";
 
 interface WebKnowledgeListProps {

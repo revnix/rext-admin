@@ -2,12 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Settings } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-retention-matrix";
-import { PlanDistributionChart } from "@/components/admin/analytics/plan-distribution-chart";
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
-import { RevenueChart } from "@/components/admin/analytics/revenue-chart";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
@@ -19,6 +18,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load chart components (use recharts - heavy library ~400KB)
+const RevenueChart = dynamic(
+  () =>
+    import("@/components/admin/analytics/revenue-chart").then(
+      (mod) => mod.RevenueChart,
+    ),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[400px] w-full" />
+        </CardContent>
+      </Card>
+    ),
+    ssr: false,
+  },
+);
+
+const PlanDistributionChart = dynamic(
+  () =>
+    import("@/components/admin/analytics/plan-distribution-chart").then(
+      (mod) => mod.PlanDistributionChart,
+    ),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    ),
+    ssr: false,
+  },
+);
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";

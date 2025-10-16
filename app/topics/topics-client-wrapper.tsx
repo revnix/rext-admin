@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle, Eye, Lightbulb, PenTool, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table";
 import {
   AudienceFitDisplay,
@@ -34,6 +35,7 @@ export function TopicsClientWrapper({
   emptyActions,
   tableActions,
 }: TopicsClientWrapperProps) {
+  const router = useRouter();
   // Mutations using modern server actions
   const deleteMutation = useTopicDeleteServerAction();
   const approveMutation = useTopicApproveServerAction();
@@ -167,11 +169,19 @@ export function TopicsClientWrapper({
       label: "Write Content",
       icon: <PenTool className="h-4 w-4" />,
       onClick: (row: TopicData) => {
-        // TODO: Navigate to content creation with topic prefilled
         topicsLogger.info("Create content clicked", {
           topic_id: row.id,
           topic_name: row.name,
         });
+
+        // Navigate to content creation with topic prefilled
+        if (workspaceSlug && row.id) {
+          router.push(`/w/${workspaceSlug}/content/create?topicId=${row.id}`);
+        } else {
+          topicsLogger.error(
+            "Cannot navigate: Missing workspace slug or topic ID",
+          );
+        }
       },
       tooltip: "Create content from this topic",
       variant: "default" as const,

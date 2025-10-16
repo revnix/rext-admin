@@ -14,7 +14,7 @@ import {
 import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
 import { TopicsHeader } from "./TopicsHeader";

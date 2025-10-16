@@ -23,7 +23,7 @@ import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-d
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
 import type { Workspace, WorkspaceListResponse } from "@/types/workspace";
 
