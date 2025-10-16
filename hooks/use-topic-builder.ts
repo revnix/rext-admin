@@ -11,7 +11,7 @@ import {
   updateFormDataForIndustryChange,
   validateFormStepDetailed,
 } from "@/lib/topic-builder-utils";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { BackendError } from "@/types/backend";
 import type {
   GeneratedTopic,

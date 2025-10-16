@@ -18,7 +18,7 @@ import {
   INDUSTRY_OPTIONS,
   PLATFORM_OPTIONS,
 } from "@/lib/content-creation/wizard-config";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { WizardAction, WizardStepProps } from "@/types/content-creation";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { TopicSelector } from "../fields/topic-selector";

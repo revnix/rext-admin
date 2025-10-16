@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
-import { useTextKnowledgeStore } from "@/stores/knowledge-store";
+import { useTextKnowledgeStore } from "@/stores/knowledge";
 import type { Workspace } from "@/types/workspace";
 import { AddTextDialog } from "./add-text-dialog";
 import { EditTextDialog } from "./edit-text-dialog";

@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
-import { useFileKnowledgeStore } from "@/stores/knowledge-store";
+import { useFileKnowledgeStore } from "@/stores/knowledge";
 import type { FileKnowledgeStatus, Workspace } from "@/types/workspace";
 import { ExportDialog } from "./export-dialog";
 import {

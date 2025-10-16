@@ -16,7 +16,7 @@ import {
 } from "@/lib/content-creation/dependency-engine";
 import { WIZARD_CONFIG } from "@/lib/content-creation/wizard-config";
 import { log } from "@/lib/logger";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type {
   ContentCreationFormData,
   ContentCreationWizardProps,

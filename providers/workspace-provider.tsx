@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 
 /**

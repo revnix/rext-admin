@@ -34,7 +34,7 @@ import {
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceOverviewFormProps {

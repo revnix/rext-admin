@@ -7,7 +7,7 @@ import { useState } from "react";
 import { classifyError } from "@/lib/error-utils";
 import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { ActionResult } from "../types";
 
 export function useNavigateToContent() {

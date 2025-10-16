@@ -33,7 +33,7 @@ import {
 import { log } from "@/lib/logger";
 import { getSession, updateSession } from "@/lib/session-storage";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { SessionData } from "@/types/session";
 import type { GeneratedTopic } from "@/types/topic-builder";
 

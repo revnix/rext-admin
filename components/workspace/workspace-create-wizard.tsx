@@ -33,7 +33,7 @@ import {
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { BrandVoice } from "@/types/workspace";
 
 /**
@@ -180,7 +180,7 @@ export function WorkspaceCreateWizard() {
       setWorkspaceSlug(workspace.slug);
 
       // Get operation_id from store (set by createWorkspace)
-      const operation = useWorkspaceStore.getState().currentOperation;
+      const operation = useWorkspaceCrudStore.getState().currentOperation;
       if (operation?.operationId) {
         log.info("[Wizard] Setting operation ID", {
           operationId: operation.operationId,

@@ -35,7 +35,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { useWebKnowledgeStore } from "@/stores/knowledge-store";
+import { useWebKnowledgeStore } from "@/stores/knowledge";
 import type { WebKnowledgeStatus, Workspace } from "@/types/workspace";
 import { AddUrlDialog } from "./add-url-dialog";
 import { ExportDialog } from "./export-dialog";

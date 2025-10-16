@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import type { WorkspaceData } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
 

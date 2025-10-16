@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { useFileKnowledgeStore } from "@/stores/knowledge-store";
+import { useFileKnowledgeStore } from "@/stores/knowledge";
 import type { FileKnowledge } from "@/types/workspace";
 
 interface FileUploadZoneProps {

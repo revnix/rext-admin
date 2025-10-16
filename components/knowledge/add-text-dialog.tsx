@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
-import { useTextKnowledgeStore } from "@/stores/knowledge-store";
+import { useTextKnowledgeStore } from "@/stores/knowledge";
 
 // Validation schema
 const addTextSchema = z.object({

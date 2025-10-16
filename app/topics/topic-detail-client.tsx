@@ -14,7 +14,7 @@ import { useTopicApproveServerAction } from "@/hooks/use-topic-mutations-server-
 import { useTopicScoring } from "@/hooks/use-topic-scoring";
 import { useTopicDeleteMutation } from "@/hooks/useTopicMutations";
 import { logger } from "@/lib/logger";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { SidebarConfig } from "@/types/detail-page";
 import type { GeneratedTopic } from "@/types/topic-builder";
 

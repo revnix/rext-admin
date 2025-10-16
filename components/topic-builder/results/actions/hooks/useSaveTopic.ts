@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useTopicSaveMutation } from "@/hooks/useTopicMutations";
 import { classifyError } from "@/lib/error-utils";
 import { log } from "@/lib/logger";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import type { ActionResult } from "../types";
 

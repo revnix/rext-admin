@@ -48,7 +48,7 @@ import { classifyError } from "@/lib/error-utils";
 import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { useCurrentWorkspace } from "@/stores/workspace-store";
+import { useCurrentWorkspace } from "@/stores/workspace";
 import type { BackendError } from "@/types/backend";
 import { type TopicEditFormData, topicEditFormSchema } from "@/types/forms";
 import type { GeneratedTopic } from "@/types/topic-builder";

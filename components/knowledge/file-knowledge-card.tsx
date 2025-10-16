@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
-import { useFileKnowledgeStore } from "@/stores/knowledge-store";
+import { useFileKnowledgeStore } from "@/stores/knowledge";
 import type { FileKnowledge } from "@/types/workspace";
 import {
   BaseKnowledgeCard,
