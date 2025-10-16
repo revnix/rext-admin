@@ -10,7 +10,7 @@ import type {
 import type { ApiClient } from "./core";
 
 export function createOnboardingNamespace(client: ApiClient) {
-  const ONBOARDING_BASE = "/onboarding";
+  const ONBOARDING_BASE = "/api/v1/onboarding";
 
   return {
     /**

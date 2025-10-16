@@ -27,6 +27,12 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      log.error(
+        "[Auth] Token refresh failed with status:",
+        response.status,
+        errorData,
+      );
       throw new Error("Token refresh failed");
     }
 
@@ -161,16 +167,6 @@ export default {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      // If there's a refresh error, return a token with error flag
-      // NextAuth will handle session invalidation based on this error
-      if (token.error === "RefreshAccessTokenError") {
-        log.error("[Auth] Refresh error detected, marking session for logout");
-        return {
-          ...token,
-          error: "RefreshAccessTokenError",
-        };
-      }
-
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -262,8 +258,19 @@ export default {
         }
       }
 
+      // If there's a previous refresh error, don't retry - just return the error token
+      // This prevents infinite loops
+      if (token.error === "RefreshAccessTokenError") {
+        return token;
+      }
+
       // Return previous token if the access token has not expired yet
       if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+        return token;
+      }
+
+      // Only attempt refresh if we have a refresh token
+      if (!token.refreshToken) {
         return token;
       }
 
