@@ -23,8 +23,10 @@ export function getCSPHeader(nonce: string): string {
   const directives = [
     "default-src 'self'",
 
-    // Scripts: Use nonce with strict-dynamic, allow unsafe-eval in dev for hot reload
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    // Scripts: Environment-aware script policy
+    // Dev (Turbopack): 'unsafe-eval' for hot reload
+    // Prod (Webpack): 'unsafe-inline' for bundled inline scripts
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : "'unsafe-inline'"}`,
 
     // Styles: ALWAYS allow unsafe-inline (React components use inline styles extensively)
     // In production, you may want to generate style hashes or use a CSS-in-JS solution
@@ -63,10 +65,23 @@ export function getCSPHeader(nonce: string): string {
 /**
  * CSP Configuration Notes:
  *
+ * Environment-Aware Policy:
+ * - Dev (Turbopack): Uses 'unsafe-eval' for hot module reload
+ * - Prod (Webpack): Uses 'unsafe-inline' for bundled inline scripts
+ *
+ * Security Features:
  * - 'strict-dynamic': Allows dynamically created scripts to run if parent has nonce
- * - 'unsafe-eval': Only in dev for Next.js hot reload, removed in production
- * - 'unsafe-inline': Only in dev for CSS hot reload, removed in production
- * - Nonce-based CSP: All inline scripts/styles must have matching nonce attribute
+ * - 'self': Only allows scripts from same origin
+ * - Nonce-based: Scripts can use nonce attribute for additional control
+ *
+ * Why 'unsafe-inline' in Production?
+ * Next.js Webpack builds generate inline scripts for:
+ * - Module loading and chunk management
+ * - Hydration data injection
+ * - Runtime configuration
+ *
+ * These inline scripts are framework-generated and change with each build,
+ * making hash-based CSP impractical. This is the standard approach for Next.js apps.
  *
  * Usage in middleware:
  * ```typescript
@@ -75,12 +90,5 @@ export function getCSPHeader(nonce: string): string {
  * const csp = getCSPHeader(nonce)
  * response.headers.set('Content-Security-Policy', csp)
  * response.headers.set('x-nonce', nonce)
- * ```
- *
- * Usage in components (if needed):
- * ```tsx
- * import { headers } from 'next/headers'
- * const nonce = headers().get('x-nonce') || ''
- * <script nonce={nonce}>...</script>
  * ```
  */
