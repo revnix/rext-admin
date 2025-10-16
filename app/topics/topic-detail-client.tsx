@@ -70,7 +70,15 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
       topic_id: generatedTopic?.id,
       title: generatedTopic?.title,
     });
-    // TODO: Navigate to content creation with topic prefilled
+
+    // Navigate to content creation with topic prefilled
+    if (currentWorkspace?.slug && generatedTopic?.id) {
+      router.push(
+        `/w/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}`,
+      );
+    } else {
+      detailLogger.error("Cannot navigate: Missing workspace slug or topic ID");
+    }
   };
 
   const handleDeleteTopic = async () => {

@@ -271,15 +271,17 @@ export default function ResultsPage() {
     topicId: string,
     updates: Partial<GeneratedTopic>,
   ) => {
-    // TODO: Implement topic editing functionality
-    log.info("Editing topic:", topicId, updates);
-    // In a real implementation, this would update the topic in state/API
+    // Future enhancement: Allow inline editing of generated topics
+    // Would update topic in both local state and backend API
+    log.info("Topic editing not yet implemented:", topicId, updates);
+    // Implementation requires: PUT /api/topics/:id endpoint with optimistic updates
   };
 
   const handleTopicRegenerate = async (topicId: string) => {
-    // TODO: Implement single topic regeneration
-    log.info("Regenerating topic:", topicId);
-    // In a real implementation, this would call the API to regenerate just this topic
+    // Future enhancement: Regenerate individual topics without regenerating the entire batch
+    // Would preserve other topics while refreshing just one
+    log.info("Single topic regeneration not yet implemented:", topicId);
+    // Implementation requires: POST /api/topics/:id/regenerate endpoint
   };
 
   const handleTopicExport = async (

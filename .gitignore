@@ -60,4 +60,10 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# Backup files
+*.backup
+*.old
+*.tmp
+*~ 
