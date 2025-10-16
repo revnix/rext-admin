@@ -101,20 +101,6 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
-     * Duplicate workspace
-     * WARNING: Backend endpoint does not exist. Needs implementation.
-     */
-    duplicate: async (sourceWorkspaceId: string) => {
-      // TODO: Backend needs to implement workspace duplication endpoint
-      return client.request<WorkspaceResponse>(
-        `/api/v1/workspaces/${sourceWorkspaceId}/duplicate`,
-        {
-          method: "POST",
-        },
-      );
-    },
-
-    /**
      * Trigger background refresh of workspace brand voice.
      * Returns operation identifier for SSE tracking.
      */

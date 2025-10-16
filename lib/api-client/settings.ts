@@ -152,53 +152,6 @@ export function createSecurityNamespace(client: ApiClient) {
         method: "GET",
       });
     },
-
-    /**
-     * Enable two-factor authentication
-     * WARNING: Backend endpoint does not exist. Needs implementation.
-     */
-    enableTwoFactor: async () => {
-      // TODO: Backend needs to implement /api/v1/user/security/2fa/enable
-      return client.request<{
-        secret: string;
-        qr_code: string;
-        backup_codes: string[];
-      }>("/api/v1/user/security/2fa/enable", {
-        method: "POST",
-      });
-    },
-
-    /**
-     * Verify and confirm two-factor authentication
-     * WARNING: Backend endpoint does not exist. Needs implementation.
-     */
-    verifyTwoFactor: async (code: string) => {
-      // TODO: Backend needs to implement /api/v1/user/security/2fa/verify
-      return client.request<{
-        success: boolean;
-        message: string;
-      }>("/api/v1/user/security/2fa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-    },
-
-    /**
-     * Disable two-factor authentication
-     * WARNING: Backend endpoint does not exist. Needs implementation.
-     */
-    disableTwoFactor: async (password: string) => {
-      // TODO: Backend needs to implement /api/v1/user/security/2fa/disable
-      return client.request<{
-        success: boolean;
-        message: string;
-      }>("/api/v1/user/security/2fa/disable", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-    },
   };
 }
 

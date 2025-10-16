@@ -6,8 +6,6 @@
  * results components, and common UI components.
  */
 
-// TODO: Re-import VariantProps when proper CVA config is available
-// import type { VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import type {
   Control,
@@ -356,10 +354,11 @@ export interface BulkActionProps {
 
 /**
  * Enhanced button props extending HTML button with custom variants
+ * Note: Individual button components use CVA's VariantProps for proper type inference.
+ * This interface provides a general type for button-like components.
  */
 export interface ButtonProps
   extends Omit<React.ComponentProps<"button">, "size"> {
-  // TODO: Replace VariantProps with proper variant config when CVA config is available
   /** Whether button is in loading state */
   loading?: boolean;
   /** Loading text to show */

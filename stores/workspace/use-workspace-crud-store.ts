@@ -144,40 +144,6 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         }
       },
 
-      duplicateWorkspace: async (sourceWorkspaceId) => {
-        set((state) => ({
-          ...state,
-          loadingStates: { ...state.loadingStates, duplicating: true },
-        }));
-
-        try {
-          const response =
-            await apiClient.workspaces.duplicate(sourceWorkspaceId);
-
-          const duplicatedWorkspace = response.workspace;
-
-          // Optimistically add to context store
-          useWorkspaceContextStore
-            .getState()
-            .addWorkspaceToList(duplicatedWorkspace);
-          useWorkspaceContextStore
-            .getState()
-            .setCurrentWorkspace(duplicatedWorkspace);
-
-          set((state) => ({
-            loadingStates: { ...state.loadingStates, duplicating: false },
-          }));
-
-          return duplicatedWorkspace;
-        } catch (error) {
-          set((state) => ({
-            ...state,
-            loadingStates: { ...state.loadingStates, duplicating: false },
-          }));
-          throw error;
-        }
-      },
-
       fetchWorkspaces: async () => {
         set((state) => ({
           ...state,
