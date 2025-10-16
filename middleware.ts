@@ -1,9 +1,18 @@
-import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import { getCSPHeader } from "@/lib/csp";
+
+/**
+ * Generate a cryptographically secure random nonce using Web Crypto API
+ * (Edge Runtime compatible)
+ */
+function generateNonce(): string {
+  const buffer = new Uint8Array(16);
+  crypto.getRandomValues(buffer);
+  return btoa(String.fromCharCode(...buffer));
+}
 
 // Extend NextRequest to include auth session from NextAuth middleware
 interface AuthenticatedRequest extends NextRequest {
@@ -58,7 +67,7 @@ export default auth((request) => {
   }
 
   // Generate cryptographic nonce for CSP
-  const nonce = randomBytes(16).toString("base64");
+  const nonce = generateNonce();
 
   // Create response
   const response = NextResponse.next();
