@@ -26,6 +26,9 @@ const customJestConfig: Config = {
   // Ignore patterns
   testPathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/utils/"],
 
+  // Transform ESM modules from node_modules
+  transformIgnorePatterns: ["node_modules/(?!(next-auth|@auth|@panva)/)"],
+
   // Coverage configuration
   collectCoverageFrom: [
     "app/**/*.{js,jsx,ts,tsx}",
