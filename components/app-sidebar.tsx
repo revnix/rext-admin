@@ -128,6 +128,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: User,
         },
         {
+          title: "Subscription",
+          url: "/dashboard/subscription",
+          icon: CreditCard,
+        },
+        {
           title: "Settings",
           url: "/settings/account",
           icon: Settings2,

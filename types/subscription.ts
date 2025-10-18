@@ -96,6 +96,9 @@ export interface UserSubscription {
   cancelled_at: string | null;
   current_api_calls: number;
   created_at: string;
+  // LemonSqueezy integration fields
+  lemonsqueezy_subscription_id: string | null;
+  lemonsqueezy_customer_id: string | null;
 }
 
 export interface SubscriptionCreateRequest {
@@ -175,6 +178,73 @@ export interface SubscriptionHistoryResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+// ============================================================================
+// LEMONSQUEEZY CHECKOUT & BILLING
+// ============================================================================
+
+/**
+ * Request payload for creating a checkout session
+ */
+export interface CheckoutSessionRequest {
+  plan_id: string;
+  billing_period: BillingPeriod;
+  success_url: string;
+  cancel_url: string;
+}
+
+/**
+ * Response from creating a checkout session
+ */
+export interface CheckoutSessionResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+/**
+ * Response for customer portal URL
+ */
+export interface CustomerPortalResponse {
+  portal_url: string;
+}
+
+/**
+ * Invoice line item
+ */
+export interface InvoiceItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+/**
+ * Invoice details
+ */
+export interface Invoice {
+  invoice_id: string;
+  invoice_number: string | null;
+  status: string; // paid, unpaid, refunded, etc.
+  amount: number;
+  currency: string;
+  tax: number | null;
+  subtotal: number | null;
+  invoice_url: string | null;
+  invoice_date: string; // ISO format
+  due_date: string | null; // ISO format
+  paid_at: string | null; // ISO format
+  customer_email: string | null;
+  customer_name: string | null;
+  items: InvoiceItem[];
+}
+
+/**
+ * Response for invoice list
+ */
+export interface InvoiceListResponse {
+  invoices: Invoice[];
+  count: number;
 }
 
 // ============================================================================

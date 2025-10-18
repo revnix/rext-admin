@@ -1,145 +1,69 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { PricingTable } from "@/components/pricing/pricing-table";
+import { TrialStatusBanner } from "@/components/subscription/trial-status-banner";
+import { apiClient } from "@/lib/api-client";
+import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { SubscriptionPlan } from "@/types/subscription";
 
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  display_name: string;
-  description: string;
-  price_monthly: number;
-  price_yearly: number;
-  features: Record<string, unknown>;
-  max_workspaces: number | null;
-  max_members_per_workspace: number | null;
-  max_topics: number | null;
-  max_knowledge_items: number | null;
-  max_api_calls_per_month: number | null;
-  is_active: boolean;
-  is_public: boolean;
-}
+/**
+ * Pricing Page
+ *
+ * Public-facing pricing page that displays all available subscription plans.
+ *
+ * Features:
+ * - Displays all active, public subscription plans
+ * - Monthly/yearly billing toggle
+ * - Shows trial status banner for logged-in users
+ * - Integrates with PricingTable component
+ * - Handles checkout flow
+ */
 
 export default function PricingPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
-    "monthly",
-  );
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const router = useRouter();
-  const { data: session } = useSession();
-
-  const fetchPlans = useCallback(async () => {
-    try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
-      const response = await fetch(
-        `${apiUrl}/api/v1/subscriptions/plans/public`,
-      );
-      const data = await response.json();
-
-      if (data.success && data.data && data.data.plans) {
-        // Sort plans by price
-        const sortedPlans = data.data.plans.sort(
-          (a: SubscriptionPlan, b: SubscriptionPlan) => {
-            const priceA =
-              billingPeriod === "monthly" ? a.price_monthly : a.price_yearly;
-            const priceB =
-              billingPeriod === "monthly" ? b.price_monthly : b.price_yearly;
-            return priceA - priceB;
-          },
-        );
-        setPlans(sortedPlans);
-      }
-    } catch (_error) {
-      toast.error("Failed to load subscription plans");
-    } finally {
-      setLoading(false);
-    }
-  }, [billingPeriod]);
+  const { subscription, fetchSubscription } = useSubscriptionStore();
 
   useEffect(() => {
-    fetchPlans();
-  }, [fetchPlans]);
+    // Fetch subscription if user is logged in
+    fetchSubscription();
+  }, [fetchSubscription]);
 
-  const handleSubscribe = async (planId: string, _planName: string) => {
-    setCheckoutLoading(planId);
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.subscriptions.getPublicPlans();
 
-    // Check if user is authenticated
-    if (!session?.user?.accessToken) {
-      toast.error("Please log in to subscribe");
-      router.push("/login");
-      setCheckoutLoading(null);
-      return;
-    }
+        if (response.plans) {
+          // Filter active public plans and sort by price
+          const activePlans = response.plans
+            .filter((plan) => plan.is_active && plan.is_public)
+            .sort((a, b) => a.monthly_price - b.monthly_price);
 
-    try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
-      const response = await fetch(`${apiUrl}/api/v1/subscriptions/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.user.accessToken}`,
-        },
-        body: JSON.stringify({
-          plan_id: planId,
-          billing_period: billingPeriod,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.data) {
-        // Redirect to checkout URL
-        window.location.href = data.data.checkout_url;
-      } else {
-        throw new Error(
-          data.error?.message || "Failed to create checkout session",
-        );
+          setPlans(activePlans);
+        }
+      } catch (_error) {
+        toast.error("Failed to load subscription plans", {
+          description: "Please refresh the page to try again.",
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to start checkout process",
-      );
-    } finally {
-      setCheckoutLoading(null);
-    }
-  };
+    };
 
-  const formatPrice = (price: number) => {
-    return price === 0 ? "Free" : `$${price.toFixed(2)}`;
-  };
-
-  const formatLimit = (limit: number | null) => {
-    if (limit === null || limit < 0) return "Unlimited";
-    return limit.toLocaleString();
-  };
+    loadPlans();
+  }, []);
 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading plans...</p>
           </div>
         </div>
@@ -149,153 +73,136 @@ export default function PricingPage() {
 
   return (
     <div className="container mx-auto px-4 py-16">
+      {/* Trial Status Banner (only shows for trial users) */}
+      <div className="mb-8">
+        <TrialStatusBanner showGlobally={false} />
+      </div>
+
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
-        <p className="text-lg text-muted-foreground mb-8">
+        <p className="text-lg text-muted-foreground mb-2">
           Start free, scale as you grow. All plans include core features.
         </p>
-
-        {/* Billing Period Toggle */}
-        <div className="flex items-center justify-center gap-4">
-          <Label
-            htmlFor="billing-toggle"
-            className={billingPeriod === "monthly" ? "font-semibold" : ""}
-          >
-            Monthly
-          </Label>
-          <Switch
-            id="billing-toggle"
-            checked={billingPeriod === "yearly"}
-            onCheckedChange={(checked) =>
-              setBillingPeriod(checked ? "yearly" : "monthly")
-            }
-          />
-          <Label
-            htmlFor="billing-toggle"
-            className={billingPeriod === "yearly" ? "font-semibold" : ""}
-          >
-            Yearly
-          </Label>
-          {billingPeriod === "yearly" && (
-            <Badge variant="secondary" className="ml-2">
-              Save 20%
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Plans Grid */}
-      <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-        {plans.map((plan) => {
-          const price =
-            billingPeriod === "monthly"
-              ? plan.price_monthly
-              : plan.price_yearly;
-          const isRecommended =
-            plan.name === "pro" || plan.name === "professional";
-          const isFree = price === 0;
-
-          return (
-            <Card
-              key={plan.id}
-              className={`relative ${isRecommended ? "border-primary shadow-lg scale-105" : ""}`}
-            >
-              {isRecommended && (
-                <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <Badge className="bg-primary text-primary-foreground">
-                    Recommended
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader>
-                <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
-                <CardDescription className="min-h-[40px]">
-                  {plan.description}
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">
-                    {formatPrice(price)}
-                  </span>
-                  {!isFree && (
-                    <span className="text-muted-foreground">
-                      /{billingPeriod === "monthly" ? "month" : "year"}
-                    </span>
-                  )}
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm">
-                      {formatLimit(plan.max_workspaces)} Workspaces
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm">
-                      {formatLimit(plan.max_members_per_workspace)} Members per
-                      Workspace
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm">
-                      {formatLimit(plan.max_topics)} Topics
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm">
-                      {formatLimit(plan.max_knowledge_items)} Knowledge Items
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm">
-                      {formatLimit(plan.max_api_calls_per_month)} API
-                      Calls/month
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-
-              <CardFooter>
-                <Button
-                  className="w-full"
-                  variant={isRecommended ? "default" : "outline"}
-                  onClick={() => handleSubscribe(plan.id, plan.name)}
-                  disabled={checkoutLoading !== null}
-                >
-                  {checkoutLoading === plan.id ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Processing...
-                    </>
-                  ) : isFree ? (
-                    "Get Started Free"
-                  ) : (
-                    "Subscribe"
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* FAQ or Additional Info */}
-      <div className="mt-16 text-center">
-        <p className="text-muted-foreground">
-          Have questions?{" "}
-          <a href="/settings/billing" className="text-primary hover:underline">
-            View billing dashboard
-          </a>{" "}
-          or contact support.
+        <p className="text-sm text-muted-foreground">
+          All plans include unlimited team members, priority support, and
+          regular updates.
         </p>
+      </div>
+
+      {/* Pricing Table */}
+      <div className="max-w-7xl mx-auto">
+        {plans.length > 0 ? (
+          <PricingTable
+            plans={plans}
+            currentPlanId={subscription?.plan_id}
+            showCurrentPlanBadge={true}
+            showPopularBadge={true}
+            highlightRecommended={true}
+          />
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              No subscription plans available at this time.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Information */}
+      <div className="mt-16 max-w-4xl mx-auto">
+        {/* FAQ Section */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold mb-6">
+            Frequently Asked Questions
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6 text-left">
+            <div>
+              <h3 className="font-semibold mb-2">
+                Can I change plans anytime?
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Yes! You can upgrade or downgrade your plan at any time from
+                your subscription dashboard. Upgrades take effect immediately,
+                while downgrades apply at the end of your billing period.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">
+                What payment methods do you accept?
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                We accept all major credit cards (Visa, MasterCard, American
+                Express) and PayPal through our secure payment processor.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Is there a free trial?</h3>
+              <p className="text-sm text-muted-foreground">
+                Yes! All new accounts start with a free trial period. No credit
+                card required to get started.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
+              <p className="text-sm text-muted-foreground">
+                Absolutely. You can cancel your subscription at any time from
+                your billing dashboard. You'll continue to have access until the
+                end of your billing period.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">
+                What happens to my data if I cancel?
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Your data is safely stored for 30 days after cancellation. You
+                can reactivate your subscription anytime during this period and
+                pick up right where you left off.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
+              <p className="text-sm text-muted-foreground">
+                We offer a 14-day money-back guarantee on all paid plans. If
+                you're not satisfied, contact our support team for a full
+                refund.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Section */}
+        <div className="text-center mt-12 p-8 bg-muted rounded-lg">
+          <h3 className="text-xl font-semibold mb-2">
+            Need help choosing a plan?
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Our team is here to help you find the perfect plan for your needs.
+          </p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <a
+              href="/dashboard/subscription"
+              className="text-primary hover:underline font-medium"
+            >
+              View Subscription Dashboard
+            </a>
+            <span className="text-muted-foreground">•</span>
+            <a
+              href="mailto:support@wrext.com"
+              className="text-primary hover:underline font-medium"
+            >
+              Contact Support
+            </a>
+            <span className="text-muted-foreground">•</span>
+            <a
+              href="/docs/pricing"
+              className="text-primary hover:underline font-medium"
+            >
+              View Documentation
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
