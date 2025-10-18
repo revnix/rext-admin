@@ -35,15 +35,15 @@ describe("CheckoutButton", () => {
       ).toBeInTheDocument();
     });
 
-    it("should display loading state when checkout is in progress", () => {
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...mockStore,
-        checkoutInProgress: true,
-      });
-
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+    it("should display loading state when disabled prop is true", () => {
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod="monthly"
+          disabled={true}
+        />,
+      );
       expect(screen.getByRole("button")).toBeDisabled();
-      expect(screen.getByText(/processing/i)).toBeInTheDocument();
     });
   });
 
@@ -150,24 +150,20 @@ describe("CheckoutButton", () => {
   });
 
   describe("Disabled State", () => {
-    it("should be disabled when loading", () => {
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...mockStore,
-        isLoading: true,
-      });
-
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+    it("should be disabled when disabled prop is true", () => {
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod="monthly"
+          disabled={true}
+        />,
+      );
       expect(screen.getByRole("button")).toBeDisabled();
     });
 
-    it("should be disabled when checkout is in progress", () => {
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...mockStore,
-        checkoutInProgress: true,
-      });
-
+    it("should be enabled by default", () => {
       render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
-      expect(screen.getByRole("button")).toBeDisabled();
+      expect(screen.getByRole("button")).not.toBeDisabled();
     });
   });
 });

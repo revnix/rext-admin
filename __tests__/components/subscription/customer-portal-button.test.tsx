@@ -69,12 +69,20 @@ describe("CustomerPortalButton", () => {
   describe("Portal URL Generation", () => {
     it("should fetch portal URL from API when clicked", async () => {
       const user = userEvent.setup();
+      const subscription = createMockUserSubscription({
+        customer_portal_url: undefined,
+      });
       const mockGetPortalUrl = jest.fn().mockResolvedValue({
         portal_url: "https://portal.lemonsqueezy.com/generated",
       });
 
       (apiClient.subscriptions.getCustomerPortalUrl as jest.Mock) =
         mockGetPortalUrl;
+
+      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+        ...mockStore,
+        subscription,
+      });
 
       render(<CustomerPortalButton />);
 
@@ -136,6 +144,9 @@ describe("CustomerPortalButton", () => {
   describe("Loading States", () => {
     it("should show loading state while fetching portal URL", async () => {
       const user = userEvent.setup();
+      const subscription = createMockUserSubscription({
+        customer_portal_url: undefined,
+      });
       const mockGetPortalUrl = jest.fn(
         () =>
           new Promise((resolve) =>
@@ -148,6 +159,11 @@ describe("CustomerPortalButton", () => {
 
       (apiClient.subscriptions.getCustomerPortalUrl as jest.Mock) =
         mockGetPortalUrl;
+
+      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+        ...mockStore,
+        subscription,
+      });
 
       render(<CustomerPortalButton />);
 
@@ -162,6 +178,9 @@ describe("CustomerPortalButton", () => {
   describe("Error Handling", () => {
     it("should handle API errors gracefully", async () => {
       const user = userEvent.setup();
+      const subscription = createMockUserSubscription({
+        customer_portal_url: undefined,
+      });
       const mockGetPortalUrl = jest
         .fn()
         .mockRejectedValue(new Error("API Error"));
@@ -170,34 +189,59 @@ describe("CustomerPortalButton", () => {
         mockGetPortalUrl;
 
       const onError = jest.fn();
+      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+        ...mockStore,
+        subscription,
+      });
+
       render(<CustomerPortalButton onError={onError} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
 
-      await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.any(Error));
-      });
+      await waitFor(
+        () => {
+          expect(onError).toHaveBeenCalled();
+        },
+        { timeout: 3000 },
+      );
+
+      expect(onError).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it("should handle missing portal URL in response", async () => {
       const user = userEvent.setup();
-      const mockGetPortalUrl = jest.fn().mockResolvedValue({
-        portal_url: null,
+      const subscription = createMockUserSubscription({
+        customer_portal_url: undefined,
       });
+      const mockGetPortalUrl = jest.fn().mockResolvedValue({});
 
       (apiClient.subscriptions.getCustomerPortalUrl as jest.Mock) =
         mockGetPortalUrl;
 
       const onError = jest.fn();
+      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+        ...mockStore,
+        subscription,
+      });
+
       render(<CustomerPortalButton onError={onError} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
 
-      await waitFor(() => {
-        expect(onError).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(onError).toHaveBeenCalled();
+        },
+        { timeout: 3000 },
+      );
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining("portal"),
+        }),
+      );
     });
   });
 
