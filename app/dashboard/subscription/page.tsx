@@ -57,7 +57,7 @@ export default function SubscriptionDashboardPage() {
 
   const loadPlans = useCallback(async () => {
     try {
-      const response = await apiClient.subscriptions.getPublicPlans();
+      const response = await apiClient.subscriptions.getPlans();
       if (response.plans) {
         const activePlans = response.plans.filter((plan) => plan.is_active);
         setPlans(activePlans);
@@ -259,7 +259,7 @@ export default function SubscriptionDashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <UsageMetrics showDetailsButton={false} />
+              <UsageMetrics detailed={true} />
             </CardContent>
           </Card>
 

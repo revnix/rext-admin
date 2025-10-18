@@ -81,6 +81,21 @@ export const UserSubscriptionSchema = z.object({
   // LemonSqueezy fields
   lemonsqueezy_subscription_id: z.string().nullable(),
   lemonsqueezy_customer_id: z.string().nullable(),
+  renews_at: z.string().nullable(),
+  ends_at: z.string().nullable(),
+  current_period_end: z.string().nullable(), // Alias for renews_at
+  // Plan details (included in API response)
+  plan_features: z.record(z.string(), z.unknown()).optional(),
+  plan_limits: z
+    .object({
+      max_workspaces: z.number().int(),
+      max_members_per_workspace: z.number().int(),
+      max_topics: z.number().int(),
+      max_knowledge_items: z.number().int(),
+      max_api_calls_per_month: z.number().int(),
+    })
+    .optional(),
+  customer_portal_url: z.string().nullable().optional(),
 });
 
 /**

@@ -64,7 +64,7 @@ export default function PricingPage() {
     const loadPlans = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.subscriptions.getPublicPlans();
+        const response = await apiClient.subscriptions.getPlans();
 
         if (response.plans) {
           // Filter active public plans and sort by price

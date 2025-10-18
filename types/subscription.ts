@@ -99,6 +99,19 @@ export interface UserSubscription {
   // LemonSqueezy integration fields
   lemonsqueezy_subscription_id: string | null;
   lemonsqueezy_customer_id: string | null;
+  renews_at?: string | null;
+  ends_at?: string | null;
+  current_period_end?: string | null; // Alias for renews_at
+  // Plan details (included in API response)
+  plan_features?: Record<string, unknown>;
+  plan_limits?: {
+    max_workspaces: number;
+    max_members_per_workspace: number;
+    max_topics: number;
+    max_knowledge_items: number;
+    max_api_calls_per_month: number;
+  };
+  customer_portal_url?: string | null;
 }
 
 export interface SubscriptionCreateRequest {

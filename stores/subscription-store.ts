@@ -59,6 +59,11 @@ interface SubscriptionStore {
   fetchSubscription: () => Promise<void>;
 
   /**
+   * Fetch usage stats only
+   */
+  fetchUsage: () => Promise<void>;
+
+  /**
    * Fetch available subscription plans
    */
   fetchPlans: () => Promise<void>;
@@ -202,6 +207,21 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             error: errorMessage,
           });
 
+          throw error;
+        }
+      },
+
+      fetchUsage: async () => {
+        try {
+          const usage = await apiClient.subscriptions.getUsageStats();
+          set({ usage });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch usage stats";
+
+          set({ error: errorMessage });
           throw error;
         }
       },
