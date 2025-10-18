@@ -131,6 +131,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Subscription",
           url: "/dashboard/subscription",
           icon: CreditCard,
+          items: [
+            {
+              title: "Overview",
+              url: "/dashboard/subscription",
+            },
+            {
+              title: "Billing",
+              url: "/dashboard/billing",
+            },
+            {
+              title: "Usage",
+              url: "/dashboard/usage",
+            },
+          ],
         },
         {
           title: "Settings",
