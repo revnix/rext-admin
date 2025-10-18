@@ -1,5 +1,6 @@
 "use client";
 
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import {
   AlertCircle,
   ArrowDownCircle,
@@ -21,7 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
 
@@ -88,15 +88,15 @@ export function PlanChangeModal({
     selectedPlan &&
     currentPlan &&
     (currentBillingPeriod === BillingPeriod.MONTHLY
-      ? selectedPlan.monthly_price > currentPlan.monthly_price
-      : selectedPlan.yearly_price > currentPlan.yearly_price);
+      ? selectedPlan.price_monthly > currentPlan.price_monthly
+      : selectedPlan.price_yearly > currentPlan.price_yearly);
 
   const isDowngrade =
     selectedPlan &&
     currentPlan &&
     (currentBillingPeriod === BillingPeriod.MONTHLY
-      ? selectedPlan.monthly_price < currentPlan.monthly_price
-      : selectedPlan.yearly_price < currentPlan.yearly_price);
+      ? selectedPlan.price_monthly < currentPlan.price_monthly
+      : selectedPlan.price_yearly < currentPlan.price_yearly);
 
   const handlePlanChange = async () => {
     if (!selectedPlan || selectedPlanId === currentPlanId) {
@@ -139,9 +139,9 @@ export function PlanChangeModal({
   const formatPrice = (plan: SubscriptionPlan | undefined) => {
     if (!plan) return "";
     if (currentBillingPeriod === BillingPeriod.MONTHLY) {
-      return `$${plan.monthly_price.toFixed(2)}/month`;
+      return `$${plan.price_monthly.toFixed(2)}/month`;
     }
-    return `$${plan.yearly_price.toFixed(2)}/year`;
+    return `$${plan.price_yearly.toFixed(2)}/year`;
   };
 
   return (
@@ -167,7 +167,7 @@ export function PlanChangeModal({
           </div>
 
           {/* Plan Selection */}
-          <RadioGroup
+          <RadioGroupPrimitive.Root
             value={selectedPlanId}
             onValueChange={setSelectedPlanId}
             className="space-y-3"
@@ -177,31 +177,32 @@ export function PlanChangeModal({
               const isSelected = plan.id === selectedPlanId;
               const planIsUpgrade =
                 currentBillingPeriod === BillingPeriod.MONTHLY
-                  ? plan.monthly_price > (currentPlan?.monthly_price || 0)
-                  : plan.yearly_price > (currentPlan?.yearly_price || 0);
+                  ? plan.price_monthly > (currentPlan?.price_monthly || 0)
+                  : plan.price_yearly > (currentPlan?.price_yearly || 0);
               const planIsDowngrade =
                 currentBillingPeriod === BillingPeriod.MONTHLY
-                  ? plan.monthly_price < (currentPlan?.monthly_price || 0)
-                  : plan.yearly_price < (currentPlan?.yearly_price || 0);
+                  ? plan.price_monthly < (currentPlan?.price_monthly || 0)
+                  : plan.price_yearly < (currentPlan?.price_yearly || 0);
 
               return (
-                <button
-                  type="button"
+                <div
                   key={plan.id}
-                  className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full text-left ${
+                  className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${
                     isSelected
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
-                  } ${isCurrent ? "opacity-50" : "cursor-pointer"}`}
-                  onClick={() => !isCurrent && setSelectedPlanId(plan.id)}
-                  disabled={isCurrent}
+                  } ${isCurrent ? "opacity-50" : ""}`}
                 >
-                  <RadioGroupItem
+                  <RadioGroupPrimitive.Item
                     value={plan.id}
                     id={plan.id}
                     disabled={isCurrent}
-                    className="mt-1"
-                  />
+                    className="mt-1 h-4 w-4 rounded-full border border-primary text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-current" />
+                    </RadioGroupPrimitive.Indicator>
+                  </RadioGroupPrimitive.Item>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <Label
@@ -233,28 +234,28 @@ export function PlanChangeModal({
                     <ul className="mt-2 space-y-1">
                       <li className="text-sm flex items-center gap-1">
                         <Check className="h-3 w-3 text-green-600" />
-                        {plan.limits.max_workspaces === -1
+                        {plan.max_workspaces === -1
                           ? "Unlimited workspaces"
-                          : `${plan.limits.max_workspaces} workspaces`}
+                          : `${plan.max_workspaces} workspaces`}
                       </li>
                       <li className="text-sm flex items-center gap-1">
                         <Check className="h-3 w-3 text-green-600" />
-                        {plan.limits.max_topics_per_workspace === -1
-                          ? "Unlimited topics per workspace"
-                          : `${plan.limits.max_topics_per_workspace} topics per workspace`}
+                        {plan.max_topics === -1
+                          ? "Unlimited topics"
+                          : `${plan.max_topics} topics`}
                       </li>
                       <li className="text-sm flex items-center gap-1">
                         <Check className="h-3 w-3 text-green-600" />
-                        {plan.limits.ai_requests_per_month === -1
-                          ? "Unlimited AI requests"
-                          : `${plan.limits.ai_requests_per_month} AI requests/month`}
+                        {plan.max_api_calls_per_month === -1
+                          ? "Unlimited API requests"
+                          : `${plan.max_api_calls_per_month} API requests/month`}
                       </li>
                     </ul>
                   </div>
-                </button>
+                </div>
               );
             })}
-          </RadioGroup>
+          </RadioGroupPrimitive.Root>
 
           {/* Change Type Info */}
           {isUpgrade && (

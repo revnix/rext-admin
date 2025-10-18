@@ -115,7 +115,10 @@ export function FeatureGate({
         ? requiredPlan
         : [requiredPlan];
 
-      if (!allowedPlans.includes(subscription.plan_name.toLowerCase())) {
+      if (
+        !subscription.plan_name ||
+        !allowedPlans.includes(subscription.plan_name.toLowerCase())
+      ) {
         setHasAccess(false);
         return;
       }
@@ -301,7 +304,10 @@ export function useFeatureAccess(
         ? requiredPlan
         : [requiredPlan];
 
-      if (!allowedPlans.includes(subscription.plan_name.toLowerCase())) {
+      if (
+        !subscription.plan_name ||
+        !allowedPlans.includes(subscription.plan_name.toLowerCase())
+      ) {
         setHasAccess(false);
         return;
       }

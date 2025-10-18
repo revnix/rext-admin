@@ -362,7 +362,7 @@ export default function SubscriptionDashboardPage() {
       <CancelSubscriptionModal
         open={cancelModalOpen}
         onOpenChange={setCancelModalOpen}
-        currentPeriodEnd={subscription.current_period_end}
+        currentPeriodEnd={subscription.current_period_end ?? null}
       />
     </div>
   );

@@ -100,24 +100,24 @@ export function UsageLimitWarning({
 
     switch (resource) {
       case "workspaces":
-        current = usage.workspaces_used;
-        max = subscription.plan_limits.max_workspaces;
+        current = usage.current_workspaces;
+        max = subscription.plan_limits?.max_workspaces || -1;
         break;
       case "topics":
-        current = usage.topics_used;
-        max = subscription.plan_limits.max_topics_per_workspace;
+        current = usage.current_topics;
+        max = subscription.plan_limits?.max_topics || -1;
         break;
       case "knowledge_items":
-        current = usage.knowledge_items_used;
-        max = subscription.plan_limits.max_knowledge_items_per_workspace;
+        current = usage.current_knowledge_items;
+        max = subscription.plan_limits?.max_knowledge_items || -1;
         break;
       case "ai_requests":
-        current = usage.ai_requests_used;
-        max = subscription.plan_limits.ai_requests_per_month;
+        current = usage.current_api_calls;
+        max = subscription.plan_limits?.max_api_calls_per_month || -1;
         break;
       case "storage":
-        current = usage.storage_used_mb;
-        max = subscription.plan_limits.storage_mb;
+        current = 0; // Storage tracking not yet implemented
+        max = -1; // Storage tracking not yet implemented
         break;
     }
 
@@ -335,24 +335,24 @@ export function useResourceLimit(
 
     switch (resource) {
       case "workspaces":
-        current = usage.workspaces_used;
-        max = subscription.plan_limits.max_workspaces;
+        current = usage.current_workspaces;
+        max = subscription.plan_limits?.max_workspaces || -1;
         break;
       case "topics":
-        current = usage.topics_used;
-        max = subscription.plan_limits.max_topics_per_workspace;
+        current = usage.current_topics;
+        max = subscription.plan_limits?.max_topics || -1;
         break;
       case "knowledge_items":
-        current = usage.knowledge_items_used;
-        max = subscription.plan_limits.max_knowledge_items_per_workspace;
+        current = usage.current_knowledge_items;
+        max = subscription.plan_limits?.max_knowledge_items || -1;
         break;
       case "ai_requests":
-        current = usage.ai_requests_used;
-        max = subscription.plan_limits.ai_requests_per_month;
+        current = usage.current_api_calls;
+        max = subscription.plan_limits?.max_api_calls_per_month || -1;
         break;
       case "storage":
-        current = usage.storage_used_mb;
-        max = subscription.plan_limits.storage_mb;
+        current = 0; // Storage tracking not yet implemented
+        max = -1; // Storage tracking not yet implemented
         break;
     }
 

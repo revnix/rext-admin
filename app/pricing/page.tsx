@@ -53,7 +53,7 @@ import type { SubscriptionPlan } from "@/types/subscription";
 export default function PricingPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const { subscription, fetchSubscription } = useSubscriptionStore();
+  const { fetchSubscription } = useSubscriptionStore();
 
   useEffect(() => {
     // Fetch subscription if user is logged in
@@ -70,7 +70,7 @@ export default function PricingPage() {
           // Filter active public plans and sort by price
           const activePlans = response.plans
             .filter((plan) => plan.is_active && plan.is_public)
-            .sort((a, b) => a.monthly_price - b.monthly_price);
+            .sort((a, b) => a.price_monthly - b.price_monthly);
 
           setPlans(activePlans);
         }
@@ -121,13 +121,7 @@ export default function PricingPage() {
       {/* Pricing Table */}
       <div className="max-w-7xl mx-auto">
         {plans.length > 0 ? (
-          <PricingTable
-            plans={plans}
-            currentPlanId={subscription?.plan_id}
-            showCurrentPlanBadge={true}
-            showPopularBadge={true}
-            highlightRecommended={true}
-          />
+          <PricingTable />
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
