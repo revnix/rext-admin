@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CancelSubscriptionModal } from "@/components/subscription/cancel-subscription-modal";
+import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
 import { SubscriptionStatusCard } from "@/components/subscription/subscription-status-card";
 import { TrialStatusBanner } from "@/components/subscription/trial-status-banner";
@@ -47,13 +48,12 @@ import {
 
 export default function SubscriptionDashboardPage() {
   const router = useRouter();
-  const { subscription, usage, fetchSubscription, fetchUsage, getPortalUrl } =
+  const { subscription, usage, fetchSubscription, fetchUsage } =
     useSubscriptionStore();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [planChangeModalOpen, setPlanChangeModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
 
   const loadPlans = useCallback(async () => {
     try {
@@ -80,18 +80,6 @@ export default function SubscriptionDashboardPage() {
 
     loadData();
   }, [fetchSubscription, fetchUsage, loadPlans]);
-
-  const handleManageBilling = async () => {
-    try {
-      setPortalLoading(true);
-      const response = await getPortalUrl();
-      window.open(response.portal_url, "_blank");
-    } catch (_error) {
-      toast.error("Failed to open billing portal");
-    } finally {
-      setPortalLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -197,19 +185,12 @@ export default function SubscriptionDashboardPage() {
                   </Button>
                 )}
 
-                <Button
-                  onClick={handleManageBilling}
+                <CustomerPortalButton
                   className="w-full justify-start"
                   variant="outline"
-                  disabled={portalLoading}
                 >
-                  {portalLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="mr-2 h-4 w-4" />
-                  )}
                   Manage Billing
-                </Button>
+                </CustomerPortalButton>
 
                 <Button
                   onClick={() => router.push("/dashboard/billing")}
@@ -306,19 +287,7 @@ export default function SubscriptionDashboardPage() {
                 Access the customer portal to update your payment method,
                 billing address, and download invoices.
               </p>
-              <Button onClick={handleManageBilling} disabled={portalLoading}>
-                {portalLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading Portal...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Open Billing Portal
-                  </>
-                )}
-              </Button>
+              <CustomerPortalButton>Open Billing Portal</CustomerPortalButton>
             </CardContent>
           </Card>
 

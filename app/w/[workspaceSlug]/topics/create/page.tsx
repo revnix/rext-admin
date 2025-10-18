@@ -3,6 +3,7 @@
 import { use } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
+import { LimitCheckWrapper } from "@/components/subscription/limit-check-wrapper";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
 import {
   Card,
@@ -61,7 +62,9 @@ export default function WorkspaceTopicCreatePage({
           </Card>
         }
       >
-        <TopicBuilderWizard />
+        <LimitCheckWrapper resource="topics" actionName="create topics">
+          <TopicBuilderWizard />
+        </LimitCheckWrapper>
       </CanAccess>
     </PageLayout>
   );

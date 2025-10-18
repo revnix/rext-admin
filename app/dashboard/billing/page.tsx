@@ -3,14 +3,13 @@
 import {
   AlertCircle,
   CreditCard,
-  Download,
-  ExternalLink,
   FileText,
   Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { InvoiceList } from "@/components/subscription/invoice-list";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,8 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
 
 export default function BillingHistoryPage() {
   const router = useRouter();
-  const { subscription, invoices, fetchInvoices, getPortalUrl } =
-    useSubscriptionStore();
+  const { subscription, invoices, fetchInvoices } = useSubscriptionStore();
   const [loading, setLoading] = useState(true);
-  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -58,23 +55,6 @@ export default function BillingHistoryPage() {
 
     loadData();
   }, [fetchInvoices]);
-
-  const handleManageBilling = async () => {
-    try {
-      setPortalLoading(true);
-      const response = await getPortalUrl();
-      window.open(response.portal_url, "_blank");
-    } catch (_error) {
-      toast.error("Failed to open billing portal");
-    } finally {
-      setPortalLoading(false);
-    }
-  };
-
-  const handleDownloadAllInvoices = () => {
-    // Open LemonSqueezy portal where users can download all invoices
-    handleManageBilling();
-  };
 
   if (loading) {
     return (
@@ -101,19 +81,7 @@ export default function BillingHistoryPage() {
             Manage your billing information and view invoice history.
           </p>
         </div>
-        <Button onClick={handleManageBilling} disabled={portalLoading}>
-          {portalLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Billing Portal
-            </>
-          )}
-        </Button>
+        <CustomerPortalButton>Billing Portal</CustomerPortalButton>
       </div>
 
       {/* Current Billing Cycle Info */}
@@ -194,16 +162,6 @@ export default function BillingHistoryPage() {
                   All your past invoices and receipts
                 </CardDescription>
               </div>
-              {invoices.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadAllInvoices}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download All
-                </Button>
-              )}
             </CardHeader>
             <CardContent>
               {invoices.length > 0 ? (
@@ -272,23 +230,9 @@ export default function BillingHistoryPage() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleManageBilling}
-                  className="w-full"
-                  disabled={portalLoading}
-                >
-                  {portalLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading Portal...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Open Billing Portal
-                    </>
-                  )}
-                </Button>
+                <CustomerPortalButton className="w-full">
+                  Open Billing Portal
+                </CustomerPortalButton>
               </div>
 
               <Alert>
