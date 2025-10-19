@@ -2,12 +2,12 @@
 
 import {
   BarChart3,
+  DollarSign,
   Shield,
+  TrendingUp,
   UserCog,
   Users,
   Webhook,
-  DollarSign,
-  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";

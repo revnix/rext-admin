@@ -1,28 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import {
+  AlertCircle,
   DollarSign,
   ExternalLink,
-  AlertCircle,
-  RefreshCw,
   Filter,
   Plus,
+  RefreshCw,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +21,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
@@ -372,8 +372,7 @@ export default function RefundManagementPage() {
       setFilteredRefunds(response.refunds);
       setSummary(response.summary);
       setPagination(response.pagination);
-    } catch (error) {
-      console.error("Failed to fetch refunds:", error);
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to load refund data. Please try again.",
@@ -404,7 +403,7 @@ export default function RefundManagementPage() {
 
   useEffect(() => {
     fetchRefunds();
-  }, [pagination.page]);
+  }, [fetchRefunds]);
 
   return (
     <div className="container mx-auto p-6">

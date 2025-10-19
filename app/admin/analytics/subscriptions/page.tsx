@@ -1,32 +1,31 @@
 "use client";
 
+import {
+  AlertCircle,
+  DollarSign,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
+  UserMinus,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
-  BarChart,
   Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  DollarSign,
-  UserMinus,
-  UserCheck,
-  AlertCircle,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -34,14 +33,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type {
   AnalyticsOverview,
-  RevenueMetrics,
   ChurnAnalysis,
+  RevenueMetrics,
   TrialConversionMetrics,
 } from "@/lib/api-client/admin-analytics";
 
@@ -208,8 +206,7 @@ export default function SubscriptionAnalyticsPage() {
       setRevenue(revenueData);
       setChurn(churnData);
       setTrialConversion(trialData);
-    } catch (error) {
-      console.error("Failed to fetch analytics:", error);
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to load analytics data. Please try again.",
@@ -227,8 +224,7 @@ export default function SubscriptionAnalyticsPage() {
       const churnData =
         await apiClient.adminAnalytics.getChurnAnalysis(periodDays);
       setChurn(churnData);
-    } catch (error) {
-      console.error("Failed to fetch churn data:", error);
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to load churn analysis. Please try again.",
@@ -239,13 +235,13 @@ export default function SubscriptionAnalyticsPage() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [fetchAnalytics]);
 
   useEffect(() => {
     if (!loading) {
       fetchChurnData(churnPeriod);
     }
-  }, [churnPeriod]);
+  }, [churnPeriod, fetchChurnData, loading]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -425,7 +421,7 @@ export default function SubscriptionAnalyticsPage() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {tierDistributionData.map((entry, index) => (
+                  {tierDistributionData.map((_entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={PIE_COLORS[index % PIE_COLORS.length]}

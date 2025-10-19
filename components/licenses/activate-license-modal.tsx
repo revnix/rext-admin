@@ -7,7 +7,7 @@
  * Collects instance identifier and optional instance name.
  */
 
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

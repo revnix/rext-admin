@@ -18,8 +18,8 @@ import {
   type EmailTemplate,
 } from "./admin";
 import { createAdminAnalyticsNamespace } from "./admin-analytics";
-import { createAdminWebhooksNamespace } from "./admin-webhooks";
 import { createAdminRefundsNamespace } from "./admin-refunds";
+import { createAdminWebhooksNamespace } from "./admin-webhooks";
 
 // Re-export types for convenience
 export type { EmailTemplate };

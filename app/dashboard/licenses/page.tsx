@@ -43,7 +43,7 @@ export default function LicensesPage() {
   // Load licenses on mount
   useEffect(() => {
     loadLicenses();
-  }, []);
+  }, [loadLicenses]);
 
   const loadLicenses = async () => {
     try {

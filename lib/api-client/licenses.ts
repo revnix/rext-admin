@@ -4,18 +4,18 @@
  * API client methods for license management operations.
  */
 
-import type { ApiClient } from "./core";
 import type {
   License,
-  LicenseActivation,
   LicenseActivateRequest,
   LicenseActivateResponse,
+  LicenseActivation,
+  LicenseActivationListResponse,
   LicenseDeactivateRequest,
   LicenseListResponse,
-  LicenseActivationListResponse,
   LicenseValidateRequest,
   LicenseValidateResponse,
 } from "@/types/license";
+import type { ApiClient } from "./core";
 
 export function createLicensesClient(client: ApiClient) {
   return {

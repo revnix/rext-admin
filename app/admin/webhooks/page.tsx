@@ -1,43 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Webhook,
+  AlertTriangle,
   CheckCircle2,
-  XCircle,
-  Clock,
-  RefreshCw,
   ChevronDown,
   ChevronUp,
-  AlertTriangle,
+  Clock,
   Filter,
+  RefreshCw,
+  Webhook,
+  XCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,12 +23,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type {
   WebhookEvent,
-  WebhookEventsResponse,
   WebhookStats,
 } from "@/lib/api-client/admin-webhooks";
 
@@ -296,7 +290,7 @@ export default function WebhookMonitoringPage() {
     try {
       setLoading(true);
 
-      let processedFilter: boolean | undefined = undefined;
+      let processedFilter: boolean | undefined;
       if (statusFilter === "processed") processedFilter = true;
       if (statusFilter === "pending" || statusFilter === "failed")
         processedFilter = false;
@@ -311,8 +305,7 @@ export default function WebhookMonitoringPage() {
       setEvents(response.events);
       setPagination(response.pagination);
       setSummary(response.summary);
-    } catch (error) {
-      console.error("Failed to fetch webhook events:", error);
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to load webhook events. Please try again.",
@@ -328,9 +321,7 @@ export default function WebhookMonitoringPage() {
     try {
       const statsData = await apiClient.adminWebhooks.getStats();
       setStats(statsData);
-    } catch (error) {
-      console.error("Failed to fetch webhook stats:", error);
-    }
+    } catch (_error) {}
   };
 
   // Retry webhook
@@ -354,7 +345,6 @@ export default function WebhookMonitoringPage() {
       // Refresh events
       await fetchEvents();
     } catch (error: any) {
-      console.error("Failed to retry webhook:", error);
       toast({
         title: "Error",
         description:
@@ -372,12 +362,12 @@ export default function WebhookMonitoringPage() {
   useEffect(() => {
     fetchEvents();
     fetchStats();
-  }, []);
+  }, [fetchEvents, fetchStats]);
 
   // Reload on filter changes
   useEffect(() => {
     fetchEvents();
-  }, [currentPage, statusFilter, eventNameFilter]);
+  }, [fetchEvents]);
 
   // Filter events based on tab
   const getFilteredEvents = () => {
