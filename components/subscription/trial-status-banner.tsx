@@ -49,6 +49,8 @@ export function TrialStatusBanner({
   const { subscription, fetchSubscription } = useSubscriptionStore();
   const [isDismissed, setIsDismissed] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+  const [hoursRemaining, setHoursRemaining] = useState<number | null>(null);
+  const [minutesRemaining, setMinutesRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     // Fetch subscription on mount if not already loaded
@@ -58,19 +60,46 @@ export function TrialStatusBanner({
   }, [subscription, fetchSubscription]);
 
   useEffect(() => {
-    // Calculate days remaining in trial
-    if (
-      subscription?.status === SubscriptionStatus.TRIAL &&
-      subscription.trial_end_date
-    ) {
-      const trialEnd = new Date(subscription.trial_end_date);
-      const now = new Date();
-      const diffTime = trialEnd.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      setDaysRemaining(diffDays);
-    } else {
-      setDaysRemaining(null);
-    }
+    // Calculate time remaining in trial with real-time updates
+    const calculateTimeRemaining = () => {
+      if (
+        subscription?.status === SubscriptionStatus.TRIAL &&
+        subscription.trial_end_date
+      ) {
+        const trialEnd = new Date(subscription.trial_end_date);
+        const now = new Date();
+        const diffTime = trialEnd.getTime() - now.getTime();
+
+        if (diffTime <= 0) {
+          setDaysRemaining(0);
+          setHoursRemaining(0);
+          setMinutesRemaining(0);
+          return;
+        }
+
+        const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+        );
+        const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+
+        setDaysRemaining(days);
+        setHoursRemaining(hours);
+        setMinutesRemaining(minutes);
+      } else {
+        setDaysRemaining(null);
+        setHoursRemaining(null);
+        setMinutesRemaining(null);
+      }
+    };
+
+    // Calculate immediately
+    calculateTimeRemaining();
+
+    // Update every minute for real-time countdown
+    const interval = setInterval(calculateTimeRemaining, 60000);
+
+    return () => clearInterval(interval);
   }, [subscription]);
 
   // Don't show if dismissed
@@ -89,6 +118,8 @@ export function TrialStatusBanner({
   }
 
   // Determine urgency level
+  const isLastDay =
+    daysRemaining === 0 && hoursRemaining !== null && hoursRemaining > 0;
   const isUrgent = daysRemaining !== null && daysRemaining <= 3;
   const isExpiringSoon = daysRemaining !== null && daysRemaining <= 7;
 
@@ -131,24 +162,39 @@ export function TrialStatusBanner({
     setIsDismissed(true);
   };
 
-  // Get trial message based on days remaining
+  // Get trial message with countdown
   const getTrialMessage = () => {
     if (daysRemaining === null) {
       return "You're currently on a trial period.";
     }
-    if (daysRemaining <= 0) {
+
+    // Expired
+    if (daysRemaining === 0 && hoursRemaining === 0 && minutesRemaining === 0) {
       return "Your trial has expired.";
     }
+
+    // Last day warning
+    if (isLastDay) {
+      return `⚡ Last Day! ${hoursRemaining}h ${minutesRemaining}m remaining`;
+    }
+
+    // Less than 24 hours
+    if (daysRemaining === 0 && hoursRemaining !== null) {
+      return `${hoursRemaining}h ${minutesRemaining}m remaining in your trial`;
+    }
+
+    // 1 day + hours
     if (daysRemaining === 1) {
-      return "Your trial ends tomorrow!";
+      return `${daysRemaining} day, ${hoursRemaining}h remaining`;
     }
-    if (daysRemaining <= 3) {
-      return `Your trial ends in ${daysRemaining} days!`;
-    }
+
+    // Multiple days + hours
     if (daysRemaining <= 7) {
-      return `Your trial ends in ${daysRemaining} days.`;
+      return `${daysRemaining} days, ${hoursRemaining}h remaining`;
     }
-    return `You have ${daysRemaining} days left in your trial.`;
+
+    // More than a week
+    return `${daysRemaining} days left in your trial`;
   };
 
   return (

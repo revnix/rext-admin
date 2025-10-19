@@ -11,7 +11,7 @@
 
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CheckoutButton } from "@/components/subscription/checkout-button";
+import { CheckoutWithDiscount } from "@/components/subscription/checkout-with-discount";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -259,14 +259,13 @@ export function PricingTable({
                       Current Plan
                     </Button>
                   ) : (
-                    <CheckoutButton
+                    <CheckoutWithDiscount
                       plan={plan}
                       billingPeriod={billingPeriod}
                       variant={isPopular ? "default" : "outline"}
-                      className="w-full"
-                    >
-                      Subscribe to {plan.display_name}
-                    </CheckoutButton>
+                      buttonText={`Subscribe to ${plan.display_name}`}
+                      showDiscountByDefault={false}
+                    />
                   )}
                 </CardFooter>
               </Card>

@@ -107,6 +107,8 @@ interface SubscriptionStore {
   initiateCheckout: (
     plan: SubscriptionPlan,
     billingPeriod: BillingPeriod,
+    discountCode?: string,
+    affiliateCode?: string,
   ) => Promise<CheckoutSessionResponse>;
 
   /**
@@ -388,6 +390,8 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       initiateCheckout: async (
         plan: SubscriptionPlan,
         billingPeriod: BillingPeriod,
+        discountCode?: string,
+        affiliateCode?: string,
       ) => {
         set({
           checkoutInProgress: true,
@@ -400,6 +404,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           const checkoutSession = await apiClient.subscriptions.createCheckout(
             plan.id,
             billingPeriod,
+            undefined,
+            undefined,
+            discountCode,
+            affiliateCode,
           );
 
           set({

@@ -60,6 +60,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @param billingPeriod - Billing period (monthly, yearly, lifetime)
      * @param successUrl - URL to redirect after successful checkout
      * @param cancelUrl - URL to redirect if checkout is cancelled
+     * @param discountCode - Optional discount/promo code
      * @returns Checkout session with URL and session ID
      */
     createCheckout: async (
@@ -67,6 +68,8 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       billingPeriod: BillingPeriod,
       successUrl?: string,
       cancelUrl?: string,
+      discountCode?: string,
+      affiliateCode?: string,
     ): Promise<CheckoutSessionResponse> => {
       const baseUrl =
         typeof window !== "undefined"
@@ -83,6 +86,8 @@ export function createSubscriptionsNamespace(client: ApiClient) {
             billing_period: billingPeriod,
             success_url: successUrl || `${baseUrl}/checkout/success`,
             cancel_url: cancelUrl || `${baseUrl}/checkout/cancel`,
+            ...(discountCode && { discount_code: discountCode }),
+            ...(affiliateCode && { affiliate_code: affiliateCode }),
           }),
         },
       );

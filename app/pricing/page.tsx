@@ -1,31 +1,4 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Pricing - WREXT",
-  description:
-    "Choose the perfect plan for your needs. Start free, scale as you grow. All plans include unlimited team members, priority support, and regular updates.",
-  keywords: [
-    "pricing",
-    "subscription",
-    "plans",
-    "SaaS pricing",
-    "WREXT pricing",
-  ],
-  openGraph: {
-    title: "WREXT Pricing Plans",
-    description:
-      "Flexible pricing plans for teams of all sizes. Start with a free trial today.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "WREXT Pricing Plans",
-    description:
-      "Flexible pricing plans for teams of all sizes. Start with a free trial today.",
-  },
-};
-
-("use client");
+"use client";
 
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";

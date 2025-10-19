@@ -205,6 +205,8 @@ export interface CheckoutSessionRequest {
   billing_period: BillingPeriod;
   success_url: string;
   cancel_url: string;
+  discount_code?: string;
+  affiliate_code?: string;
 }
 
 /**

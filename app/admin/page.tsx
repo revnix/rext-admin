@@ -1,6 +1,14 @@
 "use client";
 
-import { BarChart3, Shield, UserCog, Users } from "lucide-react";
+import {
+  BarChart3,
+  Shield,
+  UserCog,
+  Users,
+  Webhook,
+  DollarSign,
+  TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
 import {
@@ -38,6 +46,27 @@ export default function AdminDashboardPage() {
       href: "/admin/statistics",
       icon: BarChart3,
       permission: null, // Always visible to admins
+    },
+    {
+      title: "Subscription Analytics",
+      description: "Monitor MRR, churn, trial conversion, and revenue metrics",
+      href: "/admin/analytics/subscriptions",
+      icon: TrendingUp,
+      permission: null, // Requires super admin (checked in page)
+    },
+    {
+      title: "Webhook Monitoring",
+      description: "Monitor webhook events and retry failed webhooks",
+      href: "/admin/webhooks",
+      icon: Webhook,
+      permission: null, // Requires super admin (checked in page)
+    },
+    {
+      title: "Refund Management",
+      description: "View refund history and manage refund requests",
+      href: "/admin/refunds",
+      icon: DollarSign,
+      permission: null, // Requires super admin (checked in page)
     },
   ];
 
