@@ -38,7 +38,7 @@ interface ProtectedRouteProps {
  *
  * @example
  * // Protect with single permission
- * <ProtectedRoute permission="user:read">
+ * <ProtectedRoute permission="user.read">
  *   <UsersPage />
  * </ProtectedRoute>
  *
@@ -50,14 +50,14 @@ interface ProtectedRouteProps {
  *
  * @example
  * // Protect with multiple permissions (ANY)
- * <ProtectedRoute permission={["content:read", "content:update"]}>
+ * <ProtectedRoute permission={["content.read", "content.update"]}>
  *   <ContentEditor />
  * </ProtectedRoute>
  *
  * @example
  * // Protect with workspace-scoped permission
  * <ProtectedRoute
- *   permission="workspace:manage_settings"
+ *   permission="workspace.manage_settings"
  *   workspaceId={workspaceId}
  * >
  *   <WorkspaceSettings />
@@ -66,7 +66,7 @@ interface ProtectedRouteProps {
  * @example
  * // Custom redirect and fallback
  * <ProtectedRoute
- *   permission="user:delete"
+ *   permission="user.delete"
  *   redirectTo="/dashboard"
  *   fallback={<div>Checking permissions...</div>}
  * >

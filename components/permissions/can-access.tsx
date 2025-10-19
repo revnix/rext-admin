@@ -55,8 +55,8 @@ interface CanAccessProps {
  * Wrapper component for conditional rendering based on permissions or roles
  *
  * @example
- * // Show button only if user has "user:create" permission
- * <CanAccess permission="user:create">
+ * // Show button only if user has "user.create" permission
+ * <CanAccess permission="user.create">
  *   <Button>Create User</Button>
  * </CanAccess>
  *
@@ -68,7 +68,7 @@ interface CanAccessProps {
  *
  * @example
  * // Show fallback if user doesn't have permission
- * <CanAccess permission="user:delete" fallback={<p>No access</p>}>
+ * <CanAccess permission="user.delete" fallback={<p>No access</p>}>
  *   <DeleteButton />
  * </CanAccess>
  *

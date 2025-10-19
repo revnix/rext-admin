@@ -124,7 +124,7 @@ export function useWorkspacePermissionContext() {
  * @example
  * function DeleteButton() {
  *   const workspaceId = useCurrentWorkspaceId();
- *   const canDelete = useWorkspacePermission("content:delete", workspaceId);
+ *   const canDelete = useWorkspacePermission("content.delete", workspaceId);
  *
  *   if (!canDelete) return null;
  *   return <Button>Delete</Button>;

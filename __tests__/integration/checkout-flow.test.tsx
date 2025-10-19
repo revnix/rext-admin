@@ -8,6 +8,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 import {
   createMockApiClient,
   createMockSubscriptionPlan,
@@ -43,7 +44,7 @@ const CheckoutFlowComponent = () => {
 
   const handleCheckout = async (
     planId: string,
-    billingPeriod: "monthly" | "yearly",
+    billingPeriod: BillingPeriod,
   ) => {
     const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
@@ -61,14 +62,14 @@ const CheckoutFlowComponent = () => {
           <p>${plan.price_monthly}/month</p>
           <button
             type="button"
-            onClick={() => handleCheckout(plan.id, "monthly")}
+            onClick={() => handleCheckout(plan.id, BillingPeriod.MONTHLY)}
             disabled={checkoutInProgress}
           >
             {checkoutInProgress ? "Processing..." : "Subscribe Monthly"}
           </button>
           <button
             type="button"
-            onClick={() => handleCheckout(plan.id, "yearly")}
+            onClick={() => handleCheckout(plan.id, BillingPeriod.YEARLY)}
             disabled={checkoutInProgress}
           >
             {checkoutInProgress ? "Processing..." : "Subscribe Yearly"}
@@ -295,7 +296,7 @@ describe("Checkout Flow Integration", () => {
     it("should update store with new subscription data", async () => {
       const subscription = createMockUserSubscription({
         plan_name: "pro",
-        status: "active",
+        status: SubscriptionStatus.ACTIVE,
       });
 
       const fetchSubscription = jest.fn().mockImplementation(async () => {

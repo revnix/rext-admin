@@ -36,20 +36,20 @@ interface PermissionGuardProps {
  *
  * @example
  * // Single permission
- * <PermissionGuard permission="user:delete">
+ * <PermissionGuard permission="user.delete">
  *   <DeleteButton />
  * </PermissionGuard>
  *
  * @example
  * // Multiple permissions (ANY)
- * <PermissionGuard permission={["content:update", "content:publish"]}>
+ * <PermissionGuard permission={["content.update", "content.publish"]}>
  *   <EditButton />
  * </PermissionGuard>
  *
  * @example
  * // Multiple permissions (ALL required)
  * <PermissionGuard
- *   permission={["content:update", "content:publish"]}
+ *   permission={["content.update", "content.publish"]}
  *   requireAll={true}
  * >
  *   <PublishButton />
@@ -58,7 +58,7 @@ interface PermissionGuardProps {
  * @example
  * // With fallback
  * <PermissionGuard
- *   permission="user:delete"
+ *   permission="user.delete"
  *   fallback={<p>You don't have permission to delete users</p>}
  * >
  *   <DeleteButton />

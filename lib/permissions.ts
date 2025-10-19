@@ -97,7 +97,9 @@ export const ROLES = {
 
 /**
  * Permission constants matching backend RBAC system
- * Format: resource:action (e.g., user:read, content:create)
+ * Format: resource.action (e.g., user.read, content.create)
+ *
+ * IMPORTANT: Must use dot notation to match backend database schema
  */
 
 // User Management
@@ -167,44 +169,44 @@ export const MEDIA_PERMISSIONS = {
 
 // System/Admin
 export const ADMIN_PERMISSIONS = {
-  ROLE_READ: "role:read",
-  ROLE_CREATE: "role:create",
-  ROLE_UPDATE: "role:update",
-  ROLE_DELETE: "role:delete",
-  AUDIT_READ: "audit:read",
-  SYSTEM_MANAGE: "system:manage",
+  ROLE_READ: "role.read",
+  ROLE_CREATE: "role.create",
+  ROLE_UPDATE: "role.update",
+  ROLE_DELETE: "role.delete",
+  AUDIT_READ: "audit.read",
+  SYSTEM_MANAGE: "system.manage",
 } as const;
 
 // Legacy permission constants (deprecated, use resource-specific ones above)
 export const PERMISSIONS = {
   // User management
-  USER_CREATE: "user:create",
-  USER_READ: "user:read",
-  USER_UPDATE: "user:update",
-  USER_DELETE: "user:delete",
+  USER_CREATE: "user.create",
+  USER_READ: "user.read",
+  USER_UPDATE: "user.update",
+  USER_DELETE: "user.delete",
 
   // Role management
-  ROLE_CREATE: "role:create",
-  ROLE_READ: "role:read",
-  ROLE_UPDATE: "role:update",
-  ROLE_DELETE: "role:delete",
+  ROLE_CREATE: "role.create",
+  ROLE_READ: "role.read",
+  ROLE_UPDATE: "role.update",
+  ROLE_DELETE: "role.delete",
 
   // Permission management
-  PERMISSION_CREATE: "permission:create",
-  PERMISSION_READ: "permission:read",
-  PERMISSION_UPDATE: "permission:update",
-  PERMISSION_DELETE: "permission:delete",
+  PERMISSION_CREATE: "permission.create",
+  PERMISSION_READ: "permission.read",
+  PERMISSION_UPDATE: "permission.update",
+  PERMISSION_DELETE: "permission.delete",
 
   // Workspace management
-  WORKSPACE_CREATE: "workspace:create",
-  WORKSPACE_READ: "workspace:read",
-  WORKSPACE_UPDATE: "workspace:update",
-  WORKSPACE_DELETE: "workspace:delete",
+  WORKSPACE_CREATE: "workspace.create",
+  WORKSPACE_READ: "workspace.read",
+  WORKSPACE_UPDATE: "workspace.update",
+  WORKSPACE_DELETE: "workspace.delete",
 
   // System administration
-  SYSTEM_SETTINGS_READ: "system:settings:read",
-  SYSTEM_SETTINGS_UPDATE: "system:settings:update",
-  SYSTEM_AUDIT_LOG_READ: "system:audit_log:read",
+  SYSTEM_SETTINGS_READ: "system.settings.read",
+  SYSTEM_SETTINGS_UPDATE: "system.settings.update",
+  SYSTEM_AUDIT_LOG_READ: "system.audit_log.read",
 } as const;
 
 /**

@@ -8,6 +8,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 import {
   createMockApiClient,
   createMockSubscriptionStore,
@@ -250,7 +251,7 @@ describe("Subscription Management Integration", () => {
     it("should update subscription status after cancellation", async () => {
       const user = userEvent.setup();
       const cancelledSubscription = createMockUserSubscription({
-        status: "cancelled",
+        status: SubscriptionStatus.CANCELLED,
         cancelled_at: "2025-01-18T00:00:00Z",
       });
 
@@ -345,8 +346,8 @@ describe("Subscription Management Integration", () => {
     it("should display active subscription details", () => {
       const subscription = createMockUserSubscription({
         plan_display_name: "Pro Plan",
-        status: "active",
-        billing_period: "monthly",
+        status: SubscriptionStatus.ACTIVE,
+        billing_period: BillingPeriod.MONTHLY,
       });
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
@@ -361,9 +362,12 @@ describe("Subscription Management Integration", () => {
     });
 
     it("should handle different subscription statuses", () => {
-      const statuses: Array<
-        "active" | "trial" | "cancelled" | "expired" | "suspended"
-      > = ["active", "trial", "cancelled", "expired"];
+      const statuses = [
+        SubscriptionStatus.ACTIVE,
+        SubscriptionStatus.TRIAL,
+        SubscriptionStatus.CANCELLED,
+        SubscriptionStatus.EXPIRED,
+      ];
 
       statuses.forEach((status) => {
         const subscription = createMockUserSubscription({ status });

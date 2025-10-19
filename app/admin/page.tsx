@@ -31,14 +31,14 @@ export default function AdminDashboardPage() {
       description: "Manage users, view details, and modify user accounts",
       href: "/admin/users",
       icon: UserCog,
-      permission: "user:read",
+      permission: "user.read",
     },
     {
       title: "Roles & Permissions",
       description: "Configure roles and assign permissions",
       href: "/admin/roles",
       icon: Shield,
-      permission: "role:read",
+      permission: "role.read",
     },
     {
       title: "System Statistics",

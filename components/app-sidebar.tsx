@@ -176,19 +176,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Subscriptions",
           url: "/admin/subscriptions",
           icon: CreditCard,
-          anyPermission: ["subscription:analytics", "subscription:read"],
+          anyPermission: ["subscription.analytics", "subscription.read"],
         },
         {
           title: "System Monitoring",
           url: "/admin/monitoring",
           icon: Monitor,
-          permission: "system:manage",
+          permission: "system.manage",
         },
         {
           title: "Email Analytics",
           url: "/admin/email-analytics",
           icon: Mail,
-          anyPermission: ["system:manage", "audit:read"],
+          anyPermission: ["system.manage", "audit.read"],
         },
         {
           title: "Roles & Permissions",

@@ -6,6 +6,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CheckoutButton } from "@/components/subscription/checkout-button";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { BillingPeriod } from "@/types/subscription";
 import {
   createMockSubscriptionPlan,
   createMockSubscriptionStore,
@@ -29,7 +30,12 @@ describe("CheckoutButton", () => {
 
   describe("Rendering", () => {
     it("should render checkout button with plan name", () => {
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod={BillingPeriod.MONTHLY}
+        />,
+      );
       expect(
         screen.getByRole("button", { name: /subscribe/i }),
       ).toBeInTheDocument();
@@ -39,7 +45,7 @@ describe("CheckoutButton", () => {
       render(
         <CheckoutButton
           plan={mockPlan}
-          billingPeriod="monthly"
+          billingPeriod={BillingPeriod.MONTHLY}
           disabled={true}
         />,
       );
@@ -60,7 +66,12 @@ describe("CheckoutButton", () => {
         initiateCheckout,
       });
 
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod={BillingPeriod.MONTHLY}
+        />,
+      );
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -84,7 +95,12 @@ describe("CheckoutButton", () => {
         openCheckout,
       });
 
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod={BillingPeriod.MONTHLY}
+        />,
+      );
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -109,7 +125,10 @@ describe("CheckoutButton", () => {
       });
 
       const { rerender } = render(
-        <CheckoutButton plan={mockPlan} billingPeriod="monthly" />,
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod={BillingPeriod.MONTHLY}
+        />,
       );
 
       const button = screen.getByRole("button");
@@ -118,7 +137,9 @@ describe("CheckoutButton", () => {
       expect(initiateCheckout).toHaveBeenCalledWith(mockPlan, "monthly");
 
       initiateCheckout.mockClear();
-      rerender(<CheckoutButton plan={mockPlan} billingPeriod="yearly" />);
+      rerender(
+        <CheckoutButton plan={mockPlan} billingPeriod={BillingPeriod.YEARLY} />,
+      );
 
       await user.click(button);
       expect(initiateCheckout).toHaveBeenCalledWith(mockPlan, "yearly");
@@ -138,7 +159,12 @@ describe("CheckoutButton", () => {
         error: "Checkout failed",
       });
 
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod={BillingPeriod.MONTHLY}
+        />,
+      );
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -154,7 +180,7 @@ describe("CheckoutButton", () => {
       render(
         <CheckoutButton
           plan={mockPlan}
-          billingPeriod="monthly"
+          billingPeriod={BillingPeriod.MONTHLY}
           disabled={true}
         />,
       );
@@ -162,7 +188,12 @@ describe("CheckoutButton", () => {
     });
 
     it("should be enabled by default", () => {
-      render(<CheckoutButton plan={mockPlan} billingPeriod="monthly" />);
+      render(
+        <CheckoutButton
+          plan={mockPlan}
+          billingPeriod={BillingPeriod.MONTHLY}
+        />,
+      );
       expect(screen.getByRole("button")).not.toBeDisabled();
     });
   });

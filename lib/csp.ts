@@ -19,6 +19,15 @@ export function getCSPHeader(_nonce: string): string {
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:2024";
 
+  // Third-party service domains that need to be whitelisted
+  // Add new services here as needed for payment processing, analytics, etc.
+  const thirdPartyDomains = {
+    lemonsqueezy: "https://app.lemonsqueezy.com",
+    // Add more third-party services here as needed:
+    // stripe: "https://js.stripe.com",
+    // analytics: "https://www.google-analytics.com",
+  };
+
   // Build CSP directives
   const directives = [
     "default-src 'self'",
@@ -26,7 +35,8 @@ export function getCSPHeader(_nonce: string): string {
     // Scripts: Simple policy that works with both Turbopack (dev) and Webpack (prod)
     // 'unsafe-eval': Required for Turbopack dev hot reload
     // 'unsafe-inline': Required for Webpack production inline scripts
-    `script-src 'self' 'unsafe-eval' 'unsafe-inline'`,
+    // Third-party: LemonSqueezy checkout script
+    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy}`,
 
     // Styles: ALWAYS allow unsafe-inline (React components use inline styles extensively)
     // In production, you may want to generate style hashes or use a CSS-in-JS solution
@@ -38,8 +48,11 @@ export function getCSPHeader(_nonce: string): string {
     // Fonts: Allow self and data URIs
     "font-src 'self' data:",
 
-    // Connect: Allow self and backend API
-    `connect-src 'self' ${apiUrl}`,
+    // Connect: Allow self, backend API, and third-party services
+    `connect-src 'self' ${apiUrl} ${thirdPartyDomains.lemonsqueezy}`,
+
+    // Frames: Allow LemonSqueezy checkout overlays
+    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy}`,
 
     // Objects: Block all plugins
     "object-src 'none'",
@@ -75,11 +88,20 @@ export function getCSPHeader(_nonce: string): string {
  * - Next.js generates too many dynamic inline scripts to hash individually
  * - This is the pragmatic approach used by most Next.js production apps
  *
+ * Third-Party Services:
+ * - LemonSqueezy: Payment processing and checkout overlays
+ *   - script-src: Loads lemon.js for checkout functionality
+ *   - frame-src: Allows checkout overlay iframes
+ *   - connect-src: Enables API connections to LemonSqueezy
+ * - To add new services: Update thirdPartyDomains object and relevant directives
+ *
  * Security Features Still Active:
- * - 'self': Only allows scripts from same origin (blocks external scripts)
+ * - 'self': Only allows scripts from same origin by default
+ * - Explicit whitelisting: Third-party domains must be explicitly added
  * - frame-ancestors 'none': Prevents clickjacking
  * - Other directives: Restrict images, fonts, connections, etc.
  *
- * Trade-off: We allow inline scripts but still get meaningful XSS protection
- * through same-origin restrictions and other CSP directives.
+ * Trade-off: We allow inline scripts and whitelisted external scripts but still
+ * get meaningful XSS protection through same-origin restrictions and explicit
+ * third-party whitelisting.
  */
