@@ -22,7 +22,10 @@ export function getCSPHeader(_nonce: string): string {
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
   const thirdPartyDomains = {
-    lemonsqueezy: "https://app.lemonsqueezy.com",
+    lemonsqueezy: {
+      app: "https://app.lemonsqueezy.com",
+      assets: "https://assets.lemonsqueezy.com",
+    },
     // Add more third-party services here as needed:
     // stripe: "https://js.stripe.com",
     // analytics: "https://www.google-analytics.com",
@@ -36,7 +39,7 @@ export function getCSPHeader(_nonce: string): string {
     // 'unsafe-eval': Required for Turbopack dev hot reload
     // 'unsafe-inline': Required for Webpack production inline scripts
     // Third-party: LemonSqueezy checkout script
-    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy}`,
+    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.lemonsqueezy.assets}`,
 
     // Styles: ALWAYS allow unsafe-inline (React components use inline styles extensively)
     // In production, you may want to generate style hashes or use a CSS-in-JS solution
@@ -49,10 +52,10 @@ export function getCSPHeader(_nonce: string): string {
     "font-src 'self' data:",
 
     // Connect: Allow self, backend API, and third-party services
-    `connect-src 'self' ${apiUrl} ${thirdPartyDomains.lemonsqueezy}`,
+    `connect-src 'self' ${apiUrl} ${thirdPartyDomains.lemonsqueezy.app}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
-    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy}`,
+    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.app}`,
 
     // Objects: Block all plugins
     "object-src 'none'",
@@ -90,9 +93,9 @@ export function getCSPHeader(_nonce: string): string {
  *
  * Third-Party Services:
  * - LemonSqueezy: Payment processing and checkout overlays
- *   - script-src: Loads lemon.js for checkout functionality
- *   - frame-src: Allows checkout overlay iframes
- *   - connect-src: Enables API connections to LemonSqueezy
+ *   - script-src: Loads lemon.js from assets.lemonsqueezy.com
+ *   - frame-src: Allows checkout overlay iframes from app.lemonsqueezy.com
+ *   - connect-src: Enables API connections to app.lemonsqueezy.com
  * - To add new services: Update thirdPartyDomains object and relevant directives
  *
  * Security Features Still Active:
