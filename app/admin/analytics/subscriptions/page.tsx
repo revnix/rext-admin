@@ -9,7 +9,7 @@ import {
   UserMinus,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -23,6 +23,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type {
   AnalyticsOverview,
@@ -138,8 +138,15 @@ function AnalyticsLoadingSkeleton() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+        {(
+          [
+            "loading-metric-1",
+            "loading-metric-2",
+            "loading-metric-3",
+            "loading-metric-4",
+          ] as const
+        ).map((id) => (
+          <Card key={id}>
             <CardHeader>
               <Skeleton className="h-4 w-24" />
             </CardHeader>
@@ -177,8 +184,6 @@ function AnalyticsLoadingSkeleton() {
 // ============================================================================
 
 export default function SubscriptionAnalyticsPage() {
-  const { toast } = useToast();
-
   // State
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
@@ -190,7 +195,7 @@ export default function SubscriptionAnalyticsPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Fetch data
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -207,31 +212,23 @@ export default function SubscriptionAnalyticsPage() {
       setChurn(churnData);
       setTrialConversion(trialData);
     } catch (_error) {
-      toast({
-        title: "Error",
-        description: "Failed to load analytics data. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load analytics data. Please try again.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [churnPeriod]);
 
   // Fetch churn data when period changes
-  const fetchChurnData = async (periodDays: number) => {
+  const fetchChurnData = useCallback(async (periodDays: number) => {
     try {
       const churnData =
         await apiClient.adminAnalytics.getChurnAnalysis(periodDays);
       setChurn(churnData);
     } catch (_error) {
-      toast({
-        title: "Error",
-        description: "Failed to load churn analysis. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load churn analysis. Please try again.");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAnalytics();
@@ -414,16 +411,18 @@ export default function SubscriptionAnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${(percent * 100).toFixed(0)}%`
-                  }
+                  label={(props: { percent?: number; name?: string }) => {
+                    const percent = props.percent || 0;
+                    const name = props.name || "";
+                    return `${name}: ${(percent * 100).toFixed(0)}%`;
+                  }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {tierDistributionData.map((_entry, index) => (
+                  {tierDistributionData.map((entry, index) => (
                     <Cell
-                      key={`cell-${index}`}
+                      key={`cell-${entry.name}`}
                       fill={PIE_COLORS[index % PIE_COLORS.length]}
                     />
                   ))}

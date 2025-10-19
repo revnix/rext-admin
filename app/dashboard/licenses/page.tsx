@@ -11,7 +11,7 @@
  */
 
 import { Key, Loader2, Plus, Shield } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivateLicenseModal } from "@/components/licenses/activate-license-modal";
 import { Badge } from "@/components/ui/badge";
@@ -40,12 +40,7 @@ export default function LicensesPage() {
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
 
-  // Load licenses on mount
-  useEffect(() => {
-    loadLicenses();
-  }, [loadLicenses]);
-
-  const loadLicenses = async () => {
+  const loadLicenses = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.licenses.getLicenses();
@@ -58,7 +53,12 @@ export default function LicensesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load licenses on mount
+  useEffect(() => {
+    loadLicenses();
+  }, [loadLicenses]);
 
   const loadActivations = async (licenseId: string) => {
     if (activations[licenseId]) {

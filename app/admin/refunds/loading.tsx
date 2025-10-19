@@ -24,14 +24,16 @@ export default function Loading() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i}>
-            <CardContent className="pt-6">
-              <Skeleton className="h-8 w-20 mb-2" />
-              <Skeleton className="h-4 w-28" />
-            </CardContent>
-          </Card>
-        ))}
+        {(["stats-card-1", "stats-card-2", "stats-card-3"] as const).map(
+          (id) => (
+            <Card key={id}>
+              <CardContent className="pt-6">
+                <Skeleton className="h-8 w-20 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </CardContent>
+            </Card>
+          ),
+        )}
       </div>
 
       {/* Filters Card */}
@@ -52,8 +54,16 @@ export default function Loading() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+            {(
+              [
+                "table-row-1",
+                "table-row-2",
+                "table-row-3",
+                "table-row-4",
+                "table-row-5",
+              ] as const
+            ).map((id) => (
+              <Skeleton key={id} className="h-16 w-full" />
             ))}
           </div>
         </CardContent>

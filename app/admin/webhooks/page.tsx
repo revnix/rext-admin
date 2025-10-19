@@ -12,7 +12,8 @@ import {
   Webhook,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +45,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type {
   WebhookEvent,
@@ -200,8 +200,8 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-4 mb-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+        {(["stats-1", "stats-2", "stats-3", "stats-4"] as const).map((id) => (
+          <Card key={id}>
             <CardContent className="pt-6">
               <Skeleton className="h-8 w-24 mb-2" />
               <Skeleton className="h-4 w-32" />
@@ -255,8 +255,6 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
 // ============================================================================
 
 export default function WebhookMonitoringPage() {
-  const { toast } = useToast();
-
   // State
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<WebhookEvent[]>([]);
@@ -286,7 +284,7 @@ export default function WebhookMonitoringPage() {
   const [eventToRetry, setEventToRetry] = useState<string | null>(null);
 
   // Fetch events
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -306,23 +304,19 @@ export default function WebhookMonitoringPage() {
       setPagination(response.pagination);
       setSummary(response.summary);
     } catch (_error) {
-      toast({
-        title: "Error",
-        description: "Failed to load webhook events. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load webhook events. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, currentPage, eventNameFilter]);
 
   // Fetch stats
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const statsData = await apiClient.adminWebhooks.getStats();
       setStats(statsData);
     } catch (_error) {}
-  };
+  }, []);
 
   // Retry webhook
   const handleRetryWebhook = async (eventId: string) => {
@@ -337,20 +331,16 @@ export default function WebhookMonitoringPage() {
       setRetryingEventId(eventToRetry);
       const result = await apiClient.adminWebhooks.retryWebhook(eventToRetry);
 
-      toast({
-        title: "Success",
-        description: result.message || "Webhook retry initiated successfully",
-      });
+      toast.success(result.message || "Webhook retry initiated successfully");
 
       // Refresh events
       await fetchEvents();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description:
-          error.message || "Failed to retry webhook. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to retry webhook. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setRetryingEventId(null);
       setShowRetryDialog(false);
@@ -421,10 +411,14 @@ export default function WebhookMonitoringPage() {
         <CardContent>
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="text-sm font-medium mb-2 block">
+              <label
+                htmlFor="event-name-filter"
+                className="text-sm font-medium mb-2 block"
+              >
                 Event Name
               </label>
               <Input
+                id="event-name-filter"
                 placeholder="Filter by event name..."
                 value={eventNameFilter}
                 onChange={(e) => {
@@ -434,7 +428,12 @@ export default function WebhookMonitoringPage() {
               />
             </div>
             <div className="w-48">
-              <label className="text-sm font-medium mb-2 block">Status</label>
+              <label
+                htmlFor="status-filter"
+                className="text-sm font-medium mb-2 block"
+              >
+                Status
+              </label>
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => {
@@ -483,8 +482,16 @@ export default function WebhookMonitoringPage() {
             <TabsContent value={activeTab} className="mt-4">
               {loading ? (
                 <div className="space-y-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
+                  {(
+                    [
+                      "event-skeleton-1",
+                      "event-skeleton-2",
+                      "event-skeleton-3",
+                      "event-skeleton-4",
+                      "event-skeleton-5",
+                    ] as const
+                  ).map((id) => (
+                    <Skeleton key={id} className="h-16 w-full" />
                   ))}
                 </div>
               ) : filteredEvents.length === 0 ? (

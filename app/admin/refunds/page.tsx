@@ -9,7 +9,8 @@ import {
   Plus,
   RefreshCw,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +34,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type { Refund, RefundSummary } from "@/lib/api-client/admin-refunds";
 
@@ -133,8 +133,15 @@ function StatsCards({ summary, loading }: StatsCardsProps) {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-4 mb-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+        {(
+          [
+            "stats-loading-1",
+            "stats-loading-2",
+            "stats-loading-3",
+            "stats-loading-4",
+          ] as const
+        ).map((id) => (
+          <Card key={id}>
             <CardContent className="pt-6">
               <Skeleton className="h-8 w-24 mb-2" />
               <Skeleton className="h-4 w-32" />
@@ -196,7 +203,6 @@ function CreateRefundDialog({
   onOpenChange,
   onSuccess,
 }: CreateRefundDialogProps) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     order_id: "",
@@ -210,7 +216,12 @@ function CreateRefundDialog({
     setLoading(true);
 
     try {
-      const payload: any = {
+      const payload: {
+        reason?: string;
+        order_id?: string;
+        subscription_id?: string;
+        amount?: number;
+      } = {
         reason: formData.reason || undefined,
       };
 
@@ -219,11 +230,7 @@ function CreateRefundDialog({
       } else if (formData.subscription_id) {
         payload.subscription_id = formData.subscription_id;
       } else {
-        toast({
-          title: "Validation Error",
-          description: "Please provide either Order ID or Subscription ID",
-          variant: "destructive",
-        });
+        toast.error("Please provide either Order ID or Subscription ID");
         setLoading(false);
         return;
       }
@@ -234,10 +241,7 @@ function CreateRefundDialog({
 
       await apiClient.adminRefunds.create(payload);
 
-      toast({
-        title: "Success",
-        description: "Refund created successfully",
-      });
+      toast.success("Refund created successfully");
 
       onOpenChange(false);
       setFormData({
@@ -247,12 +251,10 @@ function CreateRefundDialog({
         reason: "",
       });
       onSuccess();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create refund",
-        variant: "destructive",
-      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create refund";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -342,8 +344,6 @@ function CreateRefundDialog({
 // ============================================================================
 
 export default function RefundManagementPage() {
-  const { toast } = useToast();
-
   // State
   const [loading, setLoading] = useState(true);
   const [refunds, setRefunds] = useState<Refund[]>([]);
@@ -359,7 +359,7 @@ export default function RefundManagementPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Fetch refunds
-  const fetchRefunds = async () => {
+  const fetchRefunds = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -373,15 +373,11 @@ export default function RefundManagementPage() {
       setSummary(response.summary);
       setPagination(response.pagination);
     } catch (_error) {
-      toast({
-        title: "Error",
-        description: "Failed to load refund data. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load refund data. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page]);
 
   // Filter refunds based on search query
   useEffect(() => {
@@ -482,10 +478,14 @@ export default function RefundManagementPage() {
         <CardContent>
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="text-sm font-medium mb-2 block">
+              <Label
+                htmlFor="search-refunds"
+                className="text-sm font-medium mb-2 block"
+              >
                 Search by Email, Order ID, Name, or Plan
-              </label>
+              </Label>
               <Input
+                id="search-refunds"
                 placeholder="Search refunds..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -506,8 +506,16 @@ export default function RefundManagementPage() {
         <CardContent>
           {loading ? (
             <div className="space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
+              {(
+                [
+                  "refund-table-1",
+                  "refund-table-2",
+                  "refund-table-3",
+                  "refund-table-4",
+                  "refund-table-5",
+                ] as const
+              ).map((id) => (
+                <Skeleton key={id} className="h-16 w-full" />
               ))}
             </div>
           ) : filteredRefunds.length === 0 ? (

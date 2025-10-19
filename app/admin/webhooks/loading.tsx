@@ -11,8 +11,15 @@ export default function Loading() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4 mb-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+        {(
+          [
+            "webhook-stats-1",
+            "webhook-stats-2",
+            "webhook-stats-3",
+            "webhook-stats-4",
+          ] as const
+        ).map((id) => (
+          <Card key={id}>
             <CardContent className="pt-6">
               <Skeleton className="h-8 w-20 mb-2" />
               <Skeleton className="h-4 w-28" />
@@ -41,8 +48,19 @@ export default function Loading() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+            {(
+              [
+                "webhook-event-1",
+                "webhook-event-2",
+                "webhook-event-3",
+                "webhook-event-4",
+                "webhook-event-5",
+                "webhook-event-6",
+                "webhook-event-7",
+                "webhook-event-8",
+              ] as const
+            ).map((id) => (
+              <Skeleton key={id} className="h-16 w-full" />
             ))}
           </div>
         </CardContent>
