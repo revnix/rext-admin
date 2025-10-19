@@ -70,11 +70,6 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     onClose();
   };
 
-  const handleDismiss = async () => {
-    await complete();
-    onClose();
-  };
-
   // Render current step content
   const renderStepContent = () => {
     const stepProps = {
@@ -120,7 +115,10 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent
+        className="!max-w-5xl w-[95vw] max-h-[90vh] flex flex-col p-0"
+        showCloseButton={false}
+      >
         {/* Accessible title and description for screen readers */}
         <VisuallyHidden>
           <DialogTitle>Get Started with WREXT - Onboarding</DialogTitle>
@@ -131,13 +129,13 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
         </VisuallyHidden>
 
         {/* Header with progress */}
-        <div className="border-b p-6">
+        <div className="border-b p-6 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Get Started with WREXT</h2>
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleDismiss}
+              onClick={onClose}
               className="h-8 w-8"
             >
               <X className="h-4 w-4" />
@@ -152,8 +150,8 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
           />
         </div>
 
-        {/* Animated step content */}
-        <div className="relative overflow-hidden">
+        {/* Animated step content with overflow scroll */}
+        <div className="relative flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentStep}
