@@ -96,7 +96,7 @@ export default function WorkspaceKnowledgePage() {
   ).length;
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

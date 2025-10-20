@@ -10,10 +10,11 @@
  * - Viewing and deactivating active instances
  */
 
-import { Key, Loader2, Plus, Shield } from "lucide-react";
+import { Loader2, Plus, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivateLicenseModal } from "@/components/licenses/activate-license-modal";
+import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -140,36 +141,34 @@ export default function LicensesPage() {
     });
   };
 
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/" },
+    { label: "Licenses" },
+  ];
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <PageLayout
+        title="License Management"
+        description="Manage your license keys and device activations"
+        breadcrumbs={breadcrumbs}
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading licenses...</p>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Key className="h-8 w-8" />
-              License Management
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Manage your license keys and device activations
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <PageLayout
+      title="License Management"
+      description="Manage your license keys and device activations"
+      breadcrumbs={breadcrumbs}
+    >
       {/* Licenses List */}
       {licenses.length === 0 ? (
         <Card>
@@ -355,6 +354,6 @@ export default function LicensesPage() {
           }}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }

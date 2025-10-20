@@ -3,6 +3,7 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageLayout } from "@/components/page-layout";
 import { UsageLimitWarning } from "@/components/subscription/usage-limit-warning";
 import { UsageMetrics } from "@/components/subscription/usage-metrics";
 import { Button } from "@/components/ui/button";
@@ -53,17 +54,14 @@ export default function UsagePage() {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Usage Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor your usage and plan limits
-          </p>
-        </div>
+  const breadcrumbs = [{ label: "Dashboard", href: "/" }, { label: "Usage" }];
 
+  return (
+    <PageLayout
+      title="Usage Dashboard"
+      description="Monitor your usage and plan limits"
+      breadcrumbs={breadcrumbs}
+      actions={
         <Button
           onClick={handleRefresh}
           disabled={refreshing || isLoading}
@@ -74,8 +72,8 @@ export default function UsagePage() {
           />
           Refresh
         </Button>
-      </div>
-
+      }
+    >
       {/* Usage Warnings */}
       <div className="space-y-3">
         <UsageLimitWarning resource="workspaces" />
@@ -199,6 +197,6 @@ export default function UsagePage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </PageLayout>
   );
 }

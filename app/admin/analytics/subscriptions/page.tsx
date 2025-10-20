@@ -24,6 +24,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -245,23 +246,31 @@ export default function SubscriptionAnalyticsPage() {
     fetchAnalytics();
   };
 
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Analytics", href: "/admin/analytics" },
+    { label: "Subscriptions" },
+  ];
+
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Subscription Analytics</h1>
-          <p className="text-muted-foreground">
-            Monitor key metrics and insights
-          </p>
-        </div>
+      <PageLayout
+        title="Subscription Analytics"
+        description="Monitor key metrics and insights"
+        breadcrumbs={breadcrumbs}
+      >
         <AnalyticsLoadingSkeleton />
-      </div>
+      </PageLayout>
     );
   }
 
   if (!overview || !revenue || !churn || !trialConversion) {
     return (
-      <div className="container mx-auto p-6">
+      <PageLayout
+        title="Subscription Analytics"
+        description="Monitor key metrics and insights"
+        breadcrumbs={breadcrumbs}
+      >
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -274,7 +283,7 @@ export default function SubscriptionAnalyticsPage() {
             <Button onClick={fetchAnalytics}>Try Again</Button>
           </CardContent>
         </Card>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -309,20 +318,16 @@ export default function SubscriptionAnalyticsPage() {
   const growthTrend = growthRate >= 0 ? "up" : "down";
 
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Subscription Analytics</h1>
-          <p className="text-muted-foreground">
-            Monitor key metrics and insights
-          </p>
-        </div>
+    <PageLayout
+      title="Subscription Analytics"
+      description="Monitor key metrics and insights"
+      breadcrumbs={breadcrumbs}
+      actions={
         <Button onClick={handleRefresh} disabled={refreshing}>
           {refreshing ? "Refreshing..." : "Refresh Data"}
         </Button>
-      </div>
-
+      }
+    >
       {/* Overview Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <MetricCard
@@ -550,6 +555,6 @@ export default function SubscriptionAnalyticsPage() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }

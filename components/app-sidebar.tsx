@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   Brain,
   CreditCard,
   FileText,
@@ -10,9 +9,7 @@ import {
   Library,
   Mail,
   Monitor,
-  Puzzle,
   Settings2,
-  Share2,
   Shield,
   User,
   UserCog,
@@ -20,6 +17,7 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 
+import { EmptyWorkspacePrompt } from "@/components/empty-workspace-prompt";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -38,6 +36,8 @@ import type { NavGroup } from "@/types/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  const hasWorkspaces = workspaceList.length > 0;
 
   const navigationGroups: NavGroup[] = [
     {
@@ -45,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Dashboard",
-          url: "/dashboard",
+          url: "/",
           icon: LayoutDashboard,
         },
       ],
@@ -57,102 +57,103 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Overview",
           url: currentWorkspace?.slug
             ? workspaceRoutes.overview(currentWorkspace.slug)
-            : "/dashboard",
+            : "/",
           icon: LayoutDashboard,
         },
         {
           title: "Topics",
           url: currentWorkspace?.slug
             ? workspaceRoutes.topics(currentWorkspace.slug)
-            : "/dashboard",
+            : "/",
           icon: Library,
         },
         {
           title: "Content",
           url: currentWorkspace?.slug
             ? workspaceRoutes.content(currentWorkspace.slug)
-            : "/dashboard",
+            : "/",
           icon: FileText,
         },
         {
           title: "Knowledge",
           url: currentWorkspace?.slug
             ? workspaceRoutes.knowledge(currentWorkspace.slug)
-            : "/dashboard",
+            : "/",
           icon: Brain,
         },
         {
           title: "Media",
           url: currentWorkspace?.slug
             ? workspaceRoutes.media(currentWorkspace.slug)
-            : "/dashboard",
+            : "/",
           icon: Image,
         },
         {
           title: "Users",
           url: currentWorkspace?.slug
             ? workspaceRoutes.users(currentWorkspace.slug)
-            : "/dashboard",
+            : "/",
           icon: Users,
         },
       ],
     },
-    {
-      groupLabel: "Integrations",
-      items: [
-        {
-          title: "Integrations",
-          url: "/integrations",
-          icon: Puzzle,
-          items: [
-            {
-              title: "Social Accounts",
-              url: "/social-accounts",
-              icon: Share2,
-            },
-            {
-              title: "Notifications",
-              url: "/notifications",
-              icon: Bell,
-            },
-          ],
-        },
-      ],
-    },
+    // TODO: Uncomment when integrations are ready
+    // {
+    //   groupLabel: "Integrations",
+    //   items: [
+    //     {
+    //       title: "Integrations",
+    //       url: "/integrations",
+    //       icon: Puzzle,
+    //       items: [
+    //         {
+    //           title: "Social Accounts",
+    //           url: "/social-accounts",
+    //           icon: Share2,
+    //         },
+    //         {
+    //           title: "Notifications",
+    //           url: "/notifications",
+    //           icon: Bell,
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // },
     {
       groupLabel: "Personal",
       items: [
         {
-          title: "Profile",
-          url: "/profile",
+          title: "Account",
+          url: "/settings/account",
           icon: User,
         },
         {
           title: "Subscription",
-          url: "/dashboard/subscription",
+          url: "/subscription",
           icon: CreditCard,
           items: [
             {
               title: "Overview",
-              url: "/dashboard/subscription",
+              url: "/subscription",
             },
             {
               title: "Billing",
-              url: "/dashboard/billing",
+              url: "/billing",
             },
             {
               title: "Usage",
-              url: "/dashboard/usage",
+              url: "/usage",
             },
             {
               title: "Licenses",
-              url: "/dashboard/licenses",
+              url: "/licenses",
             },
           ],
         },
         {
           title: "Settings",
-          url: "/settings/account",
+          url: "/settings/general",
           icon: Settings2,
         },
       ],
@@ -203,13 +204,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Filter navigation based on user permissions
   const filteredNavigation = useFilteredNavigation(navigationGroups);
 
+  // Filter out workspace group if no workspaces exist
+  const displayNavigation = hasWorkspaces
+    ? filteredNavigation
+    : filteredNavigation.filter((group) => group.groupLabel !== "Workspace");
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain groups={filteredNavigation} />
+        {hasWorkspaces ? (
+          <NavMain groups={displayNavigation} />
+        ) : (
+          <>
+            <NavMain groups={displayNavigation} />
+            <EmptyWorkspacePrompt />
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

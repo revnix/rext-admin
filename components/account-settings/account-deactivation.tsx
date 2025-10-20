@@ -22,21 +22,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import type { UserSubscription } from "@/types/subscription";
+import { SubscriptionStatus } from "@/types/subscription";
 
 export function AccountDeactivation() {
   const [reason, setReason] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [understood, setUnderstood] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [cancelSubscriptions, setCancelSubscriptions] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: () => apiClient.profile.get(),
   });
 
+  // Fetch current subscription
+  const { data: subscription } = useQuery({
+    queryKey: ["current-subscription"],
+    queryFn: () => apiClient.subscriptions.getCurrentPlan(),
+    retry: false,
+  });
+
+  // Check if user has an active subscription
+  const hasActiveSubscriptions =
+    subscription &&
+    (subscription.status === SubscriptionStatus.ACTIVE ||
+      subscription.status === SubscriptionStatus.TRIAL);
+
+  // Convert single subscription to array format for easier rendering
+  const subscriptions = hasActiveSubscriptions ? [subscription] : [];
+
   const deactivateMutation = useMutation({
-    mutationFn: (data: { reason?: string; confirm: boolean }) =>
-      apiClient.account.deactivate(data),
+    mutationFn: (data: {
+      reason?: string;
+      confirm: boolean;
+      cancel_subscriptions?: boolean;
+    }) => apiClient.account.deactivate(data),
     onSuccess: async (data) => {
       toast.success(
         data.message ||
@@ -64,13 +86,26 @@ export function AccountDeactivation() {
       return;
     }
 
+    if (hasActiveSubscriptions && !cancelSubscriptions) {
+      toast.error(
+        "Please confirm automatic cancellation of your active subscriptions to proceed.",
+      );
+      return;
+    }
+
     deactivateMutation.mutate({
       reason: reason || undefined,
       confirm: true,
+      cancel_subscriptions: hasActiveSubscriptions
+        ? cancelSubscriptions
+        : false,
     });
   };
 
-  const isConfirmValid = confirmText === "DEACTIVATE" && understood;
+  const isConfirmValid =
+    confirmText === "DEACTIVATE" &&
+    understood &&
+    (!hasActiveSubscriptions || cancelSubscriptions);
 
   return (
     <div className="space-y-6">
@@ -82,6 +117,22 @@ export function AccountDeactivation() {
           days.
         </AlertDescription>
       </Alert>
+
+      {hasActiveSubscriptions && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Active Subscriptions Detected</strong>
+            <p className="mt-2">
+              You have {subscriptions.length} active subscription
+              {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to cancel{" "}
+              {subscriptions.length > 1 ? "them" : "it"} before deactivating
+              your account, or choose to automatically cancel during
+              deactivation.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-4">
         <div>
@@ -135,6 +186,34 @@ export function AccountDeactivation() {
             </AlertDialogHeader>
 
             <div className="space-y-4 py-4">
+              {hasActiveSubscriptions && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong className="block mb-2">
+                      Active Subscriptions Found
+                    </strong>
+                    <div className="space-y-2 text-sm">
+                      {subscriptions.map((sub: UserSubscription) => (
+                        <div
+                          key={sub.id}
+                          className="flex items-center justify-between p-2 bg-muted/50 rounded"
+                        >
+                          <div>
+                            <div className="font-medium">{sub.plan_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Status: {sub.status}
+                              {sub.current_period_end &&
+                                ` • Renews ${new Date(sub.current_period_end).toLocaleDateString()}`}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="reason">
                   Reason for deactivation (optional)
@@ -186,6 +265,33 @@ export function AccountDeactivation() {
                   </p>
                 </div>
               </div>
+
+              {hasActiveSubscriptions && (
+                <div className="flex items-start space-x-3 p-4 border rounded-lg bg-destructive/10 border-destructive/20">
+                  <Checkbox
+                    id="cancel-subscriptions"
+                    checked={cancelSubscriptions}
+                    onCheckedChange={(checked) =>
+                      setCancelSubscriptions(checked as boolean)
+                    }
+                    disabled={deactivateMutation.isPending}
+                  />
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor="cancel-subscriptions"
+                      className="cursor-pointer font-medium"
+                    >
+                      Automatically cancel my {subscriptions.length} active
+                      subscription{subscriptions.length > 1 ? "s" : ""}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      All active subscriptions will be canceled immediately.
+                      You&apos;ll retain access until the end of your current
+                      billing period.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <AlertDialogFooter>

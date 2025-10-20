@@ -318,7 +318,7 @@ export default {
 
       // Redirect authenticated users away from auth pages
       if (isLoggedIn && isOnAuthPage) {
-        return Response.redirect(new URL("/dashboard", nextUrl));
+        return Response.redirect(new URL("/", nextUrl));
       }
 
       // Require authentication for protected pages

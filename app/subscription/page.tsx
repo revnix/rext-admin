@@ -10,6 +10,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Footer } from "@/components/layout/footer";
+import { PageLayout } from "@/components/page-layout";
 import { CancelSubscriptionModal } from "@/components/subscription/cancel-subscription-modal";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
@@ -24,6 +26,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  LemonSqueezyBadge,
+  PaymentSecurityMessage,
+} from "@/components/ui/security-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -81,22 +87,35 @@ export default function SubscriptionDashboardPage() {
     loadData();
   }, [fetchSubscription, fetchUsage, loadPlans]);
 
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/" },
+    { label: "Subscription" },
+  ];
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <PageLayout
+        title="Subscription Management"
+        description="Manage your subscription, view usage, and access billing"
+        breadcrumbs={breadcrumbs}
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading subscription...</p>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (!subscription) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <PageLayout
+        title="Subscription Management"
+        description="Manage your subscription, view usage, and access billing"
+        breadcrumbs={breadcrumbs}
+      >
         <Card>
           <CardHeader>
             <CardTitle>No Active Subscription</CardTitle>
@@ -113,7 +132,7 @@ export default function SubscriptionDashboardPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -126,15 +145,11 @@ export default function SubscriptionDashboardPage() {
     subscription.status === SubscriptionStatus.TRIAL;
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Subscription Management</h1>
-        <p className="text-muted-foreground">
-          Manage your subscription, view usage, and access billing.
-        </p>
-      </div>
-
+    <PageLayout
+      title="Subscription Management"
+      description="Manage your subscription, view usage, and access billing"
+      breadcrumbs={breadcrumbs}
+    >
       {/* Trial Banner */}
       {isTrial && <TrialStatusBanner showGlobally={false} />}
 
@@ -288,10 +303,20 @@ export default function SubscriptionDashboardPage() {
                 billing address, and download invoices.
               </p>
               <CustomerPortalButton>Open Billing Portal</CustomerPortalButton>
+
+              {/* Security Information */}
+              <div className="pt-4 mt-4 border-t">
+                <PaymentSecurityMessage variant="compact" />
+              </div>
             </CardContent>
           </Card>
 
           <SubscriptionStatusCard />
+
+          {/* Trust Badge */}
+          <div className="flex justify-center pt-4">
+            <LemonSqueezyBadge size="sm" />
+          </div>
         </TabsContent>
 
         {/* Invoices Tab */}
@@ -333,6 +358,9 @@ export default function SubscriptionDashboardPage() {
         onOpenChange={setCancelModalOpen}
         currentPeriodEnd={subscription.current_period_end ?? null}
       />
-    </div>
+
+      {/* Footer with Policy Links */}
+      <Footer variant="minimal" className="mt-12" />
+    </PageLayout>
   );
 }

@@ -136,27 +136,33 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200 bg-yellow-50/50">
-          <CardHeader>
-            <CardTitle className="text-yellow-800">
-              <Users className="inline h-5 w-5 mr-2" />
-              Backend Integration Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-yellow-800">
-            <p>
-              The admin features will be fully functional once the backend
-              includes <code className="bg-yellow-100 px-1 rounded">role</code>{" "}
-              and{" "}
-              <code className="bg-yellow-100 px-1 rounded">permissions</code> in
-              the JWT token during login.
-            </p>
-            <p className="mt-2">
-              Currently, the permission system is ready but needs backend
-              integration to populate user roles and permissions in the session.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Only show warning if user doesn't have role or permissions */}
+        {(!user?.role ||
+          !user?.permissions ||
+          user.permissions.length === 0) && (
+          <Card className="border-yellow-200 bg-yellow-50/50">
+            <CardHeader>
+              <CardTitle className="text-yellow-800">
+                <Users className="inline h-5 w-5 mr-2" />
+                Backend Integration Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-yellow-800">
+              <p>
+                The admin features will be fully functional once the backend
+                includes{" "}
+                <code className="bg-yellow-100 px-1 rounded">role</code> and{" "}
+                <code className="bg-yellow-100 px-1 rounded">permissions</code>{" "}
+                in the JWT token during login.
+              </p>
+              <p className="mt-2">
+                Currently, the permission system is ready but needs backend
+                integration to populate user roles and permissions in the
+                session.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PageLayout>
   );

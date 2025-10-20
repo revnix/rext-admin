@@ -1,64 +1,29 @@
-import { ChangePasswordForm } from "@/components/profile/change-password-form";
-import { PreferencesTab } from "@/components/profile/preferences-tab";
-import { ProfileForm } from "@/components/profile/profile-form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+"use client";
 
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+/**
+ * Profile page redirect
+ * This page has been consolidated with /settings/account
+ * Redirects users to the unified account settings page
+ */
 export default function ProfilePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/settings/account");
+  }, [router]);
+
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Profile Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your account settings and preferences
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="text-muted-foreground">
+          Redirecting to Account Settings...
         </p>
       </div>
-
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Update your account profile information and avatar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProfileForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>
-                Ensure your account is using a strong password
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChangePasswordForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="preferences">
-          <PreferencesTab />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

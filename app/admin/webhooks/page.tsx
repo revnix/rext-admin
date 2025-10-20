@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageLayout } from "@/components/page-layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -373,19 +374,17 @@ export default function WebhookMonitoringPage() {
 
   const filteredEvents = getFilteredEvents();
 
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Webhooks" },
+  ];
+
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Webhook className="h-8 w-8" />
-            Webhook Monitoring
-          </h1>
-          <p className="text-muted-foreground">
-            Monitor and manage webhook events from LemonSqueezy
-          </p>
-        </div>
+    <PageLayout
+      title="Webhook Monitoring"
+      description="Monitor and manage webhook events from LemonSqueezy"
+      breadcrumbs={breadcrumbs}
+      actions={
         <Button
           onClick={() => {
             fetchEvents();
@@ -395,8 +394,8 @@ export default function WebhookMonitoringPage() {
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
-      </div>
-
+      }
+    >
       {/* Statistics */}
       <StatsCards stats={stats} loading={loading && !stats} />
 
@@ -577,6 +576,6 @@ export default function WebhookMonitoringPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

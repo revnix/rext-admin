@@ -39,7 +39,7 @@ export default function WorkspaceOverviewPage() {
   const { workspace, workspaceSlug, isLoading } = useWorkspace();
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

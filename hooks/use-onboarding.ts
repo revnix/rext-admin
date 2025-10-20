@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import type {
+  OnboardingMarketingData,
   OnboardingStatus,
   OnboardingStepUpdate,
 } from "@/types/onboarding";
@@ -89,6 +90,18 @@ export function useOnboarding() {
     },
   });
 
+  // Update marketing data mutation
+  const updateMarketingMutation = useMutation({
+    mutationFn: (data: OnboardingMarketingData) =>
+      apiClient.onboarding.updateMarketingData(data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["onboarding", "status"], data);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to save your information");
+    },
+  });
+
   return {
     // Status
     status,
@@ -123,9 +136,14 @@ export function useOnboarding() {
       await resetMutation.mutateAsync();
     },
 
+    updateMarketingData: async (data: OnboardingMarketingData) => {
+      await updateMarketingMutation.mutateAsync(data);
+    },
+
     // Loading states
     isUpdating: updateStepMutation.isPending,
     isCompleting: completeMutation.isPending,
     isResetting: resetMutation.isPending,
+    isUpdatingMarketing: updateMarketingMutation.isPending,
   };
 }

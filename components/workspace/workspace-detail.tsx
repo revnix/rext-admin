@@ -94,7 +94,7 @@ export function WorkspaceDetail({ workspaceSlug }: WorkspaceDetailProps) {
 
   if (error) {
     const breadcrumbs = [
-      { label: "Dashboard", href: "/dashboard" },
+      { label: "Dashboard", href: "/" },
       { label: "Unknown" },
     ];
 
@@ -123,7 +123,7 @@ export function WorkspaceDetail({ workspaceSlug }: WorkspaceDetailProps) {
   }
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     { label: workspace ? workspaceTitle : "Loading..." },
   ];
 
@@ -212,7 +212,7 @@ export function WorkspaceDetail({ workspaceSlug }: WorkspaceDetailProps) {
             trigger={<span />}
             onDeleted={() => {
               setShowDeleteDialog(false);
-              router.push("/dashboard");
+              router.push("/");
             }}
           />
         )}

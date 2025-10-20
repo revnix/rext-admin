@@ -17,6 +17,8 @@ export function PrivacySettings() {
     include_roles: true,
     include_workspaces: true,
     include_activity: true,
+    include_billing: true,
+    include_usage: true,
   });
 
   const exportMutation = useMutation({
@@ -58,6 +60,18 @@ export function PrivacySettings() {
       id: "include_activity",
       label: "Activity Logs",
       description: "Your account activity and action history",
+    },
+    {
+      id: "include_billing",
+      label: "Subscription & Billing Data",
+      description:
+        "Subscription plans, billing history, and payment information",
+    },
+    {
+      id: "include_usage",
+      label: "Usage Metrics",
+      description:
+        "Content creation stats, workspace usage, and activity metrics",
     },
   ];
 

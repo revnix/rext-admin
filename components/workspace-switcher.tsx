@@ -178,13 +178,18 @@ export function WorkspaceSwitcher() {
             ) : workspaces.length === 0 ? (
               <>
                 <DropdownMenuLabel className="text-muted-foreground text-xs">
-                  Workspaces
+                  Get Started
                 </DropdownMenuLabel>
-                <DropdownMenuItem disabled>
-                  <span className="text-muted-foreground">
-                    No workspaces found
-                  </span>
-                </DropdownMenuItem>
+                <div className="px-2 py-4 text-center">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    No workspaces yet
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Create your first workspace to get started
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
               </>
             ) : (
               <>

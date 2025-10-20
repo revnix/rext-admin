@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -401,20 +402,18 @@ export default function RefundManagementPage() {
     fetchRefunds();
   }, [fetchRefunds]);
 
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin" },
+    { label: "Refunds" },
+  ];
+
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <DollarSign className="h-8 w-8" />
-            Refund Management
-          </h1>
-          <p className="text-muted-foreground">
-            View refund history and process new refunds
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <PageLayout
+      title="Refund Management"
+      description="View refund history and process new refunds"
+      breadcrumbs={breadcrumbs}
+      actions={
+        <>
           <Button
             variant="outline"
             onClick={() =>
@@ -434,9 +433,9 @@ export default function RefundManagementPage() {
             />
             Refresh
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {/* Info Banner */}
       <Card className="mb-6 border-blue-200 bg-blue-50">
         <CardContent className="pt-6">
@@ -595,6 +594,6 @@ export default function RefundManagementPage() {
         onOpenChange={setShowCreateDialog}
         onSuccess={fetchRefunds}
       />
-    </div>
+    </PageLayout>
   );
 }

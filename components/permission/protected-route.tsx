@@ -67,7 +67,7 @@ interface ProtectedRouteProps {
  * // Custom redirect and fallback
  * <ProtectedRoute
  *   permission="user.delete"
- *   redirectTo="/dashboard"
+ *   redirectTo="/"
  *   fallback={<div>Checking permissions...</div>}
  * >
  *   <DeleteUserPage />

@@ -73,7 +73,7 @@ export function SignupForm({
       });
 
       if (result?.ok) {
-        router.push("/dashboard");
+        router.push("/");
       } else {
         // If auto-login fails, redirect to login page
         setTimeout(() => {

@@ -30,7 +30,7 @@ export default function AccountSettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
+          <TabsTrigger value="privacy">Preferences</TabsTrigger>
           <TabsTrigger value="danger">Danger Zone</TabsTrigger>
         </TabsList>
 
@@ -104,9 +104,9 @@ export default function AccountSettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>UI Preferences</CardTitle>
+                <CardTitle>Appearance & Accessibility</CardTitle>
                 <CardDescription>
-                  Customize your user interface experience
+                  Customize theme, accessibility, and interface preferences
                 </CardDescription>
               </CardHeader>
               <CardContent>

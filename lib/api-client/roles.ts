@@ -4,16 +4,55 @@
  * Handles role and permission management
  */
 
+import type {
+  AssignPermissionsRequest,
+  CreatePermissionRequest,
+  CreateRoleRequest,
+  UpdatePermissionRequest,
+  UpdateRoleRequest,
+} from "@/types/role";
 import type { ApiClient } from "./core";
 
 export function createRolesNamespace(client: ApiClient) {
   return {
     /**
-     * List all roles (available roles for invitations)
+     * List all roles with optional permissions
      */
-    list: async () => {
+    list: async (includePermissions = false) => {
+      const response = await client.request<{
+        message: string;
+        data: {
+          roles: Array<{
+            id: string;
+            name: string;
+            display_name: string;
+            description?: string;
+            is_system_role: boolean;
+            hierarchy_level: number;
+            created_at: string;
+            updated_at: string;
+            permissions?: Array<{
+              id: string;
+              name: string;
+              display_name: string;
+              resource: string;
+              action: string;
+            }>;
+          }>;
+          count: number;
+        };
+      }>(`/api/v1/roles/?include_permissions=${includePermissions}`, {
+        method: "GET",
+      });
+      return response.data;
+    },
+
+    /**
+     * Get role by ID with optional permissions
+     */
+    get: async (roleId: string, includePermissions = false) => {
       return client.request<{
-        roles: Array<{
+        role: {
           id: string;
           name: string;
           display_name: string;
@@ -22,17 +61,44 @@ export function createRolesNamespace(client: ApiClient) {
           hierarchy_level: number;
           created_at: string;
           updated_at: string;
-        }>;
-        total_count: number;
-      }>("/api/v1/workspaces/available-roles", {
+          permissions?: Array<{
+            id: string;
+            name: string;
+            display_name: string;
+            resource: string;
+            action: string;
+          }>;
+        };
+      }>(`/api/v1/roles/${roleId}?include_permissions=${includePermissions}`, {
         method: "GET",
       });
     },
 
     /**
-     * Get role by ID
+     * Create a new role
      */
-    get: async (roleId: string) => {
+    create: async (data: CreateRoleRequest) => {
+      return client.request<{
+        role: {
+          id: string;
+          name: string;
+          display_name: string;
+          description?: string;
+          is_system_role: boolean;
+          hierarchy_level: number;
+          created_at: string;
+          updated_at: string;
+        };
+      }>("/api/v1/roles", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Update a role
+     */
+    update: async (roleId: string, data: UpdateRoleRequest) => {
       return client.request<{
         role: {
           id: string;
@@ -45,16 +111,98 @@ export function createRolesNamespace(client: ApiClient) {
           updated_at: string;
         };
       }>(`/api/v1/roles/${roleId}`, {
-        method: "GET",
+        method: "PUT",
+        body: JSON.stringify(data),
       });
     },
 
     /**
-     * List all permissions
+     * Delete a role
      */
-    listPermissions: async () => {
+    delete: async (roleId: string) => {
       return client.request<{
-        permissions: Array<{
+        role_id: string;
+      }>(`/api/v1/roles/${roleId}`, {
+        method: "DELETE",
+      });
+    },
+
+    /**
+     * Assign permissions to a role
+     */
+    assignPermissions: async (
+      roleId: string,
+      data: AssignPermissionsRequest,
+    ) => {
+      return client.request<{
+        role_id: string;
+        role_name: string;
+        added_count: number;
+        skipped_count: number;
+        invalid_count: number;
+      }>(`/api/v1/roles/${roleId}/permissions`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Revoke a permission from a role
+     */
+    revokePermission: async (roleId: string, permissionId: string) => {
+      return client.request<{
+        role_id: string;
+        role_name: string;
+        permission_id: string;
+        permission_name: string;
+      }>(`/api/v1/roles/${roleId}/permissions/${permissionId}`, {
+        method: "DELETE",
+      });
+    },
+
+    /**
+     * List all permissions with optional roles
+     */
+    listPermissions: async (resource?: string, includeRoles = false) => {
+      const params = new URLSearchParams();
+      if (resource) params.append("resource", resource);
+      if (includeRoles) params.append("include_roles", "true");
+
+      const queryString = params.toString();
+      const url = `/api/v1/permissions/${queryString ? `?${queryString}` : ""}`;
+
+      const response = await client.request<{
+        message: string;
+        data: {
+          permissions: Array<{
+            id: string;
+            name: string;
+            display_name: string;
+            description?: string;
+            resource: string;
+            action: string;
+            created_at: string;
+            roles?: Array<{
+              id: string;
+              name: string;
+              display_name: string;
+              hierarchy_level: number;
+            }>;
+          }>;
+          count: number;
+        };
+      }>(url, {
+        method: "GET",
+      });
+      return response.data;
+    },
+
+    /**
+     * Get permission by ID
+     */
+    getPermission: async (permissionId: string, includeRoles = false) => {
+      return client.request<{
+        permission: {
           id: string;
           name: string;
           display_name: string;
@@ -62,10 +210,69 @@ export function createRolesNamespace(client: ApiClient) {
           resource: string;
           action: string;
           created_at: string;
-        }>;
-        count: number;
-      }>("/api/v1/permissions", {
+          roles?: Array<{
+            id: string;
+            name: string;
+            display_name: string;
+            hierarchy_level: number;
+          }>;
+        };
+      }>(`/api/v1/permissions/${permissionId}?include_roles=${includeRoles}`, {
         method: "GET",
+      });
+    },
+
+    /**
+     * Create a new permission
+     */
+    createPermission: async (data: CreatePermissionRequest) => {
+      return client.request<{
+        permission: {
+          id: string;
+          name: string;
+          display_name: string;
+          description?: string;
+          resource: string;
+          action: string;
+          created_at: string;
+        };
+      }>("/api/v1/permissions", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Update a permission
+     */
+    updatePermission: async (
+      permissionId: string,
+      data: UpdatePermissionRequest,
+    ) => {
+      return client.request<{
+        permission: {
+          id: string;
+          name: string;
+          display_name: string;
+          description?: string;
+          resource: string;
+          action: string;
+          created_at: string;
+        };
+      }>(`/api/v1/permissions/${permissionId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Delete a permission
+     */
+    deletePermission: async (permissionId: string) => {
+      return client.request<{
+        permission_id: string;
+      }>(`/api/v1/permissions/${permissionId}`, {
+        method: "DELETE",
       });
     },
   };

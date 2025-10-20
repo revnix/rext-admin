@@ -3,8 +3,13 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Footer, SubscriptionAgreement } from "@/components/layout/footer";
 import { PricingTable } from "@/components/pricing/pricing-table";
 import { TrialStatusBanner } from "@/components/subscription/trial-status-banner";
+import {
+  SecurityBanner,
+  SecurityIndicators,
+} from "@/components/ui/security-badge";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { SubscriptionPlan } from "@/types/subscription";
@@ -89,6 +94,16 @@ export default function PricingPage() {
           All plans include unlimited team members, priority support, and
           regular updates.
         </p>
+      </div>
+
+      {/* Security Banner */}
+      <div className="max-w-2xl mx-auto mb-8">
+        <SecurityBanner variant="prominent" />
+      </div>
+
+      {/* Subscription Agreement */}
+      <div className="max-w-2xl mx-auto mb-8">
+        <SubscriptionAgreement />
       </div>
 
       {/* Pricing Table */}
@@ -197,7 +212,15 @@ export default function PricingPage() {
               View Documentation
             </a>
           </div>
+
+          {/* Security Indicators */}
+          <div className="mt-6 pt-6 border-t border-border/50">
+            <SecurityIndicators className="justify-center" />
+          </div>
         </div>
+
+        {/* Footer with Policy Links */}
+        <Footer />
       </div>
     </div>
   );

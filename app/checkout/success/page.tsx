@@ -93,7 +93,7 @@ export default function CheckoutSuccessPage() {
   }, [fetchSubscription]);
 
   const handleGoToDashboard = () => {
-    router.push("/dashboard");
+    router.push("/");
   };
 
   const handleViewBilling = () => {

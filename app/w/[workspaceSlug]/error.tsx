@@ -17,7 +17,7 @@ export default function WorkspaceError(props: {
       title="Workspace Error"
       logContext="WorkspaceError"
       navigationType="link"
-      navigationLink="/dashboard"
+      navigationLink="/"
       navigationLabel="Workspaces"
     />
   );
