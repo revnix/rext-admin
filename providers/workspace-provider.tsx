@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useEffect } from "react";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -69,6 +70,36 @@ export function WorkspaceProvider({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       workspaceId,
     );
+
+  // Load workspace permissions (Phase 1 integration)
+  // This loads workspace-scoped permissions dynamically for the current workspace
+  const {
+    permissions,
+    role,
+    error: permissionsError,
+  } = useWorkspacePermissions(workspaceId);
+
+  // Log permission loading for debugging
+  useEffect(() => {
+    if (permissions.length > 0) {
+      log.info("[WorkspaceProvider] Permissions loaded:", {
+        workspaceId,
+        role,
+        permissionCount: permissions.length,
+        samplePermissions: permissions.slice(0, 5),
+      });
+    }
+  }, [permissions, role, workspaceId]);
+
+  // Log permission errors
+  useEffect(() => {
+    if (permissionsError) {
+      log.error("[WorkspaceProvider] Failed to load permissions:", {
+        workspaceId,
+        error: permissionsError,
+      });
+    }
+  }, [permissionsError, workspaceId]);
 
   // Query workspace data
   const {
