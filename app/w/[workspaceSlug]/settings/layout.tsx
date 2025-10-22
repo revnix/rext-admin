@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CreditCard, Plug } from "lucide-react";
+import { Building2, Plug } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
@@ -13,11 +13,6 @@ const settingsTabs = [
     name: "Workspace",
     href: "",
     icon: Building2,
-  },
-  {
-    name: "Billing",
-    href: "billing",
-    icon: CreditCard,
   },
   {
     name: "Integrations",
