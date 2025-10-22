@@ -66,12 +66,12 @@ export function TooltipProvider({ children }: TooltipProviderProps) {
             key={tooltip.id}
             id={tooltip.id}
             place={tooltip.placement || "top"}
-            content={
+            render={() => (
               <div className="max-w-xs">
                 <div className="font-semibold mb-1">{tooltip.title}</div>
                 <div className="text-sm">{tooltip.content}</div>
               </div>
-            }
+            )}
             className="!bg-primary !text-primary-foreground !opacity-100 !rounded-lg !shadow-lg !z-50"
             style={{
               backgroundColor: "hsl(var(--primary))",
