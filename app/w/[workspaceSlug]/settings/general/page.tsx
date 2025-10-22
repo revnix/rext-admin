@@ -86,7 +86,7 @@ export default function WorkspaceGeneralSettings() {
 
       // If slug changed, redirect to new URL (note: backend doesn't allow slug changes yet)
       if (data.slug !== workspaceSlug) {
-        router.push(workspaceRoutes.settings.general(data.slug));
+        router.push(workspaceRoutes.settings.root(data.slug));
       } else {
         // Reload to get updated workspace data
         router.refresh();

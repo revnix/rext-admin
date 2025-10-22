@@ -70,9 +70,7 @@ export const workspaceRoutes = {
    */
   settings: {
     root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
-    general: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/general`,
     billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
-    team: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/team`,
     integrations: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/settings/integrations`,
   },
