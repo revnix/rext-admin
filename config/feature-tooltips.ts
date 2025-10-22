@@ -149,7 +149,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     content:
       "Invite team members and assign roles (Admin, Editor, Viewer). Control who can create, edit, and publish content in your workspace.",
     placement: "right",
-    page: "/settings/team",
+    page: "/w/[slug]/members",
   },
   {
     id: "integrations",

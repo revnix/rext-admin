@@ -211,7 +211,7 @@ export function OAuthAccounts() {
                   size="sm"
                   onClick={() => {
                     // Redirect to OAuth flow
-                    window.location.href = `/api/auth/signin/${provider}?callbackUrl=/settings/account`;
+                    window.location.href = `/api/auth/signin/${provider}?callbackUrl=/settings`;
                   }}
                 >
                   <Link2 className="mr-2 h-4 w-4" />

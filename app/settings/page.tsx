@@ -10,17 +10,15 @@ import { Separator } from "@/components/ui/separator";
 /**
  * Account & Preferences Page
  *
- * Consolidated settings page that includes:
+ * Consolidated settings page at /settings that includes:
  * - Profile Information (name, email, bio, avatar)
  * - Display Preferences (theme, date/time format)
  * - Notification Preferences (email, in-app, digest)
  * - Privacy & Data (data export)
  * - Danger Zone (account deactivation)
  *
- * This replaces the old separate pages:
- * - /settings/general
- * - /settings/account
- * - /settings/notifications
+ * Part of Settings Consolidation (Phase 3)
+ * Replaced old pages: general/, account/, notifications/
  */
 export default function AccountPreferencesPage() {
   return (

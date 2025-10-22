@@ -166,10 +166,10 @@ const searchData: SearchResult[] = [
   // Settings
   {
     id: "settings-1",
-    title: "General Settings",
-    description: "Configure global application settings",
+    title: "Account & Preferences",
+    description: "Configure your account and preferences",
     category: "Settings",
-    url: "/settings/general",
+    url: "/settings",
     icon: <Settings className="h-4 w-4" />,
   },
   {

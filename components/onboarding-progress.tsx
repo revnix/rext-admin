@@ -84,7 +84,7 @@ const getMilestoneAction = (
     },
     members: {
       label: "Invite Members",
-      href: workspaceSlug ? `/w/${workspaceSlug}/settings/team` : "/w/create",
+      href: workspaceSlug ? `/w/${workspaceSlug}/members` : "/w/create",
       icon: ArrowRight,
       enabled: !!workspaceSlug, // Only enabled after workspace created
     },

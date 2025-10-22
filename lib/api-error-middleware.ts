@@ -120,7 +120,7 @@ const RECOVERY_ACTIONS: Partial<
     {
       label: "Contact Admin",
       action: () => {
-        window.location.href = "/settings/account";
+        window.location.href = "/settings";
       },
       type: "secondary",
     },

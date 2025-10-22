@@ -10,16 +10,15 @@ import { WorkspacePreferencesSection } from "@/components/workspace-settings/wor
 /**
  * Workspace Settings Root Page
  *
- * Consolidated workspace settings page that combines:
+ * Consolidated workspace settings at /w/[slug]/settings that combines:
  * - General information (name, slug, description, URL)
  * - Brand voice profile configuration
  * - Team & access management
  * - Workspace preferences
  * - Danger zone (delete workspace)
  *
- * Replaces old separate pages:
- * - /w/[slug]/settings/general
- * - /w/[slug]/settings/team (consolidated into Team & Access section)
+ * Part of Settings Consolidation (Phase 4)
+ * Replaced old pages: general/, team/
  */
 export default function WorkspaceSettingsPage() {
   return (
