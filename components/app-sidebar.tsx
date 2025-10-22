@@ -121,47 +121,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     //     },
     //   ],
     // },
-    {
-      groupLabel: "Administration",
-      anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
-      items: [
-        {
-          title: "Dashboard",
-          url: "/admin",
-          icon: LayoutDashboard,
-        },
-        {
-          title: "User Management",
-          url: "/admin/users",
-          icon: UserCog,
-          permission: PERMISSIONS.USER_READ,
-        },
-        {
-          title: "Subscriptions",
-          url: "/admin/subscriptions",
-          icon: CreditCard,
-          anyPermission: ["subscription.analytics", "subscription.read"],
-        },
-        {
-          title: "System Monitoring",
-          url: "/admin/monitoring",
-          icon: Monitor,
-          permission: "system.manage",
-        },
-        {
-          title: "Email Analytics",
-          url: "/admin/email-analytics",
-          icon: Mail,
-          anyPermission: ["system.manage", "audit.read"],
-        },
-        {
-          title: "Roles & Permissions",
-          url: "/admin/roles",
-          icon: Shield,
-          anyPermission: [PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ],
-        },
-      ],
-    },
   ];
 
   // Personal navigation groups (sticky bottom section)
@@ -206,10 +165,58 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  // Administrator navigation groups (sticky bottom section, below Personal)
+  const administratorNavigationGroups: NavGroup[] = [
+    {
+      groupLabel: "Administration",
+      anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+      items: [
+        {
+          title: "Dashboard",
+          url: "/admin",
+          icon: LayoutDashboard,
+        },
+        {
+          title: "User Management",
+          url: "/admin/users",
+          icon: UserCog,
+          permission: PERMISSIONS.USER_READ,
+        },
+        {
+          title: "Subscriptions",
+          url: "/admin/subscriptions",
+          icon: CreditCard,
+          anyPermission: ["subscription.analytics", "subscription.read"],
+        },
+        {
+          title: "System Monitoring",
+          url: "/admin/monitoring",
+          icon: Monitor,
+          permission: "system.manage",
+        },
+        {
+          title: "Email Analytics",
+          url: "/admin/email-analytics",
+          icon: Mail,
+          anyPermission: ["system.manage", "audit.read"],
+        },
+        {
+          title: "Roles & Permissions",
+          url: "/admin/roles",
+          icon: Shield,
+          anyPermission: [PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ],
+        },
+      ],
+    },
+  ];
+
   // Filter navigation based on user permissions
   const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
   const filteredPersonalNavigation = useFilteredNavigation(
     personalNavigationGroups,
+  );
+  const filteredAdministratorNavigation = useFilteredNavigation(
+    administratorNavigationGroups,
   );
 
   // Filter out workspace group if no workspaces exist
@@ -234,7 +241,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Personal section - sticky to bottom with separator */}
         <div className="border-t border-sidebar-border pt-2 mt-auto">
+          {/* Personal menu items */}
           <NavMain groups={filteredPersonalNavigation} />
+
+          {/* Separator between Personal and Administrator */}
+          {filteredAdministratorNavigation.length > 0 && (
+            <div className="border-t border-sidebar-border my-2" />
+          )}
+
+          {/* Administrator menu items */}
+          <NavMain groups={filteredAdministratorNavigation} />
         </div>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
