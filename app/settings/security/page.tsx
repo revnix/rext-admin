@@ -5,7 +5,6 @@ import {
   Activity,
   AlertTriangle,
   Clock,
-  History,
   Loader2,
   LogOut,
   MapPin,
@@ -14,14 +13,12 @@ import {
   ShieldAlert,
   Smartphone,
   Tablet,
-  TrendingDown,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ActivityLog } from "@/components/security/activity-log";
 import { SecurityOverview } from "@/components/security/security-overview";
+import { UnifiedActivity } from "@/components/security/unified-activity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +31,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsAdmin, usePermissionUser } from "@/hooks/use-permission";
+import { useIsAdmin } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 
 export default function SecuritySettingsPage() {
@@ -42,7 +39,6 @@ export default function SecuritySettingsPage() {
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(
     null,
   );
-  const user = usePermissionUser();
   const isAdmin = useIsAdmin();
 
   // Fetch sessions with auto-refresh every 30 seconds
@@ -66,18 +62,6 @@ export default function SecuritySettingsPage() {
     queryFn: () => apiClient.security.getStats(),
     enabled: isAdmin,
     refetchInterval: 60000, // Refresh every minute
-  });
-
-  // Fetch login history for current user
-  const {
-    data: loginHistory,
-    isLoading: historyLoading,
-    error: historyError,
-  } = useQuery({
-    queryKey: ["login-history", user?.id],
-    queryFn: () => apiClient.security.getLoginHistory(),
-    enabled: !!user?.id,
-    refetchInterval: 60000,
   });
 
   // Revoke single session mutation
@@ -126,16 +110,6 @@ export default function SecuritySettingsPage() {
     if (diffMins < 60) return `${diffMins} minutes ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
     return date.toLocaleDateString();
-  };
-
-  const formatLoginEventTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   if (sessionsLoading) {
@@ -345,9 +319,8 @@ export default function SecuritySettingsPage() {
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="sessions">Active Sessions</TabsTrigger>
-          <TabsTrigger value="history">Login History</TabsTrigger>
-          <TabsTrigger value="activity">Activity Log</TabsTrigger>
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -493,140 +466,9 @@ export default function SecuritySettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Login History Tab */}
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Login History
-              </CardTitle>
-              <CardDescription>
-                Your recent login and logout activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : historyError ? (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-                  <p className="text-sm text-destructive">
-                    Failed to load login history: {historyError.message}
-                  </p>
-                </div>
-              ) : loginHistory ? (
-                <div className="space-y-4">
-                  {/* Summary Stats */}
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-lg border p-3">
-                      <p className="text-sm text-muted-foreground">
-                        Total Logins
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {loginHistory.total_count}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border p-3">
-                      <p className="text-sm text-muted-foreground">
-                        Last Login
-                      </p>
-                      <p className="text-sm font-medium">
-                        {loginHistory.history[0]?.created_at
-                          ? formatTimestamp(loginHistory.history[0]?.created_at)
-                          : "Never"}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border p-3">
-                      <p className="text-sm text-muted-foreground">
-                        Failed Attempts
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {loginHistory.history.filter((h) => !h.success).length}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Recent Login Events */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Recent Activity</p>
-                    {loginHistory.history.length === 0 ? (
-                      <p className="text-center text-sm text-muted-foreground py-8">
-                        No login history available
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {loginHistory.history.map((event, idx) => (
-                          <div
-                            key={`${event.created_at}-${idx}`}
-                            className="flex items-center justify-between rounded-lg border p-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`rounded-full p-2 ${
-                                  event.success
-                                    ? "bg-green-100 dark:bg-green-950"
-                                    : "bg-red-100 dark:bg-red-950"
-                                }`}
-                              >
-                                {event.success ? (
-                                  <TrendingUp className="h-4 w-4 text-green-600" />
-                                ) : (
-                                  <TrendingDown className="h-4 w-4 text-red-600" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-medium">
-                                    {event.success
-                                      ? "Successful Login"
-                                      : "Failed Login Attempt"}
-                                  </p>
-                                  <Badge
-                                    variant={
-                                      event.success ? "default" : "destructive"
-                                    }
-                                    className="text-xs"
-                                  >
-                                    {event.success ? "Success" : "Failed"}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {formatLoginEventTime(event.created_at)}
-                                  </span>
-                                  {event.ip_address && (
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      {event.ip_address}
-                                    </span>
-                                  )}
-                                </div>
-                                {event.browser && (
-                                  <p className="text-xs text-muted-foreground truncate max-w-md">
-                                    {event.browser}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Activity Log Tab */}
+        {/* Activity Tab - Unified login history and activity log */}
         <TabsContent value="activity">
-          <ActivityLog />
+          <UnifiedActivity />
         </TabsContent>
       </Tabs>
     </div>

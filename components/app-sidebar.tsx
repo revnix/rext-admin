@@ -55,13 +55,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       groupLabel: "Workspace",
       items: [
         {
-          title: "Overview",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.overview(currentWorkspace.slug)
-            : "/",
-          icon: LayoutDashboard,
-        },
-        {
           title: "Topics",
           url: currentWorkspace?.slug
             ? workspaceRoutes.topics(currentWorkspace.slug)

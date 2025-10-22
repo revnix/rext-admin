@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CreditCard, Plug, Users } from "lucide-react";
+import { Building2, CreditCard, Plug } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
@@ -10,19 +10,14 @@ import { useWorkspace } from "@/providers/workspace-provider";
 
 const settingsTabs = [
   {
-    name: "General",
-    href: "general",
+    name: "Workspace",
+    href: "",
     icon: Building2,
   },
   {
     name: "Billing",
     href: "billing",
     icon: CreditCard,
-  },
-  {
-    name: "Team",
-    href: "team",
-    icon: Users,
   },
   {
     name: "Integrations",
@@ -59,7 +54,9 @@ export default function WorkspaceSettingsLayout({
         <aside className="lg:w-1/5">
           <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
             {settingsTabs.map((tab) => {
-              const href = `/w/${workspaceSlug}/settings/${tab.href}`;
+              const href = tab.href
+                ? `/w/${workspaceSlug}/settings/${tab.href}`
+                : `/w/${workspaceSlug}/settings`;
               const isActive = pathname === href;
               const Icon = tab.icon;
 

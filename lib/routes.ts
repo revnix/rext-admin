@@ -14,7 +14,6 @@ export const WORKSPACE_PAGES = [
   "members",
   "knowledge",
   "media",
-  "overview",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -25,9 +24,10 @@ export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
  */
 export const workspaceRoutes = {
   /**
-   * Root workspace route - redirects to topics
+   * Root workspace route - now points to dashboard (workspace-scoped at /)
+   * The dashboard is workspace-aware and shows workspace-specific content
    */
-  root: (workspaceSlug: string) => `/w/${workspaceSlug}`,
+  root: (_workspaceSlug: string) => `/`,
 
   /**
    * Topics routes
@@ -61,11 +61,6 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/knowledge/${kbId}`,
 
   /**
-   * Overview route
-   */
-  overview: (workspaceSlug: string) => `/w/${workspaceSlug}/overview`,
-
-  /**
    * Media route
    */
   media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
@@ -75,9 +70,7 @@ export const workspaceRoutes = {
    */
   settings: {
     root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
-    general: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/general`,
     billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
-    team: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/team`,
     integrations: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/settings/integrations`,
   },
@@ -156,13 +149,12 @@ export function buildWorkspacePath(
     members: workspaceRoutes.members,
     knowledge: workspaceRoutes.knowledge,
     media: workspaceRoutes.media,
-    overview: workspaceRoutes.overview,
   };
 
   const routeFn = routeMap[pageSegment];
   return routeFn
     ? routeFn(workspaceSlug)
-    : workspaceRoutes.overview(workspaceSlug);
+    : workspaceRoutes.topics(workspaceSlug);
 }
 
 /**

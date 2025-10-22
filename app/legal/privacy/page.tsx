@@ -22,9 +22,9 @@ export default function PrivacyPolicyPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/settings/account">
+          <Link href="/settings">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Account
+            Back to Settings
           </Link>
         </Button>
       </div>
@@ -298,10 +298,7 @@ export default function PrivacyPolicyPage() {
               Your Data, Your Control
             </p>
             <div className="flex flex-wrap gap-4 text-sm">
-              <Link
-                href="/settings/account?tab=privacy"
-                className="text-primary hover:underline"
-              >
+              <Link href="/settings" className="text-primary hover:underline">
                 Export My Data
               </Link>
               <Link
