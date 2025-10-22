@@ -73,38 +73,15 @@ export function WorkspaceSwitcher() {
     // Extract current page segment from pathname
     const currentPageSegment = extractWorkspacePageSegment(pathname);
 
-    // Determine target path: preserve current page or use last visited page or default to overview
-    let targetPageSegment = currentPageSegment || null;
-
-    // If no current page, try to use last visited path if it's a valid page segment
-    if (!targetPageSegment && lastWorkspacePath) {
-      type ValidSegment =
-        | "topics"
-        | "content"
-        | "members"
-        | "knowledge"
-        | "media"
-        | "overview";
-      const validSegments: readonly ValidSegment[] = [
-        "topics",
-        "content",
-        "members",
-        "knowledge",
-        "media",
-        "overview",
-      ];
-      if (validSegments.includes(lastWorkspacePath as ValidSegment)) {
-        targetPageSegment = lastWorkspacePath as ValidSegment;
-      }
+    // If on a workspace-specific page, preserve it; otherwise go to dashboard
+    if (currentPageSegment) {
+      // Build new path with same page in new workspace
+      const newPath = buildWorkspacePath(workspace.slug, currentPageSegment);
+      router.push(newPath);
+    } else {
+      // Go to dashboard (workspace-scoped at /)
+      router.push("/");
     }
-
-    // Default to overview if still no valid segment
-    const finalSegment = targetPageSegment || "overview";
-
-    // Build new path with same page in new workspace
-    const newPath = buildWorkspacePath(workspace.slug, finalSegment);
-
-    router.push(newPath);
   };
 
   // Use current workspace or first available workspace
