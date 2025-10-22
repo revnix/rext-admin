@@ -9,6 +9,7 @@ import {
   ExternalLink,
   FileText,
   Folder,
+  Maximize2,
   Save,
   Trash2,
   User,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -60,6 +62,7 @@ export function MediaDetailSheet({
 }: MediaDetailSheetProps) {
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -146,6 +149,23 @@ export function MediaDetailSheet({
   if (!media) return null;
 
   const isImage = media.file_type.startsWith("image/");
+
+  // Convert relative URLs to absolute URLs pointing to backend
+  const getAbsoluteUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url; // Already absolute
+    }
+    // Relative URL - prepend backend URL
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://127.0.0.1:2024";
+    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const publicUrl = getAbsoluteUrl(media.public_url);
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
     const k = 1024;
@@ -165,23 +185,23 @@ export function MediaDetailSheet({
   };
 
   const copyUrl = () => {
-    if (media.public_url) {
-      navigator.clipboard.writeText(media.public_url);
+    if (publicUrl) {
+      navigator.clipboard.writeText(publicUrl);
       toast.success("URL copied to clipboard");
     }
   };
 
   const downloadFile = () => {
-    if (media.public_url) {
-      window.open(media.public_url, "_blank");
+    if (publicUrl) {
+      window.open(publicUrl, "_blank");
     }
   };
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto p-6">
+          <SheetHeader className="space-y-2 pb-4">
             <SheetTitle>
               {isEditing ? (
                 <Input
@@ -210,15 +230,24 @@ export function MediaDetailSheet({
 
           <div className="space-y-6 mt-6">
             {/* Preview */}
-            {isImage && media.public_url && (
-              <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
+            {isImage && publicUrl && (
+              <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden group">
                 <Image
-                  src={media.public_url}
+                  src={publicUrl}
                   alt={media.alt_text || media.title || media.filename}
                   fill
                   className="object-contain"
                   sizes="(max-width: 768px) 100vw, 600px"
                 />
+                {/* Fullscreen button overlay */}
+                <button
+                  type="button"
+                  onClick={() => setShowFullscreen(true)}
+                  className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="View fullscreen"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </button>
               </div>
             )}
 
@@ -244,7 +273,7 @@ export function MediaDetailSheet({
                     variant="outline"
                     size="sm"
                     onClick={copyUrl}
-                    disabled={!media.public_url}
+                    disabled={!publicUrl}
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copy URL
@@ -253,7 +282,7 @@ export function MediaDetailSheet({
                     variant="outline"
                     size="sm"
                     onClick={downloadFile}
-                    disabled={!media.public_url}
+                    disabled={!publicUrl}
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download
@@ -553,19 +582,68 @@ export function MediaDetailSheet({
         </SheetContent>
       </Sheet>
 
+      {/* Fullscreen Image Viewer */}
+      <Dialog open={showFullscreen} onOpenChange={setShowFullscreen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95">
+          <DialogTitle className="sr-only">
+            {media?.title || media?.filename} - Fullscreen View
+          </DialogTitle>
+          <div className="relative w-full h-[95vh] flex items-center justify-center">
+            {isImage && publicUrl && (
+              <Image
+                src={publicUrl}
+                alt={media.alt_text || media.title || media.filename}
+                fill
+                className="object-contain"
+                sizes="100vw"
+                quality={100}
+              />
+            )}
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setShowFullscreen(false)}
+              className="absolute top-4 right-4 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-10"
+              title="Close fullscreen"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            {/* Image info overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+              <p className="text-lg font-medium">
+                {media.title || media.filename}
+              </p>
+              {media.description && (
+                <p className="text-sm text-gray-300 mt-1">
+                  {media.description}
+                </p>
+              )}
+              <div className="flex gap-4 mt-2 text-xs text-gray-400">
+                {media.width && media.height && (
+                  <span>
+                    {media.width} × {media.height} px
+                  </span>
+                )}
+                <span>{formatFileSize(media.file_size)}</span>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Media</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription asChild>
               {usage && usage.total_usages > 0 ? (
                 <div className="space-y-2">
-                  <p className="text-destructive font-medium">
+                  <div className="text-destructive font-medium">
                     ⚠️ This media file is currently used in {usage.total_usages}{" "}
                     {usage.total_usages === 1 ? "place" : "places"}!
-                  </p>
-                  <p>
+                  </div>
+                  <div>
                     Deleting "{media.title || media.filename}" will break{" "}
                     {usage.featured_in.length > 0 && (
                       <span>
@@ -585,17 +663,17 @@ export function MediaDetailSheet({
                       </span>
                     )}
                     .
-                  </p>
-                  <p className="text-sm">
+                  </div>
+                  <div className="text-sm">
                     Are you absolutely sure you want to proceed?
-                  </p>
+                  </div>
                 </div>
               ) : (
-                <p>
+                <div>
                   Are you sure you want to delete "
                   {media.title || media.filename}"? This action cannot be
                   undone.
-                </p>
+                </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

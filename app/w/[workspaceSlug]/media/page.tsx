@@ -100,8 +100,9 @@ export default function WorkspaceMediaPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const mediaList = response?.data || [];
-  const usage = usageResponse?.data;
+  const mediaList = response?.items || [];
+  const _pagination = response?.pagination; // Reserved for future pagination UI
+  const usage = usageResponse;
 
   // Filter by folder and search query (client-side)
   let filteredMedia = mediaList;

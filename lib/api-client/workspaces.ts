@@ -10,6 +10,7 @@ import type {
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
+import type { WorkspaceStats } from "@/types/workspace-stats";
 import type { ApiClient } from "./core";
 
 export function createWorkspacesNamespace(client: ApiClient) {
@@ -212,6 +213,21 @@ export function createWorkspacesNamespace(client: ApiClient) {
       }>(`/api/v1/workspaces/${workspaceId}/members/${userId}/permissions`, {
         method: "GET",
       });
+    },
+
+    /**
+     * Get workspace statistics for onboarding tracking
+     *
+     * Returns real-time counts of topics, content, knowledge items, and members
+     * Used for tracking onboarding progress on dashboard
+     */
+    getStats: async (workspaceId: string) => {
+      return client.request<WorkspaceStats>(
+        `/api/v1/workspaces/${workspaceId}/stats`,
+        {
+          method: "GET",
+        },
+      );
     },
   };
 }

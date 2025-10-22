@@ -27,10 +27,12 @@ import { useWorkspaceStore } from "@/stores/workspace";
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const hasWorkspaces = workspaceList.length > 0;
 
-  // Check if onboarding is complete
-  const { isComplete: isOnboardingComplete } = useOnboardingProgress();
+  // Check if onboarding is complete for current workspace
+  const { isComplete: isOnboardingComplete, isDismissed } =
+    useOnboardingProgress(currentWorkspace?.id);
 
   // Update page title and description
   usePageTitle(
@@ -38,8 +40,9 @@ export default function DashboardPage() {
     "Overview of your content performance, automation flows, and key metrics. Monitor your AI-powered content strategy at a glance.",
   );
 
-  // Show onboarding until 100% complete
-  const shouldShowFullDashboard = hasWorkspaces && isOnboardingComplete;
+  // Show onboarding until 100% complete OR user dismissed it
+  const shouldShowFullDashboard =
+    hasWorkspaces && (isOnboardingComplete || isDismissed);
 
   return (
     <AuthGuard>

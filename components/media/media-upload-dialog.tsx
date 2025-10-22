@@ -49,7 +49,7 @@ export function MediaUploadDialog({
     staleTime: 30 * 1000, // 30 seconds
   });
 
-  const usage = usageResponse?.data;
+  const usage = usageResponse;
   const isStorageFull = usage && usage.usage_percentage >= 100;
 
   const { mutate: upload, isPending } = useMutation({

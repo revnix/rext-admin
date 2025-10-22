@@ -56,11 +56,12 @@ export interface Media {
 }
 
 export interface MediaListResponse {
-  data: Media[];
+  items: Media[];
   pagination: {
     page: number;
     per_page: number;
     total: number;
+    total_pages: number;
   };
 }
 
@@ -90,16 +91,14 @@ export interface MediaListParams {
 }
 
 export interface StorageUsageResponse {
-  data: {
-    total_files: number;
-    total_size: number;
-    storage_limit: number;
-    usage_percentage: number;
-    by_type: {
-      image: { count: number; size: number };
-      document: { count: number; size: number };
-      video: { count: number; size: number };
-    };
+  total_files: number;
+  total_size: number;
+  storage_limit: number;
+  usage_percentage: number;
+  by_type: {
+    image: { count: number; size: number };
+    document: { count: number; size: number };
+    video: { count: number; size: number };
   };
 }
 
@@ -127,7 +126,7 @@ export function createMediaNamespace(client: ApiClient) {
         formData.append("is_public", String(params.is_public));
 
       return client.request<{ data: Media; message: string }>(
-        `/workspaces/${workspaceId}/media/upload`,
+        `/api/v1/workspaces/${workspaceId}/media/upload`,
         {
           method: "POST",
           body: formData,
@@ -153,7 +152,7 @@ export function createMediaNamespace(client: ApiClient) {
         searchParams.append("per_page", String(params.per_page));
 
       const queryString = searchParams.toString();
-      const url = `/workspaces/${workspaceId}/media${queryString ? `?${queryString}` : ""}`;
+      const url = `/api/v1/workspaces/${workspaceId}/media${queryString ? `?${queryString}` : ""}`;
 
       return client.request<MediaListResponse>(url);
     },
@@ -163,7 +162,7 @@ export function createMediaNamespace(client: ApiClient) {
      */
     async get(workspaceId: string, mediaId: string): Promise<{ data: Media }> {
       return client.request<{ data: Media }>(
-        `/workspaces/${workspaceId}/media/${mediaId}`,
+        `/api/v1/workspaces/${workspaceId}/media/${mediaId}`,
       );
     },
 
@@ -185,7 +184,7 @@ export function createMediaNamespace(client: ApiClient) {
       if (params.tags?.length) formData.append("tags", params.tags.join(","));
 
       return client.request<{ data: Media; message: string }>(
-        `/workspaces/${workspaceId}/media/${mediaId}`,
+        `/api/v1/workspaces/${workspaceId}/media/${mediaId}`,
         {
           method: "PATCH",
           body: formData,
@@ -201,7 +200,7 @@ export function createMediaNamespace(client: ApiClient) {
       mediaId: string,
     ): Promise<{ message: string }> {
       return client.request<{ message: string }>(
-        `/workspaces/${workspaceId}/media/${mediaId}`,
+        `/api/v1/workspaces/${workspaceId}/media/${mediaId}`,
         {
           method: "DELETE",
         },
@@ -227,7 +226,7 @@ export function createMediaNamespace(client: ApiClient) {
         data: { deleted: number; failed: number; errors: string[] };
         message: string;
       }>(
-        `/workspaces/${workspaceId}/media/bulk-delete?permanent=${permanent}`,
+        `/api/v1/workspaces/${workspaceId}/media/bulk-delete?permanent=${permanent}`,
         {
           method: "POST",
           body: JSON.stringify(mediaIds),
@@ -240,7 +239,7 @@ export function createMediaNamespace(client: ApiClient) {
      */
     async getUsage(workspaceId: string): Promise<StorageUsageResponse> {
       return client.request<StorageUsageResponse>(
-        `/workspaces/${workspaceId}/media/usage/stats`,
+        `/api/v1/workspaces/${workspaceId}/media/usage/stats`,
       );
     },
 
@@ -272,7 +271,7 @@ export function createMediaNamespace(client: ApiClient) {
       };
     }> {
       return client.request(
-        `/workspaces/${workspaceId}/media/${mediaId}/usage`,
+        `/api/v1/workspaces/${workspaceId}/media/${mediaId}/usage`,
       );
     },
   };

@@ -79,7 +79,7 @@ export function MediaPickerDialog({
     staleTime: 30 * 1000,
   });
 
-  const mediaList = response?.data || [];
+  const mediaList = response?.items || [];
 
   // Filter by search query and allowed types
   const filteredMedia = mediaList.filter((m) => {

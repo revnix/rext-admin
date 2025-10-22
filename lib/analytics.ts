@@ -28,6 +28,10 @@ type AnalyticsEvent =
   | "onboarding_first_topic_created"
   | "onboarding_first_content_created"
   | "onboarding_completed"
+  | "onboarding_milestone_completed"
+  | "onboarding_milestone_skipped"
+  | "onboarding_dismissed"
+  | "onboarding_reset"
   // General Events
   | "page_view"
   | "button_click"

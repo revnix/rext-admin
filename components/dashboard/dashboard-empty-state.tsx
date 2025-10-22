@@ -1,10 +1,8 @@
 "use client";
 
-import { Building2, Plus, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { Building2, Sparkles } from "lucide-react";
 import { useEffect } from "react";
 import { OnboardingProgress } from "@/components/onboarding-progress";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -36,8 +34,7 @@ import { useWorkspaceStore } from "@/stores/workspace";
 export function DashboardEmptyState() {
   const { user } = useAuthSession();
   const userName = user?.name?.split(" ")[0] || null; // Get first name only
-  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-  const hasWorkspaces = workspaceList.length > 0;
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
 
   // Track empty state view on mount
   useEffect(() => {
@@ -46,15 +43,6 @@ export function DashboardEmptyState() {
       has_name: !!userName,
     });
   }, [user?.id, userName]);
-
-  // Track CTA click
-  const handleCTAClick = () => {
-    analytics.track("onboarding_cta_click", {
-      source: "dashboard",
-      destination: "/w/create",
-      user_id: user?.id,
-    });
-  };
 
   return (
     <div className="flex items-center justify-center">
@@ -86,29 +74,8 @@ export function DashboardEmptyState() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Onboarding Progress */}
-            <OnboardingProgress />
-
-            {/* Call to Action - Only show if no workspace created yet */}
-            {!hasWorkspaces && (
-              <div className="space-y-3 pt-2">
-                <Button
-                  asChild
-                  size="lg"
-                  className="w-full text-base h-12"
-                  onClick={handleCTAClick}
-                >
-                  <Link href="/w/create">
-                    <Plus className="h-5 w-5 mr-2" />
-                    Create Your First Workspace
-                  </Link>
-                </Button>
-
-                <p className="text-xs text-center text-muted-foreground">
-                  Setting up your workspace takes less than 2 minutes
-                </p>
-              </div>
-            )}
+            {/* Onboarding Progress - Pass workspace ID for workspace-specific tracking */}
+            <OnboardingProgress workspaceId={currentWorkspace?.id} />
           </CardContent>
         </Card>
       </div>

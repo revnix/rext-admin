@@ -96,6 +96,23 @@ function MediaCard({
     return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
+  // Convert relative URLs to absolute URLs pointing to backend
+  const getAbsoluteUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url; // Already absolute
+    }
+    // Relative URL - prepend backend URL
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://127.0.0.1:2024";
+    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const thumbnailUrl = getAbsoluteUrl(media.thumbnail_url);
+  const publicUrl = getAbsoluteUrl(media.public_url);
+
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
       onSelectionChange(media.id, !isSelected);
@@ -127,17 +144,17 @@ function MediaCard({
 
       {/* Thumbnail/Preview */}
       <div className="aspect-square bg-muted relative">
-        {isImage && media.thumbnail_url ? (
+        {isImage && thumbnailUrl ? (
           <Image
-            src={media.thumbnail_url}
+            src={thumbnailUrl}
             alt={media.alt_text || media.title || media.filename}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
           />
-        ) : isImage && media.public_url ? (
+        ) : isImage && publicUrl ? (
           <Image
-            src={media.public_url}
+            src={publicUrl}
             alt={media.alt_text || media.title || media.filename}
             fill
             className="object-cover"

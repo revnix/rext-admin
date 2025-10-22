@@ -1,26 +1,34 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { analytics } from "@/lib/analytics";
+import { apiClient } from "@/lib/api-client";
 import { useWorkspaceStore } from "@/stores/workspace";
 
 /**
- * Onboarding Progress Hook
+ * Onboarding Progress Hook (Hybrid Approach)
  *
- * Tracks user's onboarding completion across multiple milestones:
+ * Tracks user's onboarding completion using:
+ * - Real-time database queries for milestone completion
+ * - LocalStorage for UI preferences (dismissed/skipped states)
+ *
+ * Milestones:
  * - Account created (automatic - 0%)
- * - First workspace created (40%)
- * - First topic created (70%)
- * - First content created (100%)
+ * - Workspace created (40%)
+ * - Topic created (30%)
+ * - Content created (30%)
+ * - Knowledge added (optional - 0%)
+ * - Members invited (optional - 0%)
  *
- * Returns progress percentage and milestone status for UI display.
+ * @param workspaceId - Optional workspace ID for workspace-specific tracking
  *
  * @example
  * ```tsx
- * const { progress, milestones, isComplete } = useOnboardingProgress();
+ * const { progress, milestones, isComplete, isDismissed } = useOnboardingProgress(workspaceId);
  *
- * if (!isComplete) {
+ * if (!isComplete && !isDismissed) {
  *   return <OnboardingProgressBar progress={progress} />;
  * }
  * ```
@@ -40,47 +48,62 @@ export interface OnboardingProgress {
   progress: number; // Total progress percentage (0-100)
   milestones: OnboardingMilestone[];
   isComplete: boolean;
+  isDismissed: boolean;
   nextMilestone: OnboardingMilestone | null;
+  dismissOnboarding: () => void;
+  skipMilestone: (milestoneId: string) => void;
+  resetOnboarding: () => void;
 }
 
-export function useOnboardingProgress(): OnboardingProgress {
+export function useOnboardingProgress(
+  workspaceId?: string,
+): OnboardingProgress {
   const { user } = useAuthSession();
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
 
-  // Fetch topics count for current user (across all workspaces)
-  const { data: topicsData } = useQuery({
-    queryKey: ["user-topics-count", user?.id],
-    queryFn: async () => {
-      // This is a simplified check - you may want to create a dedicated endpoint
-      // For now, we'll use workspace list as a proxy
-      // In production, create: GET /api/users/me/onboarding-stats
-      return { count: 0 }; // Placeholder
+  // Force re-render trigger for when workspace doesn't exist
+  const [, forceUpdate] = useState(0);
+  const triggerUpdate = useCallback(() => forceUpdate((n) => n + 1), []);
+
+  // Fetch real-time workspace stats
+  const { data: stats, refetch: refetchStats } = useQuery({
+    queryKey: ["workspace-stats", workspaceId],
+    queryFn: () => {
+      if (!workspaceId) throw new Error("Workspace ID required");
+      return apiClient.workspaces.getStats(workspaceId);
     },
-    enabled: !!user?.id && hasWorkspaces,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!workspaceId,
+    staleTime: 30 * 1000, // 30 seconds - balance between real-time and performance
+    refetchOnMount: true, // Always refetch on mount for latest data
+    refetchOnWindowFocus: true, // Refetch when user comes back to tab
   });
 
-  // Fetch content count
-  const { data: contentData } = useQuery({
-    queryKey: ["user-content-count", user?.id],
-    queryFn: async () => {
-      return { count: 0 }; // Placeholder
-    },
-    enabled: !!user?.id && hasWorkspaces,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Get localStorage keys for this workspace
+  const dismissedKey = workspaceId
+    ? `onboarding-dismissed-${workspaceId}`
+    : "onboarding-dismissed-global";
+  const skippedKey = workspaceId
+    ? `onboarding-skipped-${workspaceId}`
+    : "onboarding-skipped-global";
 
-  // Calculate milestone completion
+  // Get UI preferences from localStorage
+  const isDismissed =
+    typeof window !== "undefined"
+      ? localStorage.getItem(dismissedKey) === "true"
+      : false;
+
+  const skippedSteps: string[] =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(skippedKey) || "[]")
+      : [];
+
+  // Calculate milestone completion based on real-time stats
   const milestones = useMemo<OnboardingMilestone[]>(() => {
-    const topicCount = topicsData?.count || 0;
-    const contentCount = contentData?.count || 0;
-
-    // Get skipped steps from localStorage
-    const skippedSteps =
-      typeof window !== "undefined"
-        ? JSON.parse(localStorage.getItem("onboarding_skipped") || "[]")
-        : [];
+    const topicCount = stats?.topics_count || 0;
+    const contentCount = stats?.content_count || 0;
+    const knowledgeCount = stats?.knowledge_items_count || 0;
+    const membersCount = stats?.members_count || 0;
 
     return [
       {
@@ -115,7 +138,7 @@ export function useOnboardingProgress(): OnboardingProgress {
         id: "knowledge",
         label: "Add Knowledge Base",
         description: "Upload documents to your knowledge base",
-        completed: false, // TODO: Implement knowledge base check
+        completed: knowledgeCount > 0,
         weight: 0, // Optional, doesn't affect progress
         optional: true,
         skipped: skippedSteps.includes("knowledge"),
@@ -124,34 +147,186 @@ export function useOnboardingProgress(): OnboardingProgress {
         id: "members",
         label: "Invite Team Members",
         description: "Add collaborators to your workspace",
-        completed: false, // TODO: Implement team members check
+        completed: membersCount > 1, // > 1 because owner is already a member
         weight: 0, // Optional, doesn't affect progress
         optional: true,
         skipped: skippedSteps.includes("members"),
       },
     ];
-  }, [user, hasWorkspaces, topicsData?.count, contentData?.count]);
+  }, [user, hasWorkspaces, stats, skippedSteps]);
 
-  // Calculate total progress
+  // Calculate total progress (only required milestones count)
   const progress = useMemo(() => {
-    const totalWeight = milestones.reduce((sum, m) => sum + m.weight, 0);
-    const completedWeight = milestones
+    const requiredMilestones = milestones.filter((m) => !m.optional);
+    const totalWeight = requiredMilestones.reduce(
+      (sum, m) => sum + m.weight,
+      0,
+    );
+    const completedWeight = requiredMilestones
       .filter((m) => m.completed)
       .reduce((sum, m) => sum + m.weight, 0);
 
-    return Math.round((completedWeight / totalWeight) * 100);
+    return totalWeight > 0
+      ? Math.round((completedWeight / totalWeight) * 100)
+      : 0;
   }, [milestones]);
 
-  // Check if onboarding is complete
-  const isComplete = milestones.every((m) => m.completed);
+  // Check if all required milestones are complete
+  const isComplete = useMemo(() => {
+    const requiredMilestones = milestones.filter((m) => !m.optional);
+    return requiredMilestones.every((m) => m.completed);
+  }, [milestones]);
 
   // Get next milestone to complete
-  const nextMilestone = milestones.find((m) => !m.completed) || null;
+  const nextMilestone = useMemo(() => {
+    return milestones.find((m) => !m.completed && !m.skipped) || null;
+  }, [milestones]);
+
+  // Track milestone completion with analytics
+  const prevMilestones = useRef<OnboardingMilestone[]>([]);
+  useEffect(() => {
+    // Skip on first render
+    if (prevMilestones.current.length === 0) {
+      prevMilestones.current = milestones;
+      return;
+    }
+
+    // Check for newly completed milestones
+    milestones.forEach((milestone, index) => {
+      const prevMilestone = prevMilestones.current[index];
+      if (milestone.completed && prevMilestone && !prevMilestone.completed) {
+        // Track milestone completion
+        analytics.track("onboarding_milestone_completed", {
+          milestone_id: milestone.id,
+          milestone_label: milestone.label,
+          workspace_id: workspaceId,
+          user_id: user?.id,
+          progress_percentage: progress,
+        });
+
+        // Track full onboarding completion
+        if (isComplete) {
+          analytics.track("onboarding_completed", {
+            workspace_id: workspaceId,
+            user_id: user?.id,
+            completion_time_ms: Date.now(), // You could track actual time from start
+          });
+        }
+      }
+    });
+
+    prevMilestones.current = milestones;
+  }, [milestones, progress, isComplete, workspaceId, user?.id]);
+
+  // Helper: Dismiss onboarding
+  const dismissOnboarding = useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(dismissedKey, "true");
+
+      // Track dismissal
+      analytics.track("onboarding_dismissed", {
+        workspace_id: workspaceId,
+        user_id: user?.id,
+        progress_at_dismiss: progress,
+        milestones_completed: milestones.filter((m) => m.completed).length,
+        total_milestones: milestones.length,
+      });
+
+      // Force re-render by refetching (only if we have a workspace)
+      if (workspaceId) {
+        refetchStats();
+      } else {
+        // Force re-render without workspace
+        triggerUpdate();
+      }
+    }
+  }, [
+    dismissedKey,
+    refetchStats,
+    workspaceId,
+    user?.id,
+    progress,
+    milestones,
+    triggerUpdate,
+  ]);
+
+  // Helper: Skip a milestone
+  const skipMilestone = useCallback(
+    (milestoneId: string) => {
+      if (typeof window !== "undefined") {
+        const currentSkipped = JSON.parse(
+          localStorage.getItem(skippedKey) || "[]",
+        );
+        if (!currentSkipped.includes(milestoneId)) {
+          const updated = [...currentSkipped, milestoneId];
+          localStorage.setItem(skippedKey, JSON.stringify(updated));
+
+          // Track skipping
+          const milestone = milestones.find((m) => m.id === milestoneId);
+          analytics.track("onboarding_milestone_skipped", {
+            milestone_id: milestoneId,
+            milestone_label: milestone?.label,
+            workspace_id: workspaceId,
+            user_id: user?.id,
+            progress_percentage: progress,
+          });
+
+          // Force re-render
+          if (workspaceId) {
+            refetchStats();
+          } else {
+            triggerUpdate();
+          }
+        }
+      }
+    },
+    [
+      skippedKey,
+      refetchStats,
+      milestones,
+      workspaceId,
+      user?.id,
+      progress,
+      triggerUpdate,
+    ],
+  );
+
+  // Helper: Reset onboarding (for testing/debugging)
+  const resetOnboarding = useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(dismissedKey);
+      localStorage.removeItem(skippedKey);
+
+      // Track reset
+      analytics.track("onboarding_reset", {
+        workspace_id: workspaceId,
+        user_id: user?.id,
+      });
+
+      // Force re-render
+      if (workspaceId) {
+        refetchStats();
+      } else {
+        triggerUpdate();
+      }
+    }
+  }, [
+    dismissedKey,
+    skippedKey,
+    refetchStats,
+    workspaceId,
+    user?.id,
+    triggerUpdate,
+  ]);
 
   return {
     progress,
     milestones,
     isComplete,
+    isDismissed,
     nextMilestone,
+    dismissOnboarding,
+    skipMilestone,
+    resetOnboarding,
   };
 }

@@ -62,6 +62,30 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"], // Modern formats, better compression
     minimumCacheTTL: 60, // Cache images for 60 seconds
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "2024",
+        pathname: "/media/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "2024",
+        pathname: "/media/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.r2.cloudflarestorage.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.r2.dev",
+        pathname: "/**",
+      },
+    ],
   },
 
   // ============================================================================
