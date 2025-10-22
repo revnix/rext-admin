@@ -49,8 +49,9 @@ interface WorkspaceMember {
   last_activity_at: string | null;
   user: {
     id: string;
+    name: string;
     email: string;
-    display_name: string;
+    display_name: string | null;
     is_verified: boolean;
   };
 }
@@ -119,7 +120,8 @@ export function WorkspaceChangeRoleDialog({
 
   if (!member) return null;
 
-  const displayName = member.user.display_name || member.user.email;
+  const displayName =
+    member.user.display_name || member.user.name || member.user.email;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

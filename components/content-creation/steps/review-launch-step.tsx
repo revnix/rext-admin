@@ -63,7 +63,7 @@ export function ReviewLaunchStep({
     if (!membersResponse?.members) return [];
     return membersResponse.members.map((member) => ({
       id: member.user_id,
-      name: member.user.display_name,
+      name: member.user.display_name || member.user.name,
       email: member.user.email,
       avatar: undefined, // No avatar in current API response
     }));

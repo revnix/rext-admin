@@ -24,8 +24,10 @@ export function createMembersNamespace(client: ApiClient) {
           last_activity_at: string | null;
           user: {
             id: string;
+            name: string;
             email: string;
-            display_name: string;
+            display_name: string | null;
+            avatar: string | null;
             is_verified: boolean;
           };
         }>;

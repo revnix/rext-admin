@@ -28,13 +28,13 @@ export default function WorkspaceUsersPage() {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
-    { label: "Users" },
+    { label: "Members" },
   ];
 
   return (
     <PageLayout
-      title="Users"
-      description={`Manage users and invitations for ${workspace?.title || "workspace"}`}
+      title="Members"
+      description={`Manage members and invitations for ${workspace?.title || "workspace"}`}
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
@@ -60,7 +60,7 @@ export default function WorkspaceUsersPage() {
       >
         <Tabs defaultValue={currentTab} className="space-y-6">
           <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="users">Members</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
           </TabsList>
 

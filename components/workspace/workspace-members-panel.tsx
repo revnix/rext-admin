@@ -39,8 +39,9 @@ interface WorkspaceMember {
   last_activity_at: string | null;
   user: {
     id: string;
+    name: string;
     email: string;
-    display_name: string;
+    display_name: string | null;
     is_verified: boolean;
   };
 }
@@ -83,7 +84,8 @@ export function WorkspaceMembersPanel({
   const members = membersResponse?.members || [];
 
   // Get initials for avatar
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "?";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -119,20 +121,20 @@ export function WorkspaceMembersPanel({
   const tableData: MemberData[] = members.map((member: WorkspaceMember) => ({
     id: member.id,
     user_id: member.user_id,
-    display_name: member.user.display_name,
+    display_name: member.user.display_name || member.user.name,
     email: member.user.email,
     status: member.status,
     is_default: member.is_default,
     is_verified: member.user.is_verified,
     joined_at: formatDate(member.joined_at),
-    initials: getInitials(member.user.display_name),
+    initials: getInitials(member.user.display_name || member.user.name),
   }));
 
   // Define columns
   const columns: Column<MemberData>[] = [
     {
       key: "display_name",
-      header: "User",
+      header: "Member",
       width: "300px",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
@@ -203,7 +205,7 @@ export function WorkspaceMembersPanel({
       disabled: (row) => row.is_default as boolean,
     },
     {
-      label: "Remove User",
+      label: "Remove Member",
       icon: <UserMinus className="h-4 w-4" />,
       onClick: (row) => {
         const member = members.find((m: WorkspaceMember) => m.id === row.id);
@@ -245,22 +247,22 @@ export function WorkspaceMembersPanel({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Workspace Users
+            Workspace Members
           </CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         <DataTable
-          columns={columns.filter((col) => col.key !== "email")} // Hide email column since it's in User column
+          columns={columns.filter((col) => col.key !== "email")} // Hide email column since it's in Member column
           data={tableData}
           isLoading={isLoading}
           rowActions={rowActions}
-          emptyTitle="No users yet"
-          emptyDescription="Invite users to collaborate on this workspace"
+          emptyTitle="No members yet"
+          emptyDescription="Invite members to collaborate on this workspace"
           emptyIcon={<Users className="h-12 w-12" />}
           emptyActions={[
             {
-              label: "Invite Users",
+              label: "Invite Members",
               icon: <UserPlus className="h-4 w-4" />,
               onClick: () => setShowInviteDialog(true),
             },

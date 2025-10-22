@@ -26,8 +26,9 @@ interface WorkspaceMember {
   last_activity_at: string | null;
   user: {
     id: string;
+    name: string;
     email: string;
-    display_name: string;
+    display_name: string | null;
     is_verified: boolean;
   };
 }
@@ -98,7 +99,7 @@ export function WorkspaceRemoveMemberDialog({
             <p>
               Are you sure you want to remove{" "}
               <span className="font-semibold text-foreground">
-                {member.user.display_name}
+                {member.user.display_name || member.user.name}
               </span>{" "}
               ({member.user.email}) from this workspace?
             </p>
