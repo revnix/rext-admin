@@ -229,5 +229,29 @@ export function createWorkspacesNamespace(client: ApiClient) {
         },
       );
     },
+
+    /**
+     * Get available roles for workspace member invitations
+     *
+     * Returns non-system roles that can be assigned to workspace members.
+     * Does not require special permissions - any authenticated user can call this.
+     */
+    getAvailableRoles: async () => {
+      return client.request<{
+        roles: Array<{
+          id: string;
+          name: string;
+          display_name: string;
+          description: string | null;
+          is_system_role: boolean;
+          hierarchy_level: number;
+          created_at: string;
+          updated_at: string;
+        }>;
+        total_count: number;
+      }>("/api/v1/workspaces/available-roles", {
+        method: "GET",
+      });
+    },
   };
 }

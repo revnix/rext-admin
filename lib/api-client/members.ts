@@ -93,6 +93,44 @@ export function createMembersNamespace(client: ApiClient) {
 export function createInvitationsNamespace(client: ApiClient) {
   return {
     /**
+     * Validate invitation token (public - no auth required)
+     */
+    validate: async (token: string) => {
+      return client.request<{
+        invitation: {
+          id: string;
+          email: string;
+          workspace_id: string;
+          workspace_name: string;
+          role_id: string;
+          role_name: string;
+          invited_by: string;
+          expires_at: string;
+          status: string;
+        };
+      }>(`/api/v1/invitations/${token}/validate`, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Accept workspace invitation (requires auth)
+     * Uses public invitation endpoint
+     */
+    accept: async (token: string) => {
+      return client.request<{
+        membership_id: string;
+        workspace_id: string;
+        workspace_name: string;
+        workspace_slug: string;
+        role: string;
+        message: string;
+      }>(`/api/v1/invitations/${token}/accept`, {
+        method: "POST",
+      });
+    },
+
+    /**
      * Create invitation
      */
     create: async (
@@ -191,18 +229,6 @@ export function createInvitationsNamespace(client: ApiClient) {
         }>;
       }>("/api/v1/workspace/invitations/received", {
         method: "GET",
-      });
-    },
-
-    /**
-     * Accept invitation
-     */
-    accept: async (token: string) => {
-      return client.request<{
-        workspace_id: string;
-        message: string;
-      }>(`/api/v1/workspace/invitations/${token}/accept`, {
-        method: "POST",
       });
     },
 

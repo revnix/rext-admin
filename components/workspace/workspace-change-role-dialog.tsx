@@ -73,10 +73,10 @@ export function WorkspaceChangeRoleDialog({
 }: WorkspaceChangeRoleDialogProps) {
   const queryClient = useQueryClient();
 
-  // Fetch available roles
+  // Fetch available roles for workspace member assignments
   const { data: rolesResponse, isLoading: isLoadingRoles } = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => apiClient.roles.list(),
+    queryKey: ["workspace-available-roles"],
+    queryFn: () => apiClient.workspaces.getAvailableRoles(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
