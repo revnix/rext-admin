@@ -31,7 +31,7 @@ import { Separator } from "@/components/ui/separator";
 
 interface UsageMetric {
   used: number;
-  limit: number | null;
+  limit: number | null | undefined;
   percentage: number;
   unlimited: boolean;
 }
@@ -209,8 +209,12 @@ function BillingDashboardContent() {
     }
   };
 
-  const formatLimit = (limit: number | null, unlimited: boolean): string => {
-    if (unlimited || limit === null || limit < 0) return "Unlimited";
+  const formatLimit = (
+    limit: number | null | undefined,
+    unlimited: boolean,
+  ): string => {
+    if (unlimited || limit === null || limit === undefined || limit < 0)
+      return "Unlimited";
     return limit.toLocaleString();
   };
 
