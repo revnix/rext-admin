@@ -19,7 +19,7 @@ import {
  * - Invitation settings
  * - Team collaboration settings
  *
- * Note: For managing individual team members, use the Users page.
+ * Note: For managing individual team members, use the Members page.
  */
 export default function WorkspaceTeamSettings() {
   return (
@@ -30,14 +30,14 @@ export default function WorkspaceTeamSettings() {
           <CardTitle>Team Management</CardTitle>
           <CardDescription>
             For adding, removing, or managing individual team members, visit the
-            Users page
+            Members page
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" asChild>
             <a href="../users">
               <Link className="h-4 w-4 mr-2" />
-              Go to Users Page
+              Go to Members Page
             </a>
           </Button>
         </CardContent>
