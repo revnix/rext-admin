@@ -29,7 +29,7 @@ export default function UnauthorizedPage() {
               <Link href="/">Go to Dashboard</Link>
             </Button>
             <Button asChild>
-              <Link href="/settings/account">Contact Support</Link>
+              <Link href="/settings">Contact Support</Link>
             </Button>
           </div>
         </CardContent>

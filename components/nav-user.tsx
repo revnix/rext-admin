@@ -139,9 +139,7 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => router.push("/settings/account")}
-              >
+              <DropdownMenuItem onClick={() => router.push("/settings")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
@@ -152,10 +150,10 @@ export function NavUser() {
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/notifications")}
+                onClick={() => router.push("/settings/security")}
               >
                 <Bell />
-                Notifications
+                Security
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

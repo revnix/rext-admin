@@ -6,14 +6,14 @@ import { useEffect } from "react";
 
 /**
  * Profile page redirect
- * This page has been consolidated with /settings/account
+ * This page has been consolidated with /settings
  * Redirects users to the unified account settings page
  */
 export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/settings/account");
+    router.replace("/settings");
   }, [router]);
 
   return (
