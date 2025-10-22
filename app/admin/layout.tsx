@@ -30,7 +30,7 @@ export default function AdminLayout({
 
     // Redirect if not admin
     if (status === "authenticated" && !isAdmin) {
-      router.push("/dashboard");
+      router.push("/");
     }
   }, [status, isAdmin, router]);
 

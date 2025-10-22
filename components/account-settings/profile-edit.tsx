@@ -57,9 +57,17 @@ export function ProfileEdit() {
     queryFn: () => apiClient.profile.get(),
   });
 
-  // Initialize form
+  // Initialize form with default values to prevent uncontrolled component warnings
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      display_name: "",
+      bio: "",
+      language: "en",
+      timezone: "UTC",
+    },
     values: profile
       ? {
           first_name: profile.first_name || "",
@@ -371,10 +379,7 @@ export function ProfileEdit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Language</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select language" />
@@ -398,10 +403,7 @@ export function ProfileEdit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Timezone</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select timezone" />

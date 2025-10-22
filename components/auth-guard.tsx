@@ -85,7 +85,7 @@ export function AuthGuard({
  */
 export function GuestGuard({
   children,
-  redirectTo = "/dashboard",
+  redirectTo = "/",
 }: {
   children: React.ReactNode;
   redirectTo?: string;

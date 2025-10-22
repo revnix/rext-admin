@@ -3,11 +3,15 @@
 import type { ReactNode } from "react";
 import {
   useAllPermissions,
+  useAllWorkspacePermissions,
   useAnyPermission,
   useAnyRole,
+  useAnyWorkspacePermission,
   usePermission,
   useRole,
+  useWorkspacePermission,
 } from "@/hooks/use-permission";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 
 interface CanAccessProps {
   /**
@@ -55,8 +59,8 @@ interface CanAccessProps {
  * Wrapper component for conditional rendering based on permissions or roles
  *
  * @example
- * // Show button only if user has "user:create" permission
- * <CanAccess permission="user:create">
+ * // Show button only if user has "user.create" permission
+ * <CanAccess permission="user.create">
  *   <Button>Create User</Button>
  * </CanAccess>
  *
@@ -68,7 +72,7 @@ interface CanAccessProps {
  *
  * @example
  * // Show fallback if user doesn't have permission
- * <CanAccess permission="user:delete" fallback={<p>No access</p>}>
+ * <CanAccess permission="user.delete" fallback={<p>No access</p>}>
  *   <DeleteButton />
  * </CanAccess>
  *
@@ -88,28 +92,57 @@ export function CanAccess({
   fallback = null,
   invert = false,
 }: CanAccessProps) {
-  // Check permissions
-  const hasSinglePermission = usePermission(permission || "");
-  const hasAnyPermission = useAnyPermission(anyPermission || []);
-  const hasAllPermissions = useAllPermissions(allPermissions || []);
+  // Get workspace context (if in workspace route)
+  const workspaceContext = useWorkspaceOptional();
+  const workspaceId =
+    workspaceContext?.workspaceSlug || workspaceContext?.workspaceId;
+
+  // Check if we're in a workspace context
+  const isWorkspaceContext = !!workspaceId;
+
+  // Check workspace permissions (if in workspace context)
+  const hasSingleWorkspacePermission = useWorkspacePermission(
+    permission || "",
+    workspaceId,
+  );
+  const hasAnyWorkspacePermission = useAnyWorkspacePermission(
+    anyPermission || [],
+    workspaceId,
+  );
+  const hasAllWorkspacePermissions = useAllWorkspacePermissions(
+    allPermissions || [],
+    workspaceId,
+  );
+
+  // Check global permissions (fallback or when not in workspace)
+  const hasSingleGlobalPermission = usePermission(permission || "");
+  const hasAnyGlobalPermission = useAnyPermission(anyPermission || []);
+  const hasAllGlobalPermissions = useAllPermissions(allPermissions || []);
 
   // Check roles
   const hasSingleRole = useRole(role || "");
-  const hasAnyRole = useAnyRole(anyRole || []);
+  const hasAnyRoleCheck = useAnyRole(anyRole || []);
 
   // Determine if user has access based on provided props
   let hasAccess = false;
 
   if (permission) {
-    hasAccess = hasSinglePermission;
+    // Use workspace permissions if in workspace context, otherwise use global
+    hasAccess = isWorkspaceContext
+      ? hasSingleWorkspacePermission
+      : hasSingleGlobalPermission;
   } else if (anyPermission && anyPermission.length > 0) {
-    hasAccess = hasAnyPermission;
+    hasAccess = isWorkspaceContext
+      ? hasAnyWorkspacePermission
+      : hasAnyGlobalPermission;
   } else if (allPermissions && allPermissions.length > 0) {
-    hasAccess = hasAllPermissions;
+    hasAccess = isWorkspaceContext
+      ? hasAllWorkspacePermissions
+      : hasAllGlobalPermissions;
   } else if (role) {
     hasAccess = hasSingleRole;
   } else if (anyRole && anyRole.length > 0) {
-    hasAccess = hasAnyRole;
+    hasAccess = hasAnyRoleCheck;
   }
 
   // Apply invert logic

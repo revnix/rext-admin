@@ -1,6 +1,14 @@
 "use client";
 
-import { BarChart3, Shield, UserCog, Users } from "lucide-react";
+import {
+  BarChart3,
+  DollarSign,
+  Shield,
+  TrendingUp,
+  UserCog,
+  Users,
+  Webhook,
+} from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
 import {
@@ -23,14 +31,14 @@ export default function AdminDashboardPage() {
       description: "Manage users, view details, and modify user accounts",
       href: "/admin/users",
       icon: UserCog,
-      permission: "user:read",
+      permission: "user.read",
     },
     {
       title: "Roles & Permissions",
       description: "Configure roles and assign permissions",
       href: "/admin/roles",
       icon: Shield,
-      permission: "role:read",
+      permission: "role.read",
     },
     {
       title: "System Statistics",
@@ -38,6 +46,27 @@ export default function AdminDashboardPage() {
       href: "/admin/statistics",
       icon: BarChart3,
       permission: null, // Always visible to admins
+    },
+    {
+      title: "Subscription Analytics",
+      description: "Monitor MRR, churn, trial conversion, and revenue metrics",
+      href: "/admin/analytics/subscriptions",
+      icon: TrendingUp,
+      permission: null, // Requires super admin (checked in page)
+    },
+    {
+      title: "Webhook Monitoring",
+      description: "Monitor webhook events and retry failed webhooks",
+      href: "/admin/webhooks",
+      icon: Webhook,
+      permission: null, // Requires super admin (checked in page)
+    },
+    {
+      title: "Refund Management",
+      description: "View refund history and manage refund requests",
+      href: "/admin/refunds",
+      icon: DollarSign,
+      permission: null, // Requires super admin (checked in page)
     },
   ];
 
@@ -107,27 +136,33 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200 bg-yellow-50/50">
-          <CardHeader>
-            <CardTitle className="text-yellow-800">
-              <Users className="inline h-5 w-5 mr-2" />
-              Backend Integration Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-yellow-800">
-            <p>
-              The admin features will be fully functional once the backend
-              includes <code className="bg-yellow-100 px-1 rounded">role</code>{" "}
-              and{" "}
-              <code className="bg-yellow-100 px-1 rounded">permissions</code> in
-              the JWT token during login.
-            </p>
-            <p className="mt-2">
-              Currently, the permission system is ready but needs backend
-              integration to populate user roles and permissions in the session.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Only show warning if user doesn't have role or permissions */}
+        {(!user?.role ||
+          !user?.permissions ||
+          user.permissions.length === 0) && (
+          <Card className="border-yellow-200 bg-yellow-50/50">
+            <CardHeader>
+              <CardTitle className="text-yellow-800">
+                <Users className="inline h-5 w-5 mr-2" />
+                Backend Integration Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-yellow-800">
+              <p>
+                The admin features will be fully functional once the backend
+                includes{" "}
+                <code className="bg-yellow-100 px-1 rounded">role</code> and{" "}
+                <code className="bg-yellow-100 px-1 rounded">permissions</code>{" "}
+                in the JWT token during login.
+              </p>
+              <p className="mt-2">
+                Currently, the permission system is ready but needs backend
+                integration to populate user roles and permissions in the
+                session.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PageLayout>
   );

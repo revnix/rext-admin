@@ -30,7 +30,7 @@ export default function WorkspaceNotFound() {
         </CardHeader>
         <CardContent>
           <Button asChild variant="default" className="w-full">
-            <Link href="/dashboard">
+            <Link href="/">
               <Home className="h-4 w-4 mr-2" />
               Back to Workspaces
             </Link>

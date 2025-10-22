@@ -60,12 +60,12 @@ export function useWorkspacePermissions(workspaceId?: string) {
       log.debug("Storing workspace permissions", {
         workspaceId,
         permissionCount: data.permissions.length,
-        roleCount: data.roles.length,
+        userRole: data.user_role,
       });
 
       setWorkspacePermissions(workspaceId, {
         workspaceId: data.workspace_id,
-        role: data.roles[0]?.name || "viewer", // Primary role
+        role: data.user_role, // Single role from Phase 1 backend
         permissions: data.permissions,
       });
     }
@@ -73,8 +73,9 @@ export function useWorkspacePermissions(workspaceId?: string) {
 
   return {
     permissions: data?.permissions || [],
-    roles: data?.roles || [],
+    role: data?.user_role || "viewer", // Return single role
     workspaceId: data?.workspace_id,
+    workspaceSlug: data?.workspace_slug,
     isLoading,
     error,
     refetch,
@@ -114,7 +115,7 @@ export function useRefreshWorkspacePermissions() {
       // Update permission store
       setWorkspacePermissions(workspaceId, {
         workspaceId: result.workspace_id,
-        role: result.roles[0]?.name || "viewer",
+        role: result.user_role, // Updated for Phase 1 backend response
         permissions: result.permissions,
       });
 

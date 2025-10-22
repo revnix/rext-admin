@@ -17,6 +17,8 @@ export function PrivacySettings() {
     include_roles: true,
     include_workspaces: true,
     include_activity: true,
+    include_billing: true,
+    include_usage: true,
   });
 
   const exportMutation = useMutation({
@@ -58,6 +60,18 @@ export function PrivacySettings() {
       id: "include_activity",
       label: "Activity Logs",
       description: "Your account activity and action history",
+    },
+    {
+      id: "include_billing",
+      label: "Subscription & Billing Data",
+      description:
+        "Subscription plans, billing history, and payment information",
+    },
+    {
+      id: "include_usage",
+      label: "Usage Metrics",
+      description:
+        "Content creation stats, workspace usage, and activity metrics",
     },
   ];
 
@@ -135,25 +149,6 @@ export function PrivacySettings() {
           The export will be sent to your email address as a JSON file
           containing all selected data. Processing may take a few minutes.
         </p>
-      </div>
-
-      {/* Privacy Information */}
-      <div className="pt-6 border-t space-y-4">
-        <div>
-          <h3 className="text-lg font-medium">Privacy Information</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            How we handle your data
-          </p>
-        </div>
-
-        <div className="space-y-3 text-sm text-muted-foreground">
-          <p>• Your data is encrypted and stored securely</p>
-          <p>• You can request deletion of your account at any time</p>
-          <p>• We never share your personal information with third parties</p>
-          <p>
-            • Data exports include all information associated with your account
-          </p>
-        </div>
       </div>
     </div>
   );

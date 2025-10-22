@@ -3,6 +3,7 @@
  */
 
 import type {
+  OnboardingMarketingData,
   OnboardingReset,
   OnboardingStatus,
   OnboardingStepUpdate,
@@ -27,6 +28,19 @@ export function createOnboardingNamespace(client: ApiClient) {
      */
     async updateStep(data: OnboardingStepUpdate): Promise<OnboardingStatus> {
       return client.request<OnboardingStatus>(`${ONBOARDING_BASE}/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Update marketing data collected during onboarding
+     */
+    async updateMarketingData(
+      data: OnboardingMarketingData,
+    ): Promise<OnboardingStatus> {
+      return client.request<OnboardingStatus>(`${ONBOARDING_BASE}/marketing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

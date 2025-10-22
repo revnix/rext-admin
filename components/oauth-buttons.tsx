@@ -10,9 +10,7 @@ interface OAuthButtonsProps {
   callbackUrl?: string;
 }
 
-export function OAuthButtons({
-  callbackUrl = "/dashboard",
-}: OAuthButtonsProps) {
+export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 

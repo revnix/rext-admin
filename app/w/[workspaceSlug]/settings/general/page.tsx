@@ -133,7 +133,7 @@ export default function WorkspaceGeneralSettings() {
 
       setDeleteDialogOpen(false);
       setPasswordConfirmation("");
-      router.push("/dashboard");
+      router.push("/");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete workspace";

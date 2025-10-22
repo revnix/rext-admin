@@ -30,7 +30,7 @@ export default function CreateWorkspacePage() {
   );
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     { label: "Create Workspace" },
   ];
 
@@ -44,10 +44,7 @@ export default function CreateWorkspacePage() {
         {/* Back Navigation */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <ChevronLeft className="h-4 w-4" />
-          <Link
-            href="/dashboard"
-            className="hover:text-foreground transition-colors"
-          >
+          <Link href="/" className="hover:text-foreground transition-colors">
             Back to Dashboard
           </Link>
         </div>

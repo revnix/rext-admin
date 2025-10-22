@@ -5,6 +5,8 @@
  * Organized by feature domain following the established patterns.
  */
 
+// Subscription Domain
+export { useSubscriptionStore } from "./subscription-store";
 // Topic Builder Domain
 export { useTopicBuilderStore } from "./topic-builder-store";
 

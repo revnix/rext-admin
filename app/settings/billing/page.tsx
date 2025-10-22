@@ -320,27 +320,31 @@ function BillingDashboardContent() {
                     </p>
                   </div>
                 )}
-                {subscription.end_date && (
+                {subscription.current_period_end && (
                   <div>
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {subscription.cancelled_at ? "Ends" : "Renews"}
+                      {subscription.cancel_at_period_end ? "Ends" : "Renews"}
                     </p>
                     <p className="text-sm font-medium">
-                      {new Date(subscription.end_date).toLocaleDateString()}
+                      {new Date(
+                        subscription.current_period_end,
+                      ).toLocaleDateString()}
                     </p>
                   </div>
                 )}
               </div>
 
-              {subscription.cancelled_at && (
+              {subscription.cancel_at_period_end && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Subscription Cancelled</AlertTitle>
                   <AlertDescription>
                     Your subscription will end on{" "}
-                    {subscription.end_date
-                      ? new Date(subscription.end_date).toLocaleDateString()
+                    {subscription.current_period_end
+                      ? new Date(
+                          subscription.current_period_end,
+                        ).toLocaleDateString()
                       : "N/A"}
                     . You can reactivate it anytime before this date.
                   </AlertDescription>
@@ -381,7 +385,7 @@ function BillingDashboardContent() {
               >
                 {showPlans ? "Hide Plans" : "Change Plan"}
               </Button>
-              {!subscription.cancelled_at && (
+              {!subscription.cancel_at_period_end && (
                 <Button
                   variant="destructive"
                   onClick={handleCancelSubscription}

@@ -113,7 +113,7 @@ const RECOVERY_ACTIONS: Partial<
     {
       label: "Go to Dashboard",
       action: () => {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       },
       type: "primary",
     },

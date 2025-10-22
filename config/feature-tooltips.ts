@@ -22,7 +22,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     content:
       "Switch between your workspaces or create a new one. Each workspace has its own content, knowledge bases, and team members.",
     placement: "bottom",
-    page: "/dashboard",
+    page: "/",
   },
   {
     id: "create-workspace",

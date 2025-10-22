@@ -15,11 +15,7 @@ import { useWorkspaceStore } from "@/stores/workspace";
  */
 interface WorkspacePermissionContextValue {
   permissions: string[];
-  roles: Array<{
-    name: string;
-    display_name: string;
-    workspace_scoped: boolean;
-  }>;
+  role: string;
   workspaceId?: string;
   isLoading: boolean;
 }
@@ -62,22 +58,21 @@ export function WorkspacePermissionProvider({
     (params?.workspaceSlug as string | undefined);
 
   // Load workspace permissions
-  const { permissions, roles, isLoading } =
-    useWorkspacePermissions(workspaceId);
+  const { permissions, role, isLoading } = useWorkspacePermissions(workspaceId);
 
   useEffect(() => {
     if (workspaceId && !isLoading) {
       log.debug("Workspace permissions loaded", {
         workspaceId,
         permissionCount: permissions.length,
-        roleCount: roles.length,
+        userRole: role,
       });
     }
-  }, [workspaceId, isLoading, permissions.length, roles.length]);
+  }, [workspaceId, isLoading, permissions.length, role]);
 
   const value: WorkspacePermissionContextValue = {
     permissions,
-    roles,
+    role,
     workspaceId,
     isLoading,
   };
@@ -124,7 +119,7 @@ export function useWorkspacePermissionContext() {
  * @example
  * function DeleteButton() {
  *   const workspaceId = useCurrentWorkspaceId();
- *   const canDelete = useWorkspacePermission("content:delete", workspaceId);
+ *   const canDelete = useWorkspacePermission("content.delete", workspaceId);
  *
  *   if (!canDelete) return null;
  *   return <Button>Delete</Button>;

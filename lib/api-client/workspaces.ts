@@ -148,17 +148,16 @@ export function createWorkspacesNamespace(client: ApiClient) {
 
     /**
      * Get current user's permissions in a specific workspace
+     *
+     * Returns workspace-scoped permissions using dot notation (e.g., "topic.create")
+     * Note: Response format updated to match Phase 1 backend changes
      */
     getPermissions: async (workspaceId: string) => {
       return client.request<{
         workspace_id: string;
-        roles: Array<{
-          name: string;
-          display_name: string;
-          workspace_scoped: boolean;
-          workspace_id: string | null;
-        }>;
-        permissions: string[];
+        workspace_slug: string;
+        user_role: string; // Simplified: single role name instead of array
+        permissions: string[]; // Dot notation: "topic.create", "content.read", etc.
       }>(`/api/v1/workspaces/${workspaceId}/permissions/me`, {
         method: "GET",
       });
@@ -182,16 +181,14 @@ export function createWorkspacesNamespace(client: ApiClient) {
 
     /**
      * Refresh current user's permissions in a workspace
+     *
+     * Forces fresh permission retrieval from database
      */
     refreshPermissions: async (workspaceId: string) => {
       return client.request<{
         workspace_id: string;
-        roles: Array<{
-          name: string;
-          display_name: string;
-          workspace_scoped: boolean;
-          workspace_id: string | null;
-        }>;
+        workspace_slug: string;
+        user_role: string;
         permissions: string[];
       }>(`/api/v1/workspaces/${workspaceId}/permissions/refresh`, {
         method: "POST",

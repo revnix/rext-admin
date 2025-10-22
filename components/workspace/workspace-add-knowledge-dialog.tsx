@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -103,6 +104,9 @@ export function WorkspaceAddKnowledgeDialog({
   const [selectedKbId, setSelectedKbId] = useState<string>(
     knowledgeBaseId || "",
   );
+
+  // Check knowledge items limit
+  const { checkLimit } = useCheckLimit("knowledge_items");
 
   // Fetch knowledge bases for the dropdown
   const { data: kbResponse } = useQuery({
@@ -208,16 +212,25 @@ export function WorkspaceAddKnowledgeDialog({
   });
 
   const onWebSubmit = (data: WebKnowledgeFormData) => {
+    if (!checkLimit("add knowledge")) {
+      return;
+    }
     addWebMutation.mutate(data);
   };
 
   const onFileSubmit = (data: FileKnowledgeFormData) => {
+    if (!checkLimit("add knowledge")) {
+      return;
+    }
     if (data.file) {
       addFileMutation.mutate(data.file);
     }
   };
 
   const onTextSubmit = (data: TextKnowledgeFormData) => {
+    if (!checkLimit("add knowledge")) {
+      return;
+    }
     addTextMutation.mutate(data);
   };
 

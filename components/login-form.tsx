@@ -99,7 +99,7 @@ export function LoginForm({
       }
 
       // Redirect to the original page or default to dashboard
-      const redirect = searchParams.get("redirect") || "/dashboard";
+      const redirect = searchParams.get("redirect") || "/";
       router.push(redirect);
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
@@ -126,9 +126,7 @@ export function LoginForm({
               </div>
             )}
 
-            <OAuthButtons
-              callbackUrl={searchParams.get("redirect") || "/dashboard"}
-            />
+            <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">

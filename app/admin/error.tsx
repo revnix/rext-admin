@@ -15,7 +15,7 @@ export default function AdminError(props: {
       title="Admin Panel Error"
       logContext="AdminError"
       navigationType="link"
-      navigationLink="/dashboard"
+      navigationLink="/"
       navigationLabel="Dashboard"
     />
   );

@@ -1,16 +1,19 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  Check,
-  Clock,
   CreditCard,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Settings,
   TrendingUp,
-  Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { SubscriptionStatusCard } from "@/components/subscription/subscription-status-card";
+import { TrialStatusBanner } from "@/components/subscription/trial-status-banner";
+import { UsageMetrics } from "@/components/subscription/usage-metrics";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,203 +22,50 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { apiClient } from "@/lib/api-client";
-import {
-  formatLimit,
-  isSubscriptionActive,
-  isUnlimited,
-  type SubscriptionHistoryEntry,
-  type SubscriptionPlan,
-  SubscriptionStatus,
-  type TrialStatus,
-  type UsageStats,
-  type UserSubscription,
-} from "@/types/subscription";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
-export default function SubscriptionPage() {
-  const queryClient = useQueryClient();
-  const [showPlans, setShowPlans] = useState(false);
+/**
+ * Subscription Settings Page
+ *
+ * User-facing settings page for subscription management.
+ * Provides quick access to all subscription-related features.
+ *
+ * Features:
+ * - Current subscription overview
+ * - Usage summary
+ * - Customer portal access
+ * - Quick links to billing and invoices
+ * - Plan management
+ */
 
-  // Fetch current subscription
-  const {
-    data: subscription,
-    isLoading: subscriptionLoading,
-    error: subscriptionError,
-  } = useQuery<UserSubscription>({
-    queryKey: ["subscription"],
-    queryFn: () => apiClient.subscriptions.getCurrentPlan(),
-  });
+export default function SubscriptionSettingsPage() {
+  const router = useRouter();
+  const { usage, fetchSubscription, fetchUsage, getPortalUrl } =
+    useSubscriptionStore();
+  const [portalLoading, setPortalLoading] = useState(false);
 
-  // Fetch usage stats
-  const { data: usage, isLoading: usageLoading } = useQuery<UsageStats>({
-    queryKey: ["usage"],
-    queryFn: () => apiClient.subscriptions.getUsageStats(),
-    enabled: !!subscription,
-  });
+  useEffect(() => {
+    // Load subscription and usage data
+    const loadData = async () => {
+      await Promise.all([fetchSubscription(), fetchUsage()]);
+    };
+    loadData();
+  }, [fetchSubscription, fetchUsage]);
 
-  // Fetch trial status
-  const { data: trialStatus } = useQuery<TrialStatus>({
-    queryKey: ["trial-status"],
-    queryFn: () => apiClient.subscriptions.getTrialStatus(),
-    enabled: !!subscription,
-  });
-
-  // Fetch subscription history
-  const { data: history } = useQuery<{
-    subscriptions: SubscriptionHistoryEntry[];
-  }>({
-    queryKey: ["subscription-history"],
-    queryFn: () => apiClient.subscriptions.getHistory(10, 0),
-  });
-
-  // Fetch available plans
-  const { data: plansData } = useQuery<{
-    plans: SubscriptionPlan[];
-  }>({
-    queryKey: ["subscription-plans"],
-    queryFn: apiClient.subscriptions.getPlans,
-    enabled: showPlans,
-  });
-
-  // Upgrade subscription mutation
-  const upgradeMutation = useMutation({
-    mutationFn: (planId: string) =>
-      apiClient.subscriptions.upgrade({ plan_id: planId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscription"] });
-      queryClient.invalidateQueries({ queryKey: ["usage"] });
-      toast.success("Plan upgraded successfully", {
-        description: "Your new plan is now active.",
+  const handleOpenPortal = async () => {
+    try {
+      setPortalLoading(true);
+      const response = await getPortalUrl();
+      window.open(response.portal_url, "_blank");
+    } catch (_error) {
+      toast.error("Failed to open billing portal", {
+        description: "Please try again or contact support.",
       });
-      setShowPlans(false);
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to upgrade plan", {
-        description: error.message,
-      });
-    },
-  });
-
-  // Cancel subscription mutation
-  const cancelMutation = useMutation({
-    mutationFn: (reason: string) => apiClient.subscriptions.cancel({ reason }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscription"] });
-      toast.success("Subscription cancelled", {
-        description:
-          "Your subscription will remain active until the end of your billing period.",
-      });
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to cancel subscription", {
-        description: error.message,
-      });
-    },
-  });
-
-  if (subscriptionError) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold">Subscription & Billing</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage your subscription, usage, and billing
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              Unable to load subscription
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {(subscriptionError as Error).message}
-            </p>
-            <Button
-              className="mt-4"
-              onClick={() =>
-                queryClient.invalidateQueries({ queryKey: ["subscription"] })
-              }
-            >
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (subscriptionLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold">Subscription & Billing</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage your subscription, usage, and billing
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="mt-2 h-4 w-60" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-20" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-20" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (!subscription) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold">Subscription & Billing</h2>
-          <p className="text-sm text-muted-foreground">
-            No active subscription found
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Get Started</CardTitle>
-            <CardDescription>
-              Choose a plan to unlock all features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setShowPlans(true)}>View Plans</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isActive = isSubscriptionActive(subscription);
-  const statusColor =
-    subscription.status === SubscriptionStatus.ACTIVE
-      ? "text-green-600"
-      : subscription.status === SubscriptionStatus.TRIAL
-        ? "text-blue-600"
-        : "text-gray-600";
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -223,327 +73,215 @@ export default function SubscriptionPage() {
       <div>
         <h2 className="text-2xl font-semibold">Subscription & Billing</h2>
         <p className="text-sm text-muted-foreground">
-          Manage your subscription, usage, and billing
+          Manage your subscription, view usage, and access billing portal
         </p>
       </div>
 
       {/* Trial Banner */}
-      {trialStatus?.is_in_trial && !trialStatus.trial_expired && (
-        <Card className="border-blue-500 bg-blue-50 dark:bg-blue-950">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Clock className="h-5 w-5" />
-              Trial Period Active
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-blue-600 dark:text-blue-400">
-              {trialStatus.days_remaining} days remaining in your free trial
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <TrialStatusBanner showGlobally={false} />
 
-      {/* Current Subscription */}
+      {/* Main Content */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Current Subscription */}
+        <SubscriptionStatusCard />
+
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Current Plan
-            </CardTitle>
-            <CardDescription>Your active subscription details</CardDescription>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Manage your subscription and billing
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold">
-                  {subscription.plan_display_name || subscription.plan_name}
-                </span>
-                <span
-                  className={`text-sm font-medium capitalize ${statusColor}`}
-                >
-                  {subscription.status}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground capitalize">
-                {subscription.billing_period} billing
-              </p>
-            </div>
+          <CardContent className="space-y-3">
+            {/* Full Subscription Dashboard */}
+            <Button
+              onClick={() => router.push("/dashboard/subscription")}
+              className="w-full justify-start"
+              variant="outline"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Subscription Dashboard
+            </Button>
 
-            <Separator />
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Start Date:</span>
-                <span>
-                  {new Date(subscription.start_date).toLocaleDateString()}
-                </span>
-              </div>
-              {subscription.trial_end_date && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Trial Ends:</span>
-                  <span>
-                    {new Date(subscription.trial_end_date).toLocaleDateString()}
-                  </span>
-                </div>
+            {/* Billing Portal */}
+            <Button
+              onClick={handleOpenPortal}
+              className="w-full justify-start"
+              variant="outline"
+              disabled={portalLoading}
+            >
+              {portalLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading Portal...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Open Billing Portal
+                </>
               )}
-              {subscription.cancelled_at && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cancelled:</span>
-                  <span className="text-destructive">
-                    {new Date(subscription.cancelled_at).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-            </div>
+            </Button>
 
-            <Separator />
+            {/* Invoices */}
+            <Button
+              onClick={() => router.push("/dashboard/billing")}
+              className="w-full justify-start"
+              variant="outline"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              View Invoices
+            </Button>
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => setShowPlans(!showPlans)}
-              >
-                {showPlans ? "Hide Plans" : "Change Plan"}
-              </Button>
-              {isActive && !subscription.cancelled_at && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Are you sure you want to cancel your subscription?",
-                      )
-                    ) {
-                      const reason = window.prompt(
-                        "Reason for cancellation (optional):",
-                      );
-                      cancelMutation.mutate(reason || "");
-                    }
-                  }}
-                  disabled={cancelMutation.isPending}
-                >
-                  Cancel
-                </Button>
-              )}
-            </div>
+            {/* Pricing */}
+            <Button
+              onClick={() => router.push("/pricing")}
+              className="w-full justify-start"
+              variant="outline"
+            >
+              <TrendingUp className="mr-2 h-4 w-4" />
+              View All Plans
+            </Button>
           </CardContent>
         </Card>
-
-        {/* Usage Stats */}
-        {usage && !usageLoading && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Usage Overview
-              </CardTitle>
-              <CardDescription>Current usage vs plan limits</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Workspaces */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>Workspaces</span>
-                  <span className="text-muted-foreground">
-                    {usage.current_workspaces} /{" "}
-                    {formatLimit(usage.max_workspaces)}
-                  </span>
-                </div>
-                {!isUnlimited(usage.max_workspaces) && (
-                  <Progress
-                    value={usage.workspaces_usage_percent}
-                    className="h-2"
-                  />
-                )}
-              </div>
-
-              {/* Topics */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>Topics</span>
-                  <span className="text-muted-foreground">
-                    {usage.current_topics} / {formatLimit(usage.max_topics)}
-                  </span>
-                </div>
-                {!isUnlimited(usage.max_topics) && (
-                  <Progress
-                    value={usage.topics_usage_percent}
-                    className="h-2"
-                  />
-                )}
-              </div>
-
-              {/* Knowledge Items */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>Knowledge Items</span>
-                  <span className="text-muted-foreground">
-                    {usage.current_knowledge_items} /{" "}
-                    {formatLimit(usage.max_knowledge_items)}
-                  </span>
-                </div>
-                {!isUnlimited(usage.max_knowledge_items) && (
-                  <Progress
-                    value={usage.knowledge_items_usage_percent}
-                    className="h-2"
-                  />
-                )}
-              </div>
-
-              {/* API Calls */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>API Calls (Monthly)</span>
-                  <span className="text-muted-foreground">
-                    {usage.current_api_calls.toLocaleString()} /{" "}
-                    {formatLimit(usage.max_api_calls_per_month)}
-                  </span>
-                </div>
-                {!isUnlimited(usage.max_api_calls_per_month) && (
-                  <Progress
-                    value={usage.api_calls_usage_percent}
-                    className="h-2"
-                  />
-                )}
-              </div>
-
-              <Separator />
-
-              <p className="text-xs text-muted-foreground">
-                Resets on{" "}
-                {new Date(usage.usage_reset_date).toLocaleDateString()}
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
-      {/* Available Plans */}
-      {showPlans && plansData && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Available Plans</h3>
-          <div className="grid gap-4 md:grid-cols-3">
-            {plansData.plans
-              .filter((plan) => plan.is_public && plan.is_active)
-              .map((plan) => {
-                const isCurrent = plan.id === subscription.plan_id;
-                return (
-                  <Card
-                    key={plan.id}
-                    className={isCurrent ? "border-primary" : ""}
-                  >
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>{plan.display_name}</span>
-                        {isCurrent && (
-                          <Check className="h-5 w-5 text-primary" />
-                        )}
-                      </CardTitle>
-                      <CardDescription>{plan.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <span className="text-3xl font-bold">
-                            ${plan.price_monthly}
-                          </span>
-                          <span className="text-muted-foreground">/month</span>
-                          {plan.price_yearly > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              or ${plan.price_yearly}/year
-                            </p>
-                          )}
-                        </div>
-
-                        <Separator />
-
-                        <ul className="space-y-2 text-sm">
-                          <li className="flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-primary" />
-                            {formatLimit(plan.max_workspaces)} workspaces
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-primary" />
-                            {formatLimit(plan.max_topics)} topics
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-primary" />
-                            {formatLimit(plan.max_knowledge_items)} knowledge
-                            items
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-primary" />
-                            {formatLimit(plan.max_api_calls_per_month)} API
-                            calls/mo
-                          </li>
-                        </ul>
-
-                        <Button
-                          className="w-full"
-                          variant={isCurrent ? "outline" : "default"}
-                          disabled={isCurrent || upgradeMutation.isPending}
-                          onClick={() => upgradeMutation.mutate(plan.id)}
-                        >
-                          {upgradeMutation.isPending
-                            ? "Upgrading..."
-                            : isCurrent
-                              ? "Current Plan"
-                              : "Upgrade"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* Subscription History */}
-      {history && history.subscriptions.length > 0 && (
+      {/* Usage Overview */}
+      {usage && (
         <Card>
           <CardHeader>
-            <CardTitle>Subscription History</CardTitle>
-            <CardDescription>Your past subscriptions</CardDescription>
+            <CardTitle>Usage Overview</CardTitle>
+            <CardDescription>
+              Current usage across all resources
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {history.subscriptions.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {entry.plan_display_name || entry.plan_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(entry.start_date).toLocaleDateString()} -{" "}
-                      {entry.end_date
-                        ? new Date(entry.end_date).toLocaleDateString()
-                        : "Present"}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-sm font-medium capitalize ${
-                      entry.status === SubscriptionStatus.ACTIVE
-                        ? "text-green-600"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    {entry.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <UsageMetrics />
           </CardContent>
         </Card>
       )}
+
+      {/* Billing Portal Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Customer Billing Portal
+          </CardTitle>
+          <CardDescription>
+            Manage all your billing information securely
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            The billing portal is hosted by LemonSqueezy, our secure payment
+            processor. You can manage the following:
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border p-3 space-y-1">
+              <p className="font-medium text-sm">Payment Methods</p>
+              <p className="text-xs text-muted-foreground">
+                Update credit cards and payment details
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-3 space-y-1">
+              <p className="font-medium text-sm">Billing Address</p>
+              <p className="text-xs text-muted-foreground">
+                Change your billing information
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-3 space-y-1">
+              <p className="font-medium text-sm">Invoices</p>
+              <p className="text-xs text-muted-foreground">
+                Download past invoices and receipts
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-3 space-y-1">
+              <p className="font-medium text-sm">Payment History</p>
+              <p className="text-xs text-muted-foreground">
+                View all your past payments
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <Button
+            onClick={handleOpenPortal}
+            className="w-full sm:w-auto"
+            disabled={portalLoading}
+          >
+            {portalLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Billing Portal
+              </>
+            )}
+          </Button>
+
+          <p className="text-xs text-muted-foreground">
+            Your payment information is encrypted and never stored on our
+            servers. All transactions are processed securely by LemonSqueezy.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Help & Support */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Need Help?</CardTitle>
+          <CardDescription>
+            Get assistance with your subscription
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm">Documentation</p>
+              <p className="text-xs text-muted-foreground">
+                Learn more about plans, billing, and features
+              </p>
+              <a
+                href="/docs/pricing"
+                className="text-xs text-primary hover:underline"
+              >
+                View documentation →
+              </a>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <CreditCard className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm">Billing Support</p>
+              <p className="text-xs text-muted-foreground">
+                Questions about billing or payments
+              </p>
+              <a
+                href="mailto:billing@wrext.com"
+                className="text-xs text-primary hover:underline"
+              >
+                Contact billing support →
+              </a>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

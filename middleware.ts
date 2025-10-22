@@ -49,8 +49,8 @@ export default auth((request) => {
     const isAdmin = userRole === "super_admin" || userRole === "admin";
 
     if (!isAdmin) {
-      // Redirect non-admins to dashboard
-      return NextResponse.redirect(new URL("/dashboard", nextUrl.origin));
+      // Redirect non-admins to home
+      return NextResponse.redirect(new URL("/", nextUrl.origin));
     }
   }
 

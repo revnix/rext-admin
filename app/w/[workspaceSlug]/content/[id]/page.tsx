@@ -243,7 +243,7 @@ export default function WorkspaceContentDetailPage({
     });
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

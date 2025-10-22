@@ -15,7 +15,7 @@ export default function SettingsError(props: {
       title="Settings Error"
       logContext="SettingsError"
       navigationType="link"
-      navigationLink="/dashboard"
+      navigationLink="/"
       navigationLabel="Dashboard"
     />
   );

@@ -40,7 +40,7 @@ export default function WorkspaceSettingsLayout({
   const pathname = usePathname();
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

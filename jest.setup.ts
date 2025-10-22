@@ -256,3 +256,31 @@ beforeEach(() => {
     (global.sessionStorage.clear as jest.Mock).mockImplementation(() => {});
   }
 });
+
+// Mock next-auth
+jest.mock("next-auth/react", () => ({
+  useSession: jest.fn(() => ({
+    data: null,
+    status: "unauthenticated",
+  })),
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock next-auth
+jest.mock("next-auth/react", () => ({
+  useSession: jest.fn(() => ({
+    data: null,
+    status: "unauthenticated",
+  })),
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock auth utils
+jest.mock("@/lib/auth-utils", () => ({
+  getAuthHeaders: jest.fn().mockResolvedValue({}),
+  getSession: jest.fn().mockResolvedValue(null),
+}));

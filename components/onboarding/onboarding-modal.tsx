@@ -12,14 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { useOnboarding } from "@/hooks/use-onboarding";
-import { ONBOARDING_STEPS } from "@/types/onboarding";
-import { OnboardingProgress } from "./onboarding-progress";
 import { OnboardingComplete } from "./steps/onboarding-complete";
-import { OnboardingContent } from "./steps/onboarding-content";
-import { OnboardingKnowledge } from "./steps/onboarding-knowledge";
-import { OnboardingTeam } from "./steps/onboarding-team";
-import { OnboardingWelcome } from "./steps/onboarding-welcome";
-import { OnboardingWorkspace } from "./steps/onboarding-workspace";
+import { OnboardingMarketingQuestions } from "./steps/onboarding-marketing-questions";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -27,42 +21,14 @@ interface OnboardingModalProps {
 }
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
-  const { status, completeStep, skipStep, goToStep, complete, isLoading } =
-    useOnboarding();
+  const { status, completeStep, complete, isLoading } = useOnboarding();
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
 
   const currentStep = status?.current_step ?? 0;
-  const totalSteps = ONBOARDING_STEPS.length;
 
   const handleNext = async () => {
     setDirection("forward");
     await completeStep(currentStep);
-  };
-
-  const handleSkip = async () => {
-    setDirection("forward");
-    if (ONBOARDING_STEPS[currentStep]?.required) {
-      // Can't skip required steps, just go next
-      await completeStep(currentStep);
-    } else {
-      await skipStep(currentStep);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setDirection("backward");
-      goToStep(currentStep - 1);
-    }
-  };
-
-  const handleStepClick = (step: number) => {
-    if (step < currentStep) {
-      setDirection("backward");
-    } else {
-      setDirection("forward");
-    }
-    goToStep(step);
   };
 
   const handleComplete = async () => {
@@ -70,33 +36,25 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     onClose();
   };
 
-  const handleDismiss = async () => {
+  const handleClose = async () => {
+    // Mark onboarding as completed when user closes
     await complete();
     onClose();
   };
 
   // Render current step content
   const renderStepContent = () => {
-    const stepProps = {
-      onNext: handleNext,
-      onSkip: handleSkip,
-      onBack: handleBack,
-      isLoading,
-      currentStep,
-    };
-
     switch (currentStep) {
       case 0:
-        return <OnboardingWelcome {...stepProps} />;
+        // Marketing Questions
+        return (
+          <OnboardingMarketingQuestions
+            onNext={handleNext}
+            isLoading={isLoading}
+          />
+        );
       case 1:
-        return <OnboardingWorkspace {...stepProps} />;
-      case 2:
-        return <OnboardingTeam {...stepProps} />;
-      case 3:
-        return <OnboardingKnowledge {...stepProps} />;
-      case 4:
-        return <OnboardingContent {...stepProps} />;
-      case 5:
+        // Complete
         return <OnboardingComplete onComplete={handleComplete} />;
       default:
         return null;
@@ -119,41 +77,36 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent
+        className="!max-w-4xl w-[95vw] max-h-[85vh] flex flex-col p-0"
+        showCloseButton={false}
+      >
         {/* Accessible title and description for screen readers */}
         <VisuallyHidden>
-          <DialogTitle>Get Started with WREXT - Onboarding</DialogTitle>
+          <DialogTitle>Get Started with WREXT</DialogTitle>
           <DialogDescription>
-            Complete the onboarding steps to set up your workspace and start
-            creating content with WREXT.
+            Complete the onboarding steps to set up your account.
           </DialogDescription>
         </VisuallyHidden>
 
-        {/* Header with progress */}
-        <div className="border-b p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Get Started with WREXT</h2>
+        {/* Header with close button */}
+        <div className="border-b p-6 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Get Started</h2>
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleDismiss}
+              onClick={handleClose}
               className="h-8 w-8"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <OnboardingProgress
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            completedSteps={status?.completed_steps ?? []}
-            skippedSteps={status?.skipped_steps ?? []}
-            onStepClick={handleStepClick}
-          />
         </div>
 
-        {/* Animated step content */}
-        <div className="relative overflow-hidden">
+        {/* Animated step content with overflow scroll */}
+        <div className="relative flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentStep}

@@ -112,6 +112,8 @@ export function createAccountNamespace(client: ApiClient) {
       include_roles?: boolean;
       include_workspaces?: boolean;
       include_activity?: boolean;
+      include_billing?: boolean;
+      include_usage?: boolean;
     }) => {
       return client.request<{
         success: boolean;
@@ -127,7 +129,11 @@ export function createAccountNamespace(client: ApiClient) {
     /**
      * Deactivate account
      */
-    deactivate: async (data: { reason?: string; confirm: boolean }) => {
+    deactivate: async (data: {
+      reason?: string;
+      confirm: boolean;
+      cancel_subscriptions?: boolean;
+    }) => {
       return client.request<{
         success: boolean;
         message: string;

@@ -13,6 +13,8 @@ export interface DeactivateAccountRequest {
   reason?: string;
   /** User must confirm deactivation (must be true) */
   confirm: boolean;
+  /** Automatically cancel active subscriptions during deactivation */
+  cancel_subscriptions?: boolean;
 }
 
 /**
@@ -45,6 +47,10 @@ export interface DataExportRequest {
   include_workspaces?: boolean;
   /** Include activity logs */
   include_activity?: boolean;
+  /** Include subscription and billing data */
+  include_billing?: boolean;
+  /** Include usage metrics and statistics */
+  include_usage?: boolean;
 }
 
 /**

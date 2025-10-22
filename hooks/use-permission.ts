@@ -43,7 +43,7 @@ function sessionUserToPermissionUser(
  * @returns boolean indicating if user has the permission
  *
  * @example
- * const canCreateUser = usePermission("user:create");
+ * const canCreateUser = usePermission("user.create");
  * if (canCreateUser) {
  *   // Show create user button
  * }
@@ -61,7 +61,7 @@ export function usePermission(permission: string): boolean {
  * @returns boolean indicating if user has at least one permission
  *
  * @example
- * const canManageUsers = useAnyPermission(["user:create", "user:update", "user:delete"]);
+ * const canManageUsers = useAnyPermission(["user.create", "user.update", "user.delete"]);
  */
 export function useAnyPermission(permissions: string[]): boolean {
   const { data: session } = useSession();
@@ -76,7 +76,7 @@ export function useAnyPermission(permissions: string[]): boolean {
  * @returns boolean indicating if user has all permissions
  *
  * @example
- * const canFullyManageRoles = useAllPermissions(["role:create", "role:update", "role:delete"]);
+ * const canFullyManageRoles = useAllPermissions(["role.create", "role.update", "role.delete"]);
  */
 export function useAllPermissions(permissions: string[]): boolean {
   const { data: session } = useSession();

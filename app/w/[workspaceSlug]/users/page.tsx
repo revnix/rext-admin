@@ -23,7 +23,7 @@ export default function WorkspaceUsersPage() {
   const currentTab = searchParams.get("tab") || "users";
 
   const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/" },
     {
       label: workspace?.title || "...",
       href: workspaceRoutes.root(workspaceSlug),

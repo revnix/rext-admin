@@ -17,6 +17,9 @@ import {
   createImpersonationNamespace,
   type EmailTemplate,
 } from "./admin";
+import { createAdminAnalyticsNamespace } from "./admin-analytics";
+import { createAdminRefundsNamespace } from "./admin-refunds";
+import { createAdminWebhooksNamespace } from "./admin-webhooks";
 
 // Re-export types for convenience
 export type { EmailTemplate };
@@ -24,6 +27,7 @@ export type { EmailTemplate };
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
 import { createKnowledgeNamespace } from "./knowledge";
+import { createLicensesClient } from "./licenses";
 import { createMediaNamespace } from "./media";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createOnboardingNamespace } from "./onboarding";
@@ -64,6 +68,7 @@ function createApiClient() {
     invitations: createInvitationsNamespace(client),
     roles: createRolesNamespace(client),
     subscriptions: createSubscriptionsNamespace(client),
+    licenses: createLicensesClient(client),
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
     onboarding: createOnboardingNamespace(client),
@@ -73,6 +78,9 @@ function createApiClient() {
     impersonation: createImpersonationNamespace(client),
     auditLogs: createAuditLogsNamespace(client),
     emailTemplates: createEmailTemplatesNamespace(client),
+    adminAnalytics: createAdminAnalyticsNamespace(client),
+    adminWebhooks: createAdminWebhooksNamespace(client),
+    adminRefunds: createAdminRefundsNamespace(client),
 
     // Settings namespaces
     notifications: createNotificationsNamespace(client),
