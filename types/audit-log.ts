@@ -51,6 +51,7 @@ export interface AuditLogListResponse {
 export interface AuditLogFilters {
   action?: string;
   resource_type?: string;
+  status?: string; // "success" | "failed" | "partial"
   date_from?: string; // ISO 8601
   date_to?: string; // ISO 8601
   limit?: number;

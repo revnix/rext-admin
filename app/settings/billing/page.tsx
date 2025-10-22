@@ -420,7 +420,7 @@ function BillingDashboardContent() {
               Usage Metrics
             </CardTitle>
             <CardDescription>
-              Your current usage across all resources
+              Your current usage across all workspaces and resources
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
