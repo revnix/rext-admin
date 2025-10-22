@@ -130,12 +130,13 @@ export function UnifiedActivity() {
     });
   };
 
-  const hasActiveFilters =
+  const hasActiveFilters = !!(
     filters.action ||
     filters.resource_type ||
     filters.status ||
     filters.date_from ||
-    filters.date_to;
+    filters.date_to
+  );
 
   const logs = auditData?.logs || [];
   const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;

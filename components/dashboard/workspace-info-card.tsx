@@ -61,15 +61,25 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Members</span>
-            <span className="font-medium">{workspace.members_count ?? 0}</span>
+            <span className="font-medium">
+              {workspace.members_count ??
+                workspace.team_metrics?.total_members ??
+                0}
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Topics</span>
-            <span className="font-medium">{workspace.topics_count ?? 0}</span>
+            <span className="text-muted-foreground">Knowledge Items</span>
+            <span className="font-medium">
+              {workspace.knowledge_stats?.total ??
+                workspace.knowledge_counts?.total_knowledge_items ??
+                0}
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Content</span>
-            <span className="font-medium">{workspace.content_count ?? 0}</span>
+            <span className="text-muted-foreground">Content Words</span>
+            <span className="font-medium">
+              {workspace.content_metrics?.total_words?.toLocaleString() ?? 0}
+            </span>
           </div>
         </div>
 

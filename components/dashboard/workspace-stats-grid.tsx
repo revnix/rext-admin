@@ -17,30 +17,26 @@ interface WorkspaceStatsGridProps {
 
 export function WorkspaceStatsGrid({ workspace }: WorkspaceStatsGridProps) {
   // Calculate stats from workspace data
-  const topicsCount = workspace?.topics_count ?? 0;
-  const contentCount = workspace?.content_count ?? 0;
-  const membersCount = workspace?.members_count ?? 0;
+  const membersCount =
+    workspace?.members_count ?? workspace?.team_metrics?.total_members ?? 0;
   const knowledgeCount =
+    workspace?.knowledge_stats?.total ??
+    workspace?.knowledge_counts?.total_knowledge_items ??
     (workspace?.websites?.length ?? 0) +
-    (workspace?.knowledge_files?.length ?? 0) +
-    (workspace?.text_knowledge?.length ?? 0);
+      (workspace?.knowledge_files?.length ?? 0) +
+      (workspace?.text_knowledge?.length ?? 0);
+  const totalWords = workspace?.content_metrics?.total_words ?? 0;
 
   const stats = [
     {
-      title: "Total Topics",
-      value: topicsCount,
-      icon: BarChart,
+      title: "Knowledge Items",
+      value: knowledgeCount,
+      icon: BookOpen,
       color: "text-blue-600",
     },
     {
-      title: "Active Flows",
-      value: "--", // Placeholder for future implementation
-      icon: Zap,
-      color: "text-yellow-600",
-    },
-    {
-      title: "Content Items",
-      value: contentCount,
+      title: "Total Words",
+      value: totalWords.toLocaleString(),
       icon: FileText,
       color: "text-green-600",
     },
@@ -51,14 +47,29 @@ export function WorkspaceStatsGrid({ workspace }: WorkspaceStatsGridProps) {
       color: "text-purple-600",
     },
     {
-      title: "Knowledge Items",
-      value: knowledgeCount,
-      icon: BookOpen,
+      title: "Web Knowledge",
+      value:
+        workspace?.knowledge_stats?.web_knowledge ??
+        workspace?.websites?.length ??
+        0,
+      icon: BarChart,
       color: "text-indigo-600",
     },
     {
-      title: "Total Engagement",
-      value: "--", // Placeholder for future implementation
+      title: "Files",
+      value:
+        workspace?.knowledge_stats?.files ??
+        workspace?.knowledge_files?.length ??
+        0,
+      icon: Zap,
+      color: "text-yellow-600",
+    },
+    {
+      title: "Text Knowledge",
+      value:
+        workspace?.knowledge_stats?.text_knowledge ??
+        workspace?.text_knowledge?.length ??
+        0,
       icon: TrendingUp,
       color: "text-pink-600",
     },

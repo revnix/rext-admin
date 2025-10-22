@@ -14,7 +14,7 @@ interface RecentActivityCardProps {
   workspace: Workspace | null;
 }
 
-export function RecentActivityCard({ workspace }: RecentActivityCardProps) {
+export function RecentActivityCard(_props: RecentActivityCardProps) {
   // Placeholder implementation - will be enhanced in future with real activity data
   // workspace parameter will be used when real activity API is available
   const placeholderActivities = [
