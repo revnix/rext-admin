@@ -11,7 +11,7 @@
 export const WORKSPACE_PAGES = [
   "topics",
   "content",
-  "users",
+  "members",
   "knowledge",
   "media",
   "overview",
@@ -49,9 +49,9 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/content/progress/${contentId}`,
 
   /**
-   * Users route
+   * Members route
    */
-  users: (workspaceSlug: string) => `/w/${workspaceSlug}/users`,
+  members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
 
   /**
    * Knowledge routes
@@ -153,7 +153,7 @@ export function buildWorkspacePath(
   const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
     topics: workspaceRoutes.topics,
     content: workspaceRoutes.content,
-    users: workspaceRoutes.users,
+    members: workspaceRoutes.members,
     knowledge: workspaceRoutes.knowledge,
     media: workspaceRoutes.media,
     overview: workspaceRoutes.overview,

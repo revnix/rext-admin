@@ -92,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Members",
           url: currentWorkspace?.slug
-            ? workspaceRoutes.users(currentWorkspace.slug)
+            ? workspaceRoutes.members(currentWorkspace.slug)
             : "/",
           icon: Users,
         },

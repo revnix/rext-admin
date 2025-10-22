@@ -81,14 +81,14 @@ export function WorkspaceSwitcher() {
       type ValidSegment =
         | "topics"
         | "content"
-        | "users"
+        | "members"
         | "knowledge"
         | "media"
         | "overview";
       const validSegments: readonly ValidSegment[] = [
         "topics",
         "content",
-        "users",
+        "members",
         "knowledge",
         "media",
         "overview",

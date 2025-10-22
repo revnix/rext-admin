@@ -20,7 +20,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 export default function WorkspaceUsersPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const searchParams = useSearchParams();
-  const currentTab = searchParams.get("tab") || "users";
+  const currentTab = searchParams.get("tab") || "members";
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
@@ -60,11 +60,11 @@ export default function WorkspaceUsersPage() {
       >
         <Tabs defaultValue={currentTab} className="space-y-6">
           <TabsList>
-            <TabsTrigger value="users">Members</TabsTrigger>
+            <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users" className="space-y-6">
+          <TabsContent value="members" className="space-y-6">
             {workspace && <WorkspaceMembersPanel workspace={workspace} />}
           </TabsContent>
 

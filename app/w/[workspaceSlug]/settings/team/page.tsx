@@ -35,7 +35,7 @@ export default function WorkspaceTeamSettings() {
         </CardHeader>
         <CardContent>
           <Button variant="outline" asChild>
-            <a href="../users">
+            <a href="../members">
               <Link className="h-4 w-4 mr-2" />
               Go to Members Page
             </a>
