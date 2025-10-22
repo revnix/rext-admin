@@ -17,9 +17,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WorkspaceBulkInviteDialog } from "@/components/workspace/workspace-bulk-invite-dialog";
 import { WorkspaceChangeRoleDialog } from "@/components/workspace/workspace-change-role-dialog";
-import { WorkspaceInviteDialog } from "@/components/workspace/workspace-invite-dialog";
+import { WorkspaceInviteMembersDialog } from "@/components/workspace/workspace-invite-members-dialog";
 import { WorkspaceRemoveMemberDialog } from "@/components/workspace/workspace-remove-member-dialog";
 import { apiClient } from "@/lib/api-client";
 import type { Column, RowAction } from "@/types/data-table";
@@ -62,7 +61,6 @@ export function WorkspaceMembersPanel({
   workspace,
 }: WorkspaceMembersPanelProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [showBulkInviteDialog, setShowBulkInviteDialog] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
     null,
   );
@@ -226,17 +224,9 @@ export function WorkspaceMembersPanel({
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setShowBulkInviteDialog(true)}
-      >
-        <Users className="h-4 w-4 mr-2" />
-        Bulk Invite
-      </Button>
       <Button size="sm" onClick={() => setShowInviteDialog(true)}>
         <UserPlus className="h-4 w-4 mr-2" />
-        Invite
+        Invite Members
       </Button>
     </div>
   );
@@ -282,19 +272,11 @@ export function WorkspaceMembersPanel({
         )}
       </CardContent>
 
-      {/* Invite Dialog */}
-      <WorkspaceInviteDialog
+      {/* Unified Invite Dialog */}
+      <WorkspaceInviteMembersDialog
         workspaceId={workspace.id}
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
-        onInvited={() => refetch()}
-      />
-
-      {/* Bulk Invite Dialog */}
-      <WorkspaceBulkInviteDialog
-        workspaceId={workspace.id}
-        open={showBulkInviteDialog}
-        onOpenChange={setShowBulkInviteDialog}
         onInvited={() => refetch()}
       />
 

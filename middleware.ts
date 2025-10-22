@@ -30,6 +30,7 @@ export default auth((request) => {
     "/forgot-password",
     "/reset-password",
     "/verify-email",
+    "/invitations/accept", // Allow unauthenticated users to view and accept invitations
   ];
 
   const isPublicRoute = publicRoutes.some((route) =>

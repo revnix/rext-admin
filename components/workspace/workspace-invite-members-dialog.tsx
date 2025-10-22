@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle, Mail, Send, Users } from "lucide-react";
+import { AlertCircle, CheckCircle, Mail, Plus, Send, X } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,6 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,21 +34,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 
-const bulkInviteFormSchema = z.object({
-  emails_text: z
-    .string()
-    .min(1, "Please enter at least one email address")
-    .max(5000, "Input too large"),
+const inviteFormSchema = z.object({
+  emails: z
+    .array(
+      z.object({
+        value: z.string().email("Please enter a valid email address"),
+      }),
+    )
+    .min(1, "Please add at least one email address"),
   role_id: z.string().min(1, "Please select a role"),
   expires_in_days: z.number().int().min(1).max(30),
 });
 
-type BulkInviteFormValues = z.infer<typeof bulkInviteFormSchema>;
+type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
-interface WorkspaceBulkInviteDialogProps {
+interface WorkspaceInviteMembersDialogProps {
   workspaceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,67 +64,91 @@ interface InvitationResult {
   error_message?: string;
 }
 
-export function WorkspaceBulkInviteDialog({
+export function WorkspaceInviteMembersDialog({
   workspaceId,
   open,
   onOpenChange,
   onInvited,
-}: WorkspaceBulkInviteDialogProps) {
+}: WorkspaceInviteMembersDialogProps) {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<InvitationResult[] | null>(null);
 
-  // Fetch available roles
+  // Fetch available roles for workspace member invitations
   const { data: rolesResponse, isLoading: isLoadingRoles } = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => apiClient.roles.list(),
+    queryKey: ["workspace-available-roles"],
+    queryFn: () => apiClient.workspaces.getAvailableRoles(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const roles = rolesResponse?.roles || [];
 
-  const form = useForm<BulkInviteFormValues>({
-    resolver: zodResolver(bulkInviteFormSchema),
+  const form = useForm<InviteFormValues>({
+    resolver: zodResolver(inviteFormSchema),
     defaultValues: {
-      emails_text: "",
+      emails: [{ value: "" }],
       role_id: "",
       expires_in_days: 7,
     },
   });
 
-  // Parse emails from text input
-  const parseEmails = (text: string): string[] => {
-    // Split by common delimiters: comma, semicolon, newline, space
-    const emails = text
-      .split(/[,;\n\s]+/)
-      .map((email) => email.trim())
-      .filter((email) => email.length > 0);
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "emails",
+  });
 
-    return [...new Set(emails)]; // Remove duplicates
-  };
+  // Single/Bulk invitation mutation
+  const createInvitationsMutation = useMutation({
+    mutationFn: async (data: InviteFormValues) => {
+      const emails = data.emails.map((e) => e.value.trim()).filter(Boolean);
 
-  // Create bulk invitations mutation
-  const createBulkInvitationsMutation = useMutation({
-    mutationFn: (data: BulkInviteFormValues) => {
-      const emails = parseEmails(data.emails_text);
-      return apiClient.invitations.createBulk(workspaceId, {
-        emails,
-        role_id: data.role_id,
-        expiry_days: data.expires_in_days,
-      });
+      if (emails.length === 1) {
+        // Single invitation
+        const result = await apiClient.invitations.create(workspaceId, {
+          email: emails[0],
+          role_id: data.role_id,
+          expiry_days: data.expires_in_days,
+        });
+        return {
+          successful: 1,
+          failed: 0,
+          results: [
+            {
+              invitation_id:
+                result.invitation?.id || `${emails[0]}-${Date.now()}`,
+              email: emails[0],
+              success: true,
+            },
+          ],
+        };
+      } else {
+        // Bulk invitation
+        return await apiClient.invitations.createBulk(workspaceId, {
+          emails,
+          role_id: data.role_id,
+          expiry_days: data.expires_in_days,
+        });
+      }
     },
     onSuccess: (data) => {
+      const emailCount = data.results.length;
+
       setResults(
         data.results.map((result) => ({
           id: result.invitation_id ?? `${result.email}-${Date.now()}`,
           email: result.email,
           status: result.success ? "pending" : "failed",
-          error_message: result.error_message,
+          error_message:
+            "error_message" in result ? result.error_message : undefined,
         })),
       );
 
       if (data.failed === 0) {
-        toast.success(`Successfully sent ${data.successful} invitations`);
+        toast.success(
+          emailCount === 1
+            ? "Invitation sent successfully"
+            : `Successfully sent ${data.successful} invitations`,
+        );
       } else {
         toast.warning(
           `Sent ${data.successful} invitations, ${data.failed} failed`,
@@ -138,9 +165,7 @@ export function WorkspaceBulkInviteDialog({
       if (data.failed === 0) {
         // Only close if all succeeded
         setTimeout(() => {
-          form.reset();
-          onOpenChange(false);
-          setResults(null);
+          handleClose();
         }, 2000);
       }
 
@@ -151,27 +176,11 @@ export function WorkspaceBulkInviteDialog({
     },
   });
 
-  const onSubmit = async (data: BulkInviteFormValues) => {
-    const emails = parseEmails(data.emails_text);
-
-    if (emails.length === 0) {
-      form.setError("emails_text", {
-        message: "No valid email addresses found",
-      });
-      return;
-    }
-
-    if (emails.length > 50) {
-      form.setError("emails_text", {
-        message: "Maximum 50 emails allowed",
-      });
-      return;
-    }
-
+  const onSubmit = async (data: InviteFormValues) => {
     setIsSubmitting(true);
     setResults(null);
     try {
-      await createBulkInvitationsMutation.mutateAsync(data);
+      await createInvitationsMutation.mutateAsync(data);
     } finally {
       setIsSubmitting(false);
     }
@@ -183,19 +192,32 @@ export function WorkspaceBulkInviteDialog({
     onOpenChange(false);
   };
 
-  const emailsPreview = parseEmails(form.watch("emails_text") || "");
+  const handleAddEmail = () => {
+    append({ value: "" });
+  };
+
+  const handleRemoveEmail = (index: number) => {
+    if (fields.length > 1) {
+      remove(index);
+    }
+  };
+
+  const validEmails = fields.filter((_field, index) => {
+    const value = form.watch(`emails.${index}.value`);
+    return value && value.trim().length > 0;
+  }).length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Bulk Invite Team Members
+            <Mail className="h-5 w-5" />
+            Invite Team Members
           </DialogTitle>
           <DialogDescription>
-            Invite multiple people at once by entering their email addresses.
-            Separate emails with commas, semicolons, spaces, or newlines.
+            Invite people to collaborate on this workspace. Add multiple emails
+            to send invitations in bulk.
           </DialogDescription>
         </DialogHeader>
 
@@ -251,37 +273,65 @@ export function WorkspaceBulkInviteDialog({
           // Show form
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Input */}
-              <FormField
-                control={form.control}
-                name="emails_text"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Addresses</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="user1@example.com, user2@example.com&#10;user3@example.com"
-                        className="min-h-[150px] font-mono text-sm"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Enter email addresses separated by commas, semicolons,
-                      spaces, or newlines. Max 50 emails per request.
-                    </FormDescription>
-                    <FormMessage />
-                    {emailsPreview.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium">
-                          {emailsPreview.length} email
-                          {emailsPreview.length !== 1 ? "s" : ""} detected
-                        </p>
-                      </div>
-                    )}
-                  </FormItem>
+              {/* Email Fields */}
+              <div className="space-y-3">
+                <FormLabel>Email Addresses</FormLabel>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                  {fields.map((field, index) => (
+                    <FormField
+                      key={field.id}
+                      control={form.control}
+                      name={`emails.${index}.value`}
+                      render={({ field: inputField }) => (
+                        <FormItem>
+                          <div className="flex items-start gap-2">
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="colleague@example.com"
+                                {...inputField}
+                                disabled={isSubmitting}
+                              />
+                            </FormControl>
+                            {fields.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveEmail(index)}
+                                disabled={isSubmitting}
+                                className="flex-shrink-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddEmail}
+                  disabled={isSubmitting || fields.length >= 50}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Another Email {fields.length >= 50 && "(Max 50)"}
+                </Button>
+
+                {validEmails > 1 && (
+                  <p className="text-sm text-muted-foreground">
+                    {validEmails} email{validEmails !== 1 ? "s" : ""} will be
+                    invited
+                  </p>
                 )}
-              />
+              </div>
 
               {/* Role Selection */}
               <FormField
@@ -320,7 +370,9 @@ export function WorkspaceBulkInviteDialog({
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      All invited members will receive this role
+                      {validEmails > 1
+                        ? "All invited members will receive this role"
+                        : "Choose the role for the invited member"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -353,21 +405,24 @@ export function WorkspaceBulkInviteDialog({
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      How long the invitation links will remain valid
+                      How long the invitation{" "}
+                      {validEmails > 1 ? "links" : "link"} will remain valid
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Alert>
-                <Mail className="h-4 w-4" />
-                <AlertDescription>
-                  Each person will receive a separate email invitation. Failed
-                  invitations (duplicates, invalid emails, existing members)
-                  will be reported after submission.
-                </AlertDescription>
-              </Alert>
+              {validEmails > 1 && (
+                <Alert>
+                  <Mail className="h-4 w-4" />
+                  <AlertDescription>
+                    Each person will receive a separate email invitation. Failed
+                    invitations (duplicates, invalid emails, existing members)
+                    will be reported after submission.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <DialogFooter>
                 <Button
@@ -384,7 +439,7 @@ export function WorkspaceBulkInviteDialog({
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      Send Invitations
+                      Send {validEmails > 1 ? "Invitations" : "Invitation"}
                     </>
                   )}
                 </Button>
