@@ -150,25 +150,6 @@ export function PrivacySettings() {
           containing all selected data. Processing may take a few minutes.
         </p>
       </div>
-
-      {/* Privacy Information */}
-      <div className="pt-6 border-t space-y-4">
-        <div>
-          <h3 className="text-lg font-medium">Privacy Information</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            How we handle your data
-          </p>
-        </div>
-
-        <div className="space-y-3 text-sm text-muted-foreground">
-          <p>• Your data is encrypted and stored securely</p>
-          <p>• You can request deletion of your account at any time</p>
-          <p>• We never share your personal information with third parties</p>
-          <p>
-            • Data exports include all information associated with your account
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

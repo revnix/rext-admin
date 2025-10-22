@@ -21,6 +21,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/security/activity-log";
+import { SecurityOverview } from "@/components/security/security-overview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -341,12 +342,18 @@ export default function SecuritySettingsPage() {
           </Card>
         ) : null)}
 
-      <Tabs defaultValue="sessions" className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="sessions">Active Sessions</TabsTrigger>
           <TabsTrigger value="history">Login History</TabsTrigger>
           <TabsTrigger value="activity">Activity Log</TabsTrigger>
         </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <SecurityOverview />
+        </TabsContent>
 
         {/* Active Sessions Tab */}
         <TabsContent value="sessions" className="space-y-4">

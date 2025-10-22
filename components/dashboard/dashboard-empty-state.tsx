@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CheckCircle2, Plus, Sparkles } from "lucide-react";
+import { Building2, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { OnboardingProgress } from "@/components/onboarding-progress";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 /**
  * Dashboard Empty State Component
@@ -35,13 +36,8 @@ import { analytics } from "@/lib/analytics";
 export function DashboardEmptyState() {
   const { user } = useAuthSession();
   const userName = user?.name?.split(" ")[0] || null; // Get first name only
-
-  const benefits = [
-    "Generate AI-powered content tailored to your brand",
-    "Organize topics and manage content workflows",
-    "Collaborate with team members in real-time",
-    "Track performance with analytics and insights",
-  ];
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  const hasWorkspaces = workspaceList.length > 0;
 
   // Track empty state view on mount
   useEffect(() => {
@@ -61,9 +57,9 @@ export function DashboardEmptyState() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="max-w-2xl w-full px-4">
-        <Card className="border-none shadow-lg">
+    <div className="flex items-center justify-center">
+      <div className="w-full px-4">
+        <Card>
           <CardHeader className="text-center space-y-4 pb-6">
             {/* Hero Icon */}
             <div className="flex justify-center">
@@ -93,42 +89,26 @@ export function DashboardEmptyState() {
             {/* Onboarding Progress */}
             <OnboardingProgress />
 
-            {/* Benefits List */}
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground text-center">
-                With your workspace, you'll be able to:
-              </p>
-              <div className="grid gap-3">
-                {benefits.map((benefit) => (
-                  <div
-                    key={benefit}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">{benefit}</span>
-                  </div>
-                ))}
+            {/* Call to Action - Only show if no workspace created yet */}
+            {!hasWorkspaces && (
+              <div className="space-y-3 pt-2">
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full text-base h-12"
+                  onClick={handleCTAClick}
+                >
+                  <Link href="/w/create">
+                    <Plus className="h-5 w-5 mr-2" />
+                    Create Your First Workspace
+                  </Link>
+                </Button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  Setting up your workspace takes less than 2 minutes
+                </p>
               </div>
-            </div>
-
-            {/* Call to Action */}
-            <div className="space-y-3 pt-2">
-              <Button
-                asChild
-                size="lg"
-                className="w-full text-base h-12"
-                onClick={handleCTAClick}
-              >
-                <Link href="/w/create">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Your First Workspace
-                </Link>
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Setting up your workspace takes less than 2 minutes
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

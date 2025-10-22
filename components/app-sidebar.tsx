@@ -39,7 +39,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
 
-  const navigationGroups: NavGroup[] = [
+  // Main navigation groups (top section)
+  const mainNavigationGroups: NavGroup[] = [
     {
       groupLabel: "",
       items: [
@@ -121,44 +122,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     //   ],
     // },
     {
-      groupLabel: "Personal",
-      items: [
-        {
-          title: "Account",
-          url: "/settings/account",
-          icon: User,
-        },
-        {
-          title: "Subscription",
-          url: "/subscription",
-          icon: CreditCard,
-          items: [
-            {
-              title: "Overview",
-              url: "/subscription",
-            },
-            {
-              title: "Billing",
-              url: "/billing",
-            },
-            {
-              title: "Usage",
-              url: "/usage",
-            },
-            {
-              title: "Licenses",
-              url: "/licenses",
-            },
-          ],
-        },
-        {
-          title: "Settings",
-          url: "/settings/general",
-          icon: Settings2,
-        },
-      ],
-    },
-    {
       groupLabel: "Administration",
       anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
       items: [
@@ -201,30 +164,80 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  // Personal navigation groups (sticky bottom section)
+  const personalNavigationGroups: NavGroup[] = [
+    {
+      groupLabel: "Personal",
+      items: [
+        {
+          title: "Account",
+          url: "/settings/account",
+          icon: User,
+        },
+        {
+          title: "Subscription",
+          url: "/subscription",
+          icon: CreditCard,
+          items: [
+            {
+              title: "Overview",
+              url: "/subscription",
+            },
+            {
+              title: "Billing",
+              url: "/billing",
+            },
+            {
+              title: "Usage",
+              url: "/usage",
+            },
+            {
+              title: "Licenses",
+              url: "/licenses",
+            },
+          ],
+        },
+        {
+          title: "Settings",
+          url: "/settings/general",
+          icon: Settings2,
+        },
+      ],
+    },
+  ];
+
   // Filter navigation based on user permissions
-  const filteredNavigation = useFilteredNavigation(navigationGroups);
+  const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
+  const filteredPersonalNavigation = useFilteredNavigation(
+    personalNavigationGroups,
+  );
 
   // Filter out workspace group if no workspaces exist
-  const displayNavigation = hasWorkspaces
-    ? filteredNavigation
-    : filteredNavigation.filter((group) => group.groupLabel !== "Workspace");
+  const displayMainNavigation = hasWorkspaces
+    ? filteredMainNavigation
+    : filteredMainNavigation.filter(
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
-      <SidebarContent>
-        {hasWorkspaces ? (
-          <NavMain groups={displayNavigation} />
-        ) : (
-          <>
-            <NavMain groups={displayNavigation} />
-            <EmptyWorkspacePrompt />
-          </>
-        )}
+      <SidebarContent className="flex flex-col">
+        {/* Main navigation area - grows to fill space */}
+        <div className="flex-1">
+          <NavMain groups={displayMainNavigation} />
+          {/* Empty workspace prompt appears after Dashboard link */}
+          {!hasWorkspaces && <EmptyWorkspacePrompt />}
+        </div>
+
+        {/* Personal section - sticky to bottom with separator */}
+        <div className="border-t border-sidebar-border pt-2 mt-auto">
+          <NavMain groups={filteredPersonalNavigation} />
+        </div>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border">
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

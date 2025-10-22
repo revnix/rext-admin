@@ -6,6 +6,7 @@ import { Loader2, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { ThemeSelector } from "@/components/settings/theme-selector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,11 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 
 const preferencesSchema = z.object({
-  theme: z.enum(["system", "light", "dark"]),
   date_format: z.enum(["iso", "us", "eu", "relative"]),
   time_format: z.enum(["24h", "12h"]),
   items_per_page: z.number().min(10).max(100),
@@ -50,12 +51,16 @@ export default function GeneralSettingsPage() {
     queryFn: () => apiClient.preferences.get(),
   });
 
-  // Initialize form
+  // Initialize form with default values
   const form = useForm<PreferencesFormValues>({
     resolver: zodResolver(preferencesSchema),
+    defaultValues: {
+      date_format: "iso",
+      time_format: "24h",
+      items_per_page: 25,
+    },
     values: preferences
       ? {
-          theme: preferences.theme as "system" | "light" | "dark",
           date_format: preferences.date_format as
             | "iso"
             | "us"
@@ -94,15 +99,15 @@ export default function GeneralSettingsPage() {
             General Settings
           </h2>
           <p className="text-muted-foreground mt-1">
-            Configure your personal preferences and display options
+            Configure your preferences, appearance, and display options
           </p>
         </div>
         <Card>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
             </div>
           </CardContent>
         </Card>
@@ -118,7 +123,7 @@ export default function GeneralSettingsPage() {
             General Settings
           </h2>
           <p className="text-muted-foreground mt-1">
-            Configure your personal preferences and display options
+            Configure your preferences, appearance, and display options
           </p>
         </div>
         <Alert variant="destructive">
@@ -135,13 +140,22 @@ export default function GeneralSettingsPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">General Settings</h2>
         <p className="text-muted-foreground mt-1">
-          Configure your personal preferences and display options
+          Configure your preferences, appearance, and display options
         </p>
       </div>
 
+      {/* Theme Selector - Not part of backend form, saves directly to localStorage/theme provider */}
+      <Card>
+        <CardContent className="p-6">
+          <ThemeSelector />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Backend Preferences Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Display Preferences */}
           <Card>
             <CardContent className="p-6">
               <div className="space-y-6 max-w-2xl">
@@ -154,39 +168,13 @@ export default function GeneralSettingsPage() {
 
                 <FormField
                   control={form.control}
-                  name="theme"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
-                      <FormLabel>Theme</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl className="col-span-2">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="system">System</SelectItem>
-                          <SelectItem value="light">Light</SelectItem>
-                          <SelectItem value="dark">Dark</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="col-span-3 col-start-2" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="date_format"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
                       <FormLabel>Date Format</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl className="col-span-2">
                           <SelectTrigger>
@@ -221,7 +209,7 @@ export default function GeneralSettingsPage() {
                       <FormLabel>Time Format</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl className="col-span-2">
                           <SelectTrigger>
@@ -248,7 +236,7 @@ export default function GeneralSettingsPage() {
                         onValueChange={(value) =>
                           field.onChange(parseInt(value, 10))
                         }
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString()}
                       >
                         <FormControl className="col-span-2">
                           <SelectTrigger>

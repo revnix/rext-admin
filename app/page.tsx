@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspaceStore } from "@/stores/workspace";
 
@@ -28,24 +29,30 @@ export default function DashboardPage() {
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
 
+  // Check if onboarding is complete
+  const { isComplete: isOnboardingComplete } = useOnboardingProgress();
+
   // Update page title and description
   usePageTitle(
     "Dashboard",
     "Overview of your content performance, automation flows, and key metrics. Monitor your AI-powered content strategy at a glance.",
   );
 
+  // Show onboarding until 100% complete
+  const shouldShowFullDashboard = hasWorkspaces && isOnboardingComplete;
+
   return (
     <AuthGuard>
       <PageLayout
         title="Dashboard"
         description={
-          hasWorkspaces
+          shouldShowFullDashboard
             ? "Welcome to your workspace. Monitor your progress, track key metrics, and manage your projects."
             : "Welcome to Wrext! Let's get you started."
         }
         breadcrumbs={breadcrumbs}
         actions={
-          hasWorkspaces ? (
+          shouldShowFullDashboard ? (
             <>
               <Button variant="outline">
                 <Settings className="h-4 w-4 mr-2" />
@@ -59,7 +66,7 @@ export default function DashboardPage() {
           ) : undefined
         }
       >
-        {hasWorkspaces ? (
+        {shouldShowFullDashboard ? (
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

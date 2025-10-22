@@ -32,6 +32,8 @@ export interface OnboardingMilestone {
   description: string;
   completed: boolean;
   weight: number; // Contribution to total progress (0-100)
+  optional?: boolean; // Optional steps can be skipped
+  skipped?: boolean; // Whether the user skipped this step
 }
 
 export interface OnboardingProgress {
@@ -74,6 +76,12 @@ export function useOnboardingProgress(): OnboardingProgress {
     const topicCount = topicsData?.count || 0;
     const contentCount = contentData?.count || 0;
 
+    // Get skipped steps from localStorage
+    const skippedSteps =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("onboarding_skipped") || "[]")
+        : [];
+
     return [
       {
         id: "account",
@@ -102,6 +110,24 @@ export function useOnboardingProgress(): OnboardingProgress {
         description: "Publish your first piece of content",
         completed: contentCount > 0,
         weight: 30,
+      },
+      {
+        id: "knowledge",
+        label: "Add Knowledge Base",
+        description: "Upload documents to your knowledge base",
+        completed: false, // TODO: Implement knowledge base check
+        weight: 0, // Optional, doesn't affect progress
+        optional: true,
+        skipped: skippedSteps.includes("knowledge"),
+      },
+      {
+        id: "members",
+        label: "Invite Team Members",
+        description: "Add collaborators to your workspace",
+        completed: false, // TODO: Implement team members check
+        weight: 0, // Optional, doesn't affect progress
+        optional: true,
+        skipped: skippedSteps.includes("members"),
       },
     ];
   }, [user, hasWorkspaces, topicsData?.count, contentData?.count]);

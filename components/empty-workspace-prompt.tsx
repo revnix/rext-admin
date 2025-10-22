@@ -4,13 +4,7 @@ import { Building2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
 
@@ -47,31 +41,31 @@ export function EmptyWorkspacePrompt() {
   };
 
   return (
-    <div className="px-2 py-4">
-      <Card className="border-dashed">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-center mb-2">
-            <div className="relative">
-              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-primary" />
-              </div>
-              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                <Plus className="h-3 w-3 text-primary-foreground" />
-              </div>
+    <div className="px-2 py-3">
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <Building2 className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">
+                No Workspace
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                Get started now
+              </p>
             </div>
           </div>
-          <CardTitle className="text-sm text-center">
-            No Workspace Yet
-          </CardTitle>
-          <CardDescription className="text-xs text-center">
-            Create a workspace to start managing your content, topics, and team
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pb-4">
-          <Button asChild className="w-full" size="sm" onClick={handleCTAClick}>
+          <Button
+            asChild
+            className="w-full h-8"
+            size="sm"
+            onClick={handleCTAClick}
+          >
             <Link href="/w/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Workspace
+              <Plus className="h-3 w-3 mr-1.5" />
+              <span className="text-xs">Create Workspace</span>
             </Link>
           </Button>
         </CardContent>
