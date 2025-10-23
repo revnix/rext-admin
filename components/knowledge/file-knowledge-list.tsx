@@ -156,6 +156,7 @@ export function FileKnowledgeList({
         : apiClient.knowledge.listFiles(workspaceId),
     staleTime: 30000,
     enabled: !!workspaceId,
+    select: (response) => response.file_knowledge, // Extract array from response
   });
 
   // Update store when data changes

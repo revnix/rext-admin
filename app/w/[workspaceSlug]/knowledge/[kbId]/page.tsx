@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Plus, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/components/workspace/workspace-knowledge-table";
 import { apiClient } from "@/lib/api-client";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
@@ -38,7 +40,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * - Back navigation to KB list
  */
 export default function KnowledgeBaseDetailPage() {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -62,21 +64,21 @@ export default function KnowledgeBaseDetailPage() {
   });
 
   // Fetch knowledge items (web, file, text) - filtered by KB on backend
-  const { data: webKnowledge = [], isLoading: isLoadingWeb } = useQuery({
+  const { data: webResponse, isLoading: isLoadingWeb } = useQuery({
     queryKey: ["web-knowledge", workspace?.id],
     queryFn: () => apiClient.knowledge.listWeb(workspace?.id || ""),
     enabled: !!workspace?.id,
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: fileKnowledge = [], isLoading: isLoadingFiles } = useQuery({
+  const { data: fileResponse, isLoading: isLoadingFiles } = useQuery({
     queryKey: ["file-knowledge", workspace?.id],
     queryFn: () => apiClient.knowledge.listFiles(workspace?.id || ""),
     enabled: !!workspace?.id,
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: textKnowledge = [], isLoading: isLoadingText } = useQuery({
+  const { data: textResponse, isLoading: isLoadingText } = useQuery({
     queryKey: ["text-knowledge", workspace?.id],
     queryFn: () => apiClient.knowledge.listText(workspace?.id || ""),
     enabled: !!workspace?.id,
@@ -86,6 +88,11 @@ export default function KnowledgeBaseDetailPage() {
   const kb = kbResponse?.knowledge_base;
   const isLoading =
     isLoadingKb || isLoadingWeb || isLoadingFiles || isLoadingText;
+
+  // Extract arrays from response objects
+  const webKnowledge = webResponse?.web_knowledge || [];
+  const fileKnowledge = fileResponse?.file_knowledge || [];
+  const textKnowledge = textResponse?.text_knowledge || [];
 
   // Filter items by knowledge_base_id
   const filteredWeb = webKnowledge.filter(
@@ -136,15 +143,26 @@ export default function KnowledgeBaseDetailPage() {
     handleRefresh();
   };
 
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/" },
+    {
+      label: workspace?.title || "...",
+      href: workspaceRoutes.root(workspaceSlug),
+    },
+    {
+      label: "Knowledge",
+      href: workspaceRoutes.knowledge(workspaceSlug),
+    },
+    { label: kb?.name || "Loading..." },
+  ];
+
   if (kbError) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </div>
+      <PageLayout
+        title="Knowledge Base Not Found"
+        description="The requested knowledge base could not be loaded"
+        breadcrumbs={breadcrumbs}
+      >
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
@@ -156,164 +174,165 @@ export default function KnowledgeBaseDetailPage() {
                 The requested knowledge base could not be loaded
               </p>
               <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Knowledge Bases
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <CanAccess
-      permission={KNOWLEDGE_PERMISSIONS.READ}
-      fallback={
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to view this knowledge base.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Required permission:{" "}
-              <code className="text-xs bg-muted px-1 rounded">
-                knowledge.read
-              </code>
-            </p>
-          </CardContent>
-        </Card>
+    <PageLayout
+      title={kb?.name || "Loading..."}
+      description={
+        kb?.description ||
+        "View and manage knowledge items in this knowledge base"
+      }
+      breadcrumbs={breadcrumbs}
+      actions={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </Button>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Knowledge
+          </Button>
+        </div>
       }
     >
-      <div className="space-y-6">
-        {/* Header with Back Button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {kb?.name || "Loading..."}
-              </h1>
-              {kb?.description && (
-                <p className="text-muted-foreground mt-2">{kb.description}</p>
-              )}
-            </div>
+      <CanAccess
+        permission={KNOWLEDGE_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view this knowledge base.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  knowledge.read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Items
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {knowledgeItems.length}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  In this knowledge base
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Websites
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{filteredWeb.length}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Web pages scraped
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Files & Text
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {filteredFiles.length + filteredText.length}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredFiles.length} files, {filteredText.length} text
+                  entries
+                </p>
+              </CardContent>
+            </Card>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+
+          {/* Knowledge Items Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Knowledge Items</CardTitle>
+              <CardDescription>
+                {knowledgeItems.length}{" "}
+                {knowledgeItems.length === 1 ? "item" : "items"} in{" "}
+                {kb?.name || "this knowledge base"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkspaceKnowledgeTable
+                items={knowledgeItems}
+                onEdit={setItemToEdit}
+                onDelete={setItemToDelete}
+                isLoading={isLoading}
               />
-            </Button>
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Knowledge
-            </Button>
-          </div>
+            </CardContent>
+          </Card>
+
+          {/* Dialogs */}
+          <WorkspaceAddKnowledgeDialog
+            workspaceId={workspace?.id || ""}
+            knowledgeBaseId={kbId}
+            open={showAddDialog}
+            onOpenChange={setShowAddDialog}
+            onAdded={handleAdded}
+          />
+
+          <WorkspaceEditKnowledgeDialog
+            workspaceId={workspace?.id || ""}
+            item={itemToEdit}
+            open={!!itemToEdit}
+            onOpenChange={(open) => !open && setItemToEdit(null)}
+            onEdited={handleEdited}
+          />
+
+          <WorkspaceDeleteKnowledgeDialog
+            workspaceId={workspace?.id || ""}
+            item={itemToDelete}
+            open={!!itemToDelete}
+            onOpenChange={(open) => !open && setItemToDelete(null)}
+            onDeleted={handleDeleted}
+          />
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Items
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{knowledgeItems.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                In this knowledge base
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Websites
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredWeb.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Web pages scraped
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Files & Text
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {filteredFiles.length + filteredText.length}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {filteredFiles.length} files, {filteredText.length} text entries
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Knowledge Items Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Knowledge Items</CardTitle>
-            <CardDescription>
-              {knowledgeItems.length}{" "}
-              {knowledgeItems.length === 1 ? "item" : "items"} in{" "}
-              {kb?.name || "this knowledge base"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WorkspaceKnowledgeTable
-              items={knowledgeItems}
-              onEdit={setItemToEdit}
-              onDelete={setItemToDelete}
-              isLoading={isLoading}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Dialogs */}
-        <WorkspaceAddKnowledgeDialog
-          workspaceId={workspace?.id || ""}
-          knowledgeBaseId={kbId}
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          onAdded={handleAdded}
-        />
-
-        <WorkspaceEditKnowledgeDialog
-          workspaceId={workspace?.id || ""}
-          item={itemToEdit}
-          open={!!itemToEdit}
-          onOpenChange={(open) => !open && setItemToEdit(null)}
-          onEdited={handleEdited}
-        />
-
-        <WorkspaceDeleteKnowledgeDialog
-          workspaceId={workspace?.id || ""}
-          item={itemToDelete}
-          open={!!itemToDelete}
-          onOpenChange={(open) => !open && setItemToDelete(null)}
-          onDeleted={handleDeleted}
-        />
-      </div>
-    </CanAccess>
+      </CanAccess>
+    </PageLayout>
   );
 }

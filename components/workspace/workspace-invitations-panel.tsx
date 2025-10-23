@@ -7,23 +7,17 @@ import {
   Mail,
   MailCheck,
   MailX,
-  MoreHorizontal,
   RefreshCw,
   Send,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
+import type { Column, RowAction } from "@/types/data-table";
 
 interface WorkspaceInvitationsPanelProps {
   workspaceId: string;
@@ -41,34 +35,17 @@ interface Invitation {
   role_name?: string;
 }
 
-function InvitationSkeleton() {
-  return (
-    <div className="flex items-center gap-4 p-4 border rounded-lg">
-      <Skeleton className="h-10 w-10 rounded-full" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-3 w-32" />
-      </div>
-      <Skeleton className="h-6 w-16" />
-      <Skeleton className="h-8 w-8" />
-    </div>
-  );
-}
-
-function EmptyInvitations() {
-  return (
-    <Card className="border-dashed">
-      <CardContent className="flex flex-col items-center justify-center py-12">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-          <Mail className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-lg font-medium mb-2">No pending invitations</h3>
-        <p className="text-muted-foreground text-center max-w-md">
-          Invitations you send will appear here
-        </p>
-      </CardContent>
-    </Card>
-  );
+interface InvitationData extends Record<string, unknown> {
+  id: string;
+  email: string;
+  role_name: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  expired: boolean;
+  expiration_text: string;
+  status_variant: "default" | "secondary" | "outline" | "destructive";
+  status_icon: React.ReactNode;
 }
 
 export function WorkspaceInvitationsPanel({
@@ -115,8 +92,6 @@ export function WorkspaceInvitationsPanel({
       month: "short",
       day: "numeric",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
@@ -176,128 +151,159 @@ export function WorkspaceInvitationsPanel({
     }
   };
 
+  // Transform data for DataTable
+  const tableData: InvitationData[] = invitations.map(
+    (invitation: Invitation) => {
+      const statusDisplay = getStatusDisplay(invitation);
+      const expired = isExpired(invitation.expires_at);
+
+      return {
+        id: invitation.id,
+        email: invitation.email,
+        role_name: invitation.role_name || "Unknown Role",
+        status: statusDisplay.label,
+        created_at: formatDate(invitation.created_at),
+        expires_at: formatDate(invitation.expires_at),
+        expired,
+        expiration_text: getTimeUntilExpiration(invitation.expires_at),
+        status_variant: statusDisplay.variant,
+        status_icon: statusDisplay.icon,
+      };
+    },
+  );
+
+  // Define columns
+  const columns: Column<InvitationData>[] = [
+    {
+      key: "email",
+      header: "Email",
+      width: "300px",
+      cell: (value, row) => (
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-medium truncate">{value as string}</p>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span className="truncate">{row.role_name}</span>
+            </div>
+          </div>
+        </div>
+      ),
+      searchable: true,
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "120px",
+      cell: (value, row) => (
+        <Badge
+          variant={
+            row.status_variant as
+              | "default"
+              | "secondary"
+              | "outline"
+              | "destructive"
+          }
+          className="text-xs flex items-center gap-1 w-fit"
+        >
+          {row.status_icon}
+          {value as string}
+        </Badge>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Sent",
+      width: "150px",
+      cell: (value) => (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Calendar className="h-3 w-3" />
+          <span>{value as string}</span>
+        </div>
+      ),
+    },
+    {
+      key: "expiration_text",
+      header: "Expiration",
+      width: "150px",
+      cell: (value, row) => (
+        <div
+          className={`flex items-center gap-1 text-sm ${
+            row.expired ? "text-destructive" : "text-muted-foreground"
+          }`}
+        >
+          <Clock className="h-3 w-3" />
+          <span>{value as string}</span>
+        </div>
+      ),
+    },
+  ];
+
+  // Define row actions
+  const rowActions: RowAction<InvitationData>[] = [
+    {
+      label: "Revoke",
+      icon: <XCircle className="h-4 w-4" />,
+      onClick: (row) => {
+        handleRevokeInvitation(row.id as string);
+      },
+      variant: "destructive",
+      requiresConfirmation: true,
+      confirmationTitle: "Revoke Invitation",
+      confirmationDescription:
+        "Are you sure you want to revoke this invitation? The recipient will no longer be able to use this link.",
+      disabled: (row) => {
+        const expired = row.expired as boolean;
+        const status = (row.status as string).toLowerCase();
+        return status !== "pending" || expired;
+      },
+    },
+  ];
+
+  const headerActions = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => refetch()}
+      disabled={isLoading}
+    >
+      <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+    </Button>
+  );
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
-              Sent Invitations
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {invitations.length}{" "}
-              {invitations.length === 1 ? "invitation" : "invitations"} sent
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-          </Button>
+          <CardTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5" />
+            Sent Invitations
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            <InvitationSkeleton />
-            <InvitationSkeleton />
-          </div>
-        ) : error ? (
-          <Card className="border-destructive">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <p className="text-destructive mb-4">
-                Failed to load invitations
-              </p>
-              <Button variant="outline" onClick={() => refetch()}>
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        ) : invitations.length === 0 ? (
-          <EmptyInvitations />
-        ) : (
-          <div className="space-y-3">
-            {invitations.map((invitation: Invitation) => {
-              const statusDisplay = getStatusDisplay(invitation);
-              const expired = isExpired(invitation.expires_at);
-              const canRevoke =
-                invitation.status.toLowerCase() === "pending" && !expired;
+        <DataTable
+          columns={columns}
+          data={tableData}
+          isLoading={isLoading}
+          rowActions={rowActions}
+          emptyTitle="No invitations sent"
+          emptyDescription="Invitations you send will appear here"
+          emptyIcon={<Mail className="h-12 w-12" />}
+          emptyActions={[]}
+          searchPlaceholder="Search by email..."
+          searchFields={["email"]}
+          actions={headerActions}
+          pageSize={10}
+          pageSizeOptions={[10, 25, 50]}
+          tableId="workspace-invitations"
+        />
 
-              return (
-                <div
-                  key={invitation.id}
-                  className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  {/* Icon */}
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-primary" />
-                    </div>
-                  </div>
-
-                  {/* Invitation Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{invitation.email}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <span>{invitation.role_name || "Unknown Role"}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Sent {formatDate(invitation.created_at)}
-                      </span>
-                      <span
-                        className={`flex items-center gap-1 ${
-                          expired ? "text-destructive" : ""
-                        }`}
-                      >
-                        <Clock className="h-3 w-3" />
-                        {getTimeUntilExpiration(invitation.expires_at)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <Badge
-                    variant={statusDisplay.variant}
-                    className="text-xs flex items-center gap-1"
-                  >
-                    {statusDisplay.icon}
-                    {statusDisplay.label}
-                  </Badge>
-
-                  {/* Actions Menu */}
-                  {canRevoke && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleRevokeInvitation(invitation.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Revoke Invitation
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              );
-            })}
+        {error && (
+          <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-md text-sm text-destructive">
+            Failed to load invitations. Please try again.
           </div>
         )}
       </CardContent>

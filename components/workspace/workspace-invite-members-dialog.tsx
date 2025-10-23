@@ -2,12 +2,24 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle, Mail, Plus, Send, X } from "lucide-react";
-import { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Mail,
+  Send,
+  Shield,
+  UserCheck,
+  Users,
+  UserX,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +38,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -34,16 +45,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { apiClient } from "@/lib/api-client";
 
 const inviteFormSchema = z.object({
-  emails: z
-    .array(
-      z.object({
-        value: z.string().email("Please enter a valid email address"),
-      }),
-    )
-    .min(1, "Please add at least one email address"),
   role_id: z.string().min(1, "Please select a role"),
   expires_in_days: z.number().int().min(1).max(30),
 });
@@ -64,6 +74,18 @@ interface InvitationResult {
   error_message?: string;
 }
 
+interface EmailChip {
+  email: string;
+  status: "valid" | "invalid" | "duplicate" | "existing" | "invited";
+  message?: string;
+}
+
+// Email validation helper
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 export function WorkspaceInviteMembersDialog({
   workspaceId,
   open,
@@ -73,34 +95,183 @@ export function WorkspaceInviteMembersDialog({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<InvitationResult[] | null>(null);
+  const [emailChips, setEmailChips] = useState<EmailChip[]>([]);
+  const [inputValue, setInputValue] = useState("");
 
-  // Fetch available roles for workspace member invitations
+  // Fetch available roles (without permissions to avoid permission errors)
   const { data: rolesResponse, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["workspace-available-roles"],
     queryFn: () => apiClient.workspaces.getAvailableRoles(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Fetch existing members
+  const { data: membersData } = useQuery({
+    queryKey: ["workspace-members", workspaceId],
+    queryFn: () => apiClient.members.list(workspaceId),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch pending invitations
+  const { data: invitationsData } = useQuery({
+    queryKey: ["sent-invitations", workspaceId],
+    queryFn: () => apiClient.invitations.listSent(workspaceId),
+    staleTime: 2 * 60 * 1000,
+  });
+
   const roles = rolesResponse?.roles || [];
+  const existingMembers = membersData?.members || [];
+  const pendingInvitations = invitationsData?.invitations || [];
+
+  // Find default role (Editor) or first non-system role
+  const defaultRoleId =
+    roles.find((r) => r.name.toLowerCase() === "editor")?.id ||
+    roles.find((r) => !r.is_system_role)?.id ||
+    "";
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
-      emails: [{ value: "" }],
       role_id: "",
       expires_in_days: 7,
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "emails",
-  });
+  // Set default role when roles are loaded (using useEffect to avoid infinite loops)
+  if (
+    defaultRoleId &&
+    !form.getValues("role_id") &&
+    roles.length > 0 &&
+    !isLoadingRoles
+  ) {
+    form.setValue("role_id", defaultRoleId, { shouldValidate: true });
+  }
+
+  // Validate email chip status
+  const validateEmailChip = (email: string): EmailChip => {
+    if (!isValidEmail(email)) {
+      return { email, status: "invalid", message: "Invalid email format" };
+    }
+
+    // Check if already a member
+    const isMember = existingMembers.some(
+      (m) => m.user.email.toLowerCase() === email.toLowerCase(),
+    );
+    if (isMember) {
+      return { email, status: "existing", message: "Already a member" };
+    }
+
+    // Check if already invited
+    const isInvited = pendingInvitations.some(
+      (i) =>
+        i.email.toLowerCase() === email.toLowerCase() &&
+        i.status.toLowerCase() === "pending",
+    );
+    if (isInvited) {
+      return { email, status: "invited", message: "Already invited" };
+    }
+
+    // Check for duplicates in current chips
+    const isDuplicate = emailChips.some(
+      (c) => c.email.toLowerCase() === email.toLowerCase(),
+    );
+    if (isDuplicate) {
+      return { email, status: "duplicate", message: "Duplicate email" };
+    }
+
+    return { email, status: "valid" };
+  };
+
+  // Handle paste multiple emails
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData("text");
+    const emails = pastedText
+      .split(/[\n,;]+/)
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+
+    if (emails.length > 1) {
+      e.preventDefault();
+      const newChips = emails.map((email) => validateEmailChip(email));
+      setEmailChips([...emailChips, ...newChips]);
+      setInputValue("");
+    }
+  };
+
+  // Add email chip
+  const addEmailChip = (email: string) => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return;
+
+    const chip = validateEmailChip(trimmedEmail);
+    setEmailChips([...emailChips, chip]);
+    setInputValue("");
+  };
+
+  // Remove email chip
+  const removeEmailChip = (index: number) => {
+    setEmailChips(emailChips.filter((_, i) => i !== index));
+  };
+
+  // Handle input key down
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && inputValue.trim()) {
+      e.preventDefault();
+      addEmailChip(inputValue);
+    } else if (e.key === "Backspace" && !inputValue && emailChips.length > 0) {
+      removeEmailChip(emailChips.length - 1);
+    }
+  };
+
+  // Get chip badge variant
+  const getChipBadgeVariant = (
+    status: EmailChip["status"],
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case "valid":
+        return "default";
+      case "invalid":
+      case "duplicate":
+        return "destructive";
+      case "existing":
+      case "invited":
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
+
+  // Get chip icon
+  const getChipIcon = (status: EmailChip["status"]) => {
+    switch (status) {
+      case "valid":
+        return <UserCheck className="h-3 w-3" />;
+      case "invalid":
+      case "duplicate":
+        return <UserX className="h-3 w-3" />;
+      case "existing":
+        return <Users className="h-3 w-3" />;
+      case "invited":
+        return <Mail className="h-3 w-3" />;
+      default:
+        return null;
+    }
+  };
+
+  // Valid emails count
+  const validEmails = useMemo(
+    () => emailChips.filter((c) => c.status === "valid"),
+    [emailChips],
+  );
 
   // Single/Bulk invitation mutation
   const createInvitationsMutation = useMutation({
     mutationFn: async (data: InviteFormValues) => {
-      const emails = data.emails.map((e) => e.value.trim()).filter(Boolean);
+      const emails = validEmails.map((c) => c.email);
+
+      if (emails.length === 0) {
+        throw new Error("No valid emails to invite");
+      }
 
       if (emails.length === 1) {
         // Single invitation
@@ -177,6 +348,16 @@ export function WorkspaceInviteMembersDialog({
   });
 
   const onSubmit = async (data: InviteFormValues) => {
+    if (validEmails.length === 0) {
+      toast.error("Please add at least one valid email address");
+      return;
+    }
+
+    if (!data.role_id) {
+      toast.error("Please select a role");
+      return;
+    }
+
     setIsSubmitting(true);
     setResults(null);
     try {
@@ -189,27 +370,14 @@ export function WorkspaceInviteMembersDialog({
   const handleClose = () => {
     form.reset();
     setResults(null);
+    setEmailChips([]);
+    setInputValue("");
     onOpenChange(false);
   };
 
-  const handleAddEmail = () => {
-    append({ value: "" });
-  };
-
-  const handleRemoveEmail = (index: number) => {
-    if (fields.length > 1) {
-      remove(index);
-    }
-  };
-
-  const validEmails = fields.filter((_field, index) => {
-    const value = form.watch(`emails.${index}.value`);
-    return value && value.trim().length > 0;
-  }).length;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
@@ -217,7 +385,7 @@ export function WorkspaceInviteMembersDialog({
           </DialogTitle>
           <DialogDescription>
             Invite people to collaborate on this workspace. Add multiple emails
-            to send invitations in bulk.
+            by pasting comma or newline-separated addresses.
           </DialogDescription>
         </DialogHeader>
 
@@ -273,63 +441,92 @@ export function WorkspaceInviteMembersDialog({
           // Show form
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Fields */}
+              {/* Email Chips Input */}
               <div className="space-y-3">
                 <FormLabel>Email Addresses</FormLabel>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                  {fields.map((field, index) => (
-                    <FormField
-                      key={field.id}
-                      control={form.control}
-                      name={`emails.${index}.value`}
-                      render={({ field: inputField }) => (
-                        <FormItem>
-                          <div className="flex items-start gap-2">
-                            <FormControl>
-                              <Input
-                                type="email"
-                                placeholder="colleague@example.com"
-                                {...inputField}
-                                disabled={isSubmitting}
-                              />
-                            </FormControl>
-                            {fields.length > 1 && (
+                <div className="min-h-[100px] p-3 border-2 rounded-md focus-within:border-primary">
+                  <div className="flex flex-wrap gap-2">
+                    {/* Email chips */}
+                    {emailChips.map((chip, index) => (
+                      <TooltipProvider key={`${chip.email}-${index}`}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant={getChipBadgeVariant(chip.status)}
+                              className="px-2 py-1 text-sm flex items-center gap-1"
+                            >
+                              {getChipIcon(chip.status)}
+                              <span>{chip.email}</span>
                               <Button
                                 type="button"
                                 variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveEmail(index)}
-                                disabled={isSubmitting}
-                                className="flex-shrink-0"
+                                size="sm"
+                                className="h-auto p-0 ml-1 hover:bg-transparent"
+                                onClick={() => removeEmailChip(index)}
                               >
-                                <X className="h-4 w-4" />
+                                <X className="w-3 h-3" />
                               </Button>
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                            </Badge>
+                          </TooltipTrigger>
+                          {chip.message && (
+                            <TooltipContent>
+                              <p>{chip.message}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))}
+
+                    {/* Input field */}
+                    <input
+                      type="email"
+                      value={inputValue}
+                      onChange={(e) => {
+                        setInputValue(e.target.value);
+                      }}
+                      onKeyDown={handleInputKeyDown}
+                      onPaste={handlePaste}
+                      onBlur={() => {
+                        if (inputValue.trim()) {
+                          addEmailChip(inputValue);
+                        }
+                      }}
+                      placeholder={
+                        emailChips.length === 0
+                          ? "colleague@example.com or paste multiple emails"
+                          : "Add another email..."
+                      }
+                      disabled={isSubmitting || emailChips.length >= 50}
+                      className="border-0 p-0 h-auto text-sm focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 min-w-[200px] bg-transparent outline-none"
+                      autoComplete="email"
+                      name="email-input"
                     />
-                  ))}
+                  </div>
                 </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddEmail}
-                  disabled={isSubmitting || fields.length >= 50}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Another Email {fields.length >= 50 && "(Max 50)"}
-                </Button>
-
-                {validEmails > 1 && (
-                  <p className="text-sm text-muted-foreground">
-                    {validEmails} email{validEmails !== 1 ? "s" : ""} will be
-                    invited
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <p>
+                    Press Enter to add • Paste comma/newline-separated emails •
+                    Max 50
                   </p>
+                  <p>
+                    {validEmails.length} valid{" "}
+                    {emailChips.length > validEmails.length && (
+                      <span className="text-amber-600">
+                        • {emailChips.length - validEmails.length} invalid
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {emailChips.some((c) => c.status !== "valid") && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Some emails are invalid or already invited. Only valid
+                      emails will be sent invitations.
+                    </AlertDescription>
+                  </Alert>
                 )}
               </div>
 
@@ -347,7 +544,11 @@ export function WorkspaceInviteMembersDialog({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
+                          <SelectValue placeholder="Select a role">
+                            {field.value &&
+                              roles.find((r) => r.id === field.value)
+                                ?.display_name}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -356,9 +557,20 @@ export function WorkspaceInviteMembersDialog({
                           .map((role) => (
                             <SelectItem key={role.id} value={role.id}>
                               <div className="flex flex-col">
-                                <span className="font-medium">
-                                  {role.display_name}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">
+                                    {role.display_name}
+                                  </span>
+                                  {role.is_system_role && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs gap-1"
+                                    >
+                                      <Shield className="h-3 w-3" />
+                                      System
+                                    </Badge>
+                                  )}
+                                </div>
                                 {role.description && (
                                   <span className="text-xs text-muted-foreground">
                                     {role.description}
@@ -370,7 +582,7 @@ export function WorkspaceInviteMembersDialog({
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {validEmails > 1
+                      {validEmails.length > 1
                         ? "All invited members will receive this role"
                         : "Choose the role for the invited member"}
                     </FormDescription>
@@ -406,14 +618,15 @@ export function WorkspaceInviteMembersDialog({
                     </Select>
                     <FormDescription>
                       How long the invitation{" "}
-                      {validEmails > 1 ? "links" : "link"} will remain valid
+                      {validEmails.length > 1 ? "links" : "link"} will remain
+                      valid
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {validEmails > 1 && (
+              {validEmails.length > 1 && (
                 <Alert>
                   <Mail className="h-4 w-4" />
                   <AlertDescription>
@@ -424,7 +637,7 @@ export function WorkspaceInviteMembersDialog({
                 </Alert>
               )}
 
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -433,13 +646,19 @@ export function WorkspaceInviteMembersDialog({
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || validEmails.length === 0}
+                >
                   {isSubmitting ? (
                     "Sending..."
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      Send {validEmails > 1 ? "Invitations" : "Invitation"}
+                      Send{" "}
+                      {validEmails.length > 1
+                        ? `${validEmails.length} Invitations`
+                        : "Invitation"}
                     </>
                   )}
                 </Button>

@@ -171,6 +171,7 @@ export function TextKnowledgeList({
         : apiClient.knowledge.listText(workspaceId),
     staleTime: 30000,
     enabled: !!workspaceId,
+    select: (response) => response.text_knowledge, // Extract array from response
   });
 
   // Update store when data changes

@@ -66,13 +66,42 @@ export class ApiClient {
         const parsedError = errorData as {
           error?: { message?: string; code?: string };
           message?: string;
+          detail?:
+            | Array<{
+                type: string;
+                loc: string[];
+                msg: string;
+                input?: unknown;
+                ctx?: unknown;
+              }>
+            | string;
         };
+
+        // Handle FastAPI validation errors
+        let errorMessage: string;
+        if (parsedError?.detail) {
+          if (Array.isArray(parsedError.detail)) {
+            // Extract validation error messages
+            errorMessage = parsedError.detail
+              .map((err) => {
+                const field = err.loc[err.loc.length - 1];
+                return `${field}: ${err.msg}`;
+              })
+              .join(", ");
+          } else {
+            // String detail message
+            errorMessage = parsedError.detail;
+          }
+        } else {
+          errorMessage =
+            parsedError?.error?.message ||
+            parsedError?.message ||
+            `Request failed: ${response.statusText}`;
+        }
 
         throw new ApiError(
           response.status,
-          parsedError?.error?.message ||
-            parsedError?.message ||
-            `Request failed: ${response.statusText}`,
+          errorMessage,
           parsedError?.error?.code,
           errorData,
         );

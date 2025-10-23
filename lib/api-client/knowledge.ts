@@ -111,12 +111,12 @@ export function createKnowledgeNamespace(client: ApiClient) {
      * List web knowledge for workspace
      */
     listWeb: async (workspaceId: string) => {
-      return client.request<WebKnowledge[]>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/web`,
-        {
-          method: "GET",
-        },
-      );
+      return client.request<{
+        web_knowledge: WebKnowledge[];
+        total_count: number;
+      }>(`/api/v1/workspaces/${workspaceId}/knowledge/web`, {
+        method: "GET",
+      });
     },
 
     /**
@@ -191,12 +191,12 @@ export function createKnowledgeNamespace(client: ApiClient) {
      * List file knowledge for workspace
      */
     listFiles: async (workspaceId: string) => {
-      return client.request<FileKnowledge[]>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/files`,
-        {
-          method: "GET",
-        },
-      );
+      return client.request<{
+        file_knowledge: FileKnowledge[];
+        total_count: number;
+      }>(`/api/v1/workspaces/${workspaceId}/knowledge/files`, {
+        method: "GET",
+      });
     },
 
     /**
@@ -254,12 +254,12 @@ export function createKnowledgeNamespace(client: ApiClient) {
      * List text knowledge for workspace
      */
     listText: async (workspaceId: string) => {
-      return client.request<TextKnowledge[]>(
-        `/api/v1/workspaces/${workspaceId}/knowledge/text`,
-        {
-          method: "GET",
-        },
-      );
+      return client.request<{
+        text_knowledge: TextKnowledge[];
+        total_count: number;
+      }>(`/api/v1/workspaces/${workspaceId}/knowledge/text`, {
+        method: "GET",
+      });
     },
 
     /**

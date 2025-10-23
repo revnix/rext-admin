@@ -99,6 +99,7 @@ export function UnifiedKnowledgeList({
     queryFn: () => apiClient.knowledge.listWeb(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
+    select: (response) => response.web_knowledge, // Extract array from response
   });
 
   const fileQuery = useQuery({
@@ -106,6 +107,7 @@ export function UnifiedKnowledgeList({
     queryFn: () => apiClient.knowledge.listFiles(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
+    select: (response) => response.file_knowledge, // Extract array from response
   });
 
   const textQuery = useQuery({
@@ -113,6 +115,7 @@ export function UnifiedKnowledgeList({
     queryFn: () => apiClient.knowledge.listText(workspaceId),
     staleTime: 2 * 60 * 1000,
     enabled: workspaceId.length > 0,
+    select: (response) => response.text_knowledge, // Extract array from response
   });
 
   // Sync web query state to store

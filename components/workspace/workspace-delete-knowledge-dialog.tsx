@@ -114,13 +114,13 @@ export function WorkspaceDeleteKnowledgeDialog({
             </div>
           </div>
           <AlertDialogDescription className="space-y-3">
-            <p>
+            <div>
               Are you sure you want to delete <strong>{item.name}</strong>?
-            </p>
-            <p>{getDescription()}</p>
-            <p className="text-destructive font-medium">
+            </div>
+            <div>{getDescription()}</div>
+            <div className="text-destructive font-medium">
               This action cannot be undone.
-            </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

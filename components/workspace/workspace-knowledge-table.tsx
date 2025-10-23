@@ -1,31 +1,10 @@
 "use client";
 
 import { format } from "date-fns";
-import {
-  FileText,
-  Globe,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Type,
-} from "lucide-react";
+import { FileText, Globe, Pencil, Trash2, Type } from "lucide-react";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import type { Column, RowAction } from "@/types/data-table";
 import type {
   FileKnowledge,
   TextKnowledge,
@@ -58,12 +37,14 @@ interface WorkspaceKnowledgeTableProps {
  * Workspace Knowledge Table Component
  *
  * Displays all knowledge items (web, file, text) in a unified table format.
+ * Uses the DataTable component for consistency with topics and knowledge bases tables.
  *
  * Features:
  * - Type-based icons and badges
  * - Status indicators
  * - Created/updated timestamps
  * - Edit and delete actions
+ * - Search and pagination
  * - Empty and loading states
  */
 export function WorkspaceKnowledgeTable({
@@ -122,112 +103,115 @@ export function WorkspaceKnowledgeTable({
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="rounded-md border">
-        <div className="p-12 text-center text-muted-foreground">
-          Loading knowledge items...
+  // Define columns for DataTable
+  const columns: Column<KnowledgeItem>[] = [
+    {
+      key: "name",
+      header: "Name",
+      width: "350px",
+      cell: (value, row) => (
+        <div className="flex items-center gap-2">
+          {getTypeIcon(row.type)}
+          <div className="flex flex-col min-w-0">
+            <span className="font-medium truncate">{value as string}</span>
+            {row.description && (
+              <span className="text-xs text-muted-foreground truncate max-w-md">
+                {row.description}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    );
-  }
+      ),
+      searchable: true,
+    },
+    {
+      key: "type",
+      header: "Type",
+      width: "120px",
+      cell: (value) => getTypeBadge(value as string),
+      searchable: true,
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "120px",
+      cell: (value) => getStatusBadge(value as string | undefined),
+      searchable: false,
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      width: "140px",
+      cell: (value) => {
+        if (!value)
+          return <span className="text-sm text-muted-foreground">-</span>;
+        const date = new Date(value as string);
+        return (
+          <span className="text-sm text-muted-foreground">
+            {Number.isNaN(date.getTime()) ? "-" : format(date, "MMM d, yyyy")}
+          </span>
+        );
+      },
+      searchable: false,
+    },
+    {
+      key: "updated_at",
+      header: "Last Updated",
+      width: "140px",
+      cell: (value) => {
+        if (!value)
+          return <span className="text-sm text-muted-foreground">-</span>;
+        const date = new Date(value as string);
+        return (
+          <span className="text-sm text-muted-foreground">
+            {Number.isNaN(date.getTime()) ? "-" : format(date, "MMM d, yyyy")}
+          </span>
+        );
+      },
+      searchable: false,
+    },
+  ];
+
+  // Define row actions - similar to topics table
+  const rowActions: RowAction<KnowledgeItem>[] = [
+    {
+      label: "Edit",
+      icon: <Pencil className="h-4 w-4" />,
+      onClick: (row) => onEdit(row),
+      tooltip: "Edit this knowledge item",
+      variant: "default" as const,
+      showLabel: true,
+      primary: true,
+    },
+    {
+      label: "Delete",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: (row) => onDelete(row),
+      variant: "destructive" as const,
+      requiresConfirmation: true,
+      confirmationTitle: "Delete Knowledge Item",
+      confirmationDescription:
+        "Are you sure you want to delete this knowledge item? This action cannot be undone.",
+      tooltip: "Delete this knowledge item permanently",
+      showLabel: true,
+    },
+  ];
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Last Updated</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={6}
-                className="text-center text-muted-foreground h-32"
-              >
-                No knowledge items found
-              </TableCell>
-            </TableRow>
-          ) : (
-            items.map((item) => (
-              <TableRow key={`${item.type}-${item.id}`}>
-                {/* Name */}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {getTypeIcon(item.type)}
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.name}</span>
-                      {item.description && (
-                        <span className="text-xs text-muted-foreground truncate max-w-md">
-                          {item.description}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
-
-                {/* Type */}
-                <TableCell>{getTypeBadge(item.type)}</TableCell>
-
-                {/* Status */}
-                <TableCell>{getStatusBadge(item.status)}</TableCell>
-
-                {/* Created */}
-                <TableCell>
-                  <span className="text-sm text-muted-foreground">
-                    {format(new Date(item.created_at), "MMM d, yyyy")}
-                  </span>
-                </TableCell>
-
-                {/* Last Updated */}
-                <TableCell>
-                  {item.updated_at ? (
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(item.updated_at), "MMM d, yyyy")}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-
-                {/* Actions */}
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(item)}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => onDelete(item)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={items}
+      isLoading={isLoading}
+      rowActions={rowActions}
+      emptyTitle="No knowledge items yet"
+      emptyDescription="Add your first knowledge item to this knowledge base"
+      emptyIcon={<FileText className="h-12 w-12" />}
+      searchPlaceholder="Search knowledge items..."
+      searchFields={["name", "type", "description"]}
+      pageSize={15}
+      pageSizeOptions={[10, 15, 25, 50]}
+      tableId="workspace-knowledge-items"
+    />
   );
 }
 

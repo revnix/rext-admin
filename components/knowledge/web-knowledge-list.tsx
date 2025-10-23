@@ -184,6 +184,7 @@ export function WebKnowledgeList({
     queryFn: () => apiClient.knowledge.listWeb(workspaceId),
     staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!workspaceId,
+    select: (response) => response.web_knowledge, // Extract array from response
   });
 
   // Update store when API data changes

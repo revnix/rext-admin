@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Pencil, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
@@ -121,7 +121,7 @@ export function WorkspaceKnowledgeBasesTable({
     },
   ];
 
-  // Define row actions
+  // Define row actions - similar to topics table
   const rowActions: RowAction<KnowledgeBaseData>[] = [
     {
       label: "View Items",
@@ -130,23 +130,36 @@ export function WorkspaceKnowledgeBasesTable({
         const kb = knowledgeBases.find((k) => k.id === row.id);
         if (kb) onView(kb);
       },
+      tooltip: "View items in this knowledge base",
+      variant: "default" as const,
+      showLabel: true,
       primary: true,
     },
     {
-      label: "Edit Details",
+      label: "Edit",
+      icon: <Pencil className="h-4 w-4" />,
       onClick: (row) => {
         const kb = knowledgeBases.find((k) => k.id === row.id);
         if (kb) onEdit(kb);
       },
+      tooltip: "Edit knowledge base details",
+      showLabel: true,
     },
     {
       label: "Delete",
+      icon: <Trash2 className="h-4 w-4" />,
       onClick: (row) => {
         const kb = knowledgeBases.find((k) => k.id === row.id);
         if (kb) onDelete(kb);
       },
-      variant: "destructive",
+      variant: "destructive" as const,
+      requiresConfirmation: true,
+      confirmationTitle: "Delete Knowledge Base",
+      confirmationDescription:
+        "Are you sure you want to delete this knowledge base? This action cannot be undone.",
+      tooltip: "Delete this knowledge base permanently",
       disabled: (row) => row.type === "default",
+      showLabel: true,
     },
   ];
 
