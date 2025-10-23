@@ -110,14 +110,9 @@ export function SignupForm({
       });
 
       if (result?.ok) {
-        // If invitation signup, redirect to workspace
-        if (isInvitationSignup && responseData.data?.workspace?.slug) {
-          const workspaceSlug = responseData.data.workspace.slug;
-          router.push(`/w/${workspaceSlug}`);
-        } else {
-          // Regular signup, go to dashboard
-          router.push("/");
-        }
+        // Both invitation signup and regular signup go to dashboard
+        // The dashboard will show the appropriate workspace content
+        router.push("/");
 
         // Clean up session storage
         sessionStorage.removeItem("pending_invitation_token");
