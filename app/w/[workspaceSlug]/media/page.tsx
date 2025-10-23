@@ -32,7 +32,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -311,74 +310,6 @@ export default function WorkspaceMediaPage() {
         }
       >
         <div className="space-y-6">
-          {/* Stats Cards */}
-          {usage && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Files
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{usage.total_files}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Across all types
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Storage Used
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatFileSize(usage.total_size)}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {usage.usage_percentage.toFixed(1)}% of{" "}
-                    {formatFileSize(usage.storage_limit)}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Images
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {usage.by_type.image.count}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatFileSize(usage.by_type.image.size)}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Documents
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {usage.by_type.document.count}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatFileSize(usage.by_type.document.size)}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           {/* Storage Quota Warning */}
           {usage && usage.usage_percentage >= 80 && (
             <Alert
@@ -410,55 +341,10 @@ export default function WorkspaceMediaPage() {
             </Alert>
           )}
 
-          {/* Storage Progress Bar */}
-          {usage && (
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">
-                    Storage Usage
-                  </CardTitle>
-                  <span className="text-sm text-muted-foreground">
-                    {formatFileSize(usage.total_size)} /{" "}
-                    {formatFileSize(usage.storage_limit)}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Progress
-                  value={usage.usage_percentage}
-                  className={`h-2 ${
-                    usage.usage_percentage >= 95
-                      ? "[&>div]:bg-destructive"
-                      : usage.usage_percentage >= 80
-                        ? "[&>div]:bg-yellow-500"
-                        : ""
-                  }`}
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  {usage.usage_percentage.toFixed(1)}% used
-                  {usage.usage_percentage < 100 && (
-                    <>
-                      {" "}
-                      • {formatFileSize(usage.storage_limit - usage.total_size)}{" "}
-                      remaining
-                    </>
-                  )}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Filters */}
           <Card>
             <CardHeader>
               <CardTitle>Media Files</CardTitle>
-              <CardDescription>
-                {filteredMedia.length}{" "}
-                {filteredMedia.length === 1 ? "file" : "files"}
-                {selectedFolder !== null &&
-                  ` in ${selectedFolder || "Uncategorized"}`}
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-6">
