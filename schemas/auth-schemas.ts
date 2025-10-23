@@ -68,8 +68,43 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+// Signup with invitation schema (merges with base signup)
+export const signupWithInvitationSchema = z
+  .object({
+    firstName: z
+      .string()
+      .min(1, "First name is required")
+      .max(50, "First name must be 50 characters or less")
+      .trim(),
+    lastName: z
+      .string()
+      .min(1, "Last name is required")
+      .max(50, "Last name must be 50 characters or less")
+      .trim(),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .max(30, "Username must be 30 characters or less")
+      .regex(
+        /^[a-zA-Z0-9_-]+$/,
+        "Username can only contain letters, numbers, underscores, and hyphens",
+      )
+      .trim(),
+    email: z.string().email("Invalid email address").trim().toLowerCase(),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+    invitationToken: z.string().min(1, "Invitation token is required"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
 // Type exports
 export type SignupFormData = z.infer<typeof signupFormSchema>;
+export type SignupWithInvitationData = z.infer<
+  typeof signupWithInvitationSchema
+>;
 export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export type LoginData = z.infer<typeof loginSchema>;

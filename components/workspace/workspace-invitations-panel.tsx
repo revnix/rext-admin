@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
   Clock,
+  Copy,
   Mail,
   MailCheck,
   MailX,
@@ -84,6 +85,36 @@ export function WorkspaceInvitationsPanel({
 
   const handleRevokeInvitation = async (invitationId: string) => {
     await revokeInvitationMutation.mutateAsync(invitationId);
+  };
+
+  // Resend invitation mutation
+  const resendInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) =>
+      apiClient.invitations.resend(workspaceId, invitationId),
+    onSuccess: () => {
+      toast.success("Invitation resent successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["sent-invitations", workspaceId],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to resend invitation: ${error.message}`);
+    },
+  });
+
+  const handleResendInvitation = async (invitationId: string) => {
+    await resendInvitationMutation.mutateAsync(invitationId);
+  };
+
+  // Copy invitation link
+  const handleCopyInvitationLink = (invitation: Invitation) => {
+    // Note: We don't have the token in the list response
+    // For security, tokens are not returned in list endpoints
+    // We'll copy the email instead and show a helpful message
+    navigator.clipboard.writeText(invitation.email);
+    toast.info(
+      "Email copied! Use 'Resend' to send a new invitation with a fresh link.",
+    );
   };
 
   // Format date
@@ -243,6 +274,32 @@ export function WorkspaceInvitationsPanel({
 
   // Define row actions
   const rowActions: RowAction<InvitationData>[] = [
+    {
+      label: "Resend",
+      icon: <Send className="h-4 w-4" />,
+      onClick: (row) => {
+        handleResendInvitation(row.id as string);
+      },
+      variant: "default",
+      disabled: (row) => {
+        const expired = row.expired as boolean;
+        const status = (row.status as string).toLowerCase();
+        return status !== "pending" || expired;
+      },
+    },
+    {
+      label: "Copy Email",
+      icon: <Copy className="h-4 w-4" />,
+      onClick: (row) => {
+        const invitation = invitations.find(
+          (inv: Invitation) => inv.id === row.id,
+        );
+        if (invitation) {
+          handleCopyInvitationLink(invitation);
+        }
+      },
+      variant: "default",
+    },
     {
       label: "Revoke",
       icon: <XCircle className="h-4 w-4" />,

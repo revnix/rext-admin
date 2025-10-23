@@ -68,6 +68,60 @@ export interface AnalyticsApiResponse<T> {
   message?: string;
 }
 
+// Invitation Analytics Types
+export interface InvitationAnalyticsSummary {
+  total_invitations: number;
+  accepted: number;
+  declined: number;
+  expired: number;
+  pending: number;
+  acceptance_rate: number;
+  decline_rate: number;
+  expiry_rate: number;
+  avg_time_to_acceptance_hours: number;
+}
+
+export interface TopInviter {
+  user_id: string;
+  name: string;
+  email: string;
+  invitation_count: number;
+}
+
+export interface PopularRole {
+  role_id: string;
+  name: string;
+  invitation_count: number;
+}
+
+export interface DailyTrend {
+  date: string;
+  total: number;
+  accepted: number;
+  pending: number;
+}
+
+export interface WorkspaceStat {
+  workspace_id: string;
+  name: string;
+  total_invitations: number;
+  accepted_invitations: number;
+  acceptance_rate: number;
+}
+
+export interface InvitationAnalyticsData {
+  summary: InvitationAnalyticsSummary;
+  top_inviters: TopInviter[];
+  popular_roles: PopularRole[];
+  daily_trend: DailyTrend[];
+  workspace_stats: WorkspaceStat[];
+  period: {
+    start_date: string;
+    end_date: string;
+    days: number;
+  };
+}
+
 // ============================================================================
 // ADMIN ANALYTICS NAMESPACE
 // ============================================================================
@@ -129,6 +183,31 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
       const response = await client.request<
         AnalyticsApiResponse<TrialConversionMetrics>
       >("/api/v1/admin/subscriptions/stats/trial-conversion", {
+        method: "GET",
+      });
+      return response.data;
+    },
+
+    /**
+     * Get invitation analytics
+     * Includes acceptance rates, top inviters, popular roles, daily trends
+     *
+     * @param days - Number of days to analyze (default 30)
+     * @param workspaceId - Optional workspace filter
+     * @requires audit.read permission
+     */
+    getInvitationAnalytics: async (
+      days = 30,
+      workspaceId?: string,
+    ): Promise<InvitationAnalyticsData> => {
+      const params = new URLSearchParams({ days: days.toString() });
+      if (workspaceId) {
+        params.append("workspace_id", workspaceId);
+      }
+
+      const response = await client.request<
+        AnalyticsApiResponse<InvitationAnalyticsData>
+      >(`/api/v1/admin/analytics/invitations/analytics?${params.toString()}`, {
         method: "GET",
       });
       return response.data;

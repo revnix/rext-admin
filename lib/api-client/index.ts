@@ -18,6 +18,7 @@ import {
   type EmailTemplate,
 } from "./admin";
 import { createAdminAnalyticsNamespace } from "./admin-analytics";
+import { createAdminInvitationsNamespace } from "./admin-invitations";
 import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
 
@@ -81,6 +82,7 @@ function createApiClient() {
     adminAnalytics: createAdminAnalyticsNamespace(client),
     adminWebhooks: createAdminWebhooksNamespace(client),
     adminRefunds: createAdminRefundsNamespace(client),
+    adminInvitations: createAdminInvitationsNamespace(client),
 
     // Settings namespaces
     notifications: createNotificationsNamespace(client),

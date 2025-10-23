@@ -32,6 +32,10 @@ type AnalyticsEvent =
   | "onboarding_milestone_skipped"
   | "onboarding_dismissed"
   | "onboarding_reset"
+  // Empty State Events
+  | "dashboard_empty_state_view"
+  | "workspace_empty_state_view"
+  | "workspace_empty_state_action_click"
   // General Events
   | "page_view"
   | "button_click"

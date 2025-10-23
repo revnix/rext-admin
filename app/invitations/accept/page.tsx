@@ -24,7 +24,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { storeInvitationContext } from "@/hooks/use-invited-user-onboarding";
 import { apiClient } from "@/lib/api-client";
+import { storeWelcomeData } from "@/providers/workspace-welcome-provider";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
@@ -51,11 +53,48 @@ export default function AcceptInvitationPage() {
   const invitation = invitationData?.invitation;
 
   const handleAcceptInvitation = useCallback(async () => {
-    if (!token) return;
+    if (!token || !invitation) return;
 
     setIsAccepting(true);
     try {
       const result = await apiClient.invitations.accept(token);
+
+      const workspaceData = {
+        id: result.workspace_id,
+        title: result.workspace_name,
+        name: result.workspace_name,
+        slug: result.workspace_slug,
+        url: "",
+        created_at: new Date().toISOString(),
+      };
+
+      const inviterName =
+        typeof invitation.invited_by === "string"
+          ? invitation.invited_by
+          : invitation.invited_by?.display_name ||
+            `${invitation.invited_by?.first_name || ""} ${invitation.invited_by?.last_name || ""}`.trim() ||
+            invitation.invited_by?.username ||
+            "Workspace Admin";
+
+      const roleName =
+        invitation.role?.display_name || invitation.role?.name || "Member";
+
+      // Store welcome modal data (shows first)
+      storeWelcomeData({
+        workspace: workspaceData,
+        inviterName,
+        roleName,
+      });
+
+      // Store invitation context for onboarding (shows after welcome modal)
+      storeInvitationContext({
+        workspace: workspaceData,
+        inviterName,
+        roleName,
+        roleDescription: undefined,
+        acceptedAt: new Date().toISOString(),
+      });
+
       toast.success(`Welcome to ${result.workspace_name}!`);
       // Redirect to workspace
       router.push(`/w/${result.workspace_slug}`);
@@ -64,7 +103,7 @@ export default function AcceptInvitationPage() {
       toast.error(`Failed to accept invitation: ${err.message}`);
       setIsAccepting(false);
     }
-  }, [token, router]);
+  }, [token, invitation, router]);
 
   // Auto-accept if user is logged in
   useEffect(() => {
@@ -86,7 +125,7 @@ export default function AcceptInvitationPage() {
   // Handle signup redirect
   const handleSignup = () => {
     router.push(
-      `/signup?email=${encodeURIComponent(invitation?.email || "")}&callbackUrl=/invitations/accept?token=${token}`,
+      `/signup?invitation_token=${token}&email=${encodeURIComponent(invitation?.email || "")}`,
     );
   };
 
@@ -174,7 +213,7 @@ export default function AcceptInvitationPage() {
               </AlertTitle>
               <AlertDescription>
                 {invitation.status === "accepted"
-                  ? `You are already a member of ${invitation.workspace_name}. You can access the workspace directly.`
+                  ? `You are already a member of ${invitation.workspace?.title || invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
                   : `This invitation expired on ${new Date(invitation.expires_at).toLocaleDateString()}. Please request a new invitation from your workspace administrator.`}
               </AlertDescription>
             </Alert>
@@ -245,7 +284,9 @@ export default function AcceptInvitationPage() {
                   Workspace
                 </p>
                 <p className="text-base font-semibold">
-                  {invitation.workspace_name}
+                  {invitation.workspace?.title ||
+                    invitation.workspace?.name ||
+                    "Workspace"}
                 </p>
               </div>
             </div>
@@ -257,7 +298,9 @@ export default function AcceptInvitationPage() {
                   Role
                 </p>
                 <p className="text-base font-semibold">
-                  {invitation.role_name}
+                  {invitation.role?.display_name ||
+                    invitation.role?.name ||
+                    "Member"}
                 </p>
               </div>
             </div>
@@ -269,7 +312,12 @@ export default function AcceptInvitationPage() {
                   Invited by
                 </p>
                 <p className="text-base font-semibold">
-                  {invitation.invited_by}
+                  {typeof invitation.invited_by === "string"
+                    ? invitation.invited_by
+                    : invitation.invited_by?.display_name ||
+                      `${invitation.invited_by?.first_name || ""} ${invitation.invited_by?.last_name || ""}`.trim() ||
+                      invitation.invited_by?.username ||
+                      "Workspace Admin"}
                 </p>
               </div>
             </div>
