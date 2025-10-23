@@ -100,13 +100,27 @@ export function createInvitationsNamespace(client: ApiClient) {
         invitation: {
           id: string;
           email: string;
-          workspace_id: string;
-          workspace_name: string;
-          role_id: string;
-          role_name: string;
-          invited_by: string;
+          workspace: {
+            id: string;
+            title: string;
+            name: string;
+            slug: string;
+          };
+          role: {
+            id: string;
+            name: string;
+            display_name: string;
+          };
+          invited_by: {
+            id: string;
+            username: string;
+            first_name: string;
+            last_name: string;
+            display_name?: string;
+          };
           expires_at: string;
           status: string;
+          token: string;
         };
       }>(`/api/v1/invitations/${token}/validate`, {
         method: "GET",
@@ -233,6 +247,34 @@ export function createInvitationsNamespace(client: ApiClient) {
     },
 
     /**
+     * Get pending invitations for the current user
+     */
+    pending: async () => {
+      return client.request<{
+        invitations: Array<{
+          id: string;
+          email: string;
+          workspace_id: string;
+          workspace_name: string;
+          role_id: string;
+          role_name: string;
+          invited_by:
+            | string
+            | {
+                name: string;
+                email: string;
+              };
+          expires_at: string;
+          status: string;
+          created_at: string;
+        }>;
+        count: number;
+      }>("/api/v1/user/invitations/pending", {
+        method: "GET",
+      });
+    },
+
+    /**
      * Revoke invitation
      */
     revoke: async (
@@ -248,6 +290,29 @@ export function createInvitationsNamespace(client: ApiClient) {
         headers: reason ? { "Content-Type": "application/json" } : undefined,
         body: reason ? JSON.stringify({ reason }) : undefined,
       });
+    },
+
+    /**
+     * Resend invitation
+     */
+    resend: async (workspaceId: string, invitationId: string) => {
+      return client.request<{
+        invitation: {
+          id: string;
+          email: string;
+          workspace_id: string;
+          role_id: string;
+          status: string;
+          expires_at: string;
+          created_at: string;
+          role_name?: string;
+        };
+      }>(
+        `/api/v1/workspaces/${workspaceId}/invitations/${invitationId}/resend`,
+        {
+          method: "POST",
+        },
+      );
     },
   };
 }

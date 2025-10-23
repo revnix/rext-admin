@@ -4,11 +4,13 @@ import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/auth-provider";
+import { InvitedUserOnboardingProvider } from "@/providers/invited-user-onboarding-provider";
 import { OnboardingProvider } from "@/providers/onboarding-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
+import { WorkspaceWelcomeProvider } from "@/providers/workspace-welcome-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,7 +85,12 @@ export default function RootLayout({
             <SSEProvider>
               <QueryProvider>
                 <TooltipProvider>
-                  <OnboardingProvider>{children}</OnboardingProvider>
+                  {/* Welcome modal shows first, then invited user onboarding, then regular onboarding */}
+                  <WorkspaceWelcomeProvider>
+                    <InvitedUserOnboardingProvider>
+                      <OnboardingProvider>{children}</OnboardingProvider>
+                    </InvitedUserOnboardingProvider>
+                  </WorkspaceWelcomeProvider>
                 </TooltipProvider>
               </QueryProvider>
             </SSEProvider>

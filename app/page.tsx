@@ -1,7 +1,8 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth-guard";
-import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
+import { EnhancedDashboardEmptyState } from "@/components/dashboard/enhanced-dashboard-empty-state";
+import { PendingInvitationsCard } from "@/components/dashboard/pending-invitations-card";
 import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
 import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
 import { WorkspaceInfoCard } from "@/components/dashboard/workspace-info-card";
@@ -81,7 +82,7 @@ export default function DashboardPage() {
           description="Welcome to Wrext! Let's get you started."
           breadcrumbs={breadcrumbs}
         >
-          <DashboardEmptyState />
+          <EnhancedDashboardEmptyState />
         </PageLayout>
       </AuthGuard>
     );
@@ -114,6 +115,7 @@ export default function DashboardPage() {
 
           {/* Sidebar - Always visible */}
           <aside className="space-y-6">
+            <PendingInvitationsCard />
             <WorkspaceInfoCard workspace={currentWorkspace} />
             <QuickActionsCard workspace={currentWorkspace} />
           </aside>

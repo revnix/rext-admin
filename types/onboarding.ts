@@ -16,6 +16,11 @@ export interface OnboardingStatus {
   user_goal: string | null;
   heard_from: string | null;
 
+  // Invitation tracking (for invited users)
+  via_invitation?: boolean;
+  invitation_workspace_id?: string;
+  invitation_accepted_at?: string;
+
   // Timestamps
   started_at: string;
   completed_at: string | null;

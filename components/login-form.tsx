@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +32,15 @@ export function LoginForm({
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Invitation validation hook
+  const {
+    invitationToken,
+    invitation,
+    isLoading: isLoadingInvitation,
+    isValid: hasValidInvitation,
+    error: invitationError,
+  } = useInvitationValidation();
 
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
@@ -98,9 +109,15 @@ export function LoginForm({
         return;
       }
 
-      // Redirect to the original page or default to dashboard
-      const redirect = searchParams.get("redirect") || "/";
-      router.push(redirect);
+      // Handle redirect based on invitation presence
+      if (hasValidInvitation && invitationToken) {
+        // Redirect to invitation acceptance page
+        router.push(`/accept-invitation?token=${invitationToken}`);
+      } else {
+        // Redirect to the original page or default to dashboard
+        const redirect = searchParams.get("redirect") || "/";
+        router.push(redirect);
+      }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       setError("An error occurred. Please try again.");
@@ -111,11 +128,44 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Invitation Banner */}
+      {hasValidInvitation && invitation && (
+        <InvitationBanner
+          workspaceName={invitation.workspace.title}
+          workspaceSlug={invitation.workspace.slug}
+          inviterName={`${invitation.invited_by.first_name} ${invitation.invited_by.last_name}`}
+          roleName={invitation.role.display_name}
+          inviteeEmail={invitation.email}
+          isLoading={isLoadingInvitation}
+        />
+      )}
+
+      {/* Show invitation error if validation failed */}
+      {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg">
+          <p className="font-medium">Invitation Link Issue</p>
+          <p className="text-sm mt-1">
+            {invitationError ||
+              "This invitation link is invalid or has expired."}
+          </p>
+          <p className="text-sm mt-2">
+            You can still log in, but you won't be automatically added to the
+            workspace.
+          </p>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>
+            {hasValidInvitation
+              ? "Log in to join workspace"
+              : "Login to your account"}
+          </CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            {hasValidInvitation
+              ? "Log in to accept your workspace invitation"
+              : "Enter your email below to login to your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -174,14 +224,31 @@ export function LoginForm({
                 </label>
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || isLoadingInvitation}
+                >
+                  {isLoading
+                    ? hasValidInvitation
+                      ? "Logging in & joining workspace..."
+                      : "Logging in..."
+                    : hasValidInvitation
+                      ? "Login & Join Workspace"
+                      : "Login"}
                 </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="underline underline-offset-4">
+              <Link
+                href={
+                  invitationToken
+                    ? `/signup?token=${invitationToken}`
+                    : "/signup"
+                }
+                className="underline underline-offset-4"
+              >
                 Sign up
               </Link>
             </div>
