@@ -36,7 +36,11 @@ export function TopicActions({
     <div className="flex items-center gap-2">
       {/* Approve - First and primary when not approved */}
       {!isApproved && (
-        <CanAccess permission={TOPIC_PERMISSIONS.UPDATE}>
+        <CanAccess
+          permission={TOPIC_PERMISSIONS.UPDATE}
+          showLockedTooltip
+          showLockIcon
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -59,7 +63,11 @@ export function TopicActions({
 
       {/* Write Content - Only show when approved */}
       {isApproved && (
-        <CanAccess permission={TOPIC_PERMISSIONS.READ}>
+        <CanAccess
+          permission={TOPIC_PERMISSIONS.READ}
+          showLockedTooltip
+          showLockIcon
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={onUse} className="gap-2">
@@ -75,7 +83,11 @@ export function TopicActions({
       )}
 
       {/* Remove Topic */}
-      <CanAccess permission={TOPIC_PERMISSIONS.DELETE}>
+      <CanAccess
+        permission={TOPIC_PERMISSIONS.DELETE}
+        showLockedTooltip
+        showLockIcon
+      >
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

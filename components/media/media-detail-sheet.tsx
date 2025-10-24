@@ -263,7 +263,10 @@ export function MediaDetailSheet({
             <div className="flex flex-wrap gap-2">
               {!isEditing ? (
                 <>
-                  <CanAccess permission={MEDIA_PERMISSIONS.UPDATE}>
+                  <CanAccess
+                    permission={MEDIA_PERMISSIONS.UPDATE}
+                    showLockedTooltip
+                  >
                     <Button
                       variant="outline"
                       size="sm"
@@ -291,7 +294,11 @@ export function MediaDetailSheet({
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
-                  <CanAccess permission={MEDIA_PERMISSIONS.DELETE}>
+                  <CanAccess
+                    permission={MEDIA_PERMISSIONS.DELETE}
+                    showLockedTooltip
+                    showLockIcon
+                  >
                     <Button
                       variant="destructive"
                       size="sm"
@@ -305,7 +312,10 @@ export function MediaDetailSheet({
                 </>
               ) : (
                 <>
-                  <CanAccess permission={MEDIA_PERMISSIONS.UPDATE}>
+                  <CanAccess
+                    permission={MEDIA_PERMISSIONS.UPDATE}
+                    showLockedTooltip
+                  >
                     <Button
                       variant="default"
                       size="sm"

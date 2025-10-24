@@ -232,7 +232,12 @@ export function WorkspaceMembersPanel({
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <CanAccess permission={MEMBER_PERMISSIONS.INVITE}>
+      <CanAccess
+        permission={MEMBER_PERMISSIONS.INVITE}
+        showLockedTooltip
+        tooltipMessage="Only workspace admins can invite members"
+        showLockIcon
+      >
         <Button size="sm" onClick={() => setShowInviteDialog(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Members
