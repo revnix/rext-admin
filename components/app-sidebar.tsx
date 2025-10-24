@@ -48,6 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Dashboard",
           url: "/",
           icon: LayoutDashboard,
+          // No permission required - available to all authenticated users
         },
       ],
     },
@@ -60,6 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.topics(currentWorkspace.slug)
             : "/",
           icon: Library,
+          permission: "topic.read",
         },
         {
           title: "Content",
@@ -67,6 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.content(currentWorkspace.slug)
             : "/",
           icon: FileText,
+          permission: "content.read",
         },
         {
           title: "Knowledge",
@@ -74,6 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.knowledge(currentWorkspace.slug)
             : "/",
           icon: Brain,
+          permission: "knowledge.read",
         },
         {
           title: "Media",
@@ -81,6 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.media(currentWorkspace.slug)
             : "/",
           icon: Image,
+          permission: "media.read",
         },
         {
           title: "Members",
@@ -88,6 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.members(currentWorkspace.slug)
             : "/",
           icon: Users,
+          permission: "member.read",
         },
       ],
     },
@@ -125,27 +131,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Account",
           url: "/settings",
           icon: User,
+          // No permission required - users can view their own account
         },
         {
           title: "Subscription",
           url: "/subscription",
           icon: CreditCard,
+          permission: "subscription.read", // Owner-only (workspace owner or super_admin)
           items: [
             {
               title: "Overview",
               url: "/subscription",
+              permission: "subscription.read",
             },
             {
               title: "Billing",
               url: "/billing",
+              permission: "billing.read",
             },
             {
               title: "Usage",
               url: "/usage",
+              permission: "usage.read",
             },
             {
               title: "Licenses",
               url: "/licenses",
+              permission: "license.view",
             },
           ],
         },
@@ -153,6 +165,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Settings",
           url: "/settings",
           icon: Settings2,
+          // No permission required - users can access their own settings
         },
       ],
     },
