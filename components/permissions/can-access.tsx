@@ -1,6 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
+import { isValidElement } from "react";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import {
   useAllPermissions,
   useAllWorkspacePermissions,
@@ -53,6 +55,22 @@ interface CanAccessProps {
    * Invert the check (show content if user DOESN'T have permission/role)
    */
   invert?: boolean;
+
+  /**
+   * Show a tooltip with permission info when access is denied
+   * instead of hiding the element entirely. The element will be disabled.
+   */
+  showLockedTooltip?: boolean;
+
+  /**
+   * Custom tooltip message when locked
+   */
+  tooltipMessage?: string;
+
+  /**
+   * Show lock icon next to disabled element
+   */
+  showLockIcon?: boolean;
 }
 
 /**
@@ -81,6 +99,23 @@ interface CanAccessProps {
  * <CanAccess role="admin" invert>
  *   <p>You are not an admin</p>
  * </CanAccess>
+ *
+ * @example
+ * // Show disabled button with tooltip when locked
+ * <CanAccess permission="content.delete" showLockedTooltip>
+ *   <Button>Delete</Button>
+ * </CanAccess>
+ *
+ * @example
+ * // Show custom tooltip message
+ * <CanAccess
+ *   permission="workspace.manage_billing"
+ *   showLockedTooltip
+ *   tooltipMessage="Upgrade to Pro to access billing"
+ *   showLockIcon
+ * >
+ *   <Button>Manage Billing</Button>
+ * </CanAccess>
  */
 export function CanAccess({
   permission,
@@ -91,6 +126,9 @@ export function CanAccess({
   children,
   fallback = null,
   invert = false,
+  showLockedTooltip = false,
+  tooltipMessage,
+  showLockIcon = false,
 }: CanAccessProps) {
   // Get workspace context (if in workspace route)
   const workspaceContext = useWorkspaceOptional();
@@ -153,6 +191,24 @@ export function CanAccess({
   // Render based on access
   if (hasAccess) {
     return <>{children}</>;
+  }
+
+  // If showLockedTooltip is enabled and no custom fallback, show tooltip
+  if (showLockedTooltip && !fallback) {
+    // Only wrap if children is a single valid React element
+    if (isValidElement(children)) {
+      return (
+        <LockedFeatureTooltip
+          permission={permission || anyPermission?.[0]}
+          message={tooltipMessage}
+          showIcon={showLockIcon}
+        >
+          {children as ReactElement}
+        </LockedFeatureTooltip>
+      );
+    }
+    // If children is not a single element, fallback to hiding it
+    return null;
   }
 
   return <>{fallback}</>;
