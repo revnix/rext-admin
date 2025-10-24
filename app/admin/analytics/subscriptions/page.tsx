@@ -25,6 +25,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -318,16 +319,17 @@ export default function SubscriptionAnalyticsPage() {
   const growthTrend = growthRate >= 0 ? "up" : "down";
 
   return (
-    <PageLayout
-      title="Subscription Analytics"
-      description="Monitor key metrics and insights"
-      breadcrumbs={breadcrumbs}
-      actions={
-        <Button onClick={handleRefresh} disabled={refreshing}>
-          {refreshing ? "Refreshing..." : "Refresh Data"}
-        </Button>
-      }
-    >
+    <AdminGuard superAdminOnly={true}>
+      <PageLayout
+        title="Subscription Analytics"
+        description="Monitor key metrics and insights"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <Button onClick={handleRefresh} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh Data"}
+          </Button>
+        }
+      >
       {/* Overview Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <MetricCard
@@ -556,5 +558,6 @@ export default function SubscriptionAnalyticsPage() {
         </CardContent>
       </Card>
     </PageLayout>
+    </AdminGuard>
   );
 }

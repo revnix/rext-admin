@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -89,11 +90,12 @@ export default function InvitationAnalyticsPage() {
   const { summary, top_inviters, popular_roles, workspace_stats } = analytics;
 
   return (
-    <PageLayout
-      title="Invitation Analytics"
-      description="Track and analyze invitation metrics across the platform"
-      breadcrumbs={breadcrumbs}
-    >
+    <AdminGuard>
+      <PageLayout
+        title="Invitation Analytics"
+        description="Track and analyze invitation metrics across the platform"
+        breadcrumbs={breadcrumbs}
+      >
       <div className="space-y-6">
         {/* Period Selector */}
         <div className="flex items-center justify-between">
@@ -382,5 +384,6 @@ export default function InvitationAnalyticsPage() {
         )}
       </div>
     </PageLayout>
+    </AdminGuard>
   );
 }

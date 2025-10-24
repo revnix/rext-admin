@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -408,10 +409,11 @@ export default function RefundManagementPage() {
   ];
 
   return (
-    <PageLayout
-      title="Refund Management"
-      description="View refund history and process new refunds"
-      breadcrumbs={breadcrumbs}
+    <AdminGuard superAdminOnly={true}>
+      <PageLayout
+        title="Refund Management"
+        description="View refund history and process new refunds"
+        breadcrumbs={breadcrumbs}
       actions={
         <>
           <Button
@@ -595,5 +597,6 @@ export default function RefundManagementPage() {
         onSuccess={fetchRefunds}
       />
     </PageLayout>
+    </AdminGuard>
   );
 }

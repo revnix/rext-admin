@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -380,10 +381,11 @@ export default function WebhookMonitoringPage() {
   ];
 
   return (
-    <PageLayout
-      title="Webhook Monitoring"
-      description="Monitor and manage webhook events from LemonSqueezy"
-      breadcrumbs={breadcrumbs}
+    <AdminGuard superAdminOnly={true}>
+      <PageLayout
+        title="Webhook Monitoring"
+        description="Monitor and manage webhook events from LemonSqueezy"
+        breadcrumbs={breadcrumbs}
       actions={
         <Button
           onClick={() => {
@@ -577,5 +579,6 @@ export default function WebhookMonitoringPage() {
         </AlertDialogContent>
       </AlertDialog>
     </PageLayout>
+    </AdminGuard>
   );
 }

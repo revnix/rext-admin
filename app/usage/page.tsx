@@ -1,9 +1,11 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { UsageLimitWarning } from "@/components/subscription/usage-limit-warning";
 import { UsageMetrics } from "@/components/subscription/usage-metrics";
 import { Button } from "@/components/ui/button";
@@ -16,11 +18,14 @@ import {
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
+const USAGE_READ = "usage.read";
+
 /**
  * Usage Dashboard Page
  *
  * Displays detailed usage statistics and limits for the current subscription.
- * Shows workspaces, topics, knowledge items, and API usage.
+ *
+ * **Permission Required:** `usage.read` (Admin+)
  *
  * Features:
  * - Real-time usage statistics
@@ -31,6 +36,7 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
  */
 
 export default function UsagePage() {
+  const router = useRouter();
   const { subscription, usage, fetchUsage, fetchSubscription, isLoading } =
     useSubscriptionStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -57,10 +63,45 @@ export default function UsagePage() {
   const breadcrumbs = [{ label: "Dashboard", href: "/" }, { label: "Usage" }];
 
   return (
-    <PageLayout
-      title="Usage Dashboard"
-      description="Monitor your usage and plan limits"
-      breadcrumbs={breadcrumbs}
+    <PermissionGuard
+      permission={USAGE_READ}
+      fallback={
+        <PageLayout
+          title="Access Denied"
+          description="You don't have permission to view usage statistics"
+          breadcrumbs={breadcrumbs}
+        >
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Usage Statistics Access Restricted
+              </CardTitle>
+              <CardDescription>
+                Only workspace admins and owners can view usage statistics.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Usage statistics contain workspace resource consumption details.
+              </p>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-xs font-mono">
+                  Required permission: <span className="font-semibold">usage.read</span>
+                </p>
+              </div>
+              <Button onClick={() => router.push("/")} variant="outline">
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </PageLayout>
+      }
+    >
+      <PageLayout
+        title="Usage Dashboard"
+        description="Monitor your usage and plan limits"
+        breadcrumbs={breadcrumbs}
       actions={
         <Button
           onClick={handleRefresh}
@@ -198,5 +239,6 @@ export default function UsagePage() {
         </Card>
       )}
     </PageLayout>
+    </PermissionGuard>
   );
 }

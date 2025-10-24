@@ -10,7 +10,10 @@ import {
   Webhook,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
+import { PermissionGuard } from "@/components/permission/permission-guard";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,9 +21,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ROLES } from "@/lib/permissions";
 import { usePermissionUser } from "@/hooks/use-permission";
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const user = usePermissionUser();
 
   const breadcrumbs = [{ label: "Admin" }];
@@ -71,11 +76,43 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <PageLayout
-      title="Administration"
-      description="Manage users, roles, and system settings"
-      breadcrumbs={breadcrumbs}
+    <PermissionGuard
+      permission={["audit.read", "user.read", "role.read", "system.manage"]}
+      requireAll={false}
+      fallback={
+        <PageLayout title="Access Denied" description="Admin access required" breadcrumbs={breadcrumbs}>
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Admin Access Required
+              </CardTitle>
+              <CardDescription>
+                Only administrators can access this area.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                The admin dashboard requires administrator permissions.
+              </p>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-xs font-mono">
+                  Required: Admin or Super Admin role
+                </p>
+              </div>
+              <Button onClick={() => router.push("/")} variant="outline">
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </PageLayout>
+      }
     >
+      <PageLayout
+        title="Administration"
+        description="Manage users, roles, and system settings"
+        breadcrumbs={breadcrumbs}
+      >
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {adminCards.map((card) => {
@@ -165,5 +202,6 @@ export default function AdminDashboardPage() {
         )}
       </div>
     </PageLayout>
+    </PermissionGuard>
   );
 }

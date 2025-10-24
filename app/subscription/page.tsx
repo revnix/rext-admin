@@ -5,6 +5,7 @@ import {
   FileText,
   Loader2,
   Settings,
+  Shield,
   TrendingUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Footer } from "@/components/layout/footer";
 import { PageLayout } from "@/components/page-layout";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { CancelSubscriptionModal } from "@/components/subscription/cancel-subscription-modal";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/security-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
+import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import {
   type SubscriptionPlan,
@@ -42,6 +45,8 @@ import {
  * Subscription Management Dashboard Page
  *
  * Central hub for managing subscription, viewing usage, and accessing billing.
+ *
+ * **Permission Required:** `subscription.read` (Owner-only)
  *
  * Features:
  * - Current subscription status and details
@@ -145,11 +150,46 @@ export default function SubscriptionDashboardPage() {
     subscription.status === SubscriptionStatus.TRIAL;
 
   return (
-    <PageLayout
-      title="Subscription Management"
-      description="Manage your subscription, view usage, and access billing"
-      breadcrumbs={breadcrumbs}
+    <PermissionGuard
+      permission={SUBSCRIPTION_PERMISSIONS.READ}
+      fallback={
+        <PageLayout
+          title="Access Denied"
+          description="You don't have permission to view subscription management"
+          breadcrumbs={breadcrumbs}
+        >
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Subscription Access Restricted
+              </CardTitle>
+              <CardDescription>
+                Only workspace owners can access subscription management.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                This page contains sensitive billing and subscription information that is restricted to workspace owners only.
+              </p>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-xs font-mono">
+                  Required permission: <span className="font-semibold">subscription.read</span>
+                </p>
+              </div>
+              <Button onClick={() => router.push("/")} variant="outline">
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </PageLayout>
+      }
     >
+      <PageLayout
+        title="Subscription Management"
+        description="Manage your subscription, view usage, and access billing"
+        breadcrumbs={breadcrumbs}
+      >
       {/* Trial Banner */}
       {isTrial && <TrialStatusBanner showGlobally={false} />}
 
@@ -362,5 +402,6 @@ export default function SubscriptionDashboardPage() {
       {/* Footer with Policy Links */}
       <Footer variant="minimal" className="mt-12" />
     </PageLayout>
+    </PermissionGuard>
   );
 }
