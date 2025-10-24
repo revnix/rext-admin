@@ -118,8 +118,10 @@ export const WORKSPACE_PERMISSIONS = {
   READ: "workspace.read",
   UPDATE: "workspace.update",
   DELETE: "workspace.delete",
+  TRANSFER: "workspace.transfer",
   MANAGE_MEMBERS: "workspace.manage_members",
-  MANAGE_SETTINGS: "workspace.manage_settings",
+  MANAGE_ROLES: "workspace.manage_roles",
+  INVITE: "workspace.invite",
 } as const;
 
 // Content Management
@@ -129,7 +131,10 @@ export const CONTENT_PERMISSIONS = {
   UPDATE: "content.update",
   DELETE: "content.delete",
   PUBLISH: "content.publish",
-  MANAGE_WORKFLOW: "content.manage_workflow",
+  SUBMIT_REVIEW: "content.submit_review",
+  APPROVE: "content.approve",
+  REJECT: "content.reject",
+  EXPORT: "content.export",
 } as const;
 
 // Topic Management
@@ -138,7 +143,7 @@ export const TOPIC_PERMISSIONS = {
   READ: "topic.read",
   UPDATE: "topic.update",
   DELETE: "topic.delete",
-  MANAGE: "topic.manage",
+  APPROVE: "topic.approve",
 } as const;
 
 // Knowledge Base
@@ -147,24 +152,34 @@ export const KNOWLEDGE_PERMISSIONS = {
   READ: "knowledge.read",
   UPDATE: "knowledge.update",
   DELETE: "knowledge.delete",
-  MANAGE: "knowledge.manage",
 } as const;
 
 // Subscription Management
 export const SUBSCRIPTION_PERMISSIONS = {
   READ: "subscription.read",
-  CREATE: "subscription.create",
-  UPDATE: "subscription.update",
-  CANCEL: "subscription.cancel",
-  ANALYTICS: "subscription.analytics",
+  MANAGE: "subscription.manage",
+} as const;
+
+// Billing Management
+export const BILLING_PERMISSIONS = {
+  READ: "billing.read",
+  MANAGE: "billing.manage",
+} as const;
+
+// Usage Monitoring
+export const USAGE_PERMISSIONS = {
+  READ: "usage.read",
 } as const;
 
 // Media Management
 export const MEDIA_PERMISSIONS = {
-  UPLOAD: "media.create", // 'create' = upload in backend
-  READ: "media.view", // 'view' = read in backend
+  CREATE: "media.create", // Standard CRUD (canonical)
+  READ: "media.read", // Standard CRUD (canonical)
   UPDATE: "media.update",
   DELETE: "media.delete",
+  ORGANIZE: "media.organize",
+  UPLOAD: "media.upload", // Deprecated alias for media.create
+  VIEW: "media.view", // Deprecated alias for media.read
 } as const;
 
 // Member Management
@@ -178,14 +193,31 @@ export const MEMBER_PERMISSIONS = {
   REVOKE_INVITATION: "member.revoke_invitation",
 } as const;
 
+// License Management (One-time purchases)
+export const LICENSE_PERMISSIONS = {
+  READ: "license.read", // Standard CRUD (canonical)
+  ACTIVATE: "license.activate",
+  DEACTIVATE: "license.deactivate",
+  REVOKE: "license.revoke",
+  VIEW: "license.view", // Deprecated alias for license.read
+} as const;
+
 // System/Admin
 export const ADMIN_PERMISSIONS = {
   ROLE_READ: "role.read",
   ROLE_CREATE: "role.create",
   ROLE_UPDATE: "role.update",
   ROLE_DELETE: "role.delete",
+  ROLE_MANAGE_PERMISSIONS: "role.manage_permissions",
   AUDIT_READ: "audit.read",
-  SYSTEM_MANAGE: "system.manage",
+  AUDIT_EXPORT: "audit.export",
+  ADMIN_INVITE: "admin.invite",
+} as const;
+
+// Support Staff Permissions
+export const SUPPORT_PERMISSIONS = {
+  VIEW_WORKSPACE: "support.view_workspace",
+  VIEW_BILLING: "support.view_billing",
 } as const;
 
 // Legacy permission constants (deprecated, use resource-specific ones above)
@@ -230,8 +262,13 @@ export const ALL_PERMISSIONS = {
   TOPIC: Object.values(TOPIC_PERMISSIONS),
   KNOWLEDGE: Object.values(KNOWLEDGE_PERMISSIONS),
   SUBSCRIPTION: Object.values(SUBSCRIPTION_PERMISSIONS),
+  BILLING: Object.values(BILLING_PERMISSIONS),
+  USAGE: Object.values(USAGE_PERMISSIONS),
   MEDIA: Object.values(MEDIA_PERMISSIONS),
+  MEMBER: Object.values(MEMBER_PERMISSIONS),
+  LICENSE: Object.values(LICENSE_PERMISSIONS),
   ADMIN: Object.values(ADMIN_PERMISSIONS),
+  SUPPORT: Object.values(SUPPORT_PERMISSIONS),
 } as const;
 
 /**

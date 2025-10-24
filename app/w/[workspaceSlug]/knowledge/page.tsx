@@ -18,7 +18,7 @@ import { WorkspaceCreateKnowledgeBaseDialog } from "@/components/workspace/works
 import { WorkspaceDeleteKnowledgeBaseDialog } from "@/components/workspace/workspace-delete-knowledge-base-dialog";
 import { WorkspaceEditKnowledgeBaseDialog } from "@/components/workspace/workspace-edit-knowledge-base-dialog";
 import { WorkspaceKnowledgeBasesTable } from "@/components/workspace/workspace-knowledge-bases-table";
-import { usePermission } from "@/hooks/use-permission";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
@@ -39,12 +39,15 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * - View knowledge base items
  */
 export default function WorkspaceKnowledgePage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  // Check permission for creating knowledge bases
-  const canCreateKnowledge = usePermission(KNOWLEDGE_PERMISSIONS.CREATE);
+  // Check workspace-scoped permission for creating knowledge bases
+  const canCreateKnowledge = useWorkspacePermission(
+    KNOWLEDGE_PERMISSIONS.CREATE,
+    workspaceId,
+  );
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);

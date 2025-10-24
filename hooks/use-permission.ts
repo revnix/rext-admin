@@ -11,6 +11,7 @@ import {
   isSuperAdmin,
   type UserWithPermissions,
 } from "@/lib/permissions";
+import { usePermissionStore } from "@/stores/permission-store";
 
 /**
  * Convert AuthJS session user to UserWithPermissions format
@@ -181,6 +182,11 @@ export function useWorkspacePermission(
   const { data: session } = useSession();
   const user = sessionUserToPermissionUser(session?.user);
 
+  // Subscribe to workspace permissions store (reactive)
+  const workspacePermissions = usePermissionStore(
+    (state) => state.workspacePermissions,
+  );
+
   // If no workspace ID, fall back to global permission check
   if (!workspaceId) {
     return checkPermission(user, permission);
@@ -189,18 +195,10 @@ export function useWorkspacePermission(
   // Super admin has all permissions
   if (isSuperAdmin(user)) return true;
 
-  // Import permission store dynamically to avoid circular deps
-  // Use workspace permissions from store if available
-  if (typeof window !== "undefined") {
-    // Access store on client side only
-    const { usePermissionStore } = require("@/stores/permission-store");
-    const store = usePermissionStore.getState();
-
-    // Check workspace-specific permissions from store
-    const wsPerms = store.workspacePermissions.get(workspaceId);
-    if (wsPerms?.permissions.includes(permission)) {
-      return true;
-    }
+  // Check workspace-specific permissions from store (reactive)
+  const wsPerms = workspacePermissions.get(workspaceId);
+  if (wsPerms?.permissions.includes(permission)) {
+    return true;
   }
 
   // Fallback to global permissions
@@ -223,25 +221,25 @@ export function useAnyWorkspacePermission(
   const { data: session } = useSession();
   const user = sessionUserToPermissionUser(session?.user);
 
+  // Subscribe to workspace permissions store (reactive)
+  const workspacePermissions = usePermissionStore(
+    (state) => state.workspacePermissions,
+  );
+
   if (!workspaceId) {
     return checkAnyPermission(user, permissions);
   }
 
   if (isSuperAdmin(user)) return true;
 
-  // Check workspace permissions from store
-  if (typeof window !== "undefined") {
-    const { usePermissionStore } = require("@/stores/permission-store");
-    const store = usePermissionStore.getState();
-
-    const wsPerms = store.workspacePermissions.get(workspaceId);
-    if (wsPerms) {
-      // Check if user has ANY of the permissions
-      const hasAny = permissions.some((perm) =>
-        wsPerms.permissions.includes(perm),
-      );
-      if (hasAny) return true;
-    }
+  // Check workspace permissions from store (reactive)
+  const wsPerms = workspacePermissions.get(workspaceId);
+  if (wsPerms) {
+    // Check if user has ANY of the permissions
+    const hasAny = permissions.some((perm) =>
+      wsPerms.permissions.includes(perm),
+    );
+    if (hasAny) return true;
   }
 
   // Fallback to global permissions
@@ -264,25 +262,25 @@ export function useAllWorkspacePermissions(
   const { data: session } = useSession();
   const user = sessionUserToPermissionUser(session?.user);
 
+  // Subscribe to workspace permissions store (reactive)
+  const workspacePermissions = usePermissionStore(
+    (state) => state.workspacePermissions,
+  );
+
   if (!workspaceId) {
     return checkAllPermissions(user, permissions);
   }
 
   if (isSuperAdmin(user)) return true;
 
-  // Check workspace permissions from store
-  if (typeof window !== "undefined") {
-    const { usePermissionStore } = require("@/stores/permission-store");
-    const store = usePermissionStore.getState();
-
-    const wsPerms = store.workspacePermissions.get(workspaceId);
-    if (wsPerms) {
-      // Check if user has ALL of the permissions
-      const hasAll = permissions.every((perm) =>
-        wsPerms.permissions.includes(perm),
-      );
-      if (hasAll) return true;
-    }
+  // Check workspace permissions from store (reactive)
+  const wsPerms = workspacePermissions.get(workspaceId);
+  if (wsPerms) {
+    // Check if user has ALL of the permissions
+    const hasAll = permissions.every((perm) =>
+      wsPerms.permissions.includes(perm),
+    );
+    if (hasAll) return true;
   }
 
   // Fallback to global permissions

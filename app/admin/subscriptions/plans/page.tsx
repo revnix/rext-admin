@@ -175,7 +175,7 @@ export default function SubscriptionPlansPage() {
       }
     >
       <CanAccess
-        permission={SUBSCRIPTION_PERMISSIONS.UPDATE}
+        permission={SUBSCRIPTION_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

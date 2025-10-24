@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/card";
 import { useContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { usePermission } from "@/hooks/use-permission";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -40,10 +40,19 @@ import type { ContentData, RowAction } from "@/types/data-table";
 export default function WorkspaceContentPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
 
-  // Check permissions for content actions
-  const canCreateContent = usePermission(CONTENT_PERMISSIONS.CREATE);
-  const canUpdateContent = usePermission(CONTENT_PERMISSIONS.UPDATE);
-  const canDeleteContent = usePermission(CONTENT_PERMISSIONS.DELETE);
+  // Check workspace-scoped permissions for content actions
+  const canCreateContent = useWorkspacePermission(
+    CONTENT_PERMISSIONS.CREATE,
+    workspaceId,
+  );
+  const canUpdateContent = useWorkspacePermission(
+    CONTENT_PERMISSIONS.UPDATE,
+    workspaceId,
+  );
+  const canDeleteContent = useWorkspacePermission(
+    CONTENT_PERMISSIONS.DELETE,
+    workspaceId,
+  );
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },

@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePermission } from "@/hooks/use-permission";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
@@ -53,12 +53,18 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * Features upload, browse, search, filter, and organize media.
  */
 export default function WorkspaceMediaPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
 
-  // Check permissions
-  const canUploadMedia = usePermission(MEDIA_PERMISSIONS.UPLOAD);
-  const canDeleteMedia = usePermission(MEDIA_PERMISSIONS.DELETE);
+  // Check workspace-scoped permissions
+  const canUploadMedia = useWorkspacePermission(
+    MEDIA_PERMISSIONS.UPLOAD,
+    workspaceId,
+  );
+  const canDeleteMedia = useWorkspacePermission(
+    MEDIA_PERMISSIONS.DELETE,
+    workspaceId,
+  );
 
   // UI states
   const [showUploadDialog, setShowUploadDialog] = useState(false);

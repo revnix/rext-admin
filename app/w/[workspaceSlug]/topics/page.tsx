@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
-import { usePermission } from "@/hooks/use-permission";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useTopics } from "@/hooks/use-topics";
 import { log } from "@/lib/logger";
 import { TOPIC_PERMISSIONS } from "@/lib/permissions";
@@ -27,8 +27,11 @@ export default function WorkspaceTopicsPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
 
-  // Check permission for creating topics
-  const canCreateTopic = usePermission(TOPIC_PERMISSIONS.CREATE);
+  // Check workspace-scoped permission for creating topics
+  const canCreateTopic = useWorkspacePermission(
+    TOPIC_PERMISSIONS.CREATE,
+    workspaceId,
+  );
 
   const { data: topics, isLoading, error, refetch } = useTopics(workspaceId);
 
