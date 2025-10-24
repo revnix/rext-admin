@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { DataTable } from "@/components/data-table";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkspaceChangeRoleDialog } from "@/components/workspace/workspace-change-role-dialog";
 import { WorkspaceInviteMembersDialog } from "@/components/workspace/workspace-invite-members-dialog";
 import { WorkspaceRemoveMemberDialog } from "@/components/workspace/workspace-remove-member-dialog";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
 
@@ -66,6 +69,11 @@ export function WorkspaceMembersPanel({
   );
   const [memberToChangeRole, setMemberToChangeRole] =
     useState<WorkspaceMember | null>(null);
+
+  // Check permissions
+  const canUpdateRole = usePermission(MEMBER_PERMISSIONS.UPDATE_ROLE);
+  const canRemoveMember = usePermission(MEMBER_PERMISSIONS.REMOVE);
+  const canInviteMember = usePermission(MEMBER_PERMISSIONS.INVITE);
 
   // Fetch workspace members
   const {
@@ -191,28 +199,28 @@ export function WorkspaceMembersPanel({
     },
   ];
 
-  // Define row actions
+  // Define row actions (filtered by permissions)
   const rowActions: RowAction<MemberData>[] = [
-    {
+    canUpdateRole && {
       label: "Change Role",
       icon: <Shield className="h-4 w-4" />,
-      onClick: (row) => {
+      onClick: (row: MemberData) => {
         const member = members.find((m: WorkspaceMember) => m.id === row.id);
         if (member) setMemberToChangeRole(member);
       },
-      disabled: (row) => row.is_default as boolean,
+      disabled: (row: MemberData) => row.is_default as boolean,
     },
-    {
+    canRemoveMember && {
       label: "Remove Member",
       icon: <UserMinus className="h-4 w-4" />,
-      onClick: (row) => {
+      onClick: (row: MemberData) => {
         const member = members.find((m: WorkspaceMember) => m.id === row.id);
         if (member) setMemberToRemove(member);
       },
       variant: "destructive",
-      disabled: (row) => row.is_default as boolean,
+      disabled: (row: MemberData) => row.is_default as boolean,
     },
-  ];
+  ].filter(Boolean) as RowAction<MemberData>[];
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -224,10 +232,17 @@ export function WorkspaceMembersPanel({
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <Button size="sm" onClick={() => setShowInviteDialog(true)}>
-        <UserPlus className="h-4 w-4 mr-2" />
-        Invite Members
-      </Button>
+      <CanAccess
+        permission={MEMBER_PERMISSIONS.INVITE}
+        showLockedTooltip
+        tooltipMessage="Only workspace admins can invite members"
+        showLockIcon
+      >
+        <Button size="sm" onClick={() => setShowInviteDialog(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invite Members
+        </Button>
+      </CanAccess>
     </div>
   );
 
@@ -250,13 +265,17 @@ export function WorkspaceMembersPanel({
           emptyTitle="No members yet"
           emptyDescription="Invite members to collaborate on this workspace"
           emptyIcon={<Users className="h-12 w-12" />}
-          emptyActions={[
-            {
-              label: "Invite Members",
-              icon: <UserPlus className="h-4 w-4" />,
-              onClick: () => setShowInviteDialog(true),
-            },
-          ]}
+          emptyActions={
+            canInviteMember
+              ? [
+                  {
+                    label: "Invite Members",
+                    icon: <UserPlus className="h-4 w-4" />,
+                    onClick: () => setShowInviteDialog(true),
+                  },
+                ]
+              : []
+          }
           searchPlaceholder="Search by name or email..."
           searchFields={["display_name", "email"]}
           actions={headerActions}

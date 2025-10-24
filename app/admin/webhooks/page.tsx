@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -380,202 +381,205 @@ export default function WebhookMonitoringPage() {
   ];
 
   return (
-    <PageLayout
-      title="Webhook Monitoring"
-      description="Monitor and manage webhook events from LemonSqueezy"
-      breadcrumbs={breadcrumbs}
-      actions={
-        <Button
-          onClick={() => {
-            fetchEvents();
-            fetchStats();
-          }}
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      }
-    >
-      {/* Statistics */}
-      <StatsCards stats={stats} loading={loading && !stats} />
+    <AdminGuard superAdminOnly={true}>
+      <PageLayout
+        title="Webhook Monitoring"
+        description="Monitor and manage webhook events from LemonSqueezy"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <Button
+            onClick={() => {
+              fetchEvents();
+              fetchStats();
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        }
+      >
+        {/* Statistics */}
+        <StatsCards stats={stats} loading={loading && !stats} />
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label
-                htmlFor="event-name-filter"
-                className="text-sm font-medium mb-2 block"
-              >
-                Event Name
-              </label>
-              <Input
-                id="event-name-filter"
-                placeholder="Filter by event name..."
-                value={eventNameFilter}
-                onChange={(e) => {
-                  setEventNameFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label
+                  htmlFor="event-name-filter"
+                  className="text-sm font-medium mb-2 block"
+                >
+                  Event Name
+                </label>
+                <Input
+                  id="event-name-filter"
+                  placeholder="Filter by event name..."
+                  value={eventNameFilter}
+                  onChange={(e) => {
+                    setEventNameFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+              <div className="w-48">
+                <label
+                  htmlFor="status-filter"
+                  className="text-sm font-medium mb-2 block"
+                >
+                  Status
+                </label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value: StatusFilter) => {
+                    setStatusFilter(value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="processed">Processed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="w-48">
-              <label
-                htmlFor="status-filter"
-                className="text-sm font-medium mb-2 block"
-              >
-                Status
-              </label>
-              <Select
-                value={statusFilter}
-                onValueChange={(value: StatusFilter) => {
-                  setStatusFilter(value);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="processed">Processed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Events Table with Tabs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Webhook Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="all">
-                All Events ({summary.total})
-              </TabsTrigger>
-              <TabsTrigger value="failed">
-                <AlertTriangle className="h-4 w-4 mr-1" />
-                Failed ({summary.failed})
-              </TabsTrigger>
-              <TabsTrigger value="pending">
-                Pending ({summary.pending})
-              </TabsTrigger>
-              <TabsTrigger value="processed">
-                Processed ({summary.processed})
-              </TabsTrigger>
-            </TabsList>
+        {/* Events Table with Tabs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Webhook Events</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="all">
+                  All Events ({summary.total})
+                </TabsTrigger>
+                <TabsTrigger value="failed">
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Failed ({summary.failed})
+                </TabsTrigger>
+                <TabsTrigger value="pending">
+                  Pending ({summary.pending})
+                </TabsTrigger>
+                <TabsTrigger value="processed">
+                  Processed ({summary.processed})
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value={activeTab} className="mt-4">
-              {loading ? (
-                <div className="space-y-2">
-                  {(
-                    [
-                      "event-skeleton-1",
-                      "event-skeleton-2",
-                      "event-skeleton-3",
-                      "event-skeleton-4",
-                      "event-skeleton-5",
-                    ] as const
-                  ).map((id) => (
-                    <Skeleton key={id} className="h-16 w-full" />
-                  ))}
-                </div>
-              ) : filteredEvents.length === 0 ? (
-                <div className="text-center py-12">
-                  <Webhook className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    No webhook events found
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Event Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Processed</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredEvents.map((event) => (
-                        <WebhookEventRow
-                          key={event.id}
-                          event={event}
-                          onRetry={handleRetryWebhook}
-                          retrying={retryingEventId === event.id}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
+              <TabsContent value={activeTab} className="mt-4">
+                {loading ? (
+                  <div className="space-y-2">
+                    {(
+                      [
+                        "event-skeleton-1",
+                        "event-skeleton-2",
+                        "event-skeleton-3",
+                        "event-skeleton-4",
+                        "event-skeleton-5",
+                      ] as const
+                    ).map((id) => (
+                      <Skeleton key={id} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : filteredEvents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Webhook className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      No webhook events found
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Event Name</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Processed</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredEvents.map((event) => (
+                          <WebhookEventRow
+                            key={event.id}
+                            event={event}
+                            onRetry={handleRetryWebhook}
+                            retrying={retryingEventId === event.id}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
 
-                  {/* Pagination */}
-                  {pagination.total_pages > 1 && (
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="text-sm text-muted-foreground">
-                        Page {pagination.page} of {pagination.total_pages} (
-                        {pagination.total} total)
+                    {/* Pagination */}
+                    {pagination.total_pages > 1 && (
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="text-sm text-muted-foreground">
+                          Page {pagination.page} of {pagination.total_pages} (
+                          {pagination.total} total)
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === pagination.total_pages}
+                          >
+                            Next
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(currentPage - 1)}
-                          disabled={currentPage === 1}
-                        >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(currentPage + 1)}
-                          disabled={currentPage === pagination.total_pages}
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                    )}
+                  </>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
 
-      {/* Retry Confirmation Dialog */}
-      <AlertDialog open={showRetryDialog} onOpenChange={setShowRetryDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Retry Webhook</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to retry processing this webhook event? This
-              will attempt to reprocess the event with the original payload.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRetry}>
-              Retry Webhook
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </PageLayout>
+        {/* Retry Confirmation Dialog */}
+        <AlertDialog open={showRetryDialog} onOpenChange={setShowRetryDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Retry Webhook</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to retry processing this webhook event?
+                This will attempt to reprocess the event with the original
+                payload.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmRetry}>
+                Retry Webhook
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </PageLayout>
+    </AdminGuard>
   );
 }

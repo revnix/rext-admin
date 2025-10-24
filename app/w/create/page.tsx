@@ -1,10 +1,15 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ShieldX } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { usePermission } from "@/hooks/use-permission";
 
 /**
  * Create Workspace Page
@@ -21,6 +26,9 @@ import { usePageTitle } from "@/hooks/use-page-title";
  * - Real-time URL analysis and brand voice extraction
  * - Professional typeform-style UI
  * - Proper error handling and validation
+ *
+ * **Phase 4, Task HIGH-10: Permission Guards**
+ * Requires workspace.create permission to access this page.
  */
 export default function CreateWorkspacePage() {
   // Update page title
@@ -29,10 +37,63 @@ export default function CreateWorkspacePage() {
     "Create a new workspace with guided setup for optimal content generation",
   );
 
+  // Check if user has permission to create workspaces
+  const canCreateWorkspace = usePermission("workspace.create");
+  const router = useRouter();
+
+  // Redirect to dashboard if no permission
+  useEffect(() => {
+    if (!canCreateWorkspace) {
+      // Don't redirect immediately to avoid flash
+      const timer = setTimeout(() => {
+        router.push("/");
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [canCreateWorkspace, router]);
+
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     { label: "Create Workspace" },
   ];
+
+  // Show permission denied message if no access
+  if (!canCreateWorkspace) {
+    return (
+      <PageLayout
+        title="Permission Required"
+        description="You need permission to create workspaces"
+        breadcrumbs={breadcrumbs}
+      >
+        <div className="max-w-2xl mx-auto py-12">
+          <Card className="p-8">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="rounded-full bg-muted p-4">
+                <ShieldX className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Permission Required</h2>
+                <p className="text-muted-foreground max-w-md">
+                  You don't have permission to create new workspaces. Please
+                  contact your administrator to request access or upgrade your
+                  plan.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button asChild>
+                  <Link href="/">Back to Dashboard</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/subscription">View Plans</Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout

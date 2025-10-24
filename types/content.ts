@@ -153,7 +153,7 @@ export interface ContentSEODataSchema {
  * Request schema for creating content
  */
 export interface CreateContentRequest {
-  workspace_id: string;
+  workspace_id?: string; // Optional - provided via query parameter
   topic_id?: string;
   title: string;
   content_format?: string;

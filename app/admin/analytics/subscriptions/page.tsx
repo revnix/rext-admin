@@ -25,6 +25,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -318,243 +319,251 @@ export default function SubscriptionAnalyticsPage() {
   const growthTrend = growthRate >= 0 ? "up" : "down";
 
   return (
-    <PageLayout
-      title="Subscription Analytics"
-      description="Monitor key metrics and insights"
-      breadcrumbs={breadcrumbs}
-      actions={
-        <Button onClick={handleRefresh} disabled={refreshing}>
-          {refreshing ? "Refreshing..." : "Refresh Data"}
-        </Button>
-      }
-    >
-      {/* Overview Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <MetricCard
-          title="Monthly Recurring Revenue"
-          value={formatCurrency(overview.mrr)}
-          icon={<DollarSign className="h-4 w-4" />}
-          change={growthRate}
-          trend={growthTrend}
-        />
-        <MetricCard
-          title="Annual Recurring Revenue"
-          value={formatCurrency(overview.arr)}
-          icon={<DollarSign className="h-4 w-4" />}
-        />
-        <MetricCard
-          title="Active Subscriptions"
-          value={overview.active_subscriptions}
-          icon={<Users className="h-4 w-4" />}
-        />
-        <MetricCard
-          title="Churn Rate"
-          value={formatPercentage(overview.churn_rate)}
-          icon={<UserMinus className="h-4 w-4" />}
-        />
-      </div>
+    <AdminGuard superAdminOnly={true}>
+      <PageLayout
+        title="Subscription Analytics"
+        description="Monitor key metrics and insights"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <Button onClick={handleRefresh} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh Data"}
+          </Button>
+        }
+      >
+        {/* Overview Metrics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <MetricCard
+            title="Monthly Recurring Revenue"
+            value={formatCurrency(overview.mrr)}
+            icon={<DollarSign className="h-4 w-4" />}
+            change={growthRate}
+            trend={growthTrend}
+          />
+          <MetricCard
+            title="Annual Recurring Revenue"
+            value={formatCurrency(overview.arr)}
+            icon={<DollarSign className="h-4 w-4" />}
+          />
+          <MetricCard
+            title="Active Subscriptions"
+            value={overview.active_subscriptions}
+            icon={<Users className="h-4 w-4" />}
+          />
+          <MetricCard
+            title="Churn Rate"
+            value={formatPercentage(overview.churn_rate)}
+            icon={<UserMinus className="h-4 w-4" />}
+          />
+        </div>
 
-      {/* Secondary Metrics */}
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
-        <MetricCard
-          title="Trial Conversion Rate"
-          value={formatPercentage(overview.trial_conversion_rate)}
-          icon={<UserCheck className="h-4 w-4" />}
-        />
-        <MetricCard
-          title="Customer Lifetime Value"
-          value={formatCurrency(overview.avg_customer_ltv)}
-          icon={<DollarSign className="h-4 w-4" />}
-        />
-        <MetricCard
-          title="Trial Subscriptions"
-          value={overview.trialing_subscriptions}
-          icon={<Users className="h-4 w-4" />}
-        />
-      </div>
+        {/* Secondary Metrics */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <MetricCard
+            title="Trial Conversion Rate"
+            value={formatPercentage(overview.trial_conversion_rate)}
+            icon={<UserCheck className="h-4 w-4" />}
+          />
+          <MetricCard
+            title="Customer Lifetime Value"
+            value={formatCurrency(overview.avg_customer_ltv)}
+            icon={<DollarSign className="h-4 w-4" />}
+          />
+          <MetricCard
+            title="Trial Subscriptions"
+            value={overview.trialing_subscriptions}
+            icon={<Users className="h-4 w-4" />}
+          />
+        </div>
 
-      {/* Revenue Charts */}
-      <div className="grid gap-6 md:grid-cols-2 mb-6">
-        {/* Revenue by Plan */}
-        <Card>
+        {/* Revenue Charts */}
+        <div className="grid gap-6 md:grid-cols-2 mb-6">
+          {/* Revenue by Plan */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue by Plan</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Current month: {formatCurrency(revenue.current_month_revenue)}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={revenueByPlanData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    labelStyle={{ color: "#000" }}
+                  />
+                  <Legend />
+                  <Bar dataKey="revenue" fill={COLORS.primary} name="Revenue" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Tier Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Distribution</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Total: {overview.total_subscriptions} subscriptions
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={tierDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(props: { percent?: number; name?: string }) => {
+                      const percent = props.percent || 0;
+                      const name = props.name || "";
+                      return `${name}: ${(percent * 100).toFixed(0)}%`;
+                    }}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {tierDistributionData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${entry.name}`}
+                        fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Trial Conversion */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Revenue by Plan</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Current month: {formatCurrency(revenue.current_month_revenue)}
-            </p>
+            <CardTitle>Trial Conversion Funnel</CardTitle>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>
+                Total Trials:{" "}
+                <Badge variant="secondary">
+                  {trialConversion.total_trials}
+                </Badge>
+              </span>
+              <span>
+                Conversions:{" "}
+                <Badge variant="secondary">
+                  {trialConversion.converted_trials}
+                </Badge>
+              </span>
+              <span>
+                Conversion Rate:{" "}
+                <Badge variant="secondary">
+                  {formatPercentage(trialConversion.conversion_rate)}
+                </Badge>
+              </span>
+              <span>
+                Avg Duration:{" "}
+                <Badge variant="secondary">
+                  {trialConversion.avg_trial_duration_days.toFixed(1)} days
+                </Badge>
+              </span>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueByPlanData}>
+              <BarChart data={trialFunnelData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelStyle={{ color: "#000" }}
-                />
+                <Tooltip labelStyle={{ color: "#000" }} />
                 <Legend />
-                <Bar dataKey="revenue" fill={COLORS.primary} name="Revenue" />
+                <Bar
+                  dataKey="trials"
+                  fill={COLORS.warning}
+                  name="Trial Starts"
+                />
+                <Bar
+                  dataKey="conversions"
+                  fill={COLORS.success}
+                  name="Conversions"
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Tier Distribution */}
+        {/* Churn Analysis */}
         <Card>
           <CardHeader>
-            <CardTitle>Subscription Distribution</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Total: {overview.total_subscriptions} subscriptions
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Churn Analysis</CardTitle>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                  <span>
+                    Churned:{" "}
+                    <Badge variant="destructive">
+                      {churn.churned_subscriptions}
+                    </Badge>
+                  </span>
+                  <span>
+                    Revenue Lost:{" "}
+                    <Badge variant="destructive">
+                      {formatCurrency(churn.revenue_lost)}
+                    </Badge>
+                  </span>
+                  <span>
+                    Churn Rate:{" "}
+                    <Badge variant="destructive">
+                      {formatPercentage(churn.churn_rate)}
+                    </Badge>
+                  </span>
+                </div>
+              </div>
+              <Select
+                value={churnPeriod.toString()}
+                onValueChange={(value) => setChurnPeriod(Number(value))}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">Last 7 days</SelectItem>
+                  <SelectItem value="30">Last 30 days</SelectItem>
+                  <SelectItem value="60">Last 60 days</SelectItem>
+                  <SelectItem value="90">Last 90 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={tierDistributionData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(props: { percent?: number; name?: string }) => {
-                    const percent = props.percent || 0;
-                    const name = props.name || "";
-                    return `${name}: ${(percent * 100).toFixed(0)}%`;
+              <BarChart data={churnByPlanData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip
+                  formatter={(value: number, name: string) => {
+                    if (name === "Churn Rate") {
+                      return formatPercentage(value);
+                    }
+                    return value;
                   }}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {tierDistributionData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${entry.name}`}
-                      fill={PIE_COLORS[index % PIE_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
+                  labelStyle={{ color: "#000" }}
+                />
+                <Legend />
+                <Bar
+                  dataKey="churnRate"
+                  fill={COLORS.danger}
+                  name="Churn Rate (%)"
+                />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Trial Conversion */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Trial Conversion Funnel</CardTitle>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>
-              Total Trials:{" "}
-              <Badge variant="secondary">{trialConversion.total_trials}</Badge>
-            </span>
-            <span>
-              Conversions:{" "}
-              <Badge variant="secondary">
-                {trialConversion.converted_trials}
-              </Badge>
-            </span>
-            <span>
-              Conversion Rate:{" "}
-              <Badge variant="secondary">
-                {formatPercentage(trialConversion.conversion_rate)}
-              </Badge>
-            </span>
-            <span>
-              Avg Duration:{" "}
-              <Badge variant="secondary">
-                {trialConversion.avg_trial_duration_days.toFixed(1)} days
-              </Badge>
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={trialFunnelData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip labelStyle={{ color: "#000" }} />
-              <Legend />
-              <Bar dataKey="trials" fill={COLORS.warning} name="Trial Starts" />
-              <Bar
-                dataKey="conversions"
-                fill={COLORS.success}
-                name="Conversions"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Churn Analysis */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Churn Analysis</CardTitle>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-                <span>
-                  Churned:{" "}
-                  <Badge variant="destructive">
-                    {churn.churned_subscriptions}
-                  </Badge>
-                </span>
-                <span>
-                  Revenue Lost:{" "}
-                  <Badge variant="destructive">
-                    {formatCurrency(churn.revenue_lost)}
-                  </Badge>
-                </span>
-                <span>
-                  Churn Rate:{" "}
-                  <Badge variant="destructive">
-                    {formatPercentage(churn.churn_rate)}
-                  </Badge>
-                </span>
-              </div>
-            </div>
-            <Select
-              value={churnPeriod.toString()}
-              onValueChange={(value) => setChurnPeriod(Number(value))}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="60">Last 60 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={churnByPlanData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip
-                formatter={(value: number, name: string) => {
-                  if (name === "Churn Rate") {
-                    return formatPercentage(value);
-                  }
-                  return value;
-                }}
-                labelStyle={{ color: "#000" }}
-              />
-              <Legend />
-              <Bar
-                dataKey="churnRate"
-                fill={COLORS.danger}
-                name="Churn Rate (%)"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    </PageLayout>
+      </PageLayout>
+    </AdminGuard>
   );
 }

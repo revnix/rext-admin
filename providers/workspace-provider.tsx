@@ -14,9 +14,9 @@ import type { Workspace } from "@/types/workspace";
  */
 interface WorkspaceContextType {
   workspace: Workspace | undefined;
-  workspaceId: string; // UUID - The actual workspace ID (workspace.id)
+  workspaceId: string; // Identifier from URL - Can be slug OR UUID (backend accepts both)
   workspaceSlug: string; // Slug - The URL-friendly identifier (workspace.slug)
-  identifier: string; // The identifier used in the URL (could be UUID or slug for backward compat)
+  identifier: string; // The identifier used in the URL (same as workspaceId)
   isLoading: boolean;
   error: Error | null;
 }
@@ -219,7 +219,10 @@ export function WorkspaceProvider({
 
   const contextValue: WorkspaceContextType = {
     workspace,
-    workspaceId: workspace?.id || "", // UUID - only available after fetch
+    // CRITICAL FIX: Return the identifier immediately (slug or UUID from URL)
+    // Don't wait for workspace API to return UUID, as this breaks permission loading
+    // The workspaceId can be either slug or UUID - backend accepts both
+    workspaceId: workspaceId, // Immediate - from URL (slug or UUID)
     workspaceSlug: immediateSlug, // Slug - immediately available from URL
     identifier: workspaceId, // Original URL param
     isLoading,

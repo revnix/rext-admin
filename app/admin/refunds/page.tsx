@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -408,192 +409,194 @@ export default function RefundManagementPage() {
   ];
 
   return (
-    <PageLayout
-      title="Refund Management"
-      description="View refund history and process new refunds"
-      breadcrumbs={breadcrumbs}
-      actions={
-        <>
-          <Button
-            variant="outline"
-            onClick={() =>
-              window.open("https://app.lemonsqueezy.com/", "_blank")
-            }
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            LemonSqueezy
-          </Button>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Refund
-          </Button>
-          <Button onClick={fetchRefunds} disabled={loading}>
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-        </>
-      }
-    >
-      {/* Info Banner */}
-      <Card className="mb-6 border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-1">
-                Refund Processing
-              </h3>
-              <p className="text-sm text-blue-800">
-                You can process refunds directly from this page or via the{" "}
-                <a
-                  href="https://app.lemonsqueezy.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline font-medium"
-                >
-                  LemonSqueezy Dashboard
-                </a>
-                . Refunds processed via LemonSqueezy will automatically appear
-                here via webhooks.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Statistics */}
-      <StatsCards summary={summary} loading={loading} />
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Label
-                htmlFor="search-refunds"
-                className="text-sm font-medium mb-2 block"
-              >
-                Search by Email, Order ID, Name, or Plan
-              </Label>
-              <Input
-                id="search-refunds"
-                placeholder="Search refunds..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+    <AdminGuard superAdminOnly={true}>
+      <PageLayout
+        title="Refund Management"
+        description="View refund history and process new refunds"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() =>
+                window.open("https://app.lemonsqueezy.com/", "_blank")
+              }
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              LemonSqueezy
+            </Button>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Refund
+            </Button>
+            <Button onClick={fetchRefunds} disabled={loading}>
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
               />
+              Refresh
+            </Button>
+          </>
+        }
+      >
+        {/* Info Banner */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-1">
+                  Refund Processing
+                </h3>
+                <p className="text-sm text-blue-800">
+                  You can process refunds directly from this page or via the{" "}
+                  <a
+                    href="https://app.lemonsqueezy.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium"
+                  >
+                    LemonSqueezy Dashboard
+                  </a>
+                  . Refunds processed via LemonSqueezy will automatically appear
+                  here via webhooks.
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Refunds Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Refund History</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredRefunds.length} of {pagination.total} refunds
-          </p>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              {(
-                [
-                  "refund-table-1",
-                  "refund-table-2",
-                  "refund-table-3",
-                  "refund-table-4",
-                  "refund-table-5",
-                ] as const
-              ).map((id) => (
-                <Skeleton key={id} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : filteredRefunds.length === 0 ? (
-            <div className="text-center py-12">
-              <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                {searchQuery
-                  ? "No refunds found matching your search"
-                  : "No refunds found"}
-              </p>
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Order/Plan</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRefunds.map((refund) => (
-                    <RefundRow key={refund.id} refund={refund} />
-                  ))}
-                </TableBody>
-              </Table>
+        {/* Statistics */}
+        <StatsCards summary={summary} loading={loading} />
 
-              {/* Pagination */}
-              {pagination.total_pages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Page {pagination.page} of {pagination.total_pages} (
-                    {pagination.total} total)
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label
+                  htmlFor="search-refunds"
+                  className="text-sm font-medium mb-2 block"
+                >
+                  Search by Email, Order ID, Name, or Plan
+                </Label>
+                <Input
+                  id="search-refunds"
+                  placeholder="Search refunds..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Refunds Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Refund History</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredRefunds.length} of {pagination.total} refunds
+            </p>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-2">
+                {(
+                  [
+                    "refund-table-1",
+                    "refund-table-2",
+                    "refund-table-3",
+                    "refund-table-4",
+                    "refund-table-5",
+                  ] as const
+                ).map((id) => (
+                  <Skeleton key={id} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : filteredRefunds.length === 0 ? (
+              <div className="text-center py-12">
+                <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  {searchQuery
+                    ? "No refunds found matching your search"
+                    : "No refunds found"}
+                </p>
+              </div>
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Order/Plan</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRefunds.map((refund) => (
+                      <RefundRow key={refund.id} refund={refund} />
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Pagination */}
+                {pagination.total_pages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Page {pagination.page} of {pagination.total_pages} (
+                      {pagination.total} total)
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setPagination({
+                            ...pagination,
+                            page: pagination.page - 1,
+                          })
+                        }
+                        disabled={pagination.page === 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setPagination({
+                            ...pagination,
+                            page: pagination.page + 1,
+                          })
+                        }
+                        disabled={pagination.page === pagination.total_pages}
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setPagination({
-                          ...pagination,
-                          page: pagination.page - 1,
-                        })
-                      }
-                      disabled={pagination.page === 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setPagination({
-                          ...pagination,
-                          page: pagination.page + 1,
-                        })
-                      }
-                      disabled={pagination.page === pagination.total_pages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Create Refund Dialog */}
-      <CreateRefundDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onSuccess={fetchRefunds}
-      />
-    </PageLayout>
+        {/* Create Refund Dialog */}
+        <CreateRefundDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSuccess={fetchRefunds}
+        />
+      </PageLayout>
+    </AdminGuard>
   );
 }

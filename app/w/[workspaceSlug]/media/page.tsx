@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
@@ -52,8 +53,18 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * Features upload, browse, search, filter, and organize media.
  */
 export default function WorkspaceMediaPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
+
+  // Check workspace-scoped permissions
+  const canUploadMedia = useWorkspacePermission(
+    MEDIA_PERMISSIONS.UPLOAD,
+    workspaceId,
+  );
+  const canDeleteMedia = useWorkspacePermission(
+    MEDIA_PERMISSIONS.DELETE,
+    workspaceId,
+  );
 
   // UI states
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -222,15 +233,17 @@ export default function WorkspaceMediaPage() {
           ? "Deselect All"
           : "Select All"}
       </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={handleBulkDelete}
-        disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
-      >
-        <Trash2 className="h-4 w-4 mr-2" />
-        Delete ({selectedIds.size})
-      </Button>
+      {canDeleteMedia && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleBulkDelete}
+          disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete ({selectedIds.size})
+        </Button>
+      )}
       <Button variant="ghost" size="sm" onClick={handleCancelSelection}>
         <X className="h-4 w-4 mr-2" />
         Cancel
@@ -274,10 +287,12 @@ export default function WorkspaceMediaPage() {
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <Button onClick={() => setShowUploadDialog(true)}>
-        <Plus className="h-4 w-4 mr-2" />
-        Upload Media
-      </Button>
+      {canUploadMedia && (
+        <Button onClick={() => setShowUploadDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Upload Media
+        </Button>
+      )}
     </>
   );
 

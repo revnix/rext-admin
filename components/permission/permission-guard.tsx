@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { Suspense } from "react";
 import {
   useAllPermissions,
   useAllWorkspacePermissions,
@@ -10,6 +11,7 @@ import {
   useWorkspacePermission,
 } from "@/hooks/use-permission";
 import { useCurrentWorkspaceId } from "@/providers/workspace-permission-provider";
+import { PermissionLoading } from "./permission-loading";
 
 /**
  * Permission guard component props
@@ -25,6 +27,12 @@ interface PermissionGuardProps {
   fallback?: React.ReactNode;
   /** Children to render when permission is granted */
   children: React.ReactNode;
+  /** Show loading state while checking permissions */
+  showLoading?: boolean;
+  /** Loading variant */
+  loadingVariant?: "skeleton" | "spinner" | "minimal";
+  /** Custom loading message */
+  loadingMessage?: string;
 }
 
 /**
@@ -63,6 +71,17 @@ interface PermissionGuardProps {
  * >
  *   <DeleteButton />
  * </PermissionGuard>
+ *
+ * @example
+ * // With loading state
+ * <PermissionGuard
+ *   permission="content.update"
+ *   showLoading
+ *   loadingVariant="spinner"
+ *   loadingMessage="Checking permissions..."
+ * >
+ *   <EditButton />
+ * </PermissionGuard>
  */
 export function PermissionGuard({
   permission,
@@ -70,6 +89,9 @@ export function PermissionGuard({
   workspaceId: propWorkspaceId,
   fallback = null,
   children,
+  showLoading = false,
+  loadingVariant = "skeleton",
+  loadingMessage,
 }: PermissionGuardProps) {
   const permissions = Array.isArray(permission) ? permission : [permission];
 
@@ -123,6 +145,22 @@ export function PermissionGuard({
 
   if (!hasAccess) {
     return <>{fallback}</>;
+  }
+
+  // Wrap children in Suspense if loading state is enabled
+  if (showLoading) {
+    return (
+      <Suspense
+        fallback={
+          <PermissionLoading
+            variant={loadingVariant}
+            message={loadingMessage}
+          />
+        }
+      >
+        {children}
+      </Suspense>
+    );
   }
 
   return <>{children}</>;

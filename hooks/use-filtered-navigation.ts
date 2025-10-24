@@ -9,8 +9,34 @@ import {
   checkRole,
   type UserWithPermissions,
 } from "@/lib/permissions";
+import { usePermissionStore } from "@/stores/permission-store";
 import type { NavGroup, NavItem, NavSubItem } from "@/types/navigation";
 import { usePermissionUser } from "./use-permission";
+
+/**
+ * Check if user has permission in ANY workspace
+ * Used for user-level features that require workspace-level permissions
+ * (e.g., subscription management - user feature, but requires workspace owner)
+ *
+ * Note: This function now receives workspacePermissions as a parameter
+ * to properly track dependencies in React hooks
+ */
+function hasPermissionInAnyWorkspace(
+  permission: string,
+  workspacePermissions: Map<
+    string,
+    { workspaceId: string; role: string; permissions: string[] }
+  >,
+): boolean {
+  // Check if user has this permission in ANY workspace
+  for (const [, wsPerms] of workspacePermissions) {
+    if (wsPerms.permissions.includes(permission)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /**
  * Check if user has access to a navigation item
@@ -18,6 +44,10 @@ import { usePermissionUser } from "./use-permission";
 function hasAccessToItem(
   user: UserWithPermissions | null,
   item: NavItem | NavSubItem,
+  workspacePermissions: Map<
+    string,
+    { workspaceId: string; role: string; permissions: string[] }
+  >,
 ): boolean {
   // If no permission/role requirements, allow access
   if (
@@ -30,27 +60,38 @@ function hasAccessToItem(
     return true;
   }
 
-  // Check single permission
-  if (item.permission && !checkPermission(user, item.permission)) {
-    return false;
+  // Check single permission (global first, then any workspace)
+  if (item.permission) {
+    const hasGlobal = checkPermission(user, item.permission);
+    const hasInWorkspace = hasPermissionInAnyWorkspace(
+      item.permission,
+      workspacePermissions,
+    );
+    if (!hasGlobal && !hasInWorkspace) {
+      return false;
+    }
   }
 
-  // Check ANY permission
-  if (
-    item.anyPermission &&
-    item.anyPermission.length > 0 &&
-    !checkAnyPermission(user, item.anyPermission)
-  ) {
-    return false;
+  // Check ANY permission (global first, then any workspace)
+  if (item.anyPermission && item.anyPermission.length > 0) {
+    const hasGlobal = checkAnyPermission(user, item.anyPermission);
+    const hasInWorkspace = item.anyPermission.some((perm) =>
+      hasPermissionInAnyWorkspace(perm, workspacePermissions),
+    );
+    if (!hasGlobal && !hasInWorkspace) {
+      return false;
+    }
   }
 
-  // Check ALL permissions
-  if (
-    item.allPermissions &&
-    item.allPermissions.length > 0 &&
-    !checkAllPermissions(user, item.allPermissions)
-  ) {
-    return false;
+  // Check ALL permissions (global first, then any workspace)
+  if (item.allPermissions && item.allPermissions.length > 0) {
+    const hasGlobal = checkAllPermissions(user, item.allPermissions);
+    const hasInWorkspace = item.allPermissions.every((perm) =>
+      hasPermissionInAnyWorkspace(perm, workspacePermissions),
+    );
+    if (!hasGlobal && !hasInWorkspace) {
+      return false;
+    }
   }
 
   // Check single role
@@ -76,14 +117,18 @@ function hasAccessToItem(
 function filterNavItems(
   user: UserWithPermissions | null,
   items: NavItem[],
+  workspacePermissions: Map<
+    string,
+    { workspaceId: string; role: string; permissions: string[] }
+  >,
 ): NavItem[] {
   return items
-    .filter((item) => hasAccessToItem(user, item))
+    .filter((item) => hasAccessToItem(user, item, workspacePermissions))
     .map((item) => {
       // Filter sub-items if they exist
       if (item.items && item.items.length > 0) {
         const filteredSubItems = item.items.filter((subItem) =>
-          hasAccessToItem(user, subItem),
+          hasAccessToItem(user, subItem, workspacePermissions),
         );
 
         // Only include parent if it has accessible sub-items or is accessible itself
@@ -149,13 +194,18 @@ function hasAccessToGroup(
 export function useFilteredNavigation(groups: NavGroup[]): NavGroup[] {
   const user = usePermissionUser();
 
+  // Subscribe to workspace permissions to make navigation reactive
+  const workspacePermissions = usePermissionStore(
+    (state) => state.workspacePermissions,
+  );
+
   return useMemo(() => {
     return groups
       .filter((group) => hasAccessToGroup(user, group))
       .map((group) => ({
         ...group,
-        items: filterNavItems(user, group.items),
+        items: filterNavItems(user, group.items, workspacePermissions),
       }))
       .filter((group) => group.items.length > 0); // Remove empty groups
-  }, [user, groups]);
+  }, [user, groups, workspacePermissions]);
 }

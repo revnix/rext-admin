@@ -99,7 +99,7 @@ export function SignupForm({
         throw new Error(errorMessage);
       }
 
-      const responseData = await response.json();
+      const _responseData = await response.json();
       setSuccess(true);
 
       // Auto-login after successful registration
