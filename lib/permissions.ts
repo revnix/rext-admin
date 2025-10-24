@@ -167,6 +167,17 @@ export const MEDIA_PERMISSIONS = {
   DELETE: "media.delete",
 } as const;
 
+// Member Management
+export const MEMBER_PERMISSIONS = {
+  READ: "member.read",
+  UPDATE: "member.update",
+  UPDATE_ROLE: "member.update_role",
+  INVITE: "member.invite",
+  REMOVE: "member.remove",
+  RESEND_INVITATION: "member.resend_invitation",
+  REVOKE_INVITATION: "member.revoke_invitation",
+} as const;
+
 // System/Admin
 export const ADMIN_PERMISSIONS = {
   ROLE_READ: "role.read",
