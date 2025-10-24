@@ -19,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CanAccess } from "@/components/permissions/can-access";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +45,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import type { Media } from "@/lib/api-client/media";
+import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 
 interface MediaDetailSheetProps {
   workspaceId: string;
@@ -261,14 +263,16 @@ export function MediaDetailSheet({
             <div className="flex flex-wrap gap-2">
               {!isEditing ? (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
+                  <CanAccess permission={MEDIA_PERMISSIONS.UPDATE}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </CanAccess>
                   <Button
                     variant="outline"
                     size="sm"
@@ -287,27 +291,31 @@ export function MediaDetailSheet({
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
+                  <CanAccess permission={MEDIA_PERMISSIONS.DELETE}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </CanAccess>
                 </>
               ) : (
                 <>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => updateMedia()}
-                    disabled={isUpdating}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {isUpdating ? "Saving..." : "Save"}
-                  </Button>
+                  <CanAccess permission={MEDIA_PERMISSIONS.UPDATE}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => updateMedia()}
+                      disabled={isUpdating}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isUpdating ? "Saving..." : "Save"}
+                    </Button>
+                  </CanAccess>
                   <Button
                     variant="outline"
                     size="sm"
