@@ -67,7 +67,9 @@ export function TopicActions({
                 Write Content
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Use this topic to create new content</TooltipContent>
+            <TooltipContent>
+              Use this topic to create new content
+            </TooltipContent>
           </Tooltip>
         </CanAccess>
       )}

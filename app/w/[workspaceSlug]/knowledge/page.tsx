@@ -18,6 +18,7 @@ import { WorkspaceCreateKnowledgeBaseDialog } from "@/components/workspace/works
 import { WorkspaceDeleteKnowledgeBaseDialog } from "@/components/workspace/workspace-delete-knowledge-base-dialog";
 import { WorkspaceEditKnowledgeBaseDialog } from "@/components/workspace/workspace-edit-knowledge-base-dialog";
 import { WorkspaceKnowledgeBasesTable } from "@/components/workspace/workspace-knowledge-bases-table";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
@@ -41,6 +42,9 @@ export default function WorkspaceKnowledgePage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  // Check permission for creating knowledge bases
+  const canCreateKnowledge = usePermission(KNOWLEDGE_PERMISSIONS.CREATE);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -114,10 +118,12 @@ export default function WorkspaceKnowledgePage() {
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <Button onClick={() => setShowCreateDialog(true)}>
-        <Plus className="h-4 w-4 mr-2" />
-        New Knowledge Base
-      </Button>
+      {canCreateKnowledge && (
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Knowledge Base
+        </Button>
+      )}
     </>
   );
 

@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
@@ -54,6 +55,10 @@ import { useWorkspace } from "@/providers/workspace-provider";
 export default function WorkspaceMediaPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
+
+  // Check permissions
+  const canUploadMedia = usePermission(MEDIA_PERMISSIONS.UPLOAD);
+  const canDeleteMedia = usePermission(MEDIA_PERMISSIONS.DELETE);
 
   // UI states
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -222,15 +227,17 @@ export default function WorkspaceMediaPage() {
           ? "Deselect All"
           : "Select All"}
       </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={handleBulkDelete}
-        disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
-      >
-        <Trash2 className="h-4 w-4 mr-2" />
-        Delete ({selectedIds.size})
-      </Button>
+      {canDeleteMedia && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleBulkDelete}
+          disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete ({selectedIds.size})
+        </Button>
+      )}
       <Button variant="ghost" size="sm" onClick={handleCancelSelection}>
         <X className="h-4 w-4 mr-2" />
         Cancel
@@ -274,10 +281,12 @@ export default function WorkspaceMediaPage() {
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <Button onClick={() => setShowUploadDialog(true)}>
-        <Plus className="h-4 w-4 mr-2" />
-        Upload Media
-      </Button>
+      {canUploadMedia && (
+        <Button onClick={() => setShowUploadDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Upload Media
+        </Button>
+      )}
     </>
   );
 

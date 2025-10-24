@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { usePermission } from "@/hooks/use-permission";
 import { useTopics } from "@/hooks/use-topics";
 import { log } from "@/lib/logger";
 import { TOPIC_PERMISSIONS } from "@/lib/permissions";
@@ -25,6 +26,9 @@ import { useWorkspace } from "@/providers/workspace-provider";
 export default function WorkspaceTopicsPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
+
+  // Check permission for creating topics
+  const canCreateTopic = usePermission(TOPIC_PERMISSIONS.CREATE);
 
   const { data: topics, isLoading, error, refetch } = useTopics(workspaceId);
 
@@ -55,22 +59,24 @@ export default function WorkspaceTopicsPage() {
     { label: "Topics" },
   ];
 
-  const emptyActions = [
-    {
-      label: "Generate Topics",
-      icon: <Plus className="h-4 w-4" />,
-      href: workspaceRoutes.topicCreate(workspaceSlug),
-    },
-  ];
+  const emptyActions = canCreateTopic
+    ? [
+        {
+          label: "Generate Topics",
+          icon: <Plus className="h-4 w-4" />,
+          href: workspaceRoutes.topicCreate(workspaceSlug),
+        },
+      ]
+    : [];
 
-  const tableActions = (
+  const tableActions = canCreateTopic ? (
     <Button asChild>
       <Link href={workspaceRoutes.topicCreate(workspaceSlug)}>
         <Plus className="h-4 w-4 mr-2" />
         Generate Topics
       </Link>
     </Button>
-  );
+  ) : null;
 
   return (
     <PageLayout

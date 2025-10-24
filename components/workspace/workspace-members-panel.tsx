@@ -12,9 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { CanAccess } from "@/components/permissions/can-access";
 import { DataTable } from "@/components/data-table";
-import { usePermission } from "@/hooks/use-permission";
+import { CanAccess } from "@/components/permissions/can-access";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkspaceChangeRoleDialog } from "@/components/workspace/workspace-change-role-dialog";
 import { WorkspaceInviteMembersDialog } from "@/components/workspace/workspace-invite-members-dialog";
 import { WorkspaceRemoveMemberDialog } from "@/components/workspace/workspace-remove-member-dialog";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/card";
 import { useContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { usePermission } from "@/hooks/use-permission";
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -38,6 +39,11 @@ import type { ContentData, RowAction } from "@/types/data-table";
 
 export default function WorkspaceContentPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+
+  // Check permissions for content actions
+  const canCreateContent = usePermission(CONTENT_PERMISSIONS.CREATE);
+  const canUpdateContent = usePermission(CONTENT_PERMISSIONS.UPDATE);
+  const canDeleteContent = usePermission(CONTENT_PERMISSIONS.DELETE);
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
@@ -160,7 +166,7 @@ export default function WorkspaceContentPage() {
     },
   ];
 
-  const tableActions = (
+  const tableActions = canCreateContent ? (
     <div className="flex items-center gap-2">
       <Button asChild variant="default">
         <Link href={workspaceRoutes.contentCreate(workspaceSlug)}>
@@ -169,7 +175,7 @@ export default function WorkspaceContentPage() {
         </Link>
       </Button>
     </div>
-  );
+  ) : null;
 
   const rowActions: RowAction<ContentData>[] = [
     {
@@ -179,25 +185,25 @@ export default function WorkspaceContentPage() {
         workspaceRoutes.contentDetail(workspaceSlug, row.id),
       tooltip: "View content details",
     },
-    {
+    canUpdateContent && {
       label: "Edit",
       icon: <Edit3 className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Edit content:", row.title),
       tooltip: "Edit this content",
     },
-    {
+    canCreateContent && {
       label: "Copy",
       icon: <Copy className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Copy content:", row.title),
       tooltip: "Duplicate this content",
     },
-    {
+    canUpdateContent && {
       label: "Schedule",
       icon: <Calendar className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Schedule content:", row.title),
       tooltip: "Schedule for publication",
     },
-    {
+    canDeleteContent && {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Delete content:", row.title),
@@ -207,7 +213,7 @@ export default function WorkspaceContentPage() {
       confirmationDescription:
         "Are you sure you want to delete this content? This action cannot be undone.",
     },
-  ];
+  ].filter(Boolean) as RowAction<ContentData>[];
 
   return (
     <PageLayout
