@@ -139,15 +139,16 @@ export function CanAccess({
   const isWorkspaceContext = !!workspaceId;
 
   // Check workspace permissions (if in workspace context)
-  const hasSingleWorkspacePermission = useWorkspacePermission(
+  // Phase 2: These now return {hasPermission, isLoading}
+  const singleWorkspaceResult = useWorkspacePermission(
     permission || "",
     workspaceId,
   );
-  const hasAnyWorkspacePermission = useAnyWorkspacePermission(
+  const anyWorkspaceResult = useAnyWorkspacePermission(
     anyPermission || [],
     workspaceId,
   );
-  const hasAllWorkspacePermissions = useAllWorkspacePermissions(
+  const allWorkspaceResult = useAllWorkspacePermissions(
     allPermissions || [],
     workspaceId,
   );
@@ -161,26 +162,43 @@ export function CanAccess({
   const hasSingleRole = useRole(role || "");
   const hasAnyRoleCheck = useAnyRole(anyRole || []);
 
-  // Determine if user has access based on provided props
+  // Determine if user has access and if still loading
   let hasAccess = false;
+  let isLoading = false;
 
   if (permission) {
     // Use workspace permissions if in workspace context, otherwise use global
-    hasAccess = isWorkspaceContext
-      ? hasSingleWorkspacePermission
-      : hasSingleGlobalPermission;
+    if (isWorkspaceContext) {
+      hasAccess = singleWorkspaceResult.hasPermission;
+      isLoading = singleWorkspaceResult.isLoading;
+    } else {
+      hasAccess = hasSingleGlobalPermission;
+    }
   } else if (anyPermission && anyPermission.length > 0) {
-    hasAccess = isWorkspaceContext
-      ? hasAnyWorkspacePermission
-      : hasAnyGlobalPermission;
+    if (isWorkspaceContext) {
+      hasAccess = anyWorkspaceResult.hasPermission;
+      isLoading = anyWorkspaceResult.isLoading;
+    } else {
+      hasAccess = hasAnyGlobalPermission;
+    }
   } else if (allPermissions && allPermissions.length > 0) {
-    hasAccess = isWorkspaceContext
-      ? hasAllWorkspacePermissions
-      : hasAllGlobalPermissions;
+    if (isWorkspaceContext) {
+      hasAccess = allWorkspaceResult.hasPermission;
+      isLoading = allWorkspaceResult.isLoading;
+    } else {
+      hasAccess = hasAllGlobalPermissions;
+    }
   } else if (role) {
     hasAccess = hasSingleRole;
   } else if (anyRole && anyRole.length > 0) {
     hasAccess = hasAnyRoleCheck;
+  }
+
+  // Show loading state while permissions are being fetched (prevent flash!)
+  if (isLoading) {
+    // For now, show children as-is during loading (could show skeleton instead)
+    // This prevents flash of "no access" message
+    return <>{children}</>;
   }
 
   // Apply invert logic

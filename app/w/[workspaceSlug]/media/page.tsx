@@ -57,11 +57,12 @@ export default function WorkspaceMediaPage() {
   const queryClient = useQueryClient();
 
   // Check workspace-scoped permissions
-  const canUploadMedia = useWorkspacePermission(
-    MEDIA_PERMISSIONS.UPLOAD,
+  // Phase 2: Hooks now return {hasPermission, isLoading}
+  const { hasPermission: canUploadMedia } = useWorkspacePermission(
+    MEDIA_PERMISSIONS.CREATE,
     workspaceId,
   );
-  const canDeleteMedia = useWorkspacePermission(
+  const { hasPermission: canDeleteMedia } = useWorkspacePermission(
     MEDIA_PERMISSIONS.DELETE,
     workspaceId,
   );

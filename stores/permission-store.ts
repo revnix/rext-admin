@@ -29,6 +29,8 @@ interface PermissionStore {
   workspacePermissions: Map<string, WorkspacePermissions>;
   isLoading: boolean;
   error: string | null;
+  // Track loading state per workspace to avoid flash during permission loading
+  workspaceLoadingStates: Map<string, boolean>;
 
   // Actions
   setUser: (user: User) => void;
@@ -39,6 +41,10 @@ interface PermissionStore {
   clearPermissions: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+  // Set loading state for a specific workspace
+  setWorkspaceLoading: (workspaceId: string, isLoading: boolean) => void;
+  // Check if workspace permissions are currently loading
+  isWorkspaceLoading: (workspaceId: string) => boolean;
 
   // Permission checks
   hasPermission: (permission: string, workspaceId?: string) => boolean;
@@ -65,6 +71,7 @@ export const usePermissionStore = create<PermissionStore>()(
       workspacePermissions: new Map(),
       isLoading: false,
       error: null,
+      workspaceLoadingStates: new Map(),
 
       setUser: (user) => set({ user, error: null }),
 
@@ -72,19 +79,40 @@ export const usePermissionStore = create<PermissionStore>()(
         set((state) => {
           const newMap = new Map(state.workspacePermissions);
           newMap.set(workspaceId, permissions);
-          return { workspacePermissions: newMap };
+
+          // Mark workspace as loaded (not loading anymore)
+          const newLoadingStates = new Map(state.workspaceLoadingStates);
+          newLoadingStates.set(workspaceId, false);
+
+          return {
+            workspacePermissions: newMap,
+            workspaceLoadingStates: newLoadingStates,
+          };
         }),
 
       clearPermissions: () =>
         set({
           user: null,
           workspacePermissions: new Map(),
+          workspaceLoadingStates: new Map(),
           error: null,
         }),
 
       setLoading: (isLoading) => set({ isLoading }),
 
       setError: (error) => set({ error }),
+
+      setWorkspaceLoading: (workspaceId, isLoading) =>
+        set((state) => {
+          const newLoadingStates = new Map(state.workspaceLoadingStates);
+          newLoadingStates.set(workspaceId, isLoading);
+          return { workspaceLoadingStates: newLoadingStates };
+        }),
+
+      isWorkspaceLoading: (workspaceId) => {
+        const state = get();
+        return state.workspaceLoadingStates.get(workspaceId) || false;
+      },
 
       hasPermission: (permission, workspaceId) => {
         const state = get();

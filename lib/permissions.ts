@@ -109,7 +109,6 @@ export const USER_PERMISSIONS = {
   UPDATE: "user.update",
   DELETE: "user.delete",
   MANAGE_ROLES: "user.manage_roles",
-  IMPERSONATE: "user.impersonate",
 } as const;
 
 // Workspace Management
@@ -173,13 +172,11 @@ export const USAGE_PERMISSIONS = {
 
 // Media Management
 export const MEDIA_PERMISSIONS = {
-  CREATE: "media.create", // Standard CRUD (canonical)
-  READ: "media.read", // Standard CRUD (canonical)
+  CREATE: "media.create",
+  READ: "media.read",
   UPDATE: "media.update",
   DELETE: "media.delete",
   ORGANIZE: "media.organize",
-  UPLOAD: "media.upload", // Deprecated alias for media.create
-  VIEW: "media.view", // Deprecated alias for media.read
 } as const;
 
 // Member Management
@@ -195,11 +192,10 @@ export const MEMBER_PERMISSIONS = {
 
 // License Management (One-time purchases)
 export const LICENSE_PERMISSIONS = {
-  READ: "license.read", // Standard CRUD (canonical)
+  READ: "license.read",
   ACTIVATE: "license.activate",
   DEACTIVATE: "license.deactivate",
   REVOKE: "license.revoke",
-  VIEW: "license.view", // Deprecated alias for license.read
 } as const;
 
 // System/Admin
@@ -245,11 +241,6 @@ export const PERMISSIONS = {
   WORKSPACE_READ: "workspace.read",
   WORKSPACE_UPDATE: "workspace.update",
   WORKSPACE_DELETE: "workspace.delete",
-
-  // System administration
-  SYSTEM_SETTINGS_READ: "system.settings.read",
-  SYSTEM_SETTINGS_UPDATE: "system.settings.update",
-  SYSTEM_AUDIT_LOG_READ: "system.audit_log.read",
 } as const;
 
 /**

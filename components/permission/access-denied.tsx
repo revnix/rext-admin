@@ -47,6 +47,12 @@ interface AccessDeniedProps {
    * Variant of the component (card or full-page)
    */
   variant?: "card" | "page";
+
+  /**
+   * The route the user attempted to access (e.g., "/subscription")
+   * Used to provide context about what they tried to do
+   */
+  attemptedRoute?: string;
 }
 
 /**
@@ -79,6 +85,7 @@ export function AccessDenied({
   showUpgrade = false,
   backUrl = "/",
   variant = "card",
+  attemptedRoute,
 }: AccessDeniedProps) {
   const router = useRouter();
 
@@ -133,6 +140,18 @@ export function AccessDenied({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Attempted Route Context */}
+        {attemptedRoute && (
+          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-3 rounded-md">
+            <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">
+              You tried to access:
+            </p>
+            <p className="text-sm font-mono font-semibold text-amber-700 dark:text-amber-300">
+              {attemptedRoute}
+            </p>
+          </div>
+        )}
+
         {/* Permission Details */}
         {permission && (
           <div className="bg-muted p-3 rounded-md">

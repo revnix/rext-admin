@@ -44,7 +44,8 @@ export default function WorkspaceKnowledgePage() {
   const router = useRouter();
 
   // Check workspace-scoped permission for creating knowledge bases
-  const canCreateKnowledge = useWorkspacePermission(
+  // Phase 2: Hooks now return {hasPermission, isLoading}
+  const { hasPermission: canCreateKnowledge } = useWorkspacePermission(
     KNOWLEDGE_PERMISSIONS.CREATE,
     workspaceId,
   );

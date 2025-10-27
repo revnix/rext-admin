@@ -168,41 +168,71 @@ export function usePermissionUser(): UserWithPermissions | null {
  * Checks permission from workspace permission store, which is loaded
  * via useWorkspacePermissions hook.
  *
+ * **BREAKING CHANGE (Phase 2):** Now returns an object with `hasPermission` and `isLoading`
+ * to prevent permission flash during initial load.
+ *
  * @param permission - Permission string to check
  * @param workspaceId - Workspace ID for scoped permission check
- * @returns boolean indicating if user has permission in workspace
+ * @returns Object with hasPermission (boolean) and isLoading (boolean)
  *
  * @example
- * const canManageWorkspace = useWorkspacePermission("workspace:manage_settings", workspaceId);
+ * // OLD (deprecated):
+ * const canManage = useWorkspacePermission("workspace.update", workspaceId);
+ *
+ * @example
+ * // NEW (Phase 2):
+ * const { hasPermission: canManage, isLoading } = useWorkspacePermission("workspace.update", workspaceId);
+ * if (isLoading) return <Skeleton />;
+ * if (!canManage) return <AccessDenied />;
  */
 export function useWorkspacePermission(
   permission: string,
   workspaceId?: string,
-): boolean {
-  const { data: session } = useSession();
+): { hasPermission: boolean; isLoading: boolean } {
+  const { data: session, status } = useSession();
   const user = sessionUserToPermissionUser(session?.user);
 
   // Subscribe to workspace permissions store (reactive)
   const workspacePermissions = usePermissionStore(
     (state) => state.workspacePermissions,
   );
+  const isWorkspaceLoading = usePermissionStore(
+    (state) => state.isWorkspaceLoading,
+  );
+
+  // Session still loading
+  const isSessionLoading = status === "loading";
 
   // If no workspace ID, fall back to global permission check
   if (!workspaceId) {
-    return checkPermission(user, permission);
+    return {
+      hasPermission: checkPermission(user, permission),
+      isLoading: isSessionLoading,
+    };
   }
 
-  // Super admin has all permissions
-  if (isSuperAdmin(user)) return true;
+  // Check if workspace permissions are currently loading
+  const isLoadingPermissions = isWorkspaceLoading(workspaceId);
+
+  // Super admin has all permissions (no loading needed)
+  if (isSuperAdmin(user)) {
+    return { hasPermission: true, isLoading: false };
+  }
 
   // Check workspace-specific permissions from store (reactive)
   const wsPerms = workspacePermissions.get(workspaceId);
-  if (wsPerms?.permissions.includes(permission)) {
-    return true;
+
+  // If permissions not loaded yet and still loading, indicate loading state
+  if (!wsPerms && isLoadingPermissions) {
+    return { hasPermission: false, isLoading: true };
   }
 
-  // Fallback to global permissions
-  return checkPermission(user, permission);
+  // Permissions loaded (or failed to load), check permission
+  const hasPermission =
+    wsPerms?.permissions.includes(permission) ||
+    checkPermission(user, permission); // Fallback to global
+
+  return { hasPermission, isLoading: false };
 }
 
 /**
@@ -210,40 +240,57 @@ export function useWorkspacePermission(
  *
  * Checks permissions from workspace permission store.
  *
+ * **BREAKING CHANGE (Phase 2):** Now returns an object with `hasPermission` and `isLoading`
+ *
  * @param permissions - Array of permission strings
  * @param workspaceId - Workspace ID for scoped permission check
- * @returns boolean indicating if user has at least one permission in workspace
+ * @returns Object with hasPermission (boolean) and isLoading (boolean)
  */
 export function useAnyWorkspacePermission(
   permissions: string[],
   workspaceId?: string,
-): boolean {
-  const { data: session } = useSession();
+): { hasPermission: boolean; isLoading: boolean } {
+  const { data: session, status } = useSession();
   const user = sessionUserToPermissionUser(session?.user);
 
   // Subscribe to workspace permissions store (reactive)
   const workspacePermissions = usePermissionStore(
     (state) => state.workspacePermissions,
   );
+  const isWorkspaceLoading = usePermissionStore(
+    (state) => state.isWorkspaceLoading,
+  );
+
+  const isSessionLoading = status === "loading";
 
   if (!workspaceId) {
-    return checkAnyPermission(user, permissions);
+    return {
+      hasPermission: checkAnyPermission(user, permissions),
+      isLoading: isSessionLoading,
+    };
   }
 
-  if (isSuperAdmin(user)) return true;
+  const isLoadingPermissions = isWorkspaceLoading(workspaceId);
+
+  if (isSuperAdmin(user)) {
+    return { hasPermission: true, isLoading: false };
+  }
 
   // Check workspace permissions from store (reactive)
   const wsPerms = workspacePermissions.get(workspaceId);
-  if (wsPerms) {
-    // Check if user has ANY of the permissions
-    const hasAny = permissions.some((perm) =>
-      wsPerms.permissions.includes(perm),
-    );
-    if (hasAny) return true;
+
+  // If permissions not loaded yet and still loading, indicate loading state
+  if (!wsPerms && isLoadingPermissions) {
+    return { hasPermission: false, isLoading: true };
   }
 
-  // Fallback to global permissions
-  return checkAnyPermission(user, permissions);
+  // Check if user has ANY of the permissions
+  const hasPermission =
+    (wsPerms &&
+      permissions.some((perm) => wsPerms.permissions.includes(perm))) ||
+    checkAnyPermission(user, permissions); // Fallback to global
+
+  return { hasPermission, isLoading: false };
 }
 
 /**
@@ -251,38 +298,55 @@ export function useAnyWorkspacePermission(
  *
  * Checks permissions from workspace permission store.
  *
+ * **BREAKING CHANGE (Phase 2):** Now returns an object with `hasPermission` and `isLoading`
+ *
  * @param permissions - Array of permission strings
  * @param workspaceId - Workspace ID for scoped permission check
- * @returns boolean indicating if user has all permissions in workspace
+ * @returns Object with hasPermission (boolean) and isLoading (boolean)
  */
 export function useAllWorkspacePermissions(
   permissions: string[],
   workspaceId?: string,
-): boolean {
-  const { data: session } = useSession();
+): { hasPermission: boolean; isLoading: boolean } {
+  const { data: session, status } = useSession();
   const user = sessionUserToPermissionUser(session?.user);
 
   // Subscribe to workspace permissions store (reactive)
   const workspacePermissions = usePermissionStore(
     (state) => state.workspacePermissions,
   );
+  const isWorkspaceLoading = usePermissionStore(
+    (state) => state.isWorkspaceLoading,
+  );
+
+  const isSessionLoading = status === "loading";
 
   if (!workspaceId) {
-    return checkAllPermissions(user, permissions);
+    return {
+      hasPermission: checkAllPermissions(user, permissions),
+      isLoading: isSessionLoading,
+    };
   }
 
-  if (isSuperAdmin(user)) return true;
+  const isLoadingPermissions = isWorkspaceLoading(workspaceId);
+
+  if (isSuperAdmin(user)) {
+    return { hasPermission: true, isLoading: false };
+  }
 
   // Check workspace permissions from store (reactive)
   const wsPerms = workspacePermissions.get(workspaceId);
-  if (wsPerms) {
-    // Check if user has ALL of the permissions
-    const hasAll = permissions.every((perm) =>
-      wsPerms.permissions.includes(perm),
-    );
-    if (hasAll) return true;
+
+  // If permissions not loaded yet and still loading, indicate loading state
+  if (!wsPerms && isLoadingPermissions) {
+    return { hasPermission: false, isLoading: true };
   }
 
-  // Fallback to global permissions
-  return checkAllPermissions(user, permissions);
+  // Check if user has ALL of the permissions
+  const hasPermission =
+    (wsPerms &&
+      permissions.every((perm) => wsPerms.permissions.includes(perm))) ||
+    checkAllPermissions(user, permissions); // Fallback to global
+
+  return { hasPermission, isLoading: false };
 }

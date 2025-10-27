@@ -29,7 +29,7 @@ import { usePermissionStore } from "@/stores/permission-store";
  * }
  */
 export function useWorkspacePermissions(workspaceId?: string) {
-  const { setWorkspacePermissions } = usePermissionStore();
+  const { setWorkspacePermissions, setWorkspaceLoading } = usePermissionStore();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["workspace-permissions", workspaceId],
@@ -53,6 +53,13 @@ export function useWorkspacePermissions(workspaceId?: string) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  // Update loading state in store when query status changes
+  useEffect(() => {
+    if (workspaceId) {
+      setWorkspaceLoading(workspaceId, isLoading);
+    }
+  }, [isLoading, workspaceId, setWorkspaceLoading]);
 
   // Store permissions in Zustand store when data changes
   useEffect(() => {

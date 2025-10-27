@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
+import { CanAccess } from "@/components/permissions/can-access";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmailTemplateEditor } from "@/components/workspace/email-template-editor";
 import { apiClient, type EmailTemplate } from "@/lib/api-client";
+import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 
 const templateTypeLabels: Record<string, string> = {
   workspace_invitation: "Workspace Invitation",
@@ -172,10 +174,12 @@ export default function AdminEmailTemplatesPage() {
       description="Manage system-wide email templates used across all workspaces"
       breadcrumbs={breadcrumbs}
       actions={
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Template
-        </Button>
+        <CanAccess permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Template
+          </Button>
+        </CanAccess>
       }
     >
       <AdminGuard>

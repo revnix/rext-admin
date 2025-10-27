@@ -41,15 +41,16 @@ export default function WorkspaceContentPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
 
   // Check workspace-scoped permissions for content actions
-  const canCreateContent = useWorkspacePermission(
+  // Phase 2: Hooks now return {hasPermission, isLoading}
+  const { hasPermission: canCreateContent } = useWorkspacePermission(
     CONTENT_PERMISSIONS.CREATE,
     workspaceId,
   );
-  const canUpdateContent = useWorkspacePermission(
+  const { hasPermission: canUpdateContent } = useWorkspacePermission(
     CONTENT_PERMISSIONS.UPDATE,
     workspaceId,
   );
-  const canDeleteContent = useWorkspacePermission(
+  const { hasPermission: canDeleteContent } = useWorkspacePermission(
     CONTENT_PERMISSIONS.DELETE,
     workspaceId,
   );

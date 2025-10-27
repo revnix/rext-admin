@@ -157,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {
               title: "Licenses",
               url: "/licenses",
-              permission: "license.view",
+              permission: "license.read",
             },
           ],
         },

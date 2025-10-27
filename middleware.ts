@@ -19,6 +19,72 @@ interface AuthenticatedRequest extends NextRequest {
   auth: Session | null;
 }
 
+/**
+ * Protected routes configuration
+ * Maps route patterns to required permissions or roles
+ *
+ * NOTE: These are GLOBAL (user-level) permissions, NOT workspace-scoped.
+ * Workspace-scoped permissions are checked at the page/component level
+ * after workspace context is loaded.
+ */
+const PROTECTED_ROUTES: Record<string, string | string[]> = {
+  // Owner-only pages (subscription management)
+  // These are user-level permissions (workspace_scoped=False in backend)
+  "/subscription": "subscription.read",
+  "/billing": "billing.read",
+
+  // Usage monitoring (owner + admin have this permission)
+  "/usage": "usage.read",
+
+  // Admin-only pages (platform administration)
+  "/admin": ["super_admin", "admin"], // Role-based check
+  "/admin/users": "user.read",
+  "/admin/monitoring": "audit.read",
+  "/admin/reports": "audit.read",
+};
+
+/**
+ * Workspace-scoped routes that require workspace-specific permission checks
+ * These routes need workspace context loaded before permission check,
+ * so they're checked at the page level, not in middleware.
+ *
+ * Examples:
+ * - /w/[workspaceSlug]/settings - requires workspace.update for THAT workspace
+ * - /w/[workspaceSlug]/members - requires member.read for THAT workspace
+ * - /w/[workspaceSlug]/content - requires content.read for THAT workspace
+ *
+ * Middleware only verifies user is authenticated for workspace routes.
+ * Detailed permission checks happen in:
+ * - WorkspaceProvider (workspace membership)
+ * - PermissionGuard components (action-level permissions)
+ */
+
+/**
+ * Check if user has required permission or role
+ * @param session - User session with permissions and role
+ * @param requirement - Single permission string, or array of roles
+ * @returns true if user has access, false otherwise
+ */
+function checkAccess(
+  session: Session | null,
+  requirement: string | string[],
+): boolean {
+  if (!session?.user) return false;
+
+  const user = session.user;
+
+  // Super admin bypasses all permission checks
+  if (user.role === "super_admin") return true;
+
+  // Role-based check (array of allowed roles)
+  if (Array.isArray(requirement)) {
+    return requirement.includes(user.role || "");
+  }
+
+  // Permission-based check (single permission string)
+  return user.permissions?.includes(requirement) || false;
+}
+
 export default auth((request) => {
   const { nextUrl } = request as NextRequest;
   const session = (request as AuthenticatedRequest).auth;
@@ -44,14 +110,28 @@ export default auth((request) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin route protection
-  if (nextUrl.pathname.startsWith("/admin")) {
-    const userRole = session?.user?.role || "";
-    const isAdmin = userRole === "super_admin" || userRole === "admin";
+  // Permission-based route protection
+  // Check each protected route pattern and enforce permissions
+  for (const [routePattern, requirement] of Object.entries(PROTECTED_ROUTES)) {
+    if (nextUrl.pathname.startsWith(routePattern)) {
+      const hasAccess = checkAccess(session, requirement);
 
-    if (!isAdmin) {
-      // Redirect non-admins to home
-      return NextResponse.redirect(new URL("/", nextUrl.origin));
+      if (!hasAccess) {
+        // Redirect to unauthorized page with context
+        const unauthorizedUrl = new URL("/unauthorized", nextUrl.origin);
+        unauthorizedUrl.searchParams.set("from", nextUrl.pathname);
+
+        // Add required permission/role to help users understand what's needed
+        const requiredLabel = Array.isArray(requirement)
+          ? requirement.join(" or ")
+          : requirement;
+        unauthorizedUrl.searchParams.set("required", requiredLabel);
+
+        return NextResponse.redirect(unauthorizedUrl);
+      }
+
+      // Permission granted, continue to page
+      break;
     }
   }
 

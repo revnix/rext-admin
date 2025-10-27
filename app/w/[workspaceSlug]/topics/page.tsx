@@ -28,7 +28,8 @@ export default function WorkspaceTopicsPage() {
   const queryClient = useQueryClient();
 
   // Check workspace-scoped permission for creating topics
-  const canCreateTopic = useWorkspacePermission(
+  // Phase 2: Hooks now return {hasPermission, isLoading}
+  const { hasPermission: canCreateTopic } = useWorkspacePermission(
     TOPIC_PERMISSIONS.CREATE,
     workspaceId,
   );

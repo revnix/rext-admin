@@ -3,7 +3,7 @@
 /**
  * License Management Page
  *
- * **Permission Required:** `license.view` (Admin+)
+ * **Permission Required:** `license.read` (Admin+)
  *
  * Allows users to view and manage their license keys, including:
  * - Viewing all licenses
@@ -32,7 +32,7 @@ import { apiClient } from "@/lib/api-client";
 import type { License, LicenseActivation } from "@/types/license";
 import { LicenseStatus } from "@/types/license";
 
-const LICENSE_VIEW = "license.view";
+const LICENSE_VIEW = "license.read";
 
 export default function LicensesPage() {
   const router = useRouter();
@@ -176,7 +176,7 @@ export default function LicensesPage() {
           <div className="bg-muted p-3 rounded-md">
             <p className="text-xs font-mono">
               Required permission:{" "}
-              <span className="font-semibold">license.view</span>
+              <span className="font-semibold">license.read</span>
             </p>
           </div>
           <Button onClick={() => router.push("/")} variant="outline">

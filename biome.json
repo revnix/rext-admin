@@ -14,7 +14,8 @@
       "!dist",
       "!build",
       "!app/tasks",
-      "!app/api/tasks"
+      "!app/api/tasks",
+      "!scripts"
     ]
   },
   "formatter": {
