@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
+// import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
 import { useOnboarding } from "@/hooks/use-onboarding";
 
 interface OnboardingProviderProps {
@@ -14,7 +14,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const { status } = useSession();
   const pathname = usePathname();
   const { shouldShow, isLoading, isCompleted } = useOnboarding();
-  const [isOpen, setIsOpen] = useState(false);
+  const [_isOpen, setIsOpen] = useState(false);
 
   // Don't show onboarding on certain pages
   const isExcludedPage =
@@ -57,9 +57,10 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     return undefined;
   }, [status, shouldShow, isLoading, isCompleted, isExcludedPage]);
 
-  const handleClose = () => {
-    setIsOpen(false);
-  };
+  // Onboarding modal temporarily disabled
+  // const _handleClose = () => {
+  //   setIsOpen(false);
+  // };
 
   return (
     <>
