@@ -21,7 +21,7 @@ export function checkPermission(
   if (!user) return false;
 
   // Super admin bypass - has all permissions
-  if (user.role === 'super_admin') return true;
+  if (user.role === "super_admin") return true;
 
   if (!user.permissions) return false;
 
@@ -39,7 +39,7 @@ export function checkAnyPermission(
   if (!user) return false;
 
   // Super admin bypass - has all permissions
-  if (user.role === 'super_admin') return true;
+  if (user.role === "super_admin") return true;
 
   if (!user.permissions || user.permissions.length === 0) return false;
   if (permissions.length === 0) return false;
@@ -60,7 +60,7 @@ export function checkAllPermissions(
   if (!user) return false;
 
   // Super admin bypass - has all permissions
-  if (user.role === 'super_admin') return true;
+  if (user.role === "super_admin") return true;
 
   if (!user.permissions || user.permissions.length === 0) return false;
   if (permissions.length === 0) return false;
