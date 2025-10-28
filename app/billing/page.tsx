@@ -74,68 +74,30 @@ export default function BillingHistoryPage() {
     { label: "Billing & Invoices" },
   ];
 
-  const AccessDeniedFallback = (
-    <PageLayout
-      title="Access Denied"
-      description="You don't have permission to view billing information"
-      breadcrumbs={breadcrumbs}
-    >
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Billing Access Restricted
-          </CardTitle>
-          <CardDescription>
-            Only workspace owners can access billing and invoice information.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            This page contains sensitive financial information that is
-            restricted to workspace owners only.
-          </p>
-          <div className="bg-muted p-3 rounded-md">
-            <p className="text-xs font-mono">
-              Required permission:{" "}
-              <span className="font-semibold">billing.read</span>
-            </p>
-          </div>
-          <Button onClick={() => router.push("/")} variant="outline">
-            Return to Dashboard
-          </Button>
-        </CardContent>
-      </Card>
-    </PageLayout>
-  );
+  // NOTE: This page is protected by middleware (see middleware.ts)
+  // No need for PermissionGuard wrapper as middleware already validates billing.read permission
 
   if (loading) {
     return (
-      <PermissionGuard
-        permission={BILLING_READ}
-        fallback={AccessDeniedFallback}
+      <PageLayout
+        title="Billing & Invoices"
+        description="Manage your billing information and view invoice history"
+        breadcrumbs={breadcrumbs}
       >
-        <PageLayout
-          title="Billing & Invoices"
-          description="Manage your billing information and view invoice history"
-          breadcrumbs={breadcrumbs}
-        >
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Loading billing information...
-              </p>
-            </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              Loading billing information...
+            </p>
           </div>
-        </PageLayout>
-      </PermissionGuard>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <PermissionGuard permission={BILLING_READ} fallback={AccessDeniedFallback}>
-      <PageLayout
+    <PageLayout
         title="Billing & Invoices"
         description="Manage your billing information and view invoice history"
         breadcrumbs={breadcrumbs}
@@ -366,6 +328,5 @@ export default function BillingHistoryPage() {
         {/* Footer with Policy Links */}
         <Footer variant="minimal" className="mt-12" />
       </PageLayout>
-    </PermissionGuard>
   );
 }

@@ -64,7 +64,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   return (
     <>
       {children}
-      {!isLoading && <OnboardingModal open={isOpen} onClose={handleClose} />}
+      {/* Onboarding modal temporarily disabled */}
+      {/* {!isLoading && <OnboardingModal open={isOpen} onClose={handleClose} />} */}
     </>
   );
 }

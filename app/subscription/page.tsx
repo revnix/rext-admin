@@ -149,45 +149,10 @@ export default function SubscriptionDashboardPage() {
     subscription.status === SubscriptionStatus.ACTIVE ||
     subscription.status === SubscriptionStatus.TRIAL;
 
+  // NOTE: This page is protected by middleware (see middleware.ts)
+  // No need for PermissionGuard wrapper as middleware already validates subscription.read permission
   return (
-    <PermissionGuard
-      permission={SUBSCRIPTION_PERMISSIONS.READ}
-      fallback={
-        <PageLayout
-          title="Access Denied"
-          description="You don't have permission to view subscription management"
-          breadcrumbs={breadcrumbs}
-        >
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Subscription Access Restricted
-              </CardTitle>
-              <CardDescription>
-                Only workspace owners can access subscription management.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                This page contains sensitive billing and subscription
-                information that is restricted to workspace owners only.
-              </p>
-              <div className="bg-muted p-3 rounded-md">
-                <p className="text-xs font-mono">
-                  Required permission:{" "}
-                  <span className="font-semibold">subscription.read</span>
-                </p>
-              </div>
-              <Button onClick={() => router.push("/")} variant="outline">
-                Return to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        </PageLayout>
-      }
-    >
-      <PageLayout
+    <PageLayout
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
         breadcrumbs={breadcrumbs}
@@ -405,6 +370,5 @@ export default function SubscriptionDashboardPage() {
         {/* Footer with Policy Links */}
         <Footer variant="minimal" className="mt-12" />
       </PageLayout>
-    </PermissionGuard>
   );
 }

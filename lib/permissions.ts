@@ -12,12 +12,17 @@ export interface UserWithPermissions {
 
 /**
  * Check if user has a specific permission
+ * Super admin has all permissions
  */
 export function checkPermission(
   user: UserWithPermissions | null,
   permission: string,
 ): boolean {
   if (!user) return false;
+
+  // Super admin bypass - has all permissions
+  if (user.role === 'super_admin') return true;
+
   if (!user.permissions) return false;
 
   return user.permissions.includes(permission);
@@ -25,12 +30,17 @@ export function checkPermission(
 
 /**
  * Check if user has ANY of the specified permissions
+ * Super admin has all permissions
  */
 export function checkAnyPermission(
   user: UserWithPermissions | null,
   permissions: string[],
 ): boolean {
   if (!user) return false;
+
+  // Super admin bypass - has all permissions
+  if (user.role === 'super_admin') return true;
+
   if (!user.permissions || user.permissions.length === 0) return false;
   if (permissions.length === 0) return false;
 
@@ -41,12 +51,17 @@ export function checkAnyPermission(
 
 /**
  * Check if user has ALL of the specified permissions
+ * Super admin has all permissions
  */
 export function checkAllPermissions(
   user: UserWithPermissions | null,
   permissions: string[],
 ): boolean {
   if (!user) return false;
+
+  // Super admin bypass - has all permissions
+  if (user.role === 'super_admin') return true;
+
   if (!user.permissions || user.permissions.length === 0) return false;
   if (permissions.length === 0) return false;
 
