@@ -19,9 +19,7 @@ COPY . .
 RUN npm run build
 
 
-# -------------------------
 # 🚀 Stage 2: Production Runtime
-# -------------------------
 FROM node:20-alpine AS runner
 
 # Set environment variables for production
