@@ -1,9 +1,6 @@
 name: frontend_CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
