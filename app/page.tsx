@@ -26,8 +26,11 @@ export default function DashboardPage() {
   } = useWorkspaceAutoSelect();
 
   // Check if onboarding is complete for current workspace
-  const { isComplete: isOnboardingComplete, isDismissed } =
-    useOnboardingProgress(currentWorkspace?.id);
+  const {
+    isComplete: isOnboardingComplete,
+    isDismissed,
+    isLoading,
+  } = useOnboardingProgress(currentWorkspace?.id);
 
   // Update page title and description
   usePageTitle(
@@ -40,7 +43,7 @@ export default function DashboardPage() {
   );
 
   // Show loading state while fetching workspaces
-  if (isLoadingWorkspaces) {
+  if (isLoadingWorkspaces || isLoading) {
     return (
       <AuthGuard>
         <PageLayout
