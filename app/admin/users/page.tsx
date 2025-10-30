@@ -25,6 +25,7 @@ import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
 import { PERMISSIONS } from "@/lib/permissions";
+import { useCurrentWorkspaceId } from "@/stores/workspace";
 import type { Column, RowAction } from "@/types/data-table";
 
 interface UserData extends Record<string, unknown> {
@@ -43,6 +44,7 @@ interface UserData extends Record<string, unknown> {
 export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
+  const currentWorkspaceId = useCurrentWorkspaceId();
 
   const breadcrumbs = [
     { label: "Admin", href: "/admin" },
@@ -51,8 +53,9 @@ export default function AdminUsersPage() {
 
   // Fetch all users
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => apiClient.users.list(),
+    queryKey: ["admin-users", currentWorkspaceId],
+    queryFn: () => apiClient.users.list(currentWorkspaceId || undefined),
+    enabled: !!currentWorkspaceId,
   });
 
   const handleImpersonate = (userId: string) => {
