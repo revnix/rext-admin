@@ -1,0 +1,105 @@
+name: frontend_CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧩 Ensure ts-node is installed
+        run: npm install --save-dev ts-node
+
+      - name: 🧹 Run lint and tests
+        run: |
+          npm run lint
+          npm test --if-present
+
+      - name: 🏗️ Build Next.js
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+        run: npm run build
+
+
+  docker_job:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🧱 Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
+
+      - name: 🚀 Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+
+  # deploy:
+  #   needs: docker_job
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: 🧾 Checkout code
+  #       uses: actions/checkout@v4
+
+  #     - name: 🧩 Deploy frontend
+  #       run: |
+  #         DEPLOY_DIR=~/WREXT/frontend
+  #         mkdir -p $DEPLOY_DIR
+  #         cp -r $GITHUB_WORKSPACE/* $DEPLOY_DIR/
+  #         cd $DEPLOY_DIR
+
+  #         echo "📝 Creating .env file..."
+  #         cat <<EOF > .env.local
+  #         NODE_ENV=production
+  #         NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+  #         NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+
+  #         # Public variables
+  #         NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+  #         NEXT_PUBLIC_BACKEND_API_URL=${{ secrets.NEXT_PUBLIC_BACKEND_API_URL }}
+  #         NEXT_PUBLIC_CONTENT_API_KEY=${{ secrets.NEXT_PUBLIC_CONTENT_API_KEY }}
+
+  #         EOF
+  #         echo "✅ .env.local created successfully."
+
+  #         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+  #         echo "📦 Pulling latest frontend image..."
+  #         docker pull revnix/frontend:latest
+
+  #         echo "🧹 Stopping old containers..."
+  #         docker compose down || true
+
+  #         echo "🚀 Starting new container..."
+  #         docker compose up -d frontend
+
+  #         echo "🧹 Cleaning old images..."
+  #         docker image prune -f
+
+  #         echo "✅ Frontend deployed successfully."
