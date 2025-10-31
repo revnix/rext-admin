@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import { use } from "react";
 import { TopicDetailClient } from "@/app/topics/topic-detail-client";
+import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   Card,
@@ -29,9 +30,11 @@ export default function WorkspaceTopicDetailPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <PageLayout title="">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </PageLayout>
     );
   }
 
@@ -45,26 +48,26 @@ export default function WorkspaceTopicDetailPage({
 
   // Workspace context is available via useWorkspace hook in child components
   return (
-    <CanAccess
-      permission={TOPIC_PERMISSIONS.READ}
-      fallback={
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to view this topic.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Required permission:{" "}
-              <code className="text-xs bg-muted px-1 rounded">topic.read</code>
-            </p>
-          </CardContent>
-        </Card>
-      }
-    >
-      <TopicDetailClient topic={topic} />
-    </CanAccess>
+      <CanAccess
+        permission={TOPIC_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view this topic.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">topic.read</code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
+        <TopicDetailClient topic={topic} />
+      </CanAccess>
   );
 }
