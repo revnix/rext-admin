@@ -1,10 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { log } from "@/lib/logger";
-import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Backward-compatible auth hook using AuthJS
@@ -16,7 +16,7 @@ export function useAuthSession() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
-  
+
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [activityCount, setActivityCount] = useState<number>(0);
 

@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import { use } from "react";
 import { TopicDetailClient } from "@/app/topics/topic-detail-client";
+import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   Card,
@@ -29,9 +30,11 @@ export default function WorkspaceTopicDetailPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <PageLayout title="">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </PageLayout>
     );
   }
 

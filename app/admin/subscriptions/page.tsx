@@ -191,9 +191,11 @@ export default function SubscriptionAnalyticsPage() {
 
   if (overviewLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <PageLayout title="">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </PageLayout>
     );
   }
 

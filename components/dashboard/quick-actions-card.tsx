@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CanAccess } from "@/components/permissions/can-access";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import {
   Card,
   CardContent,
@@ -54,13 +56,7 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
       enabled: !!workspaceSlug,
       color: "text-purple-600",
     },
-    {
-      label: "Workspace Settings",
-      href: workspaceSlug ? `/w/${workspaceSlug}/settings` : "/w/create",
-      icon: Settings,
-      enabled: !!workspaceSlug,
-      color: "text-gray-600",
-    },
+    // Workspace Settings is rendered separately with permission gating below
   ];
 
   return (
@@ -85,6 +81,25 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
               </Link>
             </Button>
           ))}
+
+          {/* Gated: Workspace Settings (visible only with workspace.update) */}
+          <CanAccess permission={WORKSPACE_PERMISSIONS.UPDATE} fallback={null}>
+            <Button
+              asChild
+              variant="ghost"
+              className="w-full justify-start"
+              disabled={!workspaceSlug}
+            >
+              <Link
+                href={
+                  workspaceSlug ? `/w/${workspaceSlug}/settings` : "/w/create"
+                }
+              >
+                <Settings className="h-4 w-4 mr-2 text-gray-600" />
+                Workspace Settings
+              </Link>
+            </Button>
+          </CanAccess>
         </div>
       </CardContent>
     </Card>

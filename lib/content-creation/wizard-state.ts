@@ -75,27 +75,34 @@ export function wizardStateReducer(
     case "UPDATE_FIELD": {
       const { field, value } = action.payload;
       const newFormData = { ...state.formData, [field]: value };
-
+      const newTouched = { ...state.touched, [field]: true };
+      const newErrors = { ...state.errors, [field]: undefined };
       return {
         ...state,
         formData: newFormData,
         hasUnsavedChanges: true,
-        touched: { ...state.touched, [field]: true },
-        // Clear field error if value is provided
-        errors:
-          value !== undefined && value !== null && value !== ""
-            ? { ...state.errors, [field]: undefined }
-            : state.errors,
+        touched: newTouched,
+        errors: newErrors,
       };
     }
 
     case "UPDATE_MULTIPLE_FIELDS": {
       const newFormData = { ...state.formData, ...action.payload };
-
+      // For every updated field, mark it touched and clear its error
+      const newTouched = { ...(state.touched as Record<string, boolean>) };
+      const newErrors = {
+        ...(state.errors as Record<string, string | undefined>),
+      };
+      Object.keys(action.payload).forEach((key) => {
+        newTouched[key] = true;
+        newErrors[key] = undefined;
+      });
       return {
         ...state,
         formData: newFormData,
         hasUnsavedChanges: true,
+        touched: newTouched,
+        errors: newErrors,
       };
     }
 

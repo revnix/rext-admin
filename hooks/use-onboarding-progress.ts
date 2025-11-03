@@ -53,6 +53,7 @@ export interface OnboardingProgress {
   dismissOnboarding: () => void;
   skipMilestone: (milestoneId: string) => void;
   resetOnboarding: () => void;
+  isLoading: boolean;
 }
 
 export function useOnboardingProgress(
@@ -67,7 +68,12 @@ export function useOnboardingProgress(
   const triggerUpdate = useCallback(() => forceUpdate((n) => n + 1), []);
 
   // Fetch real-time workspace stats
-  const { data: stats, refetch: refetchStats } = useQuery({
+  const {
+    data: stats,
+    refetch: refetchStats,
+    isLoading,
+    isFetching, // optional if you want more granular control
+  } = useQuery({
     queryKey: ["workspace-stats", workspaceId],
     queryFn: () => {
       if (!workspaceId) throw new Error("Workspace ID required");
@@ -328,5 +334,6 @@ export function useOnboardingProgress(
     dismissOnboarding,
     skipMilestone,
     resetOnboarding,
+    isLoading: isLoading || isFetching, // Return both if desired
   };
 }

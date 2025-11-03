@@ -215,7 +215,9 @@ export function useWizardNavigation({
   }, [wizardState.currentStep, nextStep]);
 
   // Calculate navigation state
-  const canGoNext = !Object.values(wizardState.errors).some((error) => error);
+  const currentStepConfig = WIZARD_CONFIG.steps[wizardState.currentStep];
+  const stepValidation = dependencyEngine.validateStep(currentStepConfig);
+  const canGoNext = stepValidation.isValid;
   const canGoBack = wizardState.currentStep > 0;
 
   // Check if form is ready for submission
