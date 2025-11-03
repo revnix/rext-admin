@@ -194,11 +194,10 @@ export function CanAccess({
     hasAccess = hasAnyRoleCheck;
   }
 
-  // Show loading state while permissions are being fetched (prevent flash!)
+  // Show loading state while permissions are being fetched (prevent flash of unauthorized content)
   if (isLoading) {
-    // For now, show children as-is during loading (could show skeleton instead)
-    // This prevents flash of "no access" message
-    return <>{children}</>;
+    // Render fallback (e.g., Access Restricted card) or nothing while loading
+    return <>{fallback || null}</>;
   }
 
   // Apply invert logic

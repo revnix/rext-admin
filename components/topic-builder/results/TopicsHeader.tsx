@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import type { TopicsHeaderProps } from "@/types/topic-builder-results";
+import type { GeneratedTopic } from "@/types/topic-builder";
 
 export const TopicsHeader = memo(function TopicsHeader({
   filteredCount,
@@ -27,11 +28,12 @@ export const TopicsHeader = memo(function TopicsHeader({
   onRegenerateTopics,
   onBackToWizard,
   selectedTopicIds = [],
-  selectedTopics = [],
+  // selectedTopics = [],
+  selectedUniqueUnsavedTopics = [],
   isBulkSaving = false,
   onBulkSave,
   onClearSelection: _onClearSelection,
-}: TopicsHeaderProps) {
+}: TopicsHeaderProps & { selectedUniqueUnsavedTopics: GeneratedTopic[] }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -85,17 +87,10 @@ export const TopicsHeader = memo(function TopicsHeader({
               variant="secondary"
               size="sm"
               onClick={() => {
-                onBulkSave(selectedTopicIds);
+                onBulkSave(selectedUniqueUnsavedTopics.map((t) => t.id));
               }}
               disabled={(() => {
-                const unsaved = selectedTopics.filter(
-                  (topic) => !topic.is_saved && !topic._optimisticSaved,
-                );
-                return (
-                  isBulkSaving ||
-                  selectedTopicIds.length === 0 ||
-                  unsaved.length === 0
-                );
+                return isBulkSaving || selectedUniqueUnsavedTopics.length === 0;
               })()}
               className="gap-1.5"
             >
@@ -104,23 +99,9 @@ export const TopicsHeader = memo(function TopicsHeader({
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {(() => {
-                if (isBulkSaving) return "Saving...";
-
-                const unsaved = selectedTopics.filter(
-                  (topic) => !topic.is_saved && !topic._optimisticSaved,
-                );
-
-                if (unsaved.length === 0 && selectedTopics.length > 0) {
-                  return "Already Saved";
-                }
-
-                if (unsaved.length === selectedTopics.length) {
-                  return `Save ${selectedTopicIds.length} Topic${selectedTopicIds.length !== 1 ? "s" : ""}`;
-                }
-
-                return `Save ${unsaved.length} Topic${unsaved.length !== 1 ? "s" : ""}`;
-              })()}
+              {isBulkSaving
+                ? "Saving..."
+                : `Save ${selectedUniqueUnsavedTopics.length} Topic${selectedUniqueUnsavedTopics.length !== 1 ? "s" : ""}`}
             </Button>
           )}
 
