@@ -39,9 +39,9 @@ interface WorkspaceMember {
   is_default: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
-  role?:{
+  role?: {
     display_name: string;
-  },
+  };
   user: {
     id: string;
     name: string;
@@ -134,7 +134,7 @@ export function WorkspaceMembersPanel({
     display_name: member.user.display_name || member.user.name,
     email: member.user.email,
     status: member.status,
-    roleName: member.role?.display_name ?? '',
+    roleName: member.role?.display_name ?? "",
     is_default: member.is_default,
     is_verified: member.user.is_verified,
     joined_at: formatDate(member.joined_at),

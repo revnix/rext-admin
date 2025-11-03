@@ -48,26 +48,26 @@ export default function WorkspaceTopicDetailPage({
 
   // Workspace context is available via useWorkspace hook in child components
   return (
-      <CanAccess
-        permission={TOPIC_PERMISSIONS.READ}
-        fallback={
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Access Denied</CardTitle>
-              <CardDescription>
-                You don't have permission to view this topic.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">topic.read</code>
-              </p>
-            </CardContent>
-          </Card>
-        }
-      >
-        <TopicDetailClient topic={topic} />
-      </CanAccess>
+    <CanAccess
+      permission={TOPIC_PERMISSIONS.READ}
+      fallback={
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to view this topic.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Required permission:{" "}
+              <code className="text-xs bg-muted px-1 rounded">topic.read</code>
+            </p>
+          </CardContent>
+        </Card>
+      }
+    >
+      <TopicDetailClient topic={topic} />
+    </CanAccess>
   );
 }

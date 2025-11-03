@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  CheckCircle,
-  Eye,
-  Lightbulb,
-  PenTool,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle, Eye, Lightbulb, PenTool, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table";
 import {
