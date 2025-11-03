@@ -72,6 +72,7 @@ export const TopicsList = memo(function TopicsList({
     useState<GeneratedTopic | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  const [savingTopicIds, setSavingTopicIds] = useState<string[]>([]);
 
   const router = useRouter();
   const currentWorkspace = useCurrentWorkspace();
@@ -113,13 +114,15 @@ export const TopicsList = memo(function TopicsList({
   }, [topics, newlyAddedTopicIds]);
 
   const handleTopicSave = useCallback(
-    (topicId: string) => {
+    async (topicId: string) => {
+      setSavingTopicIds((prev) => [...prev, topicId]);
       try {
-        onTopicSave(topicId);
+        await onTopicSave(topicId);
         log.info(`Topic ${topicId} saved successfully`);
       } catch (error) {
         log.error(`Failed to save topic ${topicId}:`, error);
-        throw error;
+      } finally {
+        setSavingTopicIds((prev) => prev.filter((id) => id !== topicId));
       }
     },
     [onTopicSave],
@@ -186,6 +189,15 @@ export const TopicsList = memo(function TopicsList({
     );
   }
 
+  // Deduplicate and only count unsaved topics for header/actions
+  const uniqueSelectedTopicIds = Array.from(new Set(selectedTopicIds));
+  const selectedTopics = sortedTopics.filter((topic) =>
+    uniqueSelectedTopicIds.includes(topic.id),
+  );
+  const selectedUniqueUnsavedTopics = selectedTopics.filter(
+    (topic) => !topic.is_saved && !topic._optimisticSaved,
+  );
+
   return (
     <div className={cn("space-y-6", className)}>
       {/* Header */}
@@ -196,34 +208,23 @@ export const TopicsList = memo(function TopicsList({
         isGeneratingMore={isGeneratingMore}
         onRegenerateTopics={onRegenerateTopics}
         onBackToWizard={onBackToWizard}
-        selectedTopicIds={selectedTopicIds}
-        selectedTopics={sortedTopics.filter((topic) =>
-          selectedTopicIds.includes(topic.id),
-        )}
+        selectedTopicIds={uniqueSelectedTopicIds}
+        selectedTopics={selectedTopics}
+        selectedUniqueUnsavedTopics={selectedUniqueUnsavedTopics}
         isBulkSaving={isBulkSaving}
         onBulkSave={(topicIds: string[]) => {
-          const selectedTopics = sortedTopics.filter((topic) =>
-            topicIds.includes(topic.id),
+          // Only save unique, unsaved topics
+          const topicIdsToSave = Array.from(
+            new Set(
+              topicIds.filter((id) => {
+                const t = sortedTopics.find((ti) => ti.id === id);
+                return t && !t.is_saved && !t._optimisticSaved;
+              }),
+            ),
           );
-          const unsaved = selectedTopics.filter(
-            (topic) => !topic.is_saved && !topic._optimisticSaved,
-          );
 
-          log.info("Bulk saving topics:", {
-            requested: topicIds,
-            totalSelected: selectedTopics.length,
-            unsaved: unsaved.length,
-          });
-
-          _onBulkSave(topicIds);
-
-          if (unsaved.length > 0) {
-            toast.success(
-              `Saving ${unsaved.length} topic${unsaved.length !== 1 ? "s" : ""} to your library`,
-            );
-          }
-
-          // Clear selection after save
+          _onBulkSave(topicIdsToSave);
+          // Optionally clear selection after save
           setSelectedTopicIds([]);
         }}
         onClearSelection={() => setSelectedTopicIds([])}
@@ -232,13 +233,14 @@ export const TopicsList = memo(function TopicsList({
       {/* Topics Display */}
       <TopicsTable
         topics={sortedTopics}
-        selectedTopicIds={selectedTopicIds}
+        selectedTopicIds={uniqueSelectedTopicIds}
         newlyAddedTopicIds={newlyAddedTopicIds}
         onTopicSelect={handleTopicSelect}
         onTopicSave={handleTopicSave}
         onNavigateToContent={handleNavigateToContent}
         onViewDetails={handleViewDetails}
         onCopyTopic={handleCopyTopic}
+        savingTopicIds={savingTopicIds}
       />
 
       {/* Footer Actions */}

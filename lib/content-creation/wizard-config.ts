@@ -336,7 +336,7 @@ export const SEARCH_INTENT_OPTIONS: SelectOption[] = [
 export const RESEARCH_LEVEL_OPTIONS: SelectOption[] = [
   {
     label: "Basic",
-    value: "Basic",
+    value: "research_basic",
     description: "Quick research, 5-10 sources",
   },
   {
@@ -353,7 +353,7 @@ export const RESEARCH_LEVEL_OPTIONS: SelectOption[] = [
 
 /** Fact checking level options */
 export const FACT_CHECKING_OPTIONS: SelectOption[] = [
-  { label: "Basic", value: "Basic", description: "Standard verification" },
+  { label: "Basic", value: "fact_basic", description: "Standard verification" },
   {
     label: "Standard",
     value: "Standard",
