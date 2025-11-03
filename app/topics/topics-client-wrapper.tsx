@@ -19,6 +19,8 @@ import {
 import { logger } from "@/lib/logger";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+
 
 interface TopicsClientWrapperProps {
   data: TopicData[];
@@ -44,6 +46,7 @@ export function TopicsClientWrapper({
   // Get workspace context (optional because this component is used in both workspace and legacy routes)
   const workspaceContext = useWorkspaceOptional();
   const workspaceSlug = workspaceContext?.workspaceSlug;
+  const { hasPermission: canDelete } = useWorkspacePermission("topic.delete", workspaceSlug);
 
   // Handle topic deletion using server actions
   const handleTopicDelete = async (topicId: string, _topicName: string) => {
@@ -192,21 +195,24 @@ export function TopicsClientWrapper({
         row.status?.toLowerCase() !== "saved" &&
         !(row && "approved" in row && row.approved === true),
     },
-    {
-      label: "Remove",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: TopicData) => {
-        handleTopicDelete(row.id, row.name);
-      },
-      variant: "destructive" as const,
-      requiresConfirmation: true,
-      confirmationTitle: "Remove Topic",
-      confirmationDescription:
-        "Are you sure you want to remove this topic? This action cannot be undone.",
-      tooltip: "Remove this topic permanently",
-      disabled: deleteMutation.isPending,
-      showLabel: true,
-    },
+    
+        ...(canDelete
+      ? [
+          {
+            label: "Remove",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: TopicData) => handleTopicDelete(row.id, row.name),
+            variant: "destructive" as const,
+            requiresConfirmation: true,
+            confirmationTitle: "Remove Topic",
+            confirmationDescription:
+              "Are you sure you want to remove this topic? This action cannot be undone.",
+            tooltip: "Remove this topic permanently",
+            disabled: deleteMutation.isPending,
+            showLabel: true,
+          } satisfies RowAction<TopicData>,
+        ]
+      : []),
   ];
 
   return (
