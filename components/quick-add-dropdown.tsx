@@ -9,17 +9,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 
 export function QuickAddDropdown() {
   const workspaceContext = useWorkspaceOptional();
+  const { workspace } = useWorkspaceAutoSelect();
   const workspaceSlug = workspaceContext?.workspaceSlug;
+  //Prevent rendering until workspace context or auto-selected workspace is ready
+  if (!workspaceSlug && !workspace) return null;
 
   // Use workspace-scoped route if in workspace context, otherwise fallback to global route
   const topicCreateHref = workspaceSlug
     ? workspaceRoutes.topicCreate(workspaceSlug)
-    : "/topics/create";
+    : `/w/${workspace?.slug}/topics/create`;
 
   return (
     <DropdownMenu>
