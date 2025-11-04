@@ -26,6 +26,9 @@ const baseTopic: GeneratedTopic = {
   tags: ["ai", "marketing"],
   created_at: "2025-01-01T00:00:00.000Z",
   is_saved: false,
+  generated_by_user_id: "test-user",
+  generated_by_first_name: "Test",
+  generated_by_last_name: "User",
 };
 
 describe("transformTopicForBackend", () => {

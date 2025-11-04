@@ -63,6 +63,9 @@ const mockTopic: GeneratedTopic = {
   created_at: "2024-01-01T00:00:00Z",
   _optimisticSaved: false,
   _isBeingSaved: false,
+  generated_by_user_id: "test-user",
+  generated_by_first_name: "Test",
+  generated_by_last_name: "User",
 };
 
 const mockSavedTopic: GeneratedTopic = {
@@ -542,6 +545,9 @@ describe("TopicActions Component", () => {
         id: "minimal-topic",
         title: "Minimal Topic",
         scores: { relevance: 0.5, freshness: 0.5, novelty: 0.5 },
+        generated_by_user_id: "test-user",
+        generated_by_first_name: "Test",
+        generated_by_last_name: "User",
         // biome-ignore lint/suspicious/noExplicitAny: Required for minimal topic mock
       } as any;
 
