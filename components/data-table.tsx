@@ -464,7 +464,7 @@ export function DataTable<
                     {columns.map((column) => (
                       <TableHead
                         key={column.key}
-                        style={{ width: column.width }}
+                        style={{ minWidth: column.width }}
                       >
                         <div className="flex items-center gap-1">
                           <span>{column.header}</span>
