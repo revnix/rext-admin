@@ -28,10 +28,8 @@ export default function WorkspaceTopicsPage() {
   const queryClient = useQueryClient();
 
   // Permissions for creating topics
-  const {
-    hasPermission: canCreateTopic,
-    isLoading: isPermissionLoading,
-  } = useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
+  const { hasPermission: canCreateTopic, isLoading: isPermissionLoading } =
+    useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
 
   const {
     data: topics,

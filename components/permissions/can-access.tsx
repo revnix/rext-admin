@@ -103,8 +103,14 @@ export function CanAccess({
 
   // === 1️⃣ Determine workspace and global permission states ===
   const singleWorkspace = useWorkspacePermission(permission || "", workspaceId);
-  const anyWorkspace = useAnyWorkspacePermission(anyPermission || [], workspaceId);
-  const allWorkspace = useAllWorkspacePermissions(allPermissions || [], workspaceId);
+  const anyWorkspace = useAnyWorkspacePermission(
+    anyPermission || [],
+    workspaceId,
+  );
+  const allWorkspace = useAllWorkspacePermissions(
+    allPermissions || [],
+    workspaceId,
+  );
 
   const singleGlobal = usePermission(permission || "");
   const anyGlobal = useAnyPermission(anyPermission || []);
@@ -118,7 +124,9 @@ export function CanAccess({
   let isLoading = false;
 
   if (permission) {
-    hasAccess = isWorkspaceContext ? singleWorkspace.hasPermission : singleGlobal;
+    hasAccess = isWorkspaceContext
+      ? singleWorkspace.hasPermission
+      : singleGlobal;
     isLoading = isWorkspaceContext ? singleWorkspace.isLoading : false;
   } else if (anyPermission?.length) {
     hasAccess = isWorkspaceContext ? anyWorkspace.hasPermission : anyGlobal;
@@ -135,7 +143,7 @@ export function CanAccess({
   // Show loading state while permissions are being fetched (prevent flash of unauthorized content)
   if (isLoading) {
     // Return nothing or fallback while permissions load — avoids flash of Access Denied
-    return fallback ? <>{fallback}</> : null;
+    return fallback ?? null;
   }
 
   // Apply invert logic
