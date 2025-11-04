@@ -27,18 +27,21 @@ export default function WorkspaceTopicsPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
 
-  // Check workspace-scoped permission for creating topics
-  // Phase 2: Hooks now return {hasPermission, isLoading}
-  const { hasPermission: canCreateTopic } = useWorkspacePermission(
-    TOPIC_PERMISSIONS.CREATE,
-    workspaceId,
-  );
+  // Permissions for creating topics
+  const {
+    hasPermission: canCreateTopic,
+    isLoading: isPermissionLoading,
+  } = useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
 
-  const { data: topics, isLoading, error, refetch } = useTopics(workspaceId);
+  const {
+    data: topics,
+    isLoading: isTopicsLoading,
+    error,
+    refetch,
+  } = useTopics(workspaceId);
 
   const handleRetry = async () => {
     try {
-      // Proper error recovery without losing SPA state
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["topics", workspaceId] }),
         refetch(),
@@ -49,7 +52,6 @@ export default function WorkspaceTopicsPage() {
   };
 
   const handleForceRefresh = () => {
-    // Clear all caches and refetch
     queryClient.clear();
     queryClient.invalidateQueries();
   };
@@ -82,10 +84,21 @@ export default function WorkspaceTopicsPage() {
     </Button>
   ) : null;
 
+  // 🧠 Show skeleton until permissions are ready (prevents flicker)
+  if (isPermissionLoading) {
+    return (
+      <PageLayout title="Topic Library" breadcrumbs={breadcrumbs}>
+        <TableSkeleton rows={8} />
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="Topic Library"
-      description={`Browse AI-generated topics for ${workspace?.title || "this workspace"}. Generate new topics or explore your saved collection.`}
+      description={`Browse AI-generated topics for ${
+        workspace?.title || "this workspace"
+      }. Generate new topics or explore your saved collection.`}
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
@@ -95,7 +108,7 @@ export default function WorkspaceTopicsPage() {
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
               <CardDescription>
-                You don't have permission to view topics in this workspace.
+                You don’t have permission to view topics in this workspace.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -109,7 +122,7 @@ export default function WorkspaceTopicsPage() {
           </Card>
         }
       >
-        {isLoading ? (
+        {isTopicsLoading ? (
           <TableSkeleton rows={8} />
         ) : error ? (
           <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
