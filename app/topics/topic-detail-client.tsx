@@ -74,7 +74,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
     // Navigate to content creation with topic prefilled
     if (currentWorkspace?.slug && generatedTopic?.id) {
       router.push(
-        `/w/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}`,
+        `/workspaces/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}`,
       );
     } else {
       detailLogger.error("Cannot navigate: Missing workspace slug or topic ID");
@@ -88,7 +88,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
       await deleteMutation.mutateAsync([generatedTopic.id]);
       // Navigate to workspace-scoped topics page
       if (currentWorkspace?.slug) {
-        router.push(`/w/${currentWorkspace.slug}/topics`);
+        router.push(`/workspaces/${currentWorkspace.slug}/topics`);
       } else {
         router.push("/");
       }

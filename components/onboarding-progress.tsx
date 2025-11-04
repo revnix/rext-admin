@@ -54,7 +54,7 @@ const getMilestoneAction = (
   > = {
     workspace: {
       label: "Create Workspace",
-      href: "/w/create",
+      href: "/workspaces/create",
       icon: ArrowRight,
       enabled: true,
     },
@@ -62,8 +62,8 @@ const getMilestoneAction = (
       label: "Create Topic",
       href:
         hasTopicBuilder && workspaceSlug
-          ? `/w/${workspaceSlug}/topics/create`
-          : "/w/create",
+          ? `/workspaces/${workspaceSlug}/topics/create`
+          : "/workspaces/create",
       icon: ArrowRight,
       enabled: !!workspaceSlug, // Only enabled after workspace created
     },
@@ -71,20 +71,24 @@ const getMilestoneAction = (
       label: "Create Content",
       href:
         hasContentBuilder && workspaceSlug
-          ? `/w/${workspaceSlug}/content/create`
-          : "/w/create",
+          ? `/workspaces/${workspaceSlug}/content/create`
+          : "/workspaces/create",
       icon: ArrowRight,
       enabled: !!workspaceSlug, // Only enabled after workspace created
     },
     knowledge: {
       label: "Add Knowledge",
-      href: workspaceSlug ? `/w/${workspaceSlug}/knowledge` : "/w/create",
+      href: workspaceSlug
+        ? `/workspaces/${workspaceSlug}/knowledge`
+        : "/workspaces/create",
       icon: ArrowRight,
       enabled: !!workspaceSlug, // Only enabled after workspace created
     },
     members: {
       label: "Invite Members",
-      href: workspaceSlug ? `/w/${workspaceSlug}/members` : "/w/create",
+      href: workspaceSlug
+        ? `/workspaces/${workspaceSlug}/members`
+        : "/workspaces/create",
       icon: ArrowRight,
       enabled: !!workspaceSlug, // Only enabled after workspace created
     },

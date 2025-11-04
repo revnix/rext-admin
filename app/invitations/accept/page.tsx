@@ -97,7 +97,7 @@ export default function AcceptInvitationPage() {
 
       toast.success(`Welcome to ${result.workspace_name}!`);
       // Redirect to workspace
-      router.push(`/w/${result.workspace_slug}`);
+      router.push(`/workspaces/${result.workspace_slug}`);
     } catch (error) {
       const err = error as Error;
       toast.error(`Failed to accept invitation: ${err.message}`);

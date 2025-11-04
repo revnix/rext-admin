@@ -534,7 +534,7 @@ export function MediaDetailSheet({
                       {usage.featured_in.map((content) => (
                         <Link
                           key={content.id}
-                          href={`/w/${workspaceId}/content/${content.id}`}
+                          href={`/workspaces/${workspaceId}/content/${content.id}`}
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
                         >
                           <div className="flex-1 min-w-0">
@@ -561,7 +561,7 @@ export function MediaDetailSheet({
                       {usage.used_in_content.map((content) => (
                         <Link
                           key={`${content.id}-${content.position || 0}`}
-                          href={`/w/${workspaceId}/content/${content.id}`}
+                          href={`/workspaces/${workspaceId}/content/${content.id}`}
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
                         >
                           <div className="flex-1 min-w-0">

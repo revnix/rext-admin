@@ -49,9 +49,9 @@ const PROTECTED_ROUTES: Record<string, string | string[]> = {
  * so they're checked at the page level, not in middleware.
  *
  * Examples:
- * - /w/[workspaceSlug]/settings - requires workspace.update for THAT workspace
- * - /w/[workspaceSlug]/members - requires member.read for THAT workspace
- * - /w/[workspaceSlug]/content - requires content.read for THAT workspace
+ * - /workspaces/[workspaceSlug]/settings - requires workspace.update for THAT workspace
+ * - /workspaces/[workspaceSlug]/members - requires member.read for THAT workspace
+ * - /workspaces/[workspaceSlug]/content - requires content.read for THAT workspace
  *
  * Middleware only verifies user is authenticated for workspace routes.
  * Detailed permission checks happen in:
@@ -138,7 +138,10 @@ export default auth((request) => {
   // Workspace route protection - verify user has access
   // Note: Detailed workspace membership is checked at page level via WorkspaceProvider
   // This is a basic check to ensure user is authenticated for workspace routes
-  if (nextUrl.pathname.startsWith("/w/") && nextUrl.pathname !== "/w/create") {
+  if (
+    nextUrl.pathname.startsWith("/workspaces/") &&
+    nextUrl.pathname !== "/workspaces/create"
+  ) {
     if (!session) {
       const loginUrl = new URL("/login", nextUrl.origin);
       loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);

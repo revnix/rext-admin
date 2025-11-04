@@ -106,7 +106,7 @@ export function WorkspaceKnowledgeBasesTable({
       header: "Items",
       width: "100px",
       cell: (value) => (
-        <div className="text-right">
+        <div className="text-left pl-4">
           <span className="font-medium">{value as number}</span>
         </div>
       ),

@@ -11,7 +11,7 @@
  *
  * analytics.track('onboarding_cta_click', {
  *   source: 'dashboard',
- *   destination: '/w/create'
+ *   destination: '/workspaces/create'
  * });
  * ```
  */
