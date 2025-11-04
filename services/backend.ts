@@ -726,10 +726,10 @@ export class BackendService {
     });
 
     if (validatedResponse.topics && Array.isArray(validatedResponse.topics)) {
-      validatedResponse.topics = validatedResponse.topics.map(topic => ({
-        generated_by_user_id: 'unknown',
-        generated_by_first_name: 'Unknown',
-        generated_by_last_name: 'User',
+      validatedResponse.topics = validatedResponse.topics.map((topic) => ({
+        generated_by_user_id: "unknown",
+        generated_by_first_name: "Unknown",
+        generated_by_last_name: "User",
         ...topic,
       }));
     }
