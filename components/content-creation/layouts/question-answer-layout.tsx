@@ -81,7 +81,7 @@ export function QuestionAnswerLayout({
       )}
     >
       <CardContent className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-2">
           {/* Question Section - 30% */}
           <div className="space-y-2">
             <div className="flex items-start gap-2">
