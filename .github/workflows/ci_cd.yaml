@@ -55,46 +55,55 @@ jobs:
       - name: 🚀 Push Docker image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
-  # deploy:
-  #   needs: docker_job
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: 🧾 Checkout code
-  #       uses: actions/checkout@v4
+  deploy:
+    needs: docker_job
+    runs-on: self-hosted
+    steps:
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: 🧩 Deploy frontend
-  #       run: |
-  #         DEPLOY_DIR=~/WREXT/frontend
-  #         mkdir -p $DEPLOY_DIR
-  #         cp -r $GITHUB_WORKSPACE/* $DEPLOY_DIR/
-  #         cd $DEPLOY_DIR
+      - name: 🧩 Deploy frontend
+        run: |
+          DEPLOY_DIR=~/WREXT/frontend
+          mkdir -p $DEPLOY_DIR
+          cp -r $GITHUB_WORKSPACE/* $DEPLOY_DIR/
+          cd $DEPLOY_DIR
 
-  #         echo "📝 Creating .env file..."
-  #         cat <<EOF > .env.local
-  #         NODE_ENV=production
-  #         NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-  #         NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          echo "📝 Creating .env file..."
+          cat <<EOF > .env.local
+          NODE_ENV=production
+          NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
 
-  #         # Public variables
-  #         NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-  #         NEXT_PUBLIC_BACKEND_API_URL=${{ secrets.NEXT_PUBLIC_BACKEND_API_URL }}
-  #         NEXT_PUBLIC_CONTENT_API_KEY=${{ secrets.NEXT_PUBLIC_CONTENT_API_KEY }}
+          # Public variables
+          NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_BACKEND_API_URL=${{ secrets.NEXT_PUBLIC_BACKEND_API_URL }}
+          NEXT_PUBLIC_CONTENT_API_KEY=${{ secrets.NEXT_PUBLIC_CONTENT_API_KEY }}
 
-  #         EOF
-  #         echo "✅ .env.local created successfully."
+          EOF
+          echo "✅ .env.local created successfully."
 
-  #         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-  #         echo "📦 Pulling latest frontend image..."
-  #         docker pull revnix/frontend:latest
+          echo "📦 Pulling latest frontend image..."
+          docker pull revnix/frontend:latest
 
-  #         echo "🧹 Stopping old containers..."
-  #         docker compose down || true
+          echo "📦 Pulling latest frontend image..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
-  #         echo "🚀 Starting new container..."
-  #         docker compose up -d frontend
+          echo "🛑 Stopping old container if it exists..."
+          docker rm -f revnix_frontend || true
 
-  #         echo "🧹 Cleaning old images..."
-  #         docker image prune -f
+          echo "🚀 Running new container..."
+          docker run -d \
+            --name revnix_frontend \
+            -p 3000:3000 \
+            -e NODE_ENV=production \
+            -e NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
+            -e NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
+            -e NEXT_PUBLIC_API_BASE_URL="${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" \
+            -e NEXT_PUBLIC_BACKEND_API_URL="${{ secrets.NEXT_PUBLIC_BACKEND_API_URL }}" \
+            -e NEXT_PUBLIC_CONTENT_API_KEY="${{ secrets.NEXT_PUBLIC_CONTENT_API_KEY }}" \
+            ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
-  #         echo "✅ Frontend deployed successfully."
+          echo "✅ Frontend deployed successfully."
