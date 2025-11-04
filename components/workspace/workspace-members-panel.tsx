@@ -39,6 +39,9 @@ interface WorkspaceMember {
   is_default: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
+  role?: {
+    display_name: string;
+  };
   user: {
     id: string;
     name: string;
@@ -53,6 +56,7 @@ interface MemberData extends Record<string, unknown> {
   user_id: string;
   display_name: string;
   email: string;
+  roleName: string;
   status: string;
   is_default: boolean;
   is_verified: boolean;
@@ -130,6 +134,7 @@ export function WorkspaceMembersPanel({
     display_name: member.user.display_name || member.user.name,
     email: member.user.email,
     status: member.status,
+    roleName: member.role?.display_name ?? "",
     is_default: member.is_default,
     is_verified: member.user.is_verified,
     joined_at: formatDate(member.joined_at),
@@ -178,6 +183,11 @@ export function WorkspaceMembersPanel({
       width: "250px",
       cell: () => null, // Email shown in User column
       searchable: true,
+    },
+    {
+      key: "roleName",
+      header: "Role",
+      width: "250px",
     },
     {
       key: "status",

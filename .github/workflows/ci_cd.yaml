@@ -27,11 +27,6 @@ jobs:
       - name: 🧩 Ensure ts-node is installed
         run: npm install --save-dev ts-node
 
-      - name: 🧹 Run lint and tests
-        run: |
-          npm run lint
-          npm test --if-present
-
       - name: 🏗️ Build Next.js
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}

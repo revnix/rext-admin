@@ -18,7 +18,10 @@ import {
 } from "@/hooks/use-topic-mutations-server-actions";
 import { logger } from "@/lib/logger";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
+// import { TOPIC_PERMISSIONS } from "@/lib/permissions";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
+import { useState } from "react";
 
 interface TopicsClientWrapperProps {
   data: TopicData[];
@@ -40,14 +43,24 @@ export function TopicsClientWrapper({
   const deleteMutation = useTopicDeleteServerAction();
   const approveMutation = useTopicApproveServerAction();
   const topicsLogger = logger.forComponent("TopicsClientWrapper");
+  const [approvingTopicId, setApprovingTopicId] = useState<string | null>(null);
+  const [, setDeletingTopicId] = useState<string | null>(null);
 
   // Get workspace context (optional because this component is used in both workspace and legacy routes)
   const workspaceContext = useWorkspaceOptional();
   const workspaceSlug = workspaceContext?.workspaceSlug;
+  // const workspaceId = workspaceContext?.workspaceId;
+
+  // Permission: can the current user delete topics in this workspace?
+  const { hasPermission: canDelete } = useWorkspacePermission(
+    "topic.delete",
+    workspaceSlug,
+  );
 
   // Handle topic deletion using server actions
   const handleTopicDelete = async (topicId: string, _topicName: string) => {
     try {
+      setDeletingTopicId(topicId);
       await deleteMutation.mutateAsync([topicId]);
     } catch (error) {
       // Error handling is done by the mutation hook
@@ -55,12 +68,15 @@ export function TopicsClientWrapper({
         topic_id: topicId,
         error: error instanceof Error ? error.message : String(error),
       });
+    } finally {
+      setDeletingTopicId(null);
     }
   };
 
   // Handle topic approval using server actions
   const handleTopicApproval = async (topicId: string, topicName: string) => {
     try {
+      setApprovingTopicId(topicId);
       await approveMutation.mutateAsync(topicId);
     } catch (error) {
       // Error handling is done by the mutation hook
@@ -69,6 +85,8 @@ export function TopicsClientWrapper({
         topic_name: topicName,
         error: error instanceof Error ? error.message : String(error),
       });
+    } finally {
+      setApprovingTopicId(null);
     }
   };
 
@@ -152,14 +170,14 @@ export function TopicsClientWrapper({
       label: "Approve",
       icon: <CheckCircle className="h-4 w-4" />,
       onClick: (row: TopicData) => {
-        handleTopicApproval(row.id, row.name);
+        if (!approvingTopicId) handleTopicApproval(row.id, row.name);
       },
       tooltip: "Approve this topic for content creation",
       variant: "default" as const,
       showLabel: true,
       primary: true,
       disabled: (row: TopicData) =>
-        approveMutation.isPending ||
+        approvingTopicId === row.id ||
         row.status?.toLowerCase() === "approved" ||
         row.status?.toLowerCase() === "saved" ||
         (row && "approved" in row && row.approved === true),
@@ -192,21 +210,24 @@ export function TopicsClientWrapper({
         row.status?.toLowerCase() !== "saved" &&
         !(row && "approved" in row && row.approved === true),
     },
-    {
-      label: "Remove",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: TopicData) => {
-        handleTopicDelete(row.id, row.name);
-      },
-      variant: "destructive" as const,
-      requiresConfirmation: true,
-      confirmationTitle: "Remove Topic",
-      confirmationDescription:
-        "Are you sure you want to remove this topic? This action cannot be undone.",
-      tooltip: "Remove this topic permanently",
-      disabled: deleteMutation.isPending,
-      showLabel: true,
-    },
+    //  Conditionally include Remove only if permission granted
+    ...(canDelete
+      ? [
+          {
+            label: "Remove",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: TopicData) => handleTopicDelete(row.id, row.name),
+            variant: "destructive" as const,
+            requiresConfirmation: true,
+            confirmationTitle: "Remove Topic",
+            confirmationDescription:
+              "Are you sure you want to remove this topic? This action cannot be undone.",
+            tooltip: "Remove this topic permanently",
+            disabled: deleteMutation.isPending,
+            showLabel: true,
+          } satisfies RowAction<TopicData>,
+        ]
+      : []),
   ];
 
   return (

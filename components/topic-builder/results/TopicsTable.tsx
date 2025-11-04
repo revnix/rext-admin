@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Save } from "lucide-react";
+import { Eye, Save, Loader2 } from "lucide-react";
 import { memo, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CircularProgress } from "@/components/ui/progress";
@@ -26,6 +26,7 @@ interface TopicsTableProps {
   topics: GeneratedTopic[];
   selectedTopicIds: string[];
   newlyAddedTopicIds?: string[];
+  savingTopicIds?: string[];
   onTopicSelect: (topicId: string, selected: boolean) => void;
   onTopicSave: (topicId: string) => void;
   onNavigateToContent: (topicId: string) => void;
@@ -43,6 +44,7 @@ export const TopicsTable = memo(function TopicsTable({
   topics,
   selectedTopicIds,
   newlyAddedTopicIds = [],
+  savingTopicIds = [],
   onTopicSelect,
   onTopicSave,
   onNavigateToContent: _onNavigateToContent,
@@ -271,6 +273,15 @@ export const TopicsTable = memo(function TopicsTable({
     },
   ];
 
+  // Helper to get the correct icon for Save action
+  const getSaveIcon = (row: TopicTableRow) => {
+    return savingTopicIds.includes(row.id) ? (
+      <Loader2 className="h-4 w-4 animate-spin" />
+    ) : (
+      <Save className="h-4 w-4" />
+    );
+  };
+
   // Row actions - only View and Save
   const rowActions: RowAction<TopicTableRow>[] = [
     {
@@ -284,11 +295,20 @@ export const TopicsTable = memo(function TopicsTable({
     {
       label: "Save",
       icon: <Save className="h-4 w-4" />,
-      onClick: (row: TopicTableRow) => onTopicSave(row.id),
+      onClick: (row: TopicTableRow) => {
+        if (!savingTopicIds.includes(row.id)) {
+          onTopicSave(row.id);
+        }
+      },
       tooltip: "Save to library",
       showLabel: true,
       disabled: (row: TopicTableRow): boolean =>
-        !!(row._isBeingSaved || row.is_saved || row._optimisticSaved),
+        !!(
+          savingTopicIds.includes(row.id) ||
+          row._isBeingSaved ||
+          row.is_saved ||
+          row._optimisticSaved
+        ),
       variant: "default" as const,
       primary: true,
     },
@@ -372,7 +392,9 @@ export const TopicsTable = memo(function TopicsTable({
                                   : action.disabled
                               }
                             >
-                              {action.icon}
+                              {action.label === "Save"
+                                ? getSaveIcon(row)
+                                : action.icon}
                               {action.showLabel && (
                                 <span className="text-xs font-medium">
                                   {action.label}

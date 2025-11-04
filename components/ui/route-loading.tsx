@@ -27,15 +27,15 @@ import { PageLayout } from "../page-layout";
 export interface RouteLoadingProps {
   /** The type of loading skeleton to display */
   variant:
-  | "spinner"
-  | "table"
-  | "dashboard"
-  | "workspace"
-  | "list"
-  | "grid"
-  | "form"
-  | "monitoring"
-  | "settings";
+    | "spinner"
+    | "table"
+    | "dashboard"
+    | "workspace"
+    | "list"
+    | "grid"
+    | "form"
+    | "monitoring"
+    | "settings";
   /** Number of rows (for table/list variants) */
   rows?: number;
   /** Number of columns (for table variant) */
@@ -53,13 +53,15 @@ export function RouteLoading({
   columns = 6,
   statCards = 4,
   className = "",
-  title = ""
+  title = "",
 }: RouteLoadingProps) {
   // Simple spinner for root-level or fast transitions
   if (variant === "spinner") {
     return (
       <PageLayout title={title}>
-        <div className={`flex h-screen items-center justify-center ${className}`}>
+        <div
+          className={`flex h-screen items-center justify-center ${className}`}
+        >
           <div className="space-y-4 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="text-sm text-muted-foreground">Loading...</p>
@@ -153,7 +155,9 @@ export function RouteLoading({
           </div>
 
           {/* Stats cards */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4`}>
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4`}
+          >
             {Array.from({ length: statCards }, (_, i) => i).map((i) => (
               <Card key={`workspace-stat-${i}`}>
                 <CardHeader>
@@ -293,7 +297,9 @@ export function RouteLoading({
   if (variant === "form" || variant === "settings") {
     return (
       <PageLayout title={title}>
-        <div className={`container mx-auto p-6 max-w-4xl space-y-6 ${className}`}>
+        <div
+          className={`container mx-auto p-6 max-w-4xl space-y-6 ${className}`}
+        >
           {/* Page header */}
           <div className="space-y-2">
             <Skeleton className="h-8 w-64" />
