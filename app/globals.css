@@ -178,20 +178,7 @@
 .wizard-container {
   width: 100%;
   margin: 0 auto;
-  padding: 1rem;
   max-width: none;
-}
-
-@media (min-width: 768px) {
-  .wizard-container {
-    padding: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .wizard-container {
-    padding: 2rem;
-  }
 }
 
 .wizard-step-container {
