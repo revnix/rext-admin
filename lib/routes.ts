@@ -1,7 +1,7 @@
 /**
  * Route Helper Utilities for Workspace-Scoped URLs
  *
- * Centralized route generation following the /w/{workspace-slug}/* pattern.
+ * Centralized route generation following the /workspaces/{workspace-slug}/* pattern.
  * Provides type-safe URL generation and workspace slug extraction.
  */
 
@@ -32,47 +32,50 @@ export const workspaceRoutes = {
   /**
    * Topics routes
    */
-  topics: (workspaceSlug: string) => `/w/${workspaceSlug}/topics`,
+  topics: (workspaceSlug: string) => `/workspaces/${workspaceSlug}/topics`,
   topicDetail: (workspaceSlug: string, topicId: string) =>
-    `/w/${workspaceSlug}/topics/${topicId}`,
-  topicCreate: (workspaceSlug: string) => `/w/${workspaceSlug}/topics/create`,
+    `/workspaces/${workspaceSlug}/topics/${topicId}`,
+  topicCreate: (workspaceSlug: string) =>
+    `/workspaces/${workspaceSlug}/topics/create`,
 
   /**
    * Content routes
    */
-  content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
+  content: (workspaceSlug: string) => `/workspaces/${workspaceSlug}/content`,
   contentDetail: (workspaceSlug: string, contentId: string) =>
-    `/w/${workspaceSlug}/content/${contentId}`,
+    `/workspaces/${workspaceSlug}/content/${contentId}`,
   contentCreate: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/content/create`,
+    `/workspaces/${workspaceSlug}/content/create`,
   contentProgress: (workspaceSlug: string, contentId: string) =>
-    `/w/${workspaceSlug}/content/progress/${contentId}`,
+    `/workspaces/${workspaceSlug}/content/progress/${contentId}`,
 
   /**
    * Members route
    */
-  members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
+  members: (workspaceSlug: string) => `/workspaces/${workspaceSlug}/members`,
 
   /**
    * Knowledge routes
    */
-  knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
+  knowledge: (workspaceSlug: string) =>
+    `/workspaces/${workspaceSlug}/knowledge`,
   knowledgeDetail: (workspaceSlug: string, kbId: string) =>
-    `/w/${workspaceSlug}/knowledge/${kbId}`,
+    `/workspaces/${workspaceSlug}/knowledge/${kbId}`,
 
   /**
    * Media route
    */
-  media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
+  media: (workspaceSlug: string) => `/workspaces/${workspaceSlug}/media`,
 
   /**
    * Settings routes
    */
   settings: {
-    root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
-    billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
+    root: (workspaceSlug: string) => `/workspaces/${workspaceSlug}/settings`,
+    billing: (workspaceSlug: string) =>
+      `/workspaces/${workspaceSlug}/settings/billing`,
     integrations: (workspaceSlug: string) =>
-      `/w/${workspaceSlug}/settings/integrations`,
+      `/workspaces/${workspaceSlug}/settings/integrations`,
   },
 } as const;
 
@@ -83,8 +86,8 @@ export const workspaceRoutes = {
  * @returns The workspace ID if found, null otherwise
  *
  * @example
- * extractWorkspaceId('/w/ws-123/topics') // 'ws-123'
- * extractWorkspaceId('/w/550e8400-e29b-41d4-a716-446655440000/content') // '550e8400-e29b-41d4-a716-446655440000'
+ * extractWorkspaceId('/workspaces/ws-123/topics') // 'ws-123'
+ * extractWorkspaceId('/workspaces/550e8400-e29b-41d4-a716-446655440000/content') // '550e8400-e29b-41d4-a716-446655440000'
  * extractWorkspaceId('/workspaces') // null
  */
 export function extractWorkspaceId(pathname: string): string | null {
@@ -96,14 +99,14 @@ export function extractWorkspaceId(pathname: string): string | null {
  * Check if pathname is a workspace-scoped route
  *
  * @param pathname - The URL pathname to check
- * @returns True if the pathname starts with /w/
+ * @returns True if the pathname starts with /workspaces/
  *
  * @example
- * isWorkspacePath('/w/ws-123/topics') // true
+ * isWorkspacePath('/workspaces/ws-123/topics') // true
  * isWorkspacePath('/workspaces') // false
  */
 export function isWorkspacePath(pathname: string): boolean {
-  return pathname.startsWith("/w/");
+  return pathname.startsWith("/workspaces/");
 }
 
 /**
@@ -113,9 +116,9 @@ export function isWorkspacePath(pathname: string): boolean {
  * @returns The page segment if found and valid, null otherwise
  *
  * @example
- * extractWorkspacePageSegment('/w/ws-123/topics') // 'topics'
- * extractWorkspacePageSegment('/w/ws-123/content/123') // 'content'
- * extractWorkspacePageSegment('/w/ws-123') // null
+ * extractWorkspacePageSegment('/workspaces/ws-123/topics') // 'topics'
+ * extractWorkspacePageSegment('/workspaces/ws-123/content/123') // 'content'
+ * extractWorkspacePageSegment('/workspaces/ws-123') // null
  * extractWorkspacePageSegment('/workspaces') // null
  */
 export function extractWorkspacePageSegment(
@@ -136,8 +139,8 @@ export function extractWorkspacePageSegment(
  * @returns The full workspace path
  *
  * @example
- * buildWorkspacePath('my-workspace', 'topics') // '/w/my-workspace/topics'
- * buildWorkspacePath('my-workspace', 'content') // '/w/my-workspace/content'
+ * buildWorkspacePath('my-workspace', 'topics') // '/workspaces/my-workspace/topics'
+ * buildWorkspacePath('my-workspace', 'content') // '/workspaces/my-workspace/content'
  */
 export function buildWorkspacePath(
   workspaceSlug: string,
@@ -180,7 +183,7 @@ export function getWorkspaceTabUrl(
   workspaceId: string,
   tab: "overview" | "knowledge" | "members",
 ): string {
-  return `/w/${workspaceId}?tab=${tab}`;
+  return `/workspaces/${workspaceId}?tab=${tab}`;
 }
 
 /**

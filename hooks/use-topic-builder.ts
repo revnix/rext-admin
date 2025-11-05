@@ -488,7 +488,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
 
             log.info("Navigating to workspace-scoped results page...");
             router.push(
-              `/w/${workspaceSlug}/topics/create/results/${sessionId}`,
+              `/workspaces/${workspaceSlug}/topics/create/results/${sessionId}`,
             );
           } catch (sessionError) {
             log.error("Failed to save session:", sessionError);
@@ -631,7 +631,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       }
 
       log.info(`Navigating to workspace-scoped results page: ${sessionId}`);
-      router.push(`/w/${workspaceSlug}/topics/create/results/${sessionId}`);
+      router.push(
+        `/workspaces/${workspaceSlug}/topics/create/results/${sessionId}`,
+      );
     },
     [router, currentWorkspace],
   );

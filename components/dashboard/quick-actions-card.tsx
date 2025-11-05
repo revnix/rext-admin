@@ -30,28 +30,36 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
   const actions = [
     {
       label: "Create Topic",
-      href: workspaceSlug ? `/w/${workspaceSlug}/topics/create` : "/w/create",
+      href: workspaceSlug
+        ? `/workspaces/${workspaceSlug}/topics/create`
+        : "/workspaces/create",
       icon: Lightbulb,
       enabled: !!workspaceSlug,
       color: "text-yellow-600",
     },
     {
       label: "Add Content",
-      href: workspaceSlug ? `/w/${workspaceSlug}/content` : "/w/create",
+      href: workspaceSlug
+        ? `/workspaces/${workspaceSlug}/content`
+        : "/workspaces/create",
       icon: FileText,
       enabled: !!workspaceSlug,
       color: "text-green-600",
     },
     {
       label: "Add Knowledge",
-      href: workspaceSlug ? `/w/${workspaceSlug}/knowledge` : "/w/create",
+      href: workspaceSlug
+        ? `/workspaces/${workspaceSlug}/knowledge`
+        : "/workspaces/create",
       icon: BookOpen,
       enabled: !!workspaceSlug,
       color: "text-blue-600",
     },
     {
       label: "Invite Member",
-      href: workspaceSlug ? `/w/${workspaceSlug}/members` : "/w/create",
+      href: workspaceSlug
+        ? `/workspaces/${workspaceSlug}/members`
+        : "/workspaces/create",
       icon: UserPlus,
       enabled: !!workspaceSlug,
       color: "text-purple-600",
@@ -92,7 +100,9 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
             >
               <Link
                 href={
-                  workspaceSlug ? `/w/${workspaceSlug}/settings` : "/w/create"
+                  workspaceSlug
+                    ? `/workspaces/${workspaceSlug}/settings`
+                    : "/workspaces/create"
                 }
               >
                 <Settings className="h-4 w-4 mr-2 text-gray-600" />

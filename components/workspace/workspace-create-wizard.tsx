@@ -508,7 +508,7 @@ export function WorkspaceCreateWizard() {
             workspaceName={form.getValues("title")}
             onContinue={() => {
               if (workspaceSlug) {
-                router.push(`/w/${workspaceSlug}/topics`);
+                router.push(`/workspaces/${workspaceSlug}/topics`);
               }
             }}
           />

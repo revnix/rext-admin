@@ -208,7 +208,7 @@ export function WorkspaceSwitcher() {
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/w/create" className="gap-2 p-2">
+              <Link href="/workspaces/create" className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <Plus className="size-4" />
                 </div>

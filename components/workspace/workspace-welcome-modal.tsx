@@ -81,7 +81,7 @@ export function WorkspaceWelcomeModal({
 
   const handleStartExploring = () => {
     handleClose();
-    router.push(`/w/${workspace.slug}`);
+    router.push(`/workspaces/${workspace.slug}`);
   };
 
   const handleTakeTour = () => {
@@ -90,7 +90,7 @@ export function WorkspaceWelcomeModal({
       onStartTour();
     } else {
       // Fallback: trigger invited user onboarding if available
-      router.push(`/w/${workspace.slug}?tour=true`);
+      router.push(`/workspaces/${workspace.slug}?tour=true`);
     }
   };
 

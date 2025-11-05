@@ -91,7 +91,7 @@ export default function WorkspaceKnowledgePage() {
   const handleView = (kb: KnowledgeBase) => {
     // Navigate to knowledge base items page
     // For now, just show a toast - you can implement a detail page later
-    router.push(`/w/${workspace?.slug}/knowledge/${kb.id}`);
+    router.push(`/workspaces/${workspace?.slug}/knowledge/${kb.id}`);
   };
 
   // Calculate stats

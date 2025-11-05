@@ -26,8 +26,8 @@ files=(
   "hooks/use-topic-builder.ts"
   "providers/workspace-provider.tsx"
   "providers/workspace-permission-provider.tsx"
-  "app/w/[workspaceSlug]/topics/create/results/[temporaryId]/page.tsx"
-  "app/w/page.tsx"
+  "app/workspaces/[workspaceSlug]/topics/create/results/[temporaryId]/page.tsx"
+  "app/workspaces/page.tsx"
   "app/topics/topic-detail-client.tsx"
 )
 

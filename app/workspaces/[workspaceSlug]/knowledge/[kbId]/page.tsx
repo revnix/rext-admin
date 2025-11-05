@@ -128,7 +128,7 @@ export default function KnowledgeBaseDetailPage() {
   };
 
   const handleBack = () => {
-    router.push(`/w/${workspace?.slug}/knowledge`);
+    router.push(`/workspaces/${workspace?.slug}/knowledge`);
   };
 
   const handleAdded = () => {

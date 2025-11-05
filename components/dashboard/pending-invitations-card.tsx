@@ -68,7 +68,7 @@ export function PendingInvitationsCard() {
       });
 
       // Redirect to the newly joined workspace
-      router.push(`/w/${invitation.workspace.slug}`);
+      router.push(`/workspaces/${invitation.workspace.slug}`);
     } catch (error) {
       toast.error("Failed to Accept Invitation", {
         description:

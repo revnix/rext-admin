@@ -35,7 +35,7 @@ export function EmptyWorkspacePrompt() {
   const handleCTAClick = () => {
     analytics.track("onboarding_cta_click", {
       source: "sidebar",
-      destination: "/w/create",
+      destination: "/workspaces/create",
       user_id: user?.id,
     });
   };
@@ -63,7 +63,7 @@ export function EmptyWorkspacePrompt() {
             size="sm"
             onClick={handleCTAClick}
           >
-            <Link href="/w/create">
+            <Link href="/workspaces/create">
               <Plus className="h-3 w-3 mr-1.5" />
               <span className="text-xs">Create Workspace</span>
             </Link>
