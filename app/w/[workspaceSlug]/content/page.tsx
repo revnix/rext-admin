@@ -26,7 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useContent } from "@/hooks/use-content";
+import { useContent, useDeleteContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { log } from "@/lib/logger";
@@ -73,6 +73,9 @@ export default function WorkspaceContentPage() {
 
   // Fetch content data from API
   const { data: contentResponse, isLoading, error } = useContent(workspaceId);
+
+  // Delete content mutation
+  const deleteContentMutation = useDeleteContent();
 
   // Map ContentResponse to ContentData for DataTable
   const contentData: ContentData[] = (contentResponse?.content || []).map(
@@ -217,7 +220,12 @@ export default function WorkspaceContentPage() {
     canDeleteContent && {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: ContentData) => log.info("Delete content:", row.title),
+      onClick: (row: ContentData) => {
+        deleteContentMutation.mutate({
+          workspaceId,
+          contentId: row.id,
+        });
+      },
       variant: "destructive" as const,
       requiresConfirmation: true,
       confirmationTitle: "Delete Content",
