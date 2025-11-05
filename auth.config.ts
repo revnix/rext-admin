@@ -304,10 +304,6 @@ export default {
         "/reset-password",
         "/verify-email",
       ].some((path) => nextUrl.pathname.startsWith(path));
-      const isOnHomePage = nextUrl.pathname === "/";
-
-      // Allow homepage to handle its own redirects
-      if (isOnHomePage) return true;
 
       // If refresh error, force redirect to login
       if (hasRefreshError && !isOnAuthPage) {
