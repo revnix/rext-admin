@@ -222,7 +222,7 @@ export function QuestionStep({
         title={question.title}
         description={question.description}
         required={question.required}
-        error={error}
+        error={question.type === "chip-input" ? undefined : error}
         helpText={question.helpText}
         questionId={question.id}
         progress={progress}
