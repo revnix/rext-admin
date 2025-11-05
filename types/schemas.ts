@@ -209,7 +209,7 @@ export const TopicBuilderFormDataSchema = z.object({
     .optional(),
 
   // Audience targeting
-  audience: z.array(z.string()).optional(),
+  audience: z.array(z.string()).min(1, "At least one audience segment is required"),
 
   // Content goals and style preferences
   purpose: z
