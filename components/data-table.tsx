@@ -303,25 +303,6 @@ export function DataTable<
   const displayEmptyActions =
     emptyActions.length > 0 ? emptyActions : defaultEmptyActions;
 
-  // Default row actions if none provided
-  const defaultRowActions: RowAction<T>[] = [
-    {
-      label: "View",
-      icon: <Eye className="h-4 w-4" />,
-      onClick: (row) => log.info("View:", row),
-    },
-    {
-      label: "Edit",
-      icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row) => log.info("Edit:", row),
-    },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => log.info("Delete:", row),
-      variant: "destructive" as const,
-    },
-  ];
   const displayRowActions = rowActions.length > 0 ? rowActions : [];
 
   // Reset to page 1 when search changes
