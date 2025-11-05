@@ -93,8 +93,10 @@ export function AudienceQuestion({
           const addSuggestion = (suggestion: string) => {
             if (!currentAudiences.includes(suggestion)) {
               const newAudiences = [...currentAudiences, suggestion];
-              field.onChange(newAudiences); // Trigger form validation
+              field.onChange(newAudiences);
               updateFormData("audience", newAudiences);
+              // Explicitly trigger validation to clear error immediately
+              form.trigger("audience");
             }
           };
 
@@ -102,8 +104,10 @@ export function AudienceQuestion({
             const newAudiences = currentAudiences.filter(
               (audience) => audience !== suggestion,
             );
-            field.onChange(newAudiences); // Trigger form validation
+            field.onChange(newAudiences);
             updateFormData("audience", newAudiences);
+            // Explicitly trigger validation
+            form.trigger("audience");
           };
 
           return (
