@@ -167,7 +167,7 @@ function getRoleFirstTasks(
         description:
           "See who's in your workspace and their roles. Get familiar with your team structure.",
         action: "View team",
-        href: `/w/${workspaceSlug}/settings/members`,
+        href: `/workspaces/${workspaceSlug}/settings/members`,
         priority: "high",
       },
       {
@@ -176,7 +176,7 @@ function getRoleFirstTasks(
         description:
           "Browse through current content to understand what's already been created.",
         action: "Browse content",
-        href: `/w/${workspaceSlug}/content`,
+        href: `/workspaces/${workspaceSlug}/content`,
         priority: "high",
       },
       {
@@ -185,7 +185,7 @@ function getRoleFirstTasks(
         description:
           "Review the workspace knowledge base and documentation library.",
         action: "View knowledge",
-        href: `/w/${workspaceSlug}/knowledge`,
+        href: `/workspaces/${workspaceSlug}/knowledge`,
         priority: "medium",
       },
       {
@@ -194,7 +194,7 @@ function getRoleFirstTasks(
         description:
           "Reach out to the workspace owner to align on priorities and goals.",
         action: "Contact team",
-        href: `/w/${workspaceSlug}/settings/members`,
+        href: `/workspaces/${workspaceSlug}/settings/members`,
         priority: "medium",
       },
     ];
@@ -209,7 +209,7 @@ function getRoleFirstTasks(
         description:
           "Get familiar with the content that's already been created and the topics being covered.",
         action: "Explore content",
-        href: `/w/${workspaceSlug}/content`,
+        href: `/workspaces/${workspaceSlug}/content`,
         priority: "high",
       },
       {
@@ -218,7 +218,7 @@ function getRoleFirstTasks(
         description:
           "Check out the workspace knowledge base to understand available resources.",
         action: "View knowledge",
-        href: `/w/${workspaceSlug}/knowledge`,
+        href: `/workspaces/${workspaceSlug}/knowledge`,
         priority: "high",
       },
       {
@@ -227,7 +227,7 @@ function getRoleFirstTasks(
         description:
           "Try creating a piece of content to get hands-on experience with the tools.",
         action: "Create content",
-        href: `/w/${workspaceSlug}/content/create`,
+        href: `/workspaces/${workspaceSlug}/content/create`,
         priority: "medium",
       },
       {
@@ -236,7 +236,7 @@ function getRoleFirstTasks(
         description:
           "See who else is in the workspace and what they're working on.",
         action: "View team",
-        href: `/w/${workspaceSlug}/settings/members`,
+        href: `/workspaces/${workspaceSlug}/settings/members`,
         priority: "low",
       },
     ];
@@ -250,7 +250,7 @@ function getRoleFirstTasks(
       description:
         "Browse through all the content in this workspace to get familiar with what's available.",
       action: "Browse content",
-      href: `/w/${workspaceSlug}/content`,
+      href: `/workspaces/${workspaceSlug}/content`,
       priority: "high",
     },
     {
@@ -259,7 +259,7 @@ function getRoleFirstTasks(
       description:
         "Discover the workspace knowledge base and documentation resources.",
       action: "View knowledge",
-      href: `/w/${workspaceSlug}/knowledge`,
+      href: `/workspaces/${workspaceSlug}/knowledge`,
       priority: "high",
     },
     {
@@ -267,7 +267,7 @@ function getRoleFirstTasks(
       title: "Meet the Team",
       description: "See who's in your workspace and learn about their roles.",
       action: "View team",
-      href: `/w/${workspaceSlug}/settings/members`,
+      href: `/workspaces/${workspaceSlug}/settings/members`,
       priority: "medium",
     },
     {
@@ -276,7 +276,7 @@ function getRoleFirstTasks(
       description:
         "Don't hesitate to reach out to team members if you need guidance.",
       action: "Contact team",
-      href: `/w/${workspaceSlug}/settings/members`,
+      href: `/workspaces/${workspaceSlug}/settings/members`,
       priority: "low",
     },
   ];

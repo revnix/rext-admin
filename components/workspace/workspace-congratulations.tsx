@@ -61,7 +61,7 @@ const NEXT_ACTIONS = [
  * ```tsx
  * <WorkspaceCongratulations
  *   workspaceName="My Company"
- *   onContinue={() => router.push(`/w/my-company/topics`)}
+ *   onContinue={() => router.push(`/workspaces/my-company/topics`)}
  * />
  * ```
  */

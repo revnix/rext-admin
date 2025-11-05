@@ -50,8 +50,8 @@ export default function WorkspaceSettingsLayout({
           <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
             {settingsTabs.map((tab) => {
               const href = tab.href
-                ? `/w/${workspaceSlug}/settings/${tab.href}`
-                : `/w/${workspaceSlug}/settings`;
+                ? `/workspaces/${workspaceSlug}/settings/${tab.href}`
+                : `/workspaces/${workspaceSlug}/settings`;
               const isActive = pathname === href;
               const Icon = tab.icon;
 

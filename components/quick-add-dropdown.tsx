@@ -23,7 +23,7 @@ export function QuickAddDropdown() {
   // Use workspace-scoped route if in workspace context, otherwise fallback to global route
   const topicCreateHref = workspaceSlug
     ? workspaceRoutes.topicCreate(workspaceSlug)
-    : `/w/${workspace?.slug}/topics/create`;
+    : `/workspaces/${workspace?.slug}/topics/create`;
 
   return (
     <DropdownMenu>

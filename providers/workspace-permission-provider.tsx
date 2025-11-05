@@ -31,7 +31,7 @@ const WorkspacePermissionContext =
  * before any workspace-scoped components render.
  *
  * @example
- * // In app/w/[workspaceSlug]/layout.tsx
+ * // In app/workspaces/[workspaceSlug]/layout.tsx
  * export default function WorkspaceLayout({ children }) {
  *   return (
  *     <WorkspacePermissionProvider>

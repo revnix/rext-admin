@@ -35,7 +35,7 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/w/create">
+            <Link href="/workspaces/create">
               <Building2 className="h-4 w-4 mr-2" />
               Create Workspace
             </Link>
@@ -117,7 +117,7 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
         <div className="space-y-2">
           <CanAccess permission={WORKSPACE_PERMISSIONS.UPDATE} fallback={null}>
             <Button asChild variant="outline" size="sm" className="w-full">
-              <Link href={`/w/${workspace.slug}/settings`}>
+              <Link href={`/workspaces/${workspace.slug}/settings`}>
                 <Settings className="h-4 w-4 mr-2" />
                 Workspace Settings
               </Link>

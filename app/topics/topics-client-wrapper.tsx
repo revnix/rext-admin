@@ -102,7 +102,7 @@ export function TopicsClientWrapper({
           row={row}
           href={
             workspaceSlug
-              ? `/w/${workspaceSlug}/topics/${row.id}`
+              ? `/workspaces/${workspaceSlug}/topics/${row.id}`
               : `/topics/${row.id}`
           }
         />
@@ -160,7 +160,7 @@ export function TopicsClientWrapper({
       icon: <Eye className="h-4 w-4" />,
       href: (row: TopicData) =>
         workspaceSlug
-          ? `/w/${workspaceSlug}/topics/${row.id}`
+          ? `/workspaces/${workspaceSlug}/topics/${row.id}`
           : `/topics/${row.id}`,
       tooltip: "View topic details",
       showLabel: true,
@@ -194,7 +194,9 @@ export function TopicsClientWrapper({
 
         // Navigate to content creation with topic prefilled
         if (workspaceSlug && row.id) {
-          router.push(`/w/${workspaceSlug}/content/create?topicId=${row.id}`);
+          router.push(
+            `/workspaces/${workspaceSlug}/content/create?topicId=${row.id}`,
+          );
         } else {
           topicsLogger.error(
             "Cannot navigate: Missing workspace slug or topic ID",

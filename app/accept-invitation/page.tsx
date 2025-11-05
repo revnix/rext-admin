@@ -87,7 +87,7 @@ export default function AcceptInvitationPage() {
       // Redirect to workspace after short delay
       setTimeout(() => {
         if (data.data?.workspace?.slug) {
-          router.push(`/w/${data.data.workspace.slug}`);
+          router.push(`/workspaces/${data.data.workspace.slug}`);
         } else {
           router.push("/");
         }

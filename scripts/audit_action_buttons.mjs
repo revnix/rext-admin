@@ -510,7 +510,7 @@ function generateMarkdownReport() {
       lines.push("|---|-------|------|------|---------------------|");
 
       buttons.forEach((btn, idx) => {
-        const shortFile = btn.file.replace("app/w/[workspaceSlug]/", "");
+        const shortFile = btn.file.replace("app/workspaces/[workspaceSlug]/", "");
         lines.push(
           `| ${idx + 1} | ${btn.label} | ${shortFile} | ${btn.line} | \`${btn.suggestedPermission}\` |`,
         );
@@ -547,7 +547,7 @@ function generateMarkdownReport() {
       lines.push("|-------|------|------|----------|");
 
       buttons.slice(0, 20).forEach((btn) => {
-        const shortFile = btn.file.replace("app/w/[workspaceSlug]/", "");
+        const shortFile = btn.file.replace("app/workspaces/[workspaceSlug]/", "");
         lines.push(
           `| ${btn.label} | ${shortFile} | ${btn.line} | ${btn.category} |`,
         );

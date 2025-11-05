@@ -91,7 +91,7 @@ export default function WorkspacePage() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Link
-                href={`/w/${row.slug}`}
+                href={`/workspaces/${row.slug}`}
                 className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
                 onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
               >
@@ -197,7 +197,7 @@ export default function WorkspacePage() {
     {
       label: "Create Workspace",
       icon: <Plus className="h-4 w-4" />,
-      href: "/w/create",
+      href: "/workspaces/create",
     },
   ];
 
@@ -208,7 +208,7 @@ export default function WorkspacePage() {
         <Settings className="h-4 w-4 mr-2" />
         Refresh
       </Button>
-      <Button onClick={() => router.push("/w/create")}>
+      <Button onClick={() => router.push("/workspaces/create")}>
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>
@@ -234,7 +234,7 @@ export default function WorkspacePage() {
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.slug}`);
+        router.push(`/workspaces/${row.slug}`);
       },
       tooltip: "View workspace details",
     },

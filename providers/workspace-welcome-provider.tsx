@@ -50,7 +50,7 @@ export function WorkspaceWelcomeProvider({
     }
 
     // Check if we're on a workspace page
-    const isWorkspacePage = pathname?.startsWith("/w/");
+    const isWorkspacePage = pathname?.startsWith("/workspaces/");
     if (!isWorkspacePage || !currentWorkspace) {
       return undefined;
     }

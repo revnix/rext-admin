@@ -23,7 +23,7 @@ export function SelectedTopicDisplay({
   const workspaceSlug = currentWorkspace?.slug || "";
 
   const handleViewDetails = () => {
-    window.open(`/w/${workspaceSlug}/topics/${topic.id}`, "_blank");
+    window.open(`/workspaces/${workspaceSlug}/topics/${topic.id}`, "_blank");
   };
 
   return (

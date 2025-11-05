@@ -223,7 +223,11 @@ export default function ResultsPage() {
       if (alreadySavedCount > 0) {
         log.info(`Skipping ${alreadySavedCount} already saved topics`);
         toast.info(
-          `Skipping ${alreadySavedCount} topic${alreadySavedCount !== 1 ? "s" : ""} already saved. Saving ${unsavedTopics.length} new topic${unsavedTopics.length !== 1 ? "s" : ""}.`,
+          `Skipping ${alreadySavedCount} topic${
+            alreadySavedCount !== 1 ? "s" : ""
+          } already saved. Saving ${unsavedTopics.length} new topic${
+            unsavedTopics.length !== 1 ? "s" : ""
+          }.`,
         );
       }
 
@@ -398,7 +402,7 @@ export default function ResultsPage() {
       log.info("🔄 Starting over: Wizard reset, navigating to topic builder");
       setShowStartOverDialog(false);
       // Navigate to create page without full refresh
-      router.push(`/w/${urlWorkspaceSlug}/topics/create`);
+      router.push(`/workspaces/${urlWorkspaceSlug}/topics/create`);
     } catch (error) {
       log.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
@@ -410,7 +414,7 @@ export default function ResultsPage() {
   };
 
   const handleNavigateToTopics = () => {
-    router.push(`/w/${urlWorkspaceSlug}/topics`);
+    router.push(`/workspaces/${urlWorkspaceSlug}/topics`);
   };
 
   const handleRetryLoad = () => {
@@ -472,11 +476,17 @@ export default function ResultsPage() {
 
   // Generate page title and description based on session data
   const pageTitle = state.session
-    ? `${formatIndustryName(state.session.formData.industry)} Topics (${state.session.topics.length} results)`
+    ? `${formatIndustryName(state.session.formData.industry)} Topics (${
+        state.session.topics.length
+      } results)`
     : "Topic Results";
 
   const pageDescription = state.session
-    ? `${state.session.topics.length} AI-generated topics for ${formatIndustryName(state.session.formData.industry)} industry`
+    ? `${
+        state.session.topics.length
+      } AI-generated topics for ${formatIndustryName(
+        state.session.formData.industry,
+      )} industry`
     : "View your generated topics";
 
   // Loading state

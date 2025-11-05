@@ -20,7 +20,7 @@ import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 /**
  * Workspace Settings Root Page
  *
- * Consolidated workspace settings at /w/[slug]/settings that combines:
+ * Consolidated workspace settings at /workspaces/[slug]/settings that combines:
  * - General information (name, slug, description, URL)
  * - Brand voice profile configuration
  * - Team & access management
