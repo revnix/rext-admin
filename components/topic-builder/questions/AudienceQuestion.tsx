@@ -78,20 +78,6 @@ export function AudienceQuestion({
       ? contextualSuggestions
       : fallbackSuggestions;
 
-  const addSuggestion = (suggestion: string) => {
-    if (!currentAudiences.includes(suggestion)) {
-      const newAudiences = [...currentAudiences, suggestion];
-      updateFormData("audience", newAudiences);
-    }
-  };
-
-  const removeSuggestion = (suggestion: string) => {
-    const newAudiences = currentAudiences.filter(
-      (audience) => audience !== suggestion,
-    );
-    updateFormData("audience", newAudiences);
-  };
-
   return (
     <motion.div
       variants={itemVariants}
@@ -102,93 +88,114 @@ export function AudienceQuestion({
       <Controller
         name="audience"
         control={form.control}
-        render={({ field, fieldState }) => (
-          <ChipInput
-            value={field.value || []}
-            onChange={(values) => {
-              field.onChange(values);
-              updateFormData("audience", values);
-            }}
-            placeholder="Type an audience and press Enter..."
-            disabled={isLoading}
-            error={fieldState.error?.message || error}
-            maxItems={5}
-            icon={<Users className="w-5 h-5" />}
-            enableDualEnter={true}
-            onStepAdvance={onStepAdvance}
-          />
-        )}
-      />
+        render={({ field, fieldState }) => {
+          // Define handlers inside render to access field.onChange
+          const addSuggestion = (suggestion: string) => {
+            if (!currentAudiences.includes(suggestion)) {
+              const newAudiences = [...currentAudiences, suggestion];
+              field.onChange(newAudiences); // Trigger form validation
+              updateFormData("audience", newAudiences);
+            }
+          };
 
-      {/* Suggestions */}
-      {suggestions.length > 0 && (
-        <motion.div variants={itemVariants} className="space-y-3">
-          <div className="text-sm font-medium text-muted-foreground">
-            {contextualSuggestions.length > 0 && _formData.industry
-              ? `Audiences for ${_formData.industry} industry (click to add):`
-              : "Popular audiences (click to add):"}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {suggestions.map((suggestion) => {
-              const isSelected = currentAudiences.includes(suggestion);
+          const removeSuggestion = (suggestion: string) => {
+            const newAudiences = currentAudiences.filter(
+              (audience) => audience !== suggestion,
+            );
+            field.onChange(newAudiences); // Trigger form validation
+            updateFormData("audience", newAudiences);
+          };
 
-              return (
-                <button
-                  key={`suggestion-${suggestion}`}
-                  type="button"
-                  onClick={() =>
-                    isSelected
-                      ? removeSuggestion(suggestion)
-                      : addSuggestion(suggestion)
-                  }
-                  disabled={
-                    isLoading || (!isSelected && currentAudiences.length >= 5)
-                  }
-                  className={cn(
-                    "px-3 py-2 text-sm rounded-lg transition-all duration-200 cursor-pointer",
-                    "border hover:border-primary/50 shadow-sm hover:shadow-md",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
-                    isSelected
-                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                      : "bg-background hover:bg-primary/5 text-foreground border-border hover:text-primary",
-                  )}
+          return (
+            <>
+              <ChipInput
+                value={field.value || []}
+                onChange={(values) => {
+                  field.onChange(values);
+                  updateFormData("audience", values);
+                }}
+                placeholder="Type an audience and press Enter..."
+                disabled={isLoading}
+                error={fieldState.error?.message || error}
+                maxItems={5}
+                icon={<Users className="w-5 h-5" />}
+                enableDualEnter={true}
+                onStepAdvance={onStepAdvance}
+              />
+
+              {/* Suggestions */}
+              {suggestions.length > 0 && (
+                <motion.div variants={itemVariants} className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {contextualSuggestions.length > 0 && _formData.industry
+                      ? `Audiences for ${_formData.industry} industry (click to add):`
+                      : "Popular audiences (click to add):"}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map((suggestion) => {
+                      const isSelected = currentAudiences.includes(suggestion);
+
+                      return (
+                        <button
+                          key={`suggestion-${suggestion}`}
+                          type="button"
+                          onClick={() =>
+                            isSelected
+                              ? removeSuggestion(suggestion)
+                              : addSuggestion(suggestion)
+                          }
+                          disabled={
+                            isLoading || (!isSelected && currentAudiences.length >= 5)
+                          }
+                          className={cn(
+                            "px-3 py-2 text-sm rounded-lg transition-all duration-200 cursor-pointer",
+                            "border hover:border-primary/50 shadow-sm hover:shadow-md",
+                            "disabled:opacity-50 disabled:cursor-not-allowed",
+                            "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                              : "bg-background hover:bg-primary/5 text-foreground border-border hover:text-primary",
+                          )}
+                        >
+                          <span className="flex items-center gap-1">
+                            {isSelected ? (
+                              <>
+                                {suggestion}
+                                <span className="text-xs">✓</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3 h-3" />
+                                {suggestion}
+                              </>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Selected Count */}
+              {currentAudiences.length > 0 && (
+                <motion.div
+                  variants={itemVariants}
+                  className="text-sm text-muted-foreground"
                 >
-                  <span className="flex items-center gap-1">
-                    {isSelected ? (
-                      <>
-                        {suggestion}
-                        <span className="text-xs">✓</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3 h-3" />
-                        {suggestion}
-                      </>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Selected Count */}
-      {currentAudiences.length > 0 && (
-        <motion.div
-          variants={itemVariants}
-          className="text-sm text-muted-foreground"
-        >
-          {currentAudiences.length} audience
-          {currentAudiences.length !== 1 ? "s" : ""} selected
-          {currentAudiences.length >= 5 && (
-            <span className="ml-2 text-amber-600 dark:text-amber-400">
-              (Maximum reached)
-            </span>
-          )}
-        </motion.div>
-      )}
+                  {currentAudiences.length} audience
+                  {currentAudiences.length !== 1 ? "s" : ""} selected
+                  {currentAudiences.length >= 5 && (
+                    <span className="ml-2 text-amber-600 dark:text-amber-400">
+                      (Maximum reached)
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </>
+          );
+        }}
+      />
     </motion.div>
   );
 }
