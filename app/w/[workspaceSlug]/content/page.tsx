@@ -36,6 +36,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentStatus } from "@/types/content";
 import { STATUS_FILTER_OPTIONS } from "@/types/content";
 import type { ContentData, RowAction } from "@/types/data-table";
+import { DateDisplay } from "@/components/ui/topic-cell-formatters";
 
 export default function WorkspaceContentPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
@@ -167,8 +168,8 @@ export default function WorkspaceContentPage() {
     { key: "wordCount", header: "Words", width: "80px" },
     { key: "seoScore", header: "SEO Score", width: "90px" },
     { key: "humanReviewer", header: "Reviewer", width: "120px" },
-    { key: "publishDate", header: "Published", width: "130px" },
-    { key: "created", header: "Created", width: "130px" },
+    { key: "publishDate", header: "Published", width: "130px", cell: (value: unknown) => <DateDisplay value={value} />, },
+    { key: "created", header: "Created", width: "130px",cell: (value: unknown) => <DateDisplay value={value} />, },
   ];
 
   const emptyActions = [
