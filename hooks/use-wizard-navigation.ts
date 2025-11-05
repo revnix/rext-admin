@@ -116,6 +116,9 @@ export function useWizardNavigation({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, _setIsLoading] = useState(false);
+  const [submissionTimeoutId, setSubmissionTimeoutId] = useState<
+    NodeJS.Timeout | undefined
+  >();
 
   // Enhanced navigation state for edit mode (Task 8.2)
   const [navigationMode, setNavigationMode] = useState<"normal" | "editing">(
@@ -304,14 +307,27 @@ export function useWizardNavigation({
     }
 
     if (currentQuestionIndex >= questions.length - 1) {
-      // Complete the wizard - validation already passed to reach here
+      // Complete the wizard
       log.info("🏁 Last question reached, completing wizard");
       setIsSubmitting(true);
 
-      // Call completion handler (handles errors internally)
-      // Note: On success, navigation occurs so isSubmitting reset isn't needed
-      // On error, the handler shows error toast and we reset below
-      onComplete(formData);
+      // Set a timeout to reset isSubmitting as a failsafe (15 seconds)
+      const timeoutId = setTimeout(() => {
+        log.warn("⏱️ Submission timeout reached, resetting isSubmitting");
+        setIsSubmitting(false);
+      }, 15000);
+      setSubmissionTimeoutId(timeoutId);
+
+      // Handle async completion and reset isSubmitting on failure
+      Promise.resolve(onComplete(formData))
+        .catch((error) => {
+          log.error("❌ Wizard completion failed:", error);
+          setIsSubmitting(false);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            setSubmissionTimeoutId(undefined);
+          }
+        });
 
       return true;
     } else {
@@ -421,6 +437,15 @@ export function useWizardNavigation({
     formData.industry,
     formData.purpose,
   ]);
+
+  // Cleanup submission timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (submissionTimeoutId) {
+        clearTimeout(submissionTimeoutId);
+      }
+    };
+  }, [submissionTimeoutId]);
 
   return {
     // Form state

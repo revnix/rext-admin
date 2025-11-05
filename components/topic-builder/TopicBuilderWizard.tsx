@@ -76,11 +76,16 @@ export const TopicBuilderWizard = memo(function TopicBuilderWizard({
   // Handle wizard completion
   const handleComplete = useCallback(
     async (formData: TopicBuilderFormData) => {
-      if (onComplete) {
-        await Promise.resolve(onComplete(formData));
-      } else {
-        // Errors are handled by the mutation's onError callback
-        await handleGenerateTopics(formData);
+      try {
+        if (onComplete) {
+          await Promise.resolve(onComplete(formData));
+        } else {
+          await handleGenerateTopics(formData);
+        }
+      } catch (error) {
+        // Re-throw the error so the wizard navigation can handle it
+        log.error("Error in handleComplete:", error);
+        throw error;
       }
     },
     [onComplete, handleGenerateTopics],
