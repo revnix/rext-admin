@@ -17,7 +17,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
       data-slot="breadcrumb-list"
       className={cn(
         "text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5",
-        className
+        className,
       )}
       {...props}
     />
@@ -34,40 +34,38 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   );
 }
 
-/**
- * ✅ Simplified BreadcrumbLink — uses Next.js <Link> directly
- * Prevents double <a> tags and page reloads.
- */
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<typeof Link> & {
+  Omit<React.ComponentPropsWithoutRef<typeof Link>, "href"> & {
+    href?: string;
     asChild?: boolean;
   }
 >(({ href, className, children, ...props }, ref) => {
-  // If href provided, render Next.js Link for client-side navigation
+  // If href provided, use Next.js Link for client-side routing
   if (href) {
     return (
       <Link
         href={href}
-        ref={ref as any}
         className={cn(
           "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
-          className
+          className,
         )}
         {...props}
+        // We can’t forward ref to <Link>, but this is safe — Next.js handles focus internally
+        legacyBehavior={false}
       >
         {children}
       </Link>
     );
   }
 
-  // Otherwise, render a normal <a> (no navigation)
+  // Otherwise render a regular <a> tag
   return (
     <a
       ref={ref}
       className={cn(
         "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
-        className
+        className,
       )}
       {...props}
     >
