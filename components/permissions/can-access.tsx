@@ -1,7 +1,6 @@
 "use client";
 
-import type { ReactElement, ReactNode } from "react";
-import { isValidElement } from "react";
+import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import {
   useAllPermissions,
@@ -16,60 +15,27 @@ import {
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 
 interface CanAccessProps {
-  /**
-   * Single permission to check
-   */
+  /** Single permission to check */
   permission?: string;
-
-  /**
-   * Array of permissions - user must have ANY of them
-   */
+  /** Array of permissions - user must have ANY of them */
   anyPermission?: string[];
-
-  /**
-   * Array of permissions - user must have ALL of them
-   */
+  /** Array of permissions - user must have ALL of them */
   allPermissions?: string[];
-
-  /**
-   * Single role to check
-   */
+  /** Single role to check */
   role?: string;
-
-  /**
-   * Array of roles - user must have ANY of them
-   */
+  /** Array of roles - user must have ANY of them */
   anyRole?: string[];
-
-  /**
-   * Content to render if user has access
-   */
+  /** Content to render if user has access */
   children: ReactNode;
-
-  /**
-   * Content to render if user doesn't have access (default: null)
-   */
+  /** Content to render if user doesn't have access */
   fallback?: ReactNode;
-
-  /**
-   * Invert the check (show content if user DOESN'T have permission/role)
-   */
+  /** Invert the check (show content if user DOESN'T have access) */
   invert?: boolean;
-
-  /**
-   * Show a tooltip with permission info when access is denied
-   * instead of hiding the element entirely. The element will be disabled.
-   */
+  /** Show a tooltip instead of hiding restricted elements */
   showLockedTooltip?: boolean;
-
-  /**
-   * Custom tooltip message when locked
-   */
+  /** Custom tooltip message */
   tooltipMessage?: string;
-
-  /**
-   * Show lock icon next to disabled element
-   */
+  /** Show lock icon next to disabled element */
   showLockIcon?: boolean;
 }
 
@@ -130,74 +96,54 @@ export function CanAccess({
   tooltipMessage,
   showLockIcon = false,
 }: CanAccessProps) {
-  // Get workspace context (if in workspace route)
   const workspaceContext = useWorkspaceOptional();
   const workspaceId =
     workspaceContext?.workspaceSlug || workspaceContext?.workspaceId;
+  const isWorkspaceContext = Boolean(workspaceId);
 
-  // Check if we're in a workspace context
-  const isWorkspaceContext = !!workspaceId;
-
-  // Check workspace permissions (if in workspace context)
-  // Phase 2: These now return {hasPermission, isLoading}
-  const singleWorkspaceResult = useWorkspacePermission(
-    permission || "",
-    workspaceId,
-  );
-  const anyWorkspaceResult = useAnyWorkspacePermission(
+  // === 1️⃣ Determine workspace and global permission states ===
+  const singleWorkspace = useWorkspacePermission(permission || "", workspaceId);
+  const anyWorkspace = useAnyWorkspacePermission(
     anyPermission || [],
     workspaceId,
   );
-  const allWorkspaceResult = useAllWorkspacePermissions(
+  const allWorkspace = useAllWorkspacePermissions(
     allPermissions || [],
     workspaceId,
   );
 
-  // Check global permissions (fallback or when not in workspace)
-  const hasSingleGlobalPermission = usePermission(permission || "");
-  const hasAnyGlobalPermission = useAnyPermission(anyPermission || []);
-  const hasAllGlobalPermissions = useAllPermissions(allPermissions || []);
+  const singleGlobal = usePermission(permission || "");
+  const anyGlobal = useAnyPermission(anyPermission || []);
+  const allGlobal = useAllPermissions(allPermissions || []);
 
-  // Check roles
-  const hasSingleRole = useRole(role || "");
-  const hasAnyRoleCheck = useAnyRole(anyRole || []);
+  const roleCheck = useRole(role || "");
+  const anyRoleCheck = useAnyRole(anyRole || []);
 
   // Determine if user has access and if still loading
   let hasAccess = false;
   let isLoading = false;
 
   if (permission) {
-    // Use workspace permissions if in workspace context, otherwise use global
-    if (isWorkspaceContext) {
-      hasAccess = singleWorkspaceResult.hasPermission;
-      isLoading = singleWorkspaceResult.isLoading;
-    } else {
-      hasAccess = hasSingleGlobalPermission;
-    }
-  } else if (anyPermission && anyPermission.length > 0) {
-    if (isWorkspaceContext) {
-      hasAccess = anyWorkspaceResult.hasPermission;
-      isLoading = anyWorkspaceResult.isLoading;
-    } else {
-      hasAccess = hasAnyGlobalPermission;
-    }
-  } else if (allPermissions && allPermissions.length > 0) {
-    if (isWorkspaceContext) {
-      hasAccess = allWorkspaceResult.hasPermission;
-      isLoading = allWorkspaceResult.isLoading;
-    } else {
-      hasAccess = hasAllGlobalPermissions;
-    }
+    hasAccess = isWorkspaceContext
+      ? singleWorkspace.hasPermission
+      : singleGlobal;
+    isLoading = isWorkspaceContext ? singleWorkspace.isLoading : false;
+  } else if (anyPermission?.length) {
+    hasAccess = isWorkspaceContext ? anyWorkspace.hasPermission : anyGlobal;
+    isLoading = isWorkspaceContext ? anyWorkspace.isLoading : false;
+  } else if (allPermissions?.length) {
+    hasAccess = isWorkspaceContext ? allWorkspace.hasPermission : allGlobal;
+    isLoading = isWorkspaceContext ? allWorkspace.isLoading : false;
   } else if (role) {
-    hasAccess = hasSingleRole;
-  } else if (anyRole && anyRole.length > 0) {
-    hasAccess = hasAnyRoleCheck;
+    hasAccess = roleCheck;
+  } else if (anyRole?.length) {
+    hasAccess = anyRoleCheck;
   }
 
   // Show loading state while permissions are being fetched (prevent flash of unauthorized content)
   if (isLoading) {
-    // Render fallback (e.g., Access Restricted card) or nothing while loading
-    return <>{fallback || null}</>;
+    // Return nothing or fallback while permissions load — avoids flash of Access Denied
+    return fallback ?? null;
   }
 
   // Apply invert logic
@@ -210,22 +156,17 @@ export function CanAccess({
     return <>{children}</>;
   }
 
-  // If showLockedTooltip is enabled and no custom fallback, show tooltip
-  if (showLockedTooltip && !fallback) {
-    // Only wrap if children is a single valid React element
-    if (isValidElement(children)) {
-      return (
-        <LockedFeatureTooltip
-          permission={permission || anyPermission?.[0]}
-          message={tooltipMessage}
-          showIcon={showLockIcon}
-        >
-          {children as ReactElement}
-        </LockedFeatureTooltip>
-      );
-    }
-    // If children is not a single element, fallback to hiding it
-    return null;
+  // === 6️⃣ Handle locked tooltip display ===
+  if (showLockedTooltip && !fallback && isValidElement(children)) {
+    return (
+      <LockedFeatureTooltip
+        permission={permission || anyPermission?.[0]}
+        message={tooltipMessage}
+        showIcon={showLockIcon}
+      >
+        {children as ReactElement}
+      </LockedFeatureTooltip>
+    );
   }
 
   return <>{fallback}</>;
