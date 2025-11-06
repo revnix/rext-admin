@@ -109,50 +109,19 @@ const mockTopic: GeneratedTopic = {
   },
   tags: ["technology", "testing"],
   created_at: "2024-01-01T00:00:00Z",
+  generated_by_user_id: "test-user",
+  generated_by_first_name: "Test",
+  generated_by_last_name: "User",
 };
 
 const mockTopic2: GeneratedTopic = {
-  id: "topic-2",
-  title: "Test Topic 2",
-  angle: "Second test angle",
-  description: "Second test description",
-  channel_fit: ["blog"],
-  audience_fit: ["designers"],
-  why_it_works: "Second test explanation",
-  scores: {
-    relevance: 0.9,
-    seo_potential: 0.6,
-    trend_level: 0.8,
-    uniqueness: 0.7,
-    reader_interest: 0.9,
-    actionable_potential: 0.6,
-    brand_alignment: 0.8,
-    controversy: 0.1,
-  },
-  tags: ["design", "testing"],
-  created_at: "2024-01-01T00:00:00Z",
+  ...mockTopic,
+  id: "mock-topic-2",
 };
 
 const mockTopic3: GeneratedTopic = {
-  id: "topic-3",
-  title: "Test Topic 3",
-  angle: "Third test angle",
-  description: "Third test description",
-  channel_fit: ["social"],
-  audience_fit: ["marketers"],
-  why_it_works: "Third test explanation",
-  scores: {
-    relevance: 0.7,
-    seo_potential: 0.8,
-    trend_level: 0.7,
-    uniqueness: 0.8,
-    reader_interest: 0.7,
-    actionable_potential: 0.8,
-    brand_alignment: 0.7,
-    controversy: 0.3,
-  },
-  tags: ["marketing", "testing"],
-  created_at: "2024-01-01T00:00:00Z",
+  ...mockTopic,
+  id: "mock-topic-3",
 };
 
 const mockTopics = [mockTopic, mockTopic2, mockTopic3];

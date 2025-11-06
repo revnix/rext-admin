@@ -146,6 +146,12 @@ export interface GeneratedTopic {
   is_saved?: boolean;
   /** Whether the topic has been approved for content creation */
   approved?: boolean;
+  /** ID of the user who generated this topic */
+  generated_by_user_id: string;
+  /** First name of the user who generated this topic */
+  generated_by_first_name: string;
+  /** Last name of the user who generated this topic */
+  generated_by_last_name: string;
   /** Optimistic UI state: marks topic as saved while API call is in progress */
   _optimisticSaved?: boolean;
   /** Tracks if topic is currently being saved (for loading states) */
