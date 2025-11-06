@@ -26,7 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useContent } from "@/hooks/use-content";
+import { useContent, useDeleteContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { log } from "@/lib/logger";
@@ -36,6 +36,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentStatus } from "@/types/content";
 import { STATUS_FILTER_OPTIONS } from "@/types/content";
 import type { ContentData, RowAction } from "@/types/data-table";
+import { DateDisplay } from "@/components/ui/topic-cell-formatters";
 
 export default function WorkspaceContentPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
@@ -72,6 +73,9 @@ export default function WorkspaceContentPage() {
 
   // Fetch content data from API
   const { data: contentResponse, isLoading, error } = useContent(workspaceId);
+
+  // Delete content mutation
+  const deleteContentMutation = useDeleteContent();
 
   // Map ContentResponse to ContentData for DataTable
   const contentData: ContentData[] = (contentResponse?.content || []).map(
@@ -164,8 +168,18 @@ export default function WorkspaceContentPage() {
     { key: "wordCount", header: "Words", width: "80px" },
     { key: "seoScore", header: "SEO Score", width: "90px" },
     { key: "humanReviewer", header: "Reviewer", width: "120px" },
-    { key: "publishDate", header: "Published", width: "130px" },
-    { key: "created", header: "Created", width: "130px" },
+    {
+      key: "publishDate",
+      header: "Published",
+      width: "130px",
+      cell: (value: unknown) => <DateDisplay value={value} />,
+    },
+    {
+      key: "created",
+      header: "Created",
+      width: "130px",
+      cell: (value: unknown) => <DateDisplay value={value} />,
+    },
   ];
 
   const emptyActions = [
@@ -216,7 +230,12 @@ export default function WorkspaceContentPage() {
     canDeleteContent && {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: ContentData) => log.info("Delete content:", row.title),
+      onClick: (row: ContentData) => {
+        deleteContentMutation.mutate({
+          workspaceId,
+          contentId: row.id,
+        });
+      },
       variant: "destructive" as const,
       requiresConfirmation: true,
       confirmationTitle: "Delete Content",

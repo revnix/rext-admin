@@ -144,7 +144,11 @@ export function WorkspaceKnowledgeTable({
       width: "140px",
       cell: (value) => {
         if (!value)
-          return <span className="text-sm text-muted-foreground">-</span>;
+          return (
+            <span className="inline-block px-6 text-sm text-muted-foreground">
+              -
+            </span>
+          );
         const date = new Date(value as string);
         return (
           <span className="text-sm text-muted-foreground">
@@ -160,7 +164,11 @@ export function WorkspaceKnowledgeTable({
       width: "140px",
       cell: (value) => {
         if (!value)
-          return <span className="text-sm text-muted-foreground">-</span>;
+          return (
+            <span className="inline-block px-6 text-sm text-muted-foreground">
+              -
+            </span>
+          );
         const date = new Date(value as string);
         return (
           <span className="text-sm text-muted-foreground">
