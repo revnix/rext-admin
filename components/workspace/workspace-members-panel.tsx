@@ -74,9 +74,7 @@ export function WorkspaceMembersPanel({
   const [memberToChangeRole, setMemberToChangeRole] =
     useState<WorkspaceMember | null>(null);
 
-  // Check permissions
-  const canUpdateRole = usePermission(MEMBER_PERMISSIONS.UPDATE_ROLE);
-  const canRemoveMember = usePermission(MEMBER_PERMISSIONS.REMOVE);
+  // Use permission gates (kept), but ensure we don't fall back to default Edit/View/Delete
   const canInviteMember = usePermission(MEMBER_PERMISSIONS.INVITE);
 
   // Fetch workspace members
@@ -211,7 +209,7 @@ export function WorkspaceMembersPanel({
 
   // Define row actions (filtered by permissions)
   const rowActions: RowAction<MemberData>[] = [
-    canUpdateRole && {
+    {
       label: "Change Role",
       icon: <Shield className="h-4 w-4" />,
       onClick: (row: MemberData) => {
@@ -220,7 +218,7 @@ export function WorkspaceMembersPanel({
       },
       disabled: (row: MemberData) => row.is_default as boolean,
     },
-    canRemoveMember && {
+    {
       label: "Remove Member",
       icon: <UserMinus className="h-4 w-4" />,
       onClick: (row: MemberData) => {
@@ -230,7 +228,7 @@ export function WorkspaceMembersPanel({
       variant: "destructive",
       disabled: (row: MemberData) => row.is_default as boolean,
     },
-  ].filter(Boolean) as RowAction<MemberData>[];
+  ];
 
   const headerActions = (
     <div className="flex items-center gap-2">

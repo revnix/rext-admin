@@ -18,10 +18,7 @@ interface AuthProviderProps {
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   return (
-    <SessionProvider
-      refetchOnWindowFocus={false}
-      refetchInterval={0}
-    >
+    <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
       {children}
       <SessionTimeoutWarning />
     </SessionProvider>

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  Edit2,
-  Eye,
-  Filter,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Search, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -38,7 +29,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
-import { log } from "@/lib/logger";
 import type { Column, ColumnFilter, RowAction } from "@/types/data-table";
 
 interface EmptyStateAction {
@@ -303,25 +293,6 @@ export function DataTable<
   const displayEmptyActions =
     emptyActions.length > 0 ? emptyActions : defaultEmptyActions;
 
-  // Default row actions if none provided
-  const defaultRowActions: RowAction<T>[] = [
-    {
-      label: "View",
-      icon: <Eye className="h-4 w-4" />,
-      onClick: (row) => log.info("View:", row),
-    },
-    {
-      label: "Edit",
-      icon: <Edit2 className="h-4 w-4" />,
-      onClick: (row) => log.info("Edit:", row),
-    },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => log.info("Delete:", row),
-      variant: "destructive" as const,
-    },
-  ];
   const displayRowActions = rowActions.length > 0 ? rowActions : [];
 
   // Reset to page 1 when search changes
