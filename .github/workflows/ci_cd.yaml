@@ -83,27 +83,4 @@ jobs:
           EOF
           echo "✅ .env.local created successfully."
 
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-          echo "📦 Pulling latest frontend image..."
-          docker pull revnix/frontend:latest
-
-          echo "📦 Pulling latest frontend image..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:latest
-
-          echo "🛑 Stopping old container if it exists..."
-          docker rm -f revnix_frontend || true
-
-          echo "🚀 Running new container..."
-          docker run -d \
-            --name revnix_frontend \
-            -p 3000:3000 \
-            -e NODE_ENV=production \
-            -e NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
-            -e NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
-            -e NEXT_PUBLIC_API_BASE_URL="${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" \
-            -e NEXT_PUBLIC_BACKEND_API_URL="${{ secrets.NEXT_PUBLIC_BACKEND_API_URL }}" \
-            -e NEXT_PUBLIC_CONTENT_API_KEY="${{ secrets.NEXT_PUBLIC_CONTENT_API_KEY }}" \
-            ${{ secrets.DOCKER_USERNAME }}/frontend:latest
-
-          echo "✅ Frontend deployed successfully."
+          echo "✅ Frontend update successfully."
