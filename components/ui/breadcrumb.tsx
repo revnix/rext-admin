@@ -1,7 +1,8 @@
-import { Slot } from "@radix-ui/react-slot";
+"use client";
+
+import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import type * as React from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
       data-slot="breadcrumb-list"
       className={cn(
         "text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5",
-        className,
+        className
       )}
       {...props}
     />
@@ -33,26 +34,48 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   );
 }
 
-function BreadcrumbLink({
-  asChild,
-  className,
-  ...props
-}: React.ComponentProps<"a"> & {
-  asChild?: boolean;
-}) {
-  const Comp = asChild ? Slot : "a";
+/**
+ * ✅ Simplified BreadcrumbLink — uses Next.js <Link> directly
+ * Prevents double <a> tags and page reloads.
+ */
+const BreadcrumbLink = React.forwardRef<
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<typeof Link> & {
+    asChild?: boolean;
+  }
+>(({ href, className, children, ...props }, ref) => {
+  // If href provided, render Next.js Link for client-side navigation
+  if (href) {
+    return (
+      <Link
+        href={href}
+        ref={ref as any}
+        className={cn(
+          "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </Link>
+    );
+  }
 
+  // Otherwise, render a normal <a> (no navigation)
   return (
-    <Comp
-      data-slot="breadcrumb-link"
+    <a
+      ref={ref}
       className={cn(
-        "hover:text-foreground transition-colors cursor-pointer",
-        className,
+        "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
+        className
       )}
       {...props}
-    />
+    >
+      {children}
+    </a>
   );
-}
+});
+BreadcrumbLink.displayName = "BreadcrumbLink";
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
@@ -131,11 +154,9 @@ export function Breadcrumbs({
           <span key={`${item.label}-${index}`} className="contents">
             <BreadcrumbItem>
               {item.href ? (
-                <BreadcrumbLink asChild>
-                  <Link href={item.href} className="flex items-center gap-1.5">
-                    {item.icon}
-                    {item.label}
-                  </Link>
+                <BreadcrumbLink href={item.href}>
+                  {item.icon}
+                  {item.label}
                 </BreadcrumbLink>
               ) : (
                 <BreadcrumbPage className="flex items-center gap-1.5">
