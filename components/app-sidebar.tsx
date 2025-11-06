@@ -31,13 +31,23 @@ import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { PERMISSIONS, ROLES } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
+import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
+  const { workspacePermissions } = usePermissionStore();
+  const storeRole = currentWorkspace
+    ? (workspacePermissions.get(currentWorkspace.id)?.role ??
+      workspacePermissions.get(currentWorkspace.slug)?.role)
+    : undefined;
+  // Also fetch directly to avoid timing/key mismatches
+  const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
+  const activeRole = fetchedRole || storeRole;
 
   // Main navigation groups (top section)
   const mainNavigationGroups: NavGroup[] = [
@@ -95,7 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Users,
           permission: "member.read",
         },
-      ],
+      ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
     },
     // TODO: Uncomment when integrations are ready
     // {
