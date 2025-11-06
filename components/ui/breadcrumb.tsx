@@ -1,7 +1,8 @@
-import { Slot } from "@radix-ui/react-slot";
+"use client";
+
+import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import type * as React from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -33,26 +34,46 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   );
 }
 
-function BreadcrumbLink({
-  asChild,
-  className,
-  ...props
-}: React.ComponentProps<"a"> & {
-  asChild?: boolean;
-}) {
-  const Comp = asChild ? Slot : "a";
+const BreadcrumbLink = React.forwardRef<
+  HTMLAnchorElement,
+  Omit<React.ComponentPropsWithoutRef<typeof Link>, "href"> & {
+    href?: string;
+    asChild?: boolean;
+  }
+>(({ href, className, children, ...props }, ref) => {
+  // If href provided, use Next.js Link for client-side routing
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
+          className,
+        )}
+        {...props}
+        // We can’t forward ref to <Link>, but this is safe — Next.js handles focus internally
+        legacyBehavior={false}
+      >
+        {children}
+      </Link>
+    );
+  }
 
+  // Otherwise render a regular <a> tag
   return (
-    <Comp
-      data-slot="breadcrumb-link"
+    <a
+      ref={ref}
       className={cn(
-        "hover:text-foreground transition-colors cursor-pointer",
+        "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </a>
   );
-}
+});
+BreadcrumbLink.displayName = "BreadcrumbLink";
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
@@ -131,11 +152,9 @@ export function Breadcrumbs({
           <span key={`${item.label}-${index}`} className="contents">
             <BreadcrumbItem>
               {item.href ? (
-                <BreadcrumbLink asChild>
-                  <Link href={item.href} className="flex items-center gap-1.5">
-                    {item.icon}
-                    {item.label}
-                  </Link>
+                <BreadcrumbLink href={item.href}>
+                  {item.icon}
+                  {item.label}
                 </BreadcrumbLink>
               ) : (
                 <BreadcrumbPage className="flex items-center gap-1.5">
