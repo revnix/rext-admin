@@ -322,8 +322,7 @@ export function DataTable<
       variant: "destructive" as const,
     },
   ];
-  const displayRowActions =
-    rowActions.length > 0 ? rowActions : defaultRowActions;
+  const displayRowActions = rowActions.length > 0 ? rowActions : [];
 
   // Reset to page 1 when search changes
   const handleSearchChange = (value: string) => {

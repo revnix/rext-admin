@@ -235,7 +235,7 @@ export function ContentCreationWizard({
                 </div>
 
                 {/* Step Content */}
-                <div className="flex-1 p-6 lg:p-10 w-full max-w-none">
+                <div className="flex-1 p-6 lg:p-4 w-full max-w-none">
                   <AnimatePresence mode="wait">
                     {currentStepConfig && (
                       <motion.div

@@ -13,10 +13,15 @@ interface AuthProviderProps {
  * Wraps the app with NextAuth SessionProvider and includes:
  * - Session timeout warnings
  * - Automatic session refresh
+ * - Disabled automatic refetch to prevent cross-tab interference
+ * - Session changes only detected on user interaction (navigation, etc.)
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   return (
-    <SessionProvider>
+    <SessionProvider
+      refetchOnWindowFocus={false}
+      refetchInterval={0}
+    >
       {children}
       <SessionTimeoutWarning />
     </SessionProvider>
