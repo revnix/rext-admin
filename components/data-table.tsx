@@ -3,11 +3,8 @@
 import {
   ChevronLeft,
   ChevronRight,
-  Edit2,
-  Eye,
   Filter,
   Search,
-  Trash2,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -38,7 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
-import { log } from "@/lib/logger";
 import type { Column, ColumnFilter, RowAction } from "@/types/data-table";
 
 interface EmptyStateAction {
