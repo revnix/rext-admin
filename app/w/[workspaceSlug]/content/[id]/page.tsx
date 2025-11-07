@@ -49,6 +49,7 @@ interface Content {
 }
 
 // Map backend step names to UI steps
+// Keys must match the normalized backend event names (after removing prefix and converting to snake_case)
 const STEP_MAPPING: Record<
   string,
   { name: string; description: string; order: number }
@@ -58,47 +59,47 @@ const STEP_MAPPING: Record<
     description: "Initializing content generation...",
     order: 0,
   },
-  fetching_user: {
+  fetch_user: {
     name: "User Data",
     description: "Fetching user information...",
     order: 1,
   },
-  fetching_workspace: {
+  fetch_workspace: {
     name: "Workspace",
     description: "Loading workspace details...",
     order: 2,
   },
-  fetching_topic: {
+  fetch_topic: {
     name: "Topic",
     description: "Retrieving topic information...",
     order: 3,
   },
-  gathering_web_context: {
+  web_context: {
     name: "Web Research",
     description: "Searching web for relevant context...",
     order: 4,
   },
-  gathering_knowledge_context: {
+  knowledge_context: {
     name: "Knowledge Base",
     description: "Retrieving workspace knowledge...",
     order: 5,
   },
-  scraping_content: {
+  scrape_content: {
     name: "Content Scraping",
     description: "Scraping and processing sources...",
     order: 6,
   },
-  reranking_documents: {
+  rerank_content: {
     name: "Relevance Ranking",
     description: "Ranking content by relevance...",
     order: 7,
   },
-  generating_blog: {
+  blog_generation: {
     name: "AI Generation",
     description: "Generating content with AI...",
     order: 8,
   },
-  saving_content: {
+  save_content: {
     name: "Saving",
     description: "Saving generated content...",
     order: 9,
@@ -212,11 +213,29 @@ export default function WorkspaceContentDetailPage({
     }
   };
 
+  // Helper function to normalize step names for matching
+  const normalizeStepName = (stepName: string): string => {
+    // Remove prefix (e.g., "content_generation.")
+    const withoutPrefix = stepName.replace(/^content_generation\./, "");
+
+    // Convert PascalCase to snake_case (e.g., "FetchUser" -> "fetch_user")
+    const snakeCase = withoutPrefix
+      .replace(/([A-Z])/g, "_$1")
+      .toLowerCase()
+      .replace(/^_/, "");
+
+    return snakeCase;
+  };
+
   // Map SSE events to timeline steps
   const timelineSteps: GenerationStep[] = Object.entries(STEP_MAPPING)
     .sort((a, b) => a[1].order - b[1].order)
     .map(([stepKey, stepInfo]) => {
-      const event = events.find((e) => e.step === stepKey);
+      // Find event by normalizing the backend step name to match frontend keys
+      const event = events.find((e) => {
+        const normalizedEventStep = normalizeStepName(e.step);
+        return normalizedEventStep === stepKey;
+      });
 
       let status: "pending" | "in-progress" | "completed" | "failed" =
         "pending";
