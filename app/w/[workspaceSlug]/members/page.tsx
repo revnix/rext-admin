@@ -26,8 +26,10 @@ export default function WorkspaceUsersPage() {
   const currentTab = searchParams.get("tab") || "members";
 
   // ✅ Load permission safely with loading state
-  const { isLoading: isPermissionLoading } =
-    useWorkspacePermission(WORKSPACE_PERMISSIONS.MANAGE_MEMBERS, workspaceId);
+  const { isLoading: isPermissionLoading } = useWorkspacePermission(
+    WORKSPACE_PERMISSIONS.MANAGE_MEMBERS,
+    workspaceId,
+  );
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },

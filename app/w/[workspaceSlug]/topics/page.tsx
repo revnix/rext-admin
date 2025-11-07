@@ -33,8 +33,10 @@ export default function WorkspaceTopicsPage() {
     isLoading: isCreatePermissionLoading,
   } = useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
 
-  const { isLoading: isReadPermissionLoading } =
-    useWorkspacePermission(TOPIC_PERMISSIONS.READ, workspaceId);
+  const { isLoading: isReadPermissionLoading } = useWorkspacePermission(
+    TOPIC_PERMISSIONS.READ,
+    workspaceId,
+  );
 
   // Topics data
   const {
