@@ -31,7 +31,9 @@ interface TopicsListProps {
   topics: GeneratedTopic[];
   isGeneratingMore?: boolean;
   newlyAddedTopicIds?: string[];
-  onTopicSave: (topicId: string) => void;
+  onTopicSave: (
+    topicId: string,
+  ) => Promise<{ success: boolean; message?: string }>;
   onTopicEdit?: (
     topicId: string,
     updates: Partial<GeneratedTopic>,
@@ -48,6 +50,7 @@ interface TopicsListProps {
   onNavigateToTopics?: () => void;
   onGenerateNew?: (count: number) => void;
   isBulkSaving?: boolean;
+  bulkSaveResult?: { successIds: string[]; failedIds: string[] } | null;
   className?: string;
 }
 
@@ -65,7 +68,8 @@ export const TopicsList = memo(function TopicsList({
   onRegenerateTopics,
   onNavigateToTopics: _onNavigateToTopics,
   onGenerateNew: _onGenerateNew,
-  isBulkSaving = false,
+  isBulkSaving,
+  bulkSaveResult,
   className,
 }: TopicsListProps) {
   const [selectedTopicForDrawer, setSelectedTopicForDrawer] =
@@ -114,13 +118,17 @@ export const TopicsList = memo(function TopicsList({
   }, [topics, newlyAddedTopicIds]);
 
   const handleTopicSave = useCallback(
-    async (topicId: string) => {
+    async (
+      topicId: string,
+    ): Promise<{ success: boolean; message?: string }> => {
       setSavingTopicIds((prev) => [...prev, topicId]);
       try {
-        await onTopicSave(topicId);
-        log.info(`Topic ${topicId} saved successfully`);
+        const result = await onTopicSave(topicId);
+        log.info(`Topic ${topicId} saved successfully`, result);
+        return result; // Return result for error handling in topics table
       } catch (error) {
         log.error(`Failed to save topic ${topicId}:`, error);
+        throw error; // rethrow so handleOptimisticSave catches it
       } finally {
         setSavingTopicIds((prev) => prev.filter((id) => id !== topicId));
       }
@@ -225,7 +233,6 @@ export const TopicsList = memo(function TopicsList({
 
           _onBulkSave(topicIdsToSave);
           // Optionally clear selection after save
-          setSelectedTopicIds([]);
         }}
         onClearSelection={() => setSelectedTopicIds([])}
       />
@@ -241,6 +248,8 @@ export const TopicsList = memo(function TopicsList({
         onViewDetails={handleViewDetails}
         onCopyTopic={handleCopyTopic}
         savingTopicIds={savingTopicIds}
+        isBulkSaving={isBulkSaving}
+        bulkSaveResult={bulkSaveResult}
       />
 
       {/* Footer Actions */}

@@ -1123,6 +1123,12 @@ export const ERROR_CODE_MAPPING: Record<
     retryable: true,
     severity: "medium",
   },
+  resouce_limit_exceeded: {
+    category: "external",
+    userMessage: "Subscribe to a plan to unlock more features.",
+    retryable: true,
+    severity: "medium",
+  },
   third_party_service_error: {
     category: "external",
     userMessage: "Third-party service error. Please try again later",

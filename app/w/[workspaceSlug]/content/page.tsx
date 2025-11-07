@@ -165,8 +165,18 @@ export default function WorkspaceContentPage() {
     { key: "wordCount", header: "Words", width: "80px" },
     { key: "seoScore", header: "SEO Score", width: "90px" },
     { key: "humanReviewer", header: "Reviewer", width: "120px" },
-    { key: "publishDate", header: "Published", width: "130px", cell: (value: unknown) => <DateDisplay value={value} />, },
-    { key: "created", header: "Created", width: "130px",cell: (value: unknown) => <DateDisplay value={value} />, },
+    {
+      key: "publishDate",
+      header: "Published",
+      width: "130px",
+      cell: (value: unknown) => <DateDisplay value={value} />,
+    },
+    {
+      key: "created",
+      header: "Created",
+      width: "130px",
+      cell: (value: unknown) => <DateDisplay value={value} />,
+    },
   ];
 
   const emptyActions = [

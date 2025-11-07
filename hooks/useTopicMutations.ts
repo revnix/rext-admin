@@ -162,7 +162,7 @@ export function useTopicSaveMutation(workspaceId: string) {
           error_code:
             errorInfo.statusCode === 401
               ? "unauthorized"
-              : "external_service_error",
+              : "resouce_limit_exceeded",
           details: errorInfo.context
             ? JSON.stringify(errorInfo.context)
             : undefined,
@@ -288,7 +288,7 @@ export function useTopicBulkSaveMutation(workspaceId: string) {
           error_code:
             errorInfo.statusCode === 401
               ? "unauthorized"
-              : "external_service_error",
+              : "resouce_limit_exceeded",
           details: errorInfo.context
             ? JSON.stringify(errorInfo.context)
             : undefined,

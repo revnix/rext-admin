@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, Save, Loader2 } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CircularProgress } from "@/components/ui/progress";
 import {
@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Column, RowAction } from "@/types/data-table";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import { useTopicStorage } from "@/hooks/use-topic-storage";
 
 interface TopicsTableProps {
   topics: GeneratedTopic[];
@@ -28,10 +29,14 @@ interface TopicsTableProps {
   newlyAddedTopicIds?: string[];
   savingTopicIds?: string[];
   onTopicSelect: (topicId: string, selected: boolean) => void;
-  onTopicSave: (topicId: string) => void;
+  onTopicSave: (
+    topicId: string,
+  ) => Promise<{ success: boolean; message?: string }>;
   onNavigateToContent: (topicId: string) => void;
   onViewDetails: (topicId: string) => void;
   onCopyTopic: (topicId: string) => void;
+  isBulkSaving?: boolean;
+  bulkSaveResult?: { successIds: string[]; failedIds: string[] } | null;
 }
 
 // Extend GeneratedTopic to include selection state for DataTable
@@ -47,6 +52,8 @@ export const TopicsTable = memo(function TopicsTable({
   savingTopicIds = [],
   onTopicSelect,
   onTopicSave,
+  isBulkSaving,
+  bulkSaveResult,
   onNavigateToContent: _onNavigateToContent,
   onViewDetails: _onViewDetails,
   onCopyTopic: _onCopyTopic,
@@ -59,6 +66,56 @@ export const TopicsTable = memo(function TopicsTable({
       highlighted: newlyAddedTopicIds.includes(topic.id),
     }));
   }, [topics, selectedTopicIds, newlyAddedTopicIds]);
+
+  const [optimisticSavedIds, setOptimisticSavedIds] = useState<string[]>([]);
+  const [saveErrors, setSaveErrors] = useState<string[]>([]);
+  const { savedTopics } = useTopicStorage();
+
+  useEffect(() => {
+    if (!isBulkSaving && bulkSaveResult) {
+      if (bulkSaveResult.successIds.length > 0) {
+        setOptimisticSavedIds((prev) => [
+          ...new Set([...prev, ...bulkSaveResult.successIds]),
+        ]);
+      }
+
+      // mark failed ones for retry
+      if (bulkSaveResult.failedIds.length > 0) {
+        setSaveErrors((prev) => [
+          ...new Set([...prev, ...bulkSaveResult.failedIds]),
+        ]);
+      }
+    }
+  }, [isBulkSaving, bulkSaveResult]);
+
+  // Helper to check if topic is saved (includes optimistic saves)
+  const isTopicSaved = (topicId: string) => {
+    return (
+      savedTopics.some((topic) => topic.id === topicId) ||
+      optimisticSavedIds.includes(topicId)
+    );
+  };
+
+  const getActionLabel = (topicId: string) => {
+    // If bulk save is active and topic is selected
+    if (
+      isBulkSaving &&
+      selectedTopicIds.includes(topicId) &&
+      !saveErrors.includes(topicId)
+    ) {
+      return "Saving...";
+    }
+    if (savingTopicIds.includes(topicId)) {
+      return "Saving...";
+    }
+    if (saveErrors.includes(topicId)) {
+      return "Retry";
+    }
+    if (isTopicSaved(topicId) || optimisticSavedIds.includes(topicId)) {
+      return "Saved";
+    }
+    return "Save";
+  };
 
   // Helper function to calculate overall score using weighted formula (same as TopicDetailDrawer)
   const calculateOverallScore = (scores: GeneratedTopic["scores"]) => {
@@ -226,7 +283,7 @@ export const TopicsTable = memo(function TopicsTable({
     {
       key: "scores",
       header: "Overall Score",
-      width: "120px",
+      width: "160px",
       cell: (_value, row) => (
         <div className="flex items-center justify-center">
           <CircularProgress
@@ -255,27 +312,61 @@ export const TopicsTable = memo(function TopicsTable({
       width: "80px",
       cell: (_value, row) => (
         <div className="flex items-center justify-center">
-          {(row._optimisticSaved || row.is_saved) && (
-            <Tooltip>
-              <TooltipTrigger>
-                <div className="inline-flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm bg-green-500">
-                  ✓
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Saved to library</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {(row._optimisticSaved || row.is_saved || isTopicSaved(row.id)) &&
+            !savingTopicIds.includes(row.id) && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="inline-flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm bg-green-500">
+                    ✓
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Saved to library</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
         </div>
       ),
       searchable: false,
     },
   ];
 
+  // Handle optimistic save - call this when save button is clicked
+  const handleOptimisticSave = async (topicId: string) => {
+    // prevent double-click saving
+    if (optimisticSavedIds.includes(topicId)) return;
+
+    // mark as optimistic first
+    setOptimisticSavedIds((prev) => [...prev, topicId]);
+    setSaveErrors((prev) => prev.filter((id) => id !== topicId));
+
+    try {
+      const result = await onTopicSave(topicId);
+
+      // if the API call explicitly says failed
+      if (!result?.success) {
+        throw new Error(result?.message || "Save failed");
+      }
+    } catch (_error) {
+      // revert optimistic mark
+      setOptimisticSavedIds((prev) => prev.filter((id) => id !== topicId));
+
+      // mark topic as failed → this will show Retry label
+      setSaveErrors((prev) => [...prev, topicId]);
+    }
+  };
+
   // Helper to get the correct icon for Save action
   const getSaveIcon = (row: TopicTableRow) => {
-    return savingTopicIds.includes(row.id) ? (
+    const isSaving =
+      savingTopicIds.includes(row.id) ||
+      (isBulkSaving && selectedTopicIds.includes(row.id));
+
+    if (saveErrors.includes(row.id)) {
+      return <Save className="h-4 w-4 text-red-500" />;
+    }
+
+    return isSaving ? (
       <Loader2 className="h-4 w-4 animate-spin" />
     ) : (
       <Save className="h-4 w-4" />
@@ -296,18 +387,18 @@ export const TopicsTable = memo(function TopicsTable({
       label: "Save",
       icon: <Save className="h-4 w-4" />,
       onClick: (row: TopicTableRow) => {
-        if (!savingTopicIds.includes(row.id)) {
-          onTopicSave(row.id);
+        if (!isTopicSaved(row.id)) {
+          handleOptimisticSave(row.id);
         }
       },
       tooltip: "Save to library",
       showLabel: true,
       disabled: (row: TopicTableRow): boolean =>
         !!(
-          savingTopicIds.includes(row.id) ||
-          row._isBeingSaved ||
           row.is_saved ||
-          row._optimisticSaved
+          isTopicSaved(row.id) ||
+          savingTopicIds.includes(row.id) ||
+          (isBulkSaving && selectedTopicIds.includes(row.id))
         ),
       variant: "default" as const,
       primary: true,
@@ -366,12 +457,7 @@ export const TopicsTable = memo(function TopicsTable({
                 <TableCell className="w-[200px]">
                   <div className="flex items-center justify-end gap-1">
                     {rowActions
-                      .filter((action) => {
-                        if (typeof action.disabled === "function") {
-                          return !action.disabled(row);
-                        }
-                        return !action.disabled;
-                      })
+                      // Removed this block of code because it was causing the button to flicker
                       .map((action, actionIndex) => (
                         <Tooltip key={`action-${action.label}-${actionIndex}`}>
                           <TooltipTrigger asChild>
@@ -381,6 +467,9 @@ export const TopicsTable = memo(function TopicsTable({
                                 "inline-flex h-8 px-2 gap-1 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
                                 action.primary &&
                                   "border-primary text-primary hover:bg-primary/10 hover:text-primary",
+                                action.label === "Save" &&
+                                  getActionLabel(row.id) === "Retry" &&
+                                  "border-red-500 text-red-500 hover:bg-red-50 hover:text-red-500",
                               )}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -397,7 +486,9 @@ export const TopicsTable = memo(function TopicsTable({
                                 : action.icon}
                               {action.showLabel && (
                                 <span className="text-xs font-medium">
-                                  {action.label}
+                                  {action.label === "Save"
+                                    ? getActionLabel(row.id)
+                                    : action.label}
                                 </span>
                               )}
                             </button>

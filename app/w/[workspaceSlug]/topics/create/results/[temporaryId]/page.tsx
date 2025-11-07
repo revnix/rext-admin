@@ -86,6 +86,7 @@ export default function ResultsPage() {
   );
 
   const {
+    savedTopics,
     saveTopic,
     saveTopics,
     removeTopic,
@@ -93,6 +94,10 @@ export default function ResultsPage() {
     error: storageError,
     clearError: clearStorageError,
   } = useTopicStorage();
+  const [bulkSaveResult, setBulkSaveResult] = useState<{
+    successIds: string[];
+    failedIds: string[];
+  } | null>(null);
 
   // Load session data on mount
   useEffect(() => {
@@ -150,23 +155,24 @@ export default function ResultsPage() {
   }, [temporaryId]);
 
   // Event handlers for topic operations
-  const handleTopicSave = async (topicId: string) => {
+  const handleTopicSave = async (
+    topicId: string,
+  ): Promise<{ success: boolean; message?: string }> => {
     if (!state.session) {
-      log.error("No session available for topic save");
-      return;
+      throw new Error("No session available for topic save");
     }
-
     const topic = state.session.topics.find((t) => t.id === topicId);
     if (!topic) {
-      log.error("Topic not found:", topicId);
-      return;
+      throw new Error(`Topic not found: ${topicId}`);
     }
 
     // Check if topic is already saved to prevent duplicates
-    if (topic.is_saved || topic._optimisticSaved) {
-      log.info("Topic already saved, skipping:", topicId);
+    const isAlreadySaved = savedTopics.some(
+      (savedTopic) => savedTopic.id === topic.id,
+    );
+    if (isAlreadySaved) {
       toast.info("This topic is already saved to your library");
-      return;
+      return { success: false, message: "already_saved" };
     }
 
     try {
@@ -179,15 +185,10 @@ export default function ResultsPage() {
       saveTopic(topic);
 
       log.info("Topic saved successfully:", topicId);
+      return { success: true, message: "Topic saved successfully" };
     } catch (error) {
       log.error("Error saving topic:", error);
-      // Fallback to localStorage save if API fails
-      try {
-        saveTopic(topic);
-        log.info("Fallback: Topic saved to localStorage only:", topicId);
-      } catch (fallbackError) {
-        log.error("Fallback save also failed:", fallbackError);
-      }
+      throw error;
     }
   };
 
@@ -197,6 +198,9 @@ export default function ResultsPage() {
       return;
     }
 
+    // Reset bulk save result when starting new bulk save
+    setBulkSaveResult(null);
+
     try {
       const allTopicsToConsider = state.session.topics.filter((topic) =>
         topicIds.includes(topic.id),
@@ -204,7 +208,8 @@ export default function ResultsPage() {
 
       // Filter out already saved topics to prevent duplicates
       const unsavedTopics = allTopicsToConsider.filter(
-        (topic) => !topic.is_saved && !topic._optimisticSaved,
+        (topic) =>
+          !savedTopics.some((savedTopic) => savedTopic.id === topic.id),
       );
 
       if (allTopicsToConsider.length === 0) {
@@ -213,7 +218,6 @@ export default function ResultsPage() {
       }
 
       if (unsavedTopics.length === 0) {
-        log.info("All selected topics are already saved");
         toast.info("All selected topics are already saved to your library");
         return;
       }
@@ -245,25 +249,33 @@ export default function ResultsPage() {
 
       // Also save to localStorage as backup
       saveTopics(unsavedTopics);
-
       log.info("Bulk save completed successfully");
+
+      // Mark all as successful
+      setBulkSaveResult({
+        successIds: unsavedTopics.map((t) => t.id),
+        failedIds: [],
+      });
+
+      return { success: true, message: "Topic saved successfully" };
     } catch (error) {
       log.error("Error during bulk save:", error);
-      // Fallback to localStorage save if API fails
-      try {
-        const allTopicsToConsider = state.session.topics.filter((topic) =>
-          topicIds.includes(topic.id),
-        );
-        const unsavedTopics = allTopicsToConsider.filter(
-          (topic) => !topic.is_saved && !topic._optimisticSaved,
-        );
-        if (unsavedTopics.length > 0) {
-          saveTopics(unsavedTopics);
-          log.info("Fallback: Saved unsaved topics to localStorage only");
-        }
-      } catch (fallbackError) {
-        log.error("Fallback save also failed:", fallbackError);
-      }
+
+      // Mark all as failed on error
+      const allTopicsToConsider = state.session.topics.filter((topic) =>
+        topicIds.includes(topic.id),
+      );
+      const unsavedTopics = allTopicsToConsider.filter(
+        (topic) =>
+          !savedTopics.some((savedTopic) => savedTopic.id === topic.id),
+      );
+
+      setBulkSaveResult({
+        successIds: [],
+        failedIds: unsavedTopics.map((t) => t.id),
+      });
+
+      throw error;
     }
   };
 
@@ -350,9 +362,9 @@ export default function ResultsPage() {
             ...prev,
             session: prev.session
               ? {
-                  ...prev.session,
-                  topics: [...prev.session.topics, ...result.topics],
-                }
+                ...prev.session,
+                topics: [...prev.session.topics, ...result.topics],
+              }
               : null,
           }));
 
@@ -608,6 +620,7 @@ export default function ResultsPage() {
               onNavigateToTopics={handleNavigateToTopics}
               onGenerateNew={handleGenerateMore}
               isBulkSaving={bulkSaveMutation.isPending}
+              bulkSaveResult={bulkSaveResult}
             />
           </div>
         </APIErrorBoundary>

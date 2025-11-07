@@ -37,7 +37,7 @@ interface TopicDetailDrawerProps {
   topic: GeneratedTopic | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave?: (topicId: string) => Promise<void> | void;
+  onSave: (topicId: string) => Promise<{ success: boolean; message?: string }>;
   onNavigateToContent?: (topicId: string) => void;
   onCopy?: (topicId: string) => void;
   className?: string;
@@ -437,7 +437,7 @@ export function TopicDetailDrawer({
               {/* Action Buttons - Moved to end of content */}
               <div className="flex justify-end pt-6 border-t border-muted/30">
                 <div className="flex items-center gap-4 flex-wrap">
-                  {onSave && (
+                  {onSave != null && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
