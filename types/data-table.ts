@@ -222,8 +222,8 @@ export interface WorkspaceData extends BaseTableRow {
 
 // Row action types for data table
 export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
-  label: string;
-  icon?: React.ReactNode;
+  label: string | ((row: T) => React.ReactNode);
+  icon?: React.ReactNode | ((row: T) => React.ReactNode);
   onClick?: (row: T) => void;
   href?: string | ((row: T) => string);
   variant?: "default" | "destructive";

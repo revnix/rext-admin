@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, Save, Loader2 } from "lucide-react";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CircularProgress } from "@/components/ui/progress";
 import {
@@ -482,19 +482,28 @@ export const TopicsTable = memo(function TopicsTable({
                               }
                             >
                               {action.label === "Save"
-                                ? getSaveIcon(row)
-                                : action.icon}
+                                ? getSaveIcon(row) // must return JSX.Element
+                                : typeof action.icon === "function"
+                                  ? action.icon(row) // if action.icon can be a function, call it
+                                  : action.icon}
                               {action.showLabel && (
                                 <span className="text-xs font-medium">
                                   {action.label === "Save"
                                     ? getActionLabel(row.id)
-                                    : action.label}
+                                    : typeof action.label === "function"
+                                      ? action.label(row)
+                                      : action.label}
                                 </span>
                               )}
                             </button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{action.tooltip || action.label}</p>
+                            <p>
+                              {action.tooltip ||
+                                (typeof action.label === "function"
+                                  ? action.label(row)
+                                  : action.label)}
+                            </p>{" "}
                           </TooltipContent>
                         </Tooltip>
                       ))}
