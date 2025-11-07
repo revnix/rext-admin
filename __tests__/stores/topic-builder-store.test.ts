@@ -35,6 +35,9 @@ const mockTopics: GeneratedTopic[] = [
     },
     tags: ["tech"],
     created_at: "2024-01-01T00:00:00Z",
+    generated_by_user_id: "test-user",
+    generated_by_first_name: "Test",
+    generated_by_last_name: "User",
   },
   {
     id: "2",
@@ -56,6 +59,9 @@ const mockTopics: GeneratedTopic[] = [
     },
     tags: ["marketing"],
     created_at: "2024-01-01T00:00:00Z",
+    generated_by_user_id: "test-user",
+    generated_by_first_name: "Test",
+    generated_by_last_name: "User",
   },
 ];
 

@@ -98,6 +98,11 @@ export function ChipInput({
   const [isFallbackMode, setIsFallbackMode] = React.useState(false);
   const [announcementText, setAnnouncementText] = React.useState("");
 
+  //  internal error state for dynamic validation
+  const [internalError, setInternalError] = React.useState<string | undefined>(
+    undefined
+  );
+
   const inputRef = React.useRef<HTMLInputElement>(null);
   const chipRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const fallbackInputRef = React.useRef<HTMLInputElement>(null);
@@ -163,7 +168,8 @@ export function ChipInput({
             announce(
               `Added "${trimmedValue}". ${value.length + 1} item${value.length === 0 ? "" : "s"} selected.`,
             );
-            return true; // Successfully added chip
+            setInternalError(undefined); //  clear error once added
+            return true;
           } else if (!trimmedValue) {
             announce("Cannot add empty item");
           } else if (value.includes(trimmedValue)) {
@@ -171,7 +177,7 @@ export function ChipInput({
           } else if (maxItems && value.length >= maxItems) {
             announce(`Maximum ${maxItems} items allowed`);
           }
-          return false; // Failed to add chip
+          return false;
         }, "addChip") ?? false
       );
     },
@@ -188,7 +194,11 @@ export function ChipInput({
           `Removed "${removedChip}". ${newValue.length} item${newValue.length === 1 ? "" : "s"} remaining.`,
         );
 
-        // Reset focus if we removed the focused chip
+        //  if all chips removed, show error
+        if (newValue.length === 0) {
+          setInternalError("At least one item is required");
+        }
+
         if (focusedChipIndex === index) {
           setFocusedChipIndex(-1);
           inputRef.current?.focus();
@@ -199,6 +209,21 @@ export function ChipInput({
     },
     [value, onChange, announce, safeOperation, focusedChipIndex],
   );
+
+  //  Automatically add one chip on mount
+  React.useEffect(() => {
+    if (value.length === 0) {
+      onChange(["Small business owners"]);
+      setInternalError(undefined);
+    }
+  }, []);
+
+  //  Clear error when at least one chip exists
+  React.useEffect(() => {
+    if (value.length > 0 && internalError) {
+      setInternalError(undefined);
+    }
+  }, [value.length, internalError]);
 
   // Keyboard navigation helpers
   const focusChip = React.useCallback(
@@ -223,31 +248,25 @@ export function ChipInput({
         e.preventDefault();
 
         if (!enableDualEnter) {
-          // Legacy behavior: just add chip
           addChip(inputValue);
           return;
         }
 
-        // Dual enter logic
         const now = Date.now();
         const hasContent = inputValue.trim().length > 0;
 
         if (hasContent) {
-          // First enter with content: add chip and reset timer
           const chipAdded = addChip(inputValue);
           if (chipAdded) {
             setLastEnterTime(now);
             log.info("🏷️ Chip added, ready for step advance on next enter");
           }
         } else {
-          // Enter on empty input: check for dual enter timing
-          if (lastEnterTime && now - lastEnterTime <= DUAL_ENTER_TIMEOUT) {
-            // Second enter within timeout: advance step
+          if (lastEnterTime && now - lastEnterTime <= 500) {
             log.info("⏭️ Dual enter detected, advancing step");
             setLastEnterTime(null);
             onStepAdvance?.();
           } else {
-            // Single enter on empty input: advance step immediately
             log.info("⏭️ Enter on empty input, advancing step");
             onStepAdvance?.();
           }
@@ -258,7 +277,6 @@ export function ChipInput({
         value.length > 0
       ) {
         removeChip(value.length - 1);
-        // Reset dual enter timer when user starts editing
         setLastEnterTime(null);
       } else if (
         e.key === "ArrowLeft" &&
@@ -268,13 +286,11 @@ export function ChipInput({
         e.preventDefault();
         focusChip(value.length - 1);
       } else {
-        // Reset dual enter timer when user starts typing
         setLastEnterTime(null);
       }
     }, "handleKeyDown");
   };
 
-  // Chip keyboard navigation
   const handleChipKeyDown = React.useCallback(
     (e: React.KeyboardEvent, index: number) => {
       safeOperation(() => {
@@ -283,16 +299,11 @@ export function ChipInput({
           removeChip(index);
         } else if (e.key === "ArrowRight") {
           e.preventDefault();
-          if (index < value.length - 1) {
-            focusChip(index + 1);
-          } else {
-            focusInput();
-          }
+          if (index < value.length - 1) focusChip(index + 1);
+          else focusInput();
         } else if (e.key === "ArrowLeft") {
           e.preventDefault();
-          if (index > 0) {
-            focusChip(index - 1);
-          }
+          if (index > 0) focusChip(index - 1);
         } else if (e.key === "Escape") {
           e.preventDefault();
           focusInput();
@@ -302,11 +313,9 @@ export function ChipInput({
     [removeChip, focusChip, focusInput, value.length, safeOperation],
   );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setInputValue(e.target.value);
-  };
 
-  // Fallback input handlers
   const handleFallbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
       .split(",")
@@ -316,15 +325,12 @@ export function ChipInput({
   };
 
   const fallbackValue = value.join(", ");
-
   const isAtMax = maxItems && value.length >= maxItems;
 
-  // Update chip refs when value changes
   React.useEffect(() => {
     chipRefs.current = chipRefs.current.slice(0, value.length);
   }, [value.length]);
 
-  // Fallback mode - render simple text input
   if (isFallbackMode) {
     return (
       <div className="space-y-2" data-chip-input data-fallback-mode>
@@ -346,25 +352,19 @@ export function ChipInput({
           }
           disabled={disabled}
           autoFocus={autoFocus}
-          className={cn("w-full", error && "border-destructive")}
+          className={cn("w-full", (error || internalError) && "border-destructive")}
           aria-label={ariaLabel || "Text input (fallback mode)"}
           aria-describedby={ariaDescription ? descriptionId : undefined}
-          aria-invalid={!!error}
+          aria-invalid={!!(error || internalError)}
         />
 
-        {error && (
+        {(error || internalError) && (
           <p
             id={errorId}
             className="text-sm text-destructive font-medium"
             role="alert"
           >
-            {error}
-          </p>
-        )}
-
-        {ariaDescription && (
-          <p id={descriptionId} className="text-xs text-muted-foreground">
-            {ariaDescription}
+            {error || internalError}
           </p>
         )}
       </div>
@@ -373,7 +373,6 @@ export function ChipInput({
 
   return (
     <div className="space-y-2" data-chip-input>
-      {/* Live region for screen reader announcements */}
       <output
         ref={liveRegionRef}
         id={liveRegionId}
@@ -388,7 +387,7 @@ export function ChipInput({
         className={cn(
           "relative min-h-12 p-3 border-2 rounded-md transition-all duration-200",
           "focus-within:border-primary",
-          error && "border-destructive",
+          (error || internalError) && "border-destructive",
           disabled && "opacity-50 cursor-not-allowed",
           className,
         )}
@@ -397,11 +396,6 @@ export function ChipInput({
         aria-expanded="false"
         aria-haspopup="listbox"
         aria-label={ariaLabel || "Multi-select input"}
-        aria-describedby={
-          [ariaDescription ? descriptionId : null, error ? errorId : null]
-            .filter(Boolean)
-            .join(" ") || undefined
-        }
       >
         {icon && (
           <div
@@ -413,7 +407,6 @@ export function ChipInput({
         )}
 
         <div className={cn("flex flex-wrap gap-2", icon && "ml-7")}>
-          {/* Existing chips */}
           {value.map((chip, index) => (
             <Badge
               key={chip}
@@ -421,8 +414,7 @@ export function ChipInput({
               className={cn(
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
                 "bg-primary text-primary-foreground hover:bg-primary/90",
-                focusedChipIndex === index &&
-                  "ring-2 ring-primary ring-offset-1",
+                focusedChipIndex === index && "ring-2 ring-primary ring-offset-1",
               )}
             >
               <span>{chip}</span>
@@ -445,7 +437,6 @@ export function ChipInput({
             </Badge>
           ))}
 
-          {/* Input field */}
           {!isAtMax && (
             <div className="flex-1 min-w-[120px]">
               <Input
@@ -458,15 +449,11 @@ export function ChipInput({
                 disabled={disabled}
                 autoFocus={autoFocus}
                 className="border-0 p-0 h-auto text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-                aria-label={ariaLabel || "Add new item"}
-                aria-describedby={liveRegionId}
-                aria-invalid={!!error}
               />
             </div>
           )}
         </div>
 
-        {/* Add button for visual feedback */}
         {inputValue.trim() && !isAtMax && (
           <Button
             type="button"
@@ -482,16 +469,15 @@ export function ChipInput({
         )}
       </div>
 
-      {/* Error message and max items indicator */}
       <div className="flex justify-between items-center min-h-[20px]">
         <div>
-          {error && (
+          {(error || internalError) && (
             <p
               id={errorId}
               className="text-sm text-destructive font-medium"
               role="alert"
             >
-              {error}
+              {error || internalError}
             </p>
           )}
         </div>
@@ -503,27 +489,9 @@ export function ChipInput({
               value.length > maxItems * 0.8 && "text-amber-600",
               value.length === maxItems && "text-destructive",
             )}
-            aria-label={`${value.length} of ${maxItems} items selected`}
           >
             {value.length}/{maxItems}
           </output>
-        )}
-      </div>
-
-      {/* Help text and accessibility description */}
-      <div className="space-y-1">
-        {ariaDescription && (
-          <p id={descriptionId} className="text-xs text-muted-foreground">
-            {ariaDescription}
-          </p>
-        )}
-
-        {value.length === 0 && !ariaDescription && (
-          <p className="text-xs text-muted-foreground">
-            {enableDualEnter
-              ? "Type and press Enter to add items, then Enter again to continue. Use arrow keys to navigate between chips."
-              : "Type and press Enter to add items. Use arrow keys to navigate between chips."}
-          </p>
         )}
       </div>
     </div>
@@ -534,10 +502,7 @@ export function ChipInput({
  * Controller-compatible ChipInput wrapper for React Hook Form
  * Includes enhanced accessibility and fallback support
  */
-export function ControlledChipInput({
-  field,
-  ...props
-}: ControlledChipInputProps) {
+export function ControlledChipInput({ field, ...props }: ControlledChipInputProps) {
   const handleFallbackTriggered = React.useCallback(
     (error: Error) => {
       log.warn("ChipInput fallback triggered for field:", field.name, error);

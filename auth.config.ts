@@ -6,6 +6,8 @@ import Google from "next-auth/providers/google";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 
+const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+
 /**
  * Refresh the access token using the refresh token
  */
@@ -121,11 +123,20 @@ export default {
             data.user.roles,
           );
 
-          // Extract primary role (first in list) for role-based checks
+          // Determine primary role based on hierarchy
+          // Support both `roles: string[]` and `role: string` shapes; normalize casing
+          const rawRoles: string[] = Array.isArray(data.user.roles)
+            ? data.user.roles
+            : data.user.role
+              ? [data.user.role]
+              : [];
+          const userRoles = rawRoles.map((r: string) =>
+            String(r).toLowerCase().replace(/\s+/g, "_"),
+          );
           const primaryRole =
-            data.user.roles && data.user.roles.length > 0
-              ? data.user.roles[0]
-              : undefined;
+            ROLE_HIERARCHY.find((role) => userRoles.includes(role)) ||
+            userRoles[0] ||
+            "user";
 
           // Return user object with backend tokens, role, and permissions
           return {
@@ -244,7 +255,18 @@ export default {
             token.picture = oauthData.user.avatar_url || user.image;
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
-            token.role = oauthData.user.roles?.[0];
+            const oauthRawRoles: string[] = Array.isArray(oauthData.user.roles)
+              ? oauthData.user.roles
+              : oauthData.user.role
+                ? [oauthData.user.role]
+                : [];
+            const oauthUserRoles = oauthRawRoles.map((r: string) =>
+              String(r).toLowerCase().replace(/\s+/g, "_"),
+            );
+            token.role =
+              ROLE_HIERARCHY.find((role) => oauthUserRoles.includes(role)) ||
+              oauthUserRoles[0] ||
+              "user";
             token.permissions = oauthData.user.permissions || [];
 
             log.info("[AuthJS] OAuth login successful for user:", token.id);
@@ -304,10 +326,6 @@ export default {
         "/reset-password",
         "/verify-email",
       ].some((path) => nextUrl.pathname.startsWith(path));
-      const isOnHomePage = nextUrl.pathname === "/";
-
-      // Allow homepage to handle its own redirects
-      if (isOnHomePage) return true;
 
       // If refresh error, force redirect to login
       if (hasRefreshError && !isOnAuthPage) {

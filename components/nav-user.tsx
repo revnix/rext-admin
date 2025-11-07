@@ -27,11 +27,28 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { usePermissionStore } from "@/stores/permission-store";
+import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { user, isAuthenticated, isLoading, logout } = useAuthSession();
   const router = useRouter();
+
+  // Workspace role sources (hooks must be at top level)
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const workspacePermissionsMap = usePermissionStore(
+    (state) => state.workspacePermissions,
+  );
+  const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
+    currentWorkspace?.id,
+  );
 
   // Generate initials from user name
   const getInitials = (name: string) => {
@@ -45,6 +62,24 @@ export function NavUser() {
 
   const handleLogout = async () => {
     await logout(); // logout already handles redirect in useAuthSession
+  };
+
+  // Friendly display for role keys (read-only)
+  const getRoleDisplayName = (role?: string) => {
+    if (!role) return "";
+    const map: Record<string, string> = {
+      super_admin: "Super Admin",
+      admin: "Admin",
+      manager: "Manager",
+      developer: "Developer",
+      editor: "Editor",
+      viewer: "Viewer",
+      user: "User",
+      guest: "Guest",
+      owner: "Owner",
+    };
+    if (map[role]) return map[role];
+    return role.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   // Show loading state
@@ -87,6 +122,13 @@ export function NavUser() {
   const userName = user.name;
   const userEmail = user.email;
   const userInitials = getInitials(userName);
+  // Prefer workspace-scoped role if available, else fall back to global session role
+  const workspaceRoleRaw = currentWorkspace
+    ? workspacePermissionsMap.get(currentWorkspace.id)?.role
+    : undefined;
+  // Ensure workspace permissions are fetched even if provider isn't mounted
+  const effectiveWorkspaceRole = fetchedWorkspaceRole || workspaceRoleRaw;
+  const userRole = getRoleDisplayName(effectiveWorkspaceRole || user.role);
 
   return (
     <SidebarMenu>
@@ -105,6 +147,22 @@ export function NavUser() {
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{userName}</span>
                 <span className="truncate text-xs">{userEmail}</span>
+                {userRole && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="truncate text-[10px] text-muted-foreground cursor-help">
+                        {userRole}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      This is your current role
+                      {currentWorkspace?.name
+                        ? ` in ${currentWorkspace.name}`
+                        : ""}
+                      .
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -125,6 +183,22 @@ export function NavUser() {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{userName}</span>
                   <span className="truncate text-xs">{userEmail}</span>
+                  {userRole && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate text-[10px] text-muted-foreground cursor-help">
+                          {userRole}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        This is your current role
+                        {currentWorkspace?.name
+                          ? ` in ${currentWorkspace.name}`
+                          : ""}
+                        . It determines what you can do here.
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
             </DropdownMenuLabel>
