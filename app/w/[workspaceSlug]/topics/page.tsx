@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { AlertCircle, Loader2, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { TopicsClientWrapper } from "@/app/topics/topics-client-wrapper";
 import { PageLayout } from "@/components/page-layout";
@@ -27,10 +27,16 @@ export default function WorkspaceTopicsPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
 
-  // Permissions for creating topics
-  const { hasPermission: canCreateTopic, isLoading: isPermissionLoading } =
-    useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
+  // Permissions
+  const {
+    hasPermission: canCreateTopic,
+    isLoading: isCreatePermissionLoading,
+  } = useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
 
+  const { isLoading: isReadPermissionLoading } =
+    useWorkspacePermission(TOPIC_PERMISSIONS.READ, workspaceId);
+
+  // Topics data
   const {
     data: topics,
     isLoading: isTopicsLoading,
@@ -38,14 +44,15 @@ export default function WorkspaceTopicsPage() {
     refetch,
   } = useTopics(workspaceId);
 
+  // Handlers
   const handleRetry = async () => {
     try {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["topics", workspaceId] }),
         refetch(),
       ]);
-    } catch (error) {
-      log.error("Retry failed:", error);
+    } catch (err) {
+      log.error("Retry failed:", err);
     }
   };
 
@@ -63,6 +70,21 @@ export default function WorkspaceTopicsPage() {
     { label: "Topics" },
   ];
 
+  // 🧩 Wait for all permission states before showing layout
+  if (!workspace?.id || isCreatePermissionLoading || isReadPermissionLoading) {
+    return (
+      <PageLayout title="Loading Permissions...">
+        <div className="flex h-screen items-center justify-center">
+          <div className="space-y-4 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Actions
   const emptyActions = canCreateTopic
     ? [
         {
@@ -81,15 +103,6 @@ export default function WorkspaceTopicsPage() {
       </Link>
     </Button>
   ) : null;
-
-  // 🧠 Show skeleton until permissions are ready (prevents flicker)
-  if (isPermissionLoading) {
-    return (
-      <PageLayout title="Topic Library" breadcrumbs={breadcrumbs}>
-        <TableSkeleton rows={8} />
-      </PageLayout>
-    );
-  }
 
   return (
     <PageLayout
@@ -113,7 +126,7 @@ export default function WorkspaceTopicsPage() {
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
-                  topic:read
+                  topic.read
                 </code>
               </p>
             </CardContent>
@@ -123,15 +136,15 @@ export default function WorkspaceTopicsPage() {
         {isTopicsLoading ? (
           <TableSkeleton rows={8} />
         ) : error ? (
-          <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
+          <div className="flex flex-col items-center justify-center min-h-64 space-y-4 text-center">
             <AlertCircle className="h-12 w-12 text-destructive" />
             <h2 className="text-lg font-semibold">Failed to load topics</h2>
-            <p className="text-muted-foreground text-center max-w-md">
+            <p className="text-muted-foreground max-w-md">
               {error.message ||
                 "An unexpected error occurred while loading topics."}
             </p>
-            <div className="flex space-x-2">
-              <Button onClick={handleRetry} variant="default" size="sm">
+            <div className="flex gap-2">
+              <Button onClick={handleRetry} size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>

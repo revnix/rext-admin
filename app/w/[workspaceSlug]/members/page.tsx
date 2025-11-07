@@ -1,6 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
@@ -16,11 +18,16 @@ import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 
 export default function WorkspaceUsersPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "members";
+
+  // ✅ Load permission safely with loading state
+  const { isLoading: isPermissionLoading } =
+    useWorkspacePermission(WORKSPACE_PERMISSIONS.MANAGE_MEMBERS, workspaceId);
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
@@ -31,10 +38,22 @@ export default function WorkspaceUsersPage() {
     { label: "Members" },
   ];
 
+  // ✅ Show loader while permissions or workspace data are loading
+  if (!workspace?.id || isPermissionLoading) {
+    return (
+      <PageLayout title="Loading Permissions...">
+        <div className="space-y-4 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="Members"
-      description={`Manage members and invitations for ${workspace?.title || "workspace"}`}
+      description={`Manage members and invitations for ${workspace?.title || "this workspace"}.`}
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
@@ -44,7 +63,7 @@ export default function WorkspaceUsersPage() {
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
               <CardDescription>
-                You don't have permission to manage members in this workspace.
+                You don’t have permission to manage members in this workspace.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -64,13 +83,25 @@ export default function WorkspaceUsersPage() {
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
           </TabsList>
 
+          {/* Members Tab */}
           <TabsContent value="members" className="space-y-6">
-            {workspace && <WorkspaceMembersPanel workspace={workspace} />}
+            {workspace ? (
+              <WorkspaceMembersPanel workspace={workspace} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Workspace data not found.
+              </p>
+            )}
           </TabsContent>
 
+          {/* Invitations Tab */}
           <TabsContent value="invitations" className="space-y-6">
-            {workspace && (
+            {workspace ? (
               <WorkspaceInvitationsPanel workspaceId={workspace.id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Workspace data not found.
+              </p>
             )}
           </TabsContent>
         </Tabs>

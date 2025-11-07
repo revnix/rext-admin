@@ -11,7 +11,6 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-
 import Link from "next/link";
 import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { DataTable } from "@/components/data-table";
@@ -26,6 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DateDisplay } from "@/components/ui/topic-cell-formatters";
 import { useContent, useDeleteContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
@@ -36,26 +36,28 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentStatus } from "@/types/content";
 import { STATUS_FILTER_OPTIONS } from "@/types/content";
 import type { ContentData, RowAction } from "@/types/data-table";
-import { DateDisplay } from "@/components/ui/topic-cell-formatters";
 
+/**
+ * ✅ Improved version:
+ * - Keeps PageLayout always visible (no full-screen loading)
+ * - Shows loader / error inline under PageLayout
+ * - Handles permission & workspace consistency gracefully
+ */
 export default function WorkspaceContentPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
 
-  // Check workspace-scoped permissions for content actions
-  // Phase 2: Hooks now return {hasPermission, isLoading}
-  const { hasPermission: canCreateContent } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.CREATE,
-    workspaceId,
-  );
-  const { hasPermission: canUpdateContent } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.UPDATE,
-    workspaceId,
-  );
-  const { hasPermission: canDeleteContent } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.DELETE,
-    workspaceId,
-  );
+  // Workspace permissions
+  const { hasPermission: canCreateContent, isLoading: isCreateLoading } =
+    useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
+  const { hasPermission: canUpdateContent, isLoading: isUpdateLoading } =
+    useWorkspacePermission(CONTENT_PERMISSIONS.UPDATE, workspaceId);
+  const { hasPermission: canDeleteContent, isLoading: isDeleteLoading } =
+    useWorkspacePermission(CONTENT_PERMISSIONS.DELETE, workspaceId);
 
+  const isPermissionLoading =
+    isCreateLoading || isUpdateLoading || isDeleteLoading;
+
+  // Breadcrumbs for navigation
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
@@ -68,11 +70,17 @@ export default function WorkspaceContentPage() {
   // Update page title and description
   usePageTitle(
     `Content Library - ${workspace?.title || "Workspace"}`,
-    `Manage published and scheduled content for ${workspace?.title || "this workspace"}.`,
+    `Manage published and scheduled content for ${
+      workspace?.title || "this workspace"
+    }.`,
   );
 
-  // Fetch content data from API
-  const { data: contentResponse, isLoading, error } = useContent(workspaceId);
+  // Fetch content
+  const {
+    data: contentResponse,
+    isLoading: isContentLoading,
+    error,
+  } = useContent(workspaceId);
 
   // Delete content mutation
   const deleteContentMutation = useDeleteContent();
@@ -112,32 +120,7 @@ export default function WorkspaceContentPage() {
     }),
   );
 
-  // Add loading state
-  if (isLoading) {
-    return (
-      <PageLayout title="Content Library" breadcrumbs={breadcrumbs}>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Add error state
-  if (error) {
-    return (
-      <PageLayout title="Content Library" breadcrumbs={breadcrumbs}>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Failed to load content. Please try again.
-          </AlertDescription>
-        </Alert>
-      </PageLayout>
-    );
-  }
-
+  // Columns
   const columns = [
     {
       key: "title",
@@ -145,8 +128,8 @@ export default function WorkspaceContentPage() {
       width: "300px",
       cell: (value: unknown, row: ContentData) => (
         <Link
-          href={workspaceRoutes.contentDetail(workspaceId, row.id)}
-          className="font-medium text-foreground leading-tight hover:text-primary transition-colors"
+          href={workspaceRoutes.contentDetail(workspaceSlug, row.id)}
+          className="font-medium text-foreground hover:text-primary transition-colors"
         >
           {String(value || "")}
         </Link>
@@ -162,7 +145,7 @@ export default function WorkspaceContentPage() {
       ),
       filterable: true,
       filterType: "select" as const,
-      filterOptions: STATUS_FILTER_OPTIONS.map((option) => option.value),
+      filterOptions: STATUS_FILTER_OPTIONS.map((o) => o.value),
     },
     { key: "publishedTo", header: "Published To", width: "120px" },
     { key: "wordCount", header: "Words", width: "80px" },
@@ -192,7 +175,7 @@ export default function WorkspaceContentPage() {
 
   const tableActions = canCreateContent ? (
     <div className="flex items-center gap-2">
-      <Button asChild variant="default">
+      <Button asChild>
         <Link href={workspaceRoutes.contentCreate(workspaceSlug)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Content
@@ -213,29 +196,25 @@ export default function WorkspaceContentPage() {
       label: "Edit",
       icon: <Edit3 className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Edit content:", row.title),
-      tooltip: "Edit this content",
     },
     canCreateContent && {
       label: "Copy",
       icon: <Copy className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Copy content:", row.title),
-      tooltip: "Duplicate this content",
     },
     canUpdateContent && {
       label: "Schedule",
       icon: <Calendar className="h-4 w-4" />,
       onClick: (row: ContentData) => log.info("Schedule content:", row.title),
-      tooltip: "Schedule for publication",
     },
     canDeleteContent && {
       label: "Delete",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: ContentData) => {
+      onClick: (row: ContentData) =>
         deleteContentMutation.mutate({
           workspaceId,
           contentId: row.id,
-        });
-      },
+        }),
       variant: "destructive" as const,
       requiresConfirmation: true,
       confirmationTitle: "Delete Content",
@@ -247,51 +226,70 @@ export default function WorkspaceContentPage() {
   return (
     <PageLayout
       title="Generated Content"
-      description={`View, edit, and manage AI-generated content for ${workspace?.title || "this workspace"}.`}
+      description={`View, edit, and manage AI-generated content for ${
+        workspace?.title || "this workspace"
+      }.`}
       breadcrumbs={breadcrumbs}
     >
-      <CanAccess
-        permission={CONTENT_PERMISSIONS.READ}
-        fallback={
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Access Denied</CardTitle>
-              <CardDescription>
-                You don't have permission to view content in this workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
-                  content:read
-                </code>
-              </p>
-            </CardContent>
-          </Card>
-        }
-      >
-        <DataTable<ContentData>
-          columns={columns}
-          data={contentData}
-          emptyTitle="No content available"
-          emptyDescription="Content will be automatically generated and managed through your configured flows."
-          emptyActions={emptyActions}
-          emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
-          searchPlaceholder="Search content by title, type, status, platform..."
-          actions={tableActions}
-          rowActions={rowActions}
-          pageSize={10}
-          searchFields={[
-            "title",
-            "type",
-            "status",
-            "publishedTo",
-            "humanReviewer",
-            "keywords",
-          ]}
-        />
-      </CanAccess>
+      {/* Inline loader inside PageLayout */}
+      {isPermissionLoading || isContentLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load content. Please try again.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <CanAccess
+          permission={CONTENT_PERMISSIONS.READ}
+          fallback={
+            <Card className="border-destructive">
+              <CardHeader>
+                <CardTitle className="text-destructive">
+                  Access Denied
+                </CardTitle>
+                <CardDescription>
+                  You don't have permission to view content in this workspace.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Required permission:{" "}
+                  <code className="text-xs bg-muted px-1 rounded">
+                    content:read
+                  </code>
+                </p>
+              </CardContent>
+            </Card>
+          }
+        >
+          <DataTable<ContentData>
+            columns={columns}
+            data={contentData}
+            emptyTitle="No content available"
+            emptyDescription="Content will be automatically generated and managed through your configured flows."
+            emptyActions={emptyActions}
+            emptyIcon={<FileText className="h-8 w-8 text-muted-foreground" />}
+            searchPlaceholder="Search content by title, type, status, platform..."
+            actions={tableActions}
+            rowActions={rowActions}
+            pageSize={10}
+            searchFields={[
+              "title",
+              "type",
+              "status",
+              "publishedTo",
+              "humanReviewer",
+              "keywords",
+            ]}
+          />
+        </CanAccess>
+      )}
     </PageLayout>
   );
 }
