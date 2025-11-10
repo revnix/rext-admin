@@ -100,7 +100,7 @@ export function ChipInput({
 
   //  internal error state for dynamic validation
   const [internalError, setInternalError] = React.useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -216,7 +216,7 @@ export function ChipInput({
       onChange(["Small business owners"]);
       setInternalError(undefined);
     }
-  }, []);
+  }, [value.length, onChange]);
 
   //  Clear error when at least one chip exists
   React.useEffect(() => {
@@ -352,7 +352,10 @@ export function ChipInput({
           }
           disabled={disabled}
           autoFocus={autoFocus}
-          className={cn("w-full", (error || internalError) && "border-destructive")}
+          className={cn(
+            "w-full",
+            (error || internalError) && "border-destructive",
+          )}
           aria-label={ariaLabel || "Text input (fallback mode)"}
           aria-describedby={ariaDescription ? descriptionId : undefined}
           aria-invalid={!!(error || internalError)}
@@ -414,7 +417,8 @@ export function ChipInput({
               className={cn(
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
                 "bg-primary text-primary-foreground hover:bg-primary/90",
-                focusedChipIndex === index && "ring-2 ring-primary ring-offset-1",
+                focusedChipIndex === index &&
+                  "ring-2 ring-primary ring-offset-1",
               )}
             >
               <span>{chip}</span>
@@ -502,7 +506,10 @@ export function ChipInput({
  * Controller-compatible ChipInput wrapper for React Hook Form
  * Includes enhanced accessibility and fallback support
  */
-export function ControlledChipInput({ field, ...props }: ControlledChipInputProps) {
+export function ControlledChipInput({
+  field,
+  ...props
+}: ControlledChipInputProps) {
   const handleFallbackTriggered = React.useCallback(
     (error: Error) => {
       log.warn("ChipInput fallback triggered for field:", field.name, error);

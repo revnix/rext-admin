@@ -26,6 +26,9 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
@@ -243,30 +246,82 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       );
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      {...props}
+      style={
+        {
+          "--sidebar-width-icon": "4rem",
+        } as React.CSSProperties
+      }
+    >
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
-      <SidebarContent className="flex flex-col">
-        {/* Main navigation area - grows to fill space */}
-        <div className="flex-1">
-          <NavMain groups={displayMainNavigation} />
-          {/* Empty workspace prompt appears after Dashboard link */}
-          {!hasWorkspaces && <EmptyWorkspacePrompt />}
-        </div>
+      <SidebarContent className="flex flex-col ">
+        {/* Added tooltip-enabled buttons for main navigation */}
+        <SidebarMenu>
+          {displayMainNavigation.flatMap((group) =>
+            group.items.map((item) => {
+              const Icon = item.icon as React.ElementType; //  type assertion for JSX component
+              return (
+                <SidebarMenuItem key={item.title}>
+                  {/*  Tooltip shown only when sidebar is collapsed */}
+                  <SidebarMenuButton tooltip={item.title} asChild>
+                    <a href={item.url}>
+                      {Icon && <Icon />}
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }),
+          )}
+        </SidebarMenu>
 
-        {/* Personal section - sticky to bottom with separator */}
+        {!hasWorkspaces && <EmptyWorkspacePrompt />}
+
+        {/* Personal + Admin sections with tooltips */}
         <div className="border-t border-sidebar-border pt-2 mt-auto">
-          {/* Personal menu items */}
-          <NavMain groups={filteredPersonalNavigation} />
+          <SidebarMenu>
+            {filteredPersonalNavigation.flatMap((group) =>
+              group.items.map((item) => {
+                const Icon = item.icon as React.ElementType;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton tooltip={item.title} asChild>
+                      <a href={item.url}>
+                        {Icon && <Icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              }),
+            )}
+          </SidebarMenu>
 
-          {/* Separator between Personal and Administrator */}
           {filteredAdministratorNavigation.length > 0 && (
             <div className="border-t border-sidebar-border my-2" />
           )}
 
-          {/* Administrator menu items */}
-          <NavMain groups={filteredAdministratorNavigation} />
+          <SidebarMenu>
+            {filteredAdministratorNavigation.flatMap((group) =>
+              group.items.map((item) => {
+                const Icon = item.icon as React.ElementType;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton tooltip={item.title} asChild>
+                      <a href={item.url}>
+                        {Icon && <Icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              }),
+            )}
+          </SidebarMenu>
         </div>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
