@@ -88,6 +88,7 @@ export function WorkspaceMembersPanel({
     queryFn: () => apiClient.members.list(workspace.id),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
+  // console.log("members", membersResponse);
 
   const members = membersResponse?.members || [];
 

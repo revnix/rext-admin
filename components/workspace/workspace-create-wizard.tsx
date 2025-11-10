@@ -208,7 +208,7 @@ export function WorkspaceCreateWizard() {
       toast.success("Workspace created! Analyzing your website...");
     } catch (error) {
       log.error("[Wizard] Failed to create workspace", error);
-      toast.error("Failed to create workspace. Please try again.");
+      toast.error((error as Error).message);
     }
   };
 

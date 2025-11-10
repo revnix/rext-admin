@@ -32,6 +32,9 @@ describe("Simple Topic Transformer", () => {
     tags: ["AI", "marketing", "content-strategy", "tools"],
     is_saved: false,
     created_at: "2024-01-01T00:00:00Z",
+    generated_by_user_id: "test-user",
+    generated_by_first_name: "Test",
+    generated_by_last_name: "User",
   };
 
   describe("Single Topic Transformation", () => {
@@ -85,7 +88,11 @@ describe("Simple Topic Transformer", () => {
           controversy: 0.2,
         },
         tags: [],
+        is_saved: false,
         created_at: "2024-01-01T00:00:00Z",
+        generated_by_user_id: "test-user",
+        generated_by_first_name: "Test",
+        generated_by_last_name: "User",
       };
 
       const result = transformTopicForDisplay(minimalTopic, 1);
@@ -121,6 +128,9 @@ describe("Simple Topic Transformer", () => {
         },
         tags: ["high-quality", "professional"],
         created_at: "2024-01-01T00:00:00Z",
+        generated_by_user_id: "test-user",
+        generated_by_first_name: "Test",
+        generated_by_last_name: "User",
       };
 
       const result = transformTopicForDisplay(topicWithHighScores);
@@ -148,6 +158,9 @@ describe("Simple Topic Transformer", () => {
         },
         tags: ["video", "social-media"],
         created_at: "2024-01-01T00:00:00Z",
+        generated_by_user_id: "test-user",
+        generated_by_first_name: "Test",
+        generated_by_last_name: "User",
       };
 
       const result = transformTopicForDisplay(topicWithChannelFit);
@@ -220,6 +233,9 @@ describe("Simple Topic Transformer", () => {
         tags: [], // tags is required but can be empty
         created_at: "2024-01-01T00:00:00Z",
         description: undefined, // description is optional
+        generated_by_user_id: "test-user",
+        generated_by_first_name: "Test",
+        generated_by_last_name: "User",
       };
 
       const result = transformTopicForDisplay(topicWithUndefined);
@@ -241,6 +257,9 @@ describe("Simple Topic Transformer", () => {
         scores: null as unknown as GeneratedTopic["scores"],
         tags: ["test"],
         created_at: "2024-01-01T00:00:00Z",
+        generated_by_user_id: "test-user",
+        generated_by_first_name: "Test",
+        generated_by_last_name: "User",
       };
 
       const result = transformTopicForDisplay(topicWithNullScores);
