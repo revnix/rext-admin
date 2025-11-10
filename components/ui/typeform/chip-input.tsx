@@ -109,7 +109,7 @@ export function ChipInput({
   const liveRegionRef = React.useRef<HTMLOutputElement>(null);
 
   // Dual enter timeout (500ms window for second enter)
-  const DUAL_ENTER_TIMEOUT = 500;
+  // const DUAL_ENTER_TIMEOUT = 500;
 
   // Generate unique IDs for accessibility
   const inputId = React.useId();
