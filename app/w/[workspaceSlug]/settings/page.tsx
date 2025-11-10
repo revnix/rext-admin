@@ -16,72 +16,92 @@ import { GeneralInfoSection } from "@/components/workspace-settings/general-info
 import { TeamAccessSection } from "@/components/workspace-settings/team-access-section";
 import { WorkspacePreferencesSection } from "@/components/workspace-settings/workspace-preferences-section";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { PageLayout } from "@/components/page-layout";
+import { workspaceRoutes } from "@/lib/routes";
+import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
- * Workspace Settings Root Page
+ * Workspace Settings Page
  *
- * Consolidated workspace settings at /w/[slug]/settings that combines:
- * - General information (name, slug, description, URL)
- * - Brand voice profile configuration
- * - Team & access management
- * - Workspace preferences
- * - Danger zone (delete workspace)
+ * Consolidated workspace settings page located at:
+ * /w/[slug]/settings
  *
- * **Permission Required:** `workspace.update` (Admin+ only)
+ * Sections:
+ * - General Information
+ * - Brand Voice
+ * - Team Access
+ * - Workspace Preferences
+ * - Danger Zone
  *
- * Part of Settings Consolidation (Phase 4)
- * Replaced old pages: general/, team/
+ * Permission Required: `workspace.update` (Admin or Owner)
  */
 export default function WorkspaceSettingsPage() {
+  const { workspace, workspaceSlug } = useWorkspace();
+
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/" },
+    {
+      label: workspace?.title || "...",
+      href: workspaceRoutes.root(workspaceSlug),
+    },
+    { label: "Settings" },
+  ];
+
   return (
-    <CanAccess
-      permission={WORKSPACE_PERMISSIONS.UPDATE}
-      fallback={
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Workspace Settings Access Restricted
-            </CardTitle>
-            <CardDescription>
-              Only workspace administrators can access workspace settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Workspace settings allow you to modify workspace name, brand
-              voice, team access, and other critical configurations. This page
-              is restricted to workspace owners and administrators.
-            </p>
-            <div className="bg-muted p-3 rounded-md">
-              <p className="text-xs font-mono">
-                Required permission:{" "}
-                <span className="font-semibold">workspace.update</span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      }
+    <PageLayout
+      title="Workspace Settings"
+      description={`Manage general info, brand voice, team access, and preferences for ${workspace?.title || "this workspace"}.`}
+      breadcrumbs={breadcrumbs}
     >
-      <div className="space-y-6">
-        <GeneralInfoSection />
+      <CanAccess
+        permission={WORKSPACE_PERMISSIONS.UPDATE}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Access Restricted
+              </CardTitle>
+              <CardDescription>
+                Only workspace administrators can access workspace settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Workspace settings allow you to modify workspace name, brand
+                voice, team access, and other critical configurations. This page
+                is restricted to workspace owners and administrators.
+              </p>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-xs font-mono">
+                  Required permission:{" "}
+                  <span className="font-semibold">workspace.update</span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        }
+      >
+        <div className="space-y-6">
+          <GeneralInfoSection />
 
-        <Separator />
+          <Separator />
 
-        <BrandVoiceSection />
+          <BrandVoiceSection />
 
-        <Separator />
+          <Separator />
 
-        <TeamAccessSection />
+          <TeamAccessSection />
 
-        <Separator />
+          <Separator />
 
-        <WorkspacePreferencesSection />
+          <WorkspacePreferencesSection />
 
-        <Separator />
+          <Separator />
 
-        <DangerZoneSection />
-      </div>
-    </CanAccess>
+          <DangerZoneSection />
+        </div>
+      </CanAccess>
+    </PageLayout>
   );
 }
