@@ -1,74 +1,62 @@
 import { z } from "zod";
 
+/**
+ * Notification Categories Schema (API Spec v1)
+ * Each category applies to both email and in-app channels
+ */
+export const notificationCategoriesSchema = z.object({
+  mentions: z.boolean(),
+  workspace_invites: z.boolean(),
+  content_updates: z.boolean(),
+  comments: z.boolean(),
+  team_activity: z.boolean(),
+  security_alerts: z.boolean(),
+  billing_updates: z.boolean(),
+  product_updates: z.boolean(),
+});
+
+export type NotificationCategories = z.infer<
+  typeof notificationCategoriesSchema
+>;
+
+/**
+ * Notification Preferences Schema (API Spec v1)
+ * Master toggles + category-based notification controls
+ */
 export const notificationPreferencesSchema = z.object({
-  // Workspace Notifications
-  workspace_invitation: z.boolean(),
-  invitation_accepted: z.boolean(),
-  role_changed: z.boolean(),
-  member_removed: z.boolean(),
+  // Master toggles for all notifications
+  email_enabled: z.boolean(),
+  in_app_enabled: z.boolean(),
 
-  // Content Generation
-  content_generation_started: z.boolean(),
-  content_generation_completed: z.boolean(),
-  content_generation_failed: z.boolean(),
-  content_published: z.boolean(),
-
-  // Billing
-  payment_succeeded: z.boolean(),
-  payment_failed: z.boolean(),
-  subscription_cancelled: z.boolean(),
-  subscription_expiring_soon: z.boolean(),
-  trial_ending_soon: z.boolean(),
-  usage_limit_warning: z.boolean(),
-  usage_limit_exceeded: z.boolean(),
-
-  // Knowledge Base
-  kb_processing_completed: z.boolean(),
-  kb_processing_failed: z.boolean(),
-
-  // Digest
+  // Digest settings
   digest_enabled: z.boolean(),
   digest_frequency: z.enum(["daily", "weekly", "monthly"]),
 
-  // Marketing
-  marketing: z.boolean(),
+  // Category-based notification toggles
+  categories: notificationCategoriesSchema,
 });
 
 export type NotificationPreferences = z.infer<
   typeof notificationPreferencesSchema
 >;
 
-// Default preferences for initial state
+/**
+ * Default notification preferences
+ * Security alerts enabled by default, marketing disabled
+ */
 export const defaultNotificationPreferences: NotificationPreferences = {
-  // Workspace Notifications
-  workspace_invitation: true,
-  invitation_accepted: true,
-  role_changed: true,
-  member_removed: true,
-
-  // Content Generation
-  content_generation_started: true,
-  content_generation_completed: true,
-  content_generation_failed: true,
-  content_published: true,
-
-  // Billing
-  payment_succeeded: true,
-  payment_failed: true,
-  subscription_cancelled: true,
-  subscription_expiring_soon: true,
-  trial_ending_soon: true,
-  usage_limit_warning: true,
-  usage_limit_exceeded: true,
-
-  // Knowledge Base
-  kb_processing_completed: true,
-  kb_processing_failed: true,
-
-  // Digest
+  email_enabled: true,
+  in_app_enabled: true,
   digest_enabled: false,
   digest_frequency: "weekly",
-
-  // Marketing
-  marketing: false,
+  categories: {
+    mentions: true,
+    workspace_invites: true,
+    content_updates: true,
+    comments: true,
+    team_activity: true,
+    security_alerts: true,
+    billing_updates: true,
+    product_updates: false,
+  },
 };

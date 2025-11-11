@@ -128,8 +128,10 @@ export function createAccountNamespace(client: ApiClient) {
 
     /**
      * Deactivate account
+     * REQUIRES: password verification (breaking change)
      */
     deactivate: async (data: {
+      password: string;
       reason?: string;
       confirm: boolean;
       cancel_subscriptions?: boolean;

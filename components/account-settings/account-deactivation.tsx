@@ -26,6 +26,7 @@ import type { UserSubscription } from "@/types/subscription";
 import { SubscriptionStatus } from "@/types/subscription";
 
 export function AccountDeactivation() {
+  const [password, setPassword] = useState("");
   const [reason, setReason] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [understood, setUnderstood] = useState(false);
@@ -55,6 +56,7 @@ export function AccountDeactivation() {
 
   const deactivateMutation = useMutation({
     mutationFn: (data: {
+      password: string;
       reason?: string;
       confirm: boolean;
       cancel_subscriptions?: boolean;
@@ -79,6 +81,11 @@ export function AccountDeactivation() {
   });
 
   const handleDeactivate = () => {
+    if (!password) {
+      toast.error("Please enter your current password to proceed.");
+      return;
+    }
+
     if (!understood || confirmText !== "DEACTIVATE") {
       toast.error(
         "Please confirm you understand the consequences and type DEACTIVATE to proceed.",
@@ -94,6 +101,7 @@ export function AccountDeactivation() {
     }
 
     deactivateMutation.mutate({
+      password: password,
       reason: reason || undefined,
       confirm: true,
       cancel_subscriptions: hasActiveSubscriptions
@@ -103,6 +111,7 @@ export function AccountDeactivation() {
   };
 
   const isConfirmValid =
+    password.length > 0 &&
     confirmText === "DEACTIVATE" &&
     understood &&
     (!hasActiveSubscriptions || cancelSubscriptions);
@@ -213,6 +222,24 @@ export function AccountDeactivation() {
                   </AlertDescription>
                 </Alert>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="password">
+                  Current Password <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your current password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={deactivateMutation.isPending}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  For security, you must verify your password to deactivate your account.
+                </p>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="reason">
