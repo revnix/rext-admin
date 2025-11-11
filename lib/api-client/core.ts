@@ -49,8 +49,13 @@ export class ApiClient {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
+    console.log(`[API Request] ${options.method || "GET"} ${endpoint}`);
+
     try {
       const response = await authenticatedFetch(url, options);
+      console.log(
+        `[API Request] Response: ${response.status} ${response.statusText}`,
+      );
 
       // Handle HTTP errors
       if (!response.ok) {

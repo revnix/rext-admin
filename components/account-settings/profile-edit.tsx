@@ -209,14 +209,25 @@ export function ProfileEdit() {
     );
   }
 
+  // Check if profile is actually empty/null
+  console.log("[ProfileEdit] Render state:", {
+    isLoading,
+    hasProfile: !!profile,
+    hasError: !!error,
+    profileKeys: profile ? Object.keys(profile) : null,
+  });
+
   if (!isLoading && !profile) {
-    console.warn("[ProfileEdit] No profile data received");
+    console.warn("[ProfileEdit] No profile data received after loading");
     return (
       <Alert>
         <AlertDescription>
-          <div>No profile data available.</div>
-          <div className="mt-2 text-xs text-muted-foreground">
-            The API returned successfully but no profile data was found.
+          <div className="font-semibold">No profile data available</div>
+          <div className="mt-2 text-sm text-muted-foreground">
+            The API request completed but no profile data was returned.
+          </div>
+          <div className="mt-2 text-xs font-mono bg-muted p-2 rounded">
+            Check browser console for [API Response] and [ProfileEdit] logs
           </div>
         </AlertDescription>
       </Alert>
