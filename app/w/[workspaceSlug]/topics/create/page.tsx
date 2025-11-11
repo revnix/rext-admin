@@ -36,7 +36,6 @@ export default function WorkspaceTopicCreatePage({
     { label: "Create" },
   ];
 
-  //Prevent flicker while loading permissions/workspace
   if (!workspace) {
     return (
       <PageLayout title="Topic Library" breadcrumbs={breadcrumbs}>
