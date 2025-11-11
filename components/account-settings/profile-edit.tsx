@@ -170,7 +170,7 @@ export function ProfileEdit() {
     if (!avatarFile) return;
 
     const formData = new FormData();
-    formData.append("file", avatarFile);
+    formData.append("avatar", avatarFile);
     uploadAvatarMutation.mutate(formData);
   };
 
