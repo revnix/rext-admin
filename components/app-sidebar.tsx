@@ -14,11 +14,13 @@ import {
   User,
   UserCog,
   Users,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import type * as React from "react";
+import { useState } from "react";
 
 import { EmptyWorkspacePrompt } from "@/components/empty-workspace-prompt";
-// import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -41,6 +43,13 @@ import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useSidebar } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -49,23 +58,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { workspacePermissions } = usePermissionStore();
   const storeRole = currentWorkspace
     ? (workspacePermissions.get(currentWorkspace.id)?.role ??
-        workspacePermissions.get(currentWorkspace.slug)?.role)
+      workspacePermissions.get(currentWorkspace.slug)?.role)
     : undefined;
-  // Also fetch directly to avoid timing/key mismatches
   const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const activeRole = fetchedRole || storeRole;
 
-  // Main navigation groups (top section)
+  const { state: sidebarState } = useSidebar();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
+    null,
+  );
+
+  // Main navigation groups
   const mainNavigationGroups: NavGroup[] = [
     {
       groupLabel: "",
-      items: [
-        {
-          title: "Dashboard",
-          url: "/",
-          icon: LayoutDashboard,
-        },
-      ],
+      items: [{ title: "Dashboard", url: "/", icon: LayoutDashboard }],
     },
     {
       groupLabel: "Workspace",
@@ -119,59 +127,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Personal",
       items: [
-        {
-          title: "Account",
-          url: "/settings",
-          icon: User,
-        },
+        { title: "Account", url: "/settings", icon: User },
         {
           title: "Subscription",
           url: "/subscription",
           icon: CreditCard,
-          permission: "subscription.read",
           items: [
-            {
-              title: "Overview",
-              url: "/subscription",
-              permission: "subscription.read",
-            },
-            {
-              title: "Billing",
-              url: "/billing",
-              permission: "billing.read",
-            },
-            {
-              title: "Usage",
-              url: "/usage",
-              permission: "usage.read",
-            },
-            {
-              title: "Licenses",
-              url: "/licenses",
-              permission: "license.read",
-            },
+            { title: "Overview", url: "/subscription" },
+            { title: "Billing", url: "/billing" },
+            { title: "Usage", url: "/usage" },
+            { title: "Licenses", url: "/licenses" },
           ],
         },
-        {
-          title: "Settings",
-          url: "/settings",
-          icon: Settings2,
-        },
+        { title: "Settings", url: "/settings", icon: Settings2 },
       ],
     },
   ];
 
-  // Administrator navigation groups
+  // Admin navigation groups
   const administratorNavigationGroups: NavGroup[] = [
     {
       groupLabel: "Administration",
       anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
       items: [
-        {
-          title: "Dashboard",
-          url: "/admin",
-          icon: LayoutDashboard,
-        },
+        { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
         {
           title: "User Management",
           url: "/admin/users",
@@ -206,32 +185,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
-  // Filter navigation based on user permissions
   const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
-  const filteredPersonalNavigation = useFilteredNavigation(personalNavigationGroups);
-  const filteredAdministratorNavigation = useFilteredNavigation(administratorNavigationGroups);
+  const filteredPersonalNavigation = useFilteredNavigation(
+    personalNavigationGroups,
+  );
+  const filteredAdministratorNavigation = useFilteredNavigation(
+    administratorNavigationGroups,
+  );
 
-  // Filter out workspace group if no workspaces exist
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
-    : filteredMainNavigation.filter((group) => group.groupLabel !== "Workspace");
+    : filteredMainNavigation.filter(
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar
       collapsible="icon"
       {...props}
-      style={
-        {
-          "--sidebar-width-icon": "4rem",
-        } as React.CSSProperties
-      }
+      style={{ "--sidebar-width-icon": "4rem" } as React.CSSProperties}
     >
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide ">
-        {/* ✅ NEW: Grouped main navigation with group labels */}
+      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide">
+        {/* Main navigation */}
         {displayMainNavigation.map((group) => (
           <SidebarGroup key={group.groupLabel || "main-group"}>
             {group.groupLabel && (
@@ -259,63 +238,198 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {!hasWorkspaces && <EmptyWorkspacePrompt />}
 
-        {/* ✅ NEW: Grouped personal + admin sections with group labels */}
-        <div className="border-t border-sidebar-border pt-2 mt-auto">
-          {filteredPersonalNavigation.map((group) => (
-            <SidebarGroup key={group.groupLabel || "personal-group"}>
-              {group.groupLabel && (
-                <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => {
-                    const Icon = item.icon as React.ElementType;
+        {/* Personal navigation */}
+        {filteredPersonalNavigation.map((group) => (
+          <SidebarGroup key={group.groupLabel || "personal-group"}>
+            {group.groupLabel && (
+              <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon as React.ElementType;
+                  const hasChildren = item.items && item.items.length > 0;
+
+                  //  Fixed Collapsed Sidebar Popover
+                  if (sidebarState === "collapsed" && hasChildren) {
                     return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton tooltip={item.title} asChild>
-                          <a href={item.url}>
+                      <SidebarMenuItem
+                        key={item.title}
+                        className="relative flex items-center"
+                      >
+                        <Popover
+                          open={openDropdown === item.title}
+                          onOpenChange={(open) =>
+                            setOpenDropdown(open ? item.title : null)
+                          }
+                        >
+                          <div className="flex items-center ml-[16px]">
+                            {/* Left side: navigates to main subscription page */}
+                            <SidebarMenuButton
+                              asChild
+                              tooltip={item.title}
+                              className="flex items-center flex-1"
+                            >
+                              <Link href={item.url}>
+                                {Icon && <Icon className="shrink-0 pr-0.5" />}
+                                <span className="truncate">{item.title}</span>
+                              </Link>
+                            </SidebarMenuButton>
+
+                            {/* Right side: chevron toggles dropdown */}
+                            <PopoverTrigger asChild>
+                              <button
+                              type="submit"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation(); // prevent link navigation
+                                  setOpenDropdown(
+                                    openDropdown === item.title
+                                      ? null
+                                      : item.title,
+                                  );
+                                }}
+                                className="rounded-md hover:bg-sidebar-accent transition"
+                              >
+                                <ChevronRight
+                                  size={16}
+                                  className={`transition-transform ${
+                                    openDropdown === item.title
+                                      ? "rotate-90"
+                                      : ""
+                                  }`}
+                                />
+                              </button>
+                            </PopoverTrigger>
+                          </div>
+
+                          {/* Dropdown Popover */}
+                          <PopoverContent
+                            side="right"
+                            align="start"
+                            className="w-40  bg-gray-100 border border-sidebar-border rounded-md shadow-md"
+                          >
+                            <SidebarMenu>
+                              {item.items!.map((subItem) => (
+                                <SidebarMenuItem
+                                  key={subItem.title}
+                                  className="rounded-md hover:bg-gray-300 transition"
+                                >
+                                  <SidebarMenuButton
+                                    asChild
+                                    className="rounded-md hover:bg-gray-300 transition"
+                                  >
+                                    <a href={subItem.url}>{subItem.title}</a>
+                                  </SidebarMenuButton>
+                                </SidebarMenuItem>
+                              ))}
+                            </SidebarMenu>
+                          </PopoverContent>
+                        </Popover>
+                      </SidebarMenuItem>
+                    );
+                  }
+
+                  // Expanded Sidebar → Accordion
+                  return (
+                    <SidebarMenuItem
+                      key={item.title}
+                      className="relative flex flex-col"
+                    >
+                      <div className="flex items-center justify-between">
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          asChild
+                          onClick={() => {
+                            if (hasChildren) {
+                              setExpandedAccordion(
+                                expandedAccordion === item.title
+                                  ? null
+                                  : item.title,
+                              );
+                            }
+                          }}
+                        >
+                          <a
+                            href={item.url}
+                            className="flex items-center gap-2 "
+                          >
                             {Icon && <Icon />}
                             <span>{item.title}</span>
                           </a>
                         </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+                        {hasChildren && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedAccordion(
+                                expandedAccordion === item.title
+                                  ? null
+                                  : item.title,
+                              )
+                            }
+                            className="p-1 ml-auto"
+                          >
+                            <ChevronDown
+                              size={16}
+                              className={`transition-transform ${
+                                expandedAccordion === item.title
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+                      {hasChildren && expandedAccordion === item.title && (
+                        <SidebarMenu className="pl-7 ml-1 mt-1 flex flex-col gap-1 border-l border-sidebar-border my-2">
+                          {item.items?.map((subItem) => (
+                            <SidebarMenuItem key={subItem.title}>
+                              <SidebarMenuButton asChild>
+                                <a href={subItem.url}>{subItem.title}</a>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
-          {filteredAdministratorNavigation.length > 0 && (
-            <div className="border-t border-sidebar-border my-2" />
-          )}
-
-          {filteredAdministratorNavigation.map((group) => (
-            <SidebarGroup key={group.groupLabel || "admin-group"}>
-              {group.groupLabel && (
-                <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => {
-                    const Icon = item.icon as React.ElementType;
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton tooltip={item.title} asChild>
-                          <a href={item.url}>
-                            {Icon && <Icon />}
-                            <span>{item.title}</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-        </div>
+        {/* Admin navigation */}
+        {filteredAdministratorNavigation.length > 0 && (
+          <div className="border-t border-sidebar-border my-2" />
+        )}
+        {filteredAdministratorNavigation.map((group) => (
+          <SidebarGroup key={group.groupLabel || "admin-group"}>
+            {group.groupLabel && (
+              <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon as React.ElementType;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton tooltip={item.title} asChild>
+                        <a href={item.url}>
+                          {Icon && <Icon />}
+                          <span>{item.title}</span>
+                        </a>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
+
       <SidebarFooter className="border-t border-sidebar-border">
         <NavUser />
       </SidebarFooter>
