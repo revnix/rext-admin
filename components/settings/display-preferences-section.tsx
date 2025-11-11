@@ -167,7 +167,11 @@ export function DisplayPreferencesSection() {
                 render={({ field }) => (
                   <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
                     <FormLabel>Date Format</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
                       <FormControl className="col-span-2">
                         <SelectTrigger>
                           <SelectValue />
@@ -199,7 +203,11 @@ export function DisplayPreferencesSection() {
                 render={({ field }) => (
                   <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
                     <FormLabel>Time Format</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
                       <FormControl className="col-span-2">
                         <SelectTrigger>
                           <SelectValue />
@@ -226,6 +234,7 @@ export function DisplayPreferencesSection() {
                         field.onChange(parseInt(value, 10))
                       }
                       value={field.value?.toString()}
+                      defaultValue={field.value?.toString()}
                     >
                       <FormControl className="col-span-2">
                         <SelectTrigger>
