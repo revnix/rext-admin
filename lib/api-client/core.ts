@@ -167,8 +167,29 @@ export class ApiClient {
           );
         }
 
-        if (result.success && "data" in result) {
+        if (result.success && "data" in result && result.data) {
           console.log("[API Response] Using success format", result.data);
+
+          // If data contains a single nested object (e.g., { profile: {...} }),
+          // unwrap it to the inner object (excluding 'message' key)
+          const dataKeys = Object.keys(result.data).filter(
+            (key) => key !== "message"
+          );
+          console.log(`[API Response] Data keys (excluding message):`, dataKeys);
+
+          if (
+            dataKeys.length === 1 &&
+            typeof result.data[dataKeys[0]] === "object" &&
+            result.data[dataKeys[0]] !== null
+          ) {
+            console.log(
+              `[API Response] Unwrapping nested data key: ${dataKeys[0]}`,
+              result.data[dataKeys[0]],
+            );
+            return result.data[dataKeys[0]] as T;
+          }
+
+          // Otherwise return data as-is
           return result.data as T;
         }
       }

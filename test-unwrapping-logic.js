@@ -44,10 +44,26 @@ const testCases = [
     expectedResult: mockProfile,
   },
   {
-    name: "Success Format",
+    name: "Success Format (direct data)",
     response: {
       success: true,
       data: mockProfile,
+    },
+    expectedResult: mockProfile,
+  },
+  {
+    name: "Success Format (nested with message) - YOUR BACKEND FORMAT",
+    response: {
+      success: true,
+      meta: {
+        request_id: "req_1762855053_31d5929e",
+        timestamp: "2025-11-11T09:57:33.026786Z",
+      },
+      data: {
+        message: "Profile retrieved successfully",
+        profile: mockProfile,
+      },
+      error: null,
     },
     expectedResult: mockProfile,
   },
@@ -97,8 +113,22 @@ function unwrapResponse(result) {
       throw new Error(result.error?.message || "Request failed");
     }
 
-    if (result.success && "data" in result) {
-      console.log("  → Returning data");
+    if (result.success && "data" in result && result.data) {
+      // If data contains a single nested object (e.g., { profile: {...} }),
+      // unwrap it to the inner object (excluding 'message' key)
+      const dataKeys = Object.keys(result.data).filter((key) => key !== "message");
+      console.log(`  Data keys (excluding message): [${dataKeys.join(", ")}]`);
+
+      if (
+        dataKeys.length === 1 &&
+        typeof result.data[dataKeys[0]] === "object" &&
+        result.data[dataKeys[0]] !== null
+      ) {
+        console.log(`  → Unwrapping nested key: "${dataKeys[0]}"`);
+        return result.data[dataKeys[0]];
+      }
+
+      console.log("  → Returning data as-is");
       return result.data;
     }
   }
