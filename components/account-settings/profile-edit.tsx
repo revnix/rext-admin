@@ -234,7 +234,7 @@ export function ProfileEdit() {
     );
   }
 
-  const currentAvatar = avatarPreview || profile?.avatar_url;
+  const currentAvatar = avatarPreview || apiClient.getAvatarUrl(profile?.avatar_url);
 
   return (
     <div className="space-y-6">

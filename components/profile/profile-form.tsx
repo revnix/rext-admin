@@ -124,7 +124,7 @@ export function ProfileForm() {
       <div>
         <h3 className="text-sm font-medium mb-4">Profile Picture</h3>
         <AvatarUpload
-          currentAvatarUrl={profile.avatar_url}
+          currentAvatarUrl={apiClient.getAvatarUrl(profile.avatar_url)}
           userInitials={userInitials}
         />
       </div>

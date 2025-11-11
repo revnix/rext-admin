@@ -208,6 +208,23 @@ export class ApiClient {
   }
 
   /**
+   * Convert relative avatar URL to absolute URL
+   * @param avatarUrl - Relative or absolute avatar URL
+   * @returns Absolute URL pointing to backend server
+   */
+  getAvatarUrl(avatarUrl?: string | null): string | null {
+    if (!avatarUrl) return null;
+
+    // If already absolute URL, return as-is
+    if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+      return avatarUrl;
+    }
+
+    // Convert relative path to absolute URL
+    return `${this.baseUrl}${avatarUrl}`;
+  }
+
+  /**
    * Cancel all active requests
    */
   cancelAllRequests(): void {
