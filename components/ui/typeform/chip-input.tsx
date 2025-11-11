@@ -215,7 +215,6 @@ export function ChipInput({
       setInternalError(undefined);
     }
   }, [value.length, onChange]);
-  
 
   //  Clear error when at least one chip exists
   useEffect(() => {
