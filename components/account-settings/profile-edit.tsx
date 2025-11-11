@@ -54,7 +54,12 @@ export function ProfileEdit() {
     error,
   } = useQuery({
     queryKey: ["profile"],
-    queryFn: () => apiClient.profile.get(),
+    queryFn: async () => {
+      console.log("[ProfileEdit] Fetching profile...");
+      const data = await apiClient.profile.get();
+      console.log("[ProfileEdit] Received profile data:", data);
+      return data;
+    },
   });
 
   // Initialize form with default values to prevent uncontrolled component warnings
@@ -69,14 +74,19 @@ export function ProfileEdit() {
       timezone: "UTC",
     },
     values: profile
-      ? {
-          first_name: profile.first_name || "",
-          last_name: profile.last_name || "",
-          display_name: profile.display_name || "",
-          bio: profile.bio || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
+      ? (() => {
+          const formValues = {
+            first_name: profile.first_name || "",
+            last_name: profile.last_name || "",
+            display_name: profile.display_name || "",
+            bio: profile.bio || "",
+            language: profile.language || "en",
+            timezone: profile.timezone || "UTC",
+          };
+          console.log("[ProfileEdit] Setting form values:", formValues);
+          console.log("[ProfileEdit] Profile object:", profile);
+          return formValues;
+        })()
       : undefined,
   });
 
@@ -186,10 +196,28 @@ export function ProfileEdit() {
   }
 
   if (error) {
+    console.error("[ProfileEdit] Error loading profile:", error);
     return (
       <Alert variant="destructive">
         <AlertDescription>
-          Failed to load profile. Please try again.
+          <div>Failed to load profile. Please try again.</div>
+          <div className="mt-2 text-xs font-mono">
+            Error: {error instanceof Error ? error.message : String(error)}
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!isLoading && !profile) {
+    console.warn("[ProfileEdit] No profile data received");
+    return (
+      <Alert>
+        <AlertDescription>
+          <div>No profile data available.</div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            The API returned successfully but no profile data was found.
+          </div>
         </AlertDescription>
       </Alert>
     );

@@ -110,6 +110,18 @@ export class ApiClient {
       // Parse successful response
       const result = await response.json();
 
+      // DEBUG: Log response format for troubleshooting
+      console.log(`[API Response] ${endpoint}`, {
+        rawResult: result,
+        hasStatus: result && "status" in result,
+        hasSuccess: result && "success" in result,
+        hasData: result && "data" in result,
+        statusValue: result?.status,
+        successValue: result?.success,
+        dataKeys: result?.data ? Object.keys(result.data) : null,
+        resultKeys: result ? Object.keys(result) : null,
+      });
+
       // Handle API spec format: { status: "success", data: {...}, message: "..." }
       if (
         result &&
@@ -121,13 +133,20 @@ export class ApiClient {
           // If data contains a single nested object (e.g., { profile: {...} }),
           // unwrap it to the inner object
           const dataKeys = Object.keys(result.data);
+          console.log(`[API Response] Data keys:`, dataKeys);
           if (
             dataKeys.length === 1 &&
-            typeof result.data[dataKeys[0]] === "object"
+            typeof result.data[dataKeys[0]] === "object" &&
+            result.data[dataKeys[0]] !== null
           ) {
+            console.log(
+              `[API Response] Unwrapping nested data key: ${dataKeys[0]}`,
+              result.data[dataKeys[0]],
+            );
             return result.data[dataKeys[0]] as T;
           }
           // Otherwise return data as-is
+          console.log("[API Response] Returning data as-is", result.data);
           return result.data as T;
         }
       }
@@ -144,11 +163,13 @@ export class ApiClient {
         }
 
         if (result.success && "data" in result) {
+          console.log("[API Response] Using success format", result.data);
           return result.data as T;
         }
       }
 
       // Legacy format or direct data
+      console.log("[API Response] Using legacy/direct format", result);
       return result as T;
     } catch (error) {
       if (error instanceof ApiError) {
