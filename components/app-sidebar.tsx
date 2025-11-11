@@ -29,6 +29,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
@@ -46,7 +49,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { workspacePermissions } = usePermissionStore();
   const storeRole = currentWorkspace
     ? (workspacePermissions.get(currentWorkspace.id)?.role ??
-      workspacePermissions.get(currentWorkspace.slug)?.role)
+        workspacePermissions.get(currentWorkspace.slug)?.role)
     : undefined;
   // Also fetch directly to avoid timing/key mismatches
   const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
@@ -61,7 +64,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Dashboard",
           url: "/",
           icon: LayoutDashboard,
-          // No permission required - available to all authenticated users
         },
       ],
     },
@@ -110,32 +112,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
       ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
     },
-    // TODO: Uncomment when integrations are ready
-    // {
-    //   groupLabel: "Integrations",
-    //   items: [
-    //     {
-    //       title: "Integrations",
-    //       url: "/integrations",
-    //       icon: Puzzle,
-    //       items: [
-    //         {
-    //           title: "Social Accounts",
-    //           url: "/social-accounts",
-    //           icon: Share2,
-    //         },
-    //         {
-    //           title: "Notifications",
-    //           url: "/notifications",
-    //           icon: Bell,
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // },
   ];
 
-  // Personal navigation groups (sticky bottom section)
+  // Personal navigation groups
   const personalNavigationGroups: NavGroup[] = [
     {
       groupLabel: "Personal",
@@ -144,13 +123,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Account",
           url: "/settings",
           icon: User,
-          // No permission required - users can view their own account
         },
         {
           title: "Subscription",
           url: "/subscription",
           icon: CreditCard,
-          permission: "subscription.read", // Owner-only (workspace owner or super_admin)
+          permission: "subscription.read",
           items: [
             {
               title: "Overview",
@@ -178,13 +156,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Settings",
           url: "/settings",
           icon: Settings2,
-          // No permission required - users can access their own settings
         },
       ],
     },
   ];
 
-  // Administrator navigation groups (sticky bottom section, below Personal)
+  // Administrator navigation groups
   const administratorNavigationGroups: NavGroup[] = [
     {
       groupLabel: "Administration",
@@ -231,19 +208,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Filter navigation based on user permissions
   const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
-  const filteredPersonalNavigation = useFilteredNavigation(
-    personalNavigationGroups,
-  );
-  const filteredAdministratorNavigation = useFilteredNavigation(
-    administratorNavigationGroups,
-  );
+  const filteredPersonalNavigation = useFilteredNavigation(personalNavigationGroups);
+  const filteredAdministratorNavigation = useFilteredNavigation(administratorNavigationGroups);
 
   // Filter out workspace group if no workspaces exist
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
-    : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+    : filteredMainNavigation.filter((group) => group.groupLabel !== "Workspace");
 
   return (
     <Sidebar
@@ -258,70 +229,91 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
-      <SidebarContent className="flex flex-col ">
-        {/* Added tooltip-enabled buttons for main navigation */}
-        <SidebarMenu>
-          {displayMainNavigation.flatMap((group) =>
-            group.items.map((item) => {
-              const Icon = item.icon as React.ElementType; //  type assertion for JSX component
-              return (
-                <SidebarMenuItem key={item.title}>
-                  {/*  Tooltip shown only when sidebar is collapsed */}
-                  <SidebarMenuButton tooltip={item.title} asChild>
-                    <a href={item.url}>
-                      {Icon && <Icon />}
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            }),
-          )}
-        </SidebarMenu>
+
+      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide ">
+        {/* ✅ NEW: Grouped main navigation with group labels */}
+        {displayMainNavigation.map((group) => (
+          <SidebarGroup key={group.groupLabel || "main-group"}>
+            {group.groupLabel && (
+              <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon as React.ElementType;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton tooltip={item.title} asChild>
+                        <a href={item.url}>
+                          {Icon && <Icon />}
+                          <span>{item.title}</span>
+                        </a>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         {!hasWorkspaces && <EmptyWorkspacePrompt />}
 
-        {/* Personal + Admin sections with tooltips */}
+        {/* ✅ NEW: Grouped personal + admin sections with group labels */}
         <div className="border-t border-sidebar-border pt-2 mt-auto">
-          <SidebarMenu>
-            {filteredPersonalNavigation.flatMap((group) =>
-              group.items.map((item) => {
-                const Icon = item.icon as React.ElementType;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton tooltip={item.title} asChild>
-                      <a href={item.url}>
-                        {Icon && <Icon />}
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              }),
-            )}
-          </SidebarMenu>
+          {filteredPersonalNavigation.map((group) => (
+            <SidebarGroup key={group.groupLabel || "personal-group"}>
+              {group.groupLabel && (
+                <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const Icon = item.icon as React.ElementType;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton tooltip={item.title} asChild>
+                          <a href={item.url}>
+                            {Icon && <Icon />}
+                            <span>{item.title}</span>
+                          </a>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
 
           {filteredAdministratorNavigation.length > 0 && (
             <div className="border-t border-sidebar-border my-2" />
           )}
 
-          <SidebarMenu>
-            {filteredAdministratorNavigation.flatMap((group) =>
-              group.items.map((item) => {
-                const Icon = item.icon as React.ElementType;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton tooltip={item.title} asChild>
-                      <a href={item.url}>
-                        {Icon && <Icon />}
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              }),
-            )}
-          </SidebarMenu>
+          {filteredAdministratorNavigation.map((group) => (
+            <SidebarGroup key={group.groupLabel || "admin-group"}>
+              {group.groupLabel && (
+                <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const Icon = item.icon as React.ElementType;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton tooltip={item.title} asChild>
+                          <a href={item.url}>
+                            {Icon && <Icon />}
+                            <span>{item.title}</span>
+                          </a>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </div>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
