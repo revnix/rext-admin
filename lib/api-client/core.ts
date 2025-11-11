@@ -110,7 +110,29 @@ export class ApiClient {
       // Parse successful response
       const result = await response.json();
 
-      // Handle new consistent format: { success: true, data: {...}, meta: {...} }
+      // Handle API spec format: { status: "success", data: {...}, message: "..." }
+      if (
+        result &&
+        typeof result === "object" &&
+        "status" in result &&
+        result.status === "success"
+      ) {
+        if ("data" in result && result.data) {
+          // If data contains a single nested object (e.g., { profile: {...} }),
+          // unwrap it to the inner object
+          const dataKeys = Object.keys(result.data);
+          if (
+            dataKeys.length === 1 &&
+            typeof result.data[dataKeys[0]] === "object"
+          ) {
+            return result.data[dataKeys[0]] as T;
+          }
+          // Otherwise return data as-is
+          return result.data as T;
+        }
+      }
+
+      // Handle alternative format: { success: true, data: {...}, meta: {...} }
       if (result && typeof result === "object" && "success" in result) {
         if (result.success === false && "error" in result) {
           throw new ApiError(
