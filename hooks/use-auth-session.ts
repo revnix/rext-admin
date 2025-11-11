@@ -53,15 +53,30 @@ export function useAuthSession() {
   }, [status]);
 
   const logout = async () => {
+    try {
     log.info(
       `[Auth] User logging out after ${activityCount} interactions. Last active: ${new Date(lastActivity).toLocaleTimeString()}`,
     );
+
+    // Disable all background queries
+    queryClient.setDefaultOptions({
+      queries: { enabled: false },
+    });
+
+    // Clear all cached React Query data
+    queryClient.clear();
+
+    // Perform sign out (don’t auto-redirect)
     await signOut({ redirect: false });
 
-    // Clear all cached server data
-    queryClient.clear();
+    // Redirect manually to login page
     router.push("/login");
-  };
+  } catch (error) {
+    log.error("[Auth] Logout failed", error);
+    // As fallback, still navigate to login
+    router.push("/login");
+  }
+};
 
   return {
     user,
