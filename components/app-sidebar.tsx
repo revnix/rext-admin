@@ -279,7 +279,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             {/* Right side: chevron toggles dropdown */}
                             <PopoverTrigger asChild>
                               <button
-                              type="submit"
+                                type="submit"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation(); // prevent link navigation
@@ -310,7 +310,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className="w-40  bg-gray-100 border border-sidebar-border rounded-md shadow-md"
                           >
                             <SidebarMenu>
-                              {item.items!.map((subItem) => (
+                              {item.items?.map((subItem) => (
                                 <SidebarMenuItem
                                   key={subItem.title}
                                   className="rounded-md hover:bg-gray-300 transition"
