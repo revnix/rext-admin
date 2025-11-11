@@ -419,9 +419,9 @@ export function ProfileEdit() {
                 <FormItem>
                   <FormLabel>Language</FormLabel>
                   <Select
+                    key={`language-${field.value}`}
                     onValueChange={field.onChange}
                     value={field.value}
-                    defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -447,9 +447,9 @@ export function ProfileEdit() {
                 <FormItem>
                   <FormLabel>Timezone</FormLabel>
                   <Select
+                    key={`timezone-${field.value}`}
                     onValueChange={field.onChange}
                     value={field.value}
-                    defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>

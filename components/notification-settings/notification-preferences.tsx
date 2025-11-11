@@ -416,9 +416,9 @@ export function NotificationPreferencesForm({
               </p>
             </div>
             <Select
+              key={`digest-frequency-${digestFrequency}`}
               disabled={!digestEnabled || !emailEnabled}
               value={digestFrequency}
-              defaultValue={digestFrequency}
               onValueChange={(value) =>
                 setValue(
                   "digest_frequency",
