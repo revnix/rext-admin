@@ -40,48 +40,9 @@ interface CanAccessProps {
 }
 
 /**
- * Wrapper component for conditional rendering based on permissions or roles
- *
- * @example
- * // Show button only if user has "user.create" permission
- * <CanAccess permission="user.create">
- *   <Button>Create User</Button>
- * </CanAccess>
- *
- * @example
- * // Show content if user has admin OR manager role
- * <CanAccess anyRole={["admin", "manager"]}>
- *   <AdminPanel />
- * </CanAccess>
- *
- * @example
- * // Show fallback if user doesn't have permission
- * <CanAccess permission="user.delete" fallback={<p>No access</p>}>
- *   <DeleteButton />
- * </CanAccess>
- *
- * @example
- * // Show content if user does NOT have admin role
- * <CanAccess role="admin" invert>
- *   <p>You are not an admin</p>
- * </CanAccess>
- *
- * @example
- * // Show disabled button with tooltip when locked
- * <CanAccess permission="content.delete" showLockedTooltip>
- *   <Button>Delete</Button>
- * </CanAccess>
- *
- * @example
- * // Show custom tooltip message
- * <CanAccess
- *   permission="workspace.manage_billing"
- *   showLockedTooltip
- *   tooltipMessage="Upgrade to Pro to access billing"
- *   showLockIcon
- * >
- *   <Button>Manage Billing</Button>
- * </CanAccess>
+ * ✅ Fixed CanAccess Component
+ * - Hooks always called at top level (no early return)
+ * - Prevents flash while workspace is loading
  */
 export function CanAccess({
   permission,
@@ -97,8 +58,9 @@ export function CanAccess({
   showLockIcon = false,
 }: CanAccessProps) {
   const workspaceContext = useWorkspaceOptional();
+
   const workspaceId =
-    workspaceContext?.workspaceSlug || workspaceContext?.workspaceId;
+    workspaceContext?.workspaceId || workspaceContext?.workspaceSlug;
   const isWorkspaceContext = Boolean(workspaceId);
 
   // === 1️⃣ Determine workspace and global permission states ===
@@ -119,7 +81,16 @@ export function CanAccess({
   const roleCheck = useRole(role || "");
   const anyRoleCheck = useAnyRole(anyRole || []);
 
-  // Determine if user has access and if still loading
+  // === Handle early states (after hooks) ===
+  if (
+    workspaceContext &&
+    !workspaceContext.workspaceId &&
+    !workspaceContext.workspaceSlug
+  ) {
+    return null; // Prevent flash while workspace loading
+  }
+
+  // === Access logic ===
   let hasAccess = false;
   let isLoading = false;
 
@@ -140,23 +111,13 @@ export function CanAccess({
     hasAccess = anyRoleCheck;
   }
 
-  // Show loading state while permissions are being fetched (prevent flash of unauthorized content)
-  if (isLoading) {
-    // Return nothing or fallback while permissions load — avoids flash of Access Denied
-    return fallback ?? null;
-  }
+  // Prevent render until permissions are ready
+  if (isLoading) return null;
 
-  // Apply invert logic
-  if (invert) {
-    hasAccess = !hasAccess;
-  }
+  if (invert) hasAccess = !hasAccess;
 
-  // Render based on access
-  if (hasAccess) {
-    return <>{children}</>;
-  }
+  if (hasAccess) return <>{children}</>;
 
-  // === 6️⃣ Handle locked tooltip display ===
   if (showLockedTooltip && !fallback && isValidElement(children)) {
     return (
       <LockedFeatureTooltip

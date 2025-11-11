@@ -12,9 +12,11 @@ import {
   RefreshCw,
   Trash2,
   X,
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { MediaDetailSheet } from "@/components/media/media-detail-sheet";
 import { MediaFolderSidebar } from "@/components/media/media-folder-sidebar";
 import { MediaGrid } from "@/components/media/media-grid";
@@ -22,6 +24,7 @@ import { MediaList } from "@/components/media/media-list";
 import { MediaUploadDialog } from "@/components/media/media-upload-dialog";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
@@ -56,18 +60,16 @@ export default function WorkspaceMediaPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
 
-  // Check workspace-scoped permissions
-  // Phase 2: Hooks now return {hasPermission, isLoading}
-  const { hasPermission: canUploadMedia } = useWorkspacePermission(
-    MEDIA_PERMISSIONS.CREATE,
-    workspaceId,
-  );
-  const { hasPermission: canDeleteMedia } = useWorkspacePermission(
-    MEDIA_PERMISSIONS.DELETE,
-    workspaceId,
-  );
+  // Permissions (with loading)
+  const { hasPermission: canUploadMedia, isLoading: isUploadPermLoading } =
+    useWorkspacePermission(MEDIA_PERMISSIONS.CREATE, workspaceId);
+  const { hasPermission: canDeleteMedia, isLoading: isDeletePermLoading } =
+    useWorkspacePermission(MEDIA_PERMISSIONS.DELETE, workspaceId);
 
-  // UI states
+  // Determine if permission check still loading
+  const isPermissionLoading = isUploadPermLoading || isDeletePermLoading;
+
+  // UI States
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -85,13 +87,10 @@ export default function WorkspaceMediaPage() {
   const queryParams: MediaListParams = {
     page: 1,
     per_page: 50,
+    ...(fileType !== "all" && { file_type: fileType }),
   };
 
-  if (fileType !== "all") {
-    queryParams.file_type = fileType;
-  }
-
-  // Fetch media
+  // Fetch media list
   const {
     data: response,
     isLoading,
@@ -100,7 +99,7 @@ export default function WorkspaceMediaPage() {
     queryKey: ["media", workspace?.id, queryParams],
     queryFn: () => apiClient.media.list(workspace?.id || "", queryParams),
     enabled: !!workspace?.id,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
   // Fetch storage usage
@@ -112,7 +111,6 @@ export default function WorkspaceMediaPage() {
   });
 
   const mediaList = response?.items || [];
-  const _pagination = response?.pagination; // Reserved for future pagination UI
   const usage = usageResponse;
 
   // Filter by folder and search query (client-side)
@@ -120,61 +118,53 @@ export default function WorkspaceMediaPage() {
 
   // Filter by folder
   if (selectedFolder !== null) {
-    filteredMedia = filteredMedia.filter((m) => {
-      const itemFolder = m.folder || "";
-      return itemFolder === selectedFolder;
-    });
+    filteredMedia = filteredMedia.filter(
+      (m) => (m.folder || "") === selectedFolder,
+    );
   }
-
-  // Filter by search query
   if (searchQuery) {
+    const q = searchQuery.toLowerCase();
     filteredMedia = filteredMedia.filter(
       (m) =>
-        m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.original_filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase()),
-        ),
+        m.title?.toLowerCase().includes(q) ||
+        m.original_filename.toLowerCase().includes(q) ||
+        m.tags.some((tag) => tag.toLowerCase().includes(q)),
     );
   }
 
+  // Helpers
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["media", workspace?.id] });
     queryClient.invalidateQueries({ queryKey: ["media-usage", workspace?.id] });
   };
+  const handleUploaded = () => handleRefresh();
+  const handleDeleted = () => handleRefresh();
 
-  const handleUploaded = () => {
-    handleRefresh();
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return "0 B";
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`;
   };
 
-  const handleDeleted = () => {
-    handleRefresh();
-  };
-
-  // Bulk delete mutation
+  // Bulk delete
   const bulkDeleteMutation = useMutation({
     mutationFn: (mediaIds: string[]) =>
       apiClient.media.bulkDelete(workspace?.id || "", mediaIds),
-    onSuccess: (response) => {
-      toast.success(response.message);
+    onSuccess: (res) => {
+      toast.success(res.message || "Media deleted successfully");
       handleRefresh();
       setSelectedIds(new Set());
       setSelectionMode(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete media: ${error.message}`);
-    },
+    onError: (err: Error) => toast.error(`Failed to delete: ${err.message}`),
   });
 
   // Selection handlers
   const handleSelectionChange = (mediaId: string, selected: boolean) => {
     setSelectedIds((prev) => {
       const newSet = new Set(prev);
-      if (selected) {
-        newSet.add(mediaId);
-      } else {
-        newSet.delete(mediaId);
-      }
+      selected ? newSet.add(mediaId) : newSet.delete(mediaId);
       return newSet;
     });
   };
@@ -187,17 +177,12 @@ export default function WorkspaceMediaPage() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = (): void => {
     if (selectedIds.size === 0) {
       toast.error("No media files selected");
       return;
     }
-
-    if (
-      confirm(
-        `Are you sure you want to delete ${selectedIds.size} media file(s)?`,
-      )
-    ) {
+    if (confirm(`Delete ${selectedIds.size} media file(s)?`)) {
       bulkDeleteMutation.mutate(Array.from(selectedIds));
     }
   };
@@ -205,14 +190,6 @@ export default function WorkspaceMediaPage() {
   const handleCancelSelection = () => {
     setSelectionMode(false);
     setSelectedIds(new Set());
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
   const breadcrumbs = [
@@ -224,6 +201,7 @@ export default function WorkspaceMediaPage() {
     { label: "Media Library" },
   ];
 
+  // Header actions
   const headerActions = selectionMode ? (
     <>
       <span className="text-sm text-muted-foreground">
@@ -260,7 +238,6 @@ export default function WorkspaceMediaPage() {
           className="rounded-r-none"
         >
           <Grid3x3 className="h-4 w-4" />
-          <span className="sr-only">Grid view</span>
         </Button>
         <Button
           variant={viewMode === "list" ? "secondary" : "ghost"}
@@ -269,9 +246,9 @@ export default function WorkspaceMediaPage() {
           className="rounded-l-none"
         >
           <List className="h-4 w-4" />
-          <span className="sr-only">List view</span>
         </Button>
       </div>
+
       <Button
         variant="outline"
         size="sm"
@@ -280,6 +257,7 @@ export default function WorkspaceMediaPage() {
         <CheckSquare className="h-4 w-4 mr-2" />
         Select
       </Button>
+
       <Button
         variant="outline"
         size="sm"
@@ -288,6 +266,7 @@ export default function WorkspaceMediaPage() {
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
+
       {canUploadMedia && (
         <Button onClick={() => setShowUploadDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -297,10 +276,22 @@ export default function WorkspaceMediaPage() {
     </>
   );
 
+  // 🧩 Prevent flicker: wait until permission check is done
+  if (!workspace?.id || isPermissionLoading) {
+    return (
+      <PageLayout title="Loading Permissions...">
+        <div className="space-y-4 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="Media Library"
-      description="Upload and manage your workspace media files"
+      description="Upload and manage your workspace media files."
       breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
@@ -311,7 +302,7 @@ export default function WorkspaceMediaPage() {
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
               <CardDescription>
-                You don't have permission to view media in this workspace.
+                You don’t have permission to view media in this workspace.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -326,7 +317,7 @@ export default function WorkspaceMediaPage() {
         }
       >
         <div className="space-y-6">
-          {/* Storage Quota Warning */}
+          {/* Storage Usage Warning */}
           {usage && usage.usage_percentage >= 80 && (
             <Alert
               variant={usage.usage_percentage >= 95 ? "destructive" : "default"}
@@ -338,26 +329,17 @@ export default function WorkspaceMediaPage() {
                   : "Storage Almost Full"}
               </AlertTitle>
               <AlertDescription>
-                {usage.usage_percentage >= 95 ? (
-                  <>
-                    You've used {usage.usage_percentage.toFixed(1)}% of your
-                    storage limit ({formatFileSize(usage.total_size)} /{" "}
-                    {formatFileSize(usage.storage_limit)}). Please delete some
-                    files or upgrade your plan to upload more media.
-                  </>
-                ) : (
-                  <>
-                    You've used {usage.usage_percentage.toFixed(1)}% of your
-                    storage limit ({formatFileSize(usage.total_size)} /{" "}
-                    {formatFileSize(usage.storage_limit)}). Consider upgrading
-                    your plan soon.
-                  </>
-                )}
+                You’ve used {usage.usage_percentage.toFixed(1)}% of your storage
+                limit ({formatFileSize(usage.total_size)} /{" "}
+                {formatFileSize(usage.storage_limit)}).{" "}
+                {usage.usage_percentage >= 95
+                  ? "Please delete some files or upgrade your plan."
+                  : "Consider upgrading soon."}
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Filters */}
+          {/* Media Section */}
           <Card>
             <CardHeader>
               <CardTitle>Media Files</CardTitle>
@@ -371,26 +353,21 @@ export default function WorkspaceMediaPage() {
                   onFolderSelect={setSelectedFolder}
                 />
 
-                {/* Main Content Area */}
+                {/* Main Section */}
                 <div className="flex-1">
-                  {/* Filter Bar */}
+                  {/* Filters */}
                   <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                    {/* Search */}
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Search by name, tags..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* File Type Filter */}
+                    <Input
+                      placeholder="Search by name, tags..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1"
+                    />
                     <Select
                       value={fileType}
                       onValueChange={(
-                        value: "all" | "image" | "document" | "video",
-                      ) => setFileType(value)}
+                        val: "all" | "image" | "document" | "video",
+                      ) => setFileType(val)}
                     >
                       <SelectTrigger className="w-full sm:w-[180px]">
                         <Filter className="h-4 w-4 mr-2" />
@@ -405,7 +382,7 @@ export default function WorkspaceMediaPage() {
                     </Select>
                   </div>
 
-                  {/* Media Grid/List */}
+                  {/* Media Grid / List */}
                   {error ? (
                     <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
                       <ImageIcon className="h-12 w-12 text-destructive mb-4" />
@@ -413,7 +390,7 @@ export default function WorkspaceMediaPage() {
                         Failed to load media
                       </p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        There was an error loading the media library
+                        There was an error loading the media library.
                       </p>
                       <Button variant="outline" onClick={handleRefresh}>
                         Try Again
