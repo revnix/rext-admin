@@ -79,7 +79,7 @@ export function useOnboardingProgress(
       if (!workspaceId) throw new Error("Workspace ID required");
       return apiClient.workspaces.getStats(workspaceId);
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !!user, // Only fetch if we have a workspace and user
     staleTime: 30 * 1000, // 30 seconds - balance between real-time and performance
     refetchOnMount: true, // Always refetch on mount for latest data
     refetchOnWindowFocus: true, // Refetch when user comes back to tab
