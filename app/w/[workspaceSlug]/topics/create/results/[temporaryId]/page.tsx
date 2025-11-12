@@ -321,6 +321,7 @@ export default function ResultsPage() {
       // Use the mutation directly to generate topics
       const result = await generateMoreMutation.mutateAsync({
         formData: modifiedFormData,
+        workspaceId: workspaceId,
       });
 
       if (result.topics && Array.isArray(result.topics)) {

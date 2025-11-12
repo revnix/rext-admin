@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 export interface ChipInputProps {
   /** Current value array */
@@ -107,9 +108,6 @@ export function ChipInput({
   const chipRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const fallbackInputRef = React.useRef<HTMLInputElement>(null);
   const liveRegionRef = React.useRef<HTMLOutputElement>(null);
-
-  // Dual enter timeout (500ms window for second enter)
-  // const DUAL_ENTER_TIMEOUT = 500;
 
   // Generate unique IDs for accessibility
   const inputId = React.useId();
@@ -211,7 +209,7 @@ export function ChipInput({
   );
 
   //  Automatically add one chip on mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (value.length === 0) {
       onChange(["Small business owners"]);
       setInternalError(undefined);
@@ -219,7 +217,7 @@ export function ChipInput({
   }, [value.length, onChange]);
 
   //  Clear error when at least one chip exists
-  React.useEffect(() => {
+  useEffect(() => {
     if (value.length > 0 && internalError) {
       setInternalError(undefined);
     }
