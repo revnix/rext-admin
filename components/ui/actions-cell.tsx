@@ -35,12 +35,16 @@ export function ActionsCell<
   const [_isHovered, _setIsHovered] = useState(false);
   const { confirm, ConfirmationComponent } = useConfirmation();
 
-  // Filter out disabled actions
+  // Filter out disabled actions (but keep loading buttons visible)
   const availableActions = actions.filter((action) => {
+    const label =
+      typeof action.label === "function" ? action.label(row) : action.label;
+    const isLoading = typeof label === "string" && label.endsWith("…");
+
     if (typeof action.disabled === "function") {
-      return !action.disabled(row);
+      return !action.disabled(row) || isLoading;
     }
-    return !action.disabled;
+    return !action.disabled || isLoading;
   });
 
   if (availableActions.length === 0) {
@@ -58,12 +62,17 @@ export function ActionsCell<
 
     if (action.requiresConfirmation) {
       const confirmed = await confirm({
-        title: action.confirmationTitle || `Confirm ${action.label}`,
+        title:
+          action.confirmationTitle ||
+          `Confirm ${typeof action.label === "function" ? action.label(row) : action.label}`,
         description:
           action.confirmationDescription ||
-          `Are you sure you want to ${action.label.toLowerCase()}?`,
+          `Are you sure you want to ${typeof action.label === "function" ? action.label(row) : action.label}`.toLowerCase(),
         variant: action.variant === "destructive" ? "destructive" : "default",
-        confirmText: action.label,
+        confirmText:
+          typeof action.label === "function"
+            ? String(action.label(row))
+            : action.label, // must be string
       });
 
       if (confirmed) {
@@ -116,9 +125,13 @@ export function ActionsCell<
 
         const buttonContent = (
           <>
-            {action.icon}
+            {typeof action.icon === "function" ? action.icon(row) : action.icon}
             {action.showLabel && (
-              <span className="text-xs font-medium">{action.label}</span>
+              <span className="text-xs font-medium">
+                {typeof action.label === "function"
+                  ? action.label(row)
+                  : action.label}
+              </span>
             )}
           </>
         );
@@ -138,6 +151,11 @@ export function ActionsCell<
             size="sm"
             onClick={(e) => handleActionClick(action, e)}
             className={getButtonClassName()}
+            disabled={
+              typeof action.disabled === "function"
+                ? action.disabled(row)
+                : action.disabled
+            }
           >
             {buttonContent}
           </Button>
@@ -148,7 +166,12 @@ export function ActionsCell<
             <Tooltip>
               <TooltipTrigger asChild>{button}</TooltipTrigger>
               <TooltipContent>
-                <p>{action.tooltip || action.label}</p>
+                <p>
+                  {action.tooltip ||
+                    (typeof action.label === "function"
+                      ? action.label(row)
+                      : action.label)}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

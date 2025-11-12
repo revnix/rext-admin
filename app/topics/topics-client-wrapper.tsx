@@ -1,6 +1,13 @@
 "use client";
 
-import { CheckCircle, Eye, Lightbulb, PenTool, Trash2 } from "lucide-react";
+import {
+  CheckCircle,
+  Eye,
+  Lightbulb,
+  Loader2,
+  PenTool,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table";
 import {
@@ -44,7 +51,7 @@ export function TopicsClientWrapper({
   const approveMutation = useTopicApproveServerAction();
   const topicsLogger = logger.forComponent("TopicsClientWrapper");
   const [approvingTopicId, setApprovingTopicId] = useState<string | null>(null);
-  const [, setDeletingTopicId] = useState<string | null>(null);
+  const [deletingTopicId, setDeletingTopicId] = useState<string | null>(null);
 
   // Get workspace context (optional because this component is used in both workspace and legacy routes)
   const workspaceContext = useWorkspaceOptional();
@@ -126,21 +133,21 @@ export function TopicsClientWrapper({
     {
       key: "tags",
       header: "Tags",
-      width: "140px",
+      width: "100px",
       cell: (value, row) => <TagsList value={value} row={row} />,
       searchable: true,
     },
     {
       key: "score",
       header: "Overall Score",
-      width: "120px",
+      width: "180px",
       cell: (value, row) => <EnhancedScoreDisplay value={value} row={row} />,
       searchable: false,
     },
     {
       key: "status",
       header: "Status",
-      width: "120px",
+      width: "220px",
       cell: (value, row) => <StatusDisplay value={value} row={row} />,
       searchable: false,
     },
@@ -167,8 +174,14 @@ export function TopicsClientWrapper({
     },
     // Approve button - only shown for non-approved topics
     {
-      label: "Approve",
-      icon: <CheckCircle className="h-4 w-4" />,
+      label: (row: TopicData) =>
+        row.id === approvingTopicId ? "Loading…" : "Approve",
+      icon: (row: TopicData) =>
+        row.id === approvingTopicId ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <CheckCircle className="h-4 w-4" />
+        ),
       onClick: (row: TopicData) => {
         if (!approvingTopicId) handleTopicApproval(row.id, row.name);
       },
@@ -214,16 +227,24 @@ export function TopicsClientWrapper({
     ...(canDelete
       ? [
           {
-            label: "Remove",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: (row: TopicData) => handleTopicDelete(row.id, row.name),
+            label: (row: TopicData) =>
+              row.id === deletingTopicId ? "Removing…" : "Remove",
+            icon: (row: TopicData) =>
+              row.id === deletingTopicId ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              ),
+            onClick: (row: TopicData) => {
+              if (!deletingTopicId) handleTopicDelete(row.id, row.name);
+            },
             variant: "destructive" as const,
             requiresConfirmation: true,
             confirmationTitle: "Remove Topic",
             confirmationDescription:
               "Are you sure you want to remove this topic? This action cannot be undone.",
             tooltip: "Remove this topic permanently",
-            disabled: deleteMutation.isPending,
+            disabled: (row: TopicData) => row.id === deletingTopicId,
             showLabel: true,
           } satisfies RowAction<TopicData>,
         ]

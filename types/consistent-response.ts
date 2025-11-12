@@ -85,6 +85,7 @@ export type BackendErrorCode =
   | "external_service_error"
   | "external_service_unavailable"
   | "api_rate_limit_exceeded"
+  | "resouce_limit_exceeded"
   | "third_party_service_error"
 
   // System Errors
