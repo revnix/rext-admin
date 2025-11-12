@@ -12,24 +12,27 @@ export function createProfileNamespace(client: ApiClient) {
      * Get user profile
      */
     get: async () => {
-      return client.request<{
-        id: string;
-        email: string;
-        username: string;
-        first_name: string;
-        last_name: string;
-        display_name: string;
-        email_verified: boolean;
-        status: string;
-        avatar_url?: string;
-        bio?: string;
-        language?: string;
-        timezone?: string;
-        created_at: string;
-        updated_at: string;
+      const response = await client.request<{
+        profile: {
+          id: string;
+          email: string;
+          username: string;
+          first_name: string;
+          last_name: string;
+          display_name: string;
+          email_verified: boolean;
+          status: string;
+          avatar_url?: string;
+          bio?: string;
+          language?: string;
+          timezone?: string;
+          created_at: string;
+          updated_at: string;
+        };
       }>("/api/v1/user/profile", {
         method: "GET",
       });
+      return response.profile;
     },
 
     /**
