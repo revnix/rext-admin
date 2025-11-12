@@ -15,6 +15,7 @@ import {
 import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 export default function WorkspaceTopicCreatePage({
   params,
@@ -34,6 +35,14 @@ export default function WorkspaceTopicCreatePage({
     { label: "Topics", href: workspaceRoutes.topics(workspaceSlug) },
     { label: "Create" },
   ];
+
+  if (!workspace) {
+    return (
+      <PageLayout title="Topic Library" breadcrumbs={breadcrumbs}>
+        <TableSkeleton rows={8} />
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout
