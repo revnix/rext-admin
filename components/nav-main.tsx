@@ -126,7 +126,12 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                           }}
                         >
                           <Link href={item.url} tabIndex={0}>
-                            {item.icon && <item.icon aria-hidden="true" />}
+                            {item.icon && (
+                              <item.icon
+                                aria-hidden="true"
+                                className="h-12 w-12"
+                              />
+                            )}
                             <span>{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
