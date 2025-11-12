@@ -30,18 +30,18 @@ export function OverallScoreCard({
 }: OverallScoreCardProps) {
   return (
     <DetailCard variant="default" className="relative">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between">
         <SectionHeader
           title="Overall Quality Score"
           icon={<TrendingUp className="w-5 h-5" />}
           variant="spacious"
-          className="mb-0"
+          className="mb-0 pb-2"
         />
-        <div
-          className={`px-2 py-1 rounded-full text-xs font-medium ${colorClasses.badge}`}
-        >
-          {rating}
-        </div>
+      </div>
+      <div
+        className={`px-2 py-1 rounded-full text-xs font-medium w-max mx-auto ${colorClasses.badge}`}
+      >
+        {rating}
       </div>
 
       {/* Main Score Display - Dashboard Style */}

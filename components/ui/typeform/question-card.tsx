@@ -63,9 +63,9 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
       <motion.fieldset
         ref={ref}
         className={cn(
-          "w-full max-w-5xl mx-auto",
+          "w-full max-w-6xl mx-auto",
           // Responsive spacing with content-aware adjustments (further reduced)
-          "px-4 py-1 sm:px-6 sm:py-2 md:px-8 md:py-3",
+          "px-4 py-1 sm:px-6 sm:py-2 md:px-12 md:py-3",
           // Dynamic spacing based on content length (reduced)
           description && description.length > 100 ? "lg:py-4" : "lg:py-3",
           className,
@@ -120,7 +120,6 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
               "text-base sm:text-lg text-muted-foreground leading-relaxed",
               // Responsive margin based on content length
               "mb-2 sm:mb-3 md:mb-4",
-              "max-w-prose",
             )}
             variants={itemVariants}
           >
@@ -166,7 +165,6 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
             id={helpId}
             className={cn(
               "text-sm text-muted-foreground leading-relaxed",
-              "max-w-prose",
             )}
             variants={itemVariants}
           >
