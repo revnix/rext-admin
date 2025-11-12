@@ -149,7 +149,7 @@ export default function WorkspaceContentPage() {
     },
     { key: "publishedTo", header: "Published To", width: "120px" },
     { key: "wordCount", header: "Words", width: "80px" },
-    { key: "seoScore", header: "SEO Score", width: "90px" },
+    { key: "seoScore", header: "SEO Score", width: "120px" },
     { key: "humanReviewer", header: "Reviewer", width: "120px" },
     {
       key: "publishDate",

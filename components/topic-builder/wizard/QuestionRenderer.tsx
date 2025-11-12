@@ -72,7 +72,7 @@ export const QuestionRenderer = memo(function QuestionRenderer({
       {/* Progress Indicator moved to top with enhanced visibility */}
       {showProgress && (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
-          <div className="max-w-5xl mx-auto px-6 py-3">
+          <div className="max-w-6xl mx-auto px-6 py-3">
             <WizardProgress
               current={progress.current}
               total={progress.total}
