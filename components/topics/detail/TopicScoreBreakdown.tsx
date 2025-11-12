@@ -116,7 +116,7 @@ export function TopicScoreBreakdown({ scores }: TopicScoreBreakdownProps) {
             <Tooltip key={score.label}>
               <TooltipTrigger asChild>
                 <div className="flex items-center justify-between py-1 cursor-help hover:bg-muted/10 rounded-md px-1 transition-colors">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 pr-4">
                     <div
                       className={`p-1.5 rounded-md shadow-sm ${colors.background} ${colors.text}`}
                     >

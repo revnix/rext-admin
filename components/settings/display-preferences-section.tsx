@@ -73,14 +73,14 @@ export function DisplayPreferencesSection() {
     },
     values: preferences
       ? {
-          date_format: preferences.date_format as
-            | "iso"
-            | "us"
-            | "eu"
-            | "relative",
-          time_format: preferences.time_format as "24h" | "12h",
-          items_per_page: preferences.items_per_page,
-        }
+        date_format: preferences.date_format as
+          | "iso"
+          | "us"
+          | "eu"
+          | "relative",
+        time_format: preferences.time_format as "24h" | "12h",
+        items_per_page: preferences.items_per_page,
+      }
       : undefined,
   });
 
@@ -227,7 +227,7 @@ export function DisplayPreferencesSection() {
                       }
                       value={field.value?.toString()}
                     >
-                      <FormControl className="col-span-2">
+                      <FormControl className="col-span-2 justify-self-end">
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -239,7 +239,7 @@ export function DisplayPreferencesSection() {
                         <SelectItem value="100">100</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription className="col-span-3 col-start-2 !mt-0">
+                    <FormDescription className="col-span-3 col-start-1 ms-auto -mt-4">
                       Default number of items to display in lists
                     </FormDescription>
                     <FormMessage className="col-span-3 col-start-2" />
