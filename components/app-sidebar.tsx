@@ -57,8 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasWorkspaces = workspaceList.length > 0;
   const { workspacePermissions } = usePermissionStore();
   const storeRole = currentWorkspace
-    ? (workspacePermissions.get(currentWorkspace.id)?.role ??
-      workspacePermissions.get(currentWorkspace.slug)?.role)
+    ? workspacePermissions.get(currentWorkspace.id)?.role ??
+      workspacePermissions.get(currentWorkspace.slug)?.role
     : undefined;
   const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const activeRole = fetchedRole || storeRole;
@@ -66,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state: sidebarState } = useSidebar();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null,
+    null
   );
 
   // Main navigation groups
@@ -187,16 +187,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
   const filteredPersonalNavigation = useFilteredNavigation(
-    personalNavigationGroups,
+    personalNavigationGroups
   );
   const filteredAdministratorNavigation = useFilteredNavigation(
-    administratorNavigationGroups,
+    administratorNavigationGroups
   );
 
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
+        (group) => group.groupLabel !== "Workspace"
       );
 
   return (
@@ -223,10 +223,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton tooltip={item.title} asChild>
-                        <a href={item.url}>
+                        <Link href={item.url}>
                           {Icon && <Icon />}
                           <span>{item.title}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -282,14 +282,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 type="submit"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  e.stopPropagation(); // prevent link navigation
+                                  e.stopPropagation();
                                   setOpenDropdown(
                                     openDropdown === item.title
                                       ? null
-                                      : item.title,
+                                      : item.title
                                   );
                                 }}
-                                className="rounded-md hover:bg-sidebar-accent transition"
+                                className="rounded-md hover:bg-sidebar-accent transition  hover:cursor-pointer"
                               >
                                 <ChevronRight
                                   size={16}
@@ -319,7 +319,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     asChild
                                     className="rounded-md hover:bg-gray-300 transition"
                                   >
-                                    <a href={subItem.url}>{subItem.title}</a>
+                                    <Link href={subItem.url}>
+                                      {subItem.title}
+                                    </Link>
                                   </SidebarMenuButton>
                                 </SidebarMenuItem>
                               ))}
@@ -337,42 +339,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className="relative flex flex-col"
                     >
                       <div className="flex items-center justify-between">
-                        <SidebarMenuButton
-                          tooltip={item.title}
-                          asChild
-                          onClick={() => {
-                            if (hasChildren) {
-                              setExpandedAccordion(
-                                expandedAccordion === item.title
-                                  ? null
-                                  : item.title,
-                              );
-                            }
-                          }}
-                        >
-                          <a
+                        {/* Clicking the text navigates directly */}
+                        <SidebarMenuButton tooltip={item.title} asChild>
+                          <Link
                             href={item.url}
-                            className="flex items-center gap-2 "
+                            className="flex items-center gap-2"
                           >
                             {Icon && <Icon />}
                             <span>{item.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuButton>
+
+                        {/* Clicking the chevron toggles the accordion only */}
                         {hasChildren && (
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent link click
                               setExpandedAccordion(
                                 expandedAccordion === item.title
                                   ? null
-                                  : item.title,
-                              )
-                            }
+                                  : item.title
+                              );
+                            }}
                             className="p-1 ml-auto"
                           >
                             <ChevronDown
                               size={16}
-                              className={`transition-transform ${
+                              className={`transition-transform hover:cursor-pointer ${
                                 expandedAccordion === item.title
                                   ? "rotate-180"
                                   : ""
@@ -381,12 +375,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </button>
                         )}
                       </div>
+
                       {hasChildren && expandedAccordion === item.title && (
                         <SidebarMenu className="pl-7 ml-1 mt-1 flex flex-col gap-1 border-l border-sidebar-border my-2">
                           {item.items?.map((subItem) => (
                             <SidebarMenuItem key={subItem.title}>
                               <SidebarMenuButton asChild>
-                                <a href={subItem.url}>{subItem.title}</a>
+                                <Link href={subItem.url}>{subItem.title}</Link>
                               </SidebarMenuButton>
                             </SidebarMenuItem>
                           ))}
@@ -416,10 +411,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton tooltip={item.title} asChild>
-                        <a href={item.url}>
+                        <Link href={item.url}>
                           {Icon && <Icon />}
                           <span>{item.title}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
