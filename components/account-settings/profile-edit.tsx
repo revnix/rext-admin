@@ -107,13 +107,15 @@ export function ProfileEdit() {
   // Upload avatar mutation
   const uploadAvatarMutation = useMutation({
     mutationFn: (file: FormData) => apiClient.profile.uploadAvatar(file),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[ProfileEdit] Avatar upload response:', data);
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Avatar uploaded successfully");
       setAvatarPreview(null);
       setAvatarFile(null);
     },
     onError: (error: Error) => {
+      console.error('[ProfileEdit] Avatar upload error:', error);
       toast.error("Failed to upload avatar", {
         description: error.message,
       });
@@ -236,6 +238,14 @@ export function ProfileEdit() {
 
   const currentAvatar = avatarPreview || apiClient.getAvatarUrl(profile?.avatar_url);
 
+  // Debug: Log avatar URL
+  console.log('[ProfileEdit] Avatar URLs:', {
+    rawAvatarUrl: profile?.avatar_url,
+    convertedUrl: apiClient.getAvatarUrl(profile?.avatar_url),
+    currentAvatar,
+    hasPreview: !!avatarPreview,
+  });
+
   return (
     <div className="space-y-6">
       {/* Avatar Section */}
@@ -256,6 +266,16 @@ export function ProfileEdit() {
                 alt="Profile picture"
                 fill
                 className="object-cover"
+                unoptimized
+                onError={(e) => {
+                  console.error('[ProfileEdit] Image load error:', {
+                    src: currentAvatar,
+                    error: e,
+                  });
+                }}
+                onLoad={() => {
+                  console.log('[ProfileEdit] Image loaded successfully:', currentAvatar);
+                }}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted-foreground">
