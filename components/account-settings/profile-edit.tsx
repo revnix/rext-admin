@@ -171,8 +171,21 @@ export function ProfileEdit() {
   const handleUploadAvatar = () => {
     if (!avatarFile) return;
 
+    console.log('[ProfileEdit] Starting avatar upload...', {
+      fileName: avatarFile.name,
+      fileSize: avatarFile.size,
+      fileType: avatarFile.type,
+    });
+
     const formData = new FormData();
     formData.append("avatar", avatarFile);
+
+    // Log FormData contents
+    console.log('[ProfileEdit] FormData created, contents:', {
+      hasAvatar: formData.has('avatar'),
+      avatarFile: formData.get('avatar'),
+    });
+
     uploadAvatarMutation.mutate(formData);
   };
 
