@@ -6,6 +6,7 @@
  */
 
 import { getSession } from "next-auth/react";
+import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import { log } from "@/lib/logger";
 
@@ -14,6 +15,10 @@ let authHeadersCache: {
   headers: Record<string, string>;
   timestamp: number;
 } | null = null;
+
+// Single shared in-flight promise for getSession() on client so concurrent calls reuse it
+let sessionPromise: Promise<Session | null> | null = null;
+
 const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 
 /**
@@ -23,14 +28,6 @@ const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 export async function getAuthHeaders(
   skipCache: boolean = false,
 ): Promise<Record<string, string>> {
-  // Check cache first (only on client-side)
-  if (typeof window !== "undefined" && !skipCache && authHeadersCache) {
-    const now = Date.now();
-    if (now - authHeadersCache.timestamp < CACHE_TTL_MS) {
-      return authHeadersCache.headers;
-    }
-  }
-
   // Server-side: use auth()
   if (typeof window === "undefined") {
     const session = await auth();
@@ -46,15 +43,70 @@ export async function getAuthHeaders(
     return {};
   }
 
-  // Client-side: use getSession()
-  const session = await getSession();
-  const headers: Record<string, string> = {};
+  // Client-side: check if we already have cached headers first
+  if (!skipCache && authHeadersCache) {
+    const now = Date.now();
+    if (now - authHeadersCache.timestamp < CACHE_TTL_MS) {
+      return authHeadersCache.headers;
+    }
+  }
 
-  if (session?.user?.accessToken) {
-    headers.Authorization = `Bearer ${session.user.accessToken}`;
+  // If there's already a sessionPromise in-flight, await it to avoid duplicate getSession() calls
+  if (!skipCache && sessionPromise) {
+    try {
+      const cachedSession = await sessionPromise;
+      const headers = buildHeadersFromSession(cachedSession);
+      // store into cache for subsequent requests
+      authHeadersCache = { headers, timestamp: Date.now() };
+      return headers;
+    } catch (_err) {
+      // fallthrough to new attempt
+      sessionPromise = null;
+    }
+  }
+
+  // create new in-flight promise and store it
+  sessionPromise = (async () => {
+    try {
+      const session = await getSession();
+      return session;
+    } finally {
+      // note: we don't null sessionPromise here immediately so concurrent callers can still await
+    }
+  })();
+
+  let session: Session | null;
+  try {
+    session = await sessionPromise;
+  } catch (err) {
+    // clear failed promise so next call can retry
+    sessionPromise = null;
+    log.error("[AuthJS] getSession() failed", err);
+    return {};
+  } finally {
+    // clear sessionPromise after resolution so a subsequent call after TTL will re-run
+    sessionPromise = null;
+  }
+
+  const headers = buildHeadersFromSession(session);
+
+  // cache the headers
+  authHeadersCache = {
+    headers,
+    timestamp: Date.now(),
+  };
+
+  return headers;
+}
+
+function buildHeadersFromSession(session: Session | null): Record<string, string> {
+  const headers: Record<string, string> = {};
+   const token = session?.user?.accessToken as string | undefined;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
     log.debug("[AuthJS] Got access token from session", {
-      tokenLength: session.user.accessToken.length,
-      tokenPreview: `${session.user.accessToken.substring(0, 10)}...`,
+      tokenLength: token.length,
+      tokenPreview: `${token.substring(0, 10)}...`,
     });
   } else {
     log.warn("[AuthJS] No access token in client session", {
@@ -64,13 +116,6 @@ export async function getAuthHeaders(
       userKeys: session?.user ? Object.keys(session.user) : [],
     });
   }
-
-  // Cache the headers on client-side
-  authHeadersCache = {
-    headers,
-    timestamp: Date.now(),
-  };
-
   return headers;
 }
 
