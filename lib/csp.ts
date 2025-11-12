@@ -45,8 +45,8 @@ export function getCSPHeader(_nonce: string): string {
     // In production, you may want to generate style hashes or use a CSS-in-JS solution
     `style-src 'self' 'unsafe-inline'`,
 
-    // Images: Allow self, data URIs, and blobs
-    "img-src 'self' blob: data: https:",
+    // Images: Allow self, data URIs, blobs, and backend API (for avatars/media)
+    `img-src 'self' blob: data: https: ${apiUrl}`,
 
     // Fonts: Allow self and data URIs
     "font-src 'self' data:",
