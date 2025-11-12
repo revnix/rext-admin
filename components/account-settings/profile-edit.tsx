@@ -266,7 +266,7 @@ export function ProfileEdit() {
                 alt="Profile picture"
                 fill
                 className="object-cover"
-                unoptimized
+                sizes="96px"
                 onError={(e) => {
                   console.error('[ProfileEdit] Image load error:', {
                     src: currentAvatar,

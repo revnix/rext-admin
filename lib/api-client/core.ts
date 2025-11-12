@@ -220,8 +220,17 @@ export class ApiClient {
       return avatarUrl;
     }
 
+    // Ensure we're using client-side environment variables (NEXT_PUBLIC_*)
+    // This is critical for image loading in the browser
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://127.0.0.1:2024";
+
     // Convert relative path to absolute URL
-    return `${this.baseUrl}${avatarUrl}`;
+    // Handle both /avatars/... and avatars/... formats
+    const separator = avatarUrl.startsWith('/') ? '' : '/';
+    return `${backendUrl}${separator}${avatarUrl}`;
   }
 
   /**
