@@ -30,6 +30,19 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 
+// Helper to convert relative avatar URLs to absolute URLs
+const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
+  if (!avatarUrl) return null;
+  if (avatarUrl.startsWith("http")) return avatarUrl;
+  
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "http://127.0.0.1:2024";
+  
+  return `${baseUrl}${avatarUrl}`;
+};
+
 const profileSchema = z.object({
   first_name: z.string().min(1, "First name is required").max(50),
   last_name: z.string().min(1, "Last name is required").max(50),
@@ -195,7 +208,7 @@ export function ProfileEdit() {
     );
   }
 
-  const currentAvatar = avatarPreview || profile?.avatar_url;
+  const currentAvatar = avatarPreview || getAvatarUrl(profile?.avatar_url);
 
   return (
     <div className="space-y-6">
