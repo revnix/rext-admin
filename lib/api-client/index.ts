@@ -91,6 +91,7 @@ function createApiClient() {
     preferences: createPreferencesNamespace(client),
 
     // Utility methods
+    getAvatarUrl: (avatarUrl?: string | null) => client.getAvatarUrl(avatarUrl),
     cancelAllRequests: () => client.cancelAllRequests(),
     getActiveRequestsCount: () => client.getActiveRequestsCount(),
   };
