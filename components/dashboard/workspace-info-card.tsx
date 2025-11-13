@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CanAccess } from "@/components/permissions/can-access";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import {
   Card,
   CardContent,
@@ -26,6 +26,15 @@ interface WorkspaceInfoCardProps {
 }
 
 export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
+  // Explicitly check workspace-scoped permission using this card's workspace.
+  // Dashboard isn't wrapped in WorkspaceProvider, so ambient checks would fall back to global.
+  // Hooks must be called before any early returns.
+  const { hasPermission: canUpdateWorkspace, isLoading: isPermLoading } =
+    useWorkspacePermission(
+      WORKSPACE_PERMISSIONS.UPDATE,
+      workspace?.id || workspace?.slug,
+    );
+
   if (!workspace) {
     return (
       <Card>
@@ -115,14 +124,14 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
 
         {/* Actions */}
         <div className="space-y-2">
-          <CanAccess permission={WORKSPACE_PERMISSIONS.UPDATE} fallback={null}>
+          {!isPermLoading && canUpdateWorkspace && (
             <Button asChild variant="outline" size="sm" className="w-full">
               <Link href={`/w/${workspace.slug}/settings`}>
                 <Settings className="h-4 w-4 mr-2" />
                 Workspace Settings
               </Link>
             </Button>
-          </CanAccess>
+          )}
           <Button asChild variant="ghost" size="sm" className="w-full">
             <Link href="/w">Switch Workspace</Link>
           </Button>

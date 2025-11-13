@@ -363,9 +363,9 @@ export default function ResultsPage() {
             ...prev,
             session: prev.session
               ? {
-                ...prev.session,
-                topics: [...prev.session.topics, ...result.topics],
-              }
+                  ...prev.session,
+                  topics: [...prev.session.topics, ...result.topics],
+                }
               : null,
           }));
 

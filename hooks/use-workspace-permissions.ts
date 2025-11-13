@@ -80,7 +80,8 @@ export function useWorkspacePermissions(workspaceId?: string) {
 
   return {
     permissions: data?.permissions || [],
-    role: data?.user_role || "viewer", // Return single role
+    // Only return role if we have workspace data; otherwise undefined to allow fallback to global role
+    role: workspaceId && data?.user_role ? data.user_role : undefined,
     workspaceId: data?.workspace_id,
     workspaceSlug: data?.workspace_slug,
     isLoading,
