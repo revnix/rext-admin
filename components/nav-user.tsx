@@ -27,7 +27,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import {
@@ -43,9 +42,6 @@ export function NavUser() {
 
   // Workspace role sources (hooks must be at top level)
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
-  const workspacePermissionsMap = usePermissionStore(
-    (state) => state.workspacePermissions,
-  );
   const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
     currentWorkspace?.id,
   );
@@ -69,6 +65,8 @@ export function NavUser() {
     if (!role) return "";
     const map: Record<string, string> = {
       super_admin: "Super Admin",
+      workspace_owner: "Workspace Owner",
+      workspace_admin: "Workspace Admin",
       admin: "Admin",
       manager: "Manager",
       developer: "Developer",
@@ -122,13 +120,9 @@ export function NavUser() {
   const userName = user.name;
   const userEmail = user.email;
   const userInitials = getInitials(userName);
-  // Prefer workspace-scoped role if available, else fall back to global session role
-  const workspaceRoleRaw = currentWorkspace
-    ? workspacePermissionsMap.get(currentWorkspace.id)?.role
-    : undefined;
-  // Ensure workspace permissions are fetched even if provider isn't mounted
-  const effectiveWorkspaceRole = fetchedWorkspaceRole || workspaceRoleRaw;
-  const userRole = getRoleDisplayName(effectiveWorkspaceRole || user.role);
+  // Prefer workspace-scoped role when available; fall back to global session role
+  const effectiveRoleKey = fetchedWorkspaceRole || user.role;
+  const userRole = getRoleDisplayName(effectiveRoleKey);
 
   return (
     <SidebarMenu>

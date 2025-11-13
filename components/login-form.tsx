@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export function LoginForm({
   className,
@@ -29,9 +30,10 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   // Invitation validation hook
   const {
@@ -60,9 +62,11 @@ export function LoginForm({
           "Sign in failed. Check the details you provided are correct.",
         Default: "An error occurred during authentication.",
       };
-      setError(errorMessages[urlError] || errorMessages.Default);
+      const message = errorMessages[urlError] || errorMessages.Default;
+      setError(message);
+      toast.error(message);
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +95,7 @@ export function LoginForm({
           errorData?.message ||
           "Invalid email or password. Please check your credentials and try again.";
         setError(errorMessage);
+        toast.error(errorMessage);
         return;
       }
 
@@ -106,6 +111,7 @@ export function LoginForm({
 
       if (result?.error) {
         setError("Authentication failed. Please try again.");
+        toast.error("Authentication failed. Please try again.");
         return;
       }
 
@@ -121,6 +127,7 @@ export function LoginForm({
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       setError("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -170,12 +177,6 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-                {error}
-              </div>
-            )}
-
             <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
             <div className="flex flex-col gap-6">

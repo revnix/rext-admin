@@ -15,7 +15,7 @@ import { useWorkspaceStore } from "@/stores/workspace";
  */
 interface WorkspacePermissionContextValue {
   permissions: string[];
-  role: string;
+  role: string | undefined; // undefined when no workspace exists, allows fallback to global role
   workspaceId?: string;
   isLoading: boolean;
 }

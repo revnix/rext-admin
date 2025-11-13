@@ -73,14 +73,14 @@ export function DisplayPreferencesSection() {
     },
     values: preferences
       ? {
-        date_format: preferences.date_format as
-          | "iso"
-          | "us"
-          | "eu"
-          | "relative",
-        time_format: preferences.time_format as "24h" | "12h",
-        items_per_page: preferences.items_per_page,
-      }
+          date_format: preferences.date_format as
+            | "iso"
+            | "us"
+            | "eu"
+            | "relative",
+          time_format: preferences.time_format as "24h" | "12h",
+          items_per_page: preferences.items_per_page,
+        }
       : undefined,
   });
 

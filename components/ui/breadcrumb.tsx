@@ -80,7 +80,10 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
     <span
       data-slot="breadcrumb-page"
       aria-current="page"
-      className={cn("text-foreground font-normal line-clamp-1 truncate w-48", className)}
+      className={cn(
+        "text-foreground font-normal line-clamp-1 truncate w-48",
+        className,
+      )}
       {...props}
     />
   );

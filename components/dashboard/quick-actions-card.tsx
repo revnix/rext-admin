@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CanAccess } from "@/components/permissions/can-access";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import {
   Card,
   CardContent,
@@ -26,6 +26,10 @@ interface QuickActionsCardProps {
 
 export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
   const workspaceSlug = workspace?.slug;
+  const { hasPermission: canUpdateWorkspace } = useWorkspacePermission(
+    WORKSPACE_PERMISSIONS.UPDATE,
+    (workspace?.id || workspace?.slug) as string | undefined,
+  );
 
   const actions = [
     {
@@ -83,7 +87,7 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
           ))}
 
           {/* Gated: Workspace Settings (visible only with workspace.update) */}
-          <CanAccess permission={WORKSPACE_PERMISSIONS.UPDATE} fallback={null}>
+          {canUpdateWorkspace && (
             <Button
               asChild
               variant="ghost"
@@ -99,7 +103,7 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
                 Workspace Settings
               </Link>
             </Button>
-          </CanAccess>
+          )}
         </div>
       </CardContent>
     </Card>

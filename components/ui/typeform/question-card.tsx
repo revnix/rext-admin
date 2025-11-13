@@ -163,9 +163,7 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
         {helpText && (
           <motion.div
             id={helpId}
-            className={cn(
-              "text-sm text-muted-foreground leading-relaxed",
-            )}
+            className={cn("text-sm text-muted-foreground leading-relaxed")}
             variants={itemVariants}
           >
             {helpText}
