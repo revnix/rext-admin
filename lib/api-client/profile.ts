@@ -135,6 +135,7 @@ export function createAccountNamespace(client: ApiClient) {
     deactivate: async (data: {
       reason?: string;
       confirm: boolean;
+      password: string;
       cancel_subscriptions?: boolean;
     }) => {
       return client.request<{

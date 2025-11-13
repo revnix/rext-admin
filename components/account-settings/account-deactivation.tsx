@@ -28,6 +28,7 @@ import { SubscriptionStatus } from "@/types/subscription";
 export function AccountDeactivation() {
   const [reason, setReason] = useState("");
   const [confirmText, setConfirmText] = useState("");
+  const [password, setPassword] = useState("");
   const [understood, setUnderstood] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cancelSubscriptions, setCancelSubscriptions] = useState(false);
@@ -57,6 +58,7 @@ export function AccountDeactivation() {
     mutationFn: (data: {
       reason?: string;
       confirm: boolean;
+      password: string;
       cancel_subscriptions?: boolean;
     }) => apiClient.account.deactivate(data),
     onSuccess: async (data) => {
@@ -96,6 +98,7 @@ export function AccountDeactivation() {
     deactivateMutation.mutate({
       reason: reason || undefined,
       confirm: true,
+      password: password,
       cancel_subscriptions: hasActiveSubscriptions
         ? cancelSubscriptions
         : false,
@@ -238,6 +241,20 @@ export function AccountDeactivation() {
                   placeholder="DEACTIVATE"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
+                  disabled={deactivateMutation.isPending}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password-text">
+                  Type password to proceed
+                </Label>
+                <Input
+                  id="password-text"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   disabled={deactivateMutation.isPending}
                 />
               </div>
