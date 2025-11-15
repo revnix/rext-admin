@@ -90,15 +90,17 @@ export function useTopicDeleteServerAction() {
       });
 
       const isMultiple = topicIds.length > 1;
-      
+
       // Extract better error message for content-related errors
-      let errorTitle = isMultiple ? "Failed to delete topics" : "Failed to delete topic";
+      let errorTitle = isMultiple
+        ? "Failed to delete topics"
+        : "Failed to delete topic";
       let errorDescription = err.message;
 
       // Check if this is a content association error
-      if (err.message && err.message.toLowerCase().includes("content")) {
+      if (err.message?.toLowerCase().includes("content")) {
         errorTitle = "Cannot delete topic";
-        errorDescription = 
+        errorDescription =
           "This topic has associated content. Please delete or reassign the content before deleting the topic.";
       }
 

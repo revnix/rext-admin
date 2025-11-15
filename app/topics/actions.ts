@@ -58,15 +58,16 @@ export async function deleteTopic(formData: FormData) {
       workspaceId,
       error: error instanceof Error ? error.message : String(error),
     });
-    
+
     // Extract better error message for the client
     let errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Check if error is about content association
-    if (errorMessage && errorMessage.toLowerCase().includes("content")) {
-      errorMessage = "Cannot delete this topic because it has associated content. Please delete or reassign the content first.";
+    if(errorMessage?.toLowerCase().includes("content")){
+      errorMessage =
+        "Cannot delete this topic because it has associated content. Please delete or reassign the content first.";
     }
-    
+
     throw new Error(errorMessage);
   }
 }
@@ -138,18 +139,19 @@ export async function deleteTopics(formData: FormData) {
       workspaceId,
       error: error instanceof Error ? error.message : String(error),
     });
-    
+
     // Extract better error message for the client
     let errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Check if error is about content association
-    if (errorMessage && errorMessage.toLowerCase().includes("content")) {
+    if (errorMessage?.toLowerCase().includes("content")) {
       const topicCount = topicIds.length;
-      errorMessage = topicCount === 1 
-        ? "Cannot delete this topic because it has associated content. Please delete or reassign the content first."
-        : "One or more of these topics have associated content. Please delete or reassign the content first.";
+      errorMessage =
+        topicCount === 1
+          ? "Cannot delete this topic because it has associated content. Please delete or reassign the content first."
+          : "One or more of these topics have associated content. Please delete or reassign the content first.";
     }
-    
+
     throw new Error(errorMessage);
   }
 }
