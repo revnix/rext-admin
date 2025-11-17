@@ -26,6 +26,7 @@ import { apiClient } from "@/lib/api-client";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
+import Image from "next/image";
 
 interface WorkspaceMembersPanelProps {
   workspace: Workspace;
@@ -48,6 +49,7 @@ interface WorkspaceMember {
     email: string;
     display_name: string | null;
     is_verified: boolean;
+    avatar: string | null;
   };
 }
 
@@ -62,6 +64,7 @@ interface MemberData extends Record<string, unknown> {
   is_verified: boolean;
   joined_at: string;
   initials: string;
+  avatar: string | null;
 }
 
 export function WorkspaceMembersPanel({
@@ -69,7 +72,7 @@ export function WorkspaceMembersPanel({
 }: WorkspaceMembersPanelProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
-    null,
+    null
   );
   const [memberToChangeRole, setMemberToChangeRole] =
     useState<WorkspaceMember | null>(null);
@@ -92,6 +95,11 @@ export function WorkspaceMembersPanel({
 
   const members = membersResponse?.members || [];
 
+  
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "http://127.0.0.1:2024";
   // Get initials for avatar
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
@@ -138,6 +146,7 @@ export function WorkspaceMembersPanel({
     is_verified: member.user.is_verified,
     joined_at: formatDate(member.joined_at),
     initials: getInitials(member.user.display_name || member.user.name),
+    avatar: member.user?.avatar ?? null,
   }));
 
   // Define columns
@@ -148,10 +157,25 @@ export function WorkspaceMembersPanel({
       width: "300px",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+          {/* <Avatar className="h-10 w-10">
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
               {row.initials}
             </AvatarFallback>
+          </Avatar> */}
+          <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
+            {row.avatar ? (
+              <Image
+                src={`${baseUrl}${row.avatar}`}
+                alt="User avatar"
+                fill
+                className="object-cover"
+                sizes="32px"
+              />
+            ) : (
+              <AvatarFallback className="rounded-lg">
+                {row.initials}
+              </AvatarFallback>
+            )}
           </Avatar>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
