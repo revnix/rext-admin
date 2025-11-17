@@ -57,8 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasWorkspaces = workspaceList.length > 0;
   const { workspacePermissions } = usePermissionStore();
   const storeRole = currentWorkspace
-    ? (workspacePermissions.get(currentWorkspace.id)?.role ??
-      workspacePermissions.get(currentWorkspace.slug)?.role)
+    ? workspacePermissions.get(currentWorkspace.id)?.role ??
+      workspacePermissions.get(currentWorkspace.slug)?.role
     : undefined;
   const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const activeRole = fetchedRole || storeRole;
@@ -66,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state: sidebarState } = useSidebar();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null,
+    null
   );
 
   // Main navigation groups
@@ -187,16 +187,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
   const filteredPersonalNavigation = useFilteredNavigation(
-    personalNavigationGroups,
+    personalNavigationGroups
   );
   const filteredAdministratorNavigation = useFilteredNavigation(
-    administratorNavigationGroups,
+    administratorNavigationGroups
   );
 
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
+        (group) => group.groupLabel !== "Workspace"
       );
 
   return (
@@ -286,7 +286,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   setOpenDropdown(
                                     openDropdown === item.title
                                       ? null
-                                      : item.title,
+                                      : item.title
                                   );
                                 }}
                                 className="rounded-md hover:bg-sidebar-accent transition  hover:cursor-pointer"
@@ -307,17 +307,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <PopoverContent
                             side="right"
                             align="start"
-                            className="w-40  bg-gray-100 border border-sidebar-border rounded-md shadow-md"
+                            className="w-40 bg-gray-100 dark:bg-gray-800 border border-sidebar-border dark:border-gray-700 rounded-md shadow-md"
                           >
                             <SidebarMenu>
                               {item.items?.map((subItem) => (
                                 <SidebarMenuItem
                                   key={subItem.title}
-                                  className="rounded-md hover:bg-gray-300 transition"
+                                  className="rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition"
                                 >
                                   <SidebarMenuButton
                                     asChild
-                                    className="rounded-md hover:bg-gray-300 transition"
+                                    className="rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition"
                                   >
                                     <Link href={subItem.url}>
                                       {subItem.title}
@@ -359,7 +359,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               setExpandedAccordion(
                                 expandedAccordion === item.title
                                   ? null
-                                  : item.title,
+                                  : item.title
                               );
                             }}
                             className="p-1 ml-auto"
