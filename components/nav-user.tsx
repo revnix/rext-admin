@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -26,43 +27,87 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuthSession } from "@/hooks/use-auth-session";
-import { useWorkspaceStore } from "@/stores/workspace";
-import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function NavUser() {
-  const { isMobile } = useSidebar();
-  const { user, isAuthenticated, isLoading, logout } = useAuthSession();
-  const router = useRouter();
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 
-  // Workspace role sources (hooks must be at top level)
+import { apiClient } from "@/lib/api-client";
+import Image from "next/image";
+
+export type ApiUser = {
+  id: string;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  display_name: string;
+  email_verified: boolean;
+  status: string;
+  avatar_url?: string;
+  bio?: string;
+  language?: string;
+  timezone?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export function NavUser() {
+  const router = useRouter();
+  const { isMobile } = useSidebar();
+
+  const { user, isAuthenticated, isLoading, logout } = useAuthSession();
+
+  const [profileUser, setProfileUser] = useState<ApiUser | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // ----------------------------------
+  // Fetch API user once
+  // ----------------------------------
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchUser() {
+      try {
+        const res = await apiClient.profile.get();
+        if (mounted) {
+          setProfileUser(res);
+        }
+      } catch (err) {
+        console.error("Profile fetch failed:", err);
+      } finally {
+        if (mounted) setLoadingProfile(false);
+      }
+    }
+
+    fetchUser();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
-    currentWorkspace?.id,
+    currentWorkspace?.id
   );
 
-  // Generate initials from user name
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
+  // Helper
+  const getInitials = (name?: string) =>
+    name
+      ?.split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2);
-  };
+      .slice(0, 2) ?? "?";
 
-  const handleLogout = async () => {
-    await logout(); // logout already handles redirect in useAuthSession
-  };
-
-  // Friendly display for role keys (read-only)
   const getRoleDisplayName = (role?: string) => {
-    if (!role) return "";
     const map: Record<string, string> = {
       super_admin: "Super Admin",
       workspace_owner: "Workspace Owner",
@@ -76,12 +121,15 @@ export function NavUser() {
       guest: "Guest",
       owner: "Owner",
     };
-    if (map[role]) return map[role];
-    return role.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    if (!role) return "";
+    return (
+      map[role] ??
+      role.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    );
   };
 
-  // Show loading state
-  if (isLoading) {
+  // Loading
+  if (isLoading || loadingProfile) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -98,7 +146,7 @@ export function NavUser() {
     );
   }
 
-  // Show login prompt if not authenticated
+  // Not logged in
   if (!isAuthenticated || !user) {
     return (
       <SidebarMenu>
@@ -117,13 +165,22 @@ export function NavUser() {
     );
   }
 
-  const userName = user.name;
-  const userEmail = user.email;
-  const userInitials = getInitials(userName);
-  // Prefer workspace-scoped role when available; fall back to global session role
-  const effectiveRoleKey = fetchedWorkspaceRole || user.role;
-  const userRole = getRoleDisplayName(effectiveRoleKey);
+  // Extract user data from API or fallback to auth user
+ const userName = profileUser?.display_name || user.name || "User";
+const userEmail = profileUser?.email || user.email || "";
+const userInitials = getInitials(userName);
 
+const effectiveRoleKey = fetchedWorkspaceRole || user.role;
+const userRole = getRoleDisplayName(effectiveRoleKey);
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "http://127.0.0.1:2024";
+
+  // ----------------------------------
+  // UI
+  // ----------------------------------
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -133,14 +190,26 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg">
-                  {userInitials}
-                </AvatarFallback>
+              <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
+                {profileUser?.avatar_url ? (
+                  <Image
+                    src={`${baseUrl}${profileUser.avatar_url}`}
+                    alt="User avatar"
+                    fill
+                    className="object-cover"
+                    sizes="32px"
+                  />
+                ) : (
+                  <AvatarFallback className="rounded-lg">
+                    {userInitials}
+                  </AvatarFallback>
+                )}
               </Avatar>
+
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{userName}</span>
                 <span className="truncate text-xs">{userEmail}</span>
+
                 {userRole && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -148,19 +217,19 @@ export function NavUser() {
                         {userRole}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-xs">
+
+                    <TooltipContent side="right">
                       This is your current role
-                      {currentWorkspace?.name
-                        ? ` in ${currentWorkspace.name}`
-                        : ""}
-                      .
+                      {currentWorkspace?.name && ` in ${currentWorkspace.name}`}.
                     </TooltipContent>
                   </Tooltip>
                 )}
               </div>
+
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
@@ -169,14 +238,24 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg">
-                    {userInitials}
-                  </AvatarFallback>
+                <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
+                  {profileUser?.avatar_url ? (
+                    <Image
+                      src={`${baseUrl}${profileUser.avatar_url}`}
+                      alt="User avatar"
+                      fill
+                      className="object-cover"
+                      sizes="32px"
+                    />
+                  ) : (
+                    <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                  )}
                 </Avatar>
+
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{userName}</span>
                   <span className="truncate text-xs">{userEmail}</span>
+
                   {userRole && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -184,19 +263,19 @@ export function NavUser() {
                           {userRole}
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
+                      <TooltipContent side="right">
                         This is your current role
-                        {currentWorkspace?.name
-                          ? ` in ${currentWorkspace.name}`
-                          : ""}
-                        . It determines what you can do here.
+                        {currentWorkspace?.name && ` in ${currentWorkspace.name}`}.
+                        It determines what you can do here.
                       </TooltipContent>
                     </Tooltip>
                   )}
                 </div>
               </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onClick={() => router.push("/settings/subscription")}
@@ -205,7 +284,9 @@ export function NavUser() {
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => router.push("/settings")}>
                 <BadgeCheck />
@@ -224,8 +305,10 @@ export function NavUser() {
                 Security
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
+
+            <DropdownMenuItem onClick={logout}>
               <LogOut />
               Log out
             </DropdownMenuItem>
