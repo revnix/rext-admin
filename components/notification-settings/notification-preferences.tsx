@@ -20,11 +20,55 @@ import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
   type NotificationPreferences,
+  type NotificationPreferencesApiResponse,
   notificationPreferencesSchema,
 } from "@/schemas/notification-schemas";
 
 interface NotificationPreferencesFormProps {
-  initialPreferences: NotificationPreferences;
+  initialPreferences: NotificationPreferencesApiResponse;
+}
+
+// Transform API response to form structure
+function transformApiToFormData(apiData: NotificationPreferencesApiResponse): NotificationPreferences {
+  return {
+    // Workspace notifications
+    ws_invite_received:
+      apiData.workspace_notifications?.invite_received ?? false,
+    ws_invite_accepted:
+      apiData.workspace_notifications?.invite_accepted ?? false,
+    ws_role_changed: apiData.workspace_notifications?.role_changed ?? false,
+    ws_member_removed: apiData.workspace_notifications?.member_removed ?? false,
+
+    // Content generation
+    gen_completed: apiData.content_generation?.generation_started ?? false,
+    gen_started: apiData.content_generation?.generation_completed ?? false,
+    gen_failed: apiData.content_generation?.generation_failed ?? false,
+    gen_published: apiData.content_generation?.content_published ?? false,
+
+    // Billing
+    billing_payment_success: apiData.billing?.payment_success ?? false,
+    billing_payment_failed: apiData.billing?.payment_failed ?? false,
+    billing_subscription_cancelled:
+      apiData.billing?.subscription_cancelled ?? false,
+    billing_subscription_expiring:
+      apiData.billing?.subscription_expiring ?? false,
+    billing_trial_ending: apiData.billing?.trial_ending ?? false,
+    billing_usage_limit_warning: apiData.billing?.usage_limit_warning ?? false,
+    billing_usage_limit_exceeded:
+      apiData.billing?.usage_limit_exceeded ?? false,
+
+    // Knowledge base
+    kb_processing_completed:
+      apiData.knowledge_base?.processing_completed ?? false,
+    kb_processing_failed: apiData.knowledge_base?.processing_failed ?? false,
+
+    // Email digest
+    digest_enabled: apiData.email_digest?.enabled ?? false,
+    digest_frequency: apiData.email_digest?.frequency ?? "daily",
+
+    // Marketing
+    marketing_updates: apiData.marketing?.marketing_updates ?? false,
+  };
 }
 
 export function NotificationPreferencesForm({
@@ -38,7 +82,7 @@ export function NotificationPreferencesForm({
     formState: { isDirty },
   } = useForm<NotificationPreferences>({
     resolver: zodResolver(notificationPreferencesSchema),
-    defaultValues: initialPreferences,
+    defaultValues: transformApiToFormData(initialPreferences),
   });
 
   const digestEnabled = watch("digest_enabled");
@@ -78,9 +122,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="workspace_invitation"
-              checked={watch("workspace_invitation")}
+              checked={watch("ws_invite_received")}
               onCheckedChange={(checked) =>
-                setValue("workspace_invitation", checked, { shouldDirty: true })
+                setValue("ws_invite_received", checked, { shouldDirty: true })
               }
             />
           </div>
@@ -94,9 +138,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="invitation_accepted"
-              checked={watch("invitation_accepted")}
+              checked={watch("ws_invite_accepted")}
               onCheckedChange={(checked) =>
-                setValue("invitation_accepted", checked, { shouldDirty: true })
+                setValue("ws_invite_accepted", checked, { shouldDirty: true })
               }
             />
           </div>
@@ -110,9 +154,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="role_changed"
-              checked={watch("role_changed")}
+              checked={watch("ws_role_changed")}
               onCheckedChange={(checked) =>
-                setValue("role_changed", checked, { shouldDirty: true })
+                setValue("ws_role_changed", checked, { shouldDirty: true })
               }
             />
           </div>
@@ -126,9 +170,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="member_removed"
-              checked={watch("member_removed")}
+              checked={watch("ws_member_removed")}
               onCheckedChange={(checked) =>
-                setValue("member_removed", checked, { shouldDirty: true })
+                setValue("ws_member_removed", checked, { shouldDirty: true })
               }
             />
           </div>
@@ -159,9 +203,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="content_generation_started"
-              checked={watch("content_generation_started")}
+              checked={watch("gen_started")}
               onCheckedChange={(checked) =>
-                setValue("content_generation_started", checked, {
+                setValue("gen_started", checked, {
                   shouldDirty: true,
                 })
               }
@@ -179,9 +223,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="content_generation_completed"
-              checked={watch("content_generation_completed")}
+              checked={watch("gen_completed")}
               onCheckedChange={(checked) =>
-                setValue("content_generation_completed", checked, {
+                setValue("gen_completed", checked, {
                   shouldDirty: true,
                 })
               }
@@ -199,9 +243,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="content_generation_failed"
-              checked={watch("content_generation_failed")}
+              checked={watch("gen_failed")}
               onCheckedChange={(checked) =>
-                setValue("content_generation_failed", checked, {
+                setValue("gen_failed", checked, {
                   shouldDirty: true,
                 })
               }
@@ -217,9 +261,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="content_published"
-              checked={watch("content_published")}
+              checked={watch("gen_published")}
               onCheckedChange={(checked) =>
-                setValue("content_published", checked, { shouldDirty: true })
+                setValue("gen_published", checked, { shouldDirty: true })
               }
             />
           </div>
@@ -248,9 +292,11 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="payment_succeeded"
-              checked={watch("payment_succeeded")}
+              checked={watch("billing_payment_success")}
               onCheckedChange={(checked) =>
-                setValue("payment_succeeded", checked, { shouldDirty: true })
+                setValue("billing_payment_success", checked, {
+                  shouldDirty: true,
+                })
               }
             />
           </div>
@@ -264,9 +310,11 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="payment_failed"
-              checked={watch("payment_failed")}
+              checked={watch("billing_payment_failed")}
               onCheckedChange={(checked) =>
-                setValue("payment_failed", checked, { shouldDirty: true })
+                setValue("billing_payment_failed", checked, {
+                  shouldDirty: true,
+                })
               }
             />
           </div>
@@ -282,9 +330,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="subscription_cancelled"
-              checked={watch("subscription_cancelled")}
+              checked={watch("billing_subscription_cancelled")}
               onCheckedChange={(checked) =>
-                setValue("subscription_cancelled", checked, {
+                setValue("billing_subscription_cancelled", checked, {
                   shouldDirty: true,
                 })
               }
@@ -302,9 +350,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="subscription_expiring_soon"
-              checked={watch("subscription_expiring_soon")}
+              checked={watch("billing_subscription_expiring")}
               onCheckedChange={(checked) =>
-                setValue("subscription_expiring_soon", checked, {
+                setValue("billing_subscription_expiring", checked, {
                   shouldDirty: true,
                 })
               }
@@ -320,9 +368,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="trial_ending_soon"
-              checked={watch("trial_ending_soon")}
+              checked={watch("billing_trial_ending")}
               onCheckedChange={(checked) =>
-                setValue("trial_ending_soon", checked, { shouldDirty: true })
+                setValue("billing_trial_ending", checked, { shouldDirty: true })
               }
             />
           </div>
@@ -336,9 +384,11 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="usage_limit_warning"
-              checked={watch("usage_limit_warning")}
+              checked={watch("billing_usage_limit_warning")}
               onCheckedChange={(checked) =>
-                setValue("usage_limit_warning", checked, { shouldDirty: true })
+                setValue("billing_usage_limit_warning", checked, {
+                  shouldDirty: true,
+                })
               }
             />
           </div>
@@ -352,9 +402,11 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="usage_limit_exceeded"
-              checked={watch("usage_limit_exceeded")}
+              checked={watch("billing_usage_limit_exceeded")}
               onCheckedChange={(checked) =>
-                setValue("usage_limit_exceeded", checked, { shouldDirty: true })
+                setValue("billing_usage_limit_exceeded", checked, {
+                  shouldDirty: true,
+                })
               }
             />
           </div>
@@ -483,9 +535,9 @@ export function NotificationPreferencesForm({
             </div>
             <Switch
               id="marketing"
-              checked={watch("marketing")}
+              checked={watch("marketing_updates")}
               onCheckedChange={(checked) =>
-                setValue("marketing", checked, { shouldDirty: true })
+                setValue("marketing_updates", checked, { shouldDirty: true })
               }
             />
           </div>
