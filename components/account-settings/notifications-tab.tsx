@@ -7,13 +7,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
-  defaultNotificationPreferences,
-  type NotificationPreferences,
+  transformToApiResponse,
+  type NotificationPreferencesApiResponse,
 } from "@/schemas/notification-schemas";
 
 export function NotificationsTab() {
   const [preferences, setPreferences] =
-    useState<NotificationPreferences | null>(null);
+    useState<NotificationPreferencesApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export function NotificationsTab() {
         log.error("[NotificationsTab] Failed to load preferences:", err);
         setError("Failed to load notification preferences");
         // Set defaults if backend not ready
-        setPreferences(defaultNotificationPreferences);
+        setPreferences(transformToApiResponse());
       } finally {
         setIsLoading(false);
       }

@@ -4,7 +4,10 @@
  * Handles settings-related operations: notifications, sessions, security
  */
 
-import type { NotificationPreferences } from "@/schemas/notification-schemas";
+import type {
+  NotificationPreferences,
+  NotificationPreferencesApiResponse,
+} from "@/schemas/notification-schemas";
 import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
 
@@ -18,7 +21,7 @@ export function createNotificationsNamespace(client: ApiClient) {
      * Get notification preferences
      */
     getPreferences: async () => {
-      return client.request<NotificationPreferences>(
+      return client.request<NotificationPreferencesApiResponse>(
         "/api/v1/user/preferences/notifications",
         {
           method: "GET",
@@ -32,7 +35,7 @@ export function createNotificationsNamespace(client: ApiClient) {
     updatePreferences: async (
       preferences: Partial<NotificationPreferences>,
     ) => {
-      return client.request<NotificationPreferences>(
+      return client.request<NotificationPreferencesApiResponse>(
         "/api/v1/user/preferences/notifications",
         {
           method: "PATCH",

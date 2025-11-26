@@ -128,3 +128,41 @@ export const notificationPreferencesApiSchema = z.object({
 export type NotificationPreferencesApiResponse = z.infer<
   typeof notificationPreferencesApiSchema
 >;
+// Transform flat preferences to API response structure
+export function transformToApiResponse(): NotificationPreferencesApiResponse {
+  const defaults = defaultNotificationPreferences;
+  return {
+    workspace_notifications: {
+      invite_received: defaults.ws_invite_received,
+      invite_accepted: defaults.ws_invite_accepted,
+      role_changed: defaults.ws_role_changed,
+      member_removed: defaults.ws_member_removed,
+    },
+    content_generation: {
+      generation_started: defaults.gen_started,
+      generation_completed: defaults.gen_completed,
+      generation_failed: defaults.gen_failed,
+      content_published: defaults.gen_published,
+    },
+    billing: {
+      payment_success: defaults.billing_payment_success,
+      payment_failed: defaults.billing_payment_failed,
+      subscription_cancelled: defaults.billing_subscription_cancelled,
+      subscription_expiring: defaults.billing_subscription_expiring,
+      trial_ending: defaults.billing_trial_ending,
+      usage_limit_warning: defaults.billing_usage_limit_warning,
+      usage_limit_exceeded: defaults.billing_usage_limit_exceeded,
+    },
+    knowledge_base: {
+      processing_completed: defaults.kb_processing_completed,
+      processing_failed: defaults.kb_processing_failed,
+    },
+    email_digest: {
+      enabled: defaults.digest_enabled,
+      frequency: defaults.digest_frequency,
+    },
+    marketing: {
+      marketing_updates: defaults.marketing_updates,
+    },
+  };
+}
