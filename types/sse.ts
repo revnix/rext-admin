@@ -30,3 +30,29 @@ export interface SSEConnectionStatus {
   retryCount: number;
   error?: string;
 }
+
+export type OperationNotificationType =
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "system"
+  | "user";
+
+export interface OperationNotificationAction {
+  label: string;
+  variant?: "default" | "outline" | "secondary" | "destructive";
+  onClick?: () => void;
+}
+
+export interface OperationNotification {
+  id: string;
+  operationId?: string;
+  title: string;
+  message: string;
+  type: OperationNotificationType;
+  createdAt: string;
+  read: boolean;
+  actions?: OperationNotificationAction[];
+  metadata?: Record<string, unknown>;
+}
