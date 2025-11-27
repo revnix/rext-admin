@@ -2,25 +2,25 @@ import { z } from "zod";
 
 export const notificationPreferencesSchema = z.object({
   // Workspace Notifications
-  workspace_invitation: z.boolean(),
-  invitation_accepted: z.boolean(),
-  role_changed: z.boolean(),
-  member_removed: z.boolean(),
+  ws_invite_received: z.boolean(),
+  ws_invite_accepted: z.boolean(),
+  ws_role_changed: z.boolean(),
+  ws_member_removed: z.boolean(),
 
   // Content Generation
-  content_generation_started: z.boolean(),
-  content_generation_completed: z.boolean(),
-  content_generation_failed: z.boolean(),
-  content_published: z.boolean(),
+  gen_completed: z.boolean(),
+  gen_started: z.boolean(),
+  gen_failed: z.boolean(),
+  gen_published: z.boolean(),
 
   // Billing
-  payment_succeeded: z.boolean(),
-  payment_failed: z.boolean(),
-  subscription_cancelled: z.boolean(),
-  subscription_expiring_soon: z.boolean(),
-  trial_ending_soon: z.boolean(),
-  usage_limit_warning: z.boolean(),
-  usage_limit_exceeded: z.boolean(),
+  billing_payment_success: z.boolean(),
+  billing_payment_failed: z.boolean(),
+  billing_subscription_cancelled: z.boolean(),
+  billing_subscription_expiring: z.boolean(),
+  billing_trial_ending: z.boolean(),
+  billing_usage_limit_warning: z.boolean(),
+  billing_usage_limit_exceeded: z.boolean(),
 
   // Knowledge Base
   kb_processing_completed: z.boolean(),
@@ -31,7 +31,7 @@ export const notificationPreferencesSchema = z.object({
   digest_frequency: z.enum(["daily", "weekly", "monthly"]),
 
   // Marketing
-  marketing: z.boolean(),
+  marketing_updates: z.boolean(),
 });
 
 export type NotificationPreferences = z.infer<
@@ -41,25 +41,25 @@ export type NotificationPreferences = z.infer<
 // Default preferences for initial state
 export const defaultNotificationPreferences: NotificationPreferences = {
   // Workspace Notifications
-  workspace_invitation: true,
-  invitation_accepted: true,
-  role_changed: true,
-  member_removed: true,
+  ws_invite_received: true,
+  ws_invite_accepted: true,
+  ws_role_changed: true,
+  ws_member_removed: true,
 
   // Content Generation
-  content_generation_started: true,
-  content_generation_completed: true,
-  content_generation_failed: true,
-  content_published: true,
+  gen_completed: true,
+  gen_started: true,
+  gen_failed: true,
+  gen_published: true,
 
   // Billing
-  payment_succeeded: true,
-  payment_failed: true,
-  subscription_cancelled: true,
-  subscription_expiring_soon: true,
-  trial_ending_soon: true,
-  usage_limit_warning: true,
-  usage_limit_exceeded: true,
+  billing_payment_success: true,
+  billing_payment_failed: true,
+  billing_subscription_cancelled: true,
+  billing_subscription_expiring: true,
+  billing_trial_ending: true,
+  billing_usage_limit_warning: true,
+  billing_usage_limit_exceeded: true,
 
   // Knowledge Base
   kb_processing_completed: true,
@@ -70,5 +70,99 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   digest_frequency: "weekly",
 
   // Marketing
-  marketing: false,
+  marketing_updates: false,
 };
+
+export const notificationPreferencesApiSchema = z.object({
+  workspace_notifications: z
+    .object({
+      invite_received: z.boolean().optional(),
+      invite_accepted: z.boolean().optional(),
+      role_changed: z.boolean().optional(),
+      member_removed: z.boolean().optional(),
+    })
+    .optional(),
+
+  content_generation: z
+    .object({
+      generation_started: z.boolean().optional(),
+      generation_completed: z.boolean().optional(),
+      generation_failed: z.boolean().optional(),
+      content_published: z.boolean().optional(),
+    })
+    .optional(),
+
+  billing: z
+    .object({
+      payment_success: z.boolean().optional(),
+      payment_failed: z.boolean().optional(),
+      subscription_cancelled: z.boolean().optional(),
+      subscription_expiring: z.boolean().optional(),
+      trial_ending: z.boolean().optional(),
+      usage_limit_warning: z.boolean().optional(),
+      usage_limit_exceeded: z.boolean().optional(),
+    })
+    .optional(),
+
+  knowledge_base: z
+    .object({
+      processing_completed: z.boolean().optional(),
+      processing_failed: z.boolean().optional(),
+    })
+    .optional(),
+
+  email_digest: z
+    .object({
+      enabled: z.boolean().optional(),
+      frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
+    })
+    .optional(),
+
+  marketing: z
+    .object({
+      marketing_updates: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+export type NotificationPreferencesApiResponse = z.infer<
+  typeof notificationPreferencesApiSchema
+>;
+// Transform flat preferences to API response structure
+export function transformToApiResponse(): NotificationPreferencesApiResponse {
+  const defaults = defaultNotificationPreferences;
+  return {
+    workspace_notifications: {
+      invite_received: defaults.ws_invite_received,
+      invite_accepted: defaults.ws_invite_accepted,
+      role_changed: defaults.ws_role_changed,
+      member_removed: defaults.ws_member_removed,
+    },
+    content_generation: {
+      generation_started: defaults.gen_started,
+      generation_completed: defaults.gen_completed,
+      generation_failed: defaults.gen_failed,
+      content_published: defaults.gen_published,
+    },
+    billing: {
+      payment_success: defaults.billing_payment_success,
+      payment_failed: defaults.billing_payment_failed,
+      subscription_cancelled: defaults.billing_subscription_cancelled,
+      subscription_expiring: defaults.billing_subscription_expiring,
+      trial_ending: defaults.billing_trial_ending,
+      usage_limit_warning: defaults.billing_usage_limit_warning,
+      usage_limit_exceeded: defaults.billing_usage_limit_exceeded,
+    },
+    knowledge_base: {
+      processing_completed: defaults.kb_processing_completed,
+      processing_failed: defaults.kb_processing_failed,
+    },
+    email_digest: {
+      enabled: defaults.digest_enabled,
+      frequency: defaults.digest_frequency,
+    },
+    marketing: {
+      marketing_updates: defaults.marketing_updates,
+    },
+  };
+}

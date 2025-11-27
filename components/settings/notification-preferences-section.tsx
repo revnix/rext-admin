@@ -13,8 +13,8 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
-  defaultNotificationPreferences,
-  type NotificationPreferences,
+  transformToApiResponse,
+  type NotificationPreferencesApiResponse,
 } from "@/schemas/notification-schemas";
 
 /**
@@ -25,7 +25,7 @@ import {
  */
 export function NotificationPreferencesSection() {
   const [preferences, setPreferences] =
-    useState<NotificationPreferences | null>(null);
+    useState<NotificationPreferencesApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +38,7 @@ export function NotificationPreferencesSection() {
         log.error("[NotificationPreferencesSection] Failed to load:", err);
         setError("Failed to load notification preferences");
         // Set defaults if backend not ready
-        setPreferences(defaultNotificationPreferences);
+        setPreferences(transformToApiResponse());
       } finally {
         setIsLoading(false);
       }
