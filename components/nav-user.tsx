@@ -40,6 +40,7 @@ import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
+import { log } from "@/lib/logger";
 
 export type ApiUser = {
   id: string;
@@ -80,7 +81,7 @@ export function NavUser() {
           setProfileUser(res);
         }
       } catch (err) {
-        console.error("Profile fetch failed:", err);
+        log.error("Profile fetch failed:", err);
       } finally {
         if (mounted) setLoadingProfile(false);
       }
@@ -95,7 +96,7 @@ export function NavUser() {
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
-    currentWorkspace?.id
+    currentWorkspace?.id,
   );
 
   // Helper
@@ -166,12 +167,12 @@ export function NavUser() {
   }
 
   // Extract user data from API or fallback to auth user
- const userName = profileUser?.display_name || user.name || "User";
-const userEmail = profileUser?.email || user.email || "";
-const userInitials = getInitials(userName);
+  const userName = profileUser?.display_name || user.name || "User";
+  const userEmail = profileUser?.email || user.email || "";
+  const userInitials = getInitials(userName);
 
-const effectiveRoleKey = fetchedWorkspaceRole || user.role;
-const userRole = getRoleDisplayName(effectiveRoleKey);
+  const effectiveRoleKey = fetchedWorkspaceRole || user.role;
+  const userRole = getRoleDisplayName(effectiveRoleKey);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
@@ -220,7 +221,8 @@ const userRole = getRoleDisplayName(effectiveRoleKey);
 
                     <TooltipContent side="right">
                       This is your current role
-                      {currentWorkspace?.name && ` in ${currentWorkspace.name}`}.
+                      {currentWorkspace?.name && ` in ${currentWorkspace.name}`}
+                      .
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -248,7 +250,9 @@ const userRole = getRoleDisplayName(effectiveRoleKey);
                       sizes="32px"
                     />
                   ) : (
-                    <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">
+                      {userInitials}
+                    </AvatarFallback>
                   )}
                 </Avatar>
 
@@ -265,8 +269,9 @@ const userRole = getRoleDisplayName(effectiveRoleKey);
                       </TooltipTrigger>
                       <TooltipContent side="right">
                         This is your current role
-                        {currentWorkspace?.name && ` in ${currentWorkspace.name}`}.
-                        It determines what you can do here.
+                        {currentWorkspace?.name &&
+                          ` in ${currentWorkspace.name}`}
+                        . It determines what you can do here.
                       </TooltipContent>
                     </Tooltip>
                   )}

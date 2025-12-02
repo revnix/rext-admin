@@ -113,6 +113,12 @@ export {
   getAuditLogById,
   getMyAuditLogs,
 } from "./audit-log-api";
+// Export notification API service
+export {
+  NotificationApiService,
+  markNotificationsAsRead,
+  markAllNotificationsAsRead,
+} from "./notification-api";
 // Export the main service class and default instance
 // Export legacy compatibility function (marked as deprecated)
 export {

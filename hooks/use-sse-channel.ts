@@ -3,12 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
-import { useNotificationStore } from "@/stores/notification-store";
-import type {
-  OperationNotification,
-  SSEConnectionStatus,
-  SSEEvent,
-} from "@/types/sse";
+import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
+import { fetchNotifications } from "@/services/notification-api";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
@@ -28,65 +24,8 @@ export interface UseSSEChannelReturn {
   isConnected: boolean;
 }
 
-const COMPLETION_STEPS = new Set(["pipeline.completed"]);
-const FAILURE_STEPS = new Set(["pipeline.failed"]);
-
-const buildNotificationMetadata = (event?: SSEEvent | null) => {
-  if (!event) {
-    return undefined;
-  }
-
-  return {
-    scope: event.scope,
-    step: event.step,
-    payload: event.payload,
-  } as OperationNotification["metadata"];
-};
-
-const createCompletionNotification = (event: SSEEvent) => {
-  const title = event.message || "Operation completed";
-
-  const notification: OperationNotification = {
-    id: event.id,
-    operationId: event.operation_id,
-    title,
-    message:
-      event.message ||
-      "Your generation run finished successfully. Open the workspace to review it.",
-    type: "success",
-    createdAt: event.timestamp || new Date().toISOString(),
-    read: false,
-    metadata: buildNotificationMetadata(event),
-  };
-
-  return notification;
-};
-
-const createFailureNotification = (
-  message: string,
-  params: { event?: SSEEvent | null; operationId?: string | null },
-) => {
-  const { event, operationId } = params;
-  const fallbackId =
-    event?.id ??
-    operationId ??
-    (typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `notification-${Date.now()}`);
-
-  const notification: OperationNotification = {
-    id: `${fallbackId}-error`,
-    operationId: event?.operation_id ?? operationId ?? undefined,
-    title: message ||  "Operation failed",
-    message: message || "We hit an issue while processing this operation.",
-    type: "error",
-    createdAt: new Date().toISOString(),
-    read: false,
-    metadata: buildNotificationMetadata(event),
-  };
-
-  return notification;
-};
+const COMPLETION_STEPS = new Set(["pipeline.completed", "success"]);
+const FAILURE_STEPS = new Set(["pipeline.failed", "failed"]);
 
 /**
  * Hook for subscribing to an SSE channel tied to an operation ID.
@@ -148,11 +87,23 @@ export function useSSEChannel(
         });
         return;
       }
-      const notification = createFailureNotification(errorMessage, {
-        event: latestEventRef.current,
-        operationId: operationIdRef.current,
-      });
-      useNotificationStore.getState().addNotification(notification);
+      // Skip "Retrying..." notifications
+      if (errorMessage.includes("Retrying...")) {
+        sseChannelLogger.debug("Skipping retry notification", {
+          operationId: operationIdRef.current,
+          errorMessage,
+        });
+        return;
+      }
+      // Skip "SSE connection established" notifications
+      if (errorMessage.includes("SSE connection established")) {
+        sseChannelLogger.debug("Skipping connection established notification", {
+          operationId: operationIdRef.current,
+          errorMessage,
+        });
+        return;
+      }
+      fetchNotifications();
       sseChannelLogger.error("SSE channel error", {
         errorMessage,
         operationId: operationIdRef.current,
@@ -183,8 +134,7 @@ export function useSSEChannel(
       onEventRef.current?.(event);
 
       if (COMPLETION_STEPS.has(event.step)) {
-        const notification = createCompletionNotification(event);
-        useNotificationStore.getState().addNotification(notification);
+        fetchNotifications();
         onCompleteRef.current?.(event.payload);
       }
 
@@ -258,7 +208,7 @@ export function useSSEChannel(
       });
       setEvents([]);
       setLatestEvent(null);
-        latestEventRef.current = null;
+      latestEventRef.current = null;
       setStatus({
         connected: false,
         retryCount: 0,

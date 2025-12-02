@@ -50,7 +50,9 @@ export function PageLayout({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const unreadNotifications = useNotificationStore((state) => state.unreadCount);
+  const unreadNotifications = useNotificationStore(
+    (state) => state.unreadCount,
+  );
 
   const hasUnread = unreadNotifications > 0;
   const notificationSummary = hasUnread

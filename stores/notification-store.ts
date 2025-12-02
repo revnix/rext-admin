@@ -1,139 +1,121 @@
-/**
- * Notification Store
- *
- * Centralized state for real-time operation notifications emitted via SSE.
- * Provides a single source of truth for unread counts, list management, and
- * lifecycle helpers (mark as read, clear, prune, etc.).
- */
-
-import { create } from "zustand";
-import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { OperationNotification } from "@/types/sse";
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { NotificationApiService } from "@/services/notification-api";
+import { log } from "@/lib/logger";
 
 const MAX_NOTIFICATIONS = 50;
-
-type NotificationInput = Omit<OperationNotification, "read" | "createdAt"> &
-  Partial<Pick<OperationNotification, "read" | "createdAt">>;
 
 interface NotificationStore {
   notifications: OperationNotification[];
   unreadCount: number;
 
-  addNotification: (notification: NotificationInput) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
+  addNotification: (notification: OperationNotification) => void;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
 }
 
-const initialState: Pick<NotificationStore, "notifications" | "unreadCount"> = {
-  notifications: [],
-  unreadCount: 0,
-};
+/* ------------------------------
+   Helpers
+--------------------------------*/
 
 const calculateUnread = (notifications: OperationNotification[]) =>
-  notifications.reduce((count, notification) => {
-    return notification.read ? count : count + 1;
-  }, 0);
+  notifications.reduce((count, n) => (n.read ? count : count + 1), 0);
 
-const noopStorage: Storage = {
-  get length() {
-    return 0;
-  },
-  clear: () => undefined,
-  getItem: () => null,
-  key: (_index: number) => null,
-  removeItem: () => undefined,
-  setItem: () => undefined,
-};
+const updateState = (notifications: OperationNotification[]) => ({
+  notifications,
+  unreadCount: calculateUnread(notifications),
+});
+
+const markOneRead = (notifications: OperationNotification[], id: string) =>
+  notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+
+const revertOneRead = (notifications: OperationNotification[], id: string) =>
+  notifications.map((n) => (n.id === id ? { ...n, read: false } : n));
+
+const markAllRead = (notifications: OperationNotification[]) =>
+  notifications.map((n) => ({ ...n, read: true }));
+
+const revertAllRead = (
+  notifications: OperationNotification[],
+  unreadIds: string[],
+) =>
+  notifications.map((n) =>
+    unreadIds.includes(n.id) ? { ...n, read: false } : n,
+  );
+
+/* ------------------------------
+   Store Implementation
+--------------------------------*/
 
 export const useNotificationStore = create<NotificationStore>()(
   devtools(
-    persist(
-      (set) => ({
-        ...initialState,
+    (set, get) => ({
+      notifications: [],
+      unreadCount: 0,
 
-        addNotification: (notification) => {
-          set((state) => {
-            // Prevent duplicates when SSE replays identical events.
-            if (state.notifications.some((n) => n.id === notification.id)) {
-              return state;
-            }
+      addNotification: (notification) =>
+        set((state) => {
+          // Skip if ID already exists
+          if (state.notifications.some((n) => n.id === notification.id))
+            return state;
 
-            const normalized: OperationNotification = {
-              ...notification,
-              createdAt: notification.createdAt ?? new Date().toISOString(),
-              read: notification.read ?? false,
-            };
+          const next = [notification, ...state.notifications].slice(
+            0,
+            MAX_NOTIFICATIONS,
+          );
 
-            const nextNotifications = [
-              normalized,
-              ...state.notifications,
-            ].slice(0, MAX_NOTIFICATIONS);
-
-            return {
-              notifications: nextNotifications,
-              unreadCount: calculateUnread(nextNotifications),
-            };
-          });
-        },
-
-        markAsRead: (id) =>
-          set((state) => {
-            const nextNotifications = state.notifications.map((notification) =>
-              notification.id === id ? { ...notification, read: true } : notification,
-            );
-
-            return {
-              notifications: nextNotifications,
-              unreadCount: calculateUnread(nextNotifications),
-            };
-          }),
-
-        markAllAsRead: () =>
-          set((state) => {
-            if (state.unreadCount === 0) {
-              return state;
-            }
-
-            const nextNotifications = state.notifications.map((notification) =>
-              notification.read ? notification : { ...notification, read: true },
-            );
-
-            return {
-              notifications: nextNotifications,
-              unreadCount: 0,
-            };
-          }),
-
-        removeNotification: (id) =>
-          set((state) => {
-            const nextNotifications = state.notifications.filter(
-              (notification) => notification.id !== id,
-            );
-
-            return {
-              notifications: nextNotifications,
-              unreadCount: calculateUnread(nextNotifications),
-            };
-          }),
-
-        clearNotifications: () => set(initialState),
-      }),
-      {
-        name: "notification-cache",
-        partialize: (state) => ({
-          notifications: state.notifications,
-          unreadCount: state.unreadCount,
+          return updateState(next);
         }),
-        storage: createJSONStorage(() =>
-          typeof window === "undefined" ? noopStorage : window.localStorage,
-        ),
+
+      markAsRead: async (id: string) => {
+        // Optimistic update
+        set((state) => updateState(markOneRead(state.notifications, id)));
+
+        try {
+          await NotificationApiService.markNotificationsAsRead([id]);
+        } catch (error) {
+          log.error("Failed to mark notification as read", error);
+          // Revert
+          set((state) => updateState(revertOneRead(state.notifications, id)));
+        }
       },
-    ),
+
+      markAllAsRead: async () => {
+        const current = get().notifications;
+        const unreadIds = current.filter((n) => !n.read).map((n) => n.id);
+        if (unreadIds.length === 0) return;
+
+        // Optimistic update
+        set((state) => ({
+          notifications: markAllRead(state.notifications),
+          unreadCount: 0,
+        }));
+
+        try {
+          await NotificationApiService.markAllNotificationsAsRead();
+        } catch (error) {
+          log.error("Failed to mark all notifications as read", error);
+          // Revert
+          set((state) =>
+            updateState(revertAllRead(state.notifications, unreadIds)),
+          );
+        }
+      },
+
+      removeNotification: (id: string) =>
+        set((state) => {
+          const next = state.notifications.filter((n) => n.id !== id);
+          return updateState(next);
+        }),
+
+      clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
+    }),
     {
       name: "notification-store",
+      enabled: process.env.NODE_ENV === "development", // good hygiene
     },
   ),
 );
-

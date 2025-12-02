@@ -76,12 +76,6 @@ export function NotificationsDrawer({
   const markAsRead = useNotificationStore((state) => state.markAsRead);
   const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      onClose();
-    }
-  };
-
   const getRelativeTime = (timestamp: string) => {
     try {
       return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
@@ -91,7 +85,7 @@ export function NotificationsDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-96 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-300">
         <SheetHeader className="p-6 pb-4">
           <SheetTitle className="flex items-center gap-2">
@@ -112,7 +106,9 @@ export function NotificationsDrawer({
             <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center text-muted-foreground">
               <Bell className="h-10 w-10 text-muted-foreground/70" />
               <div>
-                <p className="font-medium text-foreground">You're all caught up</p>
+                <p className="font-medium text-foreground">
+                  You're all caught up
+                </p>
                 <p className="text-sm">
                   We'll let you know when new operations complete.
                 </p>
@@ -163,7 +159,7 @@ export function NotificationsDrawer({
                                 key={`${action.label}-${index}`}
                                 variant={action.variant || "outline"}
                                 size="sm"
-                                onClick={() => action.onClick?.()}
+                                onClick={action.onClick}
                                 className="h-7 text-xs px-3"
                               >
                                 {action.label}
@@ -207,7 +203,7 @@ export function NotificationsDrawer({
           <Button
             variant="outline"
             className="w-full"
-            onClick={markAllAsRead}
+            onClick={() => markAllAsRead()}
             disabled={unreadCount === 0}
           >
             Mark All as Read ({unreadCount})
