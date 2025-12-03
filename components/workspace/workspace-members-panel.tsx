@@ -72,7 +72,7 @@ export function WorkspaceMembersPanel({
 }: WorkspaceMembersPanelProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
-    null
+    null,
   );
   const [memberToChangeRole, setMemberToChangeRole] =
     useState<WorkspaceMember | null>(null);
@@ -95,7 +95,6 @@ export function WorkspaceMembersPanel({
 
   const members = membersResponse?.members || [];
 
-  
   const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||

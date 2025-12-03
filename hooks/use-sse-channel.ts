@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
+import { fetchNotifications } from "@/services/notification-api";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
@@ -23,8 +24,8 @@ export interface UseSSEChannelReturn {
   isConnected: boolean;
 }
 
-const COMPLETION_STEPS = new Set(["pipeline.completed"]);
-const FAILURE_STEPS = new Set(["pipeline.failed"]);
+const COMPLETION_STEPS = new Set(["pipeline.completed", "success"]);
+const FAILURE_STEPS = new Set(["pipeline.failed", "failed"]);
 
 /**
  * Hook for subscribing to an SSE channel tied to an operation ID.
@@ -46,6 +47,7 @@ export function useSSEChannel(
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const operationIdRef = useRef<string | null>(operationId);
+  const latestEventRef = useRef<SSEEvent | null>(null);
 
   // Use refs for callbacks to avoid recreating them on every render
   const onEventRef = useRef(onEvent);
@@ -77,6 +79,31 @@ export function useSSEChannel(
         });
         return;
       }
+      // Skip connection retry notifications
+      if (errorMessage.includes("Connection lost, retrying")) {
+        sseChannelLogger.debug("Skipping connection retry notification", {
+          operationId: operationIdRef.current,
+          errorMessage,
+        });
+        return;
+      }
+      // Skip "Retrying..." notifications
+      if (errorMessage.includes("Retrying...")) {
+        sseChannelLogger.debug("Skipping retry notification", {
+          operationId: operationIdRef.current,
+          errorMessage,
+        });
+        return;
+      }
+      // Skip "SSE connection established" notifications
+      if (errorMessage.includes("SSE connection established")) {
+        sseChannelLogger.debug("Skipping connection established notification", {
+          operationId: operationIdRef.current,
+          errorMessage,
+        });
+        return;
+      }
+      fetchNotifications();
       sseChannelLogger.error("SSE channel error", {
         errorMessage,
         operationId: operationIdRef.current,
@@ -94,6 +121,7 @@ export function useSSEChannel(
         status: event.status,
         progress: event.progress,
       });
+      latestEventRef.current = event;
       setEvents((prev) => {
         const updated = [...prev, event];
         sseChannelLogger.debug("Events array updated", {
@@ -106,6 +134,7 @@ export function useSSEChannel(
       onEventRef.current?.(event);
 
       if (COMPLETION_STEPS.has(event.step)) {
+        fetchNotifications();
         onCompleteRef.current?.(event.payload);
       }
 
@@ -179,6 +208,7 @@ export function useSSEChannel(
       });
       setEvents([]);
       setLatestEvent(null);
+      latestEventRef.current = null;
       setStatus({
         connected: false,
         retryCount: 0,

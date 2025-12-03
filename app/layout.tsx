@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
 import { InvitedUserOnboardingProvider } from "@/providers/invited-user-onboarding-provider";
 import { OnboardingProvider } from "@/providers/onboarding-provider";
@@ -83,6 +84,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SSEProvider>
+              <UserNotificationsListener />
               <QueryProvider>
                 <TooltipProvider>
                   {/* Welcome modal shows first, then invited user onboarding, then regular onboarding */}

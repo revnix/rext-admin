@@ -1,0 +1,74 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { log } from "@/lib/logger";
+import { useSSE } from "@/providers/sse-provider";
+import type { SSEEvent } from "@/types/sse";
+import { fetchNotifications } from "@/services/notification-api";
+
+const userNotificationsLogger = log.forComponent("useUserNotifications");
+
+/**
+ * Hook that automatically subscribes to user-specific notifications
+ * and general events when the user is logged in. Fetches notifications from API whenever an event occurs.
+ */
+export function useUserNotifications() {
+  const { data: session, status } = useSession();
+  const { subscribe } = useSSE();
+  const unsubscribeUserNotificationsRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    // Only subscribe if user is authenticated and we have a user ID
+    if (status !== "authenticated" || !session?.user?.id) {
+      return;
+    }
+
+    const userId = session.user.id;
+    const userNotificationsChannelId = `user-notifications-${userId}`;
+
+    userNotificationsLogger.info(
+      "Subscribing to events and user notifications",
+      {
+        userId,
+        userNotificationsChannelId,
+      },
+    );
+
+    // Subscribe to user notification events
+    unsubscribeUserNotificationsRef.current = subscribe(
+      userNotificationsChannelId,
+      (event: SSEEvent) => {
+        userNotificationsLogger.debug(
+          "Received user notification event, fetching notifications",
+          {
+            eventId: event.id,
+            step: event.step,
+            status: event.status,
+          },
+        );
+
+        // Fetch notifications from API
+        fetchNotifications();
+      },
+      (status) => {
+        userNotificationsLogger.debug("User notification connection status", {
+          connected: status.connected,
+          retryCount: status.retryCount,
+          error: status.error,
+        });
+      },
+    );
+
+    // Cleanup on unmount or when user changes
+    return () => {
+      if (unsubscribeUserNotificationsRef.current) {
+        userNotificationsLogger.info("Unsubscribing from user notifications", {
+          userId,
+        });
+        unsubscribeUserNotificationsRef.current();
+        unsubscribeUserNotificationsRef.current = null;
+      }
+    };
+  }, [session?.user?.id, status, subscribe]);
+}

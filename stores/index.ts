@@ -9,8 +9,9 @@
 export { useSubscriptionStore } from "./subscription-store";
 // Topic Builder Domain
 export { useTopicBuilderStore } from "./topic-builder-store";
+// Notifications Domain
+export { useNotificationStore } from "./notification-store";
 
 // Future stores can be added here:
 // export { useUserStore } from "./user-store";
 // export { useUIStore } from "./ui-store";
-// export { useNotificationStore } from "./notification-store";

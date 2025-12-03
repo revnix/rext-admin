@@ -23,6 +23,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useNotificationStore } from "@/stores/notification-store";
 
 interface BreadcrumbItemData {
   label: string;
@@ -49,6 +50,14 @@ export function PageLayout({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const unreadNotifications = useNotificationStore(
+    (state) => state.unreadCount,
+  );
+
+  const hasUnread = unreadNotifications > 0;
+  const notificationSummary = hasUnread
+    ? `${unreadNotifications} Notifications`
+    : "Notifications";
 
   // Add keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -130,9 +139,13 @@ export function PageLayout({
             >
               <div className="relative">
                 <Bell className="h-4 w-4" />
-                <div className="absolute -top-0.5 -right-0 h-2 w-2 rounded-full bg-red-500"></div>
+                {hasUnread && (
+                  <span className="absolute -top-0.5 -right-0 inline-flex h-2 w-2 rounded-full bg-red-500" />
+                )}
               </div>
-              3 Notifications
+              <span className="text-sm font-medium" aria-live="polite">
+                {notificationSummary}
+              </span>
             </Button>
             <QuickAddDropdown />
           </div>
