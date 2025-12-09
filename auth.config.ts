@@ -14,6 +14,17 @@ const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     log.info("[Auth] Refreshing access token...");
+    log.info("[Auth] Refresh token available:", !!token.refreshToken);
+
+    if (!token.refreshToken) {
+      log.error("[Auth] No refresh token available");
+      throw new Error("No refresh token available");
+    }
+
+    const refreshPayload = {
+      refresh_token: token.refreshToken,
+    };
+    log.info("[Auth] Refresh request payload:", refreshPayload);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
@@ -22,25 +33,56 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          refresh_token: token.refreshToken,
-        }),
+        body: JSON.stringify(refreshPayload),
       },
     );
 
+    log.info("[Auth] Refresh response status:", response.status);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      log.error(
-        "[Auth] Token refresh failed with status:",
-        response.status,
-        errorData,
-      );
+      const errorText = await response.text();
+      log.error("[Auth] Refresh response error text:", errorText);
+
+      const errorData = await (async () => {
+        try {
+          return JSON.parse(errorText);
+        } catch (e) {
+          log.error("[Auth] Failed to parse refresh response as JSON:", e);
+          return { rawError: errorText };
+        }
+      })();
+
+      log.error("[Auth] Token refresh failed with status:", response.status);
+      log.error("[Auth] Token refresh error data:", errorData);
       throw new Error("Token refresh failed");
     }
 
-    const refreshResponseData = await response.json();
+    const refreshResponseText = await response.text();
+    log.info("[Auth] Refresh response body:", refreshResponseText);
+
+    const refreshResponseData = await (async () => {
+      try {
+        return JSON.parse(refreshResponseText);
+      } catch (e) {
+        log.error("[Auth] Failed to parse refresh response as JSON:", e);
+        throw new Error("Invalid refresh response format");
+      }
+    })();
+
+    log.info("[Auth] Parsed refresh response:", refreshResponseData);
+
     // Extract data from wrapped response
     const refreshedTokens = refreshResponseData.data || refreshResponseData;
+
+    log.info("[Auth] Extracted refresh tokens:", {
+      hasAccessToken: !!refreshedTokens.access_token,
+      hasRefreshToken: !!refreshedTokens.refresh_token,
+    });
+
+    if (!refreshedTokens.access_token) {
+      log.error("[Auth] No access token in refresh response");
+      throw new Error("No access token in refresh response");
+    }
 
     log.info("[Auth] Access token refreshed successfully");
 
@@ -210,6 +252,37 @@ export default {
           // For OAuth providers, use dedicated OAuth login endpoint
           try {
             log.info("[AuthJS] OAuth sign-in with", account?.provider);
+            log.info("[AuthJS] User data from OAuth provider:", {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.image,
+            });
+            log.info("[AuthJS] Account data from OAuth provider:", {
+              provider: account?.provider,
+              providerAccountId: account?.providerAccountId,
+              type: account?.type,
+              expires_at: account?.expires_at,
+            });
+
+            const oauthPayload = {
+              provider: account?.provider,
+              provider_account_id: account?.providerAccountId,
+              provider_email: user.email,
+              provider_name: user.name || "",
+              provider_avatar_url: user.image,
+              // Optional: store OAuth tokens for API calls
+              access_token: account?.access_token,
+              refresh_token: account?.refresh_token,
+              token_expires_at: account?.expires_at
+                ? new Date(account.expires_at * 1000).toISOString()
+                : null,
+            };
+
+            log.info(
+              "[AuthJS] OAuth payload being sent to backend:",
+              oauthPayload,
+            );
 
             // Call dedicated OAuth login endpoint
             // This handles: login existing user, link to existing email, or create new user
@@ -218,35 +291,72 @@ export default {
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  provider: account?.provider,
-                  provider_account_id: account?.providerAccountId,
-                  provider_email: user.email,
-                  provider_name: user.name || "",
-                  provider_avatar_url: user.image,
-                  // Optional: store OAuth tokens for API calls
-                  access_token: account?.access_token,
-                  refresh_token: account?.refresh_token,
-                  token_expires_at: account?.expires_at
-                    ? new Date(account.expires_at * 1000).toISOString()
-                    : null,
-                }),
+                body: JSON.stringify(oauthPayload),
               },
             );
 
+            log.info("[AuthJS] OAuth response status:", oauthResponse.status);
+            log.info(
+              "[AuthJS] OAuth response headers:",
+              Object.fromEntries(oauthResponse.headers.entries()),
+            );
+
             if (!oauthResponse.ok) {
-              const errorData = await oauthResponse.json().catch(() => ({}));
+              const errorText = await oauthResponse.text();
+              log.error("[AuthJS] OAuth response error text:", errorText);
+
+              const errorData = await (async () => {
+                try {
+                  return JSON.parse(errorText);
+                } catch (e) {
+                  log.error(
+                    "[AuthJS] Failed to parse OAuth response as JSON:",
+                    e,
+                  );
+                  return { rawError: errorText };
+                }
+              })();
+              log.error("[AuthJS] OAuth response error data:", errorData);
+
               const errorMessage =
                 errorData?.error?.message ||
                 errorData?.message ||
+                errorData?.rawError ||
                 "OAuth login failed";
-              log.error("[AuthJS] OAuth login failed:", errorMessage);
+              log.error(
+                "[AuthJS] OAuth login failed with message:",
+                errorMessage,
+              );
               return token;
             }
 
-            const oauthResponseData = await oauthResponse.json();
+            const oauthResponseText = await oauthResponse.text();
+            log.info("[AuthJS] OAuth response body:", oauthResponseText);
+
+            const oauthResponseData = await (async () => {
+              try {
+                return JSON.parse(oauthResponseText);
+              } catch (e) {
+                log.error("[AuthJS] Failed to parse OAuth response as JSON:", e);
+                return null;
+              }
+            })();
+
+            if (!oauthResponseData) {
+              return token;
+            }
+
+            log.info("[AuthJS] Parsed OAuth response data:", oauthResponseData);
+
             // Extract data from wrapped response
             const oauthData = oauthResponseData.data || oauthResponseData;
+
+            log.info("[AuthJS] Extracted OAuth data:", oauthData);
+
+            if (!oauthData.user) {
+              log.error("[AuthJS] No user object in OAuth response");
+              return token;
+            }
 
             token.id = oauthData.user.id;
             token.email = oauthData.user.email;
@@ -268,15 +378,34 @@ export default {
               oauthUserRoles[0] ||
               "user";
             token.permissions = oauthData.user.permissions || [];
+            // Set token expiry for OAuth logins (24 hours)
+            token.accessTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
 
-            log.info("[AuthJS] OAuth login successful for user:", token.id);
+            log.info(
+              "[AuthJS] OAuth login successful for user:",
+              token.id,
+              "with role:",
+              token.role,
+            );
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
+            log.error(
+              "[AuthJS] Error stack:",
+              error instanceof Error ? error.stack : "No stack trace",
+            );
+            log.error("[AuthJS] Error details:", {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.name : "Unknown",
+            });
             // Fall back to OAuth-only data (no backend tokens)
             token.id = user.id;
             token.email = user.email;
             token.name = user.name;
             token.picture = user.image;
+            log.info(
+              "[AuthJS] Falling back to OAuth-only data for user:",
+              token.email,
+            );
           }
         }
       }
