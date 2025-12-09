@@ -164,7 +164,12 @@ export function WorkspaceMembersPanel({
           <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
             {row.avatar ? (
               <Image
-                src={`${baseUrl}${row.avatar}`}
+                src={
+                  row.avatar.startsWith("http://") ||
+                  row.avatar.startsWith("https://")
+                    ? row.avatar
+                    : `${baseUrl}${row.avatar}`
+                }
                 alt="User avatar"
                 fill
                 className="object-cover"
