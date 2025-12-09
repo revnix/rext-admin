@@ -179,6 +179,17 @@ export function NavUser() {
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "http://127.0.0.1:2024";
 
+  // Helper to get full avatar URL
+  const getAvatarUrl = (avatarUrl?: string) => {
+    if (!avatarUrl) return null;
+    // If already absolute URL (http:// or https://), return as-is
+    if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+      return avatarUrl;
+    }
+    // Otherwise prepend base URL for relative paths
+    return `${baseUrl}${avatarUrl}`;
+  };
+
   // ----------------------------------
   // UI
   // ----------------------------------
@@ -194,7 +205,7 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
                 {profileUser?.avatar_url ? (
                   <Image
-                    src={`${baseUrl}${profileUser.avatar_url}`}
+                    src={getAvatarUrl(profileUser.avatar_url) || ""}
                     alt="User avatar"
                     fill
                     className="object-cover"
@@ -243,7 +254,7 @@ export function NavUser() {
                 <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
                   {profileUser?.avatar_url ? (
                     <Image
-                      src={`${baseUrl}${profileUser.avatar_url}`}
+                      src={getAvatarUrl(profileUser.avatar_url) || ""}
                       alt="User avatar"
                       fill
                       className="object-cover"

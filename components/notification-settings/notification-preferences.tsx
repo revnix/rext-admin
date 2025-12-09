@@ -29,7 +29,9 @@ interface NotificationPreferencesFormProps {
 }
 
 // Transform API response to form structure
-function transformApiToFormData(apiData: NotificationPreferencesApiResponse): NotificationPreferences {
+function transformApiToFormData(
+  apiData: NotificationPreferencesApiResponse,
+): NotificationPreferences {
   return {
     // Workspace notifications
     ws_invite_received:
