@@ -102,26 +102,22 @@ interface RevenueHistory {
   }>;
 }
 
-interface PlanDistribution {
-  data: Array<{
-    plan_name: string;
-    plan_display_name: string;
-    subscription_count: number;
-    revenue_monthly: number;
-    revenue_yearly: number;
-    percentage: number;
-  }>;
-}
+type PlanDistribution = Array<{
+  plan_name: string;
+  plan_display_name: string;
+  subscription_count: number;
+  revenue_monthly: number;
+  revenue_yearly: number;
+  percentage: number;
+}>;
 
 interface CohortRetention {
-  data: {
     cohorts: Array<{
       cohort: string;
       size: number;
       month_0: number;
       [key: string]: number | string;
     }>;
-  };
 }
 
 export default function SubscriptionAnalyticsPage() {
@@ -140,11 +136,10 @@ export default function SubscriptionAnalyticsPage() {
     queryFn: async () => {
       return apiClient
         .request<{ data: AnalyticsOverview }>(
-          "/api/v1/subscriptions/admin/analytics/overview",
+          "/api/v1/admin/subscriptions/analytics/overview",
         )
         .then((res) => res.data);
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch revenue history
@@ -159,23 +154,24 @@ export default function SubscriptionAnalyticsPage() {
     queryFn: async () => {
       return apiClient
         .request<{ data: RevenueHistory }>(
-          `/api/v1/subscriptions/admin/analytics/revenue-history?period=${revenuePeriod}`,
+          `/api/v1/admin/subscriptions/analytics/revenue-history?period=${revenuePeriod}`,
         )
         .then((res) => res.data);
     },
   });
 
   // Fetch plan distribution
-  const { data: planDistribution, isLoading: distributionLoading } = useQuery({
-    queryKey: ["admin", "subscriptions", "analytics", "plan-distribution"],
-    queryFn: async () => {
-      return apiClient
-        .request<{ data: PlanDistribution }>(
-          "/api/v1/subscriptions/admin/analytics/plan-distribution",
-        )
-        .then((res) => res.data);
-    },
-  });
+  const { data: planDistribution = [], isLoading: distributionLoading } =
+    useQuery({
+      queryKey: ["admin", "subscriptions", "analytics", "plan-distribution"],
+      queryFn: async () => {
+        return apiClient
+          .request<{ data: PlanDistribution }>(
+            "/api/v1/admin/subscriptions/analytics/plan-distribution",
+          )
+          .then((res) => res.data);
+      },
+    });
 
   // Fetch cohort retention
   const { data: cohortRetention, isLoading: cohortLoading } = useQuery({
@@ -183,7 +179,7 @@ export default function SubscriptionAnalyticsPage() {
     queryFn: async () => {
       return apiClient
         .request<{ data: CohortRetention }>(
-          "/api/v1/subscriptions/admin/analytics/cohort-retention",
+          "/api/v1/admin/subscriptions/analytics/cohort-retention",
         )
         .then((res) => res.data);
     },
@@ -297,7 +293,7 @@ export default function SubscriptionAnalyticsPage() {
                     </div>
                   ) : (
                     <PlanDistributionChart
-                      data={planDistribution?.data || []}
+                      data={planDistribution || []}
                     />
                   )}
                 </CardContent>
@@ -319,7 +315,7 @@ export default function SubscriptionAnalyticsPage() {
                     </div>
                   ) : (
                     <CohortRetentionMatrix
-                      cohorts={cohortRetention?.data?.cohorts || []}
+                      cohorts={cohortRetention?.cohorts || []}
                     />
                   )}
                 </CardContent>

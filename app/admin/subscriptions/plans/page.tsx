@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subscription-plan-form";
@@ -28,12 +28,8 @@ import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
 import type { SubscriptionPlan } from "@/types/subscription";
 
 interface PlansResponse {
-  success: boolean;
-  data: {
-    plans: SubscriptionPlan[];
-    count: number;
-  };
-  message: string;
+  plans: SubscriptionPlan[];
+  count: number;
 }
 
 export default function SubscriptionPlansPage() {
@@ -76,7 +72,7 @@ export default function SubscriptionPlansPage() {
     },
   });
 
-  const plans = plansResponse?.data?.plans || [];
+  const plans = plansResponse?.plans || [];
 
   const columns = [
     {
@@ -112,7 +108,7 @@ export default function SubscriptionPlansPage() {
               {Math.round(
                 ((row.price_monthly * 12 - row.price_yearly) /
                   (row.price_monthly * 12)) *
-                  100,
+                100,
               )}
               %
             </div>
@@ -144,11 +140,10 @@ export default function SubscriptionPlansPage() {
       cell: (_value: unknown, row: SubscriptionPlan) => (
         <div className="flex flex-col gap-1">
           <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-              row.is_active
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${row.is_active
                 ? "bg-green-50 text-green-700"
                 : "bg-gray-50 text-gray-600"
-            }`}
+              }`}
           >
             {row.is_active ? "Active" : "Inactive"}
           </span>
@@ -221,6 +216,7 @@ export default function SubscriptionPlansPage() {
               rowActions={[
                 {
                   label: "Edit",
+                  icon: <Pencil className="h-4 w-4" />,
                   onClick: (plan) => {
                     setEditingPlan(plan);
                     setEditDialogOpen(true);
@@ -228,6 +224,7 @@ export default function SubscriptionPlansPage() {
                 },
                 {
                   label: "Delete",
+                  icon: <Trash2 className="h-4 w-4" />,
                   onClick: (plan) => {
                     if (
                       confirm(
