@@ -337,7 +337,10 @@ export default {
               try {
                 return JSON.parse(oauthResponseText);
               } catch (e) {
-                log.error("[AuthJS] Failed to parse OAuth response as JSON:", e);
+                log.error(
+                  "[AuthJS] Failed to parse OAuth response as JSON:",
+                  e,
+                );
                 return null;
               }
             })();

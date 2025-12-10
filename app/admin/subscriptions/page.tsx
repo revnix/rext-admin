@@ -112,12 +112,12 @@ type PlanDistribution = Array<{
 }>;
 
 interface CohortRetention {
-    cohorts: Array<{
-      cohort: string;
-      size: number;
-      month_0: number;
-      [key: string]: number | string;
-    }>;
+  cohorts: Array<{
+    cohort: string;
+    size: number;
+    month_0: number;
+    [key: string]: number | string;
+  }>;
 }
 
 export default function SubscriptionAnalyticsPage() {
@@ -292,9 +292,7 @@ export default function SubscriptionAnalyticsPage() {
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
                   ) : (
-                    <PlanDistributionChart
-                      data={planDistribution || []}
-                    />
+                    <PlanDistributionChart data={planDistribution || []} />
                   )}
                 </CardContent>
               </Card>
