@@ -130,7 +130,6 @@ export function ImpersonationStartDialog({
           <AlertDialogAction
             onClick={handleStartImpersonation}
             disabled={startImpersonationMutation.isPending}
-            className="bg-warning hover:bg-warning/90"
           >
             {startImpersonationMutation.isPending
               ? "Starting..."
