@@ -212,7 +212,7 @@ export default function SubscriptionDashboardPage() {
                 </CustomerPortalButton>
 
                 <Button
-                  onClick={() => router.push("/dashboard/billing")}
+                  onClick={() => router.push("/billing")}
                   className="w-full justify-start"
                   variant="outline"
                 >
@@ -336,7 +336,7 @@ export default function SubscriptionDashboardPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your invoice history is available in the dedicated billing page.
               </p>
-              <Button onClick={() => router.push("/dashboard/billing")}>
+              <Button onClick={() => router.push("/billing")}>
                 <FileText className="mr-2 h-4 w-4" />
                 View All Invoices
               </Button>
