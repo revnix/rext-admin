@@ -96,7 +96,7 @@ export default function SubscriptionSettingsPage() {
           <CardContent className="space-y-3">
             {/* Full Subscription Dashboard */}
             <Button
-              onClick={() => router.push("/dashboard/subscription")}
+              onClick={() => router.push("/subscription")}
               className="w-full justify-start"
               variant="outline"
             >
@@ -126,7 +126,7 @@ export default function SubscriptionSettingsPage() {
 
             {/* Invoices */}
             <Button
-              onClick={() => router.push("/dashboard/billing")}
+              onClick={() => router.push("/billing")}
               className="w-full justify-start"
               variant="outline"
             >
