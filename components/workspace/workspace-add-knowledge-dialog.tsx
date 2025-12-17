@@ -57,10 +57,12 @@ const fileKnowledgeSchema = z.object({
           "application/pdf",
           "text/plain",
           "text/markdown",
+          "text/csv",
+          "application/csv",
           "application/msword",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ].includes(file.type),
-      "File type not supported. Please upload PDF, TXT, MD, DOC, or DOCX files.",
+      "File type not supported. Please upload PDF, TXT, MD, CSV, DOC, or DOCX files.",
     ),
 });
 
@@ -237,6 +239,24 @@ export function WorkspaceAddKnowledgeDialog({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const allowedTypes = [
+        "application/pdf",
+        "text/plain",
+        "text/markdown",
+        "text/csv",
+        "application/csv",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      const allowedExtensions = [".pdf", ".txt", ".text", ".md", ".markdown", ".csv", ".doc", ".docx"];
+      const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        toast.error("Invalid file type. Please select only PDF, TXT, MD, CSV, DOC, or DOCX files.");
+        e.target.value = ""; // Reset the input
+        return;
+      }
+
       setSelectedFile(file);
       fileForm.setValue("file", file);
     }
@@ -396,7 +416,7 @@ export function WorkspaceAddKnowledgeDialog({
                           <div className="flex items-center gap-4">
                             <Input
                               type="file"
-                              accept=".pdf,.txt,.md,.doc,.docx"
+                              accept=".pdf,.txt,.text,.md,.markdown,.csv,.doc,.docx"
                               onChange={handleFileChange}
                               disabled={isLoading}
                               {...field}
@@ -418,7 +438,7 @@ export function WorkspaceAddKnowledgeDialog({
                         </div>
                       </FormControl>
                       <FormDescription>
-                        Supported formats: PDF, TXT, MD, DOC, DOCX (max 10MB)
+                        Supported formats: PDF, TXT, MD, CSV, DOC, DOCX (max 10MB)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
