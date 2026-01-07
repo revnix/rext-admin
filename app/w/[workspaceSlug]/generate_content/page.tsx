@@ -5,139 +5,32 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { useEffect, useState } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
-import type { Message } from "@langchain/langgraph-sdk";
 import { log } from "@/lib/logger";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChartRadialStacked } from "@/components/ui/content/chart-radial-stacked";
 import { SearchIntentCard } from "@/components/ui/content/intent-card";
-import { Compass, TrendingUp, Zap } from "lucide-react";
+import {
+  Compass,
+  TrendingUp,
+  Zap,
+  FileText,
+  Save,
+  Send,
+  Lightbulb,
+  ShieldCheck,
+  Activity,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { MonthlyVolumeCard } from "@/components/ui/content/monthly-volume-card";
-
-type NormalizedOrganicResult = {
-  position: number;
-  title: string;
-  url: string;
-  snippet: string;
-  domain: string;
-  date?: string;
-  has_sitelinks: boolean;
-};
-
-type SERPNormalized = {
-  query: string;
-  engine: string;
-  normalize_results: NormalizedOrganicResult[];
-  related_topics: string[];
-  questions: string[];
-  stats: Record<string, number>;
-  domains: string[];
-  domain_stats: Record<string, unknown>;
-  freshness: Record<string, unknown>;
-  features: Record<string, boolean>;
-};
-
-type OutlineSection = {
-  heading: string;
-  description: string;
-  key_points: string[];
-  suggested_word_count: number;
-};
-
-type Outline = {
-  title: string;
-  brief: string;
-  sections: OutlineSection[];
-  tone: string;
-  target_audience: string[];
-};
-
-type Content = {
-  title: string;
-  content: string;
-  tags: string[];
-  final_content: FinalContent;
-};
-
-type FinalContent = {
-  title: string;
-  content: string;
-  tags: string[];
-  body_markdown: string;
-  meta_title?: string;
-  meta_description?: string;
-};
-
-type WREXT = {
-  messages: Message[];
-  serp_payload: {
-    query: string;
-    country: string; // SUPPORTED_COUNTRIES
-  };
-  serp_result: {
-    organic_results: Array<Record<string, unknown>>;
-    related_searches: string[];
-    people_ask: Array<Record<string, unknown>>;
-    search_information: Record<string, unknown>;
-    total_results: number;
-  };
-  serp_normalized: SERPNormalized;
-  competitors: Array<{
-    domain: string;
-    top_positions: number[];
-    total_occurrences: number;
-    has_sitelinks: boolean;
-    intent_distribution: Record<string, number>;
-    freshness: Record<string, number>;
-    avg_snippet_length: number;
-    featured_snippet: boolean;
-    is_brand: boolean;
-  }>;
-  scrape_context: {
-    documents: Array<{
-      document: unknown; // Document type
-      content_length: number;
-      keywords: string[];
-      headings: string[];
-    }>;
-    total_documents: number;
-  };
-  relevant_context: unknown[]; // Document[]
-  seo_result: unknown; // SEORESULT
-  content: Content; // CONTENT
-  outline?: Outline;
-  final_content?: FinalContent;
-  topics?: string[];
-  status?: string;
-  rejected_reason?: string;
-  instruction_response?: string;
-  "Selected Topic"?: string;
-  "Primary Keyword"?: string;
-  "Related Keywords"?: string[];
-  continue_workflow?: boolean;
-  __interrupt__?: Array<{
-    id: string;
-    value: {
-      instruction: string;
-      "Primary Keyword": string;
-      "Related Keywords": string[];
-      [key: string]: unknown;
-    };
-  }>;
-};
+import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
+import { Badge } from "@/components/ui/badge";
+import type { Outline, WREXT } from "@/types/generate-content";
+import { CountryDropdown } from "@/components/ui/country-dropdown";
 
 export default function Page() {
   const { workspace, workspaceSlug } = useWorkspace();
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Generate Content" },
-  ];
-
   const [step, setStep] = useState<
     "keyword" | "suggestions" | "topic" | "outline" | "content"
   >("keyword");
@@ -151,7 +44,16 @@ export default function Page() {
   const [outline, setOutline] = useState<Outline | null>(null);
   const [instruction, setInstruction] = useState<string>("");
 
-  const { values, submit, stop, isLoading } = useStream<WREXT>({
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/" },
+    {
+      label: workspace?.title || "...",
+      href: workspaceRoutes.root(workspaceSlug),
+    },
+    { label: "Generate Content" },
+  ];
+
+  const { values, submit, isLoading } = useStream<WREXT>({
     apiUrl: "http://localhost:2024",
     assistantId: "agent",
     messagesKey: "messages",
@@ -159,47 +61,34 @@ export default function Page() {
     onThreadId: setThreadId,
   });
 
-  // Automatically fetch current country with fallbacks (via proxy to bypass CSP)
-  useEffect(() => {
-    const fetchCountry = async () => {
-      try {
-        const response = await fetch("/api/country");
-        if (!response.ok) throw new Error("Failed to fetch country from proxy");
+  // // Automatically fetch current country with fallbacks (via proxy to bypass CSP)
+  // useEffect(() => {
+  //   const fetchCountry = async () => {
+  //     try {
+  //       const response = await fetch("/api/country");
+  //       if (!response.ok) throw new Error("Failed to fetch country from proxy");
 
-        const data = await response.json();
-        if (data.countryCode) {
-          const detectedCountry = data.countryCode;
-          setCountry(detectedCountry);
-          log.info("[Fetch Country Success]", { detectedCountry });
-        }
-      } catch (error) {
-        log.error("[Fetch Country Error]", error);
-        setCountry("us");
-      }
-    };
-    fetchCountry();
-  }, []);
+  //       const data = await response.json();
+  //       if (data.countryCode) {
+  //         const detectedCountry = data.countryCode;
+  //         setCountry(detectedCountry);
+  //         log.info("[Fetch Country Success]", { detectedCountry });
+  //       }
+  //     } catch (error) {
+  //       log.error("[Fetch Country Error]", error);
+  //       setCountry("us");
+  //     }
+  //   };
+  //   fetchCountry();
+  // }, []);
 
   // Track all state changes from stream
   useEffect(() => {
     if (!values) return;
-    log.info("[Stream Values Update]", values);
-    log.info("[Stream Values Update]", {
-      step,
-      values: {
-        competitors: values.competitors,
-        relevant_context: values.relevant_context,
-        scrape_context: values.scrape_context,
-        seo_result: values.seo_result,
-        serp_normalized: values.serp_normalized,
-        serp_result: values.serp_result,
-        __interrupt__: values.__interrupt__,
-        messages: values.messages?.slice(-1), // Last message only
-      },
-    });
 
     // Update UI based on streamed values with strict Priority
     const interrupt = values.__interrupt__?.[0];
+
     if (interrupt) {
       setInstruction(interrupt?.value.instruction);
     }
@@ -213,11 +102,13 @@ export default function Page() {
       }
       if (step !== "content") setStep("content");
     }
+
     // 2. Outline Review Phase
     else if (interrupt?.value.type === "outline_review") {
       setOutline(interrupt?.value.data as Outline);
-      if (step !== "outline" && step !== "content") setStep("outline");
+      if (step !== "outline" && step !== "content") setStep("content");
     }
+
     // 3. Selection Phase
     else {
       const keywords = interrupt?.value["Related Keywords"];
@@ -228,7 +119,7 @@ export default function Page() {
     }
   }, [values, step]);
 
-  // Step 1: Submit user keyword
+  // Step 1: Submit user keyword -> get suggestions
   const handleKeywordSubmit = () => {
     log.info("[User Action: Submit Keyword]", userKeyword, country);
     submit({
@@ -243,15 +134,15 @@ export default function Page() {
         },
       ],
     });
-    setStep("keyword");
+    setStep("suggestions");
   };
 
-  // // Step 2: Select keyword → get topics
+  // Step 2: Select keyword → get outline
   const handleKeywordSelect = (selected: string) => {
     log.info("[User Action: Select Keyword]", selected);
+    setStep("outline");
 
     const interrupt = values.__interrupt__?.[0];
-
     // Preserve interrupt state + add selection, then RESUME with command
     submit(
       {
@@ -266,156 +157,504 @@ export default function Page() {
         command: { resume: true },
       },
     );
-    setStep("suggestions");
   };
 
+  // Step 3: Approve outline → get content
   const handleOutlineApprove = () => {
     // Use null to avoid trying to update state keys, preventing InvalidUpdateError
+    setStep("content");
     submit(null, {
       command: { resume: "approve" },
     });
   };
 
-  const handleOutlineReject = () => {
-    if (!isRejecting) {
-      setIsRejecting(true);
-      return;
-    }
-
-    if (!rejectedReason.trim()) {
-      alert("Please provide a reason for rejection.");
-      return;
-    }
-
-    submit(null, {
-      command: { resume: { action: "reject", reason: rejectedReason } },
-    });
-    setIsRejecting(false);
-    setRejectedReason("");
-  };
-
-  useEffect(() => {
-    log.info("[User Action: Suggested Keyword]", values);
-  }, [values]);
-
-  // Reset with logging
-  const reset = () => {
-    log.info("[User Action: Reset Flow]");
-    setStep("keyword");
-    setSuggestedKeywords([]);
-    setGeneratedContent("");
-  };
-
   return (
     <PageLayout
       title="Generate Content"
-      description={`View, edit, and manage AI-generated content for ${
-        workspace?.title || "this workspace"
-      }.`}
+      description={`View, edit, and manage AI-generated content for ${workspace?.title || "this workspace"}.`}
       breadcrumbs={breadcrumbs}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleKeywordSubmit();
-        }}
-        className="flex gap-3 w-full "
-      >
-        <Input
-          type="text"
-          placeholder="Enter keyword"
-          className="h-10 w-[80%]"
-          value={userKeyword}
-          onChange={(e) => setUserKeyword(e.target.value)}
-          required
-        />
-        <Button type="submit" className="h-10 w-[20%]">
-          Submit
-        </Button>
-      </form>
+      {(step === "keyword" || step === "suggestions") && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleKeywordSubmit();
+          }}
+          className="flex gap-3 w-full "
+        >
+          <Input
+            type="text"
+            placeholder="Enter keyword"
+            className="h-10 w-[60%]"
+            value={userKeyword}
+            onChange={(e) => setUserKeyword(e.target.value)}
+            required
+          />
 
-      {/* Global Loading Indicator */}
-      {isLoading && (
-        <div className="my-4 animate-in fade-in duration-300">
-          <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-center gap-4">
-            <div className="relative flex-shrink-0">
-              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-blue-900">
-                {step === "keyword"
-                  ? "Analyzing Keyword..."
-                  : step === "topic"
-                    ? "Generating Search Topics..."
-                    : step === "suggestions"
-                      ? "Generating Content Outline..."
-                      : step === "outline"
-                        ? "Generating Premium Content..."
-                        : "Loading..."}
-              </h3>
-              <p className="text-[11px] text-blue-700 mt-1">
-                Agent is processing in real-time. Please wait for the next step.
-              </p>
-            </div>
+          <div className="w-[20%]">
+            <CountryDropdown
+              value={country}
+              onChange={(c) => setCountry(c.alpha2)}
+            />
           </div>
-        </div>
+
+          <Button type="submit" className="h-10 w-[20%]">
+            Submit
+          </Button>
+        </form>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 mt-8 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between transition-all hover:shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-400">
-              Difficulty
-            </span>
-            <Zap className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <ChartRadialStacked difficultyScore={54} />
-          </div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all hover:shadow-md">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-400">
-              Search Intent
-            </span>
-            <Compass className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex items-center gap-3">
-            <SearchIntentCard intent="informational" />
-          </div>
-        </div>
-
-        <div
-          className={`bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all hover:shadow-md`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-400">
-              Monthly Volume
-            </span>
-            <TrendingUp className="w-4 h-4 text-blue-500" />
-          </div>
-          <MonthlyVolumeCard volume="1.2K" />
-        </div>
-      </div>
+      <LoadingIndicatorVariants
+        step={step}
+        isLoading={isLoading}
+        className="mt-5"
+      />
 
       {step === "suggestions" && suggestedKeywords.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">{instruction}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
-            {suggestedKeywords.map((kw, i) => (
-              <button
-                key={i}
+          <div className="grid grid-cols-1 md:grid-cols-2 mt-8 gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-400">
+                  Difficulty
+                </span>
+                <Zap className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 flex items-center justify-center">
+                <ChartRadialStacked difficultyScore={54} />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-400">
+                    Search Intent
+                  </span>
+                  <Compass className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <SearchIntentCard intent="informational" />
+                </div>
+              </div>
+              <div
+                className={`bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all hover:shadow-md`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-400">
+                    Monthly Volume
+                  </span>
+                  <TrendingUp className="w-4 h-4 text-blue-500" />
+                </div>
+                <MonthlyVolumeCard volume="1.2K" />
+              </div>
+            </div>
+          </div>
+
+          <h2 className="text-xl font-semibold my-4">{instruction}</h2>
+          <div className="flex flex-wrap gap-2">
+            {suggestedKeywords.map((kw) => (
+              <Button
+                key={kw}
+                variant="outline"
                 onClick={() => handleKeywordSelect(kw)}
-                className="bg-green-100 hover:bg-green-200 border border-green-300 p-4 rounded-lg transition-all hover:scale-105 text-left"
+                className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
               >
                 <strong>{kw}</strong>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
       )}
 
-      <div className="p-8 max-w-2xl mx-auto">
+      {step === "outline" && outline && (
+        <div className="animate-in fade-in duration-500 mt-8">
+          <div className="space-y-2">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                {outline.title}
+              </h2>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                {outline.brief}
+              </p>
+            </div>
+
+            <div className="pb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                  Tone:
+                </span>
+                <span className="text-sm font-semibold text-slate-700">
+                  {outline.tone}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                  Audience:
+                </span>
+                <span className="text-sm font-semibold text-slate-700">
+                  {outline.target_audience?.join(", ")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {outline.sections.map((section, idx) => (
+              <div key={section.heading} className="relative">
+                <div className="flex items-baseline gap-4">
+                  <h3 className="text-sm font-bold">
+                    <span className="mr-4 font-mono">{idx + 1}.</span>
+                    {section.heading}
+                  </h3>
+                  <div className="text-xs bg-slate-100 rounded-full px-1 py-px font-medium text-slate-400">
+                    ~{section.suggested_word_count} words
+                  </div>
+                </div>
+                <div className="pl-10">
+                  <p className="leading-relaxed">{section.description}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ul className="space-y-1">
+                      {section.key_points.map((point: string) => (
+                        <li
+                          key={point}
+                          className="flex items-start gap-2 text-sm text-slate-600 pl-2"
+                        >
+                          <span className="mt-2 w-1 h-1 rounded-full bg-slate-400 flex-shrink-0" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-4 mt-8">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ms-auto">
+              <Button
+                onClick={handleOutlineApprove}
+                disabled={isLoading || isRejecting}
+                className="bg-slate-900 text-white hover:bg-slate-800"
+              >
+                Approve & Generate
+              </Button>
+              <Button
+                disabled={isLoading}
+                variant="outline"
+                className={
+                  isRejecting ? "bg-red-50 text-red-600 border-red-200" : ""
+                }
+              >
+                {isRejecting ? "Confirm Rejection" : "Reject"}
+              </Button>
+            </div>
+
+            {isRejecting && (
+              <div className="space-y-3 animate-in fade-in duration-300">
+                <textarea
+                  value={rejectedReason}
+                  onChange={(e) => setRejectedReason(e.target.value)}
+                  placeholder="Need changes? Let us know what to adjust..."
+                  className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-slate-900 outline-none min-h-[100px]"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => setIsRejecting(false)}
+                    className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {step === "content" && values.content?.final_content && (
+        <div className="animate-in fade-in duration-700 bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 flex flex-col h-[800px]">
+          {(() => {
+            const fc = values.final_content || values.content?.final_content;
+            const displayTitle =
+              fc?.title || userKeyword || "New Content Piece";
+            const body = fc?.body_markdown || generatedContent;
+            const tags = fc?.tags || [];
+            const author = workspace?.title || "WREXT AI";
+
+            return (
+              <>
+                {/* Internal Navigation / Toolbar */}
+                <header className="h-16 border-b px-6 flex items-center justify-between bg-white shrink-0">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-slate-200">
+                      <FileText size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <h1 className="text-sm font-bold text-slate-900 truncate">
+                        {displayTitle}
+                      </h1>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Badge
+                          variant="outline"
+                          className="h-4 px-1.5 text-[9px] font-bold uppercase tracking-wider border-slate-200 text-slate-500"
+                        >
+                          {author}
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            Live Editing
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 px-3 text-xs font-bold text-slate-500 hover:bg-slate-50"
+                    >
+                      <Save size={14} className="mr-2" /> Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-9 px-4 bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-lg shadow-slate-200"
+                    >
+                      <Send size={14} className="mr-2" /> Publish
+                    </Button>
+                  </div>
+                </header>
+
+                <div className="flex flex-1 overflow-hidden">
+                  {/* Left Sidebar: Outline */}
+                  <aside className="hidden lg:flex w-64 border-r bg-slate-50/50 flex-col py-6">
+                    <div className="px-6 mb-6">
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+                        Structure
+                      </h3>
+                      <nav className="space-y-1">
+                        <Button className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-lg text-left">
+                          <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                          Introduction
+                        </Button>
+                        {outline?.sections.map((sec, i) => (
+                          <Button
+                            key={sec.heading}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-lg text-left transition-colors"
+                          >
+                            <span className="text-[10px] font-mono text-slate-300">
+                              {i + 1}
+                            </span>
+                            <span className="truncate">{sec.heading}</span>
+                          </Button>
+                        ))}
+                      </nav>
+                    </div>
+                  </aside>
+
+                  {/* Main Content Area */}
+                  <main className="flex-1 overflow-y-auto bg-white p-8 md:p-16">
+                    <article className="max-w-2xl mx-auto space-y-12">
+                      <div className="space-y-8">
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.1]">
+                          {displayTitle}
+                        </h1>
+                        <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          {tags.map((t) => (
+                            <span key={t}>#{t}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* AI Insight Box */}
+                      <div className="p-6 bg-emerald-50/50 border-l-4 border-emerald-500 rounded-r-2xl">
+                        <div className="flex items-center gap-2 mb-2 text-emerald-700 font-black text-[10px] uppercase tracking-widest">
+                          <Lightbulb size={14} />
+                          AI Insight
+                        </div>
+                        <p className="text-sm text-emerald-800 leading-relaxed">
+                          Content intent is matching the{" "}
+                          <span className="font-bold underline">
+                            Informational
+                          </span>{" "}
+                          criteria. Added deep research points to increase
+                          trust.
+                        </p>
+                      </div>
+
+                      <div className="prose prose-slate prose-lg max-w-none">
+                        <div className="whitespace-pre-wrap text-slate-800 font-serif leading-[1.8] text-xl first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left">
+                          {body || (
+                            <div className="space-y-4 animate-pulse">
+                              <div className="h-4 bg-slate-100 rounded w-full" />
+                              <div className="h-4 bg-slate-100 rounded w-5/6" />
+                              <div className="h-4 bg-slate-100 rounded w-4/6" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  </main>
+
+                  {/* Right Sidebar: Analysis */}
+                  <aside className="hidden xl:flex w-80 border-l bg-slate-50/30 flex-col p-6 space-y-8 overflow-y-auto">
+                    <section className="space-y-4">
+                      <div className="flex items-center gap-2 text-slate-900 font-bold">
+                        <Activity size={16} className="text-emerald-500" />
+                        <h4 className="text-xs uppercase tracking-widest">
+                          Content Health
+                        </h4>
+                      </div>
+                      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-slate-400 uppercase">
+                            Readability
+                          </span>
+                          <Badge className="bg-blue-600 h-5 text-[10px] font-bold border-none">
+                            Grade 8
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-2xl font-black text-slate-900">
+                            Good
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] font-bold uppercase text-slate-400">
+                            <span>Sentence Length</span>
+                            <span className="text-emerald-600">Optimal</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 w-[82%]" />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <div className="flex items-center gap-2 text-slate-900 font-bold">
+                        <CheckCircle2 size={16} className="text-blue-500" />
+                        <h4 className="text-xs uppercase tracking-widest">
+                          On-Page SEO
+                        </h4>
+                      </div>
+                      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-4 mb-6">
+                          <div className="relative w-14 h-14 flex items-center justify-center">
+                            <svg className="w-full h-full -rotate-90">
+                              <title>On-Page SEO</title>
+                              <circle
+                                cx="28"
+                                cy="28"
+                                r="24"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="transparent"
+                                className="text-slate-50"
+                              />
+                              <circle
+                                cx="28"
+                                cy="28"
+                                r="24"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="transparent"
+                                strokeDasharray="150"
+                                strokeDashoffset="12"
+                                className="text-emerald-500"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <span className="absolute text-sm font-black text-slate-900">
+                              92
+                            </span>
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-bold text-slate-900">
+                              Almost Perfect!
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-bold">
+                              2 fixes remaining
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { label: "Focus keyword in H1", ok: true },
+                            { label: "Meta description length", ok: true },
+                            { label: "Keyword density", ok: false, warn: true },
+                          ].map((item) => (
+                            <div
+                              key={item.label}
+                              className="flex items-center gap-2 text-[10px] font-bold"
+                            >
+                              {item.ok ? (
+                                <CheckCircle2
+                                  size={12}
+                                  className="text-emerald-500"
+                                />
+                              ) : (
+                                <AlertCircle
+                                  size={12}
+                                  className="text-amber-500"
+                                />
+                              )}
+                              <span
+                                className={
+                                  item.ok ? "text-slate-700" : "text-slate-400"
+                                }
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <div className="flex items-center gap-2 text-amber-600 font-bold">
+                        <ShieldCheck size={16} />
+                        <h4 className="text-xs uppercase tracking-widest">
+                          EEAT Signals
+                        </h4>
+                      </div>
+                      <div className="bg-white/50 p-5 rounded-2xl border border-dashed border-slate-200 space-y-4">
+                        {[
+                          { label: "Author Trust", ok: true },
+                          { label: "Direct Experience", ok: true },
+                          {
+                            label: "External Citations",
+                            ok: false,
+                            warn: true,
+                          },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className="flex items-center gap-3"
+                          >
+                            {item.ok ? (
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            ) : (
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            )}
+                            <span className="text-[10px] font-bold text-slate-600">
+                              {item.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  </aside>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <div className="p-8">
         {/* Enhanced Debug/Live State Panel */}
         <details className="mb-8 bg-gray-50 border rounded-xl overflow-hidden group">
           <summary className="p-4 cursor-pointer hover:bg-gray-100 transition-colors flex items-center justify-between font-medium text-gray-700">
@@ -442,205 +681,6 @@ export default function Page() {
             </pre>
           </div>
         </details>
-
-        {step === "outline" && outline && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-              <div className="bg-gray-50 border-b p-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {outline.title}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">{outline.brief}</p>
-              </div>
-
-              <div className="p-4 space-y-6">
-                {outline.sections.map((section, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                      <span className="bg-blue-100 text-blue-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                        {idx + 1}
-                      </span>
-                      {section.heading}
-                    </h3>
-                    <p className="text-sm text-gray-600 ml-8">
-                      {section.description}
-                    </p>
-                    <ul className="ml-12 space-y-1">
-                      {section.key_points.map((point: string, pIdx: number) => (
-                        <li
-                          key={pIdx}
-                          className="text-xs text-gray-500 list-disc"
-                        >
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="ml-8 text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-                      Suggested: {section.suggested_word_count} words
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-gray-50 border-t p-6 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex gap-2">
-                    <span className="font-medium text-gray-700">Tone:</span>
-                    <span className="text-gray-600">{outline.tone}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="font-medium text-gray-700">Audience:</span>
-                    <span className="text-gray-600">
-                      {outline.target_audience?.join(", ")}
-                    </span>
-                  </div>
-                </div>
-
-                {isRejecting && (
-                  <div className="space-y-2 animate-in fade-in zoom-in-95 duration-200">
-                    <label
-                      htmlFor="rejectedReason"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Reason for Rejection
-                    </label>
-                    <textarea
-                      id="rejectedReason"
-                      name="rejectedReason"
-                      value={rejectedReason}
-                      onChange={(e) => setRejectedReason(e.target.value)}
-                      placeholder="Example: Need more focus on SSR, or add a section about Next.js 15..."
-                      className="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none min-h-[100px]"
-                    />
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleOutlineApprove}
-                    disabled={isLoading || isRejecting}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    ✅ Approve Outline
-                  </button>
-                  <button
-                    onClick={handleOutlineReject}
-                    disabled={isLoading}
-                    className={`flex-1 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                      isRejecting
-                        ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-white border-2 border-red-100 text-red-600 hover:bg-red-50"
-                    }`}
-                  >
-                    {isRejecting ? "Confirm Rejection" : "❌ Reject & Refine"}
-                  </button>
-                </div>
-
-                {isRejecting && (
-                  <button
-                    onClick={() => setIsRejecting(false)}
-                    className="w-full text-center text-sm text-gray-500 hover:text-gray-700 underline"
-                  >
-                    Cancel Rejection
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === "content" &&
-          (generatedContent ||
-            values.final_content ||
-            values.content?.final_content) && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-              {values.final_content || values.content?.final_content ? (
-                <div className="bg-white border rounded-2xl shadow-xl overflow-hidden">
-                  {(() => {
-                    const fc =
-                      values.final_content || values.content?.final_content;
-                    return (
-                      <>
-                        <div className="bg-emerald-600 p-8 text-white">
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                              Draft Generated
-                            </span>
-                          </div>
-                          <h2 className="text-3xl font-bold mb-2">
-                            {fc.title}
-                          </h2>
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            {fc.tags?.map((tag: string, i: number) => (
-                              <span
-                                key={i}
-                                className="bg-white/20 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm"
-                              >
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="p-8 space-y-8">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
-                            <div>
-                              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Meta Title
-                              </h4>
-                              <p className="text-sm font-medium text-gray-700">
-                                {fc.meta_title}
-                              </p>
-                            </div>
-                            <div>
-                              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Meta Description
-                              </h4>
-                              <p className="text-sm text-gray-600 italic">
-                                {fc.meta_description}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="prose prose-emerald max-w-none">
-                            <div className="whitespace-pre-wrap text-gray-800 leading-relaxed font-serif text-lg">
-                              {fc.body_markdown}
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-8 rounded-xl shadow-lg animate-in zoom-in duration-500">
-                  <h2 className="text-2xl font-bold mb-6 text-emerald-800">
-                    ✅ Generated Content
-                  </h2>
-                  <div className="prose max-w-none">
-                    <p className="whitespace-pre-wrap text-gray-900 leading-relaxed">
-                      {generatedContent}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-        <div className="mt-8 flex gap-3">
-          <button
-            onClick={reset}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            🔄 Reset Flow
-          </button>
-          {isLoading && (
-            <button
-              onClick={() => stop()}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-            >
-              ⏹️ Stop Streaming
-            </button>
-          )}
-        </div>
       </div>
     </PageLayout>
   );

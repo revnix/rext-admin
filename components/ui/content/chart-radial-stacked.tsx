@@ -100,6 +100,7 @@ export function ChartRadialStacked({
                   </text>
                 );
               }
+              return null;
             }}
           />
         </PolarRadiusAxis>

@@ -9,7 +9,7 @@ const chartConfig = {
   },
 };
 
-export function MonthlyVolumeCard({ volume = "0", className = "" }) {
+export function MonthlyVolumeCard({ volume = "0" }) {
   const sparkData = React.useMemo(() => {
     const numericVolume = parseFloat(volume.replace(/[^0-9.]/g, "")) || 0;
     const base = numericVolume > 0 ? numericVolume : 1.2;
