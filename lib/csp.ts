@@ -19,6 +19,12 @@ export function getCSPHeader(_nonce: string): string {
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:2024";
 
+  // In development, allow both localhost and 127.0.0.1 for the backend
+  // as they are distinct origins in CSP but often used interchangeably.
+  const backendOrigins = isDev
+    ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024`
+    : apiUrl;
+
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
   const thirdPartyDomains = {
@@ -52,7 +58,7 @@ export function getCSPHeader(_nonce: string): string {
     "font-src 'self' data:",
 
     // Connect: Allow self, backend API, and third-party services
-    `connect-src 'self' ${apiUrl} ${thirdPartyDomains.lemonsqueezy.app}`,
+    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
     `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.app}`,

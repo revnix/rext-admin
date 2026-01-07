@@ -248,11 +248,27 @@ export function WorkspaceAddKnowledgeDialog({
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       ];
-      const allowedExtensions = [".pdf", ".txt", ".text", ".md", ".markdown", ".csv", ".doc", ".docx"];
-      const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+      const allowedExtensions = [
+        ".pdf",
+        ".txt",
+        ".text",
+        ".md",
+        ".markdown",
+        ".csv",
+        ".doc",
+        ".docx",
+      ];
+      const fileExtension = file.name
+        .toLowerCase()
+        .slice(file.name.lastIndexOf("."));
 
-      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-        toast.error("Invalid file type. Please select only PDF, TXT, MD, CSV, DOC, or DOCX files.");
+      if (
+        !allowedTypes.includes(file.type) &&
+        !allowedExtensions.includes(fileExtension)
+      ) {
+        toast.error(
+          "Invalid file type. Please select only PDF, TXT, MD, CSV, DOC, or DOCX files.",
+        );
         e.target.value = ""; // Reset the input
         return;
       }
@@ -438,7 +454,8 @@ export function WorkspaceAddKnowledgeDialog({
                         </div>
                       </FormControl>
                       <FormDescription>
-                        Supported formats: PDF, TXT, MD, CSV, DOC, DOCX (max 10MB)
+                        Supported formats: PDF, TXT, MD, CSV, DOC, DOCX (max
+                        10MB)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

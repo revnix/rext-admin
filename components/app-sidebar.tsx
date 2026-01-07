@@ -95,6 +95,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           permission: "content.read",
         },
         {
+          title: "Generate Content",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.generate_content(currentWorkspace.slug)
+            : "/",
+          icon: FileText,
+          permission: "content.read",
+        },
+        {
           title: "Knowledge",
           url: currentWorkspace?.slug
             ? workspaceRoutes.knowledge(currentWorkspace.slug)
