@@ -125,7 +125,7 @@ export function PageLayout({
               <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                 <span className="text-xs">
                   {isMounted &&
-                    navigator.userAgent.toLowerCase().includes("mac")
+                  navigator.userAgent.toLowerCase().includes("mac")
                     ? "⌘"
                     : "Ctrl+"}
                 </span>
@@ -159,13 +159,16 @@ export function PageLayout({
         <div className={`flex flex-1 flex-col gap-4 p-4 pt-6 ${className}`}>
           {/* Page Header */}
           <div className="flex items-start justify-between">
-            {!hideTitle && (<div className="space-y-1">
-
-              <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-              {description && (
-                <p className="text-muted-foreground max-w-2xl">{description}</p>
-              )}
-            </div>)}
+            {!hideTitle && (
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                {description && (
+                  <p className="text-muted-foreground max-w-2xl">
+                    {description}
+                  </p>
+                )}
+              </div>
+            )}
             {actions && (
               <div className="flex items-start gap-2 mt-1">{actions}</div>
             )}

@@ -156,13 +156,13 @@ export default function Page() {
       breadcrumbs={breadcrumbs}
     >
       <div className="max-w-3xl mx-auto w-full min-h-[70vh] flex flex-col items-center justify-center relative px-6 overflow-hidden">
-
         <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
             What are we <span className="text-primary">writing</span> today?
           </h1>
           <p className="text-lg text-slate-500 max-w-lg mx-auto leading-relaxed">
-            Transform your keywords into high-quality content with our AI-powered generation engine.
+            Transform your keywords into high-quality content with our
+            AI-powered generation engine.
           </p>
         </div>
 
@@ -206,7 +206,6 @@ export default function Page() {
           )}
         </div>
       </div>
-
 
       <LoadingIndicatorVariants
         step={step}
