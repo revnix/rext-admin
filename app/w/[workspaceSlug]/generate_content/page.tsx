@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ChartRadialStacked } from "@/components/ui/content/chart-radial-stacked";
 import { SearchIntentCard } from "@/components/ui/content/intent-card";
 import {
+  Search,
   Compass,
   TrendingUp,
   Zap,
@@ -54,33 +55,12 @@ export default function Page() {
   ];
 
   const { values, submit, isLoading } = useStream<WREXT>({
-    apiUrl: "http://localhost:2024",
+    apiUrl: "http://192.168.1.130:2024/",
     assistantId: "agent",
     messagesKey: "messages",
     threadId: threadId,
     onThreadId: setThreadId,
   });
-
-  // // Automatically fetch current country with fallbacks (via proxy to bypass CSP)
-  // useEffect(() => {
-  //   const fetchCountry = async () => {
-  //     try {
-  //       const response = await fetch("/api/country");
-  //       if (!response.ok) throw new Error("Failed to fetch country from proxy");
-
-  //       const data = await response.json();
-  //       if (data.countryCode) {
-  //         const detectedCountry = data.countryCode;
-  //         setCountry(detectedCountry);
-  //         log.info("[Fetch Country Success]", { detectedCountry });
-  //       }
-  //     } catch (error) {
-  //       log.error("[Fetch Country Error]", error);
-  //       setCountry("us");
-  //     }
-  //   };
-  //   fetchCountry();
-  // }, []);
 
   // Track all state changes from stream
   useEffect(() => {
@@ -171,38 +151,62 @@ export default function Page() {
   return (
     <PageLayout
       title="Generate Content"
+      hideTitle={true}
       description={`View, edit, and manage AI-generated content for ${workspace?.title || "this workspace"}.`}
       breadcrumbs={breadcrumbs}
     >
-      {(step === "keyword" || step === "suggestions") && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleKeywordSubmit();
-          }}
-          className="flex gap-3 w-full "
-        >
-          <Input
-            type="text"
-            placeholder="Enter keyword"
-            className="h-10 w-[60%]"
-            value={userKeyword}
-            onChange={(e) => setUserKeyword(e.target.value)}
-            required
-          />
+      <div className="max-w-3xl mx-auto w-full min-h-[70vh] flex flex-col items-center justify-center relative px-6 overflow-hidden">
 
-          <div className="w-[20%]">
-            <CountryDropdown
-              value={country}
-              onChange={(c) => setCountry(c.alpha2)}
-            />
-          </div>
+        <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+            What are we <span className="text-primary">writing</span> today?
+          </h1>
+          <p className="text-lg text-slate-500 max-w-lg mx-auto leading-relaxed">
+            Transform your keywords into high-quality content with our AI-powered generation engine.
+          </p>
+        </div>
 
-          <Button type="submit" className="h-10 w-[20%]">
-            Submit
-          </Button>
-        </form>
-      )}
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 w-full">
+          {(step === "keyword" || step === "suggestions") && (
+            <div className="relative group">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleKeywordSubmit();
+                }}
+                className="relative flex flex-col sm:flex-row gap-3 py-2 bg-white/80 border border-slate-200 rounded-xl shadow-2xl shadow-slate-200/50"
+              >
+                <div className="flex-1 flex items-center px-4">
+                  <Search className="w-6 h-6 text-slate-300 mr-4" />
+                  <Input
+                    type="text"
+                    placeholder="Enter a keyword or topic..."
+                    className="h-12 w-full border-none shadow-none !text-lg !placeholder:text-slate-300 focus-visible:ring-0 bg-transparent px-0"
+                    value={userKeyword}
+                    onChange={(e) => setUserKeyword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 px-2 border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0 group/actions">
+                  <CountryDropdown
+                    slim={true}
+                    value={country}
+                    onChange={(c) => setCountry(c.alpha2)}
+                  />
+                  <Button
+                    type="submit"
+                    className="h-12 px-4 text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-slate-200"
+                  >
+                    Generate
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+
 
       <LoadingIndicatorVariants
         step={step}
