@@ -1,7 +1,5 @@
-import { Area, AreaChart} from "recharts";
-import {
-  ChartContainer,
-} from "@/components/ui/chart";
+import { Area, AreaChart } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 import React from "react";
 
 const chartConfig = {
