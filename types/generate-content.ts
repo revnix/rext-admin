@@ -43,6 +43,7 @@ export type Content = {
   content: string;
   tags: string[];
   final_content: FinalContent;
+  review: Review;
 };
 
 export type FinalContent = {
@@ -52,6 +53,20 @@ export type FinalContent = {
   body_markdown: string;
   meta_title?: string;
   meta_description?: string;
+};
+
+export type Review = {
+  readability_metrics: ReadabilityMetrics;
+};
+
+export type ReadabilityMetrics = {
+  flesch_reading_ease: number;
+};
+
+export type ReadabilityMeta = {
+  label: string;
+  color: string;
+  barColor: string;
 };
 
 export type WREXT = {

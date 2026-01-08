@@ -34,7 +34,7 @@ export function LoadingIndicatorVariants({
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-100 rounded-full w-2/3 animate-pulse" />
+          <div className="h-4 bg-gray-100 rounded-full w-full animate-pulse" />
           <div className="h-2 bg-gray-50 rounded-full w-1/2 animate-pulse" />
         </div>
       </div>
