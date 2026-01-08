@@ -73,7 +73,7 @@ export type WREXT = {
   messages: Message[];
   serp_payload: {
     query: string;
-    country: string; // SUPPORTED_COUNTRIES
+    country: string;
   };
   serp_result: {
     organic_results: Array<Record<string, unknown>>;
@@ -96,16 +96,16 @@ export type WREXT = {
   }>;
   scrape_context: {
     documents: Array<{
-      document: unknown; // Document type
+      document: unknown;
       content_length: number;
       keywords: string[];
       headings: string[];
     }>;
     total_documents: number;
   };
-  relevant_context: unknown[]; // Document[]
-  seo_result: unknown; // SEORESULT
-  content: Content; // CONTENT
+  relevant_context: unknown[];
+  seo_result: unknown;
+  content: Content;
   outline?: Outline;
   final_content?: FinalContent;
   topics?: string[];
@@ -119,7 +119,8 @@ export type WREXT = {
   __interrupt__?: Array<{
     id: string;
     value: {
-      instruction: string;
+      instructions: string;
+      type: string;
       "Primary Keyword": string;
       "Related Keywords": string[];
       [key: string]: unknown;

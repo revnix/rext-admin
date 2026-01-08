@@ -28,6 +28,7 @@ import type { Outline, ReadabilityMeta, WREXT } from "@/types/generate-content";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Textarea } from "@/components/ui/textarea";
 
 const slugify = (text: string) => {
   return text
@@ -52,7 +53,7 @@ const getTextFromChildren = (children: ReactNode): string => {
 };
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
-  if (score >= 80) {
+  if (score >= 90) {
     return {
       label: "Very Easy",
       color: "text-emerald-600",
@@ -60,9 +61,25 @@ function getReadabilityMeta(score: number): ReadabilityMeta {
     };
   }
 
+  if (score >= 80) {
+    return {
+      label: "Easy",
+      color: "text-emerald-600",
+      barColor: "bg-emerald-500",
+    };
+  }
+
+  if (score >= 70) {
+    return {
+      label: "Fairly Easy",
+      color: "text-emerald-600",
+      barColor: "bg-emerald-500",
+    };
+  }
+
   if (score >= 60) {
     return {
-      label: "Good",
+      label: "Standard",
       color: "text-emerald-600",
       barColor: "bg-emerald-500",
     };
@@ -70,7 +87,7 @@ function getReadabilityMeta(score: number): ReadabilityMeta {
 
   if (score >= 50) {
     return {
-      label: "Fair",
+      label: "Fairly Difficult",
       color: "text-yellow-600",
       barColor: "bg-yellow-500",
     };
@@ -85,7 +102,7 @@ function getReadabilityMeta(score: number): ReadabilityMeta {
   }
 
   return {
-    label: "Very Hard",
+    label: "Very Confusing",
     color: "text-red-600",
     barColor: "bg-red-500",
   };
@@ -94,7 +111,12 @@ function getReadabilityMeta(score: number): ReadabilityMeta {
 export default function Page() {
   const { workspace, workspaceSlug } = useWorkspace();
   const [step, setStep] = useState<
-    "keyword" | "suggestions" | "topic" | "outline" | "content"
+    | "keyword"
+    | "suggestions"
+    | "topic"
+    | "outline"
+    | "outline-reject"
+    | "content"
   >("keyword");
   const [userKeyword, setUserKeyword] = useState("");
   const [country, setCountry] = useState("us");
@@ -102,9 +124,9 @@ export default function Page() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
   const [rejectedReason, setRejectedReason] = useState("");
-  const [isRejecting, setIsRejecting] = useState(false);
   const [outline, setOutline] = useState<Outline | null>(null);
   const [instruction, setInstruction] = useState<string>("");
+  const [instructionType, setInstructionType] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
 
   const breadcrumbs = [
@@ -132,7 +154,8 @@ export default function Page() {
     const interrupt = values.__interrupt__?.[0];
 
     if (interrupt) {
-      setInstruction(interrupt?.value.instruction);
+      setInstruction(interrupt?.value.instructions);
+      setInstructionType(interrupt?.value.type);
     }
 
     // 1. Content Phase (Dominant)
@@ -151,7 +174,8 @@ export default function Page() {
     // 2. Outline Review Phase
     else if (interrupt?.value.type === "outline_review") {
       setOutline(interrupt?.value.data as Outline);
-      if (step !== "outline" && step !== "content") setStep("content");
+      if (step !== "outline" && step !== "outline-reject" && step !== "content")
+        setStep("content");
     }
 
     // 3. Selection Phase
@@ -212,6 +236,35 @@ export default function Page() {
       command: { resume: "approve" },
     });
   };
+
+  const handleOutlineReject = () => {
+    setInstruction("");
+    setStep("outline-reject");
+    submit(null, {
+      command: { resume: "reject" },
+    });
+  };
+
+  const handleOutlineRejectReason = () => {
+    setStep("outline");
+    setRejectedReason("");
+    setOutline(null);
+    submit(
+      {
+        instruction_response: rejectedReason,
+        continue_workflow: true,
+      },
+      {
+        command: { resume: true },
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (values) {
+      log.info("values", values);
+    }
+  }, [values]);
 
   return (
     <PageLayout
@@ -415,35 +468,38 @@ export default function Page() {
 
             <div className="flex flex-col gap-4 mt-8">
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ms-auto">
-                <Button
-                  onClick={handleOutlineApprove}
-                  disabled={isLoading || isRejecting}
-                >
+                <Button onClick={handleOutlineApprove} disabled={isLoading}>
                   Approve & Generate
                 </Button>
-                <Button disabled={isLoading} variant="outline">
-                  {isRejecting ? "Confirm Rejection" : "Reject"}
+                <Button
+                  onClick={handleOutlineReject}
+                  disabled={isLoading}
+                  variant="outline"
+                >
+                  Reject
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
 
-              {isRejecting && (
-                <div className="space-y-3 animate-in fade-in duration-300">
-                  <textarea
-                    value={rejectedReason}
-                    onChange={(e) => setRejectedReason(e.target.value)}
-                    placeholder="Need changes? Let us know what to adjust..."
-                    className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-slate-900 outline-none min-h-[100px]"
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={() => setIsRejecting(false)}
-                      className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
+        {step === "outline-reject" && instructionType === "outline_reject" && (
+          <div className="animate-in fade-in duration-700 bg-white flex flex-col w-full">
+            <label htmlFor="rejectedReason" className="text-base font-medium">
+              {instruction}
+            </label>
+            <Textarea
+              name="rejectedReason"
+              id="rejectedReason"
+              value={rejectedReason}
+              onChange={(e) => setRejectedReason(e.target.value)}
+              placeholder={instruction}
+              className="w-full mt-2"
+            />
+            <div className="flex justify-end mt-2">
+              <Button onClick={() => handleOutlineRejectReason()}>
+                Submit
+              </Button>
             </div>
           </div>
         )}
