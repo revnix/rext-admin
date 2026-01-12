@@ -20,10 +20,11 @@ export function SuggestionsSection({
       <button
         type="button"
         onClick={() => onSelect(primaryKeyword)}
-        className="relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4"
+        className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4"
       >
         {/* Accent bar */}
         <span className="absolute left-0 top-0 h-full w-1 bg-primary" />
+        <p>Searched Keyword</p>
         <h1 className="text-2xl md:text-3xl font-semibold leading-snug ">
           {primaryKeyword}
         </h1>
