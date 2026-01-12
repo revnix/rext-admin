@@ -114,16 +114,53 @@ export type WREXT = {
   instruction_response?: string;
   "Selected Topic"?: string;
   "Primary Keyword"?: string;
-  "Related Keywords"?: string[];
+  Recommendations?: string[];
   continue_workflow?: boolean;
   __interrupt__?: Array<{
     id: string;
     value: {
       instructions: string;
+      instruction: string;
       type: string;
       "Primary Keyword": string;
-      "Related Keywords": string[];
+      Recommendations: string[];
       [key: string]: unknown;
     };
   }>;
 };
+
+export type AppStep =
+  | "keyword"
+  | "suggestions"
+  | "topics"
+  | "outline"
+  | "outline-reject"
+  | "content";
+
+export interface PageState {
+  step: AppStep;
+  userKeyword: string;
+  country: string;
+  primaryKeyword: string;
+  suggestedKeywords: string[];
+  generatedContent: string;
+  threadId: string | null;
+  rejectedReason: string;
+  outline: Outline | null;
+  topics: string[];
+  instruction: string;
+  instructionType: string;
+  isEditing: boolean;
+}
+
+export type PageAction =
+  | { type: "SET_STEP"; payload: AppStep }
+  | { type: "SET_USER_KEYWORD"; payload: string }
+  | { type: "SET_COUNTRY"; payload: string }
+  | { type: "SET_THREAD_ID"; payload: string | null }
+  | { type: "SET_REJECTED_REASON"; payload: string }
+  | { type: "SET_IS_EDITING"; payload: boolean }
+  | { type: "SET_GENERATED_CONTENT"; payload: string }
+  | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
+  | { type: "RESET_FOR_REJECT" }
+  | { type: "SUBMIT_REJECT_REASON" };

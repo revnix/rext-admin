@@ -1,0 +1,84 @@
+import { Zap, Compass, TrendingUp } from "lucide-react";
+import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
+import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
+import { SearchIntentCard } from "../ui/content/intent-card";
+import { Button } from "../ui/button";
+
+export function SuggestionsSection({
+  instruction,
+  primaryKeyword,
+  suggestedKeywords,
+  onSelect,
+}: {
+  instruction: string;
+  primaryKeyword: string;
+  suggestedKeywords: string[];
+  onSelect: (kw: string) => void;
+}) {
+  return (
+    <div className="w-full">
+      <button
+        type="button"
+        onClick={() => onSelect(primaryKeyword)}
+        className="relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4"
+      >
+        {/* Accent bar */}
+        <span className="absolute left-0 top-0 h-full w-1 bg-primary" />
+        <h1 className="text-2xl md:text-3xl font-semibold leading-snug ">
+          {primaryKeyword}
+        </h1>
+      </button>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-400">
+              Difficulty
+            </span>
+            <Zap className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <ChartRadialStacked difficultyScore={54} />
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-400">
+                Search Intent
+              </span>
+              <Compass className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex items-center gap-3">
+              <SearchIntentCard intent="informational" />
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-400">
+                Monthly Volume
+              </span>
+              <TrendingUp className="w-4 h-4 text-blue-500" />
+            </div>
+            <MonthlyVolumeCard volume="0" />
+          </div>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-semibold my-4">{instruction}</h2>
+
+      <div className="flex flex-wrap gap-2">
+        {suggestedKeywords.map((kw) => (
+          <Button
+            key={kw}
+            variant="outline"
+            onClick={() => onSelect(kw)}
+            className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
+          >
+            <strong>{kw}</strong>
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
