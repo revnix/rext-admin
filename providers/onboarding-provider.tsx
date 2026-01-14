@@ -57,16 +57,18 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     return undefined;
   }, [status, shouldShow, isLoading, isCompleted, isExcludedPage]);
 
-  // Onboarding modal temporarily disabled
-  // const _handleClose = () => {
+  // Onboarding modal disabled - using workspace wizard instead
+  // const handleClose = () => {
   //   setIsOpen(false);
   // };
 
   return (
     <>
       {children}
-      {/* Onboarding modal temporarily disabled */}
+      {/* Onboarding modal disabled - using workspace wizard instead */}
       {/* {!isLoading && <OnboardingModal open={isOpen} onClose={handleClose} />} */}
     </>
   );
 }
+
+

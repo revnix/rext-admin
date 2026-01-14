@@ -26,6 +26,7 @@ import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
 import { WorkspaceCongratulations } from "@/components/workspace/workspace-congratulations";
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
+import { OnboardingStrategy } from "@/components/onboarding/steps/onboarding-strategy";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
@@ -54,7 +55,12 @@ import type { BrandVoice } from "@/types/workspace";
  * - Professional guided experience
  */
 
-type WizardStep = "details" | "progress" | "review" | "congratulations";
+type WizardStep =
+  | "strategy"
+  | "details"
+  | "progress"
+  | "review"
+  | "congratulations";
 
 const STEPS: Array<{
   id: WizardStep;
@@ -63,22 +69,28 @@ const STEPS: Array<{
   progress: number;
 }> = [
   {
+    id: "strategy",
+    title: "Welcome",
+    description: "Choose your content strategy",
+    progress: 20,
+  },
+  {
     id: "details",
     title: "Workspace Details",
     description: "Tell us about your workspace",
-    progress: 25,
+    progress: 40,
   },
   {
     id: "progress",
     title: "Analysis",
     description: "We're analyzing your website",
-    progress: 50,
+    progress: 60,
   },
   {
     id: "review",
     title: "Review & Save",
     description: "Review and edit brand information",
-    progress: 75,
+    progress: 80,
   },
   {
     id: "congratulations",
@@ -92,7 +104,10 @@ export function WorkspaceCreateWizard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { clearCompletedOperation } = useSSE();
-  const [currentStep, setCurrentStep] = useState<WizardStep>("details");
+  const [currentStep, setCurrentStep] = useState<WizardStep>("strategy");
+  const [selectedStrategy, setSelectedStrategy] = useState<
+    "analyze" | "manual" | null
+  >(null);
 
   // Check workspace limit
   const { checkLimit, warnIfApproaching } = useCheckLimit("workspaces");
@@ -279,9 +294,34 @@ export function WorkspaceCreateWizard() {
   // Calculate overall progress from SSE events
   const overallProgress = latestEvent?.progress || 0;
 
+  // Handle strategy selection
+  const handleStrategySelection = (strategy: "analyze" | "manual") => {
+    log.info("[Wizard] Strategy selected", { strategy });
+    setSelectedStrategy(strategy);
+    setCurrentStep("details");
+  };
+
+  // Handle back navigation
+  const handleBack = () => {
+    if (currentStep === "details") {
+      setCurrentStep("strategy");
+    } else if (currentStep === "review") {
+      setCurrentStep("progress");
+    }
+    // Note: Can't go back from progress or congratulations steps
+  };
+
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
+      case "strategy":
+        return (
+          <OnboardingStrategy
+            onNext={handleStrategySelection}
+            isLoading={false}
+          />
+        );
+
       case "details":
         return (
           <QuestionCard
@@ -293,8 +333,8 @@ export function WorkspaceCreateWizard() {
               onSubmit={handleSubmit(handleDetailsSubmit)}
               className="space-y-6"
             >
-              {/* Title Field */}
-              <div className="space-y-2">
+              {/* Title Field - HIDDEN */}
+              <div className="hidden space-y-2">
                 <Label htmlFor="title" className="text-base font-medium">
                   Workspace Title <span className="text-destructive">*</span>
                 </Label>
@@ -336,8 +376,8 @@ export function WorkspaceCreateWizard() {
                 </p>
               </div>
 
-              {/* Timezone Field */}
-              <div className="space-y-2">
+              {/* Timezone Field - HIDDEN */}
+              <div className="hidden space-y-2">
                 <Label htmlFor="timezone" className="text-base font-medium">
                   Timezone{" "}
                   <span className="text-muted-foreground">(Optional)</span>
@@ -416,25 +456,6 @@ export function WorkspaceCreateWizard() {
                   Detected: {Intl.DateTimeFormat().resolvedOptions().timeZone}
                 </p>
               </div>
-
-              <Button
-                type="submit"
-                size="lg"
-                disabled={!isValid || form.formState.isSubmitting}
-                className="w-full"
-              >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Workspace...
-                  </>
-                ) : (
-                  <>
-                    Create Workspace
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
             </form>
           </QuestionCard>
         );
@@ -550,6 +571,62 @@ export function WorkspaceCreateWizard() {
       >
         {renderStepContent()}
       </motion.div>
+
+      {/* Navigation Buttons */}
+      {currentStep !== "progress" && currentStep !== "congratulations" && (
+        <div className="flex items-center justify-between pt-6 border-t">
+          {/* Back Button */}
+          {currentStep !== "strategy" ? (
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="gap-2"
+              disabled={form.formState.isSubmitting}
+            >
+              <ArrowRight className="h-4 w-4 rotate-180" />
+              Back
+            </Button>
+          ) : (
+            <div /> // Empty div for spacing when no back button
+          )}
+
+          {/* Continue/Next Button */}
+          {currentStep === "strategy" && (
+            <Button
+              size="lg"
+              onClick={() =>
+                selectedStrategy && handleStrategySelection(selectedStrategy)
+              }
+              disabled={!selectedStrategy}
+              className="gap-2 text-white"
+            >
+              Continue
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+
+          {currentStep === "details" && (
+            <Button
+              size="lg"
+              onClick={handleSubmit(handleDetailsSubmit)}
+              disabled={!isValid || form.formState.isSubmitting}
+              className="gap-2 text-white"
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  Create Workspace
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
