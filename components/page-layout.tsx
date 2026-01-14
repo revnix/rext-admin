@@ -32,6 +32,7 @@ interface BreadcrumbItemData {
 
 interface PageLayoutProps {
   title: string;
+  hideTitle?: boolean;
   description?: string;
   breadcrumbs?: BreadcrumbItemData[];
   actions?: ReactNode;
@@ -41,6 +42,7 @@ interface PageLayoutProps {
 
 export function PageLayout({
   title,
+  hideTitle = false,
   description,
   breadcrumbs = [],
   actions,
@@ -157,12 +159,16 @@ export function PageLayout({
         <div className={`flex flex-1 flex-col gap-4 p-4 pt-6 ${className}`}>
           {/* Page Header */}
           <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-              {description && (
-                <p className="text-muted-foreground max-w-2xl">{description}</p>
-              )}
-            </div>
+            {!hideTitle && (
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                {description && (
+                  <p className="text-muted-foreground max-w-2xl">
+                    {description}
+                  </p>
+                )}
+              </div>
+            )}
             {actions && (
               <div className="flex items-start gap-2 mt-1">{actions}</div>
             )}
