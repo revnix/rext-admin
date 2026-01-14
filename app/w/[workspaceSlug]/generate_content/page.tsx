@@ -201,13 +201,39 @@ export default function Page() {
     { label: "Generate Content" },
   ];
 
-  const { values, submit, isLoading } = useStream<WREXT>(streamConfig);
-
+  const { values, thread, submit, isLoading } = useStream<WREXT>({
+    ...streamConfig,
+    streamMode: ["updates", "messages"],
+    // Handle updates (state deltas after each node/step)
+    onUpdateEvent: (update, options) => {
+      console.log("update from node", Object.keys(update)[0], update);
+      // Accumulate updates into local state if needed
+      options.mutate((prev) => ({
+        ...prev,
+        // e.g., merge into a local updates array or custom state
+        customUpdates: {
+          ...prev.customUpdates,
+          ...update,
+        },
+      }));
+    },
+    // Handle messages (LLM tokens + metadata)
+    onMessageEvent: (token, metadata, options) => {
+      console.log("token:", token.content, "node:", metadata.langgraph_node);
+      // Stream tokens live, e.g., append to message content
+    },
+    onCustomEvent: (event) => {
+      console.log("custom:", event);
+    },
+    onFinish: (finalValues) => {
+      console.log("final values:", finalValues);
+    },
+  });
   useEffect(() => {
     if (values) {
       dispatch({ type: "UPDATE_FROM_STREAM", payload: values });
     }
-    log.info("values", values);
+    console.log("values", values);
     log.info("step", step);
     log.info("isEditing", isEditing);
   }, [values, step, isEditing]);
