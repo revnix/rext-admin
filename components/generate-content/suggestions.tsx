@@ -2,7 +2,7 @@ import { Zap, Compass, TrendingUp } from "lucide-react";
 import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
-import { Button } from "../ui/button";
+import { motion } from "framer-motion";
 
 export function SuggestionsSection({
   instruction,
@@ -68,17 +68,59 @@ export function SuggestionsSection({
 
       <h2 className="text-xl font-semibold my-4">{instruction}</h2>
 
-      <div className="flex flex-wrap gap-2">
-        {suggestedKeywords.map((kw) => (
-          <Button
-            key={kw}
-            variant="outline"
-            onClick={() => onSelect(kw)}
-            className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
-          >
-            <strong>{kw}</strong>
-          </Button>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {suggestedKeywords.map((keyword, index) => {
+          const icons = [Zap, Compass, TrendingUp, Zap, Compass];
+          const iconColors = [
+            "bg-blue-50 text-blue-600",
+            "bg-purple-50 text-purple-600",
+            "bg-green-50 text-green-600",
+            "bg-orange-50 text-orange-600",
+            "bg-pink-50 text-pink-600",
+          ];
+          const Icon = icons[index % icons.length];
+          const iconColorClass = iconColors[index % iconColors.length];
+
+          return (
+            <motion.button
+              key={keyword}
+              type="button"
+              onClick={() => onSelect(keyword)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.3 }}
+              className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 text-left transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:border-primary/30"
+            >
+              {/* Icon Badge */}
+              <div
+                className={`inline-flex h-12 w-12 items-center justify-center rounded-lg ${iconColorClass} mb-4`}
+              >
+                <Icon className="h-6 w-6" />
+              </div>
+
+              {/* Decorative Background Icon */}
+              <div className="absolute right-4 top-4 opacity-5 pointer-events-none">
+                <Icon className="h-24 w-24" />
+              </div>
+
+              {/* Keyword Title */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
+                {keyword}
+              </h3>
+
+              {/* Description */}
+              <p className="text-sm text-gray-500 mb-4">
+                Generate content optimized for this keyword
+              </p>
+
+              {/* Action Link */}
+              <div className="flex items-center text-blue-600 font-medium text-sm mt-auto group-hover:gap-2 transition-all duration-300">
+                <span>Select keyword</span>
+                <TrendingUp className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </div>
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
