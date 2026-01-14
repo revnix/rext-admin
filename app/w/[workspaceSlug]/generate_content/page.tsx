@@ -3,14 +3,14 @@
 import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
-import { useEffect, useReducer, useCallback, useMemo } from "react";
+import { useEffect, useReducer, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { log } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
 import type {
-  Outline,
+  ContentOutline,
   PageAction,
   PageState,
   WREXT,
@@ -39,6 +39,10 @@ const initialState: PageState = {
   instruction: "",
   instructionType: "",
   isEditing: false,
+  seoResult: null,
+  serp: null,
+  competitors: null,
+  currentContentState: null,
 };
 
 function reducer(state: PageState, action: PageAction): PageState {
@@ -84,6 +88,37 @@ function reducer(state: PageState, action: PageAction): PageState {
         }
       }
 
+      // Sync backend state into frontend state
+      if (
+        values.seo_result &&
+        JSON.stringify(state.seoResult) !== JSON.stringify(values.seo_result)
+      ) {
+        newState.seoResult = values.seo_result;
+        changed = true;
+      }
+      if (
+        values.serp_result &&
+        JSON.stringify(state.serp) !== JSON.stringify(values.serp_result)
+      ) {
+        newState.serp = values.serp_result;
+        changed = true;
+      }
+      if (
+        values.competitors &&
+        JSON.stringify(state.competitors) !== JSON.stringify(values.competitors)
+      ) {
+        newState.competitors = values.competitors;
+        changed = true;
+      }
+      if (
+        values.content &&
+        JSON.stringify(state.currentContentState) !==
+          JSON.stringify(values.content)
+      ) {
+        newState.currentContentState = values.content;
+        changed = true;
+      }
+
       // 1. Content Phase (Dominant)
       if (values.content?.final_content) {
         if (values.content.final_content.body_markdown) {
@@ -105,7 +140,7 @@ function reducer(state: PageState, action: PageAction): PageState {
       }
       // 2. Outline Review Phase
       else if (interrupt?.value.type === "outline_review") {
-        const newOutline = interrupt.value.data as Outline;
+        const newOutline = interrupt.value.data as ContentOutline;
         if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
           newState.outline = newOutline;
           changed = true;
@@ -141,6 +176,9 @@ function reducer(state: PageState, action: PageAction): PageState {
           ) {
             newState.primaryKeyword = primaryKeyword || "";
             newState.suggestedKeywords = keywords;
+            if (interrupt.value.seo_state) {
+              newState.seoResult = interrupt.value.seo_state;
+            }
             changed = true;
           }
           if (state.step === "keyword") {
@@ -172,6 +210,7 @@ export default function Page() {
     instruction,
     instructionType,
     isEditing,
+    seoResult,
   } = state;
 
   const { workspace, workspaceSlug } = useWorkspace();
@@ -179,17 +218,6 @@ export default function Page() {
   const onThreadId = useCallback(
     (id: string | null) => dispatch({ type: "SET_THREAD_ID", payload: id }),
     [],
-  );
-
-  const streamConfig = useMemo(
-    () => ({
-      apiUrl: "http://192.168.1.130:2024/",
-      assistantId: "agent",
-      messagesKey: "messages",
-      threadId: threadId,
-      onThreadId: onThreadId,
-    }),
-    [threadId, onThreadId],
   );
 
   const breadcrumbs = [
@@ -201,7 +229,53 @@ export default function Page() {
     { label: "Generate Content" },
   ];
 
-  const { values, submit, isLoading } = useStream<WREXT>(streamConfig);
+  const { values, submit, isLoading } = useStream<WREXT>({
+    apiUrl: "http://127.0.0.1:2024/",
+    assistantId: "agent",
+    messagesKey: "messages",
+    threadId: threadId,
+    onThreadId: onThreadId,
+
+    // Handle state updates after each graph step (including subgraphs)
+    onUpdateEvent: (update, options) => {
+      // Extract namespace from options (indicates nesting level)
+      // namespace is an array like ['serp_engine:task_id', 'fetch_serp'] for subgraph nodes
+      // or undefined/empty for parent graph nodes
+      const namespace = options?.namespace || [];
+
+      // The update object structure is { nodeName: { ...stateUpdate } }
+      const nodeNames = Object.keys(update);
+      const nodeName = nodeNames[0];
+
+      if (namespace.length > 0) {
+        // Subgraph update - show the full path through the graph hierarchy
+        const graphPath = namespace.join(" → ");
+        log.info(`Subgraph node executed: ${graphPath} → ${nodeName}`, update);
+      } else {
+        // Parent graph update
+        log.info(`Parent graph node executed: ${nodeName}`, update);
+      }
+    },
+
+    // Handle custom events streamed from your graph
+    onCustomEvent: (event, _options) => {
+      log.info("Custom event received", event);
+    },
+
+    // Handle metadata events with run/thread info
+    onMetadataEvent: (metadata) => {
+      log.info("Run ID:", metadata.run_id);
+      log.info("Thread ID:", metadata.thread_id);
+    },
+
+    onError: (error) => {
+      log.error("Stream error occurred", error);
+    },
+
+    onFinish: (state, _options) => {
+      log.info("Stream completed successfully", state);
+    },
+  });
 
   useEffect(() => {
     if (values) {
@@ -340,6 +414,7 @@ export default function Page() {
             primaryKeyword={primaryKeyword}
             suggestedKeywords={suggestedKeywords}
             onSelect={handleKeywordSelect}
+            seoResult={seoResult}
           />
         )}
 

@@ -1,9 +1,11 @@
-import type { Outline, ReadabilityMeta, WREXT } from "@/types/generate-content";
+import type { Outline, WREXT } from "@/types/generate-content";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { isValidElement, type ReactNode } from "react";
 import { Button } from "../ui/button";
 import { Activity, Eye, Pencil, Save, Send } from "lucide-react";
+
+type ReadabilityMeta = { label: string; color: string; barColor: string };
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
