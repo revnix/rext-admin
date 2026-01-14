@@ -38,6 +38,7 @@ interface PageLayoutProps {
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  fullWidth?: boolean;
 }
 
 export function PageLayout({
@@ -48,6 +49,7 @@ export function PageLayout({
   actions,
   children,
   className = "",
+  fullWidth = false,
 }: PageLayoutProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -156,7 +158,11 @@ export function PageLayout({
         {/* Impersonation Banner */}
         <ImpersonationBanner />
 
-        <div className={`flex flex-1 flex-col gap-4 p-4 pt-6 ${className}`}>
+        <div
+          className={`flex flex-1 flex-col gap-4 p-4 pt-6 ${
+            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+          } ${className}`}
+        >
           {/* Page Header */}
           <div className="flex items-start justify-between">
             {!hideTitle && (

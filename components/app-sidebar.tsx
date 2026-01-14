@@ -12,6 +12,7 @@ import {
   User,
   UserCog,
   Users,
+  VenetianMask,
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
@@ -76,16 +77,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Workspace",
       items: [
-        // {
-        //   title: "Topics",
-        //   url: currentWorkspace?.slug
-        //     ? workspaceRoutes.topics(currentWorkspace.slug)
-        //     : "/",
-        //   icon: Library,
-        //   permission: "topic.read",
-        // },
         {
-          title: "Content",
+          title: "Content Library",
           url: currentWorkspace?.slug
             ? workspaceRoutes.content(currentWorkspace.slug)
             : "/",
@@ -97,25 +90,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.generate_content(currentWorkspace.slug)
             : "/",
-          icon: FileText,
+          icon: FileText, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
           permission: "content.read",
         },
-        // {
-        //   title: "Knowledge",
-        //   url: currentWorkspace?.slug
-        //     ? workspaceRoutes.knowledge(currentWorkspace.slug)
-        //     : "/",
-        //   icon: Brain,
-        //   permission: "knowledge.read",
-        // },
-        // {
-        //   title: "Media",
-        //   url: currentWorkspace?.slug
-        //     ? workspaceRoutes.media(currentWorkspace.slug)
-        //     : "/",
-        //   icon: Image,
-        //   permission: "media.read",
-        // },
+        {
+          title: "Persona",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.personas(currentWorkspace.slug)
+            : "/",
+          icon: VenetianMask,
+          permission: "content.read",
+        },
         {
           title: "Members",
           url: currentWorkspace?.slug
