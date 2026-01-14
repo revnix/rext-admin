@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Mail, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
-import { PendingInvitationsCard } from "@/components/dashboard/pending-invitations-card";
+import { PendingInvitationsCard } from "@/components/dashboard/archive/pending-invitations-card";
 import { OnboardingProgress } from "@/components/onboarding-progress";
 import { Button } from "@/components/ui/button";
 import {

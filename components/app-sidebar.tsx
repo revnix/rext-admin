@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  Brain,
   CreditCard,
   FileText,
-  Image,
+  Plug,
   LayoutDashboard,
-  Library,
   Mail,
   Monitor,
   Settings2,
@@ -78,14 +76,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Workspace",
       items: [
-        {
-          title: "Topics",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.topics(currentWorkspace.slug)
-            : "/",
-          icon: Library,
-          permission: "topic.read",
-        },
+        // {
+        //   title: "Topics",
+        //   url: currentWorkspace?.slug
+        //     ? workspaceRoutes.topics(currentWorkspace.slug)
+        //     : "/",
+        //   icon: Library,
+        //   permission: "topic.read",
+        // },
         {
           title: "Content",
           url: currentWorkspace?.slug
@@ -102,22 +100,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: FileText,
           permission: "content.read",
         },
-        {
-          title: "Knowledge",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.knowledge(currentWorkspace.slug)
-            : "/",
-          icon: Brain,
-          permission: "knowledge.read",
-        },
-        {
-          title: "Media",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.media(currentWorkspace.slug)
-            : "/",
-          icon: Image,
-          permission: "media.read",
-        },
+        // {
+        //   title: "Knowledge",
+        //   url: currentWorkspace?.slug
+        //     ? workspaceRoutes.knowledge(currentWorkspace.slug)
+        //     : "/",
+        //   icon: Brain,
+        //   permission: "knowledge.read",
+        // },
+        // {
+        //   title: "Media",
+        //   url: currentWorkspace?.slug
+        //     ? workspaceRoutes.media(currentWorkspace.slug)
+        //     : "/",
+        //   icon: Image,
+        //   permission: "media.read",
+        // },
         {
           title: "Members",
           url: currentWorkspace?.slug
@@ -125,6 +123,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Users,
           permission: "member.read",
+        },
+        {
+          title: "Integrations",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.integrations(currentWorkspace.slug)
+            : "/",
+          icon: Plug,
+          permission: "workspace.update",
         },
       ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
     },
