@@ -80,7 +80,7 @@ export default function PersonaForgePage() {
             <Lightbulb size={18} />
             <h3>Workspace Recommendations</h3>
           </div>
-          <RecommendationCard onImport={() => { }} />
+          <RecommendationCard onImport={() => {}} />
         </div>
 
         {/* Persona Grid */}
