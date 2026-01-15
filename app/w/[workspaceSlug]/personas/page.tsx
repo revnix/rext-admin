@@ -1,3 +1,5 @@
+"use client";
+
 import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
@@ -78,7 +80,7 @@ export default function PersonaForgePage() {
             <Lightbulb size={18} />
             <h3>Workspace Recommendations</h3>
           </div>
-          <RecommendationCard onImport={() => {}} />
+          <RecommendationCard onImport={() => { }} />
         </div>
 
         {/* Persona Grid */}
