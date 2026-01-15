@@ -319,6 +319,7 @@ export function WorkspaceCreateWizard() {
           <OnboardingStrategy
             onNext={handleStrategySelection}
             isLoading={false}
+            onChange={setSelectedStrategy}
           />
         );
 
@@ -334,7 +335,7 @@ export function WorkspaceCreateWizard() {
               className="space-y-6"
             >
               {/* Title Field - HIDDEN */}
-              <div className="hidden space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="title" className="text-base font-medium">
                   Workspace Title <span className="text-destructive">*</span>
                 </Label>
@@ -377,7 +378,7 @@ export function WorkspaceCreateWizard() {
               </div>
 
               {/* Timezone Field - HIDDEN */}
-              <div className="hidden space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="timezone" className="text-base font-medium">
                   Timezone{" "}
                   <span className="text-muted-foreground">(Optional)</span>

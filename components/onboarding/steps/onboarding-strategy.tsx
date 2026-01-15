@@ -8,15 +8,22 @@ import { Card, CardContent } from "@/components/ui/card";
 interface OnboardingStrategyProps {
   onNext: (strategy: "analyze" | "manual") => void;
   isLoading: boolean;
+  onChange?: (strategy: "analyze" | "manual" | null) => void;
 }
 
 export function OnboardingStrategy({
   onNext,
   isLoading,
+  onChange,
 }: OnboardingStrategyProps) {
   const [selectedStrategy, setSelectedStrategy] = useState<
     "analyze" | "manual" | null
   >(null);
+
+  const handleStrategySelect = (strategy: "analyze" | "manual") => {
+    setSelectedStrategy(strategy);
+    onChange?.(strategy);
+  };
 
   const strategies = [
     {
@@ -70,7 +77,7 @@ export function OnboardingStrategy({
                 ? "border-primary shadow-md"
                 : `border-border ${strategy.borderColor}`
             }`}
-            onClick={() => setSelectedStrategy(strategy.id)}
+            onClick={() => handleStrategySelect(strategy.id)}
           >
             <CardContent className="p-6 space-y-4">
               {/* Icon */}
