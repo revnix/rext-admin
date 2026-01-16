@@ -6,7 +6,6 @@ import {
   Settings,
   CircleHelp,
   Search,
-  User,
   CreditCard,
   LogOut,
   Book,
@@ -14,7 +13,10 @@ import {
   Keyboard,
   Sparkles,
   BadgeCheck,
+  ArrowLeftRight,
+  Users,
 } from "lucide-react";
+import { workspaceRoutes } from "@/lib/routes";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -206,7 +208,7 @@ export function PageLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md flex h-20 shrink-0 items-center justify-between gap-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20 px-8 pt-4">
+        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md flex h-16 shrink-0 items-center justify-between gap-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 px-8 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1 h-10 w-10 text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-xl" />
             <Separator
@@ -320,7 +322,7 @@ export function PageLayout({
                 </div>
                 <ScrollArea className="h-[350px]">
                   {useNotificationStore.getState().notifications.length ===
-                  0 ? (
+                    0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-muted-foreground space-y-3">
                       <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center">
                         <Bell className="h-6 w-6 opacity-20" />
@@ -389,20 +391,33 @@ export function PageLayout({
                 <DropdownMenuLabel>Settings</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Account</span>
-                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
-                    <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Workspace</span>
-                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                  {currentWorkspace?.slug && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(
+                            workspaceRoutes.settings.root(currentWorkspace.slug),
+                          )
+                        }
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Workspace Settings</span>
+                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(workspaceRoutes.members(currentWorkspace.slug))
+                        }
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>Workspace Members</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/")}>
+                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                    <span>Switch Workspace</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
@@ -602,9 +617,8 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (
