@@ -22,12 +22,12 @@ export function useAuthSession() {
 
   const user = session?.user
     ? {
-        id: session.user.id || "",
-        email: session.user.email || "",
-        name: session.user.name || "",
-        role: session.user.role || "user",
-        permissions: session.user.permissions || [],
-      }
+      id: session.user.id || "",
+      email: session.user.email || "",
+      name: session.user.name || "",
+      role: session.user.role || "user",
+      permissions: session.user.permissions || [],
+    }
     : null;
 
   // Track user activity
@@ -66,15 +66,13 @@ export function useAuthSession() {
       // Clear all cached React Query data
       queryClient.clear();
 
-      // Perform sign out (don’t auto-redirect)
-      await signOut({ redirect: false });
+      // Perform sign out with redirection
+      await signOut({ callbackUrl: "/login" });
 
-      // Redirect manually to login page
-      router.push("/login");
     } catch (error) {
       log.error("[Auth] Logout failed", error);
-      // As fallback, still navigate to login
-      router.push("/login");
+      // Fallback redirection
+      window.location.href = "/login";
     }
   };
 

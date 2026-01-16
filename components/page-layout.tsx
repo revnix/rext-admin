@@ -684,7 +684,10 @@ export function PageLayout({
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuItem
                   className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer"
-                  onClick={() => logout()}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    logout();
+                  }}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span className="font-medium">Log out</span>
