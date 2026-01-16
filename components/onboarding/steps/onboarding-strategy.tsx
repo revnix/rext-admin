@@ -2,7 +2,6 @@
 
 import { Globe, UserCircle } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface OnboardingStrategyProps {
@@ -11,11 +10,7 @@ interface OnboardingStrategyProps {
   onChange?: (strategy: "analyze" | "manual" | null) => void;
 }
 
-export function OnboardingStrategy({
-  onNext,
-  isLoading,
-  onChange,
-}: OnboardingStrategyProps) {
+export function OnboardingStrategy({ onChange }: OnboardingStrategyProps) {
   const [selectedStrategy, setSelectedStrategy] = useState<
     "analyze" | "manual" | null
   >(null);
@@ -85,9 +80,7 @@ export function OnboardingStrategy({
                 <div
                   className={`rounded-xl ${strategy.iconBgColor} p-3 inline-flex`}
                 >
-                  <strategy.icon
-                    className={`h-6 w-6 ${strategy.iconColor}`}
-                  />
+                  <strategy.icon className={`h-6 w-6 ${strategy.iconColor}`} />
                 </div>
               </div>
 

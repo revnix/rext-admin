@@ -70,5 +70,3 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     </>
   );
 }
-
-

@@ -56,7 +56,7 @@ export function OnboardingWorkspace({
     // Basic URL validation
     try {
       new URL(
-        websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`
+        websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`,
       );
     } catch {
       toast.error("Please enter a valid website URL");
@@ -213,4 +213,3 @@ export function OnboardingWorkspace({
     </div>
   );
 }
-
