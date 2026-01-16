@@ -158,9 +158,9 @@ export function SignupForm({
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-0">
+          <CardTitle className="text-2xl font-bold">
             {hasValidInvitation ? "Join Workspace" : "Create your account"}
           </CardTitle>
           <CardDescription>
@@ -169,15 +169,15 @@ export function SignupForm({
               : "Enter your details below to create your account"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
                 {hasValidInvitation
                   ? `Account created! Joining ${invitation?.workspace.title}...`
                   : "Account created successfully! Redirecting to dashboard..."}
@@ -185,13 +185,14 @@ export function SignupForm({
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName" className="ml-1">First Name</Label>
                 <Input
                   id="firstName"
                   type="text"
                   placeholder="John"
                   {...register("firstName")}
                   disabled={isLoading || success}
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
                 {errors.firstName && (
                   <p className="text-sm text-red-600">
@@ -200,13 +201,14 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName" className="ml-1">Last Name</Label>
                 <Input
                   id="lastName"
                   type="text"
                   placeholder="Doe"
                   {...register("lastName")}
                   disabled={isLoading || success}
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
                 {errors.lastName && (
                   <p className="text-sm text-red-600">
@@ -215,13 +217,14 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className="ml-1">Username</Label>
                 <Input
                   id="username"
                   type="text"
                   placeholder="johndoe"
                   {...register("username")}
                   disabled={isLoading || success}
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
                 {errors.username && (
                   <p className="text-sm text-red-600">
@@ -230,7 +233,7 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="email">
+                <Label htmlFor="email" className="ml-1">
                   Email
                   {hasValidInvitation && (
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -246,8 +249,9 @@ export function SignupForm({
                   disabled={isLoading || success}
                   readOnly={hasValidInvitation}
                   className={cn(
+                    "h-12 rounded-2xl bg-muted/30 border-muted",
                     hasValidInvitation &&
-                      "bg-muted cursor-not-allowed opacity-75",
+                    "bg-muted cursor-not-allowed opacity-75",
                   )}
                 />
                 {errors.email && (
@@ -255,13 +259,14 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="ml-1">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="Create a strong password"
                   {...register("password")}
                   disabled={isLoading || success}
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
                 {errors.password && (
                   <p className="text-sm text-red-600">
@@ -270,13 +275,14 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="ml-1">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="Confirm your password"
                   {...register("confirmPassword")}
                   disabled={isLoading || success}
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-600">
@@ -287,7 +293,7 @@ export function SignupForm({
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
                   disabled={isLoading || success || isLoadingInvitation}
                 >
                   {isLoading
@@ -304,7 +310,7 @@ export function SignupForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
-              <Link href="/login" className="underline underline-offset-4">
+              <Link href="/login" className="underline underline-offset-4 font-medium text-primary hover:text-primary/80">
                 Sign in
               </Link>
             </div>

@@ -67,7 +67,12 @@ export function useAuthSession() {
       queryClient.clear();
 
       // Perform sign out with redirection
-      await signOut({ callbackUrl: "/login" });
+      // We pass redirect: false to handle it manually for better reliability
+      await signOut({ redirect: false, callbackUrl: "/login" });
+
+      // Force manual redirection to ensure it happens
+      router.push("/login");
+      router.refresh();
 
     } catch (error) {
       log.error("[Auth] Logout failed", error);

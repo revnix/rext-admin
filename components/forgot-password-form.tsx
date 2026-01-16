@@ -72,35 +72,36 @@ export function ForgotPasswordForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Reset your password</CardTitle>
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-0">
+          <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
           <CardDescription>
             Enter your email address and we'll send you a link to reset your
             password
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
                 Password reset email sent! Check your inbox for the reset link.
               </div>
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="ml-1">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="m@example.com"
                   {...register("email")}
                   disabled={isLoading || success}
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
                 {errors.email && (
                   <p className="text-sm text-red-600">{errors.email.message}</p>
@@ -109,7 +110,7 @@ export function ForgotPasswordForm({
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
                   disabled={isLoading || success}
                 >
                   {isLoading
@@ -122,7 +123,7 @@ export function ForgotPasswordForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Remember your password?{" "}
-              <Link href="/login" className="underline underline-offset-4">
+              <Link href="/login" className="underline underline-offset-4 font-medium text-primary hover:text-primary/80">
                 Back to login
               </Link>
             </div>

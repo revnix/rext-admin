@@ -338,7 +338,7 @@ export function PageLayout({
                 </div>
                 <ScrollArea className="h-[350px]">
                   {useNotificationStore.getState().notifications.length ===
-                  0 ? (
+                    0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-muted-foreground space-y-3">
                       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                         <Bell className="h-6 w-6 opacity-20" />
@@ -360,7 +360,7 @@ export function PageLayout({
                               <div
                                 className={`h-2 w-2 shrink-0 rounded-full ${!n.read ? "bg-sky-500 shadow-sm shadow-sky-200" : "bg-transparent"}`}
                               />
-                                <span
+                              <span
                                 className={`text-sm flex-1 truncate ${!n.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}
                               >
                                 {n.title}
@@ -684,10 +684,7 @@ export function PageLayout({
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuItem
                   className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    logout();
-                  }}
+                  onClick={() => logout()}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span className="font-medium">Log out</span>
@@ -701,9 +698,8 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (
