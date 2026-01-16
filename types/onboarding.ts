@@ -55,13 +55,20 @@ export interface OnboardingStep {
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 0,
+    name: "content_strategy",
+    title: "Welcome to Wrext",
+    description: "Choose your content strategy foundation",
+    required: true,
+  },
+  {
+    id: 1,
     name: "marketing_questions",
     title: "Tell Us About Yourself",
     description: "Help us personalize your experience",
     required: true,
   },
   {
-    id: 1,
+    id: 2,
     name: "complete",
     title: "You're All Set!",
     description: "Start creating amazing content",
