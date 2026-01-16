@@ -84,7 +84,7 @@ export default function PersonaForgePage() {
         </div>
 
         {/* Persona Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {PERSONAS.map((persona) => (
             <PersonaCard key={persona.id} persona={persona} />
           ))}
@@ -94,15 +94,15 @@ export default function PersonaForgePage() {
             href={workspaceRoutes.persona_create(workspaceSlug)}
             className="contents"
           >
-            <Card className="border-2 border-dashed border-slate-200 shadow-none hover:border-slate-300 transition-colors bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group">
+            <Card className="border border-dashed border-slate-300 shadow-none hover:border-primary hover:bg-slate-50/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-[2rem]">
               <CardContent className="flex flex-col items-center justify-center text-center p-6">
-                <div className="h-16 w-16 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-primary/50 transition-all shadow-sm">
                   <Plus
-                    className="text-slate-400 group-hover:text-slate-600"
+                    className="text-slate-400 group-hover:text-primary"
                     size={24}
                   />
                 </div>
-                <h3 className="font-medium text-slate-900 mb-1">
+                <h3 className="font-semibold text-slate-900 mb-1">
                   Create New Persona
                 </h3>
                 <p className="text-sm text-muted-foreground">

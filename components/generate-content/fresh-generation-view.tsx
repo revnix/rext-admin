@@ -1,8 +1,6 @@
 "use client";
 
-import { useWorkspace } from "@/providers/workspace-provider";
-import { workspaceRoutes } from "@/lib/routes";
-import { useEffect, useReducer, useCallback } from "react";
+import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { log } from "@/lib/logger";

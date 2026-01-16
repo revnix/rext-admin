@@ -29,10 +29,10 @@ export function SelectionView({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
         {/* Start Fresh Card */}
         <Card
-          className="group relative overflow-hidden border-2 hover:border-sidebar-primary/50 transition-all duration-300 cursor-pointer shadow-none hover:shadow-lg hover:shadow-sidebar-primary/5"
+          className="group relative overflow-hidden border border-slate-200 hover:border-sidebar-primary/50 transition-all duration-300 cursor-pointer shadow-none rounded-[2rem] bg-white"
           onClick={onStartFresh}
         >
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -56,7 +56,7 @@ export function SelectionView({
 
         {/* Pick from Library Card */}
         <Card
-          className="group relative overflow-hidden border-2 hover:border-sidebar-primary/50 transition-all duration-300 cursor-pointer shadow-none hover:shadow-lg hover:shadow-sidebar-primary/5"
+          className="group relative overflow-hidden border border-slate-200 hover:border-sidebar-primary/50 transition-all duration-300 cursor-pointer shadow-none rounded-[2rem] bg-white text-left"
           onClick={onPickFromLibrary}
         >
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
