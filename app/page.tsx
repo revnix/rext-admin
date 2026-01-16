@@ -2,12 +2,11 @@
 
 import { AuthGuard } from "@/components/auth-guard";
 import { EnhancedDashboardEmptyState } from "@/components/dashboard/enhanced-dashboard-empty-state";
-import { PendingInvitationsCard } from "@/components/dashboard/pending-invitations-card";
-import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
-import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
-import { WorkspaceInfoCard } from "@/components/dashboard/workspace-info-card";
-import { WorkspaceStatsGrid } from "@/components/dashboard/workspace-stats-grid";
-import { OnboardingProgress } from "@/components/onboarding-progress";
+import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
+import { ContentPipeline } from "@/components/dashboard/revamp/content-pipeline";
+import { RecentContent } from "@/components/dashboard/revamp/recent-content";
+import { WorkspaceStats } from "@/components/dashboard/revamp/workspace-stats";
+import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,11 +25,7 @@ export default function DashboardPage() {
   } = useWorkspaceAutoSelect();
 
   // Check if onboarding is complete for current workspace
-  const {
-    isComplete: isOnboardingComplete,
-    isDismissed,
-    isLoading,
-  } = useOnboardingProgress(currentWorkspace?.id);
+  const { isLoading } = useOnboardingProgress(currentWorkspace?.id);
 
   // Update page title and description
   usePageTitle(
@@ -53,11 +48,11 @@ export default function DashboardPage() {
         >
           <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
             <div className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
                   <Card key={i}>
                     <CardContent className="p-6">
-                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-24 w-full" />
                     </CardContent>
                   </Card>
                 ))}
@@ -91,9 +86,6 @@ export default function DashboardPage() {
     );
   }
 
-  // If user has workspaces, show full dashboard with optional onboarding tracking
-  const showOnboardingTracking = !isOnboardingComplete && !isDismissed;
-
   return (
     <AuthGuard>
       <PageLayout
@@ -101,27 +93,26 @@ export default function DashboardPage() {
         description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
         breadcrumbs={breadcrumbs}
       >
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          {/* Main Content */}
-          <div className="space-y-6">
-            {/* Onboarding Progress - Shows until complete or dismissed */}
-            {showOnboardingTracking && (
-              <OnboardingProgress workspaceId={currentWorkspace?.id} />
-            )}
+        <div className="flex flex-col gap-8">
+          {/* Top Section: Metrics Cards */}
+          <MetricsCards workspace={currentWorkspace} />
 
-            {/* Always show workspace stats */}
-            <WorkspaceStatsGrid workspace={currentWorkspace} />
+          <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+            {/* Main Content */}
+            <div className="space-y-8">
+              {/* Content Pipeline */}
+              <ContentPipeline />
 
-            {/* Always show recent activity */}
-            <RecentActivityCard workspace={currentWorkspace} />
+              {/* Recent Content */}
+              <RecentContent workspace={currentWorkspace} />
+            </div>
+
+            {/* Sidebar - Always visible */}
+            <aside className="space-y-8">
+              <QuickActions workspace={currentWorkspace} />
+              <WorkspaceStats workspace={currentWorkspace} />
+            </aside>
           </div>
-
-          {/* Sidebar - Always visible */}
-          <aside className="space-y-6">
-            <PendingInvitationsCard />
-            <WorkspaceInfoCard workspace={currentWorkspace} />
-            <QuickActionsCard workspace={currentWorkspace} />
-          </aside>
         </div>
       </PageLayout>
     </AuthGuard>
