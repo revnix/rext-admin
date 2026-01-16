@@ -15,7 +15,11 @@ import {
   BadgeCheck,
   ArrowLeftRight,
   Users,
+  Sun,
+  Moon,
+  Laptop,
 } from "lucide-react";
+import { useTheme } from "@/providers/theme-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -105,6 +109,10 @@ export function PageLayout({
   const unreadNotifications = useNotificationStore(
     (state) => state.unreadCount,
   );
+
+  // State for exclusive dropdowns
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const { theme, setTheme } = useTheme();
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();
@@ -229,7 +237,10 @@ export function PageLayout({
 
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Mail */}
-            <DropdownMenu>
+            <DropdownMenu
+              open={activeDropdown === "mail"}
+              onOpenChange={(open) => setActiveDropdown(open ? "mail" : null)}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -288,7 +299,12 @@ export function PageLayout({
             </DropdownMenu>
 
             {/* Notifications */}
-            <DropdownMenu>
+            <DropdownMenu
+              open={activeDropdown === "notifications"}
+              onOpenChange={(open) =>
+                setActiveDropdown(open ? "notifications" : null)
+              }
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -377,7 +393,12 @@ export function PageLayout({
             </DropdownMenu>
 
             {/* Settings */}
-            <DropdownMenu>
+            <DropdownMenu
+              open={activeDropdown === "settings"}
+              onOpenChange={(open) =>
+                setActiveDropdown(open ? "settings" : null)
+              }
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -396,7 +417,9 @@ export function PageLayout({
                       <DropdownMenuItem
                         onClick={() =>
                           router.push(
-                            workspaceRoutes.settings.root(currentWorkspace.slug),
+                            workspaceRoutes.settings.root(
+                              currentWorkspace.slug,
+                            ),
                           )
                         }
                       >
@@ -406,7 +429,9 @@ export function PageLayout({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() =>
-                          router.push(workspaceRoutes.members(currentWorkspace.slug))
+                          router.push(
+                            workspaceRoutes.members(currentWorkspace.slug),
+                          )
                         }
                       >
                         <Users className="mr-2 h-4 w-4" />
@@ -424,7 +449,10 @@ export function PageLayout({
             </DropdownMenu>
 
             {/* Help */}
-            <DropdownMenu>
+            <DropdownMenu
+              open={activeDropdown === "help"}
+              onOpenChange={(open) => setActiveDropdown(open ? "help" : null)}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -455,8 +483,56 @@ export function PageLayout({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Theme Toggle */}
+            <DropdownMenu
+              open={activeDropdown === "theme"}
+              onOpenChange={(open) => setActiveDropdown(open ? "theme" : null)}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+                >
+                  <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  <span className="sr-only">Toggle theme</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setTheme("light")}
+                  className="cursor-pointer"
+                >
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Light</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTheme("dark")}
+                  className="cursor-pointer"
+                >
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>Dark</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTheme("system")}
+                  className="cursor-pointer"
+                >
+                  <Laptop className="mr-2 h-4 w-4" />
+                  <span>System</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Language */}
-            <DropdownMenu>
+            <DropdownMenu
+              open={activeDropdown === "language"}
+              onOpenChange={(open) =>
+                setActiveDropdown(open ? "language" : null)
+              }
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -496,7 +572,12 @@ export function PageLayout({
             <div className="h-8 w-[1px] bg-slate-200 mx-2" />
 
             {/* Profile */}
-            <DropdownMenu>
+            <DropdownMenu
+              open={activeDropdown === "profile"}
+              onOpenChange={(open) =>
+                setActiveDropdown(open ? "profile" : null)
+              }
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"

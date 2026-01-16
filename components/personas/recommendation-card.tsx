@@ -28,9 +28,7 @@ export function RecommendationCard({ onImport }: RecommendationCardProps) {
             <h3 className="font-bold text-xl text-slate-900 mb-1">
               Dr. Wrext Expert
             </h3>
-            <p className="text-sky-700 font-medium">
-              Lead Content Strategist
-            </p>
+            <p className="text-sky-700 font-medium">Lead Content Strategist</p>
           </div>
         </div>
 

@@ -154,7 +154,10 @@ export default function CreatePersonaPage() {
 
             {/* EEAT Banner */}
             <div className="bg-amber-50/50 border border-amber-100/60 rounded-xl p-5 flex gap-3 text-amber-900/80 text-sm mt-4">
-              <Sparkles className="shrink-0 mt-0.5 text-amber-500 fill-amber-200/50" size={18} />
+              <Sparkles
+                className="shrink-0 mt-0.5 text-amber-500 fill-amber-200/50"
+                size={18}
+              />
               <div>
                 <span className="font-bold text-amber-900 text-base">
                   EEAT Optimization
