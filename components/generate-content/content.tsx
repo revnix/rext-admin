@@ -1,9 +1,10 @@
-import type { Outline, ReadabilityMeta, WREXT } from "@/types/generate-content";
+import type { CONTENT, Outline, ReadabilityMeta } from "@/types/generate-content";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { isValidElement, type ReactNode } from "react";
 import { Button } from "../ui/button";
 import { Activity, Eye, Pencil, Save, Send } from "lucide-react";
+import LexicalEditor from "../ui/lexical-editor";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -92,7 +93,7 @@ export function ContentEditor({
   onEditToggle,
   onContentChange,
 }: {
-  values: WREXT;
+  values: CONTENT;
   generatedContent: string;
   isEditing: boolean;
   userKeyword: string;
@@ -100,12 +101,12 @@ export function ContentEditor({
   onEditToggle: () => void;
   onContentChange: (val: string) => void;
 }) {
-  const fc = values.content?.final_content;
+  const fc = values.final_content;
   const displayTitle = fc?.title || userKeyword || "New Content Piece";
   const body = generatedContent;
   const tags = fc?.tags || [];
   const score =
-    values.content?.review?.readability_metrics?.flesch_reading_ease ?? 0;
+    values.review?.readability_metrics?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
 

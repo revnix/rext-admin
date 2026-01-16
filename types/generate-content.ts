@@ -1,5 +1,27 @@
 import type { Message } from "@langchain/langgraph-sdk";
 
+export type Interrupt = {
+  id: string;
+  value: {
+    instructions?: string;
+    instruction?: string;
+    type: string;
+    topics?: string[];
+    data?: ContentOutline;
+    Recommendations?: string[];
+    seo_state?: SEORESULT;
+    "Primary Keyword"?: string;
+    [key: string]: unknown;
+  };
+};
+
+export type ReadabilityMeta = {
+  label: string;
+  color: string;
+  barColor: string;
+};
+
+
 export type NormalizedOrganicResult = {
   position: number;
   title: string;
@@ -23,92 +45,163 @@ export type SERPNormalized = {
   features: Record<string, boolean>;
 };
 
-export type OutlineSection = {
+export type ContentSection = {
   heading: string;
   description: string;
   key_points: string[];
-  suggested_word_count: number;
+  suggested_word_count?: number;
 };
 
-export type Outline = {
+export type ContentOutline = {
   title: string;
   brief: string;
-  sections: OutlineSection[];
-  tone: string;
+  sections: ContentSection[];
   target_audience: string[];
+  tone: string;
+  keywords_to_include: string[];
+  status: "approved" | "rejected";
+  rejected_reason?: string;
+  final_content?: FinalContent;
+  review?: ContentReview;
+  topics: string[];
+  outline: ContentOutline;
+  selected_topic: string;
+  draft: ContentDraft;
+  outline_retries: number;
+  draft_retries: number;
+  review_retries: number;
+  max_retries: number;
 };
 
-export type Content = {
+export type ContentDraft = {
   title: string;
-  content: string;
-  tags: string[];
-  final_content: FinalContent;
-  review: Review;
-};
-
-export type FinalContent = {
-  title: string;
-  content: string;
-  tags: string[];
   body_markdown: string;
-  meta_title?: string;
-  meta_description?: string;
-};
-
-export type Review = {
-  readability_metrics: ReadabilityMetrics;
+  word_count: number;
+  sections_completed: string[];
+  status: "approved" | "rejected";
+  rejected_reason?: string;
 };
 
 export type ReadabilityMetrics = {
   flesch_reading_ease: number;
+  flesch_kincaid_grade: number;
+  gunning_fog_index: number;
+  smog_index: number;
+  automated_readability_index: number;
+  coleman_liau_index: number;
+  dale_chall_score: number;
 };
 
-export type ReadabilityMeta = {
-  label: string;
-  color: string;
-  barColor: string;
+export type ContentReview = {
+  seo_score: number;
+  readability_metrics: ReadabilityMetrics;
+  eeat_score?: number;
+  plagiarism_score?: number;
+  passed: boolean;
+  missing_points: string[];
+  improvement_suggestions: string[];
+};
+
+export type FinalContent = {
+  title: string;
+  content?: string; // Kept for backward compatibility if needed, though backend uses body_markdown
+  body_markdown: string;
+  meta_title: string;
+  meta_description: string;
+  tags: string[];
+  primary_keyword?: string;
+  secondary_keywords?: string[];
+  word_count: number;
+  status: "approved" | "rejected";
+  rejected_reason?: string;
+};
+
+export type CONTENT = {
+  topics: string[];
+  selected_topic: string;
+  outline: ContentOutline;
+  draft: ContentDraft;
+  review?: ContentReview;
+  final_content?: FinalContent;
+  status:
+  | "planning"
+  | "drafting"
+  | "reviewing"
+  | "optimizing"
+  | "completed"
+  | "failed"
+  | "approved"
+  | "rejected";
+  outline_retries: number;
+  draft_retries: number;
+  review_retries: number;
+  max_retries: number;
+  error?: string;
+};
+
+// =========================
+// SERP & SCRAPE STATE
+// =========================
+
+export type SERPEngineState = {
+  search_params?: Record<string, unknown>;
+  organic_results: Array<Record<string, unknown>>;
+  related_searches: string[];
+  people_ask: Array<Record<string, unknown>>;
+  search_information: Record<string, unknown>;
+  total_results: number;
+};
+
+export type Competitor = {
+  domain: string;
+  top_positions: number[];
+  total_occurrences: number;
+  has_sitelinks: boolean;
+  intent_distribution: Record<string, number>;
+  freshness: Record<string, number>;
+  avg_snippet_length: number;
+  featured_snippet: boolean;
+  is_brand: boolean;
+};
+
+export type DocumentScrapeData = {
+  document: unknown; // Ideally this matches langchain_core.documents.Document structure
+  content_length: number;
+  keywords: string[];
+  headings: string[];
+};
+
+export type ScrapeContext = {
+  documents: DocumentScrapeData[];
+  total_documents: number;
 };
 
 export type WREXT = {
   messages: Message[];
+
+  // SERP
   serp_payload: {
     query: string;
     country: string;
   };
-  serp_result: {
-    organic_results: Array<Record<string, unknown>>;
-    related_searches: string[];
-    people_ask: Array<Record<string, unknown>>;
-    search_information: Record<string, unknown>;
-    total_results: number;
-  };
+  serp_result: SERPEngineState;
   serp_normalized: SERPNormalized;
-  competitors: Array<{
-    domain: string;
-    top_positions: number[];
-    total_occurrences: number;
-    has_sitelinks: boolean;
-    intent_distribution: Record<string, number>;
-    freshness: Record<string, number>;
-    avg_snippet_length: number;
-    featured_snippet: boolean;
-    is_brand: boolean;
-  }>;
-  scrape_context: {
-    documents: Array<{
-      document: unknown;
-      content_length: number;
-      keywords: string[];
-      headings: string[];
-    }>;
-    total_documents: number;
-  };
-  relevant_context: unknown[];
-  seo_result: unknown;
-  content: Content;
-  outline?: Outline;
-  final_content?: FinalContent;
-  topics?: string[];
+  interrupts?: Interrupt[];
+
+  // Competition
+  competitors: Competitor[];
+
+  // Content & Scraping
+  scrape_context: ScrapeContext;
+  relevant_context: unknown[]; // List of Documents
+
+  // SEO Output
+  seo_result: SEORESULT;
+
+  // Content Output
+  content: CONTENT;
+
+  // UI/Flow specific fields (from interrupts or custom logic)
   status?: string;
   rejected_reason?: string;
   instruction_response?: string;
@@ -116,26 +209,170 @@ export type WREXT = {
   "Primary Keyword"?: string;
   Recommendations?: string[];
   continue_workflow?: boolean;
-  __interrupt__?: Array<{
-    id: string;
-    value: {
-      instructions: string;
-      instruction: string;
-      type: string;
-      "Primary Keyword": string;
-      Recommendations: string[];
-      [key: string]: unknown;
-    };
-  }>;
+
+  // LangGraph specialized fields
+  __interrupt__?: Interrupt[];
+};
+
+export type SearchIntentState = {
+  primary_intent:
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
+  secondary_intents: string[];
+  confidence: number;
+  intent_signals: Record<string, number>;
+};
+
+export type KDBreakdown = {
+  link_score?: number;
+  serp_score?: number;
+  content_score?: number;
+  context_modifier?: number;
+  brand_dominance?: number;
+  freshness_pressure?: number;
+};
+
+export type KeywordDifficultyState = {
+  keyword: string;
+  difficulty_score: number;
+  difficulty_level: "easy" | "medium" | "hard" | "very_hard";
+  breakdown: KDBreakdown;
+  notes: string[];
+};
+
+export type KeywordDifficultyState2 = {
+  keyword: string;
+  kd: number;
+  breakdown: {
+    competitor_details: Array<{
+      domain: string;
+      link_kd: number;
+      serp_kd: number;
+      content_kd: number;
+      total_kd: number;
+    }>;
+  };
+  clean_text?: string;
+  notes: string[];
+};
+
+export type ContentPatternState = {
+  content_type:
+  | "blog"
+  | "listicle"
+  | "landing_page"
+  | "documentation"
+  | "comparison";
+  avg_word_count: number;
+  common_headings: string[];
+  heading_depth: number;
+  media_usage: Record<string, number>;
+  schema_types: string[];
+};
+
+export type ContentGapState = {
+  missing_topics: string[];
+  missing_questions: string[];
+  weak_coverage_areas: string[];
+  recommended_sections: string[];
+};
+
+export type AuthorityState = {
+  avg_domain_strength: number;
+  dominant_domains: string[];
+  brand_presence: boolean;
+  freshness_bias: boolean;
+  authority_level: "low" | "medium" | "high";
+};
+
+export type SERPFeatureImpactState = {
+  features_present: string[];
+  ctr_loss_estimate: number;
+  blocking_features: string[];
+  opportunity_features: string[];
+};
+
+export type ExtractedKeyword = {
+  keyword: string;
+  score: number;
+  raw_tfidf: number;
+  rank: number;
+  word_count: number;
+  in_query: boolean;
+  in_topics: boolean;
+};
+
+export type ExtractedKeywordsState = {
+  all: ExtractedKeyword[];
+  total_count: number;
+  query: string;
+  extraction_method: string;
+  sources: Record<string, number>;
+};
+
+export type TitleRecommendation = {
+  title: string;
+  score: number;
+  char_count: number;
+  word_count: number;
+  reasons: string[];
+  rank: number;
+};
+
+export type KeywordRecommendationState = {
+  original_title: string;
+  recommendations: TitleRecommendation[];
+  patterns_found: Record<string, unknown>;
+  top_keywords_used: string[];
+  total_competitors_analyzed: number;
+  is_changed: boolean;
+  error?: string;
+};
+
+export type SEOOpportunityState = {
+  opportunity_score: number;
+  opportunity_level: "low" | "medium" | "high";
+  key_drivers: Record<string, unknown>;
+};
+
+export type SEOStrategyState = {
+  target_intent: string;
+  recommended_content_type: string;
+  ideal_word_count: number;
+  priority_topics: string[];
+  questions_to_answer: string[];
+  difficulty: string;
+  ranking_time_estimate: string;
+  content_angle: string;
+};
+
+export type SEORESULT = {
+  extracted_keywords?: ExtractedKeywordsState;
+  keyword_difficulty?: KeywordDifficultyState | number;
+  keyword_difficulty2?: KeywordDifficultyState2;
+  keyword_recommendations?: KeywordRecommendationState;
+  intent?: SearchIntentState | string;
+  content_pattern?: ContentPatternState;
+  content_gaps?: ContentGapState;
+  authority?: AuthorityState;
+  serp_features?: SERPFeatureImpactState;
+  seo_strategy?: SEOStrategyState;
+  seo_opportunity?: SEOOpportunityState;
+  volume?: string;
 };
 
 export type AppStep =
   | "keyword"
   | "suggestions"
   | "topics"
+  | "topic-type"
   | "outline"
   | "outline-reject"
   | "content";
+
+export type Outline = ContentOutline;
 
 export interface PageState {
   step: AppStep;
@@ -146,11 +383,18 @@ export interface PageState {
   generatedContent: string;
   threadId: string | null;
   rejectedReason: string;
-  outline: Outline | null;
+  outline: ContentOutline | null;
   topics: string[];
   instruction: string;
   instructionType: string;
   isEditing: boolean;
+  seoResult: SEORESULT | null;
+  serp: SERPEngineState | null;
+  competitors: Competitor[] | null;
+  // Temporary storage for UI-driving state extracted from potentially deep graph state
+  currentContentState: CONTENT | null;
+  interrupt: Interrupt | null;
+  contentTypes: string[];
 }
 
 export type PageAction =
@@ -163,4 +407,5 @@ export type PageAction =
   | { type: "SET_GENERATED_CONTENT"; payload: string }
   | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
   | { type: "RESET_FOR_REJECT" }
-  | { type: "SUBMIT_REJECT_REASON" };
+  | { type: "SUBMIT_REJECT_REASON" }
+  | { type: "SET_INTERRUPT"; payload: Interrupt };

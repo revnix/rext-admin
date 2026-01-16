@@ -3,6 +3,7 @@
 import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { useEffect } from "react";
 
 export const description = "A keyword difficulty gauge chart";
 
@@ -31,13 +32,20 @@ interface ChartRadialStackedProps {
 }
 
 export function ChartRadialStacked({
-  difficultyScore = 58,
+  difficultyScore,
   className,
 }: ChartRadialStackedProps) {
   // Clamp score between 0 and 100
-  const clampedScore = Math.max(0, Math.min(100, difficultyScore));
+  const clampedScore = difficultyScore ? Math.max(0, Math.min(100, difficultyScore)) : 0;
   const remaining = 100 - clampedScore;
   const difficultyLabel = getDifficultyLabel(clampedScore);
+
+  useEffect(() => {
+    console.log("difficultyScore", difficultyScore);
+    console.log("clampedScore", clampedScore);
+    console.log("remaining", remaining);
+    console.log("difficultyLabel", difficultyLabel);
+  }, [difficultyScore]);  
 
   const chartData = [{ score: clampedScore, remaining }];
 

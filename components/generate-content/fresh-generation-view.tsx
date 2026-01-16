@@ -1,14 +1,17 @@
 "use client";
 
 import { useWorkspace } from "@/providers/workspace-provider";
-import { useEffect, useReducer, useCallback, useMemo } from "react";
+import { workspaceRoutes } from "@/lib/routes";
+import { useEffect, useReducer, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { log } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
 import type {
-  Outline,
+  CONTENT,
+  ContentOutline,
+  Interrupt,
   PageAction,
   PageState,
   WREXT,
@@ -22,8 +25,6 @@ import {
   OutlineRejectSection,
 } from "@/components/generate-content/outline";
 import { ContentEditor } from "@/components/generate-content/content";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
 
 const initialState: PageState = {
   step: "keyword",
@@ -39,6 +40,12 @@ const initialState: PageState = {
   instruction: "",
   instructionType: "",
   isEditing: false,
+  seoResult: null,
+  serp: null,
+  competitors: null,
+  currentContentState: null,
+  interrupt: null,
+  contentTypes: [],
 };
 
 function reducer(state: PageState, action: PageAction): PageState {
@@ -65,35 +72,38 @@ function reducer(state: PageState, action: PageAction): PageState {
       return { ...state, instruction: "", step: "outline-reject" };
     case "SUBMIT_REJECT_REASON":
       return { ...state, step: "outline", rejectedReason: "", outline: null };
+    case "SET_INTERRUPT":
+      return { ...state, interrupt: action.payload };
     case "UPDATE_FROM_STREAM": {
       const values = action.payload;
-      const interrupt = values.__interrupt__?.[0];
       let changed = false;
       const newState = { ...state };
 
+      const interrupt = state.interrupt;
+
       if (interrupt) {
         const newInstruction =
-          interrupt.value.instructions || interrupt.value.instruction;
+          interrupt.value.instructions || interrupt.value.instruction || "";
         if (state.instruction !== newInstruction) {
           newState.instruction = newInstruction;
           changed = true;
         }
-        if (state.instructionType !== interrupt.value.type) {
-          newState.instructionType = interrupt.value.type;
+        if (state.instructionType) {
           changed = true;
         }
       }
 
       // 1. Content Phase (Dominant)
-      if (values.content?.final_content) {
-        if (values.content.final_content.body_markdown) {
+      if (interrupt?.value?.data?.final_content) {
+        console.log("final_content", interrupt.value.data.final_content);
+        if (interrupt.value.data.final_content.body_markdown) {
           if (!state.generatedContent || !state.isEditing) {
             if (
               state.generatedContent !==
-              values.content.final_content.body_markdown
+              interrupt.value.data.final_content.body_markdown
             ) {
               newState.generatedContent =
-                values.content.final_content.body_markdown;
+                interrupt.value.data.final_content.body_markdown;
               changed = true;
             }
           }
@@ -105,7 +115,7 @@ function reducer(state: PageState, action: PageAction): PageState {
       }
       // 2. Outline Review Phase
       else if (interrupt?.value.type === "outline_review") {
-        const newOutline = interrupt.value.data as Outline;
+        const newOutline = interrupt.value.data as ContentOutline;
         if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
           newState.outline = newOutline;
           changed = true;
@@ -119,9 +129,21 @@ function reducer(state: PageState, action: PageAction): PageState {
           changed = true;
         }
       }
+      else if (interrupt?.value.content_types) {
+        const newContentTypes = interrupt.value.content_types as string[];
+        if (JSON.stringify(state.contentTypes) !== JSON.stringify(newContentTypes)) {
+          newState.contentTypes = newContentTypes;
+          changed = true;
+        }
+        if (state.instructionType !== "content-type") {
+          newState.instructionType = "content-type";
+          changed = true;
+        }
+      }
       // 3. Topics Phase
       else if (interrupt?.value.topics) {
         const newTopics = interrupt.value.topics as string[];
+        console.log("newTopics", newTopics);
         if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
           newState.topics = newTopics;
           changed = true;
@@ -134,13 +156,17 @@ function reducer(state: PageState, action: PageAction): PageState {
       // 4. Selection Phase
       else {
         const keywords = interrupt?.value.Recommendations;
-        const primaryKeyword = interrupt?.value["Primary Keyword"];
+        const primaryKeyword = interrupt?.value["Primary Keyword"] as string | undefined;
         if (keywords && keywords.length > 0) {
           if (
             JSON.stringify(state.suggestedKeywords) !== JSON.stringify(keywords)
           ) {
             newState.primaryKeyword = primaryKeyword || "";
             newState.suggestedKeywords = keywords;
+            if (interrupt.value.seo_state) {
+              newState.seoResult = interrupt.value.seo_state;
+              console.log("seoResult33", newState.seoResult);
+            }
             changed = true;
           }
           if (state.step === "keyword") {
@@ -167,24 +193,7 @@ export function FreshGenerationView({
   initialKeyword = "",
   initialStep = "keyword",
 }: FreshGenerationViewProps) {
-  const [state, dispatch] = useReducer(reducer, {
-    ...initialState,
-    step: initialStep, // Start from 'topics' if needed, but 'keyword' is safer if streaming is required
-    userKeyword: initialKeyword,
-  });
-
-  // NOTE: If initialStep is 'topics' and initialKeyword is present (from Library),
-  // we technically need the stream to be in a state where it has already "suggested" topics
-  // or we need to manually kickstart it.
-  // For the "Pick from Library" flow, we might need to simulate the 'keyword' -> 'suggestions' -> 'select' flow
-  // OR just start sending a message as if a keyword was selected.
-  // Given the current complex state logic, simply setting 'userKeyword' might be enough to PRE-FILL the form
-  // if we start at 'keyword' step.
-  // The requirements say: "on click of this there are a library of keywords... user select any keyword then its goes to next step where choose of topics".
-  // This implies we skip the "suggestions" phase and go straight to topics?
-  // If so, we need to handle that.
-  // Let's implement an effect to auto-submit if initialKeyword is provided AND we want to skip.
-
+  const [state, dispatch] = useReducer(reducer, initialState);
   const {
     step,
     userKeyword,
@@ -199,76 +208,74 @@ export function FreshGenerationView({
     instruction,
     instructionType,
     isEditing,
+    seoResult,
+    interrupt,
+    contentTypes,
   } = state;
+
+  const { workspace, workspaceSlug } = useWorkspace();
 
   const onThreadId = useCallback(
     (id: string | null) => dispatch({ type: "SET_THREAD_ID", payload: id }),
     [],
   );
 
-  const streamConfig = useMemo(
-    () => ({
-      apiUrl: "http://192.168.1.130:2024/",
-      assistantId: "agent",
-      messagesKey: "messages",
-      threadId: threadId,
-      onThreadId: onThreadId,
-    }),
-    [threadId, onThreadId],
-  );
+  const { values, submit, isLoading } = useStream<WREXT>({
+    apiUrl: "http://192.168.1.130:2024/",
+    assistantId: "agent",
+    messagesKey: "messages",
+    threadId: threadId,
+    onThreadId: onThreadId,
 
-  const { values, submit, isLoading } = useStream<WREXT>(streamConfig);
+    // Handle state updates after each graph step (including subgraphs)
+    onUpdateEvent: (update, options) => {
+      // Extract namespace from options (indicates nesting level)
+      // namespace is an array like ['serp_engine:task_id', 'fetch_serp'] for subgraph nodes
+      // or undefined/empty for parent graph nodes
+      const namespace = options?.namespace || [];
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Run once on mount to handle initial keyword
-  useEffect(() => {
-    if (initialKeyword && step === "keyword" && !values) {
-      // If we have an initial keyword (from Library), we might want to "Select" it immediately.
-      // However, the current flow requires receiving recommendations first to proceed to topics?
-      // Or does "Select Keyword" -> "Topics"?
+      // The update object structure is { nodeName: { ...stateUpdate } }
+      const nodeNames = Object.keys(update);
+      const nodeName = nodeNames[0];
 
-      // Let's assume for "Library", we treat it as if the user entered the keyword and clicked submit.
-      // OR better: we treat it as "Selecting" a keyword directly?
-      // But "Select Keyword" requires an interrupt value (Recommendations) usually.
+      if (namespace.length > 0) {
+        // Subgraph update - show the full path through the graph hierarchy
+        const graphPath = namespace.join(" → ");
+        log.info(`Subgraph node executed: ${graphPath} → ${nodeName}`, update);
+      } else {
+        // Parent graph update
+        log.info(`Parent graph node executed: ${nodeName}`, update);
 
-      // If "Pick from Library" implies we already have the researched keyword data, we might need to mock that state.
-      // But simpler approach: Auto-submit the keyword search to get suggestions/data?
-      // Re-reading request: "User select any keyword the its goes to next step where choose of topics"
-      // This implies skipping suggestions.
+        const interrupt = (update as any).__interrupt__?.[0] || (update[nodeName] as any)?.__interrupt__?.[0];
 
-      // To skip suggestions and go to topics, we need to send the 'Primary Keyword' directly?
-      // Let's try auto-submitting as if selecting a keyword.
-      if (initialStep === "suggestions" || initialStep === "topics") {
-        // Simulating selection
-        // We won't have 'interrupt' values yet, so we pass empty Recommendations?
-        /*
-                submit(
-                  {
-                    "Primary Keyword": initialKeyword,
-                    Recommendations: [], 
-                    instruction_response: initialKeyword,
-                    continue_workflow: true,
-                  },
-                  {
-                    // We can't use resume: true if we haven't started? 
-                    // We might need to start a NEW run with these inputs?
-                    // The current backend graph might expect a specific state.
-                    // For now, let's just pre-fill the keyword form and let the user click "Next" (or "Begin Research")
-                    // unless we are sure.
-                  }
-                );
-                */
-        // SAFE FALLBACK: Just pre-fill and auto-submit the SERP search?
-        // Since we technically need to "Analyze a new keyword" for Start Fresh,
-        // but for Library "skip the research phase", it implies we trust the keyword.
-
-        // If we really want to go to topics, we need to interact with the agent flow correctly.
-        // Given I don't see the backend agent code, I will implement it such that:
-        // If coming from Library, we auto-trigger the "Submit Keyword" action.
-        handleKeywordSubmit();
+        if (interrupt) {
+          dispatch({
+            type: "SET_INTERRUPT",
+            payload: interrupt,
+          });
+        }
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+    },
+
+    // Handle custom events streamed from your graph
+    onCustomEvent: (event, _options) => {
+      log.info("Custom event received", event);
+    },
+
+    // Handle metadata events with run/thread info
+    onMetadataEvent: (metadata) => {
+      log.info("Run ID:", metadata.run_id);
+      log.info("Thread ID:", metadata.thread_id);
+    },
+
+    onError: (error) => {
+      log.error("Stream error occurred", error);
+    },
+
+    onFinish: (state, _options) => {
+      log.info("Stream completed successfully", state);
+    },
+  });
 
   useEffect(() => {
     if (values) {
@@ -278,6 +285,17 @@ export function FreshGenerationView({
     log.info("step", step);
     log.info("isEditing", isEditing);
   }, [values, step, isEditing]);
+
+  useEffect(() => {
+    if (interrupt) {
+      console.log("interrupt344", interrupt);
+    }
+  }, [interrupt]);
+
+  useEffect(() => {
+    console.log("instructionType", step === "topics" && instructionType === "topics");
+    console.log("instructionType", instructionType);
+  }, [instructionType]);
 
   const handleKeywordSubmit = () => {
     log.info("[User Action: Submit Keyword]", userKeyword, country);
@@ -297,19 +315,13 @@ export function FreshGenerationView({
   };
 
   const handleKeywordSelect = (selected: string) => {
-    log.info("[User Action: Select Keyword]", selected);
-    const interrupt = values.__interrupt__?.[0];
     submit(
       {
         "Primary Keyword": selected,
-        Recommendations: interrupt?.value.Recommendations || [],
-        instruction_response: selected, // Keep consistent with original
         continue_workflow: true,
       },
       {
         // CRITICAL: Use command.resume to resume from interrupt
-        // If we are 'Library' flow, check if we have interrupt?
-        // If not, we might be starting fresh?
         command: { resume: true },
       },
     );
@@ -318,7 +330,20 @@ export function FreshGenerationView({
   };
 
   const handleTopicSelect = (selected: string) => {
-    log.info("[User Action: Select Topic]", selected);
+    submit(
+      {
+        instruction_response: selected,
+        continue_workflow: true,
+      },
+      {
+        // CRITICAL: Use command.resume to resume from interrupt
+        command: { resume: true },
+      },
+    );
+    dispatch({ type: "SET_STEP", payload: "topic-type" });
+  };
+
+  const handleContentTypeSelect = (selected: string) => {
     submit(
       {
         instruction_response: selected,
@@ -333,6 +358,7 @@ export function FreshGenerationView({
   };
 
   const handleOutlineApprove = () => {
+    // Use null to avoid trying to update state keys, preventing InvalidUpdateError
     dispatch({ type: "SET_STEP", payload: "content" });
     submit(null, {
       command: { resume: "approve" },
@@ -360,109 +386,114 @@ export function FreshGenerationView({
   };
 
   return (
-    <div
-      className={cn(
-        "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-        step === "keyword" ? "min-h-[70vh] justify-center" : "min-h-0 pt-2",
-      )}
-    >
-      {/* Back Button */}
-      <div className="absolute top-0 left-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex items-center gap-1 text-muted-foreground hover:text-primary"
-          onClick={onBack}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </Button>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {step === "keyword" && <HeroSection />}
-      </AnimatePresence>
-
-      <motion.div
-        layout
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="w-full"
+    <>
+      <div
+        className={cn(
+          "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
+          step === "keyword" ? "min-h-[70vh] justify-center" : "min-h-0 pt-2",
+        )}
       >
-        {(step === "keyword" || step === "suggestions") && (
-          <KeywordForm
-            userKeyword={userKeyword}
-            country={country}
-            onSubmit={handleKeywordSubmit}
-            onKeywordChange={(val) =>
-              dispatch({ type: "SET_USER_KEYWORD", payload: val })
-            }
-            onCountryChange={(val) =>
-              dispatch({ type: "SET_COUNTRY", payload: val })
-            }
+        <AnimatePresence mode="wait">
+          {step === "keyword" && <HeroSection />}
+        </AnimatePresence>
+
+        <motion.div
+          layout
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="w-full"
+        >
+          {(step === "keyword" || step === "suggestions") && (
+            <KeywordForm
+              userKeyword={userKeyword}
+              country={country}
+              onSubmit={handleKeywordSubmit}
+              onKeywordChange={(val) =>
+                dispatch({ type: "SET_USER_KEYWORD", payload: val })
+              }
+              onCountryChange={(val) =>
+                dispatch({ type: "SET_COUNTRY", payload: val })
+              }
+            />
+          )}
+        </motion.div>
+
+        <LoadingIndicatorVariants
+          step={step}
+          isLoading={isLoading}
+          className="mt-5"
+        />
+
+        {step === "suggestions" && suggestedKeywords.length > 0 && (
+          <SuggestionsSection
+            instruction={instruction}
+            primaryKeyword={primaryKeyword}
+            suggestedKeywords={suggestedKeywords}
+            onSelect={handleKeywordSelect}
+            seoResult={seoResult}
           />
         )}
-      </motion.div>
 
-      <LoadingIndicatorVariants
-        step={step}
-        isLoading={isLoading}
-        className="mt-5"
-      />
+        {step === "topic-type" && instructionType === "content-type" && (
+          <>
+            <h2 className="text-xl font-semibold my-4">{instruction}</h2>
+            <div className="flex flex-wrap gap-2">
+              {contentTypes.map((kw) => (
+                <button
+                  key={kw}
+                  onClick={() => handleContentTypeSelect(kw)}
+                  className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
+                >
+                  <strong>{kw}</strong>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
-      {step === "suggestions" && suggestedKeywords.length > 0 && (
-        <SuggestionsSection
-          instruction={instruction}
-          primaryKeyword={primaryKeyword}
-          suggestedKeywords={suggestedKeywords}
-          onSelect={handleKeywordSelect}
-        />
-      )}
-
-      {step === "topics" && instructionType === "topics" && (
-        <TopicsSection
-          instruction={instruction}
-          topics={topics}
-          onSelect={handleTopicSelect}
-        />
-      )}
-
-      {step === "outline" && outline && (
-        <OutlineDisplay
-          outline={outline}
-          isLoading={isLoading}
-          onApprove={handleOutlineApprove}
-          onReject={handleOutlineReject}
-        />
-      )}
-
-      {step === "outline-reject" && instructionType === "outline_reject" && (
-        <OutlineRejectSection
-          instruction={instruction}
-          rejectedReason={rejectedReason}
-          onChange={(val) =>
-            dispatch({ type: "SET_REJECTED_REASON", payload: val })
-          }
-          onSubmit={handleOutlineRejectReason}
-        />
-      )}
-
-      {step === "content" && values?.content?.final_content && (
-        <div className="w-full mt-8">
-          <ContentEditor
-            values={values}
-            generatedContent={generatedContent}
-            isEditing={isEditing}
-            userKeyword={userKeyword}
-            outline={outline}
-            onEditToggle={() =>
-              dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
-            }
-            onContentChange={(val) =>
-              dispatch({ type: "SET_GENERATED_CONTENT", payload: val })
-            }
+        {step === "topics" && instructionType === "topics" && (
+          <TopicsSection
+            instruction={instruction}
+            topics={topics}
+            onSelect={handleTopicSelect}
           />
-        </div>
+        )}
+
+        {step === "outline" && outline && (
+          <OutlineDisplay
+            outline={outline}
+            isLoading={isLoading}
+            onApprove={handleOutlineApprove}
+            onReject={handleOutlineReject}
+          />
+        )}
+
+        {step === "outline-reject" && instructionType === "outline_reject" && (
+          <OutlineRejectSection
+            instruction={instruction}
+            rejectedReason={rejectedReason}
+            onChange={(val) =>
+              dispatch({ type: "SET_REJECTED_REASON", payload: val })
+            }
+            onSubmit={handleOutlineRejectReason}
+          />
+        )}
+      </div>
+
+      {step === "content" && interrupt?.value?.data?.final_content && (
+        <ContentEditor
+          values={interrupt.value.data as CONTENT}
+          generatedContent={generatedContent}
+          isEditing={isEditing}
+          userKeyword={userKeyword}
+          outline={outline}
+          onEditToggle={() =>
+            dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
+          }
+          onContentChange={(val) =>
+            dispatch({ type: "SET_GENERATED_CONTENT", payload: val })
+          }
+        />
       )}
-    </div>
+    </>
   );
 }

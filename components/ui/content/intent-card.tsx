@@ -44,7 +44,7 @@ interface SearchIntentCardProps {
 }
 
 export function SearchIntentCard({
-  intent = "informational",
+  intent = "transactional",
 }: SearchIntentCardProps) {
   const config = INTENT_CONFIG[intent] || INTENT_CONFIG.informational;
   const Icon = config.icon;
