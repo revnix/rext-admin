@@ -21,7 +21,7 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       <Card className="shadow-none border-none bg-primary text-primary-foreground rounded-2xl relative overflow-hidden group">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px] relative z-10">
           <div className="flex justify-between items-start">
-            <span className="font-medium text-lg opacity-90">
+            <span className="font-medium text-lg text-white/90">
               Total Content
             </span>
             <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
@@ -30,7 +30,7 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="text-5xl font-bold tracking-tight">
+            <div className="text-5xl font-bold tracking-tight text-white">
               {totalContent}
             </div>
             <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm font-medium w-fit backdrop-blur-md">
@@ -44,19 +44,19 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       </Card>
 
       {/* Trust Score */}
-      <Card className="shadow-none border border-slate-100 bg-white rounded-2xl transition-all duration-300 hover:border-slate-300 group">
+      <Card className="shadow-none border border-border bg-card rounded-2xl transition-all duration-300 hover:border-foreground/20 group">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px]">
           <div className="flex justify-between items-start">
-            <span className="font-semibold text-lg text-slate-700">
+            <span className="font-semibold text-lg text-muted-foreground group-hover:text-foreground transition-colors">
               Trust Score
             </span>
-            <div className="h-10 w-10 border border-slate-200 rounded-full flex items-center justify-center group-hover:border-slate-900 group-hover:bg-slate-900 transition-all">
-              <ArrowUpRight className="h-5 w-5 text-slate-400 group-hover:text-white transition-colors" />
+            <div className="h-10 w-10 border border-border rounded-full flex items-center justify-center group-hover:border-foreground group-hover:bg-foreground transition-all">
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-background transition-colors" />
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="text-5xl font-bold text-slate-900">
+            <div className="text-5xl font-bold text-foreground">
               {trustScore}
             </div>
           </div>
@@ -64,19 +64,19 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       </Card>
 
       {/* Active Personas */}
-      <Card className="shadow-none border border-slate-100 bg-white rounded-2xl transition-all duration-300 hover:border-slate-300 group">
+      <Card className="shadow-none border border-border bg-card rounded-2xl transition-all duration-300 hover:border-foreground/20 group">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px]">
           <div className="flex justify-between items-start">
-            <span className="font-semibold text-lg text-slate-700">
+            <span className="font-semibold text-lg text-muted-foreground group-hover:text-foreground transition-colors">
               Active Personas
             </span>
-            <div className="h-10 w-10 border border-slate-200 rounded-full flex items-center justify-center group-hover:border-slate-900 group-hover:bg-slate-900 transition-all">
-              <ArrowUpRight className="h-5 w-5 text-slate-400 group-hover:text-white transition-colors" />
+            <div className="h-10 w-10 border border-border rounded-full flex items-center justify-center group-hover:border-foreground group-hover:bg-foreground transition-all">
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-background transition-colors" />
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="text-5xl font-bold text-slate-900">
+            <div className="text-5xl font-bold text-foreground">
               {activePersonas}
             </div>
           </div>
@@ -84,23 +84,23 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       </Card>
 
       {/* Publish Success */}
-      <Card className="shadow-none border border-slate-100 bg-white rounded-2xl transition-all duration-300 hover:border-slate-300 group overflow-hidden">
+      <Card className="shadow-none border border-border bg-card rounded-2xl transition-all duration-300 hover:border-foreground/20 group overflow-hidden">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px] relative">
           <div className="flex justify-between items-start relative z-10">
-            <span className="font-semibold text-lg text-slate-700">
+            <span className="font-semibold text-lg text-muted-foreground group-hover:text-foreground transition-colors">
               Publish Success
             </span>
-            <div className="h-10 w-10 border border-slate-200 rounded-full flex items-center justify-center group-hover:border-slate-900 group-hover:bg-slate-900 transition-all">
-              <ArrowUpRight className="h-5 w-5 text-slate-400 group-hover:text-white transition-colors" />
+            <div className="h-10 w-10 border border-border rounded-full flex items-center justify-center group-hover:border-foreground group-hover:bg-foreground transition-all">
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-background transition-colors" />
             </div>
           </div>
 
           <div className="space-y-1 relative z-10">
-            <div className="text-5xl font-bold text-slate-900">
+            <div className="text-5xl font-bold text-foreground">
               {publishSuccess}
-              <span className="text-3xl text-slate-400">%</span>
+              <span className="text-3xl text-muted-foreground">%</span>
             </div>
-            <div className="text-sm text-slate-500 font-medium">
+            <div className="text-sm text-muted-foreground font-medium">
               Last 30 days
             </div>
           </div>

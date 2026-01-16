@@ -197,8 +197,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+      (group) => group.groupLabel !== "Workspace",
+    );
 
   return (
     <Sidebar
@@ -299,11 +299,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               >
                                 <ChevronRight
                                   size={16}
-                                  className={`transition-transform ${
-                                    openDropdown === item.title
+                                  className={`transition-transform ${openDropdown === item.title
                                       ? "rotate-90"
                                       : ""
-                                  }`}
+                                    }`}
                                 />
                               </button>
                             </PopoverTrigger>
@@ -313,17 +312,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <PopoverContent
                             side="right"
                             align="start"
-                            className="w-40 bg-gray-100 dark:bg-gray-800 border border-sidebar-border dark:border-gray-700 rounded-md shadow-md"
+                            className="w-40 bg-popover border border-border rounded-md shadow-md"
                           >
                             <SidebarMenu>
                               {item.items?.map((subItem) => (
                                 <SidebarMenuItem
                                   key={subItem.title}
-                                  className="rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition"
+                                  className="rounded-md hover:bg-accent transition"
                                 >
                                   <SidebarMenuButton
                                     asChild
-                                    className="rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition"
+                                    className="rounded-md hover:bg-accent transition"
                                   >
                                     <Link href={subItem.url}>
                                       {subItem.title}
@@ -372,11 +371,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           >
                             <ChevronDown
                               size={16}
-                              className={`transition-transform hover:cursor-pointer ${
-                                expandedAccordion === item.title
+                              className={`transition-transform hover:cursor-pointer ${expandedAccordion === item.title
                                   ? "rotate-180"
                                   : ""
-                              }`}
+                                }`}
                             />
                           </button>
                         )}

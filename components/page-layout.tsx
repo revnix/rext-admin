@@ -216,17 +216,17 @@ export function PageLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md flex h-16 shrink-0 items-center justify-between gap-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 px-8 border-b border-slate-200">
+        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md flex h-16 shrink-0 items-center justify-between gap-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 px-8 border-b border-border">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1 h-10 w-10 text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-xl" />
+            <SidebarTrigger className="-ml-1 h-10 w-10 text-muted-foreground hover:bg-accent hover:text-foreground rounded-xl" />
             <Separator
               orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4 bg-slate-200"
+              className="mr-2 data-[orientation=vertical]:h-4 bg-border"
             />
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                className="justify-start w-full md:w-64 h-10 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100/50 px-2"
+                className="justify-start w-full md:w-64 h-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50 px-2"
                 onClick={() => setSearchOpen(true)}
               >
                 <Search className="h-4 w-4 mr-2" />
@@ -245,7 +245,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
                 >
                   <div className="relative">
                     <Mail className="h-5 w-5" />
@@ -257,7 +257,7 @@ export function PageLayout({
                 align="end"
                 className="w-80 p-0 overflow-hidden"
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-sky-50/50">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/20">
                   <span className="font-semibold text-sm">Messages</span>
                   <span className="text-xs text-sky-600 hover:text-sky-700 cursor-pointer font-medium">
                     Mark all read
@@ -268,10 +268,10 @@ export function PageLayout({
                     {[1, 2, 3].map((id) => (
                       <DropdownMenuItem
                         key={id}
-                        className="flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-0 hover:bg-slate-50 focus:bg-slate-50 rounded-none transition-colors"
+                        className="flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent/50 focus:bg-accent/50 rounded-none transition-colors"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="font-semibold text-sm text-slate-900">
+                          <span className="font-semibold text-sm text-foreground">
                             Alice Johnson
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -286,11 +286,11 @@ export function PageLayout({
                     ))}
                   </div>
                 </ScrollArea>
-                <div className="p-2 border-t bg-slate-50/30 text-center">
+                <div className="p-2 border-t border-border bg-muted/30 text-center">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-auto py-1.5 text-xs w-full text-slate-500 hover:text-sky-600"
+                    className="h-auto py-1.5 text-xs w-full text-muted-foreground hover:text-primary"
                   >
                     View all messages
                   </Button>
@@ -309,7 +309,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
                 >
                   <div className="relative">
                     <Bell className="h-5 w-5" />
@@ -323,7 +323,7 @@ export function PageLayout({
                 align="end"
                 className="w-80 p-0 overflow-hidden"
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-rose-50/50">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/20">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">Notifications</span>
                     {unreadNotifications > 0 && (
@@ -338,9 +338,9 @@ export function PageLayout({
                 </div>
                 <ScrollArea className="h-[350px]">
                   {useNotificationStore.getState().notifications.length ===
-                    0 ? (
+                  0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-muted-foreground space-y-3">
-                      <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                         <Bell className="h-6 w-6 opacity-20" />
                       </div>
                       <p className="text-sm font-medium">
@@ -354,14 +354,14 @@ export function PageLayout({
                         .notifications.map((n) => (
                           <DropdownMenuItem
                             key={n.id}
-                            className="flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-0 hover:bg-slate-50 focus:bg-slate-50 rounded-none transition-colors"
+                            className="flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent/50 focus:bg-accent/50 rounded-none transition-colors"
                           >
                             <div className="flex items-center gap-2 w-full">
                               <div
                                 className={`h-2 w-2 shrink-0 rounded-full ${!n.read ? "bg-sky-500 shadow-sm shadow-sky-200" : "bg-transparent"}`}
                               />
-                              <span
-                                className={`text-sm flex-1 truncate ${!n.read ? "font-semibold text-slate-900" : "font-medium text-slate-600"}`}
+                                <span
+                                className={`text-sm flex-1 truncate ${!n.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}
                               >
                                 {n.title}
                               </span>
@@ -377,11 +377,11 @@ export function PageLayout({
                     </div>
                   )}
                 </ScrollArea>
-                <div className="p-2 border-t bg-slate-50/30">
+                <div className="p-2 border-t border-border bg-muted/30">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full text-xs h-8 bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm"
+                    className="w-full text-xs h-8 bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 shadow-sm"
                     onClick={() =>
                       useNotificationStore.getState().markAllAsRead()
                     }
@@ -403,7 +403,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
                 >
                   <Settings className="h-5 w-5" />
                 </Button>
@@ -457,7 +457,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
                   id="help-trigger"
                 >
                   <CircleHelp className="h-5 w-5" />
@@ -537,7 +537,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100"
+                  className="h-10 w-10 rounded-full hover:bg-accent"
                   id="language-trigger"
                 >
                   <div className="h-5 w-5 overflow-hidden rounded-full flex items-center justify-center">
@@ -569,7 +569,7 @@ export function PageLayout({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="h-8 w-[1px] bg-slate-200 mx-2" />
+            <div className="h-8 w-[1px] bg-border mx-2" />
 
             {/* Profile */}
             <DropdownMenu
@@ -581,7 +581,7 @@ export function PageLayout({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-10 w-10 rounded-full p-0 overflow-hidden border border-slate-200 hover:ring-2 hover:ring-slate-100 transition-all"
+                  className="h-10 w-10 rounded-full p-0 overflow-hidden border border-border hover:ring-2 hover:ring-accent transition-all"
                   id="profile-trigger"
                 >
                   <Avatar className="h-full w-full">
@@ -594,7 +594,7 @@ export function PageLayout({
                         sizes="32px"
                       />
                     ) : (
-                      <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
+                      <AvatarFallback className="bg-muted text-muted-foreground font-medium">
                         {userInitials}
                       </AvatarFallback>
                     )}
@@ -603,7 +603,7 @@ export function PageLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60 p-1" forceMount>
                 <DropdownMenuLabel className="p-0 font-normal mb-1">
-                  <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-slate-50/80 border border-slate-100 mx-0.5 mt-0.5">
+                  <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-muted/40 border border-border mx-0.5 mt-0.5">
                     <Avatar className="h-9 w-9 rounded-lg border border-white shadow-sm overflow-hidden relative">
                       {profileUser?.avatar_url ? (
                         <Image
@@ -614,22 +614,22 @@ export function PageLayout({
                           sizes="36px"
                         />
                       ) : (
-                        <AvatarFallback className="rounded-lg bg-white text-slate-700 font-semibold">
+                        <AvatarFallback className="rounded-lg bg-background text-foreground font-semibold">
                           {userInitials}
                         </AvatarFallback>
                       )}
                     </Avatar>
                     <div className="grid flex-1 text-left leading-tight">
-                      <span className="truncate font-semibold text-sm text-slate-900">
+                      <span className="truncate font-semibold text-sm text-foreground">
                         {userName}
                       </span>
-                      <span className="truncate text-xs text-slate-500 font-normal">
+                      <span className="truncate text-xs text-muted-foreground font-normal">
                         {userEmail}
                       </span>
                       {userRole && (
                         <Badge
                           variant="outline"
-                          className="mt-1 w-fit rounded-sm px-1 py-0 text-[9px] h-4 font-normal text-slate-500 border-slate-200 bg-white"
+                          className="mt-1 w-fit rounded-sm px-1 py-0 text-[9px] h-4 font-normal text-muted-foreground border-border bg-background"
                         >
                           {userRole}
                         </Badge>
@@ -646,19 +646,19 @@ export function PageLayout({
                     <div className="flex items-center justify-center h-5 w-5 rounded-md bg-violet-50 mr-2">
                       <Sparkles className="h-3.5 w-3.5 text-violet-600 fill-violet-200/50" />
                     </div>
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-foreground">
                       Upgrade to Pro
                     </span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings")}
                     className="cursor-pointer"
                   >
-                    <BadgeCheck className="mr-2 h-4 w-4 text-slate-400 group-hover:text-slate-600" />
-                    <span className="text-slate-600 group-hover:text-slate-900">
+                    <BadgeCheck className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                    <span className="text-muted-foreground group-hover:text-foreground">
                       Account
                     </span>
                   </DropdownMenuItem>
@@ -666,8 +666,8 @@ export function PageLayout({
                     onClick={() => router.push("/settings/billing")}
                     className="cursor-pointer"
                   >
-                    <CreditCard className="mr-2 h-4 w-4 text-slate-400 group-hover:text-slate-600" />
-                    <span className="text-slate-600 group-hover:text-slate-900">
+                    <CreditCard className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                    <span className="text-muted-foreground group-hover:text-foreground">
                       Billing
                     </span>
                   </DropdownMenuItem>
@@ -675,13 +675,13 @@ export function PageLayout({
                     onClick={() => router.push("/settings/security")}
                     className="cursor-pointer"
                   >
-                    <Bell className="mr-2 h-4 w-4 text-slate-400 group-hover:text-slate-600" />
-                    <span className="text-slate-600 group-hover:text-slate-900">
+                    <Bell className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                    <span className="text-muted-foreground group-hover:text-foreground">
                       Security
                     </span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuItem
                   className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer"
                   onClick={() => logout()}
@@ -698,8 +698,9 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-            } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
+            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+          } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (

@@ -76,11 +76,11 @@ export default function PersonaForgePage() {
       <div className="space-y-8 max-w-[1600px] mx-auto">
         {/* Workspace Recommendations */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-slate-800 font-bold px-1">
-            <Lightbulb size={20} className="text-sky-500 fill-sky-100" />
+          <div className="flex items-center gap-2 text-foreground font-bold px-1">
+            <Lightbulb size={20} className="text-sky-500 fill-sky-100 dark:fill-sky-900/20" />
             <h3 className="text-lg">Workspace Recommendations</h3>
           </div>
-          <RecommendationCard onImport={() => {}} />
+          <RecommendationCard onImport={() => { }} />
         </div>
 
         {/* Persona Grid */}
@@ -94,18 +94,18 @@ export default function PersonaForgePage() {
             href={workspaceRoutes.persona_create(workspaceSlug)}
             className="contents"
           >
-            <Card className="border border-dashed border-slate-200 shadow-none hover:border-primary/50 hover:bg-slate-50/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-2xl">
+            <Card className="border border-dashed border-border shadow-none hover:border-primary/50 hover:bg-accent/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-2xl">
               <CardContent className="flex flex-col items-center justify-center text-center p-6 bg-transparent">
-                <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-primary/50 transition-all shadow-sm">
+                <div className="h-14 w-14 rounded-2xl bg-card border border-border flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-primary/50 transition-all shadow-sm">
                   <Plus
-                    className="text-slate-400 group-hover:text-primary transition-colors"
+                    className="text-muted-foreground group-hover:text-primary transition-colors"
                     size={24}
                   />
                 </div>
-                <h3 className="font-semibold text-slate-900 mb-1">
+                <h3 className="font-semibold text-foreground mb-1">
                   Create New Persona
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   Add a new author profile
                 </p>
               </CardContent>

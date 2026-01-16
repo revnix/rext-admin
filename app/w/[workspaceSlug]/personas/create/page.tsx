@@ -52,7 +52,7 @@ export default function CreatePersonaPage() {
       fullWidth
     >
       <div className="max-w-3xl mx-auto space-y-8 pb-12">
-        <Card className="shadow-sm border border-slate-200 bg-white rounded-2xl overflow-hidden">
+        <Card className="shadow-sm border border-border bg-card rounded-2xl overflow-hidden">
           <CardContent className="p-8 space-y-6">
             {/* Full Name */}
             <div className="space-y-2">
@@ -60,7 +60,7 @@ export default function CreatePersonaPage() {
               <Input
                 id="fullName"
                 placeholder="e.g., Dr. Sarah Mitchell"
-                className="bg-white rounded-xl"
+                className="bg-background rounded-xl"
               />
             </div>
 
@@ -70,7 +70,7 @@ export default function CreatePersonaPage() {
               <Input
                 id="title"
                 placeholder="e.g., Board-Certified Dermatologist"
-                className="bg-white rounded-xl"
+                className="bg-background rounded-xl"
               />
             </div>
 
@@ -88,13 +88,13 @@ export default function CreatePersonaPage() {
                     }
                   }}
                   placeholder="Add expertise tag"
-                  className="bg-white rounded-xl"
+                  className="bg-background rounded-xl"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleAddExpertise}
-                  className="bg-white rounded-xl border-slate-200"
+                  className="bg-background rounded-xl border-border"
                 >
                   Add
                 </Button>
@@ -106,13 +106,13 @@ export default function CreatePersonaPage() {
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="gap-1 pr-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg px-2 py-0.5"
+                      className="gap-1 pr-1 bg-muted hover:bg-muted/80 text-foreground rounded-lg px-2 py-0.5"
                     >
                       {tag}
                       <button
                         type="button"
                         onClick={() => handleRemoveExpertise(tag)}
-                        className="hover:bg-slate-300 rounded-full p-0.5 transition-colors"
+                        className="hover:bg-muted-foreground/20 rounded-full p-0.5 transition-colors"
                       >
                         <X size={12} />
                       </button>
@@ -128,7 +128,7 @@ export default function CreatePersonaPage() {
               <Input
                 id="tone"
                 placeholder="e.g., Professional, Empathetic, Evidence-based"
-                className="bg-white rounded-xl"
+                className="bg-background rounded-xl"
               />
             </div>
 
@@ -138,7 +138,7 @@ export default function CreatePersonaPage() {
               <Textarea
                 id="bio"
                 placeholder="Brief professional biography..."
-                className="bg-white min-h-[120px] rounded-xl"
+                className="bg-background min-h-[120px] rounded-xl"
               />
             </div>
 
@@ -148,21 +148,21 @@ export default function CreatePersonaPage() {
               <Input
                 id="linkedin"
                 placeholder="https://linkedin.com/in/username"
-                className="bg-white rounded-xl"
+                className="bg-background rounded-xl"
               />
             </div>
 
             {/* EEAT Banner */}
-            <div className="bg-amber-50/50 border border-amber-100/60 rounded-xl p-5 flex gap-3 text-amber-900/80 text-sm mt-4">
+            <div className="bg-amber-50/50 border border-amber-100/60 dark:bg-amber-900/10 dark:border-amber-800/30 rounded-xl p-5 flex gap-3 text-amber-900/80 dark:text-amber-400 text-sm mt-4">
               <Sparkles
-                className="shrink-0 mt-0.5 text-amber-500 fill-amber-200/50"
+                className="shrink-0 mt-0.5 text-amber-500 fill-amber-200/50 dark:fill-amber-900/20"
                 size={18}
               />
               <div>
-                <span className="font-bold text-amber-900 text-base">
+                <span className="font-bold text-amber-900 dark:text-amber-300 text-base">
                   EEAT Optimization
                 </span>
-                <p className="mt-1 leading-relaxed text-amber-800">
+                <p className="mt-1 leading-relaxed text-amber-800 dark:text-amber-400">
                   This persona will be used to inject authentic experience and
                   expertise into your content, improving trust signals for
                   search engines.
@@ -171,11 +171,11 @@ export default function CreatePersonaPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-6 border-t border-border">
               <Button
                 variant="outline"
                 onClick={() => router.back()}
-                className="bg-white rounded-2xl border-slate-200 px-6"
+                className="bg-background rounded-2xl border-border px-6"
               >
                 Cancel
               </Button>
