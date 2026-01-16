@@ -20,7 +20,6 @@ import type * as React from "react";
 import { useState } from "react";
 
 import { EmptyWorkspacePrompt } from "@/components/empty-workspace-prompt";
-import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -50,7 +49,10 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 
+import { usePathname } from "next/navigation";
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
@@ -208,7 +210,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <WorkspaceSwitcher />
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide">
+      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
         {/* Main navigation */}
         {displayMainNavigation.map((group) => (
           <SidebarGroup key={group.groupLabel || "main-group"}>
@@ -219,9 +221,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
+                  const isActive = pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton tooltip={item.title} asChild>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        isActive={isActive}
+                        asChild
+                      >
                         <Link href={item.url}>
                           {Icon && <Icon />}
                           <span>{item.title}</span>
@@ -425,7 +432,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <NavUser />
+        {/* <NavUser /> */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

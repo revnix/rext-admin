@@ -93,13 +93,13 @@ export default function DashboardPage() {
         description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
         breadcrumbs={breadcrumbs}
       >
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {/* Top Section: Metrics Cards */}
           <MetricsCards workspace={currentWorkspace} />
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
             {/* Main Content */}
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Content Pipeline */}
               <ContentPipeline />
 
@@ -108,9 +108,9 @@ export default function DashboardPage() {
             </div>
 
             {/* Sidebar - Always visible */}
-            <aside className="space-y-6">
-              <WorkspaceStats workspace={currentWorkspace} />
+            <aside className="space-y-8">
               <QuickActions workspace={currentWorkspace} />
+              <WorkspaceStats workspace={currentWorkspace} />
             </aside>
           </div>
         </div>

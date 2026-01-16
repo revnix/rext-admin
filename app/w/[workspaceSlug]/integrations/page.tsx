@@ -64,24 +64,24 @@ export default function IntegrationsPage() {
       description="Connect your workspace with third-party platforms."
       breadcrumbs={breadcrumbs}
     >
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {INTEGRATIONS.map((integration) => (
             <Card
               key={integration.id}
-              className={`cursor-pointer transition-all border-2 shadow-none ${
+              className={`cursor-pointer transition-all border shadow-none rounded-[2rem] overflow-hidden ${
                 !integration.active
-                  ? "opacity-60 cursor-not-allowed bg-slate-50"
+                  ? "opacity-60 cursor-not-allowed bg-slate-50 border-slate-100"
                   : selectedIntegration === integration.id
-                    ? "border-primary ring-1 ring-primary"
-                    : "hover:border-slate-300"
+                    ? "border-primary ring-1 ring-primary bg-primary/5"
+                    : "border-slate-100 hover:border-slate-300 hover:shadow-sm"
               }`}
               onClick={() =>
                 handleIntegrationClick(integration.id, integration.active)
               }
             >
-              <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                <div className="relative h-10 w-10 overflow-hidden rounded-md">
+              <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4 p-8">
+                <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-white p-1 border border-slate-100 shadow-sm flex items-center justify-center">
                   {/* Fallback specific icons if external images fail, but using generic div for now to support SVGs */}
                   {/* biome-ignore lint/performance/noImgElement: External images without config */}
                   <img
@@ -91,17 +91,25 @@ export default function IntegrationsPage() {
                   />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-base">
+                  <CardTitle className="text-lg font-bold text-slate-900">
                     {integration.name}
                   </CardTitle>
                 </div>
                 {!integration.active && (
-                  <Badge variant="secondary">Coming Soon</Badge>
+                  <Badge variant="secondary" className="rounded-full px-3">
+                    Coming Soon
+                  </Badge>
                 )}
-                {integration.active && <Badge variant="default">Active</Badge>}
+                {integration.active && (
+                  <Badge variant="default" className="rounded-full px-3">
+                    Active
+                  </Badge>
+                )}
               </CardHeader>
-              <CardContent>
-                <CardDescription>{integration.description}</CardDescription>
+              <CardContent className="p-8 pt-0">
+                <CardDescription className="text-base">
+                  {integration.description}
+                </CardDescription>
               </CardContent>
             </Card>
           ))}
