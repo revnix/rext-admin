@@ -56,7 +56,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 0,
     name: "content_strategy",
-    title: "Welcome to Wrext",
+    title: "Welcome to Rext",
     description: "Choose your content strategy foundation",
     required: true,
   },
@@ -136,7 +136,7 @@ export const GOAL_OPTIONS = [
   {
     value: "explore",
     label: "Just exploring",
-    description: "Curious to see what WREXT can do",
+    description: "Curious to see what REXT can do",
     icon: "🔍",
   },
 ];

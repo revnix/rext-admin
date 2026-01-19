@@ -77,7 +77,7 @@ export default function DashboardPage() {
       <AuthGuard>
         <PageLayout
           title="Dashboard"
-          description="Welcome to Wrext! Let's get you started."
+          description="Welcome to Rext! Let's get you started."
           breadcrumbs={breadcrumbs}
         >
           <EnhancedDashboardEmptyState />

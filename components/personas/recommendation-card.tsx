@@ -26,7 +26,7 @@ export function RecommendationCard({ onImport }: RecommendationCardProps) {
           </div>
           <div>
             <h3 className="font-bold text-xl text-foreground mb-1">
-              Dr. Wrext Expert
+              Dr. Rext Expert
             </h3>
             <p className="text-sky-700 dark:text-sky-400 font-medium">
               Lead Content Strategist
@@ -35,7 +35,7 @@ export function RecommendationCard({ onImport }: RecommendationCardProps) {
         </div>
 
         <p className="text-muted-foreground mb-6 max-w-2xl leading-relaxed text-base">
-          With over a decade of experience in the industry, Dr. Wrext Expert
+          With over a decade of experience in the industry, Dr. Rext Expert
           leads the brand's commitment to high-quality, trustworthy content,
           specializing in authoritative, data-driven narratives.
         </p>

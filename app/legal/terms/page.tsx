@@ -11,7 +11,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "General terms of service for using WREXT platform",
+  description: "General terms of service for using REXT platform",
 };
 
 export default function TermsOfServicePage() {
@@ -24,7 +24,7 @@ export default function TermsOfServicePage() {
         </CardHeader>
         <CardContent className="prose prose-sm dark:prose-invert max-w-none">
           <p className="lead">
-            Welcome to WREXT. These Terms of Service govern your use of our
+            Welcome to REXT. These Terms of Service govern your use of our
             platform and services.
           </p>
 
@@ -69,13 +69,13 @@ export default function TermsOfServicePage() {
 
           <h2>1. Acceptance of Terms</h2>
           <p>
-            By accessing or using WREXT, you agree to be bound by these Terms of
+            By accessing or using REXT, you agree to be bound by these Terms of
             Service and all applicable laws and regulations.
           </p>
 
           <h2>2. Use License</h2>
           <p>
-            Permission is granted to access and use WREXT for personal or
+            Permission is granted to access and use REXT for personal or
             business purposes, subject to the restrictions in these Terms.
           </p>
 
@@ -102,7 +102,7 @@ export default function TermsOfServicePage() {
 
           <h2>5. Intellectual Property</h2>
           <p>
-            All content, features, and functionality of WREXT are owned by us
+            All content, features, and functionality of REXT are owned by us
             and are protected by copyright, trademark, and other intellectual
             property laws.
           </p>
@@ -139,13 +139,13 @@ export default function TermsOfServicePage() {
 
           <h2>9. Limitation of Liability</h2>
           <p>
-            WREXT is provided "as is" without warranties of any kind. We are not
+            REXT is provided "as is" without warranties of any kind. We are not
             liable for any indirect, incidental, or consequential damages.
           </p>
 
           <h2>10. Changes to Terms</h2>
           <p>
-            We may update these Terms from time to time. Continued use of WREXT
+            We may update these Terms from time to time. Continued use of REXT
             after changes constitutes acceptance of the new Terms.
           </p>
 

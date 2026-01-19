@@ -127,7 +127,7 @@ export default function SubscriptionDashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Choose a plan to get started with all the features of WREXT.
+              Choose a plan to get started with all the features of REXT.
             </p>
             <Button onClick={() => router.push("/pricing")}>
               View Pricing Plans
