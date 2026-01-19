@@ -1,6 +1,6 @@
 # Types Documentation
 
-This directory contains all TypeScript type definitions for the WREXT Admin application.
+This directory contains all TypeScript type definitions for the REXT Admin application.
 
 ## File Structure
 

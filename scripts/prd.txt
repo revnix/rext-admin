@@ -1,6 +1,6 @@
 <context>
 # Overview  
-WREXT Admin is a Next.js web application that enables users to generate AI-powered content topics through an intelligent wizard interface and manage them through a comprehensive results system. The application solves the critical problem of content ideation and topic discovery by providing contextually relevant, AI-generated content suggestions tailored to specific industries, audiences, and content goals.
+REXT Admin is a Next.js web application that enables users to generate AI-powered content topics through an intelligent wizard interface and manage them through a comprehensive results system. The application solves the critical problem of content ideation and topic discovery by providing contextually relevant, AI-generated content suggestions tailored to specific industries, audiences, and content goals.
 
 **Target Users:** Content creators, marketers, bloggers, social media managers, and businesses looking to systematically generate high-quality content topics that resonate with their target audience.
 
@@ -813,5 +813,5 @@ const BUNDLE_STRATEGY = {
 - **User Data:** LocalStorage with compression for large datasets
 - **Component Code:** Service Worker caching for offline functionality
 
-This comprehensive PRD provides the technical foundation and strategic direction for implementing the WREXT Admin topic builder improvements, ensuring both immediate usability gains and long-term scalability.
+This comprehensive PRD provides the technical foundation and strategic direction for implementing the REXT Admin topic builder improvements, ensuring both immediate usability gains and long-term scalability.
 </PRD>
