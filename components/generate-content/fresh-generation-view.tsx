@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useCallback, useMemo } from "react";
+import { useEffect, useReducer, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { log } from "@/lib/logger";
@@ -9,9 +9,10 @@ import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indica
 import type {
   CONTENT,
   ContentOutline,
-  Interrupt,
   PageAction,
   PageState,
+  ResumeInput,
+  StreamInput,
   WREXT,
 } from "@/types/generate-content";
 import { HeroSection } from "@/components/generate-content/hero";
@@ -23,6 +24,20 @@ import {
   OutlineRejectSection,
 } from "@/components/generate-content/outline";
 import { ContentEditor } from "@/components/generate-content/content";
+import { Client } from "@langchain/langgraph-sdk";
+import ContentType from "./content-type";
+const API_URL = "http://192.168.1.130:2024";
+const ASSISTANT_ID = "agent";
+
+const formatNodeName = (name: string) =>
+  name
+    .split(/[_-]/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+const client = new Client({
+  apiUrl: API_URL,
+});
 
 const initialState: PageState = {
   step: "keyword",
@@ -34,9 +49,10 @@ const initialState: PageState = {
   threadId: null,
   rejectedReason: "",
   outline: null,
+  isLoading: false,
   topics: [],
   instruction: "",
-  instructionType: "",
+  instructionType: "keyword",
   isEditing: false,
   seoResult: null,
   serp: null,
@@ -44,12 +60,17 @@ const initialState: PageState = {
   currentContentState: null,
   interrupt: null,
   contentTypes: [],
+  loadingStatus: "",
+  isManualLoading: false,
+  completedNodes: [],
+  finalContent: null,
+  seoScore: null,
 };
 
 function reducer(state: PageState, action: PageAction): PageState {
   switch (action.type) {
-    case "SET_STEP":
-      return { ...state, step: action.payload };
+    case "SET_INSTRUCTION_TYPE":
+      return { ...state, instructionType: action.payload };
     case "SET_USER_KEYWORD":
       return { ...state, userKeyword: action.payload };
     case "SET_COUNTRY":
@@ -66,109 +87,128 @@ function reducer(state: PageState, action: PageAction): PageState {
     case "SET_GENERATED_CONTENT":
       if (state.generatedContent === action.payload) return state;
       return { ...state, generatedContent: action.payload };
+    case "SET_FINAL_CONTENT":
+      if (state.finalContent === action.payload) return state;
+      return { ...state, finalContent: action.payload };
+    case "SET_SEO_SCORE":
+      if (state.seoScore === action.payload) return state;
+      return { ...state, seoScore: action.payload };
     case "RESET_FOR_REJECT":
       return { ...state, instruction: "", step: "outline-reject" };
     case "SUBMIT_REJECT_REASON":
       return { ...state, step: "outline", rejectedReason: "", outline: null };
     case "SET_INTERRUPT":
       return { ...state, interrupt: action.payload };
+    case "SET_LOADING_STATUS": {
+      const nextStatus = action.payload;
+      const prevStatus = state.loadingStatus;
+
+      let nextCompleted = [...state.completedNodes];
+      if (
+        prevStatus &&
+        prevStatus.endsWith("...") &&
+        prevStatus !== nextStatus
+      ) {
+        const finishedNode = prevStatus.slice(0, -3);
+        if (!nextCompleted.includes(finishedNode)) {
+          nextCompleted.push(finishedNode);
+        }
+      }
+
+      return {
+        ...state,
+        loadingStatus: nextStatus,
+        completedNodes: nextCompleted,
+      };
+    }
+    case "SET_MANUAL_LOADING":
+      return { ...state, isManualLoading: action.payload };
+    case "CLEAR_COMPLETED_NODES":
+      return { ...state, completedNodes: [] };
+    case "ADD_COMPLETED_NODE":
+      if (state.completedNodes.includes(action.payload)) return state;
+      return {
+        ...state,
+        completedNodes: [...state.completedNodes, action.payload],
+      };
     case "UPDATE_FROM_STREAM": {
-      const values = action.payload;
+      const updates = action.payload;
       let changed = false;
       const newState = { ...state };
 
-      const interrupt = state.interrupt;
+      const interrupt = updates.__interrupt__;
 
-      if (interrupt) {
+      if (interrupt && interrupt.length > 0) {
         const newInstruction =
-          interrupt.value.instructions || interrupt.value.instruction || "";
-        if (state.instruction !== newInstruction) {
-          newState.instruction = newInstruction;
-          changed = true;
-        }
-        if (state.instructionType) {
-          changed = true;
-        }
-      }
+          interrupt[0].value.instruction || interrupt[0].value.instructions;
+        const newInstructionType =
+          interrupt[0].value.instruction_type || interrupt[0].value.type;
 
-      // 1. Content Phase (Dominant)
-      if (interrupt?.value?.data?.final_content) {
-        console.log("final_content", interrupt.value.data.final_content);
-        if (interrupt.value.data.final_content.body_markdown) {
-          if (!state.generatedContent || !state.isEditing) {
-            if (
-              state.generatedContent !==
-              interrupt.value.data.final_content.body_markdown
-            ) {
-              newState.generatedContent =
-                interrupt.value.data.final_content.body_markdown;
-              changed = true;
-            }
-          }
-        }
-        if (state.step !== "content") {
-          newState.step = "content";
-          changed = true;
-        }
-      }
-      // 2. Outline Review Phase
-      else if (interrupt?.value.type === "outline_review") {
-        const newOutline = interrupt.value.data as ContentOutline;
-        if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
-          newState.outline = newOutline;
+        if (
+          newInstruction !== undefined &&
+          state.instruction !== newInstruction
+        ) {
+          newState.instruction = newInstruction as string;
           changed = true;
         }
         if (
-          state.step !== "outline" &&
-          state.step !== "outline-reject" &&
-          state.step !== "content"
+          newInstructionType !== undefined &&
+          state.instructionType !== (newInstructionType as string)
         ) {
-          newState.step = "outline";
+          newState.instructionType = newInstructionType as string;
           changed = true;
         }
-      }
-      else if (interrupt?.value.content_types) {
-        const newContentTypes = interrupt.value.content_types as string[];
-        if (JSON.stringify(state.contentTypes) !== JSON.stringify(newContentTypes)) {
-          newState.contentTypes = newContentTypes;
-          changed = true;
-        }
-        if (state.instructionType !== "content-type") {
-          newState.instructionType = "content-type";
-          changed = true;
-        }
-      }
-      // 3. Topics Phase
-      else if (interrupt?.value.topics) {
-        const newTopics = interrupt.value.topics as string[];
-        console.log("newTopics", newTopics);
-        if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
-          newState.topics = newTopics;
-          changed = true;
-        }
-        if (state.instructionType !== "topics") {
-          newState.instructionType = "topics";
-          changed = true;
-        }
-      }
-      // 4. Selection Phase
-      else {
-        const keywords = interrupt?.value.Recommendations;
-        const primaryKeyword = interrupt?.value["Primary Keyword"] as string | undefined;
-        if (keywords && keywords.length > 0) {
-          if (
-            JSON.stringify(state.suggestedKeywords) !== JSON.stringify(keywords)
-          ) {
-            newState.primaryKeyword = primaryKeyword || "";
-            newState.suggestedKeywords = keywords;
-            if (interrupt.value.seo_state) {
-              newState.seoResult = interrupt.value.seo_state;
-              console.log("seoResult33", newState.seoResult);
+
+        if (interrupt[0]?.value.Recommendations) {
+          const keywords = interrupt[0]?.value.Recommendations;
+          const primaryKeyword = interrupt[0]?.value["Primary Keyword"] as
+            | string
+            | undefined;
+          if (keywords && keywords.length > 0) {
+            if (
+              JSON.stringify(state.suggestedKeywords) !==
+              JSON.stringify(keywords)
+            ) {
+              newState.primaryKeyword = primaryKeyword || "";
+              newState.suggestedKeywords = keywords;
+              if (interrupt[0]?.value.seo_state) {
+                newState.seoResult = interrupt[0]?.value.seo_state;
+              }
+              changed = true;
             }
+            if (state.step === "keyword") {
+              newState.step = "suggestions";
+              changed = true;
+            }
+          }
+        } else if (interrupt[0]?.value.topics) {
+          const newTopics = interrupt[0].value.topics as string[];
+          console.log("newTopics", newTopics);
+          if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
+            newState.topics = newTopics;
             changed = true;
           }
-          if (state.step === "keyword") {
-            newState.step = "suggestions";
+        } else if (interrupt[0]?.value.content_types) {
+          const newContentTypes = interrupt[0].value.content_types as string[];
+          if (
+            JSON.stringify(state.contentTypes) !==
+            JSON.stringify(newContentTypes)
+          ) {
+            newState.contentTypes = newContentTypes;
+            changed = true;
+          }
+        } else if (interrupt[0]?.value.type === "outline_review") {
+          const newOutline = interrupt[0].value.data as ContentOutline;
+          if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
+            newState.outline = newOutline;
+            changed = true;
+          }
+          if (
+            state.step !== "outline" &&
+            state.step !== "outline-reject" &&
+            state.step !== "content"
+          ) {
+            newState.step = "outline";
             changed = true;
           }
         }
@@ -207,279 +247,387 @@ export function FreshGenerationView({
     instructionType,
     isEditing,
     seoResult,
-    interrupt,
     contentTypes,
+    loadingStatus,
+    isManualLoading,
+    completedNodes,
+    isLoading,
+    finalContent,
+    seoScore,
   } = state;
 
-  const { workspace, workspaceSlug } = useWorkspace();
+  const processStream = async (
+    threadId: string,
+    input: StreamInput,
+  ): Promise<void> => {
+    let chunkCount = 0;
 
-  const onThreadId = useCallback(
-    (id: string | null) => dispatch({ type: "SET_THREAD_ID", payload: id }),
-    [],
-  );
+    const stream = await client.runs.stream(threadId, ASSISTANT_ID, {
+      input,
+      streamMode: "updates",
+      streamSubgraphs: true,
+    });
 
-  const { values, submit, isLoading } = useStream<WREXT>({
-    apiUrl: "http://192.168.1.130:2024/",
-    assistantId: "agent",
-    messagesKey: "messages",
-    threadId: threadId,
-    onThreadId: onThreadId,
+    try {
+      for await (const chunk of stream) {
+        // SDK Events are { event: string, data: any }
+        // We support both top-level and subgraph updates
+        if (chunk.event === "updates" || chunk.event.startsWith("updates|")) {
+          const updates = chunk.data as any;
 
-    // Handle state updates after each graph step (including subgraphs)
-    onUpdateEvent: (update, options) => {
-      // Extract namespace from options (indicates nesting level)
-      // namespace is an array like ['serp_engine:task_id', 'fetch_serp'] for subgraph nodes
-      // or undefined/empty for parent graph nodes
-      const namespace = options?.namespace || [];
+          console.log("updates", updates);
 
-      // The update object structure is { nodeName: { ...stateUpdate } }
-      const nodeNames = Object.keys(update);
-      const nodeName = nodeNames[0];
+          if (updates?.__interrupt__) {
+            dispatch({
+              type: "SET_INTERRUPT",
+              payload: updates.__interrupt__,
+            });
+          }
+          dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
 
-      if (namespace.length > 0) {
-        // Subgraph update - show the full path through the graph hierarchy
-        const graphPath = namespace.join(" → ");
-        log.info(`Subgraph node executed: ${graphPath} → ${nodeName}`, update);
-      } else {
-        // Parent graph update
-        log.info(`Parent graph node executed: ${nodeName}`, update);
+          // 2. Track Node Progress
+          const nodeNames = Object.keys(updates).filter(
+            (k) => !k.startsWith("__"),
+          );
+          if (nodeNames.length > 0) {
+            nodeNames.forEach((node) => {
+              dispatch({
+                type: "SET_LOADING_STATUS",
+                payload: `${formatNodeName(node)}...`,
+              });
+            });
+          }
 
-        const interrupt = (update as any).__interrupt__?.[0] || (update[nodeName] as any)?.__interrupt__?.[0];
-
-        if (interrupt) {
-          dispatch({
-            type: "SET_INTERRUPT",
-            payload: interrupt,
-          });
+          chunkCount++;
         }
       }
-    },
-
-    // Handle custom events streamed from your graph
-    onCustomEvent: (event, _options) => {
-      log.info("Custom event received", event);
-    },
-
-    // Handle metadata events with run/thread info
-    onMetadataEvent: (metadata) => {
-      log.info("Run ID:", metadata.run_id);
-      log.info("Thread ID:", metadata.thread_id);
-    },
-
-    onError: (error) => {
-      log.error("Stream error occurred", error);
-    },
-
-    onFinish: (state, _options) => {
-      log.info("Stream completed successfully", state);
-    },
-  });
-
-  useEffect(() => {
-    if (values) {
-      dispatch({ type: "UPDATE_FROM_STREAM", payload: values });
+      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+    } catch (error: any) {
+      console.error("❌ Stream error:", error);
+    } finally {
+      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+      dispatch({ type: "SET_LOADING_STATUS", payload: "" });
     }
-    log.info("values", values);
-    log.info("step", step);
-    log.info("isEditing", isEditing);
-  }, [values, step, isEditing]);
 
-  useEffect(() => {
-    if (interrupt) {
-      console.log("interrupt344", interrupt);
+    console.log(`✅ Stream complete. Chunks: ${chunkCount}`);
+  };
+
+  const resumeStream = async (
+    threadId: string,
+    resumePayload: Record<string, any>,
+  ): Promise<void> => {
+    let chunkCount = 0;
+
+    const stream = await client.runs.stream(threadId, ASSISTANT_ID, {
+      command: { resume: resumePayload },
+      streamMode: "updates",
+      streamSubgraphs: true,
+    });
+
+    try {
+      for await (const chunk of stream) {
+        // SDK Events are { event: string, data: any }
+        // We support both top-level and subgraph updates
+        if (chunk.event === "updates" || chunk.event.startsWith("updates|")) {
+          const updates = chunk.data as any;
+          console.log("updates", updates);
+
+          if (
+            updates?.calculate_on_page_seo?.content?.review?.on_page_metrics
+              ?.score
+          ) {
+            dispatch({
+              type: "SET_SEO_SCORE",
+              payload:
+                updates.calculate_on_page_seo.content.review.on_page_metrics,
+            });
+          }
+
+          if (updates?.calculate_readability?.content?.final_content) {
+            dispatch({
+              type: "SET_FINAL_CONTENT",
+              payload: updates.calculate_readability.content,
+            });
+            dispatch({
+              type: "SET_GENERATED_CONTENT",
+              payload:
+                updates.calculate_readability.content.final_content
+                  .body_markdown,
+            });
+            dispatch({
+              type: "SET_INSTRUCTION_TYPE",
+              payload: "content",
+            });
+          }
+
+          if (updates?.__interrupt__) {
+            dispatch({
+              type: "SET_INTERRUPT",
+              payload: updates.__interrupt__,
+            });
+          }
+          dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
+
+          // 2. Track Node Progress
+          const nodeNames = Object.keys(updates).filter(
+            (k) => !k.startsWith("__"),
+          );
+          if (nodeNames.length > 0) {
+            nodeNames.forEach((node) => {
+              dispatch({
+                type: "SET_LOADING_STATUS",
+                payload: `${formatNodeName(node)}...`,
+              });
+            });
+          }
+
+          chunkCount++;
+        }
+      }
+      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+    } catch (error: any) {
+      console.error("❌ Stream error:", error);
+    } finally {
+      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+      dispatch({ type: "SET_LOADING_STATUS", payload: "" });
     }
-  }, [interrupt]);
 
-  useEffect(() => {
-    console.log("instructionType", step === "topics" && instructionType === "topics");
-    console.log("instructionType", instructionType);
-  }, [instructionType]);
+    console.log(`✅ Stream complete. Chunks: ${chunkCount}`);
+  };
 
-  const handleKeywordSubmit = () => {
-    log.info("[User Action: Submit Keyword]", userKeyword, country);
-    submit({
-      serp_payload: {
-        query: userKeyword,
-        country: country,
-      },
-      messages: [
-        {
-          type: "human",
-          content: `Suggest 5 keywords related to: ${userKeyword}`,
-        },
-      ],
+  const handleKeywordSubmit = async () => {
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
+
+    const thread = await client.threads.create();
+
+    if (thread) {
+      dispatch({ type: "SET_THREAD_ID", payload: thread.thread_id });
+    }
+
+    const input = {
+      serp_payload: { query: userKeyword, country },
+    };
+
+    dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
+
+    await processStream(thread.thread_id, input);
+  };
+
+  const handleKeywordSelect = async (selected: string) => {
+    if (!threadId) {
+      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      return;
+    }
+
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    dispatch({
+      type: "SET_LOADING_STATUS",
+      payload: `Resuming workflow for "${selected}"...`,
     });
-    dispatch({ type: "SET_STEP", payload: "suggestions" });
+
+    const resumePayload: Record<string, any> = {
+      "Primary Keyword": selected,
+    };
+
+    await resumeStream(threadId, resumePayload);
   };
 
-  const handleKeywordSelect = (selected: string) => {
-    submit(
-      {
-        "Primary Keyword": selected,
-        continue_workflow: true,
-      },
-      {
-        // CRITICAL: Use command.resume to resume from interrupt
-        command: { resume: true },
-      },
-    );
+  const handleTopicSelect = async (selected: string) => {
+    if (!threadId) {
+      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      return;
+    }
 
-    dispatch({ type: "SET_STEP", payload: "topics" });
-  };
-
-  const handleTopicSelect = (selected: string) => {
-    submit(
-      {
-        instruction_response: selected,
-        continue_workflow: true,
-      },
-      {
-        // CRITICAL: Use command.resume to resume from interrupt
-        command: { resume: true },
-      },
-    );
-    dispatch({ type: "SET_STEP", payload: "topic-type" });
-  };
-
-  const handleContentTypeSelect = (selected: string) => {
-    submit(
-      {
-        instruction_response: selected,
-        continue_workflow: true,
-      },
-      {
-        // CRITICAL: Use command.resume to resume from interrupt
-        command: { resume: true },
-      },
-    );
-    dispatch({ type: "SET_STEP", payload: "outline" });
-  };
-
-  const handleOutlineApprove = () => {
-    // Use null to avoid trying to update state keys, preventing InvalidUpdateError
-    dispatch({ type: "SET_STEP", payload: "content" });
-    submit(null, {
-      command: { resume: "approve" },
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    dispatch({
+      type: "SET_LOADING_STATUS",
+      payload: `Resuming workflow for "${selected}"...`,
     });
+
+    const resumePayload: Record<string, any> = {
+      "Selected Topic": selected,
+    };
+
+    await resumeStream(threadId, resumePayload);
   };
 
-  const handleOutlineReject = () => {
-    dispatch({ type: "RESET_FOR_REJECT" });
-    submit(null, {
-      command: { resume: "reject" },
+  const handleContentTypeSelect = async (selected: string) => {
+    if (!threadId) {
+      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      return;
+    }
+
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    dispatch({
+      type: "SET_LOADING_STATUS",
+      payload: `Resuming workflow for "${selected}"...`,
     });
+
+    const resumePayload: Record<string, any> = {
+      "Selected Content Type": selected,
+    };
+
+    await resumeStream(threadId, resumePayload);
   };
 
-  const handleOutlineRejectReason = () => {
-    dispatch({ type: "SUBMIT_REJECT_REASON" });
-    submit(
-      {
-        instruction_response: rejectedReason,
-        continue_workflow: true,
-      },
-      {
-        command: { resume: true },
-      },
-    );
+  const handleOutlineApprove = async () => {
+    if (!threadId) {
+      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      return;
+    }
+
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+
+    const resumePayload: Record<string, any> = {
+      action: "approve",
+    };
+
+    await resumeStream(threadId, resumePayload);
+  };
+
+  const handleOutlineReject = async () => {
+    if (!threadId) {
+      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      return;
+    }
+
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+
+    const resumePayload: Record<string, any> = {
+      action: "reject",
+    };
+
+    await resumeStream(threadId, resumePayload);
+  };
+
+  const handleOutlineRejectReason = async () => {
+    if (!threadId) {
+      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      return;
+    }
+
+    dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+
+    const resumePayload: Record<string, any> = {
+      reason: rejectedReason,
+    };
+
+    await resumeStream(threadId, resumePayload);
   };
 
   return (
     <>
-      <div
-        className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-          step === "keyword" ? "min-h-[70vh] justify-center" : "min-h-0 pt-2",
-        )}
-      >
-        <AnimatePresence mode="wait">
-          {step === "keyword" && <HeroSection />}
-        </AnimatePresence>
-
-        <motion.div
-          layout
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="w-full"
+      {isLoading || isManualLoading ? (
+        <div
+          className={cn(
+            "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
+            instructionType === "keyword"
+              ? "min-h-[70vh] justify-center"
+              : "min-h-0 pt-2",
+          )}
         >
-          {(step === "keyword" || step === "suggestions") && (
-            <KeywordForm
-              userKeyword={userKeyword}
-              country={country}
-              onSubmit={handleKeywordSubmit}
-              onKeywordChange={(val) =>
-                dispatch({ type: "SET_USER_KEYWORD", payload: val })
-              }
-              onCountryChange={(val) =>
-                dispatch({ type: "SET_COUNTRY", payload: val })
-              }
+          <LoadingIndicatorVariants
+            step={step}
+            isLoading={isLoading || isManualLoading}
+            loadingStatus={loadingStatus}
+            completedSteps={completedNodes}
+            className="mt-5"
+          />
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
+            instructionType === "keyword"
+              ? "min-h-[70vh] justify-center"
+              : "min-h-0 pt-2",
+          )}
+        >
+          <AnimatePresence mode="wait">
+            {instructionType === "keyword" && <HeroSection />}
+          </AnimatePresence>
+
+          <motion.div
+            layout
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="w-full"
+          >
+            {(instructionType === "keyword" ||
+              instructionType === "keyword Selection") && (
+              <KeywordForm
+                userKeyword={userKeyword}
+                country={country}
+                onSubmit={handleKeywordSubmit}
+                onKeywordChange={(val) =>
+                  dispatch({ type: "SET_USER_KEYWORD", payload: val })
+                }
+                onCountryChange={(val) =>
+                  dispatch({ type: "SET_COUNTRY", payload: val })
+                }
+              />
+            )}
+          </motion.div>
+
+          {instructionType === "keyword Selection" && (
+            <SuggestionsSection
+              instruction={instruction}
+              primaryKeyword={primaryKeyword}
+              suggestedKeywords={suggestedKeywords}
+              onSelect={handleKeywordSelect}
+              seoResult={seoResult}
             />
           )}
-        </motion.div>
 
-        <LoadingIndicatorVariants
-          step={step}
-          isLoading={isLoading}
-          className="mt-5"
-        />
+          {instructionType === "topic" && (
+            <TopicsSection
+              instruction={instruction}
+              topics={topics}
+              onSelect={handleTopicSelect}
+              keyword={primaryKeyword || userKeyword}
+            />
+          )}
 
-        {step === "suggestions" && suggestedKeywords.length > 0 && (
-          <SuggestionsSection
-            instruction={instruction}
-            primaryKeyword={primaryKeyword}
-            suggestedKeywords={suggestedKeywords}
-            onSelect={handleKeywordSelect}
-            seoResult={seoResult}
-          />
-        )}
+          {instructionType === "content_type" && (
+            <ContentType
+              instruction={instruction}
+              contentTypes={contentTypes}
+              handleContentTypeSelect={handleContentTypeSelect}
+            />
+          )}
 
-        {step === "topic-type" && instructionType === "content-type" && (
-          <>
-            <h2 className="text-xl font-semibold my-4">{instruction}</h2>
-            <div className="flex flex-wrap gap-2">
-              {contentTypes.map((kw) => (
-                <button
-                  key={kw}
-                  onClick={() => handleContentTypeSelect(kw)}
-                  className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
-                >
-                  <strong>{kw}</strong>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+          {instructionType === "outline_review" && outline && (
+            <OutlineDisplay
+              outline={outline}
+              isLoading={false}
+              onApprove={handleOutlineApprove}
+              onReject={handleOutlineReject}
+            />
+          )}
 
-        {step === "topics" && instructionType === "topics" && (
-          <TopicsSection
-            instruction={instruction}
-            topics={topics}
-            onSelect={handleTopicSelect}
-          />
-        )}
-
-        {step === "outline" && outline && (
-          <OutlineDisplay
-            outline={outline}
-            isLoading={isLoading}
-            onApprove={handleOutlineApprove}
-            onReject={handleOutlineReject}
-          />
-        )}
-
-        {step === "outline-reject" && instructionType === "outline_reject" && (
-          <OutlineRejectSection
-            instruction={instruction}
-            rejectedReason={rejectedReason}
-            onChange={(val) =>
-              dispatch({ type: "SET_REJECTED_REASON", payload: val })
-            }
-            onSubmit={handleOutlineRejectReason}
-          />
-        )}
-      </div>
-
-      {step === "content" && interrupt?.value?.data?.final_content && (
+          {instructionType === "outline_reject" && (
+            <OutlineRejectSection
+              instruction={instruction}
+              rejectedReason={rejectedReason}
+              onChange={(val) =>
+                dispatch({ type: "SET_REJECTED_REASON", payload: val })
+              }
+              onSubmit={handleOutlineRejectReason}
+            />
+          )}
+        </div>
+      )}
+      {instructionType === "content" && finalContent && (
         <ContentEditor
-          values={interrupt.value.data as CONTENT}
+          values={finalContent}
+          seoScore={seoScore}
           generatedContent={generatedContent}
           isEditing={isEditing}
           userKeyword={userKeyword}

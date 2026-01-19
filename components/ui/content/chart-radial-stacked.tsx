@@ -36,7 +36,9 @@ export function ChartRadialStacked({
   className,
 }: ChartRadialStackedProps) {
   // Clamp score between 0 and 100
-  const clampedScore = difficultyScore ? Math.max(0, Math.min(100, difficultyScore)) : 0;
+  const clampedScore = difficultyScore
+    ? Math.max(0, Math.min(100, difficultyScore))
+    : 0;
   const remaining = 100 - clampedScore;
   const difficultyLabel = getDifficultyLabel(clampedScore);
 
@@ -45,7 +47,7 @@ export function ChartRadialStacked({
     console.log("clampedScore", clampedScore);
     console.log("remaining", remaining);
     console.log("difficultyLabel", difficultyLabel);
-  }, [difficultyScore]);  
+  }, [difficultyScore]);
 
   const chartData = [{ score: clampedScore, remaining }];
 

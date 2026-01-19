@@ -1,9 +1,19 @@
-import type { CONTENT, Outline, ReadabilityMeta } from "@/types/generate-content";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { isValidElement, type ReactNode } from "react";
+import type {
+  CONTENT,
+  Outline,
+  ReadabilityMeta,
+  SEORESULT,
+} from "@/types/generate-content";
 import { Button } from "../ui/button";
-import { Activity, Eye, Pencil, Save, Send } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  Pencil,
+  Save,
+  Send,
+} from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
@@ -71,22 +81,10 @@ const slugify = (text: string) => {
     .trim();
 };
 
-const getTextFromChildren = (children: ReactNode): string => {
-  if (typeof children === "string" || typeof children === "number") {
-    return String(children);
-  }
-  if (Array.isArray(children)) {
-    return children.map(getTextFromChildren).join("");
-  }
-  if (isValidElement<{ children?: ReactNode }>(children)) {
-    return getTextFromChildren(children.props.children);
-  }
-  return "";
-};
-
 export function ContentEditor({
   values,
   generatedContent,
+  seoScore,
   isEditing,
   userKeyword,
   outline,
@@ -96,17 +94,17 @@ export function ContentEditor({
   values: CONTENT;
   generatedContent: string;
   isEditing: boolean;
+  seoScore: SEORESULT | null;
   userKeyword: string;
   outline: Outline | null;
   onEditToggle: () => void;
   onContentChange: (val: string) => void;
 }) {
-  const fc = values.final_content;
+  const fc = values?.final_content;
   const displayTitle = fc?.title || userKeyword || "New Content Piece";
   const body = generatedContent;
   const tags = fc?.tags || [];
-  const score =
-    values.review?.readability_metrics?.flesch_reading_ease ?? 0;
+  const score = values?.review?.readability_metrics?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
 
@@ -147,92 +145,50 @@ export function ContentEditor({
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto bg-white px-2 py-4">
           <article className="max-w-3xl mx-5">
-            <div className="prose prose-slate prose-lg max-w-none">
+            <div>
               {isEditing ? (
-                <>
-                  <h1 className="text-lg font-bold truncate">{displayTitle}</h1>
-                  <textarea
-                    value={body}
-                    onChange={(e) => onContentChange(e.target.value)}
-                    className="mt-2 w-full min-h-[600px] p-6 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-base focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none interface-edit transition-all"
-                    placeholder="Start writing..."
-                  />
-                </>
+                <div className="space-y-4">
+                  <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-8">
+                    {displayTitle}
+                  </h1>
+                  <div className="min-h-[600px]">
+                    <LexicalEditor
+                      initialValue={body}
+                      onChange={onContentChange}
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="w-full">
                   {body ? (
                     <>
-                      <div className="space-y-4 mt-2">
+                      <div className="space-y-4 mb-8">
                         <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
                           {tags.map((t) => (
-                            <span key={t}>#{t}</span>
+                            <span
+                              key={t}
+                              className="bg-slate-50 px-2 py-1 rounded"
+                            >
+                              #{t}
+                            </span>
                           ))}
                         </div>
+                        <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+                          {displayTitle}
+                        </h1>
                       </div>
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          h1: ({ children, ...props }) => (
-                            <h1
-                              id={slugify(getTextFromChildren(children))}
-                              className="text-4xl font-bold mt-2 mb-6 tracking-tight leading-tight"
-                              {...props}
-                            >
-                              {children}
-                            </h1>
-                          ),
-                          h2: ({ children, ...props }) => (
-                            <h2
-                              id={slugify(getTextFromChildren(children))}
-                              className="text-3xl font-bold mt-10 mb-4 tracking-tight"
-                              {...props}
-                            >
-                              {children}
-                            </h2>
-                          ),
-                          h3: ({ children, ...props }) => (
-                            <h3
-                              id={slugify(getTextFromChildren(children))}
-                              className="text-2xl font-bold mt-8 mb-3"
-                              {...props}
-                            >
-                              {children}
-                            </h3>
-                          ),
-                          p: ({ ...props }) => (
-                            <p
-                              className="text-lg text-slate-600 leading-[1.8] mb-6"
-                              {...props}
-                            />
-                          ),
-                          ul: ({ ...props }) => (
-                            <ul
-                              className="list-disc list-inside space-y-3 mb-6 text-slate-600"
-                              {...props}
-                            />
-                          ),
-                          ol: ({ ...props }) => (
-                            <ol
-                              className="list-decimal list-inside space-y-3 mb-6 text-slate-600"
-                              {...props}
-                            />
-                          ),
-                          li: ({ ...props }) => (
-                            <li className="pl-2 leading-relaxed" {...props} />
-                          ),
-                          strong: ({ ...props }) => (
-                            <strong className="font-bold" {...props} />
-                          ),
-                        }}
-                      >
-                        {body}
-                      </ReactMarkdown>
+                      <div className="prose prose-slate prose-lg max-w-none">
+                        <LexicalEditor initialValue={body} readOnly={true} />
+                      </div>
                     </>
                   ) : (
                     <div className="space-y-4 animate-pulse">
-                      <div className="h-4 bg-slate-100 rounded w-full" />
-                      <div className="h-4 bg-slate-100 rounded w-5/6" />
-                      <div className="h-4 bg-slate-100 rounded w-4/6" />
+                      <div className="h-8 bg-slate-100 rounded w-3/4 mb-8" />
+                      <div className="space-y-3">
+                        <div className="h-4 bg-slate-100 rounded w-full" />
+                        <div className="h-4 bg-slate-100 rounded w-5/6" />
+                        <div className="h-4 bg-slate-100 rounded w-4/6" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -271,15 +227,11 @@ export function ContentEditor({
                 Content Health
               </h4>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase">
-                  Readability
-                </span>
-              </div>
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-4">
+              <h4 className="text-lg font-bold text-slate-900">Readability</h4>
 
               <div className="space-y-2">
-                <div className={`text-2xl font-bold ${color}`}>
+                <div className={`text-xl font-bold ${color}`}>
                   {label} ({score.toFixed(1)})
                 </div>
 
@@ -291,6 +243,83 @@ export function ContentEditor({
                 </div>
               </div>
             </div>
+            {seoScore && (
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-6">
+                <h4 className="text-lg font-bold text-slate-900">
+                  On-Page SEO
+                </h4>
+
+                <div className="flex items-center gap-6">
+                  <div className="relative flex items-center justify-center shrink-0">
+                    <svg className="w-20 h-20 transform -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="36"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-slate-100"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="36"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray={226.2}
+                        strokeDashoffset={
+                          226.2 * (1 - ((seoScore as any).score || 0) / 100)
+                        }
+                        strokeLinecap="round"
+                        className="text-emerald-900 transition-all duration-1000"
+                      />
+                    </svg>
+                    <span className="absolute text-xl font-bold text-slate-800">
+                      {Math.round((seoScore as any).score || 0)}
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <div className="text-lg font-bold text-slate-900 leading-tight">
+                      {(seoScore as any).label || "Almost Perfect!"}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {(seoScore as any).all_issues.length || 3} minor
+                      optimizations left
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  {(
+                    (seoScore as any).checks || [
+                      { label: "Focus keyword in H1", status: "success" },
+                      { label: "Meta description length", status: "success" },
+                      { label: "Keyword density (0.8%)", status: "warning" },
+                    ]
+                  ).map((check: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      {check.status === "success" ? (
+                        <CheckCircle2
+                          size={18}
+                          className="text-emerald-900 shrink-0"
+                        />
+                      ) : (
+                        <AlertCircle
+                          size={18}
+                          className="text-orange-500 shrink-0"
+                        />
+                      )}
+                      <span className="text-slate-600 font-medium leading-tight">
+                        {check.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </aside>
       </div>

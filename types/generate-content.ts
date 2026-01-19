@@ -21,7 +21,6 @@ export type ReadabilityMeta = {
   barColor: string;
 };
 
-
 export type NormalizedOrganicResult = {
   position: number;
   title: string;
@@ -61,12 +60,6 @@ export type ContentOutline = {
   keywords_to_include: string[];
   status: "approved" | "rejected";
   rejected_reason?: string;
-  final_content?: FinalContent;
-  review?: ContentReview;
-  topics: string[];
-  outline: ContentOutline;
-  selected_topic: string;
-  draft: ContentDraft;
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -124,14 +117,14 @@ export type CONTENT = {
   review?: ContentReview;
   final_content?: FinalContent;
   status:
-  | "planning"
-  | "drafting"
-  | "reviewing"
-  | "optimizing"
-  | "completed"
-  | "failed"
-  | "approved"
-  | "rejected";
+    | "planning"
+    | "drafting"
+    | "reviewing"
+    | "optimizing"
+    | "completed"
+    | "failed"
+    | "approved"
+    | "rejected";
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -216,10 +209,10 @@ export type WREXT = {
 
 export type SearchIntentState = {
   primary_intent:
-  | "informational"
-  | "commercial"
-  | "transactional"
-  | "navigational";
+    | "informational"
+    | "commercial"
+    | "transactional"
+    | "navigational";
   secondary_intents: string[];
   confidence: number;
   intent_signals: Record<string, number>;
@@ -260,11 +253,11 @@ export type KeywordDifficultyState2 = {
 
 export type ContentPatternState = {
   content_type:
-  | "blog"
-  | "listicle"
-  | "landing_page"
-  | "documentation"
-  | "comparison";
+    | "blog"
+    | "listicle"
+    | "landing_page"
+    | "documentation"
+    | "comparison";
   avg_word_count: number;
   common_headings: string[];
   heading_depth: number;
@@ -393,19 +386,44 @@ export interface PageState {
   competitors: Competitor[] | null;
   // Temporary storage for UI-driving state extracted from potentially deep graph state
   currentContentState: CONTENT | null;
-  interrupt: Interrupt | null;
+  interrupt: Interrupt[] | null;
   contentTypes: string[];
+  loadingStatus?: string;
+  isLoading: boolean;
+  isManualLoading: boolean;
+  completedNodes: string[];
+  finalContent: CONTENT | null;
+  seoScore: SEORESULT | null;
 }
 
 export type PageAction =
   | { type: "SET_STEP"; payload: AppStep }
+  | { type: "SET_INSTRUCTION_TYPE"; payload: string }
   | { type: "SET_USER_KEYWORD"; payload: string }
   | { type: "SET_COUNTRY"; payload: string }
   | { type: "SET_THREAD_ID"; payload: string | null }
   | { type: "SET_REJECTED_REASON"; payload: string }
   | { type: "SET_IS_EDITING"; payload: boolean }
   | { type: "SET_GENERATED_CONTENT"; payload: string }
+  | { type: "SET_FINAL_CONTENT"; payload: CONTENT }
+  | { type: "SET_SEO_SCORE"; payload: SEORESULT }
+  | { type: "SET_INSTRUCTION_TYPE"; payload: string }
   | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
   | { type: "RESET_FOR_REJECT" }
   | { type: "SUBMIT_REJECT_REASON" }
-  | { type: "SET_INTERRUPT"; payload: Interrupt };
+  | { type: "SET_INTERRUPT"; payload: Interrupt[] }
+  | { type: "SET_LOADING_STATUS"; payload: string }
+  | { type: "SET_MANUAL_LOADING"; payload: boolean }
+  | { type: "ADD_COMPLETED_NODE"; payload: string }
+  | { type: "CLEAR_COMPLETED_NODES" };
+
+export type StreamInput = {
+  serp_payload?: {
+    query: string;
+    country: string;
+  };
+};
+
+export type ResumeInput = {
+  command: { resume: Record<string, any> };
+};

@@ -19,16 +19,12 @@ export function SuggestionsSection({
   onSelect: (kw: string) => void;
   seoResult: SEORESULT | null;
 }) {
-
   const difficultyScore = useMemo(() => {
-  const value = seoResult?.keyword_difficulty;
-  const numberValue =
-    typeof value === "number" ? value : Number(value);
+    const value = seoResult?.keyword_difficulty;
+    const numberValue = typeof value === "number" ? value : Number(value);
 
-  return Number.isFinite(numberValue)
-    ? Math.round(numberValue)
-    : 0;
-}, [seoResult?.keyword_difficulty]);
+    return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
+  }, [seoResult?.keyword_difficulty]);
 
   return (
     <div className="w-full">
@@ -74,7 +70,7 @@ export function SuggestionsSection({
                     | "transactional"
                     | "navigational"
                 }
-              /> 
+              />
             </div>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all">
