@@ -1,20 +1,31 @@
+import type { SEORESULT } from "@/types/generate-content";
 import { Zap, Compass, TrendingUp } from "lucide-react";
 import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { Button } from "../ui/button";
+import { useMemo } from "react";
 
 export function SuggestionsSection({
   instruction,
   primaryKeyword,
   suggestedKeywords,
   onSelect,
+  seoResult,
 }: {
   instruction: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   onSelect: (kw: string) => void;
+  seoResult: SEORESULT | null;
 }) {
+  const difficultyScore = useMemo(() => {
+    const value = seoResult?.keyword_difficulty;
+    const numberValue = typeof value === "number" ? value : Number(value);
+
+    return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
+  }, [seoResult?.keyword_difficulty]);
+
   return (
     <div className="w-full">
       <button
@@ -39,7 +50,7 @@ export function SuggestionsSection({
             <Zap className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <ChartRadialStacked difficultyScore={54} />
+            <ChartRadialStacked difficultyScore={difficultyScore} />
           </div>
         </div>
         <div className="flex flex-col gap-3">
@@ -51,7 +62,15 @@ export function SuggestionsSection({
               <Compass className="w-4 h-4 text-primary" />
             </div>
             <div className="flex items-center gap-3">
-              <SearchIntentCard intent="informational" />
+              <SearchIntentCard
+                intent={
+                  seoResult?.intent as
+                    | "informational"
+                    | "commercial"
+                    | "transactional"
+                    | "navigational"
+                }
+              />
             </div>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all">
@@ -61,7 +80,7 @@ export function SuggestionsSection({
               </span>
               <TrendingUp className="w-4 h-4 text-blue-500" />
             </div>
-            <MonthlyVolumeCard volume="0" />
+            <MonthlyVolumeCard volume={seoResult?.volume} />
           </div>
         </div>
       </div>
