@@ -26,6 +26,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PersonasGrid } from "@/components/workspace/persona-card";
+import { PersonaSelection } from "@/components/workspace/persona-selection";
+import { usePersonas } from "@/hooks/use-personas";
 import type { BrandVoice } from "@/types/workspace";
 
 /**
@@ -44,9 +46,14 @@ const brandVoiceSchema = z.object({
 type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
 
 interface WorkspaceBrandVoiceFormProps {
+  workspaceId?: string | null;
   data: Partial<BrandVoice>;
-  onSave: (data: BrandVoiceFormData) => Promise<void>;
+  onSave: (
+    data: BrandVoiceFormData & { selectedPersonaId?: string },
+  ) => Promise<void>;
   isLoading?: boolean;
+  selectedPersonaId?: string | null;
+  onPersonaSelect?: (personaId: string) => void;
 }
 
 /**
@@ -60,11 +67,15 @@ interface WorkspaceBrandVoiceFormProps {
  * - Tag-based input for arrays (target_audience, brand_voice, competitors, content_strategy)
  * - Form validation with Zod
  * - Loading states during save
+ * - Dynamic persona selection from database
  */
 export function WorkspaceBrandVoiceForm({
+  workspaceId,
   data,
   onSave,
   isLoading = false,
+  selectedPersonaId,
+  onPersonaSelect,
 }: WorkspaceBrandVoiceFormProps) {
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
@@ -79,6 +90,12 @@ export function WorkspaceBrandVoiceForm({
     },
   });
 
+  // Fetch personas dynamically from database
+  const { data: personasData, isLoading: isLoadingPersonas } = usePersonas(
+    workspaceId || null,
+  );
+  const personas = personasData?.personas || [];
+
   // Tag input states
   const [targetAudienceInput, setTargetAudienceInput] = useState("");
   const [brandVoiceInput, setBrandVoiceInput] = useState("");
@@ -87,7 +104,10 @@ export function WorkspaceBrandVoiceForm({
 
   // Handle form submission
   const handleSubmit = async (formData: BrandVoiceFormData) => {
-    await onSave(formData);
+    await onSave({
+      ...formData,
+      selectedPersonaId: selectedPersonaId || undefined,
+    });
   };
 
   // Array field helpers
@@ -452,6 +472,26 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+
+              {/* Persona Selection */}
+              {workspaceId && onPersonaSelect && (
+                <div className="space-y-3 pt-4 border-t">
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">
+                      Select Persona (Optional)
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Choose a persona to represent your brand voice
+                    </p>
+                  </div>
+                  <PersonaSelection
+                    personas={personas}
+                    selectedPersonaId={selectedPersonaId}
+                    onSelect={onPersonaSelect}
+                    isLoading={isLoadingPersonas}
+                  />
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4">

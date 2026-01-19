@@ -81,6 +81,7 @@ export interface Workspace {
  * Persona data for target audience
  */
 export interface Persona {
+  id?: string; // UUID, optional for creation
   name: string;
   description: string;
   full_name?: string | null;

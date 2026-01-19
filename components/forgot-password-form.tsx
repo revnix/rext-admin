@@ -74,7 +74,9 @@ export function ForgotPasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="border-none shadow-none bg-transparent">
         <CardHeader className="px-0">
-          <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Reset your password
+          </CardTitle>
           <CardDescription>
             Enter your email address and we'll send you a link to reset your
             password
@@ -94,7 +96,9 @@ export function ForgotPasswordForm({
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">Email</Label>
+                <Label htmlFor="email" className="ml-1">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -123,7 +127,10 @@ export function ForgotPasswordForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Remember your password?{" "}
-              <Link href="/login" className="underline underline-offset-4 font-medium text-primary hover:text-primary/80">
+              <Link
+                href="/login"
+                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+              >
                 Back to login
               </Link>
             </div>

@@ -40,7 +40,8 @@ export function PersonaCard({ persona }: PersonaCardProps) {
       <CardContent className="space-y-5 pt-5 p-6">
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-muted-foreground/50" /> Expertise
+            <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />{" "}
+            Expertise
           </p>
           <div className="flex flex-wrap gap-2">
             {persona.expertise.map((skill) => (
@@ -57,7 +58,8 @@ export function PersonaCard({ persona }: PersonaCardProps) {
 
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-muted-foreground/50" /> Voice
+            <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />{" "}
+            Voice
           </p>
           <p className="text-sm text-foreground leading-relaxed font-medium">
             {persona.toneOfVoice}

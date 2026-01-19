@@ -181,7 +181,9 @@ export function LoginForm({
 
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">Email</Label>
+                <Label htmlFor="email" className="ml-1">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -194,7 +196,9 @@ export function LoginForm({
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password" className="ml-1">Password</Label>
+                  <Label htmlFor="password" className="ml-1">
+                    Password
+                  </Label>
                   <Link
                     href="/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"

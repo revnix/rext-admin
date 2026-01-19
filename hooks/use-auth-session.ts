@@ -22,12 +22,12 @@ export function useAuthSession() {
 
   const user = session?.user
     ? {
-      id: session.user.id || "",
-      email: session.user.email || "",
-      name: session.user.name || "",
-      role: session.user.role || "user",
-      permissions: session.user.permissions || [],
-    }
+        id: session.user.id || "",
+        email: session.user.email || "",
+        name: session.user.name || "",
+        role: session.user.role || "user",
+        permissions: session.user.permissions || [],
+      }
     : null;
 
   // Track user activity
@@ -73,7 +73,6 @@ export function useAuthSession() {
       // Force manual redirection to ensure it happens
       router.push("/login");
       router.refresh();
-
     } catch (error) {
       log.error("[Auth] Logout failed", error);
       // Fallback redirection

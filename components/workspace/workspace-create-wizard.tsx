@@ -26,7 +26,7 @@ import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
 import { WorkspaceCongratulations } from "@/components/workspace/workspace-congratulations";
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
-import { OnboardingStrategy } from "@/components/onboarding/steps/onboarding-strategy";
+
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
@@ -41,10 +41,11 @@ import type { BrandVoice } from "@/types/workspace";
 /**
  * Workspace Creation Wizard
  *
- * Three-step guided workspace creation with real-time SSE updates:
+ * Four-step guided workspace creation with real-time SSE updates:
  * 1. Details Form - Title, URL, Description (creates workspace immediately)
  * 2. Live Progress - Real-time SSE progress tracking
  * 3. Review & Edit - Edit AI-extracted brand voice data
+ * 4. Congratulations - Success screen
  *
  * Features:
  * - Immediate workspace creation with background processing
@@ -55,12 +56,7 @@ import type { BrandVoice } from "@/types/workspace";
  * - Professional guided experience
  */
 
-type WizardStep =
-  | "strategy"
-  | "details"
-  | "progress"
-  | "review"
-  | "congratulations";
+type WizardStep = "details" | "progress" | "review" | "congratulations";
 
 const STEPS: Array<{
   id: WizardStep;
@@ -69,28 +65,22 @@ const STEPS: Array<{
   progress: number;
 }> = [
   {
-    id: "strategy",
-    title: "Welcome",
-    description: "Choose your content strategy",
-    progress: 20,
-  },
-  {
     id: "details",
     title: "Workspace Details",
     description: "Tell us about your workspace",
-    progress: 40,
+    progress: 25,
   },
   {
     id: "progress",
     title: "Analysis",
     description: "We're analyzing your website",
-    progress: 60,
+    progress: 50,
   },
   {
     id: "review",
     title: "Review & Save",
     description: "Review and edit brand information",
-    progress: 80,
+    progress: 75,
   },
   {
     id: "congratulations",
@@ -104,10 +94,7 @@ export function WorkspaceCreateWizard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { clearCompletedOperation } = useSSE();
-  const [currentStep, setCurrentStep] = useState<WizardStep>("strategy");
-  const [selectedStrategy, setSelectedStrategy] = useState<
-    "analyze" | "manual" | null
-  >(null);
+  const [currentStep, setCurrentStep] = useState<WizardStep>("details");
 
   // Check workspace limit
   const { checkLimit, warnIfApproaching } = useCheckLimit("workspaces");
@@ -119,6 +106,9 @@ export function WorkspaceCreateWizard() {
   const [extractedBrandVoice, setExtractedBrandVoice] =
     useState<Partial<BrandVoice> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
+    null,
+  );
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
 
@@ -228,7 +218,9 @@ export function WorkspaceCreateWizard() {
   };
 
   // Step 3: Handle brand voice save
-  const handleReviewSave = async (editedData: Partial<BrandVoice>) => {
+  const handleReviewSave = async (
+    editedData: Partial<BrandVoice> & { selectedPersonaId?: string },
+  ) => {
     if (!workspaceId) {
       toast.error("Workspace ID not found");
       return;
@@ -236,10 +228,23 @@ export function WorkspaceCreateWizard() {
 
     try {
       setIsSaving(true);
-      log.info("[Wizard] Saving brand voice edits", editedData);
+      log.info("[Wizard] Saving brand voice edits", {
+        ...editedData,
+        selectedPersonaId: editedData.selectedPersonaId,
+      });
+
+      // Extract selectedPersonaId from editedData
+      const { selectedPersonaId: personaId, ...brandVoiceData } = editedData;
 
       // Update brand voice via API
-      await apiClient.workspaces.updateBrandVoice(workspaceId, editedData);
+      await apiClient.workspaces.updateBrandVoice(workspaceId, brandVoiceData);
+
+      // Log selected persona for future API integration
+      if (personaId) {
+        log.info("[Wizard] Selected persona ID:", personaId);
+        // TODO: Add API endpoint to associate persona with workspace
+        // await apiClient.workspaces.setDefaultPersona(workspaceId, personaId);
+      }
 
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
@@ -294,35 +299,17 @@ export function WorkspaceCreateWizard() {
   // Calculate overall progress from SSE events
   const overallProgress = latestEvent?.progress || 0;
 
-  // Handle strategy selection
-  const handleStrategySelection = (strategy: "analyze" | "manual") => {
-    log.info("[Wizard] Strategy selected", { strategy });
-    setSelectedStrategy(strategy);
-    setCurrentStep("details");
-  };
-
   // Handle back navigation
   const handleBack = () => {
-    if (currentStep === "details") {
-      setCurrentStep("strategy");
-    } else if (currentStep === "review") {
+    if (currentStep === "review") {
       setCurrentStep("progress");
     }
-    // Note: Can't go back from progress or congratulations steps
+    // Note: Can't go back from details, progress, or congratulations steps
   };
 
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
-      case "strategy":
-        return (
-          <OnboardingStrategy
-            onNext={handleStrategySelection}
-            isLoading={false}
-            onChange={setSelectedStrategy}
-          />
-        );
-
       case "details":
         return (
           <QuestionCard
@@ -498,9 +485,12 @@ export function WorkspaceCreateWizard() {
           >
             {extractedBrandVoice ? (
               <WorkspaceBrandVoiceForm
+                workspaceId={workspaceId}
                 data={extractedBrandVoice}
                 onSave={handleReviewSave}
                 isLoading={isSaving}
+                selectedPersonaId={selectedPersonaId}
+                onPersonaSelect={setSelectedPersonaId}
               />
             ) : (
               <div className="space-y-6">
@@ -549,7 +539,7 @@ export function WorkspaceCreateWizard() {
           currentStep === "details"
             ? currentStepInfo.progress
             : currentStep === "progress"
-              ? 33 + (overallProgress / 100) * 33
+              ? 25 + (overallProgress / 100) * 25
               : currentStepInfo.progress
         }
         currentStep={currentStepIndex + 1}
@@ -577,7 +567,7 @@ export function WorkspaceCreateWizard() {
       {currentStep !== "progress" && currentStep !== "congratulations" && (
         <div className="flex items-center justify-between pt-6 border-t">
           {/* Back Button */}
-          {currentStep !== "strategy" ? (
+          {currentStep === "review" ? (
             <Button
               variant="ghost"
               onClick={handleBack}
@@ -592,20 +582,6 @@ export function WorkspaceCreateWizard() {
           )}
 
           {/* Continue/Next Button */}
-          {currentStep === "strategy" && (
-            <Button
-              size="lg"
-              onClick={() =>
-                selectedStrategy && handleStrategySelection(selectedStrategy)
-              }
-              disabled={!selectedStrategy}
-              className="gap-2 text-white"
-            >
-              Continue
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          )}
-
           {currentStep === "details" && (
             <Button
               size="lg"

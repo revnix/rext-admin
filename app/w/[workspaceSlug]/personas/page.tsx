@@ -77,10 +77,13 @@ export default function PersonaForgePage() {
         {/* Workspace Recommendations */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-foreground font-bold px-1">
-            <Lightbulb size={20} className="text-sky-500 fill-sky-100 dark:fill-sky-900/20" />
+            <Lightbulb
+              size={20}
+              className="text-sky-500 fill-sky-100 dark:fill-sky-900/20"
+            />
             <h3 className="text-lg">Workspace Recommendations</h3>
           </div>
-          <RecommendationCard onImport={() => { }} />
+          <RecommendationCard onImport={() => {}} />
         </div>
 
         {/* Persona Grid */}

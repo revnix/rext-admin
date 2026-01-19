@@ -185,7 +185,9 @@ export function SignupForm({
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="firstName" className="ml-1">First Name</Label>
+                <Label htmlFor="firstName" className="ml-1">
+                  First Name
+                </Label>
                 <Input
                   id="firstName"
                   type="text"
@@ -201,7 +203,9 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="lastName" className="ml-1">Last Name</Label>
+                <Label htmlFor="lastName" className="ml-1">
+                  Last Name
+                </Label>
                 <Input
                   id="lastName"
                   type="text"
@@ -217,7 +221,9 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="username" className="ml-1">Username</Label>
+                <Label htmlFor="username" className="ml-1">
+                  Username
+                </Label>
                 <Input
                   id="username"
                   type="text"
@@ -251,7 +257,7 @@ export function SignupForm({
                   className={cn(
                     "h-12 rounded-2xl bg-muted/30 border-muted",
                     hasValidInvitation &&
-                    "bg-muted cursor-not-allowed opacity-75",
+                      "bg-muted cursor-not-allowed opacity-75",
                   )}
                 />
                 {errors.email && (
@@ -259,7 +265,9 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="password" className="ml-1">Password</Label>
+                <Label htmlFor="password" className="ml-1">
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
@@ -275,7 +283,9 @@ export function SignupForm({
                 )}
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="confirmPassword" className="ml-1">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="ml-1">
+                  Confirm Password
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -310,7 +320,10 @@ export function SignupForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
-              <Link href="/login" className="underline underline-offset-4 font-medium text-primary hover:text-primary/80">
+              <Link
+                href="/login"
+                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+              >
                 Sign in
               </Link>
             </div>

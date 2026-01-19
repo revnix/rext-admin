@@ -59,10 +59,11 @@ export function ContentPipeline() {
           {stats.map((stat, _i) => (
             <div
               key={stat.label}
-              className={`p-5 rounded-2xl border transition-all duration-200 ${stat.highlight
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                stat.highlight
                   ? "bg-card border-border"
                   : "bg-muted/40 border-border/50 hover:border-foreground/20"
-                } flex flex-col justify-between min-h-[140px]`}
+              } flex flex-col justify-between min-h-[140px]`}
             >
               <div className="flex justify-between items-start mb-2">
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
