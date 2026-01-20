@@ -30,6 +30,7 @@ import { useContentDetail } from "@/hooks/use-content";
 import type { GenerationStep } from "@/types/content-generation-progress";
 import type { SSEEvent } from "@/types/sse";
 import type { ContentItem, ContentMetadataSchema, ContentSEODataSchema } from "@/types/content";
+import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 
 const contentLogger = log.forComponent("ContentDetailPage");
 
@@ -296,33 +297,72 @@ export default function WorkspaceContentDetailPage({
     );
   }
 
-  // Construct CONTENT object for advanced editor
-  const advancedContent: any = {
-    final_content: {
-      title: content.title,
-      introduction: content.introduction,
-      body_markdown: contentMarkdown,
-      tags: content.tags || [],
-      meta_title: content.seo_data?.meta_title,
-      meta_description: content.seo_data?.meta_description,
-      focus_keyphrase: content.seo_data?.focus_keyphrase,
-    },
-    review: {
-      readability_metrics: {
-        flesch_reading_ease: content.seo_data?.readability_score || 0,
-      },
-    }
-  };
-
   // Construct SEORESULT object
-  const seoResult: any = content.seo_data?.seo_details ? JSON.parse(content.seo_data.seo_details) : null;
+  const seoResult: SEORESULT | null = (content.seo_data as any)?.seo_details ? JSON.parse((content.seo_data as any).seo_details) : null;
 
   // Construct Outline object (mocked or extracted from content if possible)
   // For now, we can extract headings from markdown if outline is missing in API
-  const outline: any = {
+  const outline: Outline = {
+    title: content.title,
+    brief: content.introduction || "",
     sections: contentMarkdown?.match(/^#+\s+.+$/gm)?.map(h => ({
       heading: h.replace(/^#+\s+/, ''),
-    })) || []
+      description: "",
+      key_points: [],
+    })) || [],
+    target_audience: [],
+    tone: "",
+    keywords_to_include: [],
+    status: "approved",
+    outline_retries: 0,
+    draft_retries: 0,
+    review_retries: 0,
+    max_retries: 3,
+  };
+
+  // Construct CONTENT object for advanced editor
+  const advancedContent: CONTENT = {
+    topics: [],
+    selected_topic: content.title,
+    outline: outline,
+    draft: {
+      title: content.title,
+      body_markdown: contentMarkdown,
+      word_count: contentMarkdown?.split(/\s+/).length || 0,
+      sections_completed: [],
+      status: "approved",
+    },
+    status: "completed",
+    outline_retries: 0,
+    draft_retries: 0,
+    review_retries: 0,
+    max_retries: 3,
+    final_content: {
+      title: content.title,
+      introduction: content.introduction || "",
+      body_markdown: contentMarkdown,
+      tags: content.tags || [],
+      meta_title: content.seo_data?.meta_title || "",
+      meta_description: content.seo_data?.meta_description || "",
+      focus_keyphrase: (content.seo_data as any)?.focus_keyphrase || "",
+      word_count: content.body_markdown?.split(/\s+/).length || 0,
+      status: "generated",
+    },
+    review: {
+      seo_score: content.seo_data?.content_seo_score || 0,
+      readability_metrics: {
+        flesch_reading_ease: content.seo_data?.content_readability_score || 0,
+        flesch_kincaid_grade: 0,
+        gunning_fog_index: 0,
+        smog_index: 0,
+        automated_readability_index: 0,
+        coleman_liau_index: 0,
+        dale_chall_score: 0,
+      },
+      passed: true,
+      missing_points: [],
+      improvement_suggestions: [],
+    }
   };
 
   return (
@@ -399,7 +439,7 @@ export default function WorkspaceContentDetailPage({
             generatedContent={contentMarkdown}
             seoScore={seoResult}
             isEditing={isEditing}
-            userKeyword={content.seo_data?.focus_keyphrase || ""}
+            userKeyword={(content.seo_data as any)?.focus_keyphrase || ""}
             outline={outline}
             onEditToggle={() => setIsEditing(!isEditing)}
             onContentChange={setContentMarkdown}

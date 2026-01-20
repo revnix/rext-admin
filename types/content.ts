@@ -147,6 +147,12 @@ export interface ContentSEODataSchema {
 
   /** Content readability score */
   content_readability_score?: number;
+
+  /** SEO properties used in generation */
+  meta_title?: string;
+  meta_description?: string;
+  focus_keyphrase?: string;
+  seo_details?: string;
 }
 
 /**
@@ -205,6 +211,8 @@ export interface ContentItem {
   deleted_at?: string;
   content_metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
+  introduction?: string;
+  tags?: string[];
 }
 
 /**
