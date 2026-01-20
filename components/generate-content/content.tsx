@@ -15,6 +15,18 @@ import {
   Send,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
+import { useState } from "react";
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/api-client";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -107,12 +119,93 @@ export function ContentEditor({
   const score = values?.review?.readability_metrics?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
+  const { user } = useAuthSession();
+  const workspaceId = useCurrentWorkspaceId();
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successType, setSuccessType] = useState<"publish" | "save">("publish");
+
+  const getContentPayload = () => ({
+    title: displayTitle,
+    slug: fc?.slug || slugify(displayTitle),
+    content_language: "English",
+    status: "draft",
+    workspace_id: workspaceId,
+    introduction: fc?.introduction || fc?.meta_description || "",
+    body_markdown: body,
+    body_html: body,
+    tags: tags,
+    seo_data: {
+      meta_title: fc?.meta_title || displayTitle,
+      meta_description: fc?.meta_description || "",
+      focus_keyphrase: fc?.focus_keyphrase || userKeyword,
+      keyphrase_density: fc?.keyphrase_density || 1,
+      secondary_keywords: fc?.secondary_keywords || [],
+      search_intent: ["informational"],
+      seo_score: (seoScore as any)?.score || 0,
+      readability_score: score,
+      seo_details: JSON.stringify(seoScore || {}),
+    },
+    // media_items: fc?.images?.map(img => ({
+    //   media_id: img.media_id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "00000000-0000-0000-0000-000000000000"),
+    //   alt_text: img.alt_text,
+    //   context: img.context,
+    //   placement: img.placement
+    // })) || [],
+    // images_data: {
+    //   images: fc?.images || []
+    // },
+    // links_data: {
+    //   internal: fc?.internal_links || [],
+    //   outbound: fc?.outbound_links || []
+    // },
+    // schema_markup: fc?.schema_markup || {},
+    media_items: [],
+    images_data: {},
+    links_data: {},
+    schema_markup: {},
+  });
+
+  const publishContent = async () => {
+    if (!workspaceId) return;
+    try {
+      setIsPublishing(true);
+      const data = await apiClient.content.publish(workspaceId, getContentPayload());
+
+      setSuccessType("publish");
+      setShowSuccessModal(true);
+      console.log("Publish success:", data);
+    } catch (error: any) {
+      toast.error(error.message || "Publish failed");
+      console.error("Publish failed:", error);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const saveContent = async () => {
+    if (!workspaceId) return;
+    try {
+      setIsSaving(true);
+      const data = await apiClient.content.save(workspaceId, getContentPayload());
+
+      setSuccessType("save");
+      setShowSuccessModal(true);
+      console.log("Save success:", data);
+    } catch (error: any) {
+      toast.error(error.message || "Save failed");
+      console.error("Save failed:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="animate-in fade-in duration-700 bg-white flex flex-col -mt-10 border-t">
       <div className="flex flex-1 overflow-hidden relative border-b">
         {/* Left Sidebar: Outline */}
-        <aside className="hidden lg:flex w-48 border-r bg-slate-50/50 flex-col py-6 sticky top-0">
+        <aside className="hidden lg:flex w-48 border-r bg-slate-50/50 flex-col py-6 mt-0.5">
           <div className="px-4 mb-6">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">
               Structure
@@ -143,7 +236,7 @@ export function ContentEditor({
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-white px-2 py-4">
+        <main className="flex-1 overflow-y-auto bg-white px-2 py-4 mt-2">
           <article className="max-w-3xl mx-5">
             <div>
               {isEditing ? (
@@ -176,6 +269,12 @@ export function ContentEditor({
                         <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
                           {displayTitle}
                         </h1>
+
+                        {fc?.introduction && (
+                          <div className="text-xl text-slate-600 leading-relaxed font-medium border-l-4 border-slate-200 pl-6 my-8 italic">
+                            {fc.introduction}
+                          </div>
+                        )}
                       </div>
                       <div className="prose prose-slate prose-lg max-w-none">
                         <LexicalEditor initialValue={body} readOnly={true} />
@@ -198,7 +297,7 @@ export function ContentEditor({
         </main>
 
         {/* Right Sidebar: Analysis */}
-        <aside className="hidden xl:flex w-64 border-l bg-slate-50/30 flex-col px-4 py-3 space-y-8 overflow-y-auto">
+        <aside className="hidden xl:flex w-64 border-l bg-slate-50/30 flex-col px-4 py-3 space-y-8 overflow-y-auto mt-2">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -210,23 +309,56 @@ export function ContentEditor({
               {isEditing ? "Preview" : "Edit"}
             </Button>
             <Button
+              onClick={saveContent}
+              disabled={isSaving || isPublishing}
               variant="ghost"
               size="sm"
-              className="h-9 !px-1 text-xs font-bold text-slate-500 hover:bg-slate-50"
+              className={`h-9 !px-1 text-xs font-bold transition-all`}
             >
-              <Save size={14} /> Save
+              <Save size={14} className={isSaving ? "animate-spin" : ""} /> {isSaving ? "Saving..." : "Save"}
             </Button>
-            <Button size="sm" className="h-9 px-4 text-xs font-bold">
-              <Send size={14} className="mr-2" /> Publish
+            <Button
+              onClick={publishContent}
+              disabled={isPublishing || isSaving}
+              size="sm"
+              className="h-9 px-4 text-xs font-bold">
+              <Send size={14} className={cn("mr-2", isPublishing ? "animate-pulse" : "")} /> {isPublishing ? "Publishing..." : "Publish"}
             </Button>
           </div>
+          {/* Success Modal */}
+          <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+            <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-[2rem] p-8">
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                </div>
+                <div className="space-y-2">
+                  <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight">
+                    Content {successType === "publish" ? "Published" : "Saved"} Successfully!
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-500 text-base">
+                    {successType === "publish"
+                      ? "Your content has been published as a draft and is ready for review."
+                      : "Your changes have been saved successfully to the workspace."}
+                  </DialogDescription>
+                </div>
+                <Button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
+                >
+                  Great, thanks!
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <section className="space-y-4">
             <div className="flex items-center gap-2 font-bold">
               <Activity size={16} className="text-emerald-500" />
-              <h4 className="text-xs uppercase tracking-widest">
-                Content Health
+              <h4 className="text-xs uppercase tracking-widest text-slate-500">
+                Performance & SEO
               </h4>
             </div>
+
             <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-4">
               <h4 className="text-lg font-bold text-slate-900">Readability</h4>
 
@@ -252,7 +384,7 @@ export function ContentEditor({
                 <div className="flex items-center gap-6">
                   <div className="relative flex items-center justify-center shrink-0">
                     <svg className="w-20 h-20 transform -rotate-90">
-                      <title>{Math.round((seoScore as unknown as {score: number}).score || 0)}</title>
+                      <title>{Math.round((seoScore as unknown as { score: number }).score || 0)}</title>
                       <circle
                         cx="40"
                         cy="40"
@@ -271,23 +403,23 @@ export function ContentEditor({
                         fill="transparent"
                         strokeDasharray={226.2}
                         strokeDashoffset={
-                          226.2 * (1 - ((seoScore as unknown as {score: number}).score || 0) / 100)
+                          226.2 * (1 - ((seoScore as unknown as { score: number }).score || 0) / 100)
                         }
                         strokeLinecap="round"
                         className="text-emerald-900 transition-all duration-1000"
                       />
                     </svg>
                     <span className="absolute text-xl font-bold text-slate-800">
-                      {Math.round((seoScore as unknown as {score: number}).score || 0)}
+                      {Math.round((seoScore as unknown as { score: number }).score || 0)}
                     </span>
                   </div>
 
                   <div className="space-y-0.5">
                     <div className="text-lg font-bold text-slate-900 leading-tight">
-                      {(seoScore as unknown as {label: string}).label || "Almost Perfect!"}
+                      {(seoScore as unknown as { label: string }).label || "Almost Perfect!"}
                     </div>
                     <div className="text-sm text-slate-500">
-                      {(seoScore as unknown as {all_issues: {label: string}[]}).all_issues.length || 3} minor
+                      {(seoScore as unknown as { all_issues: { label: string }[] }).all_issues.length || 3} minor
                       optimizations left
                     </div>
                   </div>
@@ -295,12 +427,12 @@ export function ContentEditor({
 
                 <div className="space-y-3 pt-2">
                   {(
-                    (seoScore as unknown as {checks: {label: string, status: string}[]}).checks || [
+                    (seoScore as unknown as { checks: { label: string, status: string }[] }).checks || [
                       { label: "Focus keyword in H1", status: "success" },
                       { label: "Meta description length", status: "success" },
                       { label: "Keyword density (0.8%)", status: "warning" },
                     ]
-                  ).map((check: {label: string, status: string}, i: number) => (
+                  ).map((check: { label: string, status: string }, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
                       {check.status === "success" ? (
                         <CheckCircle2

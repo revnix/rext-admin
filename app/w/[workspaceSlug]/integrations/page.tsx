@@ -45,9 +45,8 @@ export default function IntegrationsPage() {
   };
 
   useEffect(() => {
-    if (!workspace?.id) return;
     fetchIntegrations();
-  }, [workspace?.id, fetchIntegrations]);
+  }, [workspace?.id]);
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },

@@ -35,11 +35,8 @@ export function SelectionView({
           className="group relative overflow-hidden border border-slate-200 hover:border-sidebar-primary/50 transition-all duration-300 cursor-pointer shadow-none rounded-[2rem] bg-white"
           onClick={onStartFresh}
         >
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Sparkles size={120} />
-          </div>
           <CardHeader className="pt-8 px-8">
-            <div className="h-12 w-12 rounded-lg bg-green-50 text-green-700 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <div className="h-12 w-12 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Sparkles size={24} />
             </div>
             <CardTitle className="text-xl mb-2">Start Fresh</CardTitle>
@@ -59,11 +56,8 @@ export function SelectionView({
           className="group relative overflow-hidden border border-slate-200 hover:border-sidebar-primary/50 transition-all duration-300 cursor-pointer shadow-none rounded-[2rem] bg-white text-left"
           onClick={onPickFromLibrary}
         >
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Library size={120} />
-          </div>
           <CardHeader className="pt-8 px-8">
-            <div className="h-12 w-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <div className="h-12 w-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Library size={24} />
             </div>
             <CardTitle className="text-xl mb-2">Pick from Library</CardTitle>
@@ -72,7 +66,7 @@ export function SelectionView({
             </CardDescription>
           </CardHeader>
           <CardFooter className="px-8 pb-8 pt-4">
-            <span className="text-amber-600 font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            <span className="text-blue-600 font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
               Browse saved keywords →
             </span>
           </CardFooter>

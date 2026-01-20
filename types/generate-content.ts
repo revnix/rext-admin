@@ -95,17 +95,45 @@ export type ContentReview = {
   improvement_suggestions: string[];
 };
 
+export type ContentImage = {
+  media_id: string | null;
+  alt_text: string;
+  context: string;
+  placement: string;
+};
+
+export type ContentLink = {
+  url: string;
+  anchor_text: string;
+  link_type: "internal" | "outbound";
+  placement: string;
+  rel: string | null;
+};
+
+export type SchemaMarkup = {
+  schema_type: string;
+  schema_data: string;
+};
+
 export type FinalContent = {
   title: string;
+  slug?: string;
   content?: string; // Kept for backward compatibility if needed, though backend uses body_markdown
   body_markdown: string;
   meta_title: string;
   meta_description: string;
   tags: string[];
   primary_keyword?: string;
+  focus_keyphrase?: string;
+  keyphrase_density?: number;
   secondary_keywords?: string[];
+  introduction?: string;
+  images?: ContentImage[];
+  internal_links?: ContentLink[];
+  outbound_links?: ContentLink[];
+  schema_markup?: SchemaMarkup;
   word_count: number;
-  status: "approved" | "rejected";
+  status: "approved" | "rejected" | "generated";
   rejected_reason?: string;
 };
 
@@ -117,14 +145,14 @@ export type CONTENT = {
   review?: ContentReview;
   final_content?: FinalContent;
   status:
-    | "planning"
-    | "drafting"
-    | "reviewing"
-    | "optimizing"
-    | "completed"
-    | "failed"
-    | "approved"
-    | "rejected";
+  | "planning"
+  | "drafting"
+  | "reviewing"
+  | "optimizing"
+  | "completed"
+  | "failed"
+  | "approved"
+  | "rejected";
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -209,10 +237,10 @@ export type WREXT = {
 
 export type SearchIntentState = {
   primary_intent:
-    | "informational"
-    | "commercial"
-    | "transactional"
-    | "navigational";
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
   secondary_intents: string[];
   confidence: number;
   intent_signals: Record<string, number>;
@@ -253,11 +281,11 @@ export type KeywordDifficultyState2 = {
 
 export type ContentPatternState = {
   content_type:
-    | "blog"
-    | "listicle"
-    | "landing_page"
-    | "documentation"
-    | "comparison";
+  | "blog"
+  | "listicle"
+  | "landing_page"
+  | "documentation"
+  | "comparison";
   avg_word_count: number;
   common_headings: string[];
   heading_depth: number;

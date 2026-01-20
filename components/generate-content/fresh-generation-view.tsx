@@ -10,7 +10,6 @@ import type {
   PageState,
   ResumeOptions,
   RunStreamEvent,
-  StreamInput,
   WorkflowStep,
 } from "@/types/generate-content";
 import { HeroSection } from "@/components/generate-content/hero";
@@ -267,7 +266,7 @@ export function FreshGenerationView({
         }
 
         const updates = chunk.data as any;
-
+        console.log("updates", updates)
         if (
           updates?.calculate_on_page_seo?.content?.review?.on_page_metrics
             ?.score
@@ -541,6 +540,7 @@ export function FreshGenerationView({
           }
         />
       )}
+
     </>
   );
 }
