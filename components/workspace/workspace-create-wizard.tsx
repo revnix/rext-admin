@@ -24,7 +24,7 @@ import {
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
-import { WorkspaceCongratulations } from "@/components/workspace/workspace-congratulations";
+
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
 
 import { useSSEChannel } from "@/hooks/use-sse-channel";
@@ -56,7 +56,7 @@ import type { BrandVoice, Persona } from "@/types/workspace";
  * - Professional guided experience
  */
 
-type WizardStep = "details" | "progress" | "review" | "congratulations";
+type WizardStep = "details" | "progress" | "review";
 
 const STEPS: Array<{
   id: WizardStep;
@@ -64,31 +64,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-  {
-    id: "congratulations",
-    title: "Success",
-    description: "Your workspace is ready",
-    progress: 100,
-  },
-];
+    {
+      id: "details",
+      title: "Workspace Details",
+      description: "Tell us about your workspace",
+      progress: 25,
+    },
+    {
+      id: "progress",
+      title: "Analysis",
+      description: "We're analyzing your website",
+      progress: 50,
+    },
+    {
+      id: "review",
+      title: "Review & Save",
+      description: "Review and edit brand information",
+      progress: 75,
+    },
+  ];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -281,10 +275,12 @@ export function WorkspaceCreateWizard() {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId] });
 
-      // Move to congratulations step instead of navigating immediately
-      setCurrentStep("congratulations");
+      // Redirect directly to workspace generate content page
+      if (workspaceSlug) {
+        router.push(`/w/${workspaceSlug}/generate_content`);
+      }
 
-      // Don't show toast here, congratulations screen is the feedback
+      toast.success("Workspace setup complete!");
     } catch (error) {
       log.error("[Wizard] Failed to save brand voice", error);
       toast.error("Failed to save changes. Please try again.");
@@ -298,10 +294,12 @@ export function WorkspaceCreateWizard() {
     // Invalidate workspace queries
     queryClient.invalidateQueries({ queryKey: ["workspaces"] });
 
-    // Move to congratulations step instead of navigating immediately
-    setCurrentStep("congratulations");
+    // Redirect directly to workspace generate content page
+    if (workspaceSlug) {
+      router.push(`/w/${workspaceSlug}/generate_content`);
+    }
 
-    // Don't show toast here, congratulations screen is the feedback
+    toast.success("Workspace created!");
   };
 
   // Disconnect SSE when moving to review step
@@ -388,87 +386,6 @@ export function WorkspaceCreateWizard() {
                   content
                 </p>
               </div>
-
-              {/* Timezone Field - HIDDEN */}
-              <div className="space-y-2">
-                <Label htmlFor="timezone" className="text-base font-medium">
-                  Timezone{" "}
-                  <span className="text-muted-foreground">(Optional)</span>
-                </Label>
-                <Select
-                  value={form.watch("timezone") || ""}
-                  onValueChange={(value) =>
-                    form.setValue("timezone", value, { shouldValidate: true })
-                  }
-                >
-                  <SelectTrigger className="text-lg h-12">
-                    <SelectValue placeholder="Select timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>North America</SelectLabel>
-                      <SelectItem value="America/New_York">
-                        Eastern Time (ET)
-                      </SelectItem>
-                      <SelectItem value="America/Chicago">
-                        Central Time (CT)
-                      </SelectItem>
-                      <SelectItem value="America/Denver">
-                        Mountain Time (MT)
-                      </SelectItem>
-                      <SelectItem value="America/Los_Angeles">
-                        Pacific Time (PT)
-                      </SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Europe</SelectLabel>
-                      <SelectItem value="Europe/London">
-                        London (GMT)
-                      </SelectItem>
-                      <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
-                      <SelectItem value="Europe/Berlin">
-                        Berlin (CET)
-                      </SelectItem>
-                      <SelectItem value="Europe/Istanbul">
-                        Istanbul (TRT)
-                      </SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Asia</SelectLabel>
-                      <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
-                      <SelectItem value="Asia/Karachi">
-                        Karachi (PKT)
-                      </SelectItem>
-                      <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
-                      <SelectItem value="Asia/Singapore">
-                        Singapore (SGT)
-                      </SelectItem>
-                      <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Australia & Pacific</SelectLabel>
-                      <SelectItem value="Australia/Sydney">
-                        Sydney (AEDT)
-                      </SelectItem>
-                      <SelectItem value="Pacific/Auckland">
-                        Auckland (NZDT)
-                      </SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Other</SelectLabel>
-                      <SelectItem value="UTC">UTC</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {errors.timezone && (
-                  <p className="text-sm text-destructive">
-                    {errors.timezone.message}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Detected: {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                </p>
-              </div>
             </form>
           </QuestionCard>
         );
@@ -539,17 +456,7 @@ export function WorkspaceCreateWizard() {
           </QuestionCard>
         );
 
-      case "congratulations":
-        return (
-          <WorkspaceCongratulations
-            workspaceName={form.getValues("title")}
-            onContinue={() => {
-              if (workspaceSlug) {
-                router.push(`/w/${workspaceSlug}/topics`);
-              }
-            }}
-          />
-        );
+
 
       default:
         return null;
@@ -589,7 +496,7 @@ export function WorkspaceCreateWizard() {
       </motion.div>
 
       {/* Navigation Buttons */}
-      {currentStep !== "progress" && currentStep !== "congratulations" && (
+      {currentStep !== "progress" && (
         <div className="flex items-center justify-between pt-6 border-t">
           {/* Back Button */}
           {currentStep === "review" ? (
