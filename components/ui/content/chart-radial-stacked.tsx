@@ -42,12 +42,7 @@ export function ChartRadialStacked({
   const remaining = 100 - clampedScore;
   const difficultyLabel = getDifficultyLabel(clampedScore);
 
-  useEffect(() => {
-    console.log("difficultyScore", difficultyScore);
-    console.log("clampedScore", clampedScore);
-    console.log("remaining", remaining);
-    console.log("difficultyLabel", difficultyLabel);
-  }, [difficultyScore]);
+  useEffect(() => {}, []);
 
   const chartData = [{ score: clampedScore, remaining }];
 

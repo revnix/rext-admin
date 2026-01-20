@@ -20,9 +20,9 @@ export const PerformanceMonitor = memo(function PerformanceMonitor({
 
     return () => {
       const unmountTime = performance.now();
-      const totalLifetime = unmountTime - mountTime.current;
+      const _totalLifetime = unmountTime - mountTime.current;
     };
-  }, [componentName]);
+  }, []);
 
   // Track render performance
   useEffect(() => {

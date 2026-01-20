@@ -119,7 +119,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
     autoSaveInterval: _autoSaveInterval = 30000,
     minCompletionForAutoSave: _minCompletionForAutoSave = 25,
     showToasts = true,
-    debug = false,
+    debug: _debug = false,
   } = options;
 
   // State
@@ -226,7 +226,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
         return null;
       }
     },
-    [showToasts, debug, refreshDrafts],
+    [showToasts, refreshDrafts],
   );
 
   const loadDraft = useCallback(
@@ -364,7 +364,7 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
         },
       );
     },
-    [debug, showToasts],
+    [showToasts],
   );
 
   const setAutoSaveEnabled = useCallback(

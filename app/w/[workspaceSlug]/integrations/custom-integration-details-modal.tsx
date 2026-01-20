@@ -6,7 +6,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CustomIntegrationConfiguration } from "./custom-integration-configuration";
-import { integrationsApiService } from "@/services/integrations-api";
+import {
+  integrationsApiService,
+  type Integration,
+} from "@/services/integrations-api";
 import { toast } from "sonner"; // Assuming sonner
 import { useWorkspace } from "@/providers/workspace-provider";
 import { log } from "@/lib/logger";
@@ -14,8 +17,8 @@ import { log } from "@/lib/logger";
 interface CustomIntegrationDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  integration: any | null;
-  onUpdate: (updatedIntegration: any) => void;
+  integration: Integration | null;
+  onUpdate: (updatedIntegration: Partial<Integration>) => void;
   onDelete?: () => void;
 }
 
@@ -30,7 +33,9 @@ export function CustomIntegrationDetailsModal({
 
   if (!integration) return null;
 
-  const handleConfigurationUpdate = async (updatedData: any) => {
+  const handleConfigurationUpdate = async (
+    updatedData: Partial<Integration>,
+  ) => {
     if (!workspace?.id) {
       toast.error("Workspace ID missing");
       return;
@@ -45,7 +50,7 @@ export function CustomIntegrationDetailsModal({
         api_key: updatedData.api_key,
         // We still send is_active in patch as backup or if supported,
         // but we'll use specific APIs next to be sure.
-        is_active: updatedData.is_active ?? updatedData.active,
+        is_active: updatedData.is_active,
       };
 
       await integrationsApiService.updateIntegration(
@@ -55,8 +60,8 @@ export function CustomIntegrationDetailsModal({
       );
 
       // 2. Handle specific Activation/Deactivation if status changed
-      const oldActive = integration.is_active ?? integration.active;
-      const newActive = updatedData.is_active ?? updatedData.active;
+      const oldActive = integration.is_active;
+      const newActive = updatedData.is_active;
 
       if (newActive !== oldActive) {
         if (newActive) {

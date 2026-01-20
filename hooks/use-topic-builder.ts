@@ -549,7 +549,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
       setCurrentRequestId(null);
       setAbortController(null);
     }
-  }, [generateMutation.isPending, abortController, currentRequestId, formData]);
+  }, [generateMutation.isPending, abortController, currentRequestId]);
 
   // Clear generation error
   const clearGenerationError = useCallback(() => {

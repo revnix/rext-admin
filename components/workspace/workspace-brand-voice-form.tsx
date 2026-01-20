@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PersonasGrid } from "@/components/workspace/persona-card";
 import { PersonaSelection } from "@/components/workspace/persona-selection";
 import { usePersonas } from "@/hooks/use-personas";
-import type { BrandVoice } from "@/types/workspace";
+import type { BrandVoice, Persona } from "@/types/workspace";
 
 /**
  * Validation schema for brand voice form
@@ -49,7 +49,10 @@ interface WorkspaceBrandVoiceFormProps {
   workspaceId?: string | null;
   data: Partial<BrandVoice>;
   onSave: (
-    data: BrandVoiceFormData & { selectedPersonaId?: string },
+    data: BrandVoiceFormData & {
+      selectedPersonaId?: string;
+      selectedPersona?: Persona; // Persona from workspace types
+    },
   ) => Promise<void>;
   isLoading?: boolean;
   selectedPersonaId?: string | null;
@@ -104,9 +107,11 @@ export function WorkspaceBrandVoiceForm({
 
   // Handle form submission
   const handleSubmit = async (formData: BrandVoiceFormData) => {
+    const selectedPersona = personas.find((p) => p.id === selectedPersonaId);
     await onSave({
       ...formData,
       selectedPersonaId: selectedPersonaId || undefined,
+      selectedPersona: selectedPersona || undefined,
     });
   };
 
@@ -493,6 +498,13 @@ export function WorkspaceBrandVoiceForm({
                 </div>
               )}
 
+              {/* Personas Section - Display extracted personas */}
+              {data.personas && data.personas.length > 0 && (
+                <div className="pt-4 border-t">
+                  <PersonasGrid personas={data.personas} />
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4">
                 <Button
@@ -508,11 +520,6 @@ export function WorkspaceBrandVoiceForm({
           </Form>
         </CardContent>
       </Card>
-
-      {/* Personas Section - Separate from form */}
-      {data.personas && data.personas.length > 0 && (
-        <PersonasGrid personas={data.personas} />
-      )}
     </div>
   );
 }

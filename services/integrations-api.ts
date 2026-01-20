@@ -18,7 +18,7 @@ export interface Integration {
   site_url: string;
   api_endpoint?: string;
   is_active: boolean;
-  config?: any; // For flexible additional config if needed
+  config?: Record<string, unknown>; // For flexible additional config if needed
   logo?: string; // Optional if backend returns it, or we map it client-side
   description?: string;
   api_key?: string; // Sometimes returned, sometimes hidden
@@ -189,7 +189,7 @@ export class IntegrationsApiService {
           } else {
             errorMessage = errorData.message || errorData.error || errorMessage;
           }
-        } catch (e) {
+        } catch (_e) {
           // Ignore JSON parse error
         }
 
@@ -246,7 +246,7 @@ export class IntegrationsApiService {
           } else {
             errorMessage = errorData.message || errorData.error || errorMessage;
           }
-        } catch (e) {
+        } catch (_e) {
           /* ignore */
         }
 
@@ -293,7 +293,7 @@ export class IntegrationsApiService {
           } else {
             errorMessage = errorData.message || errorData.error || errorMessage;
           }
-        } catch (e) {
+        } catch (_e) {
           /* ignore */
         }
 
@@ -338,7 +338,7 @@ export class IntegrationsApiService {
           } else {
             errorMessage = errorData.message || errorData.error || errorMessage;
           }
-        } catch (e) {
+        } catch (_e) {
           /* ignore */
         }
         this.log.error("Failed to activate integration", {
@@ -382,7 +382,7 @@ export class IntegrationsApiService {
           } else {
             errorMessage = errorData.message || errorData.error || errorMessage;
           }
-        } catch (e) {
+        } catch (_e) {
           /* ignore */
         }
         this.log.error("Failed to deactivate integration", {

@@ -10,7 +10,6 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getContextualAudienceSuggestions } from "@/lib/contextual-suggestions";
-import { log } from "@/lib/logger";
 import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import type { Industry, TopicBuilderFormData } from "@/types/topic-builder";
 

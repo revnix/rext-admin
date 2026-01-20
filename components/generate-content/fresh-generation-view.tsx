@@ -10,7 +10,6 @@ import type {
   PageState,
   ResumeOptions,
   RunStreamEvent,
-  StreamInput,
   WorkflowStep,
 } from "@/types/generate-content";
 import { HeroSection } from "@/components/generate-content/hero";
@@ -102,12 +101,8 @@ function reducer(state: PageState, action: PageAction): PageState {
       const nextStatus = action.payload;
       const prevStatus = state.loadingStatus;
 
-      let nextCompleted = [...state.completedNodes];
-      if (
-        prevStatus &&
-        prevStatus.endsWith("...") &&
-        prevStatus !== nextStatus
-      ) {
+      const nextCompleted = [...state.completedNodes];
+      if (prevStatus?.endsWith("...") && prevStatus !== nextStatus) {
         const finishedNode = prevStatus.slice(0, -3);
         if (!nextCompleted.includes(finishedNode)) {
           nextCompleted.push(finishedNode);
@@ -225,9 +220,9 @@ interface FreshGenerationViewProps {
 }
 
 export function FreshGenerationView({
-  onBack,
-  initialKeyword = "",
-  initialStep = "keyword",
+  onBack: _onBack,
+  initialKeyword: _initialKeyword = "",
+  initialStep: _initialStep = "keyword",
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { user } = useAuthSession();
@@ -266,6 +261,7 @@ export function FreshGenerationView({
           continue;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
 
         if (
@@ -313,8 +309,7 @@ export function FreshGenerationView({
             });
           });
       }
-    } catch (error) {
-      console.error("❌ Stream error:", error);
+    } catch (_error) {
     } finally {
       dispatch({ type: "SET_MANUAL_LOADING", payload: false });
       dispatch({ type: "SET_LOADING_STATUS", payload: "" });
@@ -351,7 +346,6 @@ export function FreshGenerationView({
 
   const resumeWorkflow = async ({ payload, status }: ResumeOptions) => {
     if (!threadId) {
-      console.error("⚠️ No active thread to resume.");
       return;
     }
 
@@ -406,10 +400,11 @@ export function FreshGenerationView({
           payload: { reason: value },
         });
 
-      default:
+      default: {
         // Exhaustiveness guard
         const _never: never = step;
         return _never;
+      }
     }
   };
 

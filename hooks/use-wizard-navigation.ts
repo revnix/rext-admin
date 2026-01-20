@@ -12,7 +12,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { type Resolver, type UseFormReturn, useForm } from "react-hook-form";
 import { useContextualSuggestions } from "@/hooks/use-contextual-suggestions";
 import { getContextualTopicSuggestions } from "@/lib/contextual-suggestions";
-import { log } from "@/lib/logger";
 import { announceToScreenReader } from "@/lib/typeform-utils";
 import {
   STEP_VALIDATION_SCHEMAS,
@@ -129,7 +128,7 @@ export function useWizardNavigation({
   >();
 
   // Integrate contextual suggestions (Task 7.3)
-  const contextualSuggestions = useContextualSuggestions({
+  const _contextualSuggestions = useContextualSuggestions({
     formData,
     enableAutoUpdate: true,
   });

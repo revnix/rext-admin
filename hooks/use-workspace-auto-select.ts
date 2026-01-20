@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
-import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 
 /**
