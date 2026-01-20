@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useReducer, useCallback } from "react";
+import { useReducer } from "react";
 import { cn } from "@/lib/utils";
-import { useStream } from "@langchain/langgraph-sdk/react";
-import { log } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
 import type {
-  CONTENT,
   ContentOutline,
   PageAction,
   PageState,
-  ResumeInput,
+  ResumeOptions,
+  RunStreamEvent,
   StreamInput,
-  WREXT,
+  WorkflowStep,
 } from "@/types/generate-content";
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
@@ -26,7 +24,8 @@ import {
 import { ContentEditor } from "@/components/generate-content/content";
 import { Client } from "@langchain/langgraph-sdk";
 import ContentType from "./content-type";
-const API_URL = "http://192.168.1.130:2024";
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 const ASSISTANT_ID = "agent";
 
 const formatNodeName = (name: string) =>
@@ -36,7 +35,7 @@ const formatNodeName = (name: string) =>
     .join(" ");
 
 const client = new Client({
-  apiUrl: API_URL,
+  apiUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
 });
 
 const initialState: PageState = {
@@ -183,7 +182,6 @@ function reducer(state: PageState, action: PageAction): PageState {
           }
         } else if (interrupt[0]?.value.topics) {
           const newTopics = interrupt[0].value.topics as string[];
-          console.log("newTopics", newTopics);
           if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
             newState.topics = newTopics;
             changed = true;
@@ -232,6 +230,9 @@ export function FreshGenerationView({
   initialStep = "keyword",
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const { user } = useAuthSession();
+  const workspaceId = useCurrentWorkspaceId();
+
   const {
     step,
     userKeyword,
@@ -256,143 +257,73 @@ export function FreshGenerationView({
     seoScore,
   } = state;
 
+
   const processStream = async (
-    threadId: string,
-    input: StreamInput,
+    stream: AsyncGenerator<RunStreamEvent>,
   ): Promise<void> => {
-    let chunkCount = 0;
-
-    const stream = await client.runs.stream(threadId, ASSISTANT_ID, {
-      input,
-      streamMode: "updates",
-      streamSubgraphs: true,
-    });
-
     try {
       for await (const chunk of stream) {
-        // SDK Events are { event: string, data: any }
-        // We support both top-level and subgraph updates
-        if (chunk.event === "updates" || chunk.event.startsWith("updates|")) {
-          const updates = chunk.data as any;
-
-          console.log("updates", updates);
-
-          if (updates?.__interrupt__) {
-            dispatch({
-              type: "SET_INTERRUPT",
-              payload: updates.__interrupt__,
-            });
-          }
-          dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
-
-          // 2. Track Node Progress
-          const nodeNames = Object.keys(updates).filter(
-            (k) => !k.startsWith("__"),
-          );
-          if (nodeNames.length > 0) {
-            nodeNames.forEach((node) => {
-              dispatch({
-                type: "SET_LOADING_STATUS",
-                payload: `${formatNodeName(node)}...`,
-              });
-            });
-          }
-
-          chunkCount++;
+        if (
+          chunk.event !== "updates" &&
+          !chunk.event.startsWith("updates|")
+        ) {
+          continue;
         }
+
+        const updates = chunk.data as any;
+
+        if (
+          updates?.calculate_on_page_seo?.content?.review?.on_page_metrics
+            ?.score
+        ) {
+          dispatch({
+            type: "SET_SEO_SCORE",
+            payload:
+              updates.calculate_on_page_seo.content.review.on_page_metrics,
+          });
+        }
+
+        if (updates?.calculate_readability?.content?.final_content) {
+          dispatch({
+            type: "SET_FINAL_CONTENT",
+            payload: updates.calculate_readability.content,
+          });
+          dispatch({
+            type: "SET_GENERATED_CONTENT",
+            payload:
+              updates.calculate_readability.content.final_content
+                .body_markdown,
+          });
+          dispatch({
+            type: "SET_INSTRUCTION_TYPE",
+            payload: "content",
+          });
+        }
+
+        if (updates.__interrupt__) {
+          dispatch({
+            type: "SET_INTERRUPT",
+            payload: updates.__interrupt__,
+          });
+        }
+
+        dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
+
+        Object.keys(updates)
+          .filter((key) => !key.startsWith("__"))
+          .forEach((node) => {
+            dispatch({
+              type: "SET_LOADING_STATUS",
+              payload: `${formatNodeName(node)}...`,
+            });
+          });
       }
-      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
-    } catch (error: any) {
+    } catch (error) {
       console.error("❌ Stream error:", error);
     } finally {
       dispatch({ type: "SET_MANUAL_LOADING", payload: false });
       dispatch({ type: "SET_LOADING_STATUS", payload: "" });
     }
-
-    console.log(`✅ Stream complete. Chunks: ${chunkCount}`);
-  };
-
-  const resumeStream = async (
-    threadId: string,
-    resumePayload: Record<string, any>,
-  ): Promise<void> => {
-    let chunkCount = 0;
-
-    const stream = await client.runs.stream(threadId, ASSISTANT_ID, {
-      command: { resume: resumePayload },
-      streamMode: "updates",
-      streamSubgraphs: true,
-    });
-
-    try {
-      for await (const chunk of stream) {
-        // SDK Events are { event: string, data: any }
-        // We support both top-level and subgraph updates
-        if (chunk.event === "updates" || chunk.event.startsWith("updates|")) {
-          const updates = chunk.data as any;
-          console.log("updates", updates);
-
-          if (
-            updates?.calculate_on_page_seo?.content?.review?.on_page_metrics
-              ?.score
-          ) {
-            dispatch({
-              type: "SET_SEO_SCORE",
-              payload:
-                updates.calculate_on_page_seo.content.review.on_page_metrics,
-            });
-          }
-
-          if (updates?.calculate_readability?.content?.final_content) {
-            dispatch({
-              type: "SET_FINAL_CONTENT",
-              payload: updates.calculate_readability.content,
-            });
-            dispatch({
-              type: "SET_GENERATED_CONTENT",
-              payload:
-                updates.calculate_readability.content.final_content
-                  .body_markdown,
-            });
-            dispatch({
-              type: "SET_INSTRUCTION_TYPE",
-              payload: "content",
-            });
-          }
-
-          if (updates?.__interrupt__) {
-            dispatch({
-              type: "SET_INTERRUPT",
-              payload: updates.__interrupt__,
-            });
-          }
-          dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
-
-          // 2. Track Node Progress
-          const nodeNames = Object.keys(updates).filter(
-            (k) => !k.startsWith("__"),
-          );
-          if (nodeNames.length > 0) {
-            nodeNames.forEach((node) => {
-              dispatch({
-                type: "SET_LOADING_STATUS",
-                payload: `${formatNodeName(node)}...`,
-              });
-            });
-          }
-
-          chunkCount++;
-        }
-      }
-      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
-    } catch (error: any) {
-      console.error("❌ Stream error:", error);
-    } finally {
-      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
-      dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-    }
-
-    console.log(`✅ Stream complete. Chunks: ${chunkCount}`);
   };
 
   const handleKeywordSubmit = async () => {
@@ -401,229 +332,207 @@ export function FreshGenerationView({
     dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
 
     const thread = await client.threads.create();
+    if (!thread) return;
 
-    if (thread) {
-      dispatch({ type: "SET_THREAD_ID", payload: thread.thread_id });
-    }
-
-    const input = {
-      serp_payload: { query: userKeyword, country },
-    };
+    dispatch({ type: "SET_THREAD_ID", payload: thread.thread_id });
 
     dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
-    await processStream(thread.thread_id, input);
-  };
-
-  const handleKeywordSelect = async (selected: string) => {
-    if (!threadId) {
-      console.error("⚠️ No active thread to resume. Start a new thread first.");
-      return;
-    }
-
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    dispatch({
-      type: "SET_LOADING_STATUS",
-      payload: `Resuming workflow for "${selected}"...`,
+    const stream = client.runs.stream(thread.thread_id, ASSISTANT_ID, {
+      input: {
+        serp_payload: {
+          query: userKeyword,
+          country,
+          user_id: user?.id,
+          workspace_id: workspaceId ?? undefined,
+        },
+      },
+      streamMode: "updates",
+      streamSubgraphs: true,
     });
 
-    const resumePayload: Record<string, any> = {
-      "Primary Keyword": selected,
-    };
-
-    await resumeStream(threadId, resumePayload);
+    await processStream(stream);
   };
 
-  const handleTopicSelect = async (selected: string) => {
+  const resumeWorkflow = async ({ payload, status }: ResumeOptions) => {
     if (!threadId) {
-      console.error("⚠️ No active thread to resume. Start a new thread first.");
+      console.error("⚠️ No active thread to resume.");
       return;
     }
 
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    dispatch({
-      type: "SET_LOADING_STATUS",
-      payload: `Resuming workflow for "${selected}"...`,
+
+    if (status) {
+      dispatch({ type: "SET_LOADING_STATUS", payload: status });
+    }
+
+    const stream = client.runs.stream(threadId, ASSISTANT_ID, {
+      command: { resume: payload },
+      streamMode: "updates",
+      streamSubgraphs: true,
     });
 
-    const resumePayload: Record<string, any> = {
-      "Selected Topic": selected,
-    };
-
-    await resumeStream(threadId, resumePayload);
+    await processStream(stream);
   };
 
-  const handleContentTypeSelect = async (selected: string) => {
-    if (!threadId) {
-      console.error("⚠️ No active thread to resume. Start a new thread first.");
-      return;
+  const handleWorkflow = (
+    step: WorkflowStep,
+    value?: string,
+  ) => {
+    switch (step) {
+      case "KEYWORD_SELECT":
+        return resumeWorkflow({
+          payload: { "Primary Keyword": value },
+          status: `Resuming workflow for "${value}"...`,
+        });
+
+      case "TOPIC_SELECT":
+        return resumeWorkflow({
+          payload: { "Selected Topic": value },
+          status: `Resuming workflow for "${value}"...`,
+        });
+
+      case "CONTENT_TYPE_SELECT":
+        return resumeWorkflow({
+          payload: { "Selected Content Type": value },
+          status: `Resuming workflow for "${value}"...`,
+        });
+
+      case "OUTLINE_APPROVE":
+        return resumeWorkflow({
+          payload: { action: "approve" },
+        });
+
+      case "OUTLINE_REJECT":
+        return resumeWorkflow({
+          payload: { action: "reject" },
+        });
+
+      case "OUTLINE_REJECT_REASON":
+        return resumeWorkflow({
+          payload: { reason: value },
+        });
+
+      default:
+        // Exhaustiveness guard
+        const _never: never = step;
+        return _never;
     }
-
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    dispatch({
-      type: "SET_LOADING_STATUS",
-      payload: `Resuming workflow for "${selected}"...`,
-    });
-
-    const resumePayload: Record<string, any> = {
-      "Selected Content Type": selected,
-    };
-
-    await resumeStream(threadId, resumePayload);
   };
 
-  const handleOutlineApprove = async () => {
-    if (!threadId) {
-      console.error("⚠️ No active thread to resume. Start a new thread first.");
-      return;
-    }
+  if (isLoading || isManualLoading) {
+    return (
+      <div
+        className={cn(
+          "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
+          instructionType === "keyword"
+            ? "min-h-[70vh] justify-center"
+            : "min-h-0 pt-2",
+        )}
+      >
+        <LoadingIndicatorVariants
+          step={step}
+          isLoading={isLoading || isManualLoading}
+          loadingStatus={loadingStatus}
+          completedSteps={completedNodes}
+          className="mt-5"
+        />
+      </div>
+    )
+  }
 
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+  const isKeywordFlow =
+    instructionType === "keyword" ||
+    instructionType === "keyword Selection";
 
-    const resumePayload: Record<string, any> = {
-      action: "approve",
-    };
+  const instructionViewMap: Record<string, React.ReactNode> = {
+    "keyword Selection": (
+      <SuggestionsSection
+        instruction={instruction}
+        primaryKeyword={primaryKeyword}
+        suggestedKeywords={suggestedKeywords}
+        onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
+        seoResult={seoResult}
+      />
+    ),
 
-    await resumeStream(threadId, resumePayload);
-  };
+    topic: (
+      <TopicsSection
+        instruction={instruction}
+        topics={topics}
+        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        keyword={primaryKeyword || userKeyword}
+      />
+    ),
 
-  const handleOutlineReject = async () => {
-    if (!threadId) {
-      console.error("⚠️ No active thread to resume. Start a new thread first.");
-      return;
-    }
+    content_type: (
+      <ContentType
+        instruction={instruction}
+        contentTypes={contentTypes}
+        handleContentTypeSelect={(selected) => handleWorkflow("CONTENT_TYPE_SELECT", selected)}
+      />
+    ),
 
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    outline_review: outline && (
+      <OutlineDisplay
+        outline={outline}
+        isLoading={false}
+        onApprove={() => handleWorkflow("OUTLINE_APPROVE")}
+        onReject={() => handleWorkflow("OUTLINE_REJECT")}
+      />
+    ),
 
-    const resumePayload: Record<string, any> = {
-      action: "reject",
-    };
-
-    await resumeStream(threadId, resumePayload);
-  };
-
-  const handleOutlineRejectReason = async () => {
-    if (!threadId) {
-      console.error("⚠️ No active thread to resume. Start a new thread first.");
-      return;
-    }
-
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-
-    const resumePayload: Record<string, any> = {
-      reason: rejectedReason,
-    };
-
-    await resumeStream(threadId, resumePayload);
+    outline_reject: (
+      <OutlineRejectSection
+        instruction={instruction}
+        rejectedReason={rejectedReason}
+        onChange={(val) =>
+          dispatch({ type: "SET_REJECTED_REASON", payload: val })
+        }
+        onSubmit={() => handleWorkflow("OUTLINE_REJECT_REASON", rejectedReason)}
+      />
+    ),
   };
 
   return (
     <>
-      {isLoading || isManualLoading ? (
-        <div
-          className={cn(
-            "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-            instructionType === "keyword"
-              ? "min-h-[70vh] justify-center"
-              : "min-h-0 pt-2",
-          )}
+      <div
+        className={cn(
+          "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
+          instructionType === "keyword"
+            ? "min-h-[70vh] justify-center"
+            : "min-h-0 pt-2",
+        )}
+      >
+        <AnimatePresence mode="wait">
+          {instructionType === "keyword" && <HeroSection />}
+        </AnimatePresence>
+
+        <motion.div
+          layout
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="w-full"
         >
-          <LoadingIndicatorVariants
-            step={step}
-            isLoading={isLoading || isManualLoading}
-            loadingStatus={loadingStatus}
-            completedSteps={completedNodes}
-            className="mt-5"
-          />
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-            instructionType === "keyword"
-              ? "min-h-[70vh] justify-center"
-              : "min-h-0 pt-2",
-          )}
-        >
-          <AnimatePresence mode="wait">
-            {instructionType === "keyword" && <HeroSection />}
-          </AnimatePresence>
-
-          <motion.div
-            layout
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="w-full"
-          >
-            {(instructionType === "keyword" ||
-              instructionType === "keyword Selection") && (
-              <KeywordForm
-                userKeyword={userKeyword}
-                country={country}
-                onSubmit={handleKeywordSubmit}
-                onKeywordChange={(val) =>
-                  dispatch({ type: "SET_USER_KEYWORD", payload: val })
-                }
-                onCountryChange={(val) =>
-                  dispatch({ type: "SET_COUNTRY", payload: val })
-                }
-              />
-            )}
-          </motion.div>
-
-          {instructionType === "keyword Selection" && (
-            <SuggestionsSection
-              instruction={instruction}
-              primaryKeyword={primaryKeyword}
-              suggestedKeywords={suggestedKeywords}
-              onSelect={handleKeywordSelect}
-              seoResult={seoResult}
-            />
-          )}
-
-          {instructionType === "topic" && (
-            <TopicsSection
-              instruction={instruction}
-              topics={topics}
-              onSelect={handleTopicSelect}
-              keyword={primaryKeyword || userKeyword}
-            />
-          )}
-
-          {instructionType === "content_type" && (
-            <ContentType
-              instruction={instruction}
-              contentTypes={contentTypes}
-              handleContentTypeSelect={handleContentTypeSelect}
-            />
-          )}
-
-          {instructionType === "outline_review" && outline && (
-            <OutlineDisplay
-              outline={outline}
-              isLoading={false}
-              onApprove={handleOutlineApprove}
-              onReject={handleOutlineReject}
-            />
-          )}
-
-          {instructionType === "outline_reject" && (
-            <OutlineRejectSection
-              instruction={instruction}
-              rejectedReason={rejectedReason}
-              onChange={(val) =>
-                dispatch({ type: "SET_REJECTED_REASON", payload: val })
+          {isKeywordFlow && (
+            <KeywordForm
+              userKeyword={userKeyword}
+              country={country}
+              onSubmit={handleKeywordSubmit}
+              onKeywordChange={(val) =>
+                dispatch({ type: "SET_USER_KEYWORD", payload: val })
               }
-              onSubmit={handleOutlineRejectReason}
+              onCountryChange={(val) =>
+                dispatch({ type: "SET_COUNTRY", payload: val })
+              }
             />
           )}
-        </div>
-      )}
+        </motion.div>
+
+        {instructionViewMap[instructionType]}
+
+      </div>
+
       {instructionType === "content" && finalContent && (
         <ContentEditor
           values={finalContent}
