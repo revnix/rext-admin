@@ -21,6 +21,8 @@ import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/auth-utils";
 
 export function LoginForm({
   className,
@@ -116,9 +118,31 @@ export function LoginForm({
         // Redirect to invitation acceptance page
         router.push(`/accept-invitation?token=${invitationToken}`);
       } else {
-        // Redirect to the original page or default to dashboard
-        const redirect = searchParams.get("redirect") || "/";
-        router.push(redirect);
+        // Wait for session to be established (cookies to be set)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Force refresh auth headers to ensure we have the new token
+        await getAuthHeaders(true);
+
+        // Fetch workspaces to determine redirect
+        try {
+          const response = await apiClient.workspaces.list();
+          const workspaces = response.workspaces || [];
+
+          if (workspaces.length === 0) {
+            // No workspace exists, redirect to create workspace
+            router.push("/w/create");
+          } else {
+            // Workspace exists, redirect to generate content page
+            const firstWorkspace = workspaces[0];
+            router.push(`/w/${firstWorkspace.slug}/generate_content`);
+          }
+        } catch (error) {
+          log.error("[Auth] Failed to fetch workspaces:", error);
+          // Fallback to dashboard on error
+          const redirect = searchParams.get("redirect") || "/";
+          router.push(redirect);
+        }
       }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);

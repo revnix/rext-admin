@@ -98,12 +98,16 @@ export function GuestGuard({
     if (!isLoading) {
       setIsChecking(false);
 
-      // If already authenticated, redirect to dashboard
-      if (isAuthenticated) {
-        router.push(redirectTo);
-      }
+      // DISABLED: Let login/signup forms handle redirect logic
+      // The forms need to check workspace availability before redirecting
+      // If we redirect here, it happens before workspace fetch completes
+
+      // if (isAuthenticated) {
+      //   router.push(redirectTo);
+      // }
     }
   }, [isLoading, isAuthenticated, redirectTo, router]);
+
 
   // Show loading state
   if (isLoading || isChecking) {
