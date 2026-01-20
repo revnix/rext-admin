@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 interface SuccessConfirmationDialogProps {

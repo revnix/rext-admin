@@ -70,9 +70,11 @@ export function AddIntegrationModal({
       onAdd(null); // Signal success
       form.reset();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error("Failed to add integration", error);
-      toast.error(error.message || "Failed to add integration");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add integration",
+      );
     }
   };
 

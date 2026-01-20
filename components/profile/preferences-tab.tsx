@@ -126,8 +126,7 @@ export function PreferencesTab() {
             <CardTitle>Accessibility</CardTitle>
           </div>
           <CardDescription>
-            Configure accessibility options to make REXT more comfortable to
-            use
+            Configure accessibility options to make REXT more comfortable to use
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

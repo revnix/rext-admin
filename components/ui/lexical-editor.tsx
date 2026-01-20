@@ -18,7 +18,7 @@ import {
 import {
   HeadingNode,
   QuoteNode,
-  HeadingTagType,
+  type HeadingTagType,
   $createHeadingNode,
   $createQuoteNode,
 } from "@lexical/rich-text";
@@ -184,7 +184,8 @@ function ToolbarPlugin() {
         } else {
           const type = element.getType();
           if (type === "heading") {
-            const tag = (element as any).getTag();
+            const tag =
+              (element as { getTag?: () => string }).getTag?.() || "paragraph";
             setBlockType(tag);
           } else {
             setBlockType(type);
@@ -573,34 +574,28 @@ export default function LexicalEditor({
   // We use a state to ensure the initialConfig is stable if we were using dynamic values,
   // but here it's derived from props once.
 
-  useEffect(() => {
-    console.log("initialValue", initialValue);
-  }, [initialValue]);
+  useEffect(() => {}, []);
 
   const initialConfig = {
     namespace: "my-editor",
     theme,
     nodes: NODES,
     readOnly: readOnly,
-    onError: (error: Error) => {
-      console.error("Lexical Error:", error);
-    },
-    editorState: (editor: any) => {
+    onError: (_error: Error) => {},
+    editorState: (editor: unknown) => {
       // Convert initial markdown to editor state
-      editor.update(() => {
+      (editor as { update: (fn: () => void) => void }).update(() => {
         if (initialValue) {
           try {
             $convertFromMarkdownString(initialValue, TRANSFORMERS);
-          } catch (e) {
-            console.error("Error parsing initial markdown", e);
-          }
+          } catch (_e) {}
         }
       });
     },
   };
 
-  function handleChange(editorState: any) {
-    editorState.read(() => {
+  function handleChange(editorState: unknown) {
+    (editorState as { read: (fn: () => void) => void }).read(() => {
       // Export to markdown
       const markdown = $convertToMarkdownString(TRANSFORMERS);
 
@@ -680,8 +675,10 @@ export default function LexicalEditor({
                 {
                   namespace: initialConfig.namespace,
                   theme: initialConfig.theme,
-                  nodes: initialConfig.nodes.map((n: any) =>
-                    n.getType ? n.getType() : n.name,
+                  nodes: initialConfig.nodes.map((n: unknown) =>
+                    (n as { getType?: () => string; name?: string }).getType
+                      ? (n as { getType: () => string }).getType()
+                      : (n as { name: string }).name,
                   ),
                   onError: "function(error)",
                   editorState: "function(editor) { ... }",

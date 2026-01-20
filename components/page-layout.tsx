@@ -112,7 +112,7 @@ export function PageLayout({
 
   // State for exclusive dropdowns
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();

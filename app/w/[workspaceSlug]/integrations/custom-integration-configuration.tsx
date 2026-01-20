@@ -19,10 +19,11 @@ import {
   integrationSchema,
   type IntegrationFormData,
 } from "@/schemas/integration-schemas";
+import type { Integration } from "@/services/integrations-api";
 
 interface CustomIntegrationConfigurationProps {
-  integration: any;
-  onUpdate: (updatedIntegration: any) => void;
+  integration: Integration;
+  onUpdate: (updatedIntegration: Partial<Integration>) => void;
   onDelete?: () => void;
 }
 
@@ -37,11 +38,19 @@ export function CustomIntegrationConfiguration({
   const form = useForm<IntegrationFormData>({
     resolver: zodResolver(integrationSchema),
     defaultValues: {
-      site_url: integration.site_url || integration.config?.url || "",
-      api_key: integration.api_key || integration.config?.apiKey || "",
+      site_url:
+        integration.site_url ||
+        (integration.config?.url as string | undefined) ||
+        "",
+      api_key:
+        integration.api_key ||
+        (integration.config?.apiKey as string | undefined) ||
+        "",
       api_endpoint:
-        integration.config?.api_endpoint || integration.api_endpoint || "",
-      is_active: integration.is_active ?? integration.active ?? true,
+        (integration.config?.api_endpoint as string | undefined) ||
+        integration.api_endpoint ||
+        "",
+      is_active: integration.is_active ?? true,
     },
   });
 

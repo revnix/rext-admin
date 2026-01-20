@@ -38,7 +38,7 @@ export function WorkspaceSwitcher() {
   const setLastWorkspacePath = useWorkspaceStore(
     (state) => state.setLastWorkspacePath,
   );
-  const lastWorkspacePath = useWorkspaceStore(
+  const _lastWorkspacePath = useWorkspaceStore(
     (state) => state.lastWorkspacePath,
   );
 

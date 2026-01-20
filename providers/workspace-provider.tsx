@@ -72,8 +72,8 @@ export function WorkspaceProvider({
   // Load workspace permissions (Phase 1 integration)
   // This loads workspace-scoped permissions dynamically for the current workspace
   const {
-    permissions,
-    role,
+    permissions: _permissions,
+    role: _role,
     error: permissionsError,
   } = useWorkspacePermissions(workspaceId);
 

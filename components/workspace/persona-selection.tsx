@@ -65,7 +65,7 @@ export function PersonaSelection({
           key={persona.id || persona.name}
           persona={persona}
           isSelected={selectedPersonaId === persona.id}
-          onSelect={() => onSelect(persona.id!)}
+          onSelect={() => onSelect(persona.id || "")}
         />
       ))}
     </div>

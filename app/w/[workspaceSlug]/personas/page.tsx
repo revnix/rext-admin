@@ -4,48 +4,18 @@ import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
-import { Plus, Lightbulb } from "lucide-react";
-import { PersonaCard, type Persona } from "@/components/personas/persona-card";
-import { RecommendationCard } from "@/components/personas/recommendation-card";
+import { Plus } from "lucide-react";
+import { PersonaCard } from "@/components/personas/persona-card";
+import type { Persona } from "@/types/workspace";
+
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-
-// Mock Data
-const PERSONAS: Persona[] = [
-  {
-    id: "1",
-    name: "Dr. Sarah Mitchell",
-    title: "Board-Certified Dermatologist",
-    initials: "SM",
-    avatarColor: "bg-slate-800",
-    expertise: ["Dermatology", "Skincare", "Medical Research"],
-    toneOfVoice: "Professional, Empathetic, Evidence-based",
-    articlesWritten: 12,
-  },
-  {
-    id: "2",
-    name: "Tech Bro Tom",
-    title: "Senior Software Engineer",
-    initials: "TT",
-    avatarColor: "bg-blue-600",
-    expertise: ["JavaScript", "React", "Cloud Architecture"],
-    toneOfVoice: "Casual, Enthusiastic, Technical",
-    articlesWritten: 8,
-  },
-  {
-    id: "3",
-    name: "Marketing Maven Maria",
-    title: "Digital Marketing Strategist",
-    initials: "MM",
-    avatarColor: "bg-amber-500",
-    expertise: ["SEO", "Content Strategy", "Analytics"],
-    toneOfVoice: "Engaging, Data-driven, Creative",
-    articlesWritten: 15,
-  },
-];
+import { usePersonas } from "@/hooks/use-personas";
 
 export default function PersonaForgePage() {
   const { workspace, workspaceSlug } = useWorkspace();
+  const { data: personasData, isLoading } = usePersonas(workspace?.id || null);
+  const personas = personasData?.personas || [];
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
@@ -59,7 +29,7 @@ export default function PersonaForgePage() {
   return (
     <PageLayout
       title="Personas"
-      description={`${PERSONAS.length} personas created`}
+      description={`${personas.length} personas created`}
       breadcrumbs={breadcrumbs}
       fullWidth
       actions={
@@ -75,7 +45,7 @@ export default function PersonaForgePage() {
     >
       <div className="space-y-8 max-w-[1600px] mx-auto">
         {/* Workspace Recommendations */}
-        <div className="space-y-3">
+        {/* <div className="space-y-3">
           <div className="flex items-center gap-2 text-foreground font-bold px-1">
             <Lightbulb
               size={20}
@@ -84,13 +54,24 @@ export default function PersonaForgePage() {
             <h3 className="text-lg">Workspace Recommendations</h3>
           </div>
           <RecommendationCard onImport={() => {}} />
-        </div>
+        </div> */}
 
         {/* Persona Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {PERSONAS.map((persona) => (
-            <PersonaCard key={persona.id} persona={persona} />
-          ))}
+          {isLoading ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              Loading personas...
+            </div>
+          ) : (
+            personas
+              .filter((p) => p.id) // Ensure persona has an ID
+              .map((persona) => (
+                <PersonaCard
+                  key={persona.id}
+                  persona={persona as Persona & { id: string }}
+                />
+              ))
+          )}
 
           {/* Create New Placeholder */}
           <Link

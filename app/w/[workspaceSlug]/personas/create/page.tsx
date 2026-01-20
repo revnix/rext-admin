@@ -12,10 +12,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, X, Plus } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useCreatePersona } from "@/hooks/use-personas";
 
 export default function CreatePersonaPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
+  const createPersona = useCreatePersona(workspace?.id || "");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    title: "",
+    tone: "",
+    bio: "",
+    linkedin: "",
+  });
 
   const [expertiseInput, setExpertiseInput] = useState("");
   const [expertiseTags, setExpertiseTags] = useState<string[]>([]);
@@ -29,6 +41,35 @@ export default function CreatePersonaPage() {
 
   const handleRemoveExpertise = (tagToRemove: string) => {
     setExpertiseTags(expertiseTags.filter((tag) => tag !== tagToRemove));
+  };
+
+  const handleCreate = async () => {
+    if (!workspace?.id) return;
+    if (!formData.fullName || !formData.title) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await createPersona.mutateAsync({
+        name: formData.fullName, // Using full name as the internal name
+        description: formData.title, // Using title as description
+        full_name: formData.fullName,
+        professional_title: formData.title,
+        areas_of_expertise: expertiseTags.join(", "),
+        tone_of_voice: formData.tone,
+        bio: formData.bio,
+        linkedin_url: formData.linkedin,
+      });
+
+      // Success toast is handled by the hook
+      router.push(workspaceRoutes.personas(workspaceSlug));
+    } catch {
+      // Error toast is handled by the hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const breadcrumbs = [
@@ -59,6 +100,10 @@ export default function CreatePersonaPage() {
               <Label htmlFor="fullName">Full Name *</Label>
               <Input
                 id="fullName"
+                value={formData.fullName}
+                onChange={(e) =>
+                  setFormData({ ...formData, fullName: e.target.value })
+                }
                 placeholder="e.g., Dr. Sarah Mitchell"
                 className="bg-background rounded-xl"
               />
@@ -69,6 +114,10 @@ export default function CreatePersonaPage() {
               <Label htmlFor="title">Professional Title *</Label>
               <Input
                 id="title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="e.g., Board-Certified Dermatologist"
                 className="bg-background rounded-xl"
               />
@@ -127,6 +176,10 @@ export default function CreatePersonaPage() {
               <Label htmlFor="tone">Tone of Voice</Label>
               <Input
                 id="tone"
+                value={formData.tone}
+                onChange={(e) =>
+                  setFormData({ ...formData, tone: e.target.value })
+                }
                 placeholder="e.g., Professional, Empathetic, Evidence-based"
                 className="bg-background rounded-xl"
               />
@@ -137,6 +190,10 @@ export default function CreatePersonaPage() {
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
+                value={formData.bio}
+                onChange={(e) =>
+                  setFormData({ ...formData, bio: e.target.value })
+                }
                 placeholder="Brief professional biography..."
                 className="bg-background min-h-[120px] rounded-xl"
               />
@@ -147,6 +204,10 @@ export default function CreatePersonaPage() {
               <Label htmlFor="linkedin">LinkedIn URL (Optional)</Label>
               <Input
                 id="linkedin"
+                value={formData.linkedin}
+                onChange={(e) =>
+                  setFormData({ ...formData, linkedin: e.target.value })
+                }
                 placeholder="https://linkedin.com/in/username"
                 className="bg-background rounded-xl"
               />
@@ -176,12 +237,23 @@ export default function CreatePersonaPage() {
                 variant="outline"
                 onClick={() => router.back()}
                 className="bg-background rounded-2xl border-border px-6"
+                disabled={isLoading}
               >
                 Cancel
               </Button>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl px-6">
-                <Plus size={16} className="mr-2" />
-                Create Persona
+              <Button
+                onClick={handleCreate}
+                disabled={isLoading}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl px-6"
+              >
+                {isLoading ? (
+                  "Creating..."
+                ) : (
+                  <>
+                    <Plus size={16} className="mr-2" />
+                    Create Persona
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

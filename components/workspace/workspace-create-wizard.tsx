@@ -36,7 +36,7 @@ import {
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
-import type { BrandVoice } from "@/types/workspace";
+import type { BrandVoice, Persona } from "@/types/workspace";
 
 /**
  * Workspace Creation Wizard
@@ -210,7 +210,10 @@ export function WorkspaceCreateWizard() {
 
   // Step 3: Handle brand voice save
   const handleReviewSave = async (
-    editedData: Partial<BrandVoice> & { selectedPersonaId?: string },
+    editedData: Partial<BrandVoice> & {
+      selectedPersonaId?: string;
+      selectedPersona?: Persona;
+    },
   ) => {
     if (!workspaceId) {
       toast.error("Workspace ID not found");
@@ -221,10 +224,52 @@ export function WorkspaceCreateWizard() {
       setIsSaving(true);
 
       // Extract selectedPersonaId from editedData
-      const { selectedPersonaId: personaId, ...brandVoiceData } = editedData;
+      const {
+        selectedPersonaId: personaId,
+        selectedPersona,
+        ...brandVoiceData
+      } = editedData;
 
       // Update brand voice via API
-      await apiClient.workspaces.updateBrandVoice(workspaceId, brandVoiceData);
+      await apiClient.workspaces.updateBrandVoice(workspaceId, {
+        about: brandVoiceData.about,
+        customer_profile: brandVoiceData.customer_profile,
+        selling_position: brandVoiceData.selling_position,
+        target_audience: brandVoiceData.target_audience,
+        brand_voice: brandVoiceData.brand_voice,
+        competitors: brandVoiceData.competitors,
+        content_strategy:
+          brandVoiceData.content_strategy || brandVoiceData.content_pillar,
+        personas: selectedPersona ? [selectedPersona] : undefined,
+      });
+
+      // Manually save personas if they exist in the extracted data
+      // This is a workaround because the backend updateBrandVoice endpoint
+      // does not currently persist personas.
+      if (brandVoiceData.personas && brandVoiceData.personas.length > 0) {
+        log.info(
+          `[Wizard] Manually saving ${brandVoiceData.personas.length} personas`,
+        );
+        await Promise.all(
+          brandVoiceData.personas.map((persona: Persona) =>
+            apiClient.personas.create(workspaceId, {
+              name: persona.name,
+              description:
+                persona.description || persona.professional_title || "",
+              full_name: persona.full_name || persona.name,
+              professional_title: persona.professional_title,
+              areas_of_expertise: persona.areas_of_expertise,
+              tone_of_voice: persona.tone_of_voice,
+              bio: persona.bio,
+              linkedin_url: persona.linkedin_url,
+              demographics: persona.demographics,
+              pain_points: persona.pain_points,
+              goals: persona.goals,
+              behaviors: persona.behaviors,
+            }),
+          ),
+        );
+      }
 
       // Log selected persona for future API integration
       if (personaId) {

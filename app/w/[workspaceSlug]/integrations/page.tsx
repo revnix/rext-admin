@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -31,7 +31,7 @@ export default function IntegrationsPage() {
     null,
   );
 
-  const fetchIntegrations = async () => {
+  const fetchIntegrations = useCallback(async () => {
     if (!workspace?.id) return;
     try {
       setIsLoading(true);
@@ -42,7 +42,7 @@ export default function IntegrationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [workspace?.id]);
 
   useEffect(() => {
     fetchIntegrations();
@@ -80,7 +80,7 @@ export default function IntegrationsPage() {
     setIsAddModalOpen(false);
   };
 
-  const handleIntegrationUpdated = async (updated: any) => {
+  const handleIntegrationUpdated = async (updated: Partial<Integration>) => {
     // This callback is called by the modal when an update happens (save or toggle).
     // We should refresh the list.
     // The Modal (CustomIntegrationDetailsModal) calls `onUpdate`.
@@ -101,18 +101,16 @@ export default function IntegrationsPage() {
       // setViewIntegration(updated);
       // But typically we re-fetch to be safe.
       try {
-        if (workspace?.id) {
+        if (workspace?.id && updated.id) {
           const fullDetails = await integrationsApiService.getIntegration(
             updated.id,
             workspace.id,
           );
           setViewIntegration(fullDetails);
-        } else {
-          setViewIntegration(updated);
         }
       } catch (e) {
         log.error("Failed to fetch integration details", e);
-        setViewIntegration(updated);
+        // Don't update view on error, keep existing view
       }
     }
   };
