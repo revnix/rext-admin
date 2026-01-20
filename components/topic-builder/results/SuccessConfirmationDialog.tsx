@@ -32,13 +32,11 @@ export function SuccessConfirmationDialog({
   className,
 }: SuccessConfirmationDialogProps) {
   const handleNavigateToTopics = () => {
-    log.info("Navigating to topics page");
     onNavigateToTopics();
     onOpenChange(false);
   };
 
   const handleGenerateNew = () => {
-    log.info("Starting new topic generation");
     onGenerateNew();
     onOpenChange(false);
   };

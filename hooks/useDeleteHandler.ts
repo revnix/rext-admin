@@ -131,14 +131,7 @@ export function useDeleteHandler<TData = void>(
       setIsDeleting(true);
       setError(null);
 
-      log.info(`Deleting ${resourceName}`, { id, resourceName });
-
       const result = await deleteFunction(id);
-
-      log.info(`${resourceName} deleted successfully`, {
-        id,
-        resourceName,
-      });
 
       // Execute onSuccess callback if provided
       if (onSuccess) {

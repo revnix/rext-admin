@@ -54,10 +54,6 @@ export function useAuthSession() {
 
   const logout = async () => {
     try {
-      log.info(
-        `[Auth] User logging out after ${activityCount} interactions. Last active: ${new Date(lastActivity).toLocaleTimeString()}`,
-      );
-
       // Disable all background queries
       queryClient.setDefaultOptions({
         queries: { enabled: false },

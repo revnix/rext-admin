@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { log } from "@/lib/logger";
 
 function VerifyEmailContent() {
   const [isVerifying, setIsVerifying] = useState(true);
@@ -70,8 +69,6 @@ function VerifyEmailContent() {
       }
 
       try {
-        log.info("[Auth Migration] Using direct API call for verify-email");
-
         // Direct API call - no auth session needed for email verification
         // Backend expects GET with query parameter
         const response = await fetch(

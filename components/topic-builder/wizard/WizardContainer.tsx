@@ -111,16 +111,8 @@ export const WizardContainer = memo(function WizardContainer({
   useHotkeys(
     "enter",
     (e) => {
-      log.info("🔑 Enter key pressed", {
-        isChipInputFocused: isChipInputFocused(),
-        targetTag: (e.target as HTMLElement)?.tagName,
-        isValid: currentQuestionValidation.isValid,
-        isLastQuestion,
-      });
-
       // Don't handle Enter if we're in a chip input - let the component handle it
       if (isChipInputFocused()) {
-        log.info("🚫 Enter ignored - chip input is focused");
         return;
       }
 
@@ -131,16 +123,14 @@ export const WizardContainer = memo(function WizardContainer({
         target.contentEditable === "true" ||
         target.getAttribute("role") === "combobox"
       ) {
-        log.info("🚫 Enter ignored - in textarea/contenteditable/combobox");
         return;
       }
 
       if (currentQuestionValidation.isValid) {
-        log.info("✅ Enter - advancing to next question");
         e.preventDefault();
         handleNext();
       } else {
-        log.info("❌ Enter blocked - validation issue");
+        log.error("❌ Enter blocked - validation issue");
       }
     },
     { preventDefault: false, enableOnFormTags: true },
@@ -185,17 +175,11 @@ export const WizardContainer = memo(function WizardContainer({
   useHotkeys(
     "Escape",
     (e) => {
-      log.info("🔑 Escape key pressed", {
-        isFirstQuestion,
-        allowBackNavigation,
-      });
-
       if (!isFirstQuestion && allowBackNavigation) {
-        log.info("✅ Escape - going back to previous question");
         e.preventDefault();
         handlePrevious();
       } else {
-        log.info("❌ Escape blocked - first question or not allowed");
+        log.error("❌ Escape blocked - first question or not allowed");
       }
     },
     { preventDefault: false, enableOnFormTags: true },

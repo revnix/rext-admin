@@ -444,32 +444,17 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           formData: dataToUse,
           workspaceId, // Pass workspace ID to mutation
         });
-
-        log.info("Processing mutation result:", result);
-        log.info("Result has topics:", !!result.topics);
-        log.info("Topics is array:", Array.isArray(result.topics));
-        log.info("Topics length:", result.topics?.length);
-
         if (result.topics && Array.isArray(result.topics)) {
-          log.info("Setting generated topics...");
           setGeneratedTopics(result.topics);
           setGenerationError(null); // Clear any previous errors
 
           // Auto-save session and navigate to results page
           try {
-            log.info("Generating session ID...");
             const sessionId = generateSessionId();
-            log.info("Session ID generated:", sessionId);
 
-            log.info("Saving session...");
             saveSession({
               id: sessionId,
               topics: result.topics,
-              formData: dataToUse,
-            });
-
-            log.info(`Session saved successfully: ${sessionId}`, {
-              topicCount: result.topics.length,
               formData: dataToUse,
             });
 
@@ -486,7 +471,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
               return;
             }
 
-            log.info("Navigating to workspace-scoped results page...");
             router.push(
               `/w/${workspaceSlug}/topics/create/results/${sessionId}`,
             );
@@ -545,7 +529,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
   const cancelGeneration = useCallback(() => {
     if (generateMutation.isPending) {
       // The mutation doesn't have a built-in cancel method, but we can handle it gracefully
-      log.info("Generation cancellation requested (mutation will complete)");
 
       // Clear local states for UX
       setGenerationError(null);
@@ -557,24 +540,10 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
           "Topic generation was cancelled successfully. You can start over anytime.",
         duration: 4000,
       });
-
-      // Enhanced logging for analytics
-      log.info("ANALYTICS: Topic generation cancelled", {
-        timestamp: new Date().toISOString(),
-        userAgent:
-          typeof window !== "undefined"
-            ? window.navigator.userAgent
-            : "unknown",
-        formDataSnapshot: {
-          industry: formData.industry,
-          num_topics: formData.num_topics,
-        },
-      });
     }
 
     // Legacy support: also handle direct fetch cancellation if still active
     if (abortController && currentRequestId) {
-      log.info(`Cancelling direct fetch request: ${currentRequestId}`);
       abortController.abort();
       setIsGenerating(false);
       setCurrentRequestId(null);
@@ -608,10 +577,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         formData: formData,
       });
 
-      log.info(`Manual session save successful: ${sessionId}`, {
-        topicCount: generatedTopics.length,
-      });
-
       return sessionId;
     } catch (error) {
       log.error("Failed to save session manually:", error);
@@ -630,7 +595,6 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         return;
       }
 
-      log.info(`Navigating to workspace-scoped results page: ${sessionId}`);
       router.push(`/w/${workspaceSlug}/topics/create/results/${sessionId}`);
     },
     [router, currentWorkspace],

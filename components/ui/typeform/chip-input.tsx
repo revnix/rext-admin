@@ -257,15 +257,12 @@ export function ChipInput({
           const chipAdded = addChip(inputValue);
           if (chipAdded) {
             setLastEnterTime(now);
-            log.info("🏷️ Chip added, ready for step advance on next enter");
           }
         } else {
           if (lastEnterTime && now - lastEnterTime <= 500) {
-            log.info("⏭️ Dual enter detected, advancing step");
             setLastEnterTime(null);
             onStepAdvance?.();
           } else {
-            log.info("⏭️ Enter on empty input, advancing step");
             onStepAdvance?.();
           }
         }

@@ -136,8 +136,6 @@ export function WorkspaceCreateWizard() {
 
   // Memoize SSE callbacks to prevent infinite re-renders
   const handleSSEComplete = useCallback((payload: unknown) => {
-    log.info("[Wizard] Pipeline completed", payload);
-
     // Extract brand voice from payload
     if (payload && typeof payload === "object" && "brand_voice" in payload) {
       setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
@@ -183,16 +181,12 @@ export function WorkspaceCreateWizard() {
     }
 
     try {
-      log.info("[Wizard] Creating workspace", data);
-
       // Real API call - returns workspace (operation_id is stored in currentOperation)
       const workspace = await createWorkspace({
         title: data.title,
         url: data.url,
         timezone: data.timezone,
       });
-
-      log.info("[Wizard] Workspace created", workspace);
 
       // Store workspace IDs
       setWorkspaceId(workspace.id);
@@ -201,9 +195,6 @@ export function WorkspaceCreateWizard() {
       // Get operation_id from store (set by createWorkspace)
       const operation = useWorkspaceCrudStore.getState().currentOperation;
       if (operation?.operationId) {
-        log.info("[Wizard] Setting operation ID", {
-          operationId: operation.operationId,
-        });
         setOperationId(operation.operationId); // Triggers SSE connection via useSSEChannel
       }
 
@@ -228,10 +219,6 @@ export function WorkspaceCreateWizard() {
 
     try {
       setIsSaving(true);
-      log.info("[Wizard] Saving brand voice edits", {
-        ...editedData,
-        selectedPersonaId: editedData.selectedPersonaId,
-      });
 
       // Extract selectedPersonaId from editedData
       const { selectedPersonaId: personaId, ...brandVoiceData } = editedData;
@@ -241,7 +228,6 @@ export function WorkspaceCreateWizard() {
 
       // Log selected persona for future API integration
       if (personaId) {
-        log.info("[Wizard] Selected persona ID:", personaId);
         // TODO: Add API endpoint to associate persona with workspace
         // await apiClient.workspaces.setDefaultPersona(workspaceId, personaId);
       }
@@ -264,8 +250,6 @@ export function WorkspaceCreateWizard() {
 
   // Step 3: Handle skip (navigate without saving edits)
   const handleSkipReview = () => {
-    log.info("[Wizard] Skipping brand voice review");
-
     // Invalidate workspace queries
     queryClient.invalidateQueries({ queryKey: ["workspaces"] });
 
@@ -278,7 +262,6 @@ export function WorkspaceCreateWizard() {
   // Disconnect SSE when moving to review step
   useEffect(() => {
     if (currentStep === "review" && isConnected) {
-      log.info("[Wizard] Disconnecting SSE after reaching review step");
       disconnect();
     }
   }, [currentStep, isConnected, disconnect]);
@@ -287,9 +270,6 @@ export function WorkspaceCreateWizard() {
   useEffect(() => {
     return () => {
       if (operationId) {
-        log.info("[Wizard] Cleaning up SSE connection on unmount", {
-          operationId,
-        });
         disconnect();
         clearCompletedOperation(operationId);
       }

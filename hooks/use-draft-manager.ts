@@ -197,10 +197,6 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
           toast.success(`Draft saved: ${draft.title}`, {
             description: `Progress: ${completionPercentage}% complete`,
           });
-        } else if (debug && options.isAutoSave) {
-          log.info(
-            `Auto-saved: ${draft.title} (${completionPercentage}% complete)`,
-          );
         }
 
         // Refresh drafts list
@@ -215,9 +211,6 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
           error instanceof Error &&
           error.message.includes("No changes detected")
         ) {
-          if (debug) {
-            log.info("Auto-save skipped: no changes detected");
-          }
           return null;
         }
 
@@ -358,10 +351,6 @@ export function useDraftManager(options: UseDraftManagerOptions = {}): {
             currentDraft: draft,
             lastSaved: new Date(),
           }));
-
-          if (debug) {
-            log.info("Auto-save completed:", draft.title);
-          }
         },
         // onError
         (error) => {

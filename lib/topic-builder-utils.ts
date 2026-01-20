@@ -57,8 +57,6 @@ export const detectYMYL = (industry: string): boolean => {
       ymylIndustry.toLowerCase().includes(industryLower),
   );
 
-  log.info(`YMYL Detection - Industry: "${industry}" → YMYL: ${isYMYL}`);
-
   return isYMYL;
 };
 
@@ -681,15 +679,12 @@ export const sanitizeInput = (input: string): string => {
  * @returns Serializable object ready for API transmission
  */
 export const prepareFormDataForAPI = (formData: TopicBuilderFormData) => {
-  log.info("Raw form data:", formData);
-
   // Just return the form data - backend service handles transformation
   const apiData = {
     ...formData,
     timestamp: new Date().toISOString(),
   };
 
-  log.info("Prepared API data:", apiData);
   return apiData;
 };
 

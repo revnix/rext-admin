@@ -257,16 +257,12 @@ export function FreshGenerationView({
     seoScore,
   } = state;
 
-
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
   ): Promise<void> => {
     try {
       for await (const chunk of stream) {
-        if (
-          chunk.event !== "updates" &&
-          !chunk.event.startsWith("updates|")
-        ) {
+        if (chunk.event !== "updates" && !chunk.event.startsWith("updates|")) {
           continue;
         }
 
@@ -291,8 +287,7 @@ export function FreshGenerationView({
           dispatch({
             type: "SET_GENERATED_CONTENT",
             payload:
-              updates.calculate_readability.content.final_content
-                .body_markdown,
+              updates.calculate_readability.content.final_content.body_markdown,
           });
           dispatch({
             type: "SET_INSTRUCTION_TYPE",
@@ -376,10 +371,7 @@ export function FreshGenerationView({
     await processStream(stream);
   };
 
-  const handleWorkflow = (
-    step: WorkflowStep,
-    value?: string,
-  ) => {
+  const handleWorkflow = (step: WorkflowStep, value?: string) => {
     switch (step) {
       case "KEYWORD_SELECT":
         return resumeWorkflow({
@@ -439,12 +431,11 @@ export function FreshGenerationView({
           className="mt-5"
         />
       </div>
-    )
+    );
   }
 
   const isKeywordFlow =
-    instructionType === "keyword" ||
-    instructionType === "keyword Selection";
+    instructionType === "keyword" || instructionType === "keyword Selection";
 
   const instructionViewMap: Record<string, React.ReactNode> = {
     "keyword Selection": (
@@ -470,7 +461,9 @@ export function FreshGenerationView({
       <ContentType
         instruction={instruction}
         contentTypes={contentTypes}
-        handleContentTypeSelect={(selected) => handleWorkflow("CONTENT_TYPE_SELECT", selected)}
+        handleContentTypeSelect={(selected) =>
+          handleWorkflow("CONTENT_TYPE_SELECT", selected)
+        }
       />
     ),
 
@@ -530,7 +523,6 @@ export function FreshGenerationView({
         </motion.div>
 
         {instructionViewMap[instructionType]}
-
       </div>
 
       {instructionType === "content" && finalContent && (

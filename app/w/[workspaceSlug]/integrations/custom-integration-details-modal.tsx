@@ -9,6 +9,7 @@ import { CustomIntegrationConfiguration } from "./custom-integration-configurati
 import { integrationsApiService } from "@/services/integrations-api";
 import { toast } from "sonner"; // Assuming sonner
 import { useWorkspace } from "@/providers/workspace-provider";
+import { log } from "@/lib/logger";
 
 interface CustomIntegrationDetailsModalProps {
   isOpen: boolean;
@@ -75,7 +76,7 @@ export function CustomIntegrationDetailsModal({
       onUpdate(updatedData);
       onClose();
     } catch (e) {
-      console.error("Failed to update", e);
+      log.error("Failed to update", e);
       toast.error(
         e instanceof Error ? e.message : "Failed to update integration",
       );
@@ -97,7 +98,7 @@ export function CustomIntegrationDetailsModal({
       if (onDelete) onDelete();
       // onClose(); // onDelete usually handles view clearing
     } catch (e) {
-      console.error("Failed to delete", e);
+      log.error("Failed to delete", e);
       toast.error(
         e instanceof Error ? e.message : "Failed to delete integration",
       );

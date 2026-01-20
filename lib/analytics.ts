@@ -70,10 +70,6 @@ class Analytics {
     if (!this.enabled) return;
 
     this.user = user;
-    log.info("[Analytics] User identified:", {
-      id: user.id,
-      email: user.email,
-    });
 
     // Future: Call external analytics provider
     // Example: posthog.identify(user.id, { email: user.email, name: user.name });
@@ -94,11 +90,6 @@ class Analytics {
         user_id: this.user?.id,
       },
     };
-
-    // Log to console in development
-    if (process.env.NODE_ENV === "development") {
-      log.info("[Analytics] Event tracked:", eventData);
-    }
 
     // Future: Send to external analytics provider
     // Example: posthog.capture(event, eventData.properties);
@@ -123,7 +114,6 @@ class Analytics {
    */
   reset() {
     this.user = null;
-    log.info("[Analytics] User session reset");
 
     // Future: Reset external analytics
     // Example: posthog.reset();

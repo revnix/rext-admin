@@ -13,9 +13,6 @@ const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    log.info("[Auth] Refreshing access token...");
-    log.info("[Auth] Refresh token available:", !!token.refreshToken);
-
     if (!token.refreshToken) {
       log.error("[Auth] No refresh token available");
       throw new Error("No refresh token available");
@@ -24,7 +21,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const refreshPayload = {
       refresh_token: token.refreshToken,
     };
-    log.info("[Auth] Refresh request payload:", refreshPayload);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
@@ -36,8 +32,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
         body: JSON.stringify(refreshPayload),
       },
     );
-
-    log.info("[Auth] Refresh response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -58,7 +52,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     }
 
     const refreshResponseText = await response.text();
-    log.info("[Auth] Refresh response body:", refreshResponseText);
 
     const refreshResponseData = await (async () => {
       try {
@@ -69,22 +62,13 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       }
     })();
 
-    log.info("[Auth] Parsed refresh response:", refreshResponseData);
-
     // Extract data from wrapped response
     const refreshedTokens = refreshResponseData.data || refreshResponseData;
-
-    log.info("[Auth] Extracted refresh tokens:", {
-      hasAccessToken: !!refreshedTokens.access_token,
-      hasRefreshToken: !!refreshedTokens.refresh_token,
-    });
 
     if (!refreshedTokens.access_token) {
       log.error("[Auth] No access token in refresh response");
       throw new Error("No access token in refresh response");
     }
-
-    log.info("[Auth] Access token refreshed successfully");
 
     return {
       ...token,
@@ -155,15 +139,6 @@ export default {
             log.error("[AuthJS] No user in response");
             return null;
           }
-
-          log.info(
-            "[AuthJS] User authenticated:",
-            data.user.email,
-            "Remember me:",
-            rememberMe,
-            "Roles:",
-            data.user.roles,
-          );
 
           // Determine primary role based on hierarchy
           // Support both `roles: string[]` and `role: string` shapes; normalize casing
@@ -239,32 +214,9 @@ export default {
             ? 30 * 24 * 60 * 60 * 1000 // 30 days
             : 24 * 60 * 60 * 1000; // 24 hours
           token.accessTokenExpires = Date.now() + expiryDuration;
-          log.info(
-            "[Auth] Remember me:",
-            token.rememberMe,
-            "Expires in:",
-            expiryDuration / (24 * 60 * 60 * 1000),
-            "days",
-            "Role:",
-            token.role,
-          );
         } else {
           // For OAuth providers, use dedicated OAuth login endpoint
           try {
-            log.info("[AuthJS] OAuth sign-in with", account?.provider);
-            log.info("[AuthJS] User data from OAuth provider:", {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-            });
-            log.info("[AuthJS] Account data from OAuth provider:", {
-              provider: account?.provider,
-              providerAccountId: account?.providerAccountId,
-              type: account?.type,
-              expires_at: account?.expires_at,
-            });
-
             const oauthPayload = {
               provider: account?.provider,
               provider_account_id: account?.providerAccountId,
@@ -279,11 +231,6 @@ export default {
                 : null,
             };
 
-            log.info(
-              "[AuthJS] OAuth payload being sent to backend:",
-              oauthPayload,
-            );
-
             // Call dedicated OAuth login endpoint
             // This handles: login existing user, link to existing email, or create new user
             const oauthResponse = await fetch(
@@ -293,12 +240,6 @@ export default {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(oauthPayload),
               },
-            );
-
-            log.info("[AuthJS] OAuth response status:", oauthResponse.status);
-            log.info(
-              "[AuthJS] OAuth response headers:",
-              Object.fromEntries(oauthResponse.headers.entries()),
             );
 
             if (!oauthResponse.ok) {
@@ -331,7 +272,6 @@ export default {
             }
 
             const oauthResponseText = await oauthResponse.text();
-            log.info("[AuthJS] OAuth response body:", oauthResponseText);
 
             const oauthResponseData = await (async () => {
               try {
@@ -349,12 +289,8 @@ export default {
               return token;
             }
 
-            log.info("[AuthJS] Parsed OAuth response data:", oauthResponseData);
-
             // Extract data from wrapped response
             const oauthData = oauthResponseData.data || oauthResponseData;
-
-            log.info("[AuthJS] Extracted OAuth data:", oauthData);
 
             if (!oauthData.user) {
               log.error("[AuthJS] No user object in OAuth response");
@@ -383,13 +319,6 @@ export default {
             token.permissions = oauthData.user.permissions || [];
             // Set token expiry for OAuth logins (24 hours)
             token.accessTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
-
-            log.info(
-              "[AuthJS] OAuth login successful for user:",
-              token.id,
-              "with role:",
-              token.role,
-            );
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
@@ -405,10 +334,6 @@ export default {
             token.email = user.email;
             token.name = user.name;
             token.picture = user.image;
-            log.info(
-              "[AuthJS] Falling back to OAuth-only data for user:",
-              token.email,
-            );
           }
         }
       }
@@ -430,7 +355,6 @@ export default {
       }
 
       // Access token has expired, try to refresh it
-      log.info("[Auth] Access token expired, attempting refresh...");
       return await refreshAccessToken(token);
     },
     async session({ session, token }) {

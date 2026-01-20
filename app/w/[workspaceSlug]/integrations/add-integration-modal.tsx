@@ -28,11 +28,12 @@ import {
   integrationSchema,
   type IntegrationFormData,
 } from "@/schemas/integration-schemas";
+import { log } from "@/lib/logger";
 
 interface AddIntegrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (integration: any) => void;
+  onAdd: (integration: unknown) => void;
 }
 
 export function AddIntegrationModal({
@@ -70,7 +71,7 @@ export function AddIntegrationModal({
       form.reset();
       onClose();
     } catch (error: any) {
-      console.error("Failed to add integration", error);
+      log.error("Failed to add integration", error);
       toast.error(error.message || "Failed to add integration");
     }
   };

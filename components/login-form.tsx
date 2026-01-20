@@ -74,8 +74,6 @@ export function LoginForm({
     setError("");
 
     try {
-      log.info("[AuthJS] Signing in user:", email, "Remember me:", rememberMe);
-
       // Try to get specific error message from backend first
       // This allows us to show detailed errors like "Account locked" before NextAuth processes it
       const backendResponse = await fetch(
@@ -106,8 +104,6 @@ export function LoginForm({
         redirect: false,
         rememberMe: rememberMe.toString(),
       });
-
-      log.info("[AuthJS] Sign in result:", result);
 
       if (result?.error) {
         setError("Authentication failed. Please try again.");

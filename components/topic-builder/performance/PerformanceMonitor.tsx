@@ -21,12 +21,6 @@ export const PerformanceMonitor = memo(function PerformanceMonitor({
     return () => {
       const unmountTime = performance.now();
       const totalLifetime = unmountTime - mountTime.current;
-
-      if (process.env.NODE_ENV === "development") {
-        log.info(
-          `[Performance] ${componentName} lifetime: ${totalLifetime.toFixed(2)}ms`,
-        );
-      }
     };
   }, [componentName]);
 

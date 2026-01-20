@@ -100,8 +100,6 @@ export function useContextualSuggestions({
     const industryChanged = previousFormData?.industry !== formData?.industry;
 
     if (industryChanged) {
-      log.info("🔄 Contextual suggestions updating due to form data changes");
-
       // Update audience suggestions if industry changed
       if (industryChanged && formData.industry) {
         updateAudienceSuggestions(formData.industry);

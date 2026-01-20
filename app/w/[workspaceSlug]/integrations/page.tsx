@@ -20,7 +20,7 @@ import {
   integrationsApiService,
   type Integration,
 } from "@/services/integrations-api";
-import { toast } from "sonner"; // Assuming sonner is used, or alert
+import { log } from "@/lib/logger";
 
 export default function IntegrationsPage() {
   const { workspace, workspaceSlug } = useWorkspace();
@@ -38,15 +38,16 @@ export default function IntegrationsPage() {
       const data = await integrationsApiService.listIntegrations(workspace.id);
       setIntegrations(data);
     } catch (error) {
-      console.error("Failed to fetch integrations", error);
+      log.error("Failed to fetch integrations", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    if (!workspace?.id) return;
     fetchIntegrations();
-  }, [workspace?.id]);
+  }, [workspace?.id, fetchIntegrations]);
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
@@ -70,7 +71,7 @@ export default function IntegrationsPage() {
       );
       setViewIntegration(fullDetails);
     } catch (e) {
-      console.error("Failed to fetch integration details", e);
+      log.error("Failed to fetch integration details", e);
       setViewIntegration(integration); // Fallback
     }
   };
@@ -111,6 +112,7 @@ export default function IntegrationsPage() {
           setViewIntegration(updated);
         }
       } catch (e) {
+        log.error("Failed to fetch integration details", e);
         setViewIntegration(updated);
       }
     }

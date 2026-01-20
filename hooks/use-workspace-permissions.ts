@@ -112,8 +112,6 @@ export function useRefreshWorkspacePermissions() {
 
   const refreshPermissions = async (workspaceId: string) => {
     try {
-      log.info("Refreshing workspace permissions", { workspaceId });
-
       // Fetch fresh permissions from API
       const result = await apiClient.workspaces.refreshPermissions(workspaceId);
 
@@ -125,11 +123,6 @@ export function useRefreshWorkspacePermissions() {
         workspaceId: result.workspace_id,
         role: result.user_role, // Updated for Phase 1 backend response
         permissions: result.permissions,
-      });
-
-      log.info("Workspace permissions refreshed successfully", {
-        workspaceId,
-        permissionCount: result.permissions.length,
       });
 
       return result;

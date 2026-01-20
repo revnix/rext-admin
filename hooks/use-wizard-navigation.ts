@@ -291,21 +291,13 @@ export function useWizardNavigation({
 
   // Navigation: Next
   const onNext = useCallback((): boolean => {
-    log.info(
-      "🔄 onNext called, currentQuestionIndex:",
-      currentQuestionIndex,
-      "questions.length:",
-      questions.length,
-    );
     const validation = validateCurrentQuestion();
     if (!validation.isValid) {
-      log.info("❌ Validation failed:", validation.errors);
       return false;
     }
 
     if (currentQuestionIndex >= questions.length - 1) {
       // Complete the wizard
-      log.info("🏁 Last question reached, completing wizard");
       setIsSubmitting(true);
       onComplete(formData);
       return true;
@@ -352,10 +344,6 @@ export function useWizardNavigation({
         setReturnToReviewIndex(reviewIndex);
         setOriginalFormData(structuredClone(formData)); // Deep clone for comparison
         setCurrentQuestionIndex(questionIndex);
-        log.info(
-          "🔄 Entered edit mode, returning to review index:",
-          reviewIndex,
-        );
       }
     },
     [questions, formData],
@@ -368,8 +356,6 @@ export function useWizardNavigation({
       const hasChanges = originalFormData
         ? JSON.stringify(formData) !== JSON.stringify(originalFormData)
         : false;
-
-      log.info("💾 Save and return - hasChanges:", hasChanges);
 
       setNavigationMode("normal");
       setCurrentQuestionIndex(returnToReviewIndex);
@@ -401,21 +387,6 @@ export function useWizardNavigation({
       announceToScreenReader(announcement);
     }
   }, [currentQuestion, progress.current, progress.total]);
-
-  // Log contextual suggestions updates for debugging (Task 7.3)
-  useEffect(() => {
-    if (contextualSuggestions.audienceSuggestions.length > 0) {
-      log.info("🎯 Contextual suggestions updated:", {
-        audienceSuggestions: contextualSuggestions.audienceSuggestions,
-        industry: formData.industry,
-        purpose: formData.purpose,
-      });
-    }
-  }, [
-    contextualSuggestions.audienceSuggestions,
-    formData.industry,
-    formData.purpose,
-  ]);
 
   return {
     // Form state

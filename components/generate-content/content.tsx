@@ -252,6 +252,7 @@ export function ContentEditor({
                 <div className="flex items-center gap-6">
                   <div className="relative flex items-center justify-center shrink-0">
                     <svg className="w-20 h-20 transform -rotate-90">
+                      <title>{Math.round((seoScore as unknown as {score: number}).score || 0)}</title>
                       <circle
                         cx="40"
                         cy="40"
@@ -270,23 +271,23 @@ export function ContentEditor({
                         fill="transparent"
                         strokeDasharray={226.2}
                         strokeDashoffset={
-                          226.2 * (1 - ((seoScore as any).score || 0) / 100)
+                          226.2 * (1 - ((seoScore as unknown as {score: number}).score || 0) / 100)
                         }
                         strokeLinecap="round"
                         className="text-emerald-900 transition-all duration-1000"
                       />
                     </svg>
                     <span className="absolute text-xl font-bold text-slate-800">
-                      {Math.round((seoScore as any).score || 0)}
+                      {Math.round((seoScore as unknown as {score: number}).score || 0)}
                     </span>
                   </div>
 
                   <div className="space-y-0.5">
                     <div className="text-lg font-bold text-slate-900 leading-tight">
-                      {(seoScore as any).label || "Almost Perfect!"}
+                      {(seoScore as unknown as {label: string}).label || "Almost Perfect!"}
                     </div>
                     <div className="text-sm text-slate-500">
-                      {(seoScore as any).all_issues.length || 3} minor
+                      {(seoScore as unknown as {all_issues: {label: string}[]}).all_issues.length || 3} minor
                       optimizations left
                     </div>
                   </div>
@@ -294,12 +295,12 @@ export function ContentEditor({
 
                 <div className="space-y-3 pt-2">
                   {(
-                    (seoScore as any).checks || [
+                    (seoScore as unknown as {checks: {label: string, status: string}[]}).checks || [
                       { label: "Focus keyword in H1", status: "success" },
                       { label: "Meta description length", status: "success" },
                       { label: "Keyword density (0.8%)", status: "warning" },
                     ]
-                  ).map((check: any, i: number) => (
+                  ).map((check: {label: string, status: string}, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
                       {check.status === "success" ? (
                         <CheckCircle2
