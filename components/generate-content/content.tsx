@@ -15,7 +15,7 @@ import {
   Send,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
@@ -27,6 +27,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
+import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
+import { Integration, integrationsApiService } from "@/services/integrations-api";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -119,12 +121,18 @@ export function ContentEditor({
   const score = values?.review?.readability_metrics?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
-  const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [successType, setSuccessType] = useState<"publish" | "save">("publish");
+  const [errorType, setErrorType] = useState<"publish" | "save">("publish");
+  const [hasSaved, setHasSaved] = useState(false);
+  const [hasPublished, setHasPublished] = useState(false);
+  const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
+  const [isLoading,] = useState(false);
 
   const getContentPayload = () => ({
     title: displayTitle,
@@ -171,14 +179,18 @@ export function ContentEditor({
     if (!workspaceId) return;
     try {
       setIsPublishing(true);
-      const data = await apiClient.content.publish(workspaceId, getContentPayload());
-
+      await apiClient.content.publish(workspaceId, getContentPayload());
       setSuccessType("publish");
       setShowSuccessModal(true);
-      console.log("Publish success:", data);
+      setHasPublished(true);
+      setHasSaved(true);
     } catch (error: any) {
-      toast.error(error.message || "Publish failed");
-      console.error("Publish failed:", error);
+      setErrorType("publish");
+      setErrorMessage(error.message || "Failed to publish content. Please try again.");
+      if (error.message === "No active WordPress sites found in this workspace. Please connect a site before publishing.") {
+        setIntegrationModalOpen(true);
+      }
+      setShowErrorModal(true);
     } finally {
       setIsPublishing(false);
     }
@@ -188,17 +200,33 @@ export function ContentEditor({
     if (!workspaceId) return;
     try {
       setIsSaving(true);
-      const data = await apiClient.content.save(workspaceId, getContentPayload());
-
+      await apiClient.content.save(workspaceId, getContentPayload());
       setSuccessType("save");
       setShowSuccessModal(true);
-      console.log("Save success:", data);
+      setHasSaved(true);
     } catch (error: any) {
-      toast.error(error.message || "Save failed");
-      console.error("Save failed:", error);
+      setErrorType("save");
+      setErrorMessage(error.message || "Failed to save content. Please try again.");
+      setShowErrorModal(true);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const fetchIntegrations = useCallback(async () => {
+    if (!workspaceId) return;
+    try {
+      await integrationsApiService.listIntegrations(workspaceId);
+    } catch (error) {
+      console.error("Failed to fetch integrations", error);
+    } finally {
+    }
+  }, [workspaceId]);
+
+  const handleIntegrationAdded = async () => {
+    await fetchIntegrations();
+    publishContent();
+    setIntegrationModalOpen(false);
   };
 
   return (
@@ -310,19 +338,20 @@ export function ContentEditor({
             </Button>
             <Button
               onClick={saveContent}
-              disabled={isSaving || isPublishing}
+              disabled={isSaving || isPublishing || hasSaved}
               variant="ghost"
               size="sm"
               className={`h-9 !px-1 text-xs font-bold transition-all`}
             >
-              <Save size={14} className={isSaving ? "animate-spin" : ""} /> {isSaving ? "Saving..." : "Save"}
+              <Save size={14} className={isSaving ? "animate-pulse" : ""} /> {isSaving ? "Saving..." : hasSaved ? "Saved" : "Save"}
             </Button>
             <Button
               onClick={publishContent}
-              disabled={isPublishing || isSaving}
+              disabled={isPublishing || isSaving || hasPublished}
               size="sm"
               className="h-9 px-4 text-xs font-bold">
-              <Send size={14} className={cn("mr-2", isPublishing ? "animate-pulse" : "")} /> {isPublishing ? "Publishing..." : "Publish"}
+              <Send size={14} className={cn("mr-2", isPublishing ? "animate-pulse" : "")} />{" "}
+              {isPublishing ? "Publishing..." : hasPublished ? "Published" : "Publish"}
             </Button>
           </div>
           {/* Success Modal */}
@@ -347,6 +376,31 @@ export function ContentEditor({
                   className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
                 >
                   Great, thanks!
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Error Modal */}
+          <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
+            <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-[2rem] p-8">
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-red-500" />
+                </div>
+                <div className="space-y-2">
+                  <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight">
+                    {errorType === "publish" ? "Publish" : "Save"} Failed
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-500 text-base">
+                    {errorMessage}
+                  </DialogDescription>
+                </div>
+                <Button
+                  onClick={() => setShowErrorModal(false)}
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
+                >
+                  Try Again
                 </Button>
               </div>
             </DialogContent>
@@ -456,6 +510,15 @@ export function ContentEditor({
           </section>
         </aside>
       </div>
+      <AddIntegrationModal
+        isOpen={integrationModalOpen}
+        onClose={() => {
+          setIntegrationModalOpen(false);
+          setShowErrorModal(false);
+        }
+        }
+        onAdd={handleIntegrationAdded}
+      />
     </div>
   );
 }

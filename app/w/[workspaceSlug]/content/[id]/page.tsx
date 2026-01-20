@@ -4,7 +4,6 @@ import { ArrowLeft, Loader2, Info, Globe, Tag, Clock, BarChart, AlertCircle } fr
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ContentEditor } from "@/components/content/content-editor";
 import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { ProgressTimeline } from "@/components/content-generation/progress-timeline";
 import { PageLayout } from "@/components/page-layout";
@@ -31,6 +30,7 @@ import type { GenerationStep } from "@/types/content-generation-progress";
 import type { SSEEvent } from "@/types/sse";
 import type { ContentItem, ContentMetadataSchema, ContentSEODataSchema } from "@/types/content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
+import { ContentEditor } from "@/components/generate-content/content";
 
 const contentLogger = log.forComponent("ContentDetailPage");
 
@@ -351,7 +351,7 @@ export default function WorkspaceContentDetailPage({
     review: {
       seo_score: content.seo_data?.content_seo_score || 0,
       readability_metrics: {
-        flesch_reading_ease: content.seo_data?.content_readability_score || 0,
+        flesch_reading_ease: content.seo_data?.readability_score || 0,
         flesch_kincaid_grade: 0,
         gunning_fog_index: 0,
         smog_index: 0,
@@ -434,7 +434,6 @@ export default function WorkspaceContentDetailPage({
           hideTitle
         >
           <ContentEditor
-            contentId={id}
             values={advancedContent}
             generatedContent={contentMarkdown}
             seoScore={seoResult}
