@@ -39,13 +39,13 @@ export default function SubscriptionTermsPage() {
         <CardContent className="prose prose-sm dark:prose-invert max-w-none">
           <p className="lead">
             These Subscription Terms of Service govern your access to and use of
-            REXT's paid subscription services.
+            WREXT's paid subscription services.
           </p>
 
           <h2>1. Introduction</h2>
           <p>
-            Welcome to REXT! By subscribing to any REXT paid plan, you agree to
-            these Terms in addition to our main Terms of Service and Privacy
+            Welcome to WREXT! By subscribing to any WREXT paid plan, you agree
+            to these Terms in addition to our main Terms of Service and Privacy
             Policy.
           </p>
 
@@ -58,7 +58,7 @@ export default function SubscriptionTermsPage() {
 
           <h2>2. Subscription Plans</h2>
           <p>
-            REXT offers multiple subscription tiers with varying features and
+            WREXT offers multiple subscription tiers with varying features and
             usage limits. All plans include:
           </p>
           <ul>

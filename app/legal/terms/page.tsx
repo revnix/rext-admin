@@ -102,8 +102,8 @@ export default function TermsOfServicePage() {
 
           <h2>5. Intellectual Property</h2>
           <p>
-            All content, features, and functionality of REXT are owned by us and
-            are protected by copyright, trademark, and other intellectual
+            All content, features, and functionality of WREXT are owned by us
+            and are protected by copyright, trademark, and other intellectual
             property laws.
           </p>
 

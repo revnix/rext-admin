@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     title: "Rext Admin - AI-Powered Content Management Platform",
     description:
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
-    creator: "@wrext",
+    creator: "@Rext",
   },
   robots: {
     index: false, // Admin dashboard shouldn't be indexed

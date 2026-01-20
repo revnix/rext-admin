@@ -126,7 +126,7 @@ export function PreferencesTab() {
             <CardTitle>Accessibility</CardTitle>
           </div>
           <CardDescription>
-            Configure accessibility options to make WREXT more comfortable to
+            Configure accessibility options to make REXT more comfortable to
             use
           </CardDescription>
         </CardHeader>
