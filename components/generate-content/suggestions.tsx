@@ -1,5 +1,5 @@
 import type { SEORESULT } from "@/types/generate-content";
-import { Zap, Compass, TrendingUp } from "lucide-react";
+import { Zap, Compass, TrendingUp, ArrowRight } from "lucide-react";
 import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
@@ -31,14 +31,21 @@ export function SuggestionsSection({
       <button
         type="button"
         onClick={() => onSelect(primaryKeyword)}
-        className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4"
+        className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4 group transition-all duration-200 hover:border-primary/60 hover:shadow-sm"
       >
         {/* Accent bar */}
         <span className="absolute left-0 top-0 h-full w-1 bg-primary" />
-        <p>Searched Keyword</p>
-        <h1 className="text-2xl md:text-3xl font-semibold leading-snug ">
-          {primaryKeyword}
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">Searched Keyword</p>
+            <h1 className="text-2xl md:text-3xl font-semibold leading-snug text-foreground">
+              {primaryKeyword}
+            </h1>
+          </div>
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary transition-all duration-200 group-hover:translate-x-1 group-hover:bg-primary group-hover:text-primary-foreground">
+            <ArrowRight className="h-4 w-4" />
+          </div>
+        </div>
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-3">
@@ -65,10 +72,10 @@ export function SuggestionsSection({
               <SearchIntentCard
                 intent={
                   seoResult?.intent as
-                    | "informational"
-                    | "commercial"
-                    | "transactional"
-                    | "navigational"
+                  | "informational"
+                  | "commercial"
+                  | "transactional"
+                  | "navigational"
                 }
               />
             </div>
