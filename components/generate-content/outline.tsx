@@ -11,19 +11,55 @@ import {
   ChevronRight,
   ListChecks,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Input } from "../ui/input";
 
 export function OutlineDisplay({
   outline,
   isLoading,
   onApprove,
   onReject,
+  onUpdate,
 }: {
   outline: Outline;
   isLoading: boolean;
   onApprove: () => void;
   onReject: () => void;
+  onUpdate?: (outline: Outline) => void;
 }) {
+  const [editingTone, setEditingTone] = useState(false);
+  const [editingAudience, setEditingAudience] = useState(false);
+  const [tone, setTone] = useState(outline.tone);
+  const [audience, setAudience] = useState(
+    outline.target_audience?.join(", ") || "",
+  );
+
+  useEffect(() => {
+    setTone(outline.tone);
+    setAudience(outline.target_audience?.join(", ") || "");
+  }, [outline]);
+
+  const handleToneSave = () => {
+    if (onUpdate) {
+      onUpdate({ ...outline, tone });
+    }
+    setEditingTone(false);
+  };
+
+  const handleAudienceSave = () => {
+    if (onUpdate) {
+      onUpdate({
+        ...outline,
+        target_audience: audience
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      });
+    }
+    setEditingAudience(false);
+  };
   return (
     <div className="w-full max-w-4xl mx-auto py-8">
       {/* Header Section */}
@@ -60,7 +96,50 @@ export function OutlineDisplay({
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
               Tone
             </p>
-            <p className="text-sm font-bold text-slate-700">{outline.tone}</p>
+            {editingTone ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                  className="h-7 text-sm min-w-[120px]"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  onClick={handleToneSave}
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-slate-400 hover:text-slate-600"
+                  onClick={() => {
+                    setTone(outline.tone);
+                    setEditingTone(false);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group/edit">
+                <p className="text-sm font-bold text-slate-700">
+                  {outline.tone}
+                </p>
+                {onUpdate && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 transition-opacity text-slate-400 hover:text-blue-500"
+                    onClick={() => setEditingTone(true)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -77,9 +156,50 @@ export function OutlineDisplay({
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
               Audience
             </p>
-            <p className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
-              {outline.target_audience?.join(", ")}
-            </p>
+            {editingAudience ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  className="h-7 text-sm min-w-[200px]"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  onClick={handleAudienceSave}
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-slate-400 hover:text-slate-600"
+                  onClick={() => {
+                    setAudience(outline.target_audience?.join(", ") || "");
+                    setEditingAudience(false);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group/edit">
+                <p className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
+                  {outline.target_audience?.join(", ")}
+                </p>
+                {onUpdate && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 transition-opacity text-slate-400 hover:text-blue-500"
+                    onClick={() => setEditingAudience(true)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

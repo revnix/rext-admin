@@ -22,13 +22,13 @@ export function useAuthSession() {
 
   const user = session?.user
     ? {
-      id: session.user.id || "",
-      email: session.user.email || "",
-      name: session.user.name || "",
-      accessToken: session.user.accessToken || "",
-      role: session.user.role || "user",
-      permissions: session.user.permissions || [],
-    }
+        id: session.user.id || "",
+        email: session.user.email || "",
+        name: session.user.name || "",
+        accessToken: session.user.accessToken || "",
+        role: session.user.role || "user",
+        permissions: session.user.permissions || [],
+      }
     : null;
 
   // Track user activity

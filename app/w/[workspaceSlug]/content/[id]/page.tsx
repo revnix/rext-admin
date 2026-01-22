@@ -1,10 +1,9 @@
 "use client";
 
-import { ArrowLeft, Loader2, Info, Globe, Tag, Clock, BarChart, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { ProgressTimeline } from "@/components/content-generation/progress-timeline";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
@@ -16,11 +15,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
-import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -28,7 +25,6 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { useContentDetail } from "@/hooks/use-content";
 import type { GenerationStep } from "@/types/content-generation-progress";
 import type { SSEEvent } from "@/types/sse";
-import type { ContentItem, ContentMetadataSchema, ContentSEODataSchema } from "@/types/content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
 
@@ -113,7 +109,7 @@ export default function WorkspaceContentDetailPage({
     data: contentResponse,
     isLoading: isContentLoading,
     error: fetchError,
-    refetch: refetchContent
+    refetch: refetchContent,
   } = useContentDetail(workspaceId, id);
 
   const content = contentResponse?.content;
@@ -255,12 +251,10 @@ export default function WorkspaceContentDetailPage({
               <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
               <h3 className="text-lg font-semibold">Failed to load content</h3>
               <p className="text-muted-foreground">
-                We encountered an error while trying to fetch the content details.
-                Please try again or contact support.
+                We encountered an error while trying to fetch the content
+                details. Please try again or contact support.
               </p>
-              <Button onClick={() => refetchContent()}>
-                Retry Load
-              </Button>
+              <Button onClick={() => refetchContent()}>Retry Load</Button>
             </div>
           </CardContent>
         </Card>
@@ -298,18 +292,21 @@ export default function WorkspaceContentDetailPage({
   }
 
   // Construct SEORESULT object
-  const seoResult: SEORESULT | null = (content.seo_data as any)?.seo_details ? JSON.parse((content.seo_data as any).seo_details) : null;
+  const seoResult: SEORESULT | null = (content.seo_data as any)?.seo_details
+    ? JSON.parse((content.seo_data as any).seo_details)
+    : null;
 
   // Construct Outline object (mocked or extracted from content if possible)
   // For now, we can extract headings from markdown if outline is missing in API
   const outline: Outline = {
     title: content.title,
     brief: content.introduction || "",
-    sections: contentMarkdown?.match(/^#+\s+.+$/gm)?.map(h => ({
-      heading: h.replace(/^#+\s+/, ''),
-      description: "",
-      key_points: [],
-    })) || [],
+    sections:
+      contentMarkdown?.match(/^#+\s+.+$/gm)?.map((h) => ({
+        heading: h.replace(/^#+\s+/, ""),
+        description: "",
+        key_points: [],
+      })) || [],
     target_audience: [],
     tone: "",
     keywords_to_include: [],
@@ -362,7 +359,7 @@ export default function WorkspaceContentDetailPage({
       passed: true,
       missing_points: [],
       improvement_suggestions: [],
-    }
+    },
   };
 
   return (
@@ -402,29 +399,42 @@ export default function WorkspaceContentDetailPage({
                 <div className="flex items-center gap-4 mb-4">
                   <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                   <div>
-                    <h3 className="font-semibold text-lg">Generating Content...</h3>
-                    <p className="text-sm text-muted-foreground">{latestEvent?.message || "Initializing..."}</p>
+                    <h3 className="font-semibold text-lg">
+                      Generating Content...
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {latestEvent?.message || "Initializing..."}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Overall Progress</span>
+                    <span className="text-muted-foreground">
+                      Overall Progress
+                    </span>
                     <span className="font-medium">{currentProgress}%</span>
                   </div>
                   <Progress value={currentProgress} className="h-3" />
                 </div>
                 <div className="mt-4 flex items-center gap-2 text-sm">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
-                  <span className="text-muted-foreground">{isConnected ? "Connected" : "Connecting..."}</span>
+                  <div
+                    className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
+                  />
+                  <span className="text-muted-foreground">
+                    {isConnected ? "Connected" : "Connecting..."}
+                  </span>
                 </div>
               </CardContent>
             </Card>
-            <ProgressTimeline steps={timelineSteps} currentStep={latestEvent?.step} />
+            <ProgressTimeline
+              steps={timelineSteps}
+              currentStep={latestEvent?.step}
+            />
           </div>
         </PageLayout>
       ) : ["generated", "draft", "review", "published", "scheduled"].includes(
-        content.status,
-      ) ? (
+          content.status,
+        ) ? (
         <PageLayout
           title={content.title}
           description="Review and edit generated content"
@@ -445,27 +455,56 @@ export default function WorkspaceContentDetailPage({
           />
         </PageLayout>
       ) : content.status === "failed" ? (
-        <PageLayout title={content.title} description="Content generation failed" breadcrumbs={breadcrumbs}>
+        <PageLayout
+          title={content.title}
+          description="Content generation failed"
+          breadcrumbs={breadcrumbs}
+        >
           <Card>
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
                 <h3 className="text-lg font-semibold">Generation Failed</h3>
-                <p className="text-muted-foreground">There was an issue generating your content.</p>
+                <p className="text-muted-foreground">
+                  There was an issue generating your content.
+                </p>
                 <div className="flex gap-3 justify-center">
-                  <Button onClick={handleRetry} disabled={isRetrying}>{isRetrying ? "Retrying..." : "Retry Generation"}</Button>
-                  <Button variant="outline" onClick={() => router.push(workspaceRoutes.content(workspaceSlug))}>Back</Button>
+                  <Button onClick={handleRetry} disabled={isRetrying}>
+                    {isRetrying ? "Retrying..." : "Retry Generation"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      router.push(workspaceRoutes.content(workspaceSlug))
+                    }
+                  >
+                    Back
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </PageLayout>
       ) : (
-        <PageLayout title={content.title} description={`Status: ${content.status}`} breadcrumbs={breadcrumbs}>
+        <PageLayout
+          title={content.title}
+          description={`Status: ${content.status}`}
+          breadcrumbs={breadcrumbs}
+        >
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="mb-4">Content status: <span className="font-medium">{content.status}</span></p>
-              <Button variant="outline" onClick={() => router.push(workspaceRoutes.content(workspaceSlug))}>Back</Button>
+              <p className="mb-4">
+                Content status:{" "}
+                <span className="font-medium">{content.status}</span>
+              </p>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  router.push(workspaceRoutes.content(workspaceSlug))
+                }
+              >
+                Back
+              </Button>
             </CardContent>
           </Card>
         </PageLayout>

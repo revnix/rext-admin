@@ -164,7 +164,6 @@ export interface ContentSEODataSchema {
   seo_details?: string;
 }
 
-
 /**
  * Request schema for creating content
  */

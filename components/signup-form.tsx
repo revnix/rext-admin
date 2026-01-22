@@ -133,7 +133,10 @@ export function SignupForm({
             router.push(`/w/${firstWorkspace.slug}/generate_content`);
           }
         } catch (fetchError) {
-          log.error("[Signup] Failed to fetch workspaces after login:", fetchError);
+          log.error(
+            "[Signup] Failed to fetch workspaces after login:",
+            fetchError,
+          );
           // Fallback to dashboard on error
           router.push("/");
         }
@@ -281,7 +284,7 @@ export function SignupForm({
                   className={cn(
                     "h-12 rounded-2xl bg-muted/30 border-muted",
                     hasValidInvitation &&
-                    "bg-muted cursor-not-allowed opacity-75",
+                      "bg-muted cursor-not-allowed opacity-75",
                   )}
                 />
                 {errors.email && (

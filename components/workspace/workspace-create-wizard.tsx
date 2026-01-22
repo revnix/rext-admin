@@ -64,25 +64,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-    {
-      id: "details",
-      title: "Workspace Details",
-      description: "Tell us about your workspace",
-      progress: 25,
-    },
-    {
-      id: "progress",
-      title: "Analysis",
-      description: "We're analyzing your website",
-      progress: 50,
-    },
-    {
-      id: "review",
-      title: "Review & Save",
-      description: "Review and edit brand information",
-      progress: 75,
-    },
-  ];
+  {
+    id: "details",
+    title: "Workspace Details",
+    description: "Tell us about your workspace",
+    progress: 25,
+  },
+  {
+    id: "progress",
+    title: "Analysis",
+    description: "We're analyzing your website",
+    progress: 50,
+  },
+  {
+    id: "review",
+    title: "Review & Save",
+    description: "Review and edit brand information",
+    progress: 75,
+  },
+];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -455,8 +455,6 @@ export function WorkspaceCreateWizard() {
             )}
           </QuestionCard>
         );
-
-
 
       default:
         return null;

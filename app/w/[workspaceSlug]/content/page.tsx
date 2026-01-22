@@ -1,22 +1,9 @@
 "use client";
 
-import {
-  AlertCircle,
-  Calendar,
-  Copy,
-  Edit3,
-  Eye,
-  FileText,
-  Loader2,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { AlertCircle, FileText, Loader2, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ContentCard } from "@/components/content/content-card";
-import { ContentStatusBadge } from "@/components/content/content-status-badge";
-import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -28,17 +15,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DateDisplay } from "@/components/ui/topic-cell-formatters";
 import { useContent, useDeleteContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
-import type { ContentStatus } from "@/types/content";
-import { STATUS_FILTER_OPTIONS } from "@/types/content";
-import type { ContentData, RowAction } from "@/types/data-table";
 
 /**
  * ✅ Improved version:
@@ -74,7 +56,8 @@ export default function WorkspaceContentPage() {
   // Update page title and description
   usePageTitle(
     `Content Library - ${workspace?.title || "Workspace"}`,
-    `Manage published and scheduled content for ${workspace?.title || "this workspace"
+    `Manage published and scheduled content for ${
+      workspace?.title || "this workspace"
     }.`,
   );
 
@@ -101,9 +84,13 @@ export default function WorkspaceContentPage() {
     const searchLower = searchQuery.toLowerCase();
     return (
       item.title.toLowerCase().includes(searchLower) ||
-      item.content_metadata?.content_type?.toLowerCase().includes(searchLower) ||
+      item.content_metadata?.content_type
+        ?.toLowerCase()
+        .includes(searchLower) ||
       item.status.toLowerCase().includes(searchLower) ||
-      item.content_metadata?.target_platform?.toLowerCase().includes(searchLower)
+      item.content_metadata?.target_platform
+        ?.toLowerCase()
+        .includes(searchLower)
     );
   });
 
@@ -121,8 +108,9 @@ export default function WorkspaceContentPage() {
   return (
     <PageLayout
       title="Generated Content"
-      description={`View, edit, and manage AI-generated content for ${workspace?.title || "this workspace"
-        }.`}
+      description={`View, edit, and manage AI-generated content for ${
+        workspace?.title || "this workspace"
+      }.`}
       breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
@@ -199,11 +187,14 @@ export default function WorkspaceContentPage() {
                 <FileText className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">No content available</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mt-2">
-                  Content will be automatically generated and managed through your configured flows.
+                  Content will be automatically generated and managed through
+                  your configured flows.
                 </p>
                 {canCreateContent && (
                   <Button asChild className="mt-6">
-                    <Link href={workspaceRoutes.generate_content(workspaceSlug)}>
+                    <Link
+                      href={workspaceRoutes.generate_content(workspaceSlug)}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Generate Content
                     </Link>

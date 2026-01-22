@@ -1,8 +1,11 @@
 import type {
   CONTENT,
+  FinalContent,
   Outline,
   ReadabilityMeta,
+  ReadabilityMetrics,
   SEORESULT,
+  EEATData,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import {
@@ -13,6 +16,10 @@ import {
   Pencil,
   Save,
   Send,
+  Sparkles,
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
 import { useCallback, useEffect, useState } from "react";
@@ -28,7 +35,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
-import { Integration, integrationsApiService } from "@/services/integrations-api";
+import {
+  Integration,
+  integrationsApiService,
+} from "@/services/integrations-api";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -95,8 +105,29 @@ const slugify = (text: string) => {
     .trim();
 };
 
+const levelToStatus = (level: string) => {
+  switch (level) {
+    case "GOOD":
+      return "success";
+    case "WARNING":
+      return "warning";
+    default:
+      return "info";
+  }
+};
+
+const getStatusMessage = (score: number) => {
+  if (score >= 80) return "Excellent EEAT signals detected";
+  if (score >= 60) return "Good EEAT signals detected";
+  if (score >= 40) return "Moderate EEAT signals detected";
+  return "Weak EEAT signals detected";
+};
+
 export function ContentEditor({
-  values,
+  allContent,
+  readabilityScore,
+  trustScore,
+  eeatData,
   generatedContent,
   seoScore,
   isEditing,
@@ -105,7 +136,10 @@ export function ContentEditor({
   onEditToggle,
   onContentChange,
 }: {
-  values: CONTENT;
+  allContent: FinalContent;
+  readabilityScore: ReadabilityMetrics | null;
+  trustScore: number | null;
+  eeatData: EEATData | null;
   generatedContent: string;
   isEditing: boolean;
   seoScore: SEORESULT | null;
@@ -114,11 +148,10 @@ export function ContentEditor({
   onEditToggle: () => void;
   onContentChange: (val: string) => void;
 }) {
-  const fc = values?.final_content;
-  const displayTitle = fc?.title || userKeyword || "New Content Piece";
+  const tags = allContent?.tags || [];
+  const displayTitle = allContent.title;
   const body = generatedContent;
-  const tags = fc?.tags || [];
-  const score = values?.review?.readability_metrics?.flesch_reading_ease ?? 0;
+  const score = readabilityScore?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
   const workspaceId = useCurrentWorkspaceId();
@@ -132,24 +165,32 @@ export function ContentEditor({
   const [hasSaved, setHasSaved] = useState(false);
   const [hasPublished, setHasPublished] = useState(false);
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
-  const [isLoading,] = useState(false);
+
+  useEffect(() => {
+    console.log("readabilityScore", readabilityScore);
+    console.log("allContent", allContent);
+    console.log("trustScore", trustScore);
+    console.log("seoScore", seoScore);
+    console.log("generatedContent", generatedContent);
+  }, [readabilityScore, trustScore, seoScore, generatedContent, allContent]);
 
   const getContentPayload = () => ({
     title: displayTitle,
-    slug: fc?.slug || slugify(displayTitle),
+    slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
     status: "draft",
     workspace_id: workspaceId,
-    introduction: fc?.introduction || fc?.meta_description || "",
+    introduction:
+      allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
     body_html: body,
     tags: tags,
     seo_data: {
-      meta_title: fc?.meta_title || displayTitle,
-      meta_description: fc?.meta_description || "",
-      focus_keyphrase: fc?.focus_keyphrase || userKeyword,
-      keyphrase_density: fc?.keyphrase_density || 1,
-      secondary_keywords: fc?.secondary_keywords || [],
+      meta_title: allContent?.meta_title || displayTitle,
+      meta_description: allContent?.meta_description || "",
+      focus_keyphrase: allContent?.focus_keyphrase || userKeyword,
+      keyphrase_density: allContent?.keyphrase_density || 1,
+      secondary_keywords: allContent?.secondary_keywords || [],
       search_intent: ["informational"],
       seo_score: (seoScore as any)?.score || 0,
       readability_score: score,
@@ -186,8 +227,13 @@ export function ContentEditor({
       setHasSaved(true);
     } catch (error: any) {
       setErrorType("publish");
-      setErrorMessage(error.message || "Failed to publish content. Please try again.");
-      if (error.message === "No active WordPress sites found in this workspace. Please connect a site before publishing.") {
+      setErrorMessage(
+        error.message || "Failed to publish content. Please try again.",
+      );
+      if (
+        error.message ===
+        "No active WordPress sites found in this workspace. Please connect a site before publishing."
+      ) {
         setIntegrationModalOpen(true);
       }
       setShowErrorModal(true);
@@ -206,7 +252,9 @@ export function ContentEditor({
       setHasSaved(true);
     } catch (error: any) {
       setErrorType("save");
-      setErrorMessage(error.message || "Failed to save content. Please try again.");
+      setErrorMessage(
+        error.message || "Failed to save content. Please try again.",
+      );
       setShowErrorModal(true);
     } finally {
       setIsSaving(false);
@@ -298,9 +346,9 @@ export function ContentEditor({
                           {displayTitle}
                         </h1>
 
-                        {fc?.introduction && (
+                        {allContent?.introduction && (
                           <div className="text-xl text-slate-600 leading-relaxed font-medium border-l-4 border-slate-200 pl-6 my-8 italic">
-                            {fc.introduction}
+                            {allContent.introduction}
                           </div>
                         )}
                       </div>
@@ -343,15 +391,24 @@ export function ContentEditor({
               size="sm"
               className={`h-9 !px-1 text-xs font-bold transition-all`}
             >
-              <Save size={14} className={isSaving ? "animate-pulse" : ""} /> {isSaving ? "Saving..." : hasSaved ? "Saved" : "Save"}
+              <Save size={14} className={isSaving ? "animate-pulse" : ""} />{" "}
+              {isSaving ? "Saving..." : hasSaved ? "Saved" : "Save"}
             </Button>
             <Button
               onClick={publishContent}
               disabled={isPublishing || isSaving || hasPublished}
               size="sm"
-              className="h-9 px-4 text-xs font-bold">
-              <Send size={14} className={cn("mr-2", isPublishing ? "animate-pulse" : "")} />{" "}
-              {isPublishing ? "Publishing..." : hasPublished ? "Published" : "Publish"}
+              className="h-9 px-4 text-xs font-bold"
+            >
+              <Send
+                size={14}
+                className={cn("mr-2", isPublishing ? "animate-pulse" : "")}
+              />{" "}
+              {isPublishing
+                ? "Publishing..."
+                : hasPublished
+                  ? "Published"
+                  : "Publish"}
             </Button>
           </div>
           {/* Success Modal */}
@@ -363,7 +420,8 @@ export function ContentEditor({
                 </div>
                 <div className="space-y-2">
                   <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight">
-                    Content {successType === "publish" ? "Published" : "Saved"} Successfully!
+                    Content {successType === "publish" ? "Published" : "Saved"}{" "}
+                    Successfully!
                   </DialogTitle>
                   <DialogDescription className="text-slate-500 text-base">
                     {successType === "publish"
@@ -405,6 +463,7 @@ export function ContentEditor({
               </div>
             </DialogContent>
           </Dialog>
+
           <section className="space-y-4">
             <div className="flex items-center gap-2 font-bold">
               <Activity size={16} className="text-emerald-500" />
@@ -429,16 +488,17 @@ export function ContentEditor({
                 </div>
               </div>
             </div>
+
             {seoScore && (
               <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-6">
                 <h4 className="text-lg font-bold text-slate-900">
                   On-Page SEO
                 </h4>
 
+                {/* Score */}
                 <div className="flex items-center gap-6">
                   <div className="relative flex items-center justify-center shrink-0">
                     <svg className="w-20 h-20 transform -rotate-90">
-                      <title>{Math.round((seoScore as unknown as { score: number }).score || 0)}</title>
                       <circle
                         cx="40"
                         cy="40"
@@ -457,55 +517,105 @@ export function ContentEditor({
                         fill="transparent"
                         strokeDasharray={226.2}
                         strokeDashoffset={
-                          226.2 * (1 - ((seoScore as unknown as { score: number }).score || 0) / 100)
+                          226.2 * (1 - seoScore.seo_health_score / 100)
                         }
                         strokeLinecap="round"
                         className="text-emerald-900 transition-all duration-1000"
                       />
                     </svg>
                     <span className="absolute text-xl font-bold text-slate-800">
-                      {Math.round((seoScore as unknown as { score: number }).score || 0)}
+                      {Math.round(seoScore.seo_health_score)}
                     </span>
                   </div>
 
                   <div className="space-y-0.5">
                     <div className="text-lg font-bold text-slate-900 leading-tight">
-                      {(seoScore as unknown as { label: string }).label || "Almost Perfect!"}
+                      Almost Perfect!
                     </div>
                     <div className="text-sm text-slate-500">
-                      {(seoScore as unknown as { all_issues: { label: string }[] }).all_issues.length || 3} minor
-                      optimizations left
+                      {seoScore.issue_summary.warnings} warnings ·{" "}
+                      {seoScore.issue_summary.errors} errors
                     </div>
                   </div>
                 </div>
 
+                {/* Issues */}
                 <div className="space-y-3 pt-2">
-                  {(
-                    (seoScore as unknown as { checks: { label: string, status: string }[] }).checks || [
-                      { label: "Focus keyword in H1", status: "success" },
-                      { label: "Meta description length", status: "success" },
-                      { label: "Keyword density (0.8%)", status: "warning" },
-                    ]
-                  ).map((check: { label: string, status: string }, i: number) => (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      {check.status === "success" ? (
-                        <CheckCircle2
-                          size={18}
-                          className="text-emerald-900 shrink-0"
-                        />
-                      ) : (
-                        <AlertCircle
-                          size={18}
-                          className="text-orange-500 shrink-0"
-                        />
-                      )}
-                      <span className="text-slate-600 font-medium leading-tight">
-                        {check.label}
-                      </span>
-                    </div>
-                  ))}
+                  {seoScore.issues.map(
+                    (
+                      issue: {
+                        type: string;
+                        message: string;
+                        level: string;
+                      },
+                      i: number,
+                    ) => {
+                      const status = levelToStatus(issue.level);
+
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center gap-3 text-sm"
+                        >
+                          {status === "success" ? (
+                            <CheckCircle2
+                              size={18}
+                              className="text-emerald-900 shrink-0"
+                            />
+                          ) : status === "warning" ? (
+                            <AlertCircle
+                              size={18}
+                              className="text-orange-500 shrink-0"
+                            />
+                          ) : (
+                            <AlertCircle
+                              size={18}
+                              className="text-slate-400 shrink-0"
+                            />
+                          )}
+
+                          <span className="leading-tight">{issue.message}</span>
+                        </div>
+                      );
+                    },
+                  )}
                 </div>
               </div>
+            )}
+
+            {eeatData && (
+              <>
+                <hr />
+
+                <div className="flex items-center gap-2 font-bold">
+                  <Sparkles size={16} className="text-blue-500" />
+                  <h4 className="text-xs uppercase tracking-widest text-slate-500">
+                    EEAT Assistant
+                  </h4>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-4">
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-bold text-slate-900 leading-tight">
+                      Trust Score
+                    </h4>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-4xl font-bold text-emerald-900 tracking-tight">
+                      {eeatData.score}%
+                    </span>
+                    <TrendingUp
+                      size={20}
+                      className="text-emerald-600 shrink-0"
+                    />
+                  </div>
+
+                  <div className="text-[13px] text-slate-500 font-medium">
+                    {getStatusMessage(eeatData.score)}
+                  </div>
+                </div>
+              </>
             )}
           </section>
         </aside>
@@ -515,8 +625,7 @@ export function ContentEditor({
         onClose={() => {
           setIntegrationModalOpen(false);
           setShowErrorModal(false);
-        }
-        }
+        }}
         onAdd={handleIntegrationAdded}
       />
     </div>

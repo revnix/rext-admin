@@ -108,7 +108,6 @@ export function GuestGuard({
     }
   }, [isLoading, isAuthenticated, redirectTo, router]);
 
-
   // Show loading state
   if (isLoading || isChecking) {
     return (

@@ -89,10 +89,26 @@ export type ContentReview = {
   seo_score: number;
   readability_metrics: ReadabilityMetrics;
   eeat_score?: number;
+  eeat_data?: EEATData;
   plagiarism_score?: number;
   passed: boolean;
   missing_points: string[];
   improvement_suggestions: string[];
+};
+
+export type EEATData = {
+  score: number;
+  author_credibility: number;
+  expertise: number;
+  authority: number;
+  trustworthiness: number;
+  citations_references: number;
+  content_accuracy: number;
+  freshness: number;
+  transparency: number;
+  spam_signals: number;
+  technical_trust: number;
+  reasoning: string;
 };
 
 export type ContentImage = {
@@ -145,14 +161,14 @@ export type CONTENT = {
   review?: ContentReview;
   final_content?: FinalContent;
   status:
-  | "planning"
-  | "drafting"
-  | "reviewing"
-  | "optimizing"
-  | "completed"
-  | "failed"
-  | "approved"
-  | "rejected";
+    | "planning"
+    | "drafting"
+    | "reviewing"
+    | "optimizing"
+    | "completed"
+    | "failed"
+    | "approved"
+    | "rejected";
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -237,10 +253,10 @@ export type WREXT = {
 
 export type SearchIntentState = {
   primary_intent:
-  | "informational"
-  | "commercial"
-  | "transactional"
-  | "navigational";
+    | "informational"
+    | "commercial"
+    | "transactional"
+    | "navigational";
   secondary_intents: string[];
   confidence: number;
   intent_signals: Record<string, number>;
@@ -281,11 +297,11 @@ export type KeywordDifficultyState2 = {
 
 export type ContentPatternState = {
   content_type:
-  | "blog"
-  | "listicle"
-  | "landing_page"
-  | "documentation"
-  | "comparison";
+    | "blog"
+    | "listicle"
+    | "landing_page"
+    | "documentation"
+    | "comparison";
   avg_word_count: number;
   common_headings: string[];
   heading_depth: number;
@@ -369,6 +385,18 @@ export type SEOStrategyState = {
   content_angle: string;
 };
 
+export type Issue = {
+  type: string;
+  message: string;
+  level: string;
+};
+
+export type IssueSummary = {
+  critical: number;
+  errors: number;
+  warnings: number;
+};
+
 export type SEORESULT = {
   extracted_keywords?: ExtractedKeywordsState;
   keyword_difficulty?: KeywordDifficultyState | number;
@@ -382,6 +410,9 @@ export type SEORESULT = {
   seo_strategy?: SEOStrategyState;
   seo_opportunity?: SEOOpportunityState;
   volume?: string;
+  seo_health_score: number;
+  issue_summary: IssueSummary;
+  issues: Issue[];
 };
 
 export type AppStep =
@@ -412,7 +443,6 @@ export interface PageState {
   seoResult: SEORESULT | null;
   serp: SERPEngineState | null;
   competitors: Competitor[] | null;
-  // Temporary storage for UI-driving state extracted from potentially deep graph state
   currentContentState: CONTENT | null;
   interrupt: Interrupt[] | null;
   contentTypes: string[];
@@ -420,8 +450,11 @@ export interface PageState {
   isLoading: boolean;
   isManualLoading: boolean;
   completedNodes: string[];
-  finalContent: CONTENT | null;
+  readabilityScore: ReadabilityMetrics | null;
   seoScore: SEORESULT | null;
+  trustScore: number | null;
+  eeatData: EEATData | null;
+  allContent: FinalContent;
 }
 
 export type PageAction =
@@ -433,8 +466,11 @@ export type PageAction =
   | { type: "SET_REJECTED_REASON"; payload: string }
   | { type: "SET_IS_EDITING"; payload: boolean }
   | { type: "SET_GENERATED_CONTENT"; payload: string }
-  | { type: "SET_FINAL_CONTENT"; payload: CONTENT }
+  | { type: "SET_ALL_CONTENT"; payload: FinalContent }
+  | { type: "SET_READABLITY_SCORE"; payload: number }
+  | { type: "SET_TRUST_SCORE"; payload: number }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
+  | { type: "SET_EEAT_DATA"; payload: EEATData }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
   | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
   | { type: "RESET_FOR_REJECT" }
@@ -443,7 +479,9 @@ export type PageAction =
   | { type: "SET_LOADING_STATUS"; payload: string }
   | { type: "SET_MANUAL_LOADING"; payload: boolean }
   | { type: "ADD_COMPLETED_NODE"; payload: string }
-  | { type: "CLEAR_COMPLETED_NODES" };
+  | { type: "ADD_COMPLETED_NODE"; payload: string }
+  | { type: "CLEAR_COMPLETED_NODES" }
+  | { type: "SET_OUTLINE"; payload: ContentOutline };
 
 export type StreamInput = {
   serp_payload?: {

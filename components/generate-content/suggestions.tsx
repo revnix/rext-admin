@@ -72,10 +72,10 @@ export function SuggestionsSection({
               <SearchIntentCard
                 intent={
                   seoResult?.intent as
-                  | "informational"
-                  | "commercial"
-                  | "transactional"
-                  | "navigational"
+                    | "informational"
+                    | "commercial"
+                    | "transactional"
+                    | "navigational"
                 }
               />
             </div>

@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { AuthGuard } from "@/components/auth-guard";
-import { EnhancedDashboardEmptyState } from "@/components/dashboard/enhanced-dashboard-empty-state";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { ContentPipeline } from "@/components/dashboard/revamp/content-pipeline";
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
@@ -41,7 +40,13 @@ export default function DashboardPage() {
         router.push(`/w/${workspaceList[0].slug}/generate_content`);
       }
     }
-  }, [isLoadingWorkspaces, hasWorkspaces, currentWorkspace, workspaceList, router]);
+  }, [
+    isLoadingWorkspaces,
+    hasWorkspaces,
+    currentWorkspace,
+    workspaceList,
+    router,
+  ]);
 
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);

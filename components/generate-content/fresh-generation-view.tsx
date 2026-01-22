@@ -61,8 +61,25 @@ const initialState: PageState = {
   loadingStatus: "",
   isManualLoading: false,
   completedNodes: [],
-  finalContent: null,
+  readabilityScore: null,
   seoScore: null,
+  trustScore: null,
+  eeatData: {
+    score: 65,
+    author_credibility: 20,
+    expertise: 70,
+    authority: 40,
+    trustworthiness: 60,
+    citations_references: 10,
+    content_accuracy: 75,
+    freshness: 80,
+    transparency: 10,
+    spam_signals: 85,
+    technical_trust: 100,
+    reasoning:
+      "The content demonstrates a solid level of expertise in SEO practices specific to Next.js, evidenced by detailed descriptions of relevant technical features and best practices. However, there is no identifiable author, which severely impacts author credibility. The information appears technically accurate and fairly up-to-date, but lacks citations to authoritative sources that would enhance trustworthiness and authority. The technical aspects of the site are sound (HTTPS, no spammy content), and there are minimal spam signals given the absence of keyword stuffing. Overall, the lack of author information and citations adversely affects the overall credibility and trust score.",
+  },
+  allContent: null,
 };
 
 function reducer(state: PageState, action: PageAction): PageState {
@@ -85,18 +102,29 @@ function reducer(state: PageState, action: PageAction): PageState {
     case "SET_GENERATED_CONTENT":
       if (state.generatedContent === action.payload) return state;
       return { ...state, generatedContent: action.payload };
-    case "SET_FINAL_CONTENT":
-      if (state.finalContent === action.payload) return state;
-      return { ...state, finalContent: action.payload };
+    case "SET_ALL_CONTENT":
+      if (state.allContent === action.payload) return state;
+      return { ...state, allContent: action.payload };
+    case "SET_READABLITY_SCORE":
+      if (state.readabilityScore === action.payload) return state;
+      return { ...state, readabilityScore: action.payload };
+    case "SET_TRUST_SCORE":
+      if (state.trustScore === action.payload) return state;
+      return { ...state, trustScore: action.payload };
     case "SET_SEO_SCORE":
       if (state.seoScore === action.payload) return state;
       return { ...state, seoScore: action.payload };
+    case "SET_EEAT_DATA":
+      if (state.eeatData === action.payload) return state;
+      return { ...state, eeatData: action.payload };
     case "RESET_FOR_REJECT":
       return { ...state, instruction: "", step: "outline-reject" };
     case "SUBMIT_REJECT_REASON":
       return { ...state, step: "outline", rejectedReason: "", outline: null };
     case "SET_INTERRUPT":
       return { ...state, interrupt: action.payload };
+    case "SET_OUTLINE":
+      return { ...state, outline: action.payload };
     case "SET_LOADING_STATUS": {
       const nextStatus = action.payload;
       const prevStatus = state.loadingStatus;
@@ -248,8 +276,11 @@ export function FreshGenerationView({
     isManualLoading,
     completedNodes,
     isLoading,
-    finalContent,
+    readabilityScore,
     seoScore,
+    trustScore,
+    eeatData,
+    allContent,
   } = state;
 
   const processStream = async (
@@ -263,11 +294,16 @@ export function FreshGenerationView({
 
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
-        console.log("updates", updates)
-        if (
-          updates?.calculate_on_page_seo?.content?.review?.on_page_metrics
-            ?.score
-        ) {
+        console.log("updates", updates);
+
+        if (updates?.generate_content?.content?.final_content) {
+          dispatch({
+            type: "SET_ALL_CONTENT",
+            payload: updates.generate_content.content.final_content,
+          });
+        }
+
+        if (updates?.calculate_on_page_seo?.content?.review?.on_page_metrics) {
           dispatch({
             type: "SET_SEO_SCORE",
             payload:
@@ -275,15 +311,34 @@ export function FreshGenerationView({
           });
         }
 
-        if (updates?.calculate_readability?.content?.final_content) {
+        if (updates?.calculate_eeat_trust?.content?.review?.trust_score) {
           dispatch({
-            type: "SET_FINAL_CONTENT",
-            payload: updates.calculate_readability.content,
+            type: "SET_TRUST_SCORE",
+            payload: updates.calculate_eeat_trust.content.review.trust_score,
           });
+          if (updates.calculate_eeat_trust.content.review.eeat_data) {
+            dispatch({
+              type: "SET_EEAT_DATA",
+              payload: updates.calculate_eeat_trust.content.review.eeat_data,
+            });
+          }
+        }
+
+        if (
+          updates?.calculate_readability?.content?.review?.readability_metrics
+        ) {
+          dispatch({
+            type: "SET_READABLITY_SCORE",
+            payload:
+              updates.calculate_readability.content.review.readability_metrics,
+          });
+        }
+
+        if (updates?.generate_content?.content?.final_content) {
           dispatch({
             type: "SET_GENERATED_CONTENT",
             payload:
-              updates.calculate_readability.content.final_content.body_markdown,
+              updates.generate_content.content.final_content.body_markdown,
           });
           dispatch({
             type: "SET_INSTRUCTION_TYPE",
@@ -468,6 +523,13 @@ export function FreshGenerationView({
         isLoading={false}
         onApprove={() => handleWorkflow("OUTLINE_APPROVE")}
         onReject={() => handleWorkflow("OUTLINE_REJECT")}
+        onUpdate={(updatedOutline) => {
+          console.log("Newly edited tone and audience:", {
+            tone: updatedOutline.tone,
+            audience: updatedOutline.target_audience,
+          });
+          dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
+        }}
       />
     ),
 
@@ -520,10 +582,13 @@ export function FreshGenerationView({
         {instructionViewMap[instructionType]}
       </div>
 
-      {instructionType === "content" && finalContent && (
+      {instructionType === "content" && generatedContent && (
         <ContentEditor
-          values={finalContent}
+          allContent={allContent}
+          readabilityScore={readabilityScore}
           seoScore={seoScore}
+          trustScore={trustScore}
+          eeatData={eeatData}
           generatedContent={generatedContent}
           isEditing={isEditing}
           userKeyword={userKeyword}
@@ -536,7 +601,6 @@ export function FreshGenerationView({
           }
         />
       )}
-
     </>
   );
 }
