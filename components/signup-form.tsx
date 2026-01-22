@@ -20,6 +20,9 @@ import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
 import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
+import { apiClient } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/auth-utils";
+import { log } from "@/lib/logger";
 
 export function SignupForm({
   className,
@@ -110,9 +113,30 @@ export function SignupForm({
       });
 
       if (result?.ok) {
-        // Both invitation signup and regular signup go to dashboard
-        // The dashboard will show the appropriate workspace content
-        router.push("/");
+        // Wait for session to be established (cookies to be set)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Force refresh auth headers to ensure we have the new token
+        await getAuthHeaders(true);
+
+        // Fetch workspaces to determine redirect
+        try {
+          const response = await apiClient.workspaces.list();
+          const workspaces = response.workspaces || [];
+
+          if (workspaces.length === 0) {
+            // No workspace exists, redirect to create workspace
+            router.push("/w/create");
+          } else {
+            // Workspace exists, redirect to generate content page
+            const firstWorkspace = workspaces[0];
+            router.push(`/w/${firstWorkspace.slug}/generate_content`);
+          }
+        } catch (fetchError) {
+          log.error("[Signup] Failed to fetch workspaces after login:", fetchError);
+          // Fallback to dashboard on error
+          router.push("/");
+        }
 
         // Clean up session storage
         sessionStorage.removeItem("pending_invitation_token");
@@ -257,7 +281,7 @@ export function SignupForm({
                   className={cn(
                     "h-12 rounded-2xl bg-muted/30 border-muted",
                     hasValidInvitation &&
-                      "bg-muted cursor-not-allowed opacity-75",
+                    "bg-muted cursor-not-allowed opacity-75",
                   )}
                 />
                 {errors.email && (

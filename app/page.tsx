@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 import { AuthGuard } from "@/components/auth-guard";
 import { EnhancedDashboardEmptyState } from "@/components/dashboard/enhanced-dashboard-empty-state";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
@@ -17,12 +20,28 @@ import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
 
+  const router = useRouter();
   // Auto-select workspace on load
   const {
     workspace: currentWorkspace,
     isLoading: isLoadingWorkspaces,
     hasWorkspaces,
+    workspaceList,
   } = useWorkspaceAutoSelect();
+
+  // Redirect based on workspace existence
+  useEffect(() => {
+    if (!isLoadingWorkspaces) {
+      if (!hasWorkspaces) {
+        router.push("/w/create");
+      } else if (currentWorkspace) {
+        router.push(`/w/${currentWorkspace.slug}/generate_content`);
+      } else if (workspaceList.length > 0) {
+        // Fallback if currentWorkspace isn't set but list exists
+        router.push(`/w/${workspaceList[0].slug}/generate_content`);
+      }
+    }
+  }, [isLoadingWorkspaces, hasWorkspaces, currentWorkspace, workspaceList, router]);
 
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);
@@ -72,18 +91,9 @@ export default function DashboardPage() {
   }
 
   // Show empty state only if no workspaces exist
+  // We return null if we're about to redirect to prevent flicker
   if (!hasWorkspaces) {
-    return (
-      <AuthGuard>
-        <PageLayout
-          title="Dashboard"
-          description="Welcome to Rext! Let's get you started."
-          breadcrumbs={breadcrumbs}
-        >
-          <EnhancedDashboardEmptyState />
-        </PageLayout>
-      </AuthGuard>
-    );
+    return null;
   }
 
   return (
