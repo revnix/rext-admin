@@ -28,26 +28,6 @@ export default function DashboardPage() {
     workspaceList,
   } = useWorkspaceAutoSelect();
 
-  // Redirect based on workspace existence
-  useEffect(() => {
-    if (!isLoadingWorkspaces) {
-      if (!hasWorkspaces) {
-        router.push("/w/create");
-      } else if (currentWorkspace) {
-        router.push(`/w/${currentWorkspace.slug}/generate_content`);
-      } else if (workspaceList.length > 0) {
-        // Fallback if currentWorkspace isn't set but list exists
-        router.push(`/w/${workspaceList[0].slug}/generate_content`);
-      }
-    }
-  }, [
-    isLoadingWorkspaces,
-    hasWorkspaces,
-    currentWorkspace,
-    workspaceList,
-    router,
-  ]);
-
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);
 

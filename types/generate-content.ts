@@ -1,4 +1,5 @@
 import type { Message } from "@langchain/langgraph-sdk";
+import type { LoadingStep } from "@/constants/loading-steps";
 
 export type Interrupt = {
   id: string;
@@ -455,6 +456,7 @@ export interface PageState {
   trustScore: number | null;
   eeatData: EEATData | null;
   allContent: FinalContent | null;
+  currentLoadingSteps: LoadingStep[];
 }
 
 export type PageAction =
@@ -477,6 +479,7 @@ export type PageAction =
   | { type: "SUBMIT_REJECT_REASON" }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
   | { type: "SET_LOADING_STATUS"; payload: string }
+  | { type: "SET_LOADING_STEPS"; payload: LoadingStep[] }
   | { type: "SET_MANUAL_LOADING"; payload: boolean }
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "ADD_COMPLETED_NODE"; payload: string }

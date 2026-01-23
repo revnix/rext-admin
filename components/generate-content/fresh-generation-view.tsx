@@ -12,6 +12,14 @@ import type {
   RunStreamEvent,
   WorkflowStep,
 } from "@/types/generate-content";
+import {
+  INITIAL_ANALYSIS_STEPS,
+  KEYWORD_SELECTION_STEPS,
+  TOPIC_GENERATION_STEPS,
+  CONTENT_TYPE_STEPS,
+  FINAL_GENERATION_STEPS,
+  LoadingStep,
+} from "@/constants/loading-steps";
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
@@ -80,6 +88,7 @@ const initialState: PageState = {
       "The content demonstrates a solid level of expertise in SEO practices specific to Next.js, evidenced by detailed descriptions of relevant technical features and best practices. However, there is no identifiable author, which severely impacts author credibility. The information appears technically accurate and fairly up-to-date, but lacks citations to authoritative sources that would enhance trustworthiness and authority. The technical aspects of the site are sound (HTTPS, no spammy content), and there are minimal spam signals given the absence of keyword stuffing. Overall, the lack of author information and citations adversely affects the overall credibility and trust score.",
   },
   allContent: null,
+  currentLoadingSteps: [],
 };
 
 function reducer(state: PageState, action: PageAction): PageState {
@@ -125,6 +134,8 @@ function reducer(state: PageState, action: PageAction): PageState {
       return { ...state, interrupt: action.payload };
     case "SET_OUTLINE":
       return { ...state, outline: action.payload };
+    case "SET_LOADING_STEPS":
+      return { ...state, currentLoadingSteps: action.payload };
     case "SET_LOADING_STATUS": {
       const nextStatus = action.payload;
       const prevStatus = state.loadingStatus;
@@ -280,6 +291,7 @@ export function FreshGenerationView({
     seoScore,
     eeatData,
     allContent,
+    currentLoadingSteps,
   } = state;
 
   const processStream = async (
@@ -364,13 +376,24 @@ export function FreshGenerationView({
       }
     } catch (_error) {
     } finally {
+      // Mark the very last status as completed if it was a node status
+      // We use a local check based on the current loadingStatus
+      if (loadingStatus?.endsWith("...")) {
+        const finishedNode = loadingStatus.slice(0, -3);
+        dispatch({ type: "ADD_COMPLETED_NODE", payload: finishedNode });
+      }
+
+      // Add a small delay to allow the user to see the final step completion
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       dispatch({ type: "SET_MANUAL_LOADING", payload: false });
       dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+      dispatch({ type: "SET_LOADING_STEPS", payload: [] });
     }
   };
 
   const handleKeywordSubmit = async () => {
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
+    dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
 
@@ -421,24 +444,34 @@ export function FreshGenerationView({
   const handleWorkflow = (step: WorkflowStep, value?: string) => {
     switch (step) {
       case "KEYWORD_SELECT":
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: KEYWORD_SELECTION_STEPS,
+        });
         return resumeWorkflow({
           payload: { "Primary Keyword": value },
-          status: `Resuming workflow for "${value}"...`,
+          status: "Analyzing keyword...",
         });
 
       case "TOPIC_SELECT":
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: TOPIC_GENERATION_STEPS,
+        });
         return resumeWorkflow({
           payload: { "Selected Topic": value },
-          status: `Resuming workflow for "${value}"...`,
+          status: "Topic Generation...",
         });
 
       case "CONTENT_TYPE_SELECT":
+        dispatch({ type: "SET_LOADING_STEPS", payload: CONTENT_TYPE_STEPS });
         return resumeWorkflow({
           payload: { "Selected Content Type": value },
-          status: `Resuming workflow for "${value}"...`,
+          status: "Topic Type...",
         });
 
       case "OUTLINE_APPROVE":
+        dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
         return resumeWorkflow({
           payload: {
             action: "approve",
@@ -481,6 +514,7 @@ export function FreshGenerationView({
           isLoading={isLoading || isManualLoading}
           loadingStatus={loadingStatus}
           completedSteps={completedNodes}
+          steps={currentLoadingSteps}
           className="mt-5"
         />
       </div>
