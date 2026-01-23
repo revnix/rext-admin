@@ -46,7 +46,7 @@ export default function IntegrationsPage() {
 
   useEffect(() => {
     fetchIntegrations();
-  }, [workspace?.id]);
+  }, [fetchIntegrations]);
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },

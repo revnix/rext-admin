@@ -95,7 +95,7 @@ export function ContentCard({
     router.push(workspaceRoutes.contentDetail(workspaceSlug, item.id));
   };
 
-  const config: KnowledgeCardConfig<any> = {
+  const config: KnowledgeCardConfig<ContentItem> = {
     primaryIcon: FileText,
     getTitle: (item: ContentItem) => item.title,
     getDescription: (item: ContentItem) => (
@@ -187,10 +187,6 @@ export function ContentCard({
   };
 
   return (
-    <BaseKnowledgeCard
-      item={item as any}
-      config={config}
-      onSelect={handleSelect}
-    />
+    <BaseKnowledgeCard item={item} config={config} onSelect={handleSelect} />
   );
 }

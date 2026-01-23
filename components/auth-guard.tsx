@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { log } from "@/lib/logger";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -105,6 +106,9 @@ export function GuestGuard({
       // if (isAuthenticated) {
       //   router.push(redirectTo);
       // }
+      log.info("isAuthenticated", isAuthenticated);
+      log.info("redirectTo", redirectTo);
+      log.info("router", router);
     }
   }, [isLoading, isAuthenticated, redirectTo, router]);
 

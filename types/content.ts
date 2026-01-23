@@ -1,4 +1,5 @@
 // Content management types
+import type { EEATData } from "./generate-content";
 
 export type ContentStatus =
   | "draft"
@@ -162,6 +163,12 @@ export interface ContentSEODataSchema {
 
   /** Full SEO assessment details as JSON string */
   seo_details?: string;
+
+  /** Trust score for content */
+  trust_score?: number;
+
+  /** EEAT data for content */
+  eeat_data?: EEATData | string;
 }
 
 /**

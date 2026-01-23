@@ -1,9 +1,7 @@
 "use client";
 
 import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
-
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
-import { useEffect } from "react";
 
 export const description = "A keyword difficulty gauge chart";
 

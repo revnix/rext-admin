@@ -278,7 +278,6 @@ export function FreshGenerationView({
     isLoading,
     readabilityScore,
     seoScore,
-    trustScore,
     eeatData,
     allContent,
   } = state;
@@ -294,7 +293,6 @@ export function FreshGenerationView({
 
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
-        console.log("updates", updates);
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
@@ -444,8 +442,8 @@ export function FreshGenerationView({
         return resumeWorkflow({
           payload: {
             action: "approve",
-            tone: outline?.tone,
-            target_audience: outline?.target_audience,
+            // tone: outline?.tone,
+            // target_audience: outline?.target_audience,
           },
           status: "Approving and generating content...",
         });
@@ -529,10 +527,6 @@ export function FreshGenerationView({
         onApprove={() => handleWorkflow("OUTLINE_APPROVE")}
         onReject={() => handleWorkflow("OUTLINE_REJECT")}
         onUpdate={(updatedOutline) => {
-          console.log("Newly edited tone and audience:", {
-            tone: updatedOutline.tone,
-            audience: updatedOutline.target_audience,
-          });
           dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
         }}
       />
@@ -592,7 +586,6 @@ export function FreshGenerationView({
           allContent={allContent}
           readabilityScore={readabilityScore}
           seoScore={seoScore}
-          trustScore={trustScore}
           eeatData={eeatData}
           generatedContent={generatedContent}
           isEditing={isEditing}

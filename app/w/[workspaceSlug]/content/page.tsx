@@ -35,10 +35,14 @@ export default function WorkspaceContentPage() {
   // Workspace permissions
   const { hasPermission: canCreateContent, isLoading: isCreateLoading } =
     useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
-  const { hasPermission: canUpdateContent, isLoading: isUpdateLoading } =
-    useWorkspacePermission(CONTENT_PERMISSIONS.UPDATE, workspaceId);
-  const { hasPermission: canDeleteContent, isLoading: isDeleteLoading } =
-    useWorkspacePermission(CONTENT_PERMISSIONS.DELETE, workspaceId);
+  const { isLoading: isUpdateLoading } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.UPDATE,
+    workspaceId,
+  );
+  const { isLoading: isDeleteLoading } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.DELETE,
+    workspaceId,
+  );
 
   const isPermissionLoading =
     isCreateLoading || isUpdateLoading || isDeleteLoading;
@@ -66,7 +70,6 @@ export default function WorkspaceContentPage() {
     data: contentResponse,
     isLoading: isContentLoading,
     error,
-    refetch,
   } = useContent(workspaceId);
 
   // Delete content mutation

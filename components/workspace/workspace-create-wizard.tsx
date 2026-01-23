@@ -12,21 +12,10 @@ import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
-
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
-
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";

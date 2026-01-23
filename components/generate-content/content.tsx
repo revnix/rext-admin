@@ -1,11 +1,11 @@
 import type {
-  CONTENT,
   FinalContent,
   Outline,
   ReadabilityMeta,
   ReadabilityMetrics,
   SEORESULT,
   EEATData,
+  Issue,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import {
@@ -18,12 +18,9 @@ import {
   Send,
   Sparkles,
   TrendingUp,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
-import { useCallback, useEffect, useState } from "react";
-import { useAuthSession } from "@/hooks/use-auth-session";
+import { useCallback, useState } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
   Dialog,
@@ -31,14 +28,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
-import {
-  Integration,
-  integrationsApiService,
-} from "@/services/integrations-api";
+import { integrationsApiService } from "@/services/integrations-api";
+import { log } from "@/lib/logger";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -126,7 +120,6 @@ const getStatusMessage = (score: number) => {
 export function ContentEditor({
   allContent,
   readabilityScore,
-  trustScore,
   eeatData,
   generatedContent,
   seoScore,
@@ -138,7 +131,6 @@ export function ContentEditor({
 }: {
   allContent: FinalContent | null;
   readabilityScore: ReadabilityMetrics | null;
-  trustScore: number | null;
   eeatData: EEATData | null;
   generatedContent: string;
   isEditing: boolean;
@@ -166,14 +158,6 @@ export function ContentEditor({
   const [hasPublished, setHasPublished] = useState(false);
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
 
-  useEffect(() => {
-    console.log("readabilityScore", readabilityScore);
-    console.log("allContent", allContent);
-    console.log("trustScore", trustScore);
-    console.log("seoScore", seoScore);
-    console.log("generatedContent", generatedContent);
-  }, [readabilityScore, trustScore, seoScore, generatedContent, allContent]);
-
   const getContentPayload = () => ({
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
@@ -192,7 +176,7 @@ export function ContentEditor({
       keyphrase_density: allContent?.keyphrase_density || 1,
       secondary_keywords: allContent?.secondary_keywords || [],
       search_intent: ["informational"],
-      seo_score: (seoScore as any)?.score || 0,
+      seo_score: seoScore?.seo_health_score || 0,
       readability_score: score,
       seo_details: JSON.stringify(seoScore || {}),
     },
@@ -225,13 +209,14 @@ export function ContentEditor({
       setShowSuccessModal(true);
       setHasPublished(true);
       setHasSaved(true);
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as Error;
       setErrorType("publish");
       setErrorMessage(
-        error.message || "Failed to publish content. Please try again.",
+        err.message || "Failed to publish content. Please try again.",
       );
       if (
-        error.message ===
+        err.message ===
         "No active WordPress sites found in this workspace. Please connect a site before publishing."
       ) {
         setIntegrationModalOpen(true);
@@ -250,10 +235,11 @@ export function ContentEditor({
       setSuccessType("save");
       setShowSuccessModal(true);
       setHasSaved(true);
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as Error;
       setErrorType("save");
       setErrorMessage(
-        error.message || "Failed to save content. Please try again.",
+        err.message || "Failed to save content. Please try again.",
       );
       setShowErrorModal(true);
     } finally {
@@ -266,7 +252,7 @@ export function ContentEditor({
     try {
       await integrationsApiService.listIntegrations(workspaceId);
     } catch (error) {
-      console.error("Failed to fetch integrations", error);
+      log.error("Failed to fetch integrations", error);
     } finally {
     }
   }, [workspaceId]);
@@ -508,6 +494,9 @@ export function ContentEditor({
                 <div className="flex items-center gap-6">
                   <div className="relative flex items-center justify-center shrink-0">
                     <svg className="w-20 h-20 transform -rotate-90">
+                      <title id="seo-health-score-title">
+                        SEO health score: {seoScore.seo_health_score} percent
+                      </title>
                       <circle
                         cx="40"
                         cy="40"
@@ -542,7 +531,8 @@ export function ContentEditor({
                       Almost Perfect!
                     </div>
                     <div className="text-sm text-slate-500">
-                      {seoScore.issue_summary.warnings} warnings ·{" "}
+                      {seoScore.issue_summary.warnings} warnings
+                      <br />
                       {seoScore.issue_summary.errors} errors
                     </div>
                   </div>
@@ -550,44 +540,35 @@ export function ContentEditor({
 
                 {/* Issues */}
                 <div className="space-y-3 pt-2">
-                  {seoScore.issues.map(
-                    (
-                      issue: {
-                        type: string;
-                        message: string;
-                        level: string;
-                      },
-                      i: number,
-                    ) => {
-                      const status = levelToStatus(issue.level);
+                  {seoScore.issues.map((issue: Issue) => {
+                    const status = levelToStatus(issue.level);
 
-                      return (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 text-sm"
-                        >
-                          {status === "success" ? (
-                            <CheckCircle2
-                              size={18}
-                              className="text-emerald-900 shrink-0"
-                            />
-                          ) : status === "warning" ? (
-                            <AlertCircle
-                              size={18}
-                              className="text-orange-500 shrink-0"
-                            />
-                          ) : (
-                            <AlertCircle
-                              size={18}
-                              className="text-slate-400 shrink-0"
-                            />
-                          )}
+                    return (
+                      <div
+                        key={issue.message}
+                        className="flex items-center gap-3 text-sm"
+                      >
+                        {status === "success" ? (
+                          <CheckCircle2
+                            size={18}
+                            className="text-emerald-900 shrink-0"
+                          />
+                        ) : status === "warning" ? (
+                          <AlertCircle
+                            size={18}
+                            className="text-orange-500 shrink-0"
+                          />
+                        ) : (
+                          <AlertCircle
+                            size={18}
+                            className="text-slate-400 shrink-0"
+                          />
+                        )}
 
-                          <span className="leading-tight">{issue.message}</span>
-                        </div>
-                      );
-                    },
-                  )}
+                        <span className="leading-tight">{issue.message}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

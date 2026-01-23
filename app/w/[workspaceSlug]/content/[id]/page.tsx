@@ -292,15 +292,14 @@ export default function WorkspaceContentDetailPage({
   }
 
   // Construct SEORESULT object
-  const seoResult: SEORESULT | null = (content.seo_data as any)?.seo_details
-    ? JSON.parse((content.seo_data as any).seo_details)
+  const seoResult: SEORESULT | null = content.seo_data?.seo_details
+    ? JSON.parse(content.seo_data.seo_details)
     : null;
 
-  const trustScore = (content.seo_data as any)?.trust_score || null;
-  const eeatData = (content.seo_data as any)?.eeat_data
-    ? typeof (content.seo_data as any).eeat_data === "string"
-      ? JSON.parse((content.seo_data as any).eeat_data)
-      : (content.seo_data as any).eeat_data
+  const eeatData = content.seo_data?.eeat_data
+    ? typeof content.seo_data.eeat_data === "string"
+      ? JSON.parse(content.seo_data.eeat_data)
+      : content.seo_data.eeat_data
     : null;
 
   // Construct Outline object (mocked or extracted from content if possible)
@@ -348,7 +347,7 @@ export default function WorkspaceContentDetailPage({
       tags: content.tags || [],
       meta_title: content.seo_data?.meta_title || "",
       meta_description: content.seo_data?.meta_description || "",
-      focus_keyphrase: (content.seo_data as any)?.focus_keyphrase || "",
+      focus_keyphrase: content.seo_data?.focus_keyphrase || "",
       word_count: content.body_markdown?.split(/\s+/).length || 0,
       status: "generated",
     },
@@ -368,6 +367,8 @@ export default function WorkspaceContentDetailPage({
       improvement_suggestions: [],
     },
   };
+
+  const finalContent = advancedContent?.final_content;
 
   return (
     <CanAccess
@@ -450,21 +451,22 @@ export default function WorkspaceContentDetailPage({
           className="p-0"
           hideTitle
         >
-          <ContentEditor
-            allContent={advancedContent.final_content!}
-            readabilityScore={
-              advancedContent.review?.readability_metrics || null
-            }
-            trustScore={trustScore}
-            eeatData={eeatData}
-            generatedContent={contentMarkdown}
-            seoScore={seoResult}
-            isEditing={isEditing}
-            userKeyword={(content.seo_data as any)?.focus_keyphrase || ""}
-            outline={outline}
-            onEditToggle={() => setIsEditing(!isEditing)}
-            onContentChange={setContentMarkdown}
-          />
+          {finalContent && (
+            <ContentEditor
+              allContent={finalContent}
+              readabilityScore={
+                advancedContent.review?.readability_metrics || null
+              }
+              eeatData={eeatData}
+              generatedContent={contentMarkdown}
+              seoScore={seoResult}
+              isEditing={isEditing}
+              userKeyword={content.seo_data?.focus_keyphrase || ""}
+              outline={outline}
+              onEditToggle={() => setIsEditing(!isEditing)}
+              onContentChange={setContentMarkdown}
+            />
+          )}
         </PageLayout>
       ) : content.status === "failed" ? (
         <PageLayout
