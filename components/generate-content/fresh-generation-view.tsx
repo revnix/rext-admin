@@ -18,7 +18,6 @@ import {
   TOPIC_GENERATION_STEPS,
   CONTENT_TYPE_STEPS,
   FINAL_GENERATION_STEPS,
-  LoadingStep,
 } from "@/constants/loading-steps";
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
@@ -471,7 +470,10 @@ export function FreshGenerationView({
         });
 
       case "OUTLINE_APPROVE":
-        dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: FINAL_GENERATION_STEPS,
+        });
         return resumeWorkflow({
           payload: {
             action: "approve",

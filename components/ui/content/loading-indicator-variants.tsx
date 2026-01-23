@@ -39,8 +39,13 @@ export function LoadingIndicatorVariants({
   const normalizedStatus = loadingStatus?.replace(/\.\.\.$/, "") || "";
 
   // Find current active index
-  const activeStepIndex = steps.findIndex(s => s.id === normalizedStatus || s.label === normalizedStatus);
-  const currentStepLabel = activeStepIndex !== -1 ? steps[activeStepIndex].label : normalizedStatus || title;
+  const activeStepIndex = steps.findIndex(
+    (s) => s.id === normalizedStatus || s.label === normalizedStatus,
+  );
+  const currentStepLabel =
+    activeStepIndex !== -1
+      ? steps[activeStepIndex].label
+      : normalizedStatus || title;
 
   if (!isLoading) return null;
 
@@ -49,10 +54,12 @@ export function LoadingIndicatorVariants({
   return (
     <div className={cn("mt-4 w-full max-w-md mx-auto", className)}>
       {/* Header Section */}
-      <div className={cn(
-        "flex flex-col items-center justify-center text-center",
-        hasSteps ? "mb-4" : "mb-0"
-      )}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center text-center",
+          hasSteps ? "mb-4" : "mb-0",
+        )}
+      >
         <div className="relative mb-2">
           <div className="w-16 h-16 rounded-full border-slate-100 flex items-center justify-center relative">
             <div className="absolute inset-0 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -64,7 +71,8 @@ export function LoadingIndicatorVariants({
 
         {hasSteps && (
           <p className="text-sm text-slate-400">
-            Step {activeStepIndex !== -1 ? activeStepIndex + 1 : 1} of {steps.length}
+            Step {activeStepIndex !== -1 ? activeStepIndex + 1 : 1} of{" "}
+            {steps.length}
           </p>
         )}
       </div>
@@ -73,8 +81,12 @@ export function LoadingIndicatorVariants({
       {hasSteps && (
         <div className="space-y-2 bg-white/50 backdrop-blur-sm rounded-2xl p-2">
           {steps.map((s, index) => {
-            const isCompleted = completedSteps.includes(s.id) || completedSteps.includes(s.label) || (activeStepIndex !== -1 && index < activeStepIndex);
-            const isActive = s.id === normalizedStatus || s.label === normalizedStatus;
+            const isCompleted =
+              completedSteps.includes(s.id) ||
+              completedSteps.includes(s.label) ||
+              (activeStepIndex !== -1 && index < activeStepIndex);
+            const isActive =
+              s.id === normalizedStatus || s.label === normalizedStatus;
             const isPending = !isActive && !isCompleted;
 
             return (
@@ -85,17 +97,21 @@ export function LoadingIndicatorVariants({
                   isActive
                     ? "bg-primary/5 border-primary/20 shadow-sm scale-[1.02]"
                     : "bg-slate-50/50 border-transparent",
-                  isCompleted
-                    ? "bg-slate-50 border-slate-100"
-                    : ""
+                  isCompleted ? "bg-slate-50 border-slate-100" : "",
                 )}
               >
-                <div className={cn(
-                  "flex items-center justify-center w-6 h-6 rounded-full border transition-colors",
-                  isActive ? "bg-primary text-white border-primary" : "bg-white border-slate-200",
-                  isCompleted ? "bg-green-500 text-white border-green-500" : "",
-                  isPending ? "text-slate-300" : ""
-                )}>
+                <div
+                  className={cn(
+                    "flex items-center justify-center w-6 h-6 rounded-full border transition-colors",
+                    isActive
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white border-slate-200",
+                    isCompleted
+                      ? "bg-green-500 text-white border-green-500"
+                      : "",
+                    isPending ? "text-slate-300" : "",
+                  )}
+                >
                   {isCompleted ? (
                     <Check className="w-3 h-3" />
                   ) : isActive ? (
@@ -106,11 +122,13 @@ export function LoadingIndicatorVariants({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    "text-sm font-medium truncate transition-colors",
-                    isActive ? "text-primary" : "text-slate-500",
-                    isCompleted ? "text-slate-700" : "text-slate-400"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-sm font-medium truncate transition-colors",
+                      isActive ? "text-primary" : "text-slate-500",
+                      isCompleted ? "text-slate-700" : "text-slate-400",
+                    )}
+                  >
                     {s.label}
                   </p>
                 </div>

@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { ContentPipeline } from "@/components/dashboard/revamp/content-pipeline";
@@ -18,14 +15,11 @@ import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
-
-  const router = useRouter();
   // Auto-select workspace on load
   const {
     workspace: currentWorkspace,
     isLoading: isLoadingWorkspaces,
     hasWorkspaces,
-    workspaceList,
   } = useWorkspaceAutoSelect();
 
   // Check if onboarding is complete for current workspace
