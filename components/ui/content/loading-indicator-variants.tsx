@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-import { LoadingStep } from "@/constants/loading-steps";
+import type { LoadingStep } from "@/constants/loading-steps";
 
 interface LoadingIndicatorVariantsProps {
   step: string;
