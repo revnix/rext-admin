@@ -82,9 +82,9 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 const theme = {
   paragraph: "mb-2",
   heading: {
-    h1: "text-3xl font-bold mb-4",
-    h2: "text-2xl font-bold mb-3",
-    h3: "text-xl font-bold mb-2",
+    h1: "text-3xl font-bold mb-4 scroll-mt-20",
+    h2: "text-2xl font-bold mb-3 scroll-mt-20",
+    h3: "text-xl font-bold mb-2 scroll-mt-20",
   },
   list: {
     ul: "list-disc ml-4 mb-2",

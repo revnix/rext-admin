@@ -296,6 +296,13 @@ export default function WorkspaceContentDetailPage({
     ? JSON.parse((content.seo_data as any).seo_details)
     : null;
 
+  const trustScore = (content.seo_data as any)?.trust_score || null;
+  const eeatData = (content.seo_data as any)?.eeat_data
+    ? typeof (content.seo_data as any).eeat_data === "string"
+      ? JSON.parse((content.seo_data as any).eeat_data)
+      : (content.seo_data as any).eeat_data
+    : null;
+
   // Construct Outline object (mocked or extracted from content if possible)
   // For now, we can extract headings from markdown if outline is missing in API
   const outline: Outline = {
@@ -444,7 +451,12 @@ export default function WorkspaceContentDetailPage({
           hideTitle
         >
           <ContentEditor
-            values={advancedContent}
+            allContent={advancedContent.final_content!}
+            readabilityScore={
+              advancedContent.review?.readability_metrics || null
+            }
+            trustScore={trustScore}
+            eeatData={eeatData}
             generatedContent={contentMarkdown}
             seoScore={seoResult}
             isEditing={isEditing}

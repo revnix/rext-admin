@@ -136,7 +136,7 @@ export function ContentEditor({
   onEditToggle,
   onContentChange,
 }: {
-  allContent: FinalContent;
+  allContent: FinalContent | null;
   readabilityScore: ReadabilityMetrics | null;
   trustScore: number | null;
   eeatData: EEATData | null;
@@ -149,7 +149,7 @@ export function ContentEditor({
   onContentChange: (val: string) => void;
 }) {
   const tags = allContent?.tags || [];
-  const displayTitle = allContent.title;
+  const displayTitle = allContent?.title || "";
   const body = generatedContent;
   const score = readabilityScore?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
@@ -292,7 +292,16 @@ export function ContentEditor({
                 key={sec.heading}
                 onClick={() => {
                   const id = slugify(sec.heading);
-                  const element = document.getElementById(id);
+                  const element =
+                    document.getElementById(id) ||
+                    Array.from(
+                      document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+                    ).find(
+                      (h) =>
+                        h.textContent?.trim().toLowerCase() ===
+                        sec.heading.trim().toLowerCase(),
+                    );
+
                   if (element) {
                     element.scrollIntoView({
                       behavior: "smooth",
@@ -348,7 +357,7 @@ export function ContentEditor({
 
                         {allContent?.introduction && (
                           <div className="text-xl text-slate-600 leading-relaxed font-medium border-l-4 border-slate-200 pl-6 my-8 italic">
-                            {allContent.introduction}
+                            {allContent?.introduction}
                           </div>
                         )}
                       </div>

@@ -454,7 +454,7 @@ export interface PageState {
   seoScore: SEORESULT | null;
   trustScore: number | null;
   eeatData: EEATData | null;
-  allContent: FinalContent;
+  allContent: FinalContent | null;
 }
 
 export type PageAction =
@@ -466,8 +466,8 @@ export type PageAction =
   | { type: "SET_REJECTED_REASON"; payload: string }
   | { type: "SET_IS_EDITING"; payload: boolean }
   | { type: "SET_GENERATED_CONTENT"; payload: string }
-  | { type: "SET_ALL_CONTENT"; payload: FinalContent }
-  | { type: "SET_READABLITY_SCORE"; payload: number }
+  | { type: "SET_ALL_CONTENT"; payload: FinalContent | null }
+  | { type: "SET_READABILITY_SCORE"; payload: ReadabilityMetrics }
   | { type: "SET_TRUST_SCORE"; payload: number }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_EEAT_DATA"; payload: EEATData }

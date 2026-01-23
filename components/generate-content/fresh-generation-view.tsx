@@ -105,7 +105,7 @@ function reducer(state: PageState, action: PageAction): PageState {
     case "SET_ALL_CONTENT":
       if (state.allContent === action.payload) return state;
       return { ...state, allContent: action.payload };
-    case "SET_READABLITY_SCORE":
+    case "SET_READABILITY_SCORE":
       if (state.readabilityScore === action.payload) return state;
       return { ...state, readabilityScore: action.payload };
     case "SET_TRUST_SCORE":
@@ -328,7 +328,7 @@ export function FreshGenerationView({
           updates?.calculate_readability?.content?.review?.readability_metrics
         ) {
           dispatch({
-            type: "SET_READABLITY_SCORE",
+            type: "SET_READABILITY_SCORE",
             payload:
               updates.calculate_readability.content.review.readability_metrics,
           });
@@ -442,7 +442,12 @@ export function FreshGenerationView({
 
       case "OUTLINE_APPROVE":
         return resumeWorkflow({
-          payload: { action: "approve" },
+          payload: {
+            action: "approve",
+            tone: outline?.tone,
+            target_audience: outline?.target_audience,
+          },
+          status: "Approving and generating content...",
         });
 
       case "OUTLINE_REJECT":
