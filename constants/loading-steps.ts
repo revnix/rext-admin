@@ -1,0 +1,38 @@
+export interface LoadingStep {
+  id: string;
+  label: string;
+}
+
+export const INITIAL_ANALYSIS_STEPS: LoadingStep[] = [
+  { id: "Creating session", label: "Creating session" },
+  { id: "Starting analysis", label: "Starting analysis" },
+  { id: "Fetch Serp", label: "Fetching Search Results" },
+  { id: "Extract Competitor", label: "Extracting Competitors" },
+  { id: "Scrape Content", label: "Scraping Content" },
+  { id: "Compute Keyword Difficulty", label: "Computing Keyword Difficulty" },
+];
+
+export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [
+  { id: "Keyword Recommendation", label: "Keyword Recommendation" },
+  { id: "Seo Engine", label: "Seo Engine" },
+];
+
+export const TOPIC_GENERATION_STEPS: LoadingStep[] = [
+  { id: "Topic Generation", label: "Topic Generation" },
+];
+
+export const CONTENT_TYPE_STEPS: LoadingStep[] = [
+  { id: "Topic Type", label: "Determining Content Type" },
+  { id: "Generate Outline", label: "Generating Content Outline" },
+];
+
+export const FINAL_GENERATION_STEPS: LoadingStep[] = [
+  { id: "Review Outline", label: "Reviewing Outline" },
+  { id: "Generate Content", label: "Generating Content" },
+  { id: "Inject Eeat", label: "Injecting EEAT" },
+  { id: "Humanize Content", label: "Humanizing Content" },
+  { id: "Calculate On Page Seo", label: "Calculating SEO Metrics" },
+  { id: "Calculate Readability", label: "Analyzing Readability" },
+  { id: "Calculate Eeat Trust", label: "Verifying Trust Signals" },
+  { id: "Review Content", label: "Final Content Review" },
+];

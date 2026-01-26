@@ -114,7 +114,7 @@ export default function EmailAnalyticsPage() {
       const response = await apiClient.workspaces.list();
       return response.workspaces as Array<{ id: string; name: string }>;
     },
-    select: (data) => Array.isArray(data) ? data : [],
+    select: (data) => (Array.isArray(data) ? data : []),
   });
 
   // Fetch overview stats

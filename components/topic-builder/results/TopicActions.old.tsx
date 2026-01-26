@@ -213,10 +213,6 @@ export function TopicActions({
         await onSave(topic.id);
       }
 
-      // Show success confirmation dialog instead of only inline message
-      log.info(
-        `Topic ${topic.id} saved successfully, showing confirmation dialog`,
-      );
       setIsSuccessDialogOpen(true);
     } catch (error) {
       log.error(`Failed to save topic ${topic.id}:`, error);
@@ -251,7 +247,6 @@ export function TopicActions({
         await onEdit(topic.id, updates);
         setIsEditDialogOpen(false);
         editForm.reset(); // Reset form after successful submission
-        log.info(`Topic ${topic.id} updated successfully`);
         setSuccess("editing", "Topic updated successfully!");
       } catch (error) {
         log.error(`Failed to update topic ${topic.id}:`, error);
@@ -272,7 +267,6 @@ export function TopicActions({
     try {
       await onRegenerate(topic.id);
       setIsRegenerateDialogOpen(false);
-      log.info(`Topic ${topic.id} regenerated successfully`);
       setSuccess("regenerating", "Topic regenerated successfully!");
     } catch (error) {
       log.error(`Failed to regenerate topic ${topic.id}:`, error);
@@ -292,7 +286,6 @@ export function TopicActions({
     try {
       await onExport([topic], exportFormat);
       setIsExportDialogOpen(false);
-      log.info(`Topic ${topic.id} exported as ${exportFormat}`);
       setSuccess(
         "exporting",
         `Topic exported as ${exportFormat.toUpperCase()} successfully!`,
@@ -315,7 +308,6 @@ export function TopicActions({
     try {
       await onDelete(topic.id);
       setIsDeleteDialogOpen(false);
-      log.info(`Topic ${topic.id} deleted successfully`);
       setSuccess("deleting", "Topic deleted successfully!");
     } catch (error) {
       log.error(`Failed to delete topic ${topic.id}:`, error);
@@ -333,7 +325,6 @@ export function TopicActions({
       setLoading("navigatingToContent", true);
 
       try {
-        log.info(`Navigating to content creation for topic ${topic.id}`);
         const workspaceSlug = currentWorkspace?.slug;
         if (!workspaceSlug) {
           throw new Error("No workspace selected");
@@ -356,9 +347,6 @@ export function TopicActions({
       // Use provided handler
       try {
         setLoading("navigatingToContent", true);
-        log.info(
-          `Using handler to navigate to content creation for topic ${topic.id}`,
-        );
         onNavigateToContent(topic.id);
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {

@@ -31,8 +31,6 @@ export function useExportTopic() {
     try {
       await onExport(topics, exportFormat);
 
-      log.info(`Exported ${topics.length} topic(s) as ${exportFormat}`);
-
       return {
         success: true,
         message: `Topic exported as ${exportFormat.toUpperCase()} successfully!`,

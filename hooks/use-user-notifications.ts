@@ -27,14 +27,6 @@ export function useUserNotifications() {
     const userId = session.user.id;
     const userNotificationsChannelId = `user-notifications-${userId}`;
 
-    userNotificationsLogger.info(
-      "Subscribing to events and user notifications",
-      {
-        userId,
-        userNotificationsChannelId,
-      },
-    );
-
     // Subscribe to user notification events
     unsubscribeUserNotificationsRef.current = subscribe(
       userNotificationsChannelId,

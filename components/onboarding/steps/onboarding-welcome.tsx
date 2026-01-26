@@ -40,7 +40,7 @@ export function OnboardingWelcome({
             <Sparkles className="h-12 w-12 text-primary" />
           </div>
         </div>
-        <h1 className="text-3xl font-bold">Welcome to WREXT!</h1>
+        <h1 className="text-3xl font-bold">Welcome to REXT!</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Your AI-powered content automation platform. Let's get you set up in
           just a few minutes.

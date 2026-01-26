@@ -1,5 +1,5 @@
 /**
- * Environment variable type definitions for wrext-admin
+ * Environment variable type definitions for Rext-admin
  *
  * This file provides TypeScript type safety for environment variables
  * used throughout the application, particularly for backend API configuration.

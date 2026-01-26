@@ -63,8 +63,6 @@ export function WorkspaceProvider({
     (state) => state.addToRecentWorkspaces,
   );
 
-  log.info("[WorkspaceProvider] Initializing for workspace:", workspaceId);
-
   // Determine if workspaceId is a UUID or a slug
   const isUuid =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -74,22 +72,10 @@ export function WorkspaceProvider({
   // Load workspace permissions (Phase 1 integration)
   // This loads workspace-scoped permissions dynamically for the current workspace
   const {
-    permissions,
-    role,
+    permissions: _permissions,
+    role: _role,
     error: permissionsError,
   } = useWorkspacePermissions(workspaceId);
-
-  // Log permission loading for debugging
-  useEffect(() => {
-    if (permissions.length > 0) {
-      log.info("[WorkspaceProvider] Permissions loaded:", {
-        workspaceId,
-        role,
-        permissionCount: permissions.length,
-        samplePermissions: permissions.slice(0, 5),
-      });
-    }
-  }, [permissions, role, workspaceId]);
 
   // Log permission errors
   useEffect(() => {
@@ -109,12 +95,6 @@ export function WorkspaceProvider({
   } = useQuery({
     queryKey: ["workspace", workspaceId],
     queryFn: async () => {
-      log.info(
-        "[WorkspaceProvider] Fetching workspace:",
-        workspaceId,
-        "isUuid:",
-        isUuid,
-      );
       // Use appropriate method based on identifier type
       return isUuid
         ? apiClient.workspaces.get(workspaceId)
@@ -162,10 +142,6 @@ export function WorkspaceProvider({
         updated_at: "",
       };
 
-      log.info(
-        "[WorkspaceProvider] Setting preliminary workspace from slug:",
-        workspaceId,
-      );
       setCurrentWorkspace(preliminaryWorkspace);
     }
   }, [workspaceId, isUuid, workspace, isLoading, setCurrentWorkspace]);
@@ -173,7 +149,6 @@ export function WorkspaceProvider({
   // Sync with Zustand store when workspace data changes
   useEffect(() => {
     if (workspace) {
-      log.info("[WorkspaceProvider] Workspace loaded:", workspace.title);
       setCurrentWorkspace(workspace);
       addToRecentWorkspaces(workspace.id);
     }
@@ -258,8 +233,6 @@ export function WorkspaceProvider({
  *   // ⏳ workspaceId (UUID) only available after isLoading = false
  *   if (isLoading) return <div>Loading workspace details...</div>;
  *
- *   // Now you can use workspaceId for API calls
- *   log.info('UUID:', workspaceId);
  *
  *   return <div>{workspace?.title}</div>;
  * }

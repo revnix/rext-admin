@@ -14,6 +14,9 @@ export const WORKSPACE_PAGES = [
   "members",
   "knowledge",
   "media",
+  "integrations",
+  "personas",
+  "persona_create",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -41,6 +44,8 @@ export const workspaceRoutes = {
    * Content routes
    */
   content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
+  generate_content: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/generate_content`,
   contentDetail: (workspaceSlug: string, contentId: string) =>
     `/w/${workspaceSlug}/content/${contentId}`,
   contentCreate: (workspaceSlug: string) =>
@@ -64,6 +69,18 @@ export const workspaceRoutes = {
    * Media route
    */
   media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
+
+  /**
+   * Integrations route
+   */
+  integrations: (workspaceSlug: string) => `/w/${workspaceSlug}/integrations`,
+
+  /**
+   * Personas route
+   */
+  personas: (workspaceSlug: string) => `/w/${workspaceSlug}/personas`,
+  persona_create: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/personas/create`,
 
   /**
    * Settings routes
@@ -149,6 +166,9 @@ export function buildWorkspacePath(
     members: workspaceRoutes.members,
     knowledge: workspaceRoutes.knowledge,
     media: workspaceRoutes.media,
+    integrations: workspaceRoutes.integrations,
+    personas: workspaceRoutes.personas,
+    persona_create: workspaceRoutes.persona_create,
   };
 
   const routeFn = routeMap[pageSegment];

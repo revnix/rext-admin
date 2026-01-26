@@ -23,9 +23,6 @@ export function useNavigateToContent() {
       // Use provided handler
       try {
         setIsNavigating(true);
-        log.info(
-          `Using handler to navigate to content creation for topic ${topicId}`,
-        );
         onNavigateToContent(topicId);
 
         return {
@@ -52,7 +49,6 @@ export function useNavigateToContent() {
     // Fallback to direct navigation if no handler provided
     try {
       setIsNavigating(true);
-      log.info(`Navigating to content creation for topic ${topicId}`);
 
       const workspaceSlug = currentWorkspace?.slug;
       if (!workspaceSlug) {

@@ -199,16 +199,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
             const url = buildUrl();
 
-            sseLogger.info("Opening SSE connection", {
-              operationId,
-              url,
-              retryCount,
-              hasAuthHeader: !!authHeaders.Authorization,
-              authHeaderPreview: authHeaders.Authorization
-                ? `Bearer ${authHeaders.Authorization.substring(7, 17)}...`
-                : "none",
-            });
-
             await fetchEventSource(url, {
               signal: controller.signal,
               headers,
@@ -216,9 +206,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               credentials: "include", // Include cookies for session
               onopen: async (response) => {
                 if (response.ok) {
-                  sseLogger.info("SSE connection opened successfully", {
-                    operationId,
-                  });
                   retryCount = 0;
                   notifyStatus({
                     connected: true,
@@ -360,13 +347,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                       // Try parsing the extracted data
                       try {
                         const event: SSEEvent = JSON.parse(actualData);
-                        sseLogger.info(
-                          "Recovered SSE event from malformed message",
-                          {
-                            operationId,
-                            step: event.step,
-                          },
-                        );
                         onEvent(event);
                         return;
                       } catch (_retryError) {
@@ -494,11 +474,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         abortController,
         subscriberCount: 1,
         unsubscribe,
-      });
-
-      sseLogger.info("Created new SSE subscription", {
-        operationId,
-        activeSubscriptions: activeSubscriptions.size,
       });
 
       return unsubscribe;

@@ -78,7 +78,7 @@ export function PreferencesTab() {
             <CardTitle>Appearance</CardTitle>
           </div>
           <CardDescription>
-            Customize how WREXT looks and feels for you
+            Customize how REXT looks and feels for you
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -126,8 +126,7 @@ export function PreferencesTab() {
             <CardTitle>Accessibility</CardTitle>
           </div>
           <CardDescription>
-            Configure accessibility options to make WREXT more comfortable to
-            use
+            Configure accessibility options to make REXT more comfortable to use
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

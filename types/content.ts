@@ -1,4 +1,5 @@
 // Content management types
+import type { EEATData } from "./generate-content";
 
 export type ContentStatus =
   | "draft"
@@ -146,7 +147,28 @@ export interface ContentSEODataSchema {
   content_seo_score?: number;
 
   /** Content readability score */
-  content_readability_score?: number;
+  readability_score?: number;
+
+  /** Meta title for SEO */
+  meta_title?: string;
+
+  /** Meta description for SEO (alternative to content_meta_description) */
+  meta_description?: string;
+
+  /** Focus keyphrase for SEO */
+  focus_keyphrase?: string;
+
+  /** Keyphrase density score */
+  keyphrase_density?: number;
+
+  /** Full SEO assessment details as JSON string */
+  seo_details?: string;
+
+  /** Trust score for content */
+  trust_score?: number;
+
+  /** EEAT data for content */
+  eeat_data?: EEATData | string;
 }
 
 /**
@@ -203,6 +225,8 @@ export interface ContentItem {
   created_at: string;
   updated_at?: string;
   deleted_at?: string;
+  tags?: string[];
+  introduction?: string;
   content_metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
 }

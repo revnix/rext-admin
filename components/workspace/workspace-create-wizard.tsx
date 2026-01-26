@@ -12,19 +12,9 @@ import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
-import { WorkspaceCongratulations } from "@/components/workspace/workspace-congratulations";
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
@@ -35,15 +25,16 @@ import {
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
-import type { BrandVoice } from "@/types/workspace";
+import type { BrandVoice, Persona } from "@/types/workspace";
 
 /**
  * Workspace Creation Wizard
  *
- * Three-step guided workspace creation with real-time SSE updates:
+ * Four-step guided workspace creation with real-time SSE updates:
  * 1. Details Form - Title, URL, Description (creates workspace immediately)
  * 2. Live Progress - Real-time SSE progress tracking
  * 3. Review & Edit - Edit AI-extracted brand voice data
+ * 4. Congratulations - Success screen
  *
  * Features:
  * - Immediate workspace creation with background processing
@@ -54,7 +45,7 @@ import type { BrandVoice } from "@/types/workspace";
  * - Professional guided experience
  */
 
-type WizardStep = "details" | "progress" | "review" | "congratulations";
+type WizardStep = "details" | "progress" | "review";
 
 const STEPS: Array<{
   id: WizardStep;
@@ -80,12 +71,6 @@ const STEPS: Array<{
     description: "Review and edit brand information",
     progress: 75,
   },
-  {
-    id: "congratulations",
-    title: "Success",
-    description: "Your workspace is ready",
-    progress: 100,
-  },
 ];
 
 export function WorkspaceCreateWizard() {
@@ -104,6 +89,9 @@ export function WorkspaceCreateWizard() {
   const [extractedBrandVoice, setExtractedBrandVoice] =
     useState<Partial<BrandVoice> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
+    null,
+  );
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
 
@@ -131,8 +119,6 @@ export function WorkspaceCreateWizard() {
 
   // Memoize SSE callbacks to prevent infinite re-renders
   const handleSSEComplete = useCallback((payload: unknown) => {
-    log.info("[Wizard] Pipeline completed", payload);
-
     // Extract brand voice from payload
     if (payload && typeof payload === "object" && "brand_voice" in payload) {
       setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
@@ -178,16 +164,12 @@ export function WorkspaceCreateWizard() {
     }
 
     try {
-      log.info("[Wizard] Creating workspace", data);
-
       // Real API call - returns workspace (operation_id is stored in currentOperation)
       const workspace = await createWorkspace({
         title: data.title,
         url: data.url,
         timezone: data.timezone,
       });
-
-      log.info("[Wizard] Workspace created", workspace);
 
       // Store workspace IDs
       setWorkspaceId(workspace.id);
@@ -196,9 +178,6 @@ export function WorkspaceCreateWizard() {
       // Get operation_id from store (set by createWorkspace)
       const operation = useWorkspaceCrudStore.getState().currentOperation;
       if (operation?.operationId) {
-        log.info("[Wizard] Setting operation ID", {
-          operationId: operation.operationId,
-        });
         setOperationId(operation.operationId); // Triggers SSE connection via useSSEChannel
       }
 
@@ -213,7 +192,12 @@ export function WorkspaceCreateWizard() {
   };
 
   // Step 3: Handle brand voice save
-  const handleReviewSave = async (editedData: Partial<BrandVoice>) => {
+  const handleReviewSave = async (
+    editedData: Partial<BrandVoice> & {
+      selectedPersonaId?: string;
+      selectedPersona?: Persona;
+    },
+  ) => {
     if (!workspaceId) {
       toast.error("Workspace ID not found");
       return;
@@ -221,19 +205,71 @@ export function WorkspaceCreateWizard() {
 
     try {
       setIsSaving(true);
-      log.info("[Wizard] Saving brand voice edits", editedData);
+
+      // Extract selectedPersonaId from editedData
+      const {
+        selectedPersonaId: personaId,
+        selectedPersona,
+        ...brandVoiceData
+      } = editedData;
 
       // Update brand voice via API
-      await apiClient.workspaces.updateBrandVoice(workspaceId, editedData);
+      await apiClient.workspaces.updateBrandVoice(workspaceId, {
+        about: brandVoiceData.about,
+        customer_profile: brandVoiceData.customer_profile,
+        selling_position: brandVoiceData.selling_position,
+        target_audience: brandVoiceData.target_audience,
+        brand_voice: brandVoiceData.brand_voice,
+        competitors: brandVoiceData.competitors,
+        content_strategy:
+          brandVoiceData.content_strategy || brandVoiceData.content_pillar,
+        personas: selectedPersona ? [selectedPersona] : undefined,
+      });
+
+      // Manually save personas if they exist in the extracted data
+      // This is a workaround because the backend updateBrandVoice endpoint
+      // does not currently persist personas.
+      if (brandVoiceData.personas && brandVoiceData.personas.length > 0) {
+        log.info(
+          `[Wizard] Manually saving ${brandVoiceData.personas.length} personas`,
+        );
+        await Promise.all(
+          brandVoiceData.personas.map((persona: Persona) =>
+            apiClient.personas.create(workspaceId, {
+              name: persona.name,
+              description:
+                persona.description || persona.professional_title || "",
+              full_name: persona.full_name || persona.name,
+              professional_title: persona.professional_title,
+              areas_of_expertise: persona.areas_of_expertise,
+              tone_of_voice: persona.tone_of_voice,
+              bio: persona.bio,
+              linkedin_url: persona.linkedin_url,
+              demographics: persona.demographics,
+              pain_points: persona.pain_points,
+              goals: persona.goals,
+              behaviors: persona.behaviors,
+            }),
+          ),
+        );
+      }
+
+      // Log selected persona for future API integration
+      if (personaId) {
+        // TODO: Add API endpoint to associate persona with workspace
+        // await apiClient.workspaces.setDefaultPersona(workspaceId, personaId);
+      }
 
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId] });
 
-      // Move to congratulations step instead of navigating immediately
-      setCurrentStep("congratulations");
+      // Redirect directly to workspace generate content page
+      if (workspaceSlug) {
+        router.push(`/w/${workspaceSlug}/generate_content`);
+      }
 
-      // Don't show toast here, congratulations screen is the feedback
+      toast.success("Workspace setup complete!");
     } catch (error) {
       log.error("[Wizard] Failed to save brand voice", error);
       toast.error("Failed to save changes. Please try again.");
@@ -244,21 +280,20 @@ export function WorkspaceCreateWizard() {
 
   // Step 3: Handle skip (navigate without saving edits)
   const handleSkipReview = () => {
-    log.info("[Wizard] Skipping brand voice review");
-
     // Invalidate workspace queries
     queryClient.invalidateQueries({ queryKey: ["workspaces"] });
 
-    // Move to congratulations step instead of navigating immediately
-    setCurrentStep("congratulations");
+    // Redirect directly to workspace generate content page
+    if (workspaceSlug) {
+      router.push(`/w/${workspaceSlug}/generate_content`);
+    }
 
-    // Don't show toast here, congratulations screen is the feedback
+    toast.success("Workspace created!");
   };
 
   // Disconnect SSE when moving to review step
   useEffect(() => {
     if (currentStep === "review" && isConnected) {
-      log.info("[Wizard] Disconnecting SSE after reaching review step");
       disconnect();
     }
   }, [currentStep, isConnected, disconnect]);
@@ -267,9 +302,6 @@ export function WorkspaceCreateWizard() {
   useEffect(() => {
     return () => {
       if (operationId) {
-        log.info("[Wizard] Cleaning up SSE connection on unmount", {
-          operationId,
-        });
         disconnect();
         clearCompletedOperation(operationId);
       }
@@ -278,6 +310,14 @@ export function WorkspaceCreateWizard() {
 
   // Calculate overall progress from SSE events
   const overallProgress = latestEvent?.progress || 0;
+
+  // Handle back navigation
+  const handleBack = () => {
+    if (currentStep === "review") {
+      setCurrentStep("progress");
+    }
+    // Note: Can't go back from details, progress, or congratulations steps
+  };
 
   // Render step content
   const renderStepContent = () => {
@@ -293,7 +333,7 @@ export function WorkspaceCreateWizard() {
               onSubmit={handleSubmit(handleDetailsSubmit)}
               className="space-y-6"
             >
-              {/* Title Field */}
+              {/* Title Field - HIDDEN */}
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-base font-medium">
                   Workspace Title <span className="text-destructive">*</span>
@@ -335,106 +375,6 @@ export function WorkspaceCreateWizard() {
                   content
                 </p>
               </div>
-
-              {/* Timezone Field */}
-              <div className="space-y-2">
-                <Label htmlFor="timezone" className="text-base font-medium">
-                  Timezone{" "}
-                  <span className="text-muted-foreground">(Optional)</span>
-                </Label>
-                <Select
-                  value={form.watch("timezone") || ""}
-                  onValueChange={(value) =>
-                    form.setValue("timezone", value, { shouldValidate: true })
-                  }
-                >
-                  <SelectTrigger className="text-lg h-12">
-                    <SelectValue placeholder="Select timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>North America</SelectLabel>
-                      <SelectItem value="America/New_York">
-                        Eastern Time (ET)
-                      </SelectItem>
-                      <SelectItem value="America/Chicago">
-                        Central Time (CT)
-                      </SelectItem>
-                      <SelectItem value="America/Denver">
-                        Mountain Time (MT)
-                      </SelectItem>
-                      <SelectItem value="America/Los_Angeles">
-                        Pacific Time (PT)
-                      </SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Europe</SelectLabel>
-                      <SelectItem value="Europe/London">
-                        London (GMT)
-                      </SelectItem>
-                      <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
-                      <SelectItem value="Europe/Berlin">
-                        Berlin (CET)
-                      </SelectItem>
-                      <SelectItem value="Europe/Istanbul">
-                        Istanbul (TRT)
-                      </SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Asia</SelectLabel>
-                      <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
-                      <SelectItem value="Asia/Karachi">
-                        Karachi (PKT)
-                      </SelectItem>
-                      <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
-                      <SelectItem value="Asia/Singapore">
-                        Singapore (SGT)
-                      </SelectItem>
-                      <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Australia & Pacific</SelectLabel>
-                      <SelectItem value="Australia/Sydney">
-                        Sydney (AEDT)
-                      </SelectItem>
-                      <SelectItem value="Pacific/Auckland">
-                        Auckland (NZDT)
-                      </SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel>Other</SelectLabel>
-                      <SelectItem value="UTC">UTC</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {errors.timezone && (
-                  <p className="text-sm text-destructive">
-                    {errors.timezone.message}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Detected: {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                </p>
-              </div>
-
-              <Button
-                type="submit"
-                size="lg"
-                disabled={!isValid || form.formState.isSubmitting}
-                className="w-full"
-              >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Workspace...
-                  </>
-                ) : (
-                  <>
-                    Create Workspace
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
             </form>
           </QuestionCard>
         );
@@ -476,9 +416,12 @@ export function WorkspaceCreateWizard() {
           >
             {extractedBrandVoice ? (
               <WorkspaceBrandVoiceForm
+                workspaceId={workspaceId}
                 data={extractedBrandVoice}
                 onSave={handleReviewSave}
                 isLoading={isSaving}
+                selectedPersonaId={selectedPersonaId}
+                onPersonaSelect={setSelectedPersonaId}
               />
             ) : (
               <div className="space-y-6">
@@ -502,18 +445,6 @@ export function WorkspaceCreateWizard() {
           </QuestionCard>
         );
 
-      case "congratulations":
-        return (
-          <WorkspaceCongratulations
-            workspaceName={form.getValues("title")}
-            onContinue={() => {
-              if (workspaceSlug) {
-                router.push(`/w/${workspaceSlug}/topics`);
-              }
-            }}
-          />
-        );
-
       default:
         return null;
     }
@@ -527,7 +458,7 @@ export function WorkspaceCreateWizard() {
           currentStep === "details"
             ? currentStepInfo.progress
             : currentStep === "progress"
-              ? 33 + (overallProgress / 100) * 33
+              ? 25 + (overallProgress / 100) * 25
               : currentStepInfo.progress
         }
         currentStep={currentStepIndex + 1}
@@ -550,6 +481,48 @@ export function WorkspaceCreateWizard() {
       >
         {renderStepContent()}
       </motion.div>
+
+      {/* Navigation Buttons */}
+      {currentStep !== "progress" && (
+        <div className="flex items-center justify-between pt-6 border-t">
+          {/* Back Button */}
+          {currentStep === "review" ? (
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="gap-2"
+              disabled={form.formState.isSubmitting}
+            >
+              <ArrowRight className="h-4 w-4 rotate-180" />
+              Back
+            </Button>
+          ) : (
+            <div /> // Empty div for spacing when no back button
+          )}
+
+          {/* Continue/Next Button */}
+          {currentStep === "details" && (
+            <Button
+              size="lg"
+              onClick={handleSubmit(handleDetailsSubmit)}
+              disabled={!isValid || form.formState.isSubmitting}
+              className="gap-2 text-white"
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  Create Workspace
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,9 @@
 "use client";
 
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ContentEditor } from "@/components/content/content-editor";
 import { ProgressTimeline } from "@/components/content-generation/progress-timeline";
 import { PageLayout } from "@/components/page-layout";
 import { CanAccess } from "@/components/permissions/can-access";
@@ -19,13 +18,15 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
-import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { useContentDetail } from "@/hooks/use-content";
 import type { GenerationStep } from "@/types/content-generation-progress";
 import type { SSEEvent } from "@/types/sse";
+import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
+import { ContentEditor } from "@/components/generate-content/content";
 
 const contentLogger = log.forComponent("ContentDetailPage");
 
@@ -35,18 +36,6 @@ type WorkspaceContentDetailPageProps = {
     id: string;
   }>;
 };
-
-interface Content {
-  id: string;
-  title: string;
-  status: string;
-  body_markdown?: string;
-  body_html?: string;
-  created_at: string;
-  updated_at: string;
-  content_metadata?: Record<string, unknown>;
-  seo_data?: Record<string, unknown>;
-}
 
 // Map backend step names to UI steps
 const STEP_MAPPING: Record<
@@ -109,44 +98,21 @@ export default function WorkspaceContentDetailPage({
   params,
 }: WorkspaceContentDetailPageProps) {
   const { workspaceSlug, id } = use(params);
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const router = useRouter();
 
-  const [content, setContent] = useState<Content | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  // Fetch content details
-  const fetchContent = useCallback(async () => {
-    try {
-      const headers = await getAuthHeaders();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/v1/content/${id}?workspace_id=${workspace?.id}`,
-        { headers },
-      );
+  // Fetch content details using hook
+  const {
+    data: contentResponse,
+    isLoading: isContentLoading,
+    error: fetchError,
+    refetch: refetchContent,
+  } = useContentDetail(workspaceId, id);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch content");
-      }
-
-      const result = await response.json();
-
-      // Handle new consistent format: { success: true, data: { content: {...} } }
-      const contentData = result?.data?.content || result?.content || result;
-      setContent(contentData);
-
-      contentLogger.info("Content fetched", {
-        contentId: id,
-        status: contentData.status,
-      });
-    } catch (error) {
-      contentLogger.error("Failed to fetch content", { error });
-      toast.error("Failed to load content details");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, workspace?.id]);
+  const content = contentResponse?.content;
 
   // Subscribe to SSE only if status is "generating"
   const shouldSubscribe = content?.status === "generating";
@@ -171,39 +137,32 @@ export default function WorkspaceContentDetailPage({
         contentLogger.info("Generation completed", { payload });
         toast.success("Content generation completed!");
         // Refresh content to get generated body
-        fetchContent();
+        refetchContent();
       },
       onError: (error) => {
         contentLogger.error("Generation failed", { error });
         toast.error(`Generation failed: ${error}`);
         // Refresh to update status
-        fetchContent();
+        refetchContent();
       },
     },
   );
 
-  // Initial fetch
-  useEffect(() => {
-    if (workspace?.id) {
-      fetchContent();
-    }
-  }, [workspace?.id, fetchContent]);
-
   // Handle retry
   const handleRetry = async () => {
-    if (!workspace?.id) return;
+    if (!workspaceId) return;
 
     setIsRetrying(true);
     try {
       contentLogger.info("Retrying content generation", { contentId: id });
 
-      await apiClient.content.retry(workspace.id, id);
+      await apiClient.content.retry(workspaceId, id);
 
       toast.success("Content generation restarted!");
 
       // Reset state and refetch
       setCurrentProgress(0);
-      await fetchContent();
+      await refetchContent();
     } catch (error) {
       contentLogger.error("Failed to retry content generation", { error });
       toast.error("Failed to retry generation. Please try again.");
@@ -211,6 +170,16 @@ export default function WorkspaceContentDetailPage({
       setIsRetrying(false);
     }
   };
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [contentMarkdown, setContentMarkdown] = useState("");
+
+  // Update local content state when fetched
+  useEffect(() => {
+    if (content?.body_markdown) {
+      setContentMarkdown(content.body_markdown);
+    }
+  }, [content?.body_markdown]);
 
   // Map SSE events to timeline steps
   const timelineSteps: GenerationStep[] = Object.entries(STEP_MAPPING)
@@ -252,7 +221,7 @@ export default function WorkspaceContentDetailPage({
     { label: content?.title || "Detail" },
   ];
 
-  if (isLoading) {
+  if (isContentLoading) {
     return (
       <PageLayout
         title="Loading..."
@@ -265,6 +234,30 @@ export default function WorkspaceContentDetailPage({
             <p className="text-muted-foreground">Loading content...</p>
           </div>
         </div>
+      </PageLayout>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <PageLayout
+        title="Error Loading Content"
+        description="There was an error fetching the content"
+        breadcrumbs={breadcrumbs}
+      >
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+              <h3 className="text-lg font-semibold">Failed to load content</h3>
+              <p className="text-muted-foreground">
+                We encountered an error while trying to fetch the content
+                details. Please try again or contact support.
+              </p>
+              <Button onClick={() => refetchContent()}>Retry Load</Button>
+            </div>
+          </CardContent>
+        </Card>
       </PageLayout>
     );
   }
@@ -298,164 +291,90 @@ export default function WorkspaceContentDetailPage({
     );
   }
 
-  // Show progress view if generating
-  if (content.status === "generating") {
-    return (
-      <PageLayout
-        title={content.title}
-        description="Content generation in progress"
-        breadcrumbs={breadcrumbs}
-      >
-        <div className="space-y-6">
-          {/* Progress Header */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4 mb-4">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    Generating Content...
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {latestEvent?.message || "Initializing..."}
-                  </p>
-                </div>
-              </div>
+  // Construct SEORESULT object
+  const seoResult: SEORESULT | null = content.seo_data?.seo_details
+    ? JSON.parse(content.seo_data.seo_details)
+    : null;
 
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Overall Progress
-                  </span>
-                  <span className="font-medium">{currentProgress}%</span>
-                </div>
-                <Progress value={currentProgress} className="h-3" />
-              </div>
+  const eeatData = content.seo_data?.eeat_data
+    ? typeof content.seo_data.eeat_data === "string"
+      ? JSON.parse(content.seo_data.eeat_data)
+      : content.seo_data.eeat_data
+    : null;
 
-              {/* Connection Status */}
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <div
-                  className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
-                />
-                <span className="text-muted-foreground">
-                  {isConnected ? "Connected" : "Connecting..."}
-                </span>
-              </div>
+  // Construct Outline object (mocked or extracted from content if possible)
+  // For now, we can extract headings from markdown if outline is missing in API
+  const outline: Outline = {
+    title: content.title,
+    brief: content.introduction || "",
+    sections:
+      contentMarkdown?.match(/^#+\s+.+$/gm)?.map((h) => ({
+        heading: h.replace(/^#+\s+/, ""),
+        description: "",
+        key_points: [],
+      })) || [],
+    target_audience: [],
+    tone: "",
+    keywords_to_include: [],
+    status: "approved",
+    outline_retries: 0,
+    draft_retries: 0,
+    review_retries: 0,
+    max_retries: 3,
+  };
 
-              {/* Connection Warning */}
-              {!isConnected && currentProgress > 0 && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Connection lost.</strong> Progress is still being
-                    tracked. The page will automatically update when
-                    reconnected.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+  // Construct CONTENT object for advanced editor
+  const advancedContent: CONTENT = {
+    topics: [],
+    selected_topic: content.title,
+    outline: outline,
+    draft: {
+      title: content.title,
+      body_markdown: contentMarkdown,
+      word_count: contentMarkdown?.split(/\s+/).length || 0,
+      sections_completed: [],
+      status: "approved",
+    },
+    status: "completed",
+    outline_retries: 0,
+    draft_retries: 0,
+    review_retries: 0,
+    max_retries: 3,
+    final_content: {
+      title: content.title,
+      introduction: content.introduction || "",
+      body_markdown: contentMarkdown,
+      tags: content.tags || [],
+      meta_title: content.seo_data?.meta_title || "",
+      meta_description: content.seo_data?.meta_description || "",
+      focus_keyphrase: content.seo_data?.focus_keyphrase || "",
+      word_count: content.body_markdown?.split(/\s+/).length || 0,
+      status: "generated",
+    },
+    review: {
+      seo_score: content.seo_data?.content_seo_score || 0,
+      readability_metrics: {
+        flesch_reading_ease: content.seo_data?.readability_score || 0,
+        flesch_kincaid_grade: 0,
+        gunning_fog_index: 0,
+        smog_index: 0,
+        automated_readability_index: 0,
+        coleman_liau_index: 0,
+        dale_chall_score: 0,
+      },
+      passed: true,
+      missing_points: [],
+      improvement_suggestions: [],
+    },
+  };
 
-          {/* Progress Timeline */}
-          <ProgressTimeline
-            steps={timelineSteps}
-            currentStep={latestEvent?.step}
-          />
-        </div>
-      </PageLayout>
-    );
-  }
+  const finalContent = advancedContent?.final_content;
 
-  // Show editor view if ready
-  if (content.status === "ready") {
-    return (
-      <PageLayout
-        title={content.title}
-        description="Review and edit generated content"
-        breadcrumbs={breadcrumbs}
-      >
-        <ContentEditor
-          contentId={id}
-          workspaceId={workspace?.id || ""}
-          initialMarkdown={content.body_markdown || ""}
-          title={content.title}
-          onSaveSuccess={fetchContent}
-        />
-      </PageLayout>
-    );
-  }
-
-  // Show error view if failed
-  if (content.status === "failed") {
-    return (
-      <PageLayout
-        title={content.title}
-        description="Content generation failed"
-        breadcrumbs={breadcrumbs}
-      >
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <div className="text-red-500">
-                <svg
-                  className="h-12 w-12 mx-auto mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-label="Error icon"
-                >
-                  <title>Error</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold">Generation Failed</h3>
-              <p className="text-muted-foreground">
-                There was an issue generating your content. You can retry the
-                generation or contact support if the problem persists.
-              </p>
-              <div className="flex gap-3 justify-center">
-                <Button onClick={handleRetry} disabled={isRetrying}>
-                  {isRetrying ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Retrying...
-                    </>
-                  ) : (
-                    "Retry Generation"
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    router.push(workspaceRoutes.content(workspaceSlug))
-                  }
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Content
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </PageLayout>
-    );
-  }
-
-  // Default view for other statuses
   return (
-    <PageLayout
-      title={content.title}
-      description={`Content status: ${content.status}`}
-      breadcrumbs={breadcrumbs}
-    >
-      <CanAccess
-        anyPermission={[CONTENT_PERMISSIONS.READ, CONTENT_PERMISSIONS.UPDATE]}
-        fallback={
+    <CanAccess
+      permission={CONTENT_PERMISSIONS.READ}
+      fallback={
+        <PageLayout title="Access Denied" breadcrumbs={breadcrumbs}>
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
@@ -468,20 +387,127 @@ export default function WorkspaceContentDetailPage({
                 Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
                   content.read
-                </code>{" "}
-                or{" "}
-                <code className="text-xs bg-muted px-1 rounded">
-                  content.update
                 </code>
               </p>
             </CardContent>
           </Card>
-        }
-      >
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">
+        </PageLayout>
+      }
+    >
+      {/* Content Rendering based on status */}
+      {content.status === "generating" ? (
+        <PageLayout
+          title={content.title}
+          description="Content generation in progress"
+          breadcrumbs={breadcrumbs}
+        >
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      Generating Content...
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {latestEvent?.message || "Initializing..."}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Overall Progress
+                    </span>
+                    <span className="font-medium">{currentProgress}%</span>
+                  </div>
+                  <Progress value={currentProgress} className="h-3" />
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-sm">
+                  <div
+                    className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
+                  />
+                  <span className="text-muted-foreground">
+                    {isConnected ? "Connected" : "Connecting..."}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+            <ProgressTimeline
+              steps={timelineSteps}
+              currentStep={latestEvent?.step}
+            />
+          </div>
+        </PageLayout>
+      ) : ["generated", "draft", "review", "published", "scheduled"].includes(
+          content.status,
+        ) ? (
+        <PageLayout
+          title={content.title}
+          description="Review and edit generated content"
+          breadcrumbs={breadcrumbs}
+          fullWidth
+          className="p-0"
+          hideTitle
+        >
+          {finalContent && (
+            <ContentEditor
+              allContent={finalContent}
+              readabilityScore={
+                advancedContent.review?.readability_metrics || null
+              }
+              eeatData={eeatData}
+              generatedContent={contentMarkdown}
+              seoScore={seoResult}
+              isEditing={isEditing}
+              userKeyword={content.seo_data?.focus_keyphrase || ""}
+              outline={outline}
+              onEditToggle={() => setIsEditing(!isEditing)}
+              onContentChange={setContentMarkdown}
+            />
+          )}
+        </PageLayout>
+      ) : content.status === "failed" ? (
+        <PageLayout
+          title={content.title}
+          description="Content generation failed"
+          breadcrumbs={breadcrumbs}
+        >
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+                <h3 className="text-lg font-semibold">Generation Failed</h3>
+                <p className="text-muted-foreground">
+                  There was an issue generating your content.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={handleRetry} disabled={isRetrying}>
+                    {isRetrying ? "Retrying..." : "Retry Generation"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      router.push(workspaceRoutes.content(workspaceSlug))
+                    }
+                  >
+                    Back
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </PageLayout>
+      ) : (
+        <PageLayout
+          title={content.title}
+          description={`Status: ${content.status}`}
+          breadcrumbs={breadcrumbs}
+        >
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="mb-4">
                 Content status:{" "}
                 <span className="font-medium">{content.status}</span>
               </p>
@@ -491,13 +517,12 @@ export default function WorkspaceContentDetailPage({
                   router.push(workspaceRoutes.content(workspaceSlug))
                 }
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Content
+                Back
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </CanAccess>
-    </PageLayout>
+            </CardContent>
+          </Card>
+        </PageLayout>
+      )}
+    </CanAccess>
   );
 }

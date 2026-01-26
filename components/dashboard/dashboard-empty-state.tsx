@@ -64,7 +64,7 @@ export function DashboardEmptyState() {
             {/* Welcome Message */}
             <div className="space-y-2">
               <CardTitle className="text-3xl font-bold">
-                {userName ? `Welcome, ${userName}!` : "Welcome to Wrext!"}
+                {userName ? `Welcome, ${userName}!` : "Welcome to Rext!"}
               </CardTitle>
               <CardDescription className="text-base">
                 Let's create your first workspace to get started with AI-powered

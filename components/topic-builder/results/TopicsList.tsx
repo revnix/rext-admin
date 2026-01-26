@@ -124,7 +124,6 @@ export const TopicsList = memo(function TopicsList({
       setSavingTopicIds((prev) => [...prev, topicId]);
       try {
         const result = await onTopicSave(topicId);
-        log.info(`Topic ${topicId} saved successfully`, result);
         return result; // Return result for error handling in topics table
       } catch (error) {
         log.error(`Failed to save topic ${topicId}:`, error);
@@ -139,7 +138,6 @@ export const TopicsList = memo(function TopicsList({
   const handleNavigateToContent = useCallback(
     (topicId: string) => {
       try {
-        log.info(`Navigating to content creation for topic ${topicId}`);
         const workspaceSlug = currentWorkspace?.slug;
         if (!workspaceSlug) {
           throw new Error("No workspace selected");

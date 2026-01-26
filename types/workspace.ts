@@ -78,6 +78,25 @@ export interface Workspace {
 }
 
 /**
+ * Persona data for target audience
+ */
+export interface Persona {
+  id?: string; // UUID, optional for creation
+  name: string;
+  description: string;
+  full_name?: string | null;
+  professional_title?: string | null;
+  areas_of_expertise?: string;
+  tone_of_voice?: string;
+  bio?: string;
+  linkedin_url?: string | null;
+  demographics?: string;
+  pain_points?: string;
+  goals?: string;
+  behaviors?: string;
+}
+
+/**
  * Brand voice data extracted by LLM
  */
 export interface BrandVoice {
@@ -90,6 +109,8 @@ export interface BrandVoice {
   brand_voice?: string[]; // Communication tone/style characteristics
   competitors?: string[]; // Array of competitor names
   content_strategy?: string[]; // Content pillars/themes
+  content_pillar?: string[]; // Alternative name for content strategy
+  personas?: Persona[]; // Target audience personas
   created_at?: string;
   updated_at?: string;
 }

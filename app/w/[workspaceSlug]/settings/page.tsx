@@ -16,9 +16,6 @@ import { GeneralInfoSection } from "@/components/workspace-settings/general-info
 import { TeamAccessSection } from "@/components/workspace-settings/team-access-section";
 import { WorkspacePreferencesSection } from "@/components/workspace-settings/workspace-preferences-section";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
-import { PageLayout } from "@/components/page-layout";
-import { workspaceRoutes } from "@/lib/routes";
-import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
  * Workspace Settings Page
@@ -36,72 +33,61 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * Permission Required: `workspace.update` (Admin or Owner)
  */
 export default function WorkspaceSettingsPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.title || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Settings" },
-  ];
-
   return (
-    <PageLayout
-      title="Workspace Settings"
-      description={`Manage general info, brand voice, team access, and preferences for ${workspace?.title || "this workspace"}.`}
-      breadcrumbs={breadcrumbs}
-    >
-      <CanAccess
-        permission={WORKSPACE_PERMISSIONS.UPDATE}
-        fallback={
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Access Restricted
-              </CardTitle>
-              <CardDescription>
-                Only workspace administrators can access workspace settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Workspace settings allow you to modify workspace name, brand
-                voice, team access, and other critical configurations. This page
-                is restricted to workspace owners and administrators.
+    <CanAccess
+      permission={WORKSPACE_PERMISSIONS.UPDATE}
+      fallback={
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Access Restricted
+            </CardTitle>
+            <CardDescription>
+              Only workspace administrators can access workspace settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Workspace settings allow you to modify workspace name, brand
+              voice, team access, and other critical configurations. This page
+              is restricted to workspace owners and administrators.
+            </p>
+            <div className="bg-muted p-3 rounded-md">
+              <p className="text-xs font-mono">
+                Required permission:{" "}
+                <span className="font-semibold">workspace.update</span>
               </p>
-              <div className="bg-muted p-3 rounded-md">
-                <p className="text-xs font-mono">
-                  Required permission:{" "}
-                  <span className="font-semibold">workspace.update</span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        }
-      >
-        <div className="space-y-6">
-          <GeneralInfoSection />
-
-          <Separator />
-
-          <BrandVoiceSection />
-
-          <Separator />
-
-          <TeamAccessSection />
-
-          <Separator />
-
-          <WorkspacePreferencesSection />
-
-          <Separator />
-
-          <DangerZoneSection />
+            </div>
+          </CardContent>
+        </Card>
+      }
+    >
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-lg font-medium">General Information</h2>
+          <p className="text-sm text-muted-foreground">
+            Update your workspace name, slug, and other basic information
+          </p>
         </div>
-      </CanAccess>
-    </PageLayout>
+        <GeneralInfoSection />
+
+        <Separator />
+
+        <BrandVoiceSection />
+
+        <Separator />
+
+        <TeamAccessSection />
+
+        <Separator />
+
+        <WorkspacePreferencesSection />
+
+        <Separator />
+
+        <DangerZoneSection />
+      </div>
+    </CanAccess>
   );
 }

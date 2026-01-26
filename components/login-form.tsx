@@ -21,6 +21,8 @@ import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/auth-utils";
 
 export function LoginForm({
   className,
@@ -74,8 +76,6 @@ export function LoginForm({
     setError("");
 
     try {
-      log.info("[AuthJS] Signing in user:", email, "Remember me:", rememberMe);
-
       // Try to get specific error message from backend first
       // This allows us to show detailed errors like "Account locked" before NextAuth processes it
       const backendResponse = await fetch(
@@ -107,8 +107,6 @@ export function LoginForm({
         rememberMe: rememberMe.toString(),
       });
 
-      log.info("[AuthJS] Sign in result:", result);
-
       if (result?.error) {
         setError("Authentication failed. Please try again.");
         toast.error("Authentication failed. Please try again.");
@@ -120,9 +118,31 @@ export function LoginForm({
         // Redirect to invitation acceptance page
         router.push(`/accept-invitation?token=${invitationToken}`);
       } else {
-        // Redirect to the original page or default to dashboard
-        const redirect = searchParams.get("redirect") || "/";
-        router.push(redirect);
+        // Wait for session to be established (cookies to be set)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Force refresh auth headers to ensure we have the new token
+        await getAuthHeaders(true);
+
+        // Fetch workspaces to determine redirect
+        try {
+          const response = await apiClient.workspaces.list();
+          const workspaces = response.workspaces || [];
+
+          if (workspaces.length === 0) {
+            // No workspace exists, redirect to create workspace
+            router.push("/w/create");
+          } else {
+            // Workspace exists, redirect to generate content page
+            const firstWorkspace = workspaces[0];
+            router.push(`/w/${firstWorkspace.slug}/generate_content`);
+          }
+        } catch (error) {
+          log.error("[Auth] Failed to fetch workspaces:", error);
+          // Fallback to dashboard on error
+          const redirect = searchParams.get("redirect") || "/";
+          router.push(redirect);
+        }
       }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
@@ -162,9 +182,9 @@ export function LoginForm({
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-0">
+          <CardTitle className="text-2xl font-bold">
             {hasValidInvitation
               ? "Log in to join workspace"
               : "Login to your account"}
@@ -175,13 +195,15 @@ export function LoginForm({
               : "Enter your email below to login to your account"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <form onSubmit={handleSubmit}>
             <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="ml-1">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -189,11 +211,14 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="ml-1">
+                    Password
+                  </Label>
                   <Link
                     href="/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
@@ -207,6 +232,7 @@ export function LoginForm({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -216,6 +242,7 @@ export function LoginForm({
                   onCheckedChange={(checked) =>
                     setRememberMe(checked as boolean)
                   }
+                  className="rounded-md"
                 />
                 <label
                   htmlFor="remember"
@@ -227,7 +254,7 @@ export function LoginForm({
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
                   disabled={isLoading || isLoadingInvitation}
                 >
                   {isLoading
@@ -248,7 +275,7 @@ export function LoginForm({
                     ? `/signup?token=${invitationToken}`
                     : "/signup"
                 }
-                className="underline underline-offset-4"
+                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
               >
                 Sign up
               </Link>

@@ -44,11 +44,6 @@ export default function WorkspaceContentCreatePage({
 
   const handleSubmit = async (formData: ContentCreationFormData) => {
     try {
-      log.info("Submitting content creation request", {
-        workspaceId,
-        formData,
-      });
-
       // Generate placeholder SEO data if missing
       const primaryKeywords =
         formData.primaryKeywords && formData.primaryKeywords.length > 0
@@ -110,18 +105,11 @@ export default function WorkspaceContentCreatePage({
         },
       };
 
-      log.info("Content creation request prepared", {
-        primaryKeywords,
-        metaDescriptionLength: metaDescription.length,
-      });
-
       // Call backend API to create content
       const response = await apiClient.content.create(
         workspaceId,
         createRequest,
       );
-
-      log.info("Content creation started successfully", response);
 
       // Validate response has required ID field
       // Response structure: { content: {...}, operation_id: "...", message: "..." }

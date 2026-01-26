@@ -1,5 +1,5 @@
 /**
- * Onboarding types for WREXT platform
+ * Onboarding types for REXT platform
  */
 
 export interface OnboardingStatus {
@@ -55,13 +55,20 @@ export interface OnboardingStep {
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 0,
+    name: "content_strategy",
+    title: "Welcome to Rext",
+    description: "Choose your content strategy foundation",
+    required: true,
+  },
+  {
+    id: 1,
     name: "marketing_questions",
     title: "Tell Us About Yourself",
     description: "Help us personalize your experience",
     required: true,
   },
   {
-    id: 1,
+    id: 2,
     name: "complete",
     title: "You're All Set!",
     description: "Start creating amazing content",
@@ -129,7 +136,7 @@ export const GOAL_OPTIONS = [
   {
     value: "explore",
     label: "Just exploring",
-    description: "Curious to see what WREXT can do",
+    description: "Curious to see what REXT can do",
     icon: "🔍",
   },
 ];

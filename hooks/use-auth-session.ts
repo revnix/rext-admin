@@ -25,6 +25,7 @@ export function useAuthSession() {
         id: session.user.id || "",
         email: session.user.email || "",
         name: session.user.name || "",
+        accessToken: session.user.accessToken || "",
         role: session.user.role || "user",
         permissions: session.user.permissions || [],
       }
@@ -54,10 +55,6 @@ export function useAuthSession() {
 
   const logout = async () => {
     try {
-      log.info(
-        `[Auth] User logging out after ${activityCount} interactions. Last active: ${new Date(lastActivity).toLocaleTimeString()}`,
-      );
-
       // Disable all background queries
       queryClient.setDefaultOptions({
         queries: { enabled: false },
@@ -66,15 +63,17 @@ export function useAuthSession() {
       // Clear all cached React Query data
       queryClient.clear();
 
-      // Perform sign out (don’t auto-redirect)
-      await signOut({ redirect: false });
+      // Perform sign out with redirection
+      // We pass redirect: false to handle it manually for better reliability
+      await signOut({ redirect: false, callbackUrl: "/login" });
 
-      // Redirect manually to login page
+      // Force manual redirection to ensure it happens
       router.push("/login");
+      router.refresh();
     } catch (error) {
       log.error("[Auth] Logout failed", error);
-      // As fallback, still navigate to login
-      router.push("/login");
+      // Fallback redirection
+      window.location.href = "/login";
     }
   };
 

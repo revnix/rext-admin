@@ -46,7 +46,7 @@ export function OnboardingContent({
         </div>
         <h2 className="text-2xl font-bold">Generate Your First Content</h2>
         <p className="text-muted-foreground max-w-lg mx-auto">
-          Ready to create amazing content with AI? Let's explore what WREXT can
+          Ready to create amazing content with AI? Let's explore what REXT can
           do for you.
         </p>
       </div>

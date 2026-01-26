@@ -246,9 +246,7 @@ export function AccountDeactivation() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password-text">
-                  Type password to proceed
-                </Label>
+                <Label htmlFor="password-text">Type password to proceed</Label>
                 <Input
                   id="password-text"
                   type="password"

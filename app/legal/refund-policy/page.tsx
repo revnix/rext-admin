@@ -13,7 +13,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Refund Policy",
-  description: "WREXT refund and cancellation policy for subscription services",
+  description: "REXT refund and cancellation policy for subscription services",
 };
 
 export default function RefundPolicyPage() {
@@ -46,7 +46,7 @@ export default function RefundPolicyPage() {
 
           <h2>1. Money-Back Guarantee</h2>
           <p>
-            We want you to be completely satisfied with WREXT. That's why we
+            We want you to be completely satisfied with REXT. That's why we
             offer:
           </p>
 

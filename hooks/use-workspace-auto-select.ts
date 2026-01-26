@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
-import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 
 /**
@@ -67,7 +66,6 @@ export function useWorkspaceAutoSelect() {
 
     // Skip if no workspaces fetched yet
     if (!workspaces.length) {
-      log.info("No workspaces available for auto-selection");
       return;
     }
 
@@ -79,9 +77,6 @@ export function useWorkspaceAutoSelect() {
       currentWorkspace &&
       workspaces.find((w) => w.id === currentWorkspace.id)
     ) {
-      log.info("Current workspace already set, keeping it", {
-        workspace: currentWorkspace.title,
-      });
       hasAutoSelected.current = true;
       return;
     }
@@ -92,9 +87,6 @@ export function useWorkspaceAutoSelect() {
     // Strategy 1: If only 1 workspace, auto-select it
     if (workspaces.length === 1) {
       selectedWorkspace = workspaces[0];
-      log.info("Auto-selected single workspace", {
-        workspace: selectedWorkspace.title,
-      });
     }
     // Strategy 2: If multiple workspaces, use most recent or first
     else if (workspaces.length > 1) {
@@ -103,15 +95,9 @@ export function useWorkspaceAutoSelect() {
         const recentWorkspaceId = recentWorkspaces[0];
         selectedWorkspace =
           workspaces.find((w) => w.id === recentWorkspaceId) || workspaces[0];
-        log.info("Auto-selected recent workspace", {
-          workspace: selectedWorkspace.title,
-        });
       } else {
         // Fallback to first workspace
         selectedWorkspace = workspaces[0];
-        log.info("Auto-selected first workspace", {
-          workspace: selectedWorkspace.title,
-        });
       }
     }
 
