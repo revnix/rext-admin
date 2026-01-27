@@ -16,8 +16,8 @@ export function getCSPHeader(_nonce: string): string {
   // Always use unsafe-inline for styles in development to support React inline styles
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
-  // Production backend URL - hardcoded to avoid Vercel build cache issues
-  const PRODUCTION_BACKEND = "135.181.105.165:2024";
+  // Production backend URL
+  const PRODUCTION_BACKEND = "api.rext.ai";
 
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
