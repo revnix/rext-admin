@@ -21,12 +21,15 @@ export function getCSPHeader(_nonce: string): string {
     "http://192.168.1.130:2024" ||
     "http://localhost:2024";
 
+  // Extract host from apiUrl to build both http and https versions
+  const apiHost = apiUrl.replace(/^https?:\/\//, "");
+
   // In development, allow both localhost and 127.0.0.1 for the backend
   // as they are distinct origins in CSP but often used interchangeably.
   // In production, allow both http and https since browsers may upgrade requests
   const backendOrigins = isDev
     ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://192.168.1.130:2024`
-    : `${apiUrl} ${apiUrl.replace("http://", "https://")}`;
+    : `http://${apiHost} https://${apiHost}`;
 
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
