@@ -16,20 +16,19 @@ export function getCSPHeader(_nonce: string): string {
   // Always use unsafe-inline for styles in development to support React inline styles
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
+  // Production backend URL - hardcoded to avoid Vercel build cache issues
+  const PRODUCTION_BACKEND = "135.181.105.165:2024";
+
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
     "http://192.168.1.130:2024" ||
     "http://localhost:2024";
 
-  // Extract host from apiUrl to build both http and https versions
-  const apiHost = apiUrl.replace(/^https?:\/\//, "");
-
-  // In development, allow both localhost and 127.0.0.1 for the backend
-  // as they are distinct origins in CSP but often used interchangeably.
-  // In production, allow both http and https since browsers may upgrade requests
+  // In development, allow localhost variants
+  // In production, allow both http and https for the production backend
   const backendOrigins = isDev
     ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://192.168.1.130:2024`
-    : `http://${apiHost} https://${apiHost}`;
+    : `http://${PRODUCTION_BACKEND} https://${PRODUCTION_BACKEND}`;
 
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
