@@ -78,11 +78,6 @@ export function getCSPHeader(_nonce: string): string {
     "frame-ancestors 'none'",
   ];
 
-  // Add upgrade-insecure-requests only in production
-  if (!isDev) {
-    directives.push("upgrade-insecure-requests");
-  }
-
   return directives.join("; ");
 }
 
