@@ -17,7 +17,7 @@ export function getCSPHeader(_nonce: string): string {
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
   // Production backend URL
-  const PRODUCTION_BACKEND = "api.rext.ai";
+  const PRODUCTION_BACKEND = "135.181.105.165:2024";
 
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
