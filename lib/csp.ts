@@ -18,13 +18,13 @@ export function getCSPHeader(_nonce: string): string {
   const isDev = process.env.NODE_ENV !== "production";
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    "http://192.168.1.130:2024" ||
+    "http://135.181.105.165:2024" ||
     "http://localhost:2024";
 
   // In development, allow both localhost and 127.0.0.1 for the backend
   // as they are distinct origins in CSP but often used interchangeably.
   const backendOrigins = isDev
-    ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://192.168.1.130:2024`
+    ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://135.181.105.165:2024`
     : apiUrl;
 
   // Third-party service domains that need to be whitelisted
