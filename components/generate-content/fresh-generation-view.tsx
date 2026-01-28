@@ -304,6 +304,7 @@ export function FreshGenerationView({
 
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
+        console.log("updates", updates);
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
@@ -449,7 +450,7 @@ export function FreshGenerationView({
         });
         return resumeWorkflow({
           payload: { "Primary Keyword": value },
-          status: "Analyzing keyword...",
+          status: "Keyword Recommendation...",
         });
 
       case "TOPIC_SELECT":
@@ -459,7 +460,7 @@ export function FreshGenerationView({
         });
         return resumeWorkflow({
           payload: { "Selected Topic": value },
-          status: "Topic Generation...",
+          status: "Content Type Generation...",
         });
 
       case "CONTENT_TYPE_SELECT":
@@ -512,7 +513,7 @@ export function FreshGenerationView({
         )}
       >
         <LoadingIndicatorVariants
-          step={step}
+          step={instructionType}
           isLoading={isLoading || isManualLoading}
           loadingStatus={loadingStatus}
           completedSteps={completedNodes}

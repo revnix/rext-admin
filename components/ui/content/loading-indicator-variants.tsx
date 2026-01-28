@@ -15,8 +15,10 @@ interface LoadingIndicatorVariantsProps {
 
 const STEP_DATA: Record<string, { title: string }> = {
   keyword: { title: "Analyzing Keyword" },
-  topic: { title: "Generating Topics" },
-  suggestions: { title: "Generating Suggestions" },
+  "keyword Selection": { title: "Analyzing Keyword" },
+  topic: { title: "Content Type Generation" },
+  content_type: { title: "Determining Content Type" },
+  outline_review: { title: "Generating Content Outline" },
   outline: { title: "Generating Content Outline" },
   content: { title: "Generating Content" },
   default: { title: "Processing" },
@@ -39,9 +41,32 @@ export function LoadingIndicatorVariants({
   const normalizedStatus = loadingStatus?.replace(/\.\.\.$/, "") || "";
 
   // Find current active index
-  const activeStepIndex = steps.findIndex(
+  const matchIndex = steps.findIndex(
     (s) => s.id === normalizedStatus || s.label === normalizedStatus,
   );
+
+  // Find the most recently completed step
+  const lastCompletedIndex = steps.reduce(
+    (acc, s, i) =>
+      completedSteps.includes(s.id) || completedSteps.includes(s.label)
+        ? i
+        : acc,
+    -1,
+  );
+
+  // Logic:
+  // 1. If we have a direct match (backend reported a known node), use it.
+  // 2. If no direct match (e.g., between nodes or unknown node), stay on the last completed step.
+  // 3. Fallback to 0 if nothing has completed yet.
+  const activeStepIndex =
+    matchIndex !== -1
+      ? matchIndex
+      : lastCompletedIndex !== -1
+        ? lastCompletedIndex
+        : steps.length > 0
+          ? 0
+          : -1;
+
   const currentStepLabel =
     activeStepIndex !== -1
       ? steps[activeStepIndex].label
