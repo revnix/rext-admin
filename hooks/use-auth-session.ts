@@ -22,13 +22,13 @@ export function useAuthSession() {
 
   const user = session?.user
     ? {
-        id: session.user.id || "",
-        email: session.user.email || "",
-        name: session.user.name || "",
-        accessToken: session.user.accessToken || "",
-        role: session.user.role || "user",
-        permissions: session.user.permissions || [],
-      }
+      id: session.user.id || "",
+      email: session.user.email || "",
+      name: session.user.name || "",
+      accessToken: session.user.accessToken || "",
+      role: session.user.role || "user",
+      permissions: session.user.permissions || [],
+    }
     : null;
 
   // Track user activity
@@ -55,24 +55,48 @@ export function useAuthSession() {
 
   const logout = async () => {
     try {
-      // Disable all background queries
-      queryClient.setDefaultOptions({
-        queries: { enabled: false },
-      });
+      log.info("[Auth] Initiating comprehensive logout...");
 
-      // Clear all cached React Query data
+      // 1. Reset Analytics
+      try {
+        const { analytics } = await import("@/lib/analytics");
+        analytics.reset();
+        analytics.clearStoredEvents();
+      } catch (e) {
+        log.error("[Auth] Failed to reset analytics", e);
+      }
+
+      // 2. Clear and cancel all React Query operations
+      // We DON'T set queries.enabled = false here because it persists across
+      // navigation if a hard reload doesn't occur, breaking the next login.
+      queryClient.cancelQueries();
       queryClient.clear();
 
-      // Perform sign out with redirection
-      // We pass redirect: false to handle it manually for better reliability
+      // 3. Perform NextAuth sign out
+      // This reliably handles its own session cookies.
       await signOut({ redirect: false, callbackUrl: "/login" });
 
-      // Force manual redirection to ensure it happens
-      router.push("/login");
-      router.refresh();
+      // 4. Clear Storage
+      if (typeof window !== "undefined") {
+        const theme = localStorage.getItem("theme");
+        const sidebarState = localStorage.getItem("sidebar:state");
+
+        // Clear all sensitive data
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Restore UI preferences
+        if (theme) localStorage.setItem("theme", theme);
+        if (sidebarState) localStorage.setItem("sidebar:state", sidebarState);
+      }
+
+      // 5. Force a hard reload to ensure all in-memory state is wiped.
+      // This is the only way to guarantee Zinc (Zustand) and NextAuth internal
+      // states are completely reset and don't interfere with the next login.
+      // Using router.push or router.refresh is insufficient for a secure/clean logout.
+      window.location.href = "/login";
     } catch (error) {
       log.error("[Auth] Logout failed", error);
-      // Fallback redirection
       window.location.href = "/login";
     }
   };

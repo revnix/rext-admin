@@ -381,6 +381,8 @@ export default {
         "/forgot-password",
         "/reset-password",
         "/verify-email",
+        "/accept-invitation",
+        "/accept-admin-invitation",
       ].some((path) => nextUrl.pathname.startsWith(path));
 
       // If refresh error, force redirect to login
