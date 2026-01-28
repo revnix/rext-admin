@@ -1,9 +1,10 @@
 import type { FetchEventSourceInit } from "@microsoft/fetch-event-source";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { act, renderHook, waitFor } from "@testing-library/react";
+
 import type { ReactNode } from "react";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { SSEProvider, useSSE } from "@/providers/sse-provider";
+import { act, renderHook, waitFor } from "../utils/test-utils";
 import type { SSEEvent } from "@/types/sse";
 
 jest.mock("@microsoft/fetch-event-source");

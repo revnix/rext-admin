@@ -45,7 +45,7 @@ export function ContentPipeline() {
   ];
 
   return (
-    <Card className="shadow-none border border-border bg-card rounded-2xl">
+    <Card className="border border-border bg-card">
       <CardHeader className="p-8 pb-4">
         <CardTitle className="text-xl font-bold text-foreground">
           Content Pipeline
@@ -59,7 +59,7 @@ export function ContentPipeline() {
           {stats.map((stat, _i) => (
             <div
               key={stat.label}
-              className={`p-5 rounded-2xl border transition-all duration-200 ${
+              className={`p-5 rounded-md border transition-all duration-200 ${
                 stat.highlight
                   ? "bg-card border-border"
                   : "bg-muted/40 border-border/50 hover:border-foreground/20"

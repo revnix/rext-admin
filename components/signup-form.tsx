@@ -221,13 +221,8 @@ export function SignupForm({
                   placeholder="John"
                   {...register("firstName")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.firstName?.message}
                 />
-                {errors.firstName && (
-                  <p className="text-sm text-red-600">
-                    {errors.firstName.message}
-                  </p>
-                )}
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="lastName" className="ml-1">
@@ -239,13 +234,8 @@ export function SignupForm({
                   placeholder="Doe"
                   {...register("lastName")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.lastName?.message}
                 />
-                {errors.lastName && (
-                  <p className="text-sm text-red-600">
-                    {errors.lastName.message}
-                  </p>
-                )}
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="username" className="ml-1">
@@ -257,13 +247,8 @@ export function SignupForm({
                   placeholder="johndoe"
                   {...register("username")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.username?.message}
                 />
-                {errors.username && (
-                  <p className="text-sm text-red-600">
-                    {errors.username.message}
-                  </p>
-                )}
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="email" className="ml-1">
@@ -282,14 +267,11 @@ export function SignupForm({
                   disabled={isLoading || success}
                   readOnly={hasValidInvitation}
                   className={cn(
-                    "h-12 rounded-2xl bg-muted/30 border-muted",
                     hasValidInvitation &&
                       "bg-muted cursor-not-allowed opacity-75",
                   )}
+                  error={errors.email?.message}
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="password" className="ml-1">
@@ -301,13 +283,8 @@ export function SignupForm({
                   placeholder="Create a strong password"
                   {...register("password")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.password?.message}
                 />
-                {errors.password && (
-                  <p className="text-sm text-red-600">
-                    {errors.password.message}
-                  </p>
-                )}
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="confirmPassword" className="ml-1">
@@ -319,18 +296,13 @@ export function SignupForm({
                   placeholder="Confirm your password"
                   {...register("confirmPassword")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.confirmPassword?.message}
                 />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-600">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
               </div>
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
+                  className="w-full h-11 shadow-colored-lg"
                   disabled={isLoading || success || isLoadingInvitation}
                 >
                   {isLoading

@@ -211,7 +211,6 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
               </div>
               <div className="grid gap-3">
@@ -232,7 +231,6 @@ export function LoginForm({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -242,7 +240,6 @@ export function LoginForm({
                   onCheckedChange={(checked) =>
                     setRememberMe(checked as boolean)
                   }
-                  className="rounded-md"
                 />
                 <label
                   htmlFor="remember"
@@ -254,7 +251,7 @@ export function LoginForm({
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
+                  className="w-full h-11 rounded-md text-base font-medium transition-all shadow-colored-lg"
                   disabled={isLoading || isLoadingInvitation}
                 >
                   {isLoading

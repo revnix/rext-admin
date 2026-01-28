@@ -102,16 +102,13 @@ export function ForgotPasswordForm({
                   placeholder="m@example.com"
                   {...register("email")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.email?.message}
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
               </div>
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
+                  className="w-full h-11 shadow-colored-lg"
                   disabled={isLoading || success}
                 >
                   {isLoading

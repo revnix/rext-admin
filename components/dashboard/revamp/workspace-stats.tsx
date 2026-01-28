@@ -28,11 +28,11 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
   const website = "https://revnix.com/";
 
   return (
-    <Card className="shadow-none border border-border bg-card rounded-2xl overflow-hidden">
+    <Card className="border border-border bg-card overflow-hidden">
       {/* Header Section */}
       <div className="bg-muted/30 p-6 border-b border-border">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-card border border-border flex items-center justify-center shadow-sm">
+          <div className="h-12 w-12 rounded-md bg-card border border-border flex items-center justify-center shadow-colored-sm">
             <Building2 className="h-6 w-6 text-primary" />
           </div>
           <div>
@@ -56,7 +56,7 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
 
       <CardContent className="p-6 space-y-6">
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
+          <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                 <Users className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
             <span className="font-bold text-foreground">{membersCount}</span>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
+          <div className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                 <FileText className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
           >
             <Button
               variant="outline"
-              className="w-full h-11 rounded-xl border-border hover:bg-accent hover:text-accent-foreground font-medium"
+              className="w-full h-11 rounded-md border-border hover:bg-accent hover:text-accent-foreground font-medium"
             >
               <Settings className="h-4 w-4 mr-2" />
               Workspace Settings

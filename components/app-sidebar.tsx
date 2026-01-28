@@ -295,7 +295,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                       : item.title,
                                   );
                                 }}
-                                className="rounded-md hover:bg-sidebar-accent transition  hover:cursor-pointer"
+                                className="rounded-lg hover:bg-sidebar-accent transition  hover:cursor-pointer"
                               >
                                 <ChevronRight
                                   size={16}
@@ -313,17 +313,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <PopoverContent
                             side="right"
                             align="start"
-                            className="w-40 bg-popover border border-border rounded-md shadow-md"
+                            className="w-40 bg-popover border border-border rounded-lg shadow-colored-md"
                           >
                             <SidebarMenu>
                               {item.items?.map((subItem) => (
                                 <SidebarMenuItem
                                   key={subItem.title}
-                                  className="rounded-md hover:bg-accent transition"
+                                  className="rounded-lg hover:bg-accent transition"
                                 >
                                   <SidebarMenuButton
                                     asChild
-                                    className="rounded-md hover:bg-accent transition"
+                                    className="rounded-lg hover:bg-accent transition"
                                   >
                                     <Link href={subItem.url}>
                                       {subItem.title}

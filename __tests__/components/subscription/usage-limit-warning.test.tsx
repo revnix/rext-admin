@@ -2,18 +2,18 @@
  * Tests for UsageLimitWarning Component and useResourceLimit Hook
  */
 
-import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import {
   UsageLimitWarning,
   useResourceLimit,
 } from "@/components/subscription/usage-limit-warning";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import userEvent from "@testing-library/user-event";
 import {
   createMockSubscriptionStore,
   createMockUsageStats,
   createMockUserSubscription,
   render,
+  screen,
 } from "../../utils/test-utils";
 
 // Mock the subscription store
@@ -322,7 +322,7 @@ describe("UsageLimitWarning", () => {
 
       const dismissButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.querySelector("svg"));
+        .find((btn: HTMLElement) => btn.querySelector("svg"));
       expect(dismissButton).toBeInTheDocument();
     });
 
@@ -343,7 +343,7 @@ describe("UsageLimitWarning", () => {
 
       const dismissButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.querySelector("svg"));
+        .find((btn: HTMLElement) => btn.querySelector("svg"));
 
       if (dismissButton) {
         await user.click(dismissButton);
@@ -372,7 +372,7 @@ describe("UsageLimitWarning", () => {
 
       const dismissButtons = screen
         .getAllByRole("button")
-        .filter((btn) => btn.querySelector("svg"));
+        .filter((btn: HTMLElement) => btn.querySelector("svg"));
       expect(dismissButtons.length).toBe(0);
     });
   });

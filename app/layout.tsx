@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Roboto_Flex, Geist_Mono } from "next/font/google";
+import { Outfit, Inter, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,9 +13,17 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeProvider } from "@/providers/workspace-welcome-provider";
 
-const robotoFlex = Roboto_Flex({
-  variable: "--font-roboto-flex",
+// Design Tokens - Typography
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -72,7 +80,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${robotoFlex.variable} ${geistMono.variable} antialiased`}
+        className={`${outfit.variable} ${inter.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         {/* LemonSqueezy Checkout Overlay Script */}

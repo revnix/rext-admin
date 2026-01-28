@@ -5,8 +5,8 @@
  * and fallback scenarios as required by task 6.6
  */
 
-import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { render, screen } from "../../../utils/test-utils";
 import "@testing-library/jest-dom";
 import * as React from "react";
 import {
