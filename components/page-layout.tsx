@@ -59,6 +59,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { PageHeader } from "@/components/page-header";
+import { NotificationsDrawer } from "./notifications-drawer";
 
 interface BreadcrumbItemData {
   label: string;
@@ -102,11 +103,11 @@ export function PageLayout({
   className = "",
   fullWidth = false,
 }: PageLayoutProps) {
-  // const [notificationsOpen, setNotificationsOpen] = useState(false); // Removed
-  const [searchOpen, setSearchOpen] = useState(false);
+  const { isDrawerOpen, setDrawerOpen } = useNotificationStore();
   const unreadNotifications = useNotificationStore(
     (state) => state.unreadCount,
   );
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // State for exclusive dropdowns
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -297,98 +298,19 @@ export function PageLayout({
             </DropdownMenu>
 
             {/* Notifications */}
-            <DropdownMenu
-              open={activeDropdown === "notifications"}
-              onOpenChange={(open) =>
-                setActiveDropdown(open ? "notifications" : null)
-              }
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+              onClick={() => setDrawerOpen(true)}
             >
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
-                >
-                  <div className="relative">
-                    <Bell className="h-5 w-5" />
-                    {hasUnread && (
-                      <span className="absolute top-0 right-0 inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-white" />
-                    )}
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-80 p-0 overflow-hidden"
-              >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/20">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">Notifications</span>
-                    {unreadNotifications > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="px-1.5 h-5 text-[10px] font-medium bg-white text-rose-600 border border-rose-100 shadow-sm"
-                      >
-                        {unreadNotifications} new
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <ScrollArea className="h-[350px]">
-                  {useNotificationStore.getState().notifications.length ===
-                  0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground space-y-3">
-                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                        <Bell className="h-6 w-6 opacity-20" />
-                      </div>
-                      <p className="text-sm font-medium">
-                        No new notifications
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col">
-                      {useNotificationStore
-                        .getState()
-                        .notifications.map((n) => (
-                          <DropdownMenuItem
-                            key={n.id}
-                            className="flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent/50 focus:bg-accent/50 rounded-none transition-colors"
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              <div
-                                className={`h-2 w-2 shrink-0 rounded-full ${!n.read ? "bg-sky-500 shadow-sm shadow-sky-200" : "bg-transparent"}`}
-                              />
-                              <span
-                                className={`text-sm flex-1 truncate ${!n.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}
-                              >
-                                {n.title}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                Now
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2 pl-4">
-                              {n.message}
-                            </p>
-                          </DropdownMenuItem>
-                        ))}
-                    </div>
-                  )}
-                </ScrollArea>
-                <div className="p-2 border-t border-border bg-muted/30">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs h-8 bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 shadow-sm"
-                    onClick={() =>
-                      useNotificationStore.getState().markAllAsRead()
-                    }
-                  >
-                    Mark all as read
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <div className="relative">
+                <Bell className="h-5 w-5" />
+                {hasUnread && (
+                  <span className="absolute top-0 right-0 inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-white" />
+                )}
+              </div>
+            </Button>
 
             {/* Settings */}
             <DropdownMenu
@@ -696,9 +618,8 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (
@@ -714,10 +635,10 @@ export function PageLayout({
         </div>
       </SidebarInset>
 
-      {/* <NotificationsDrawer // Removed
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-      /> */}
+      <NotificationsDrawer
+        open={isDrawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
 
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </SidebarProvider>
