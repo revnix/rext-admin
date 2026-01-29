@@ -7,11 +7,9 @@ import {
   Book,
   CircleHelp,
   CreditCard,
-  Keyboard,
   Laptop,
   LifeBuoy,
   LogOut,
-  Mail,
   Moon,
   PanelLeft,
   Search,
@@ -19,6 +17,7 @@ import {
   Sparkles,
   Sun,
   Users,
+  Plus,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -121,9 +120,12 @@ export function PageLayout({
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
     currentWorkspace?.id,
   );
+
+  const hasWorkspaces = workspaceList.length > 0;
 
   const hasUnread = unreadNotifications > 0;
 
@@ -304,10 +306,17 @@ export function PageLayout({
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/")}>
-                    <ArrowLeftRight className="mr-2 h-4 w-4" />
-                    <span>Switch Workspace</span>
-                  </DropdownMenuItem>
+                  {hasWorkspaces ? (
+                    <DropdownMenuItem onClick={() => router.push("/")}>
+                      <ArrowLeftRight className="mr-2 h-4 w-4" />
+                      <span>Switch Workspace</span>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => router.push("/w/create")}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>Create Workspace</span>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -342,7 +351,7 @@ export function PageLayout({
                       <span>Documentation</span>
                     </a>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <a
                       href="https://rext.ai/help"
                       target="_blank"
@@ -433,22 +442,7 @@ export function PageLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60 p-1" forceMount>
                 <DropdownMenuLabel className="p-0 font-normal mb-1">
-                  <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-muted/40 border border-border mx-0.5 mt-0.5">
-                    <Avatar className="h-9 w-9 rounded-lg border border-white shadow-sm overflow-hidden relative">
-                      {profileUser?.avatar_url ? (
-                        <Image
-                          src={getAvatarUrl(profileUser.avatar_url) || ""}
-                          alt="User avatar"
-                          fill
-                          className="object-cover"
-                          sizes="36px"
-                        />
-                      ) : (
-                        <AvatarFallback className="rounded-lg bg-background text-foreground font-semibold">
-                          {userInitials}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                  <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-muted/40 mx-0.5 mt-0.5">
                     <div className="grid flex-1 text-left leading-tight">
                       <span className="truncate font-semibold text-sm text-foreground">
                         {userName}
@@ -456,18 +450,10 @@ export function PageLayout({
                       <span className="truncate text-xs text-muted-foreground font-normal">
                         {userEmail}
                       </span>
-                      {userRole && (
-                        <Badge
-                          variant="outline"
-                          className="mt-1 w-fit rounded-sm px-1 py-0 text-[9px] h-4 font-normal text-muted-foreground border-border bg-background"
-                        >
-                          {userRole}
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 </DropdownMenuLabel>
-
+                <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings/subscription")}
