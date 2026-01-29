@@ -18,7 +18,7 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       {/* Total Content - Primary Card (Dark Blue) */}
-      <Card className="shadow-none border-none bg-primary text-primary-foreground rounded-2xl relative overflow-hidden group">
+      <Card className="border-none bg-primary text-primary-foreground relative overflow-hidden group shadow-colored-primary-md">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px] relative z-10">
           <div className="flex justify-between items-start">
             <span className="font-medium text-lg text-white/90">
@@ -33,8 +33,8 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
             <div className="text-5xl font-bold tracking-tight text-white">
               {totalContent}
             </div>
-            <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm font-medium w-fit backdrop-blur-md">
-              <div className="bg-green-400/20 text-green-300 p-0.5 rounded-full">
+            <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-md text-sm font-medium w-fit backdrop-blur-md">
+              <div className="bg-green-400/20 text-green-300 p-0.5 rounded-md">
                 <TrendingUp className="h-3 w-3" />
               </div>
               <span className="text-white">+3 from last week</span>
@@ -44,7 +44,7 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       </Card>
 
       {/* Trust Score */}
-      <Card className="shadow-none border border-border bg-card rounded-2xl transition-all duration-300 hover:border-foreground/20 group">
+      <Card className="border border-border bg-card transition-all duration-300 hover:border-foreground/20 group">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px]">
           <div className="flex justify-between items-start">
             <span className="font-semibold text-lg text-muted-foreground group-hover:text-foreground transition-colors">
@@ -64,7 +64,7 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       </Card>
 
       {/* Active Personas */}
-      <Card className="shadow-none border border-border bg-card rounded-2xl transition-all duration-300 hover:border-foreground/20 group">
+      <Card className="border border-border bg-card transition-all duration-300 hover:border-foreground/20 group">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px]">
           <div className="flex justify-between items-start">
             <span className="font-semibold text-lg text-muted-foreground group-hover:text-foreground transition-colors">
@@ -84,7 +84,7 @@ export function MetricsCards({ workspace }: MetricsCardsProps) {
       </Card>
 
       {/* Publish Success */}
-      <Card className="shadow-none border border-border bg-card rounded-2xl transition-all duration-300 hover:border-foreground/20 group overflow-hidden">
+      <Card className="border border-border bg-card transition-all duration-300 hover:border-foreground/20 group overflow-hidden">
         <CardContent className="p-8 flex flex-col justify-between h-full min-h-[180px] relative">
           <div className="flex justify-between items-start relative z-10">
             <span className="font-semibold text-lg text-muted-foreground group-hover:text-foreground transition-colors">

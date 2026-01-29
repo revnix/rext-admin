@@ -5,7 +5,7 @@
  * particularly for keyboard navigation and ARIA compliance.
  */
 
-import { screen } from "@testing-library/react";
+import { screen } from "./test-utils";
 import userEvent from "@testing-library/user-event";
 
 /**
@@ -67,7 +67,7 @@ export function expectScreenReaderAnnouncement(
 ) {
   const liveRegions = screen.getAllByRole("status", { hidden: true });
 
-  const hasAnnouncement = liveRegions.some((region) =>
+  const hasAnnouncement = liveRegions.some((region: HTMLElement) =>
     region.textContent?.includes(text),
   );
 

@@ -3,9 +3,9 @@
  * Covers success messaging display, navigation actions, accessibility features, and user interactions
  */
 
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { SuccessConfirmationDialog } from "@/components/topic-builder/results/SuccessConfirmationDialog";
+import userEvent from "@testing-library/user-event";
+import { render, screen } from "../../../utils/test-utils";
 
 interface MockIconProps {
   className?: string;

@@ -2,7 +2,6 @@
  * Tests for CustomerPortalButton Component
  */
 
-import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { apiClient } from "@/lib/api-client";
@@ -11,6 +10,8 @@ import {
   createMockSubscriptionStore,
   createMockUserSubscription,
   render,
+  screen,
+  waitFor,
 } from "../../utils/test-utils";
 
 // Mock dependencies

@@ -49,7 +49,7 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
   ];
 
   return (
-    <Card className="shadow-none border border-border bg-card rounded-2xl">
+    <Card className="border border-border bg-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2 p-8">
         <CardTitle className="text-xl font-bold text-foreground">
           Recent Content
@@ -67,7 +67,7 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
           {activities.map((activity) => (
             <div
               key={activity.title}
-              className="flex items-start gap-4 hover:bg-muted/50 p-2 rounded-xl transition-colors cursor-pointer -mx-2"
+              className="flex items-start gap-4 hover:bg-muted/50 p-2 rounded-md transition-colors cursor-pointer -mx-2"
             >
               <div
                 className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${activity.color}`}

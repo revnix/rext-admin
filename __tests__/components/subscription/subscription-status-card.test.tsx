@@ -2,11 +2,14 @@
  * Tests for SubscriptionStatusCard Component
  */
 
-import { screen } from "@testing-library/react";
 import { SubscriptionStatusCard } from "@/components/subscription/subscription-status-card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
-import { createMockUserSubscription, render } from "../../utils/test-utils";
+import {
+  createMockUserSubscription,
+  render,
+  screen,
+} from "../../utils/test-utils";
 
 // Mock the subscription store
 jest.mock("@/stores/subscription-store");

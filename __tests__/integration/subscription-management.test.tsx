@@ -4,17 +4,18 @@
  * Tests plan upgrades, downgrades, cancellations, and usage display.
  */
 
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
+import userEvent from "@testing-library/user-event";
 import {
   createMockApiClient,
   createMockSubscriptionStore,
   createMockUsageStats,
   createMockUserSubscription,
   render,
+  screen,
+  waitFor,
 } from "../utils/test-utils";
 
 // Mock dependencies
@@ -143,7 +144,7 @@ describe("Subscription Management Integration", () => {
       render(<SubscriptionManagementComponent />);
 
       const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
+      buttons.forEach((button: HTMLElement) => {
         expect(button).toBeDisabled();
       });
     });

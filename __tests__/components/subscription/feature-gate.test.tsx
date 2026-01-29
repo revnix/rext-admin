@@ -2,7 +2,6 @@
  * Tests for FeatureGate Component
  */
 
-import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   FeatureGate,
@@ -13,6 +12,7 @@ import {
   createMockSubscriptionStore,
   createMockUserSubscription,
   render,
+  screen,
 } from "../../utils/test-utils";
 
 // Mock the subscription store
