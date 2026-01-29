@@ -5,8 +5,7 @@ import { z } from "zod";
  * Matches backend UpdateProfileRequest
  */
 export const profileSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  full_name: z.string().min(2, "Full name must be at least 2 characters"),
   displayName: z
     .string()
     .min(2, "Display name must be at least 2 characters")

@@ -81,9 +81,7 @@ type ApiUser = {
   id: string;
   email: string;
   username: string;
-  first_name: string;
-  last_name: string;
-  display_name: string;
+  full_name: string;
   email_verified: boolean;
   status: string;
   avatar_url?: string;
@@ -180,7 +178,7 @@ export function PageLayout({
   };
 
   // User data
-  const userName = profileUser?.display_name || user?.name || "User";
+  const userName = profileUser?.full_name || user?.full_name || "User";
   const userEmail = profileUser?.email || user?.email || "";
   const userInitials = getInitials(userName);
   const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
@@ -338,7 +336,7 @@ export function PageLayout({
                 </div>
                 <ScrollArea className="h-[350px]">
                   {useNotificationStore.getState().notifications.length ===
-                  0 ? (
+                    0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-muted-foreground space-y-3">
                       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                         <Bell className="h-6 w-6 opacity-20" />
@@ -698,9 +696,8 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (

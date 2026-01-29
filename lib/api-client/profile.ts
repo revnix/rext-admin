@@ -19,6 +19,7 @@ export function createProfileNamespace(client: ApiClient) {
           username: string;
           first_name: string;
           last_name: string;
+          full_name: string;
           display_name: string;
           email_verified: boolean;
           status: string;
@@ -41,6 +42,7 @@ export function createProfileNamespace(client: ApiClient) {
     update: async (data: {
       first_name?: string;
       last_name?: string;
+      full_name?: string;
       display_name?: string;
       bio?: string;
       avatar_url?: string;
@@ -52,6 +54,7 @@ export function createProfileNamespace(client: ApiClient) {
         email: string;
         first_name: string;
         last_name: string;
+        full_name: string;
         display_name: string;
         avatar_url?: string;
         bio?: string;

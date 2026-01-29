@@ -61,20 +61,20 @@ export function ProfileForm() {
     resolver: zodResolver(profileSchema),
     values: profile
       ? {
-          firstName: profile.first_name,
-          lastName: profile.last_name,
-          displayName: profile.display_name || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
+        // Combine first_name and last_name into full_name for the form
+        full_name: `${profile.first_name} ${profile.last_name}`.trim(),
+        displayName: profile.display_name || "",
+        language: profile.language || "en",
+        timezone: profile.timezone || "UTC",
+      }
       : undefined,
   });
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: (data: {
-      first_name: string;
-      last_name: string;
+      first_name?: string;
+      last_name?: string;
       display_name?: string;
       language?: string;
       timezone?: string;
@@ -89,9 +89,14 @@ export function ProfileForm() {
   });
 
   const onSubmit = (data: ProfileFormData) => {
+    // Split full_name back into first_name and last_name for the API
+    const nameParts = data.full_name.trim().split(/\s+/);
+    const first_name = nameParts[0] || "";
+    const last_name = nameParts.slice(1).join(" ") || "";
+
     updateMutation.mutate({
-      first_name: data.firstName,
-      last_name: data.lastName,
+      first_name,
+      last_name,
       display_name: data.displayName || undefined,
       language: data.language,
       timezone: data.timezone,
@@ -155,27 +160,12 @@ export function ProfileForm() {
           {/* First Name */}
           <FormField
             control={form.control}
-            name="firstName"
+            name="full_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Last Name */}
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Doe" {...field} />
+                  <Input placeholder="John Doe" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

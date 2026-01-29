@@ -72,9 +72,7 @@ export function SignupForm({
 
       // Build request payload
       const payload: Record<string, string> = {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        username: data.username,
+        full_name: data.full_name,
         email: data.email,
         password: data.password,
       };
@@ -212,44 +210,19 @@ export function SignupForm({
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="firstName" className="ml-1">
-                  First Name
+                <Label htmlFor="full_name" className="ml-1">
+                  Full Name
                 </Label>
                 <Input
-                  id="firstName"
+                  id="full_name"
                   type="text"
                   placeholder="John"
-                  {...register("firstName")}
+                  {...register("full_name")}
                   disabled={isLoading || success}
-                  error={errors.firstName?.message}
+                  error={errors.full_name?.message}
                 />
               </div>
-              <div className="grid gap-3">
-                <Label htmlFor="lastName" className="ml-1">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  placeholder="Doe"
-                  {...register("lastName")}
-                  disabled={isLoading || success}
-                  error={errors.lastName?.message}
-                />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="username" className="ml-1">
-                  Username
-                </Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="johndoe"
-                  {...register("username")}
-                  disabled={isLoading || success}
-                  error={errors.username?.message}
-                />
-              </div>
+              
               <div className="grid gap-3">
                 <Label htmlFor="email" className="ml-1">
                   Email

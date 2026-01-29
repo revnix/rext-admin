@@ -44,9 +44,7 @@ const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
 };
 
 const profileSchema = z.object({
-  first_name: z.string().min(1, "First name is required").max(50),
-  last_name: z.string().min(1, "Last name is required").max(50),
-  display_name: z.string().min(1, "Display name is required").max(100),
+  full_name: z.string().min(1, "Full name is required").max(100),
   bio: z.string().max(500).optional(),
   language: z.string().optional(),
   timezone: z.string().optional(),
@@ -74,22 +72,18 @@ export function ProfileEdit() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      display_name: "",
+      full_name: "",
       bio: "",
       language: "",
       timezone: "",
     },
     values: profile
       ? {
-          first_name: profile.first_name || "",
-          last_name: profile.last_name || "",
-          display_name: profile.display_name || "",
-          bio: profile.bio || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
+        full_name: profile.full_name || "",
+        bio: profile.bio || "",
+        language: profile.language || "en",
+        timezone: profile.timezone || "UTC",
+      }
       : undefined,
   });
 
@@ -233,8 +227,7 @@ export function ProfileEdit() {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted-foreground">
-                {profile?.first_name?.[0]}
-                {profile?.last_name?.[0]}
+                {profile?.full_name?.[0]}
               </div>
             )}
           </div>
@@ -317,48 +310,15 @@ export function ProfileEdit() {
       {/* Profile Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="first_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="last_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
           <FormField
             control={form.control}
-            name="display_name"
+            name="full_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Display Name</FormLabel>
+                <FormLabel>Full Name</FormLabel>
                 <FormControl>
                   <Input placeholder="John Doe" {...field} />
                 </FormControl>
-                <FormDescription>
-                  This is how your name will appear across the platform
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
