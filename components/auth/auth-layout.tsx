@@ -1,4 +1,4 @@
-import { BrandLogo } from "@/components/brand-logo";
+import { ThemeLogo } from "@/components/theme-logo";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -96,11 +96,13 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-8 max-w-lg">
           {/* Logo - Centered and Transparent */}
           <div className="flex items-center justify-center p-8">
-            <BrandLogo
-              width={150}
-              height={50}
+            {/* biome-ignore lint/performance/noImgElement: Using img for reliable SVG rendering */}
+            <img
+              src="/logos/rext_logo_dark.svg"
+              alt="Rext"
+              width={180}
+              height={60}
               className="object-contain"
-              variant="white"
             />
           </div>
 
@@ -120,7 +122,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       <div className="flex items-center justify-center p-8 bg-background relative">
         {/* Mobile Header (visible only on small screens) */}
         <div className="absolute top-6 left-6 lg:hidden">
-          <BrandLogo width={90} height={28} />
+          <ThemeLogo width={100} height={32} />
         </div>
 
         <div className="w-full max-w-[420px]">{children}</div>

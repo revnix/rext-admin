@@ -109,6 +109,9 @@ export function SignupForm({
       });
 
       if (result?.ok) {
+        // Wait for session to be established (cookies to be set)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
 
@@ -218,6 +221,7 @@ export function SignupForm({
                         placeholder="John"
                         type="text"
                         disabled={isLoading || success}
+                        className="!shadow-none"
                         {...field}
                       />
                     </FormControl>

@@ -199,43 +199,33 @@
   --radius: 6px;
 
   /* Semantic Colors - Light Mode */
-  --background: #f2f4f7;
-  /* Gray.100 - Increased contrast for dashboard look */
+  --background: #ffffff;
   --foreground: #344054;
   /* Gray.700 */
-
   --card: #ffffff;
-  /* Pure White */
   --card-foreground: #344054;
   /* Gray.700 */
-
   --popover: #ffffff;
   --popover-foreground: #344054;
   /* Gray.700 */
-
   --primary: #3641f5;
   /* Brand.600 */
   --primary-foreground: #ffffff;
-
   --secondary: #f2f4f7;
   /* Gray.100 */
   --secondary-foreground: #101828;
   /* Gray.900 */
-
   --muted: #f9fafb;
   /* Gray.50 */
   --muted-foreground: #667085;
   /* Gray.500 */
-
   --accent: #f2f4f7;
   /* Gray.100 */
   --accent-foreground: #101828;
   /* Gray.900 */
-
   --destructive: #f04438;
   /* Error.500 */
   --destructive-foreground: #ffffff;
-
   --border: #e4e7ec;
   /* Gray.200 */
   --input: #e4e7ec;
@@ -256,8 +246,8 @@
   /* Pink.600 */
 
   /* Sidebar Colors */
-  --sidebar: #ffffff;
-  /* Pure White */
+  --sidebar: #fcfcfd;
+  /* Gray.25 */
   --sidebar-foreground: #344054;
   /* Gray.700 */
   --sidebar-primary: #3641f5;
@@ -268,7 +258,7 @@
   --sidebar-accent-foreground: #101828;
   /* Gray.900 */
   --sidebar-border: #e4e7ec;
-  /* Gray.200 - Subtle border */
+  /* Gray.200 */
   --sidebar-ring: #3641f5;
   /* Brand.600 */
 }

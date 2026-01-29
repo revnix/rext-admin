@@ -14,7 +14,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
-import { PageLoader } from "@/components/ui/loading-states";
 
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
@@ -48,7 +47,36 @@ export default function DashboardPage() {
 
   // Show loading state while fetching workspaces
   if (isLoadingWorkspaces || isLoading) {
-    return <PageLoader message="Loading your workspace..." />;
+    return (
+      <AuthGuard>
+        <PageLayout
+          title="Dashboard"
+          description="Loading your workspace..."
+          breadcrumbs={breadcrumbs}
+        >
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="p-6">
+                      <Skeleton className="h-24 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+            <aside className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <Skeleton className="h-32 w-full" />
+                </CardContent>
+              </Card>
+            </aside>
+          </div>
+        </PageLayout>
+      </AuthGuard>
+    );
   }
 
   // Show empty state only if no workspaces exist

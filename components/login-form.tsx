@@ -112,6 +112,9 @@ export function LoginForm({
         // Redirect to invitation acceptance page
         router.push(`/accept-invitation?token=${invitationToken}`);
       } else {
+        // Wait for session to be established (cookies to be set)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
 

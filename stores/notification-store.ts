@@ -9,14 +9,12 @@ const MAX_NOTIFICATIONS = 50;
 interface NotificationStore {
   notifications: OperationNotification[];
   unreadCount: number;
-  isDrawerOpen: boolean;
 
   addNotification: (notification: OperationNotification) => void;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
-  setDrawerOpen: (open: boolean) => void;
 }
 
 /* ------------------------------
@@ -57,7 +55,6 @@ export const useNotificationStore = create<NotificationStore>()(
     (set, get) => ({
       notifications: [],
       unreadCount: 0,
-      isDrawerOpen: false,
 
       addNotification: (notification) =>
         set((state) => {
@@ -115,7 +112,6 @@ export const useNotificationStore = create<NotificationStore>()(
         }),
 
       clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
-      setDrawerOpen: (open: boolean) => set({ isDrawerOpen: open }),
     }),
     {
       name: "notification-store",
