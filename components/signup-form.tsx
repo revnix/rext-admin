@@ -220,6 +220,7 @@ export function SignupForm({
                         disabled={isLoading || success}
                         className="!shadow-none"
                         {...field}
+                        required
                       />
                     </FormControl>
                     <FormMessage />
@@ -251,6 +252,7 @@ export function SignupForm({
                           "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
+                        required
                       />
                     </FormControl>
                     <FormMessage />
@@ -270,6 +272,7 @@ export function SignupForm({
                         type="password"
                         disabled={isLoading || success}
                         {...field}
+                        required
                       />
                     </FormControl>
                     <FormMessage />
@@ -291,6 +294,7 @@ export function SignupForm({
                         type="password"
                         disabled={isLoading || success}
                         {...field}
+                        required
                       />
                     </FormControl>
                     <FormMessage />
