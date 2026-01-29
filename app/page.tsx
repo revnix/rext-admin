@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { ContentPipeline } from "@/components/dashboard/revamp/content-pipeline";
@@ -21,6 +23,14 @@ export default function DashboardPage() {
     isLoading: isLoadingWorkspaces,
     hasWorkspaces,
   } = useWorkspaceAutoSelect();
+  const router = useRouter();
+
+  // Redirect to workspace creation if no workspaces exist
+  useEffect(() => {
+    if (!isLoadingWorkspaces && !hasWorkspaces) {
+      router.push("/w/create");
+    }
+  }, [isLoadingWorkspaces, hasWorkspaces, router]);
 
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);
