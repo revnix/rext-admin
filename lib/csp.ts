@@ -17,7 +17,7 @@ export function getCSPHeader(_nonce: string): string {
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
   // Production backend URL
-  const PRODUCTION_BACKEND = "135.181.105.165:2024";
+  const PRODUCTION_BACKEND = "api.rext.ai";
 
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
@@ -25,7 +25,7 @@ export function getCSPHeader(_nonce: string): string {
     "http://localhost:2024";
 
   // In development, allow localhost variants
-  // In production, allow both http and https for the production backend
+  // In production, allow the api.rext.ai domain
   const backendOrigins = isDev
     ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://135.181.105.165:2024`
     : apiUrl;
