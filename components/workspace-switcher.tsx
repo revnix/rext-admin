@@ -112,15 +112,14 @@ export function WorkspaceSwitcher() {
                   {isLoading
                     ? "Loading..."
                     : getWorkspaceDisplayTitle(
-                      displayWorkspace,
-                      "Select Workspace",
-                    )}
+                        displayWorkspace,
+                        "Select Workspace",
+                      )}
                 </span>
                 <span className="truncate text-xs">
                   {isLoading
                     ? "Fetching workspaces..."
-                    : displayWorkspace?.timezone ||
-                    "Choose a workspace"}
+                    : displayWorkspace?.timezone || "Choose a workspace"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Mail,
   Monitor,
+  Plus,
   Settings2,
   Shield,
   User,
@@ -19,7 +20,7 @@ import {
 import type * as React from "react";
 import { useState } from "react";
 
-import { EmptyWorkspacePrompt } from "@/components/empty-workspace-prompt";
+// EmptyWorkspacePrompt removed
 import {
   Sidebar,
   SidebarContent,
@@ -48,7 +49,6 @@ import {
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
@@ -123,6 +123,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
     },
   ];
+
+  if (!hasWorkspaces) {
+    mainNavigationGroups[0].items.push({
+      title: "Create Workspace",
+      url: "/w/create",
+      icon: Plus,
+    });
+  }
 
   // Personal navigation groups
   const personalNavigationGroups: NavGroup[] = [
@@ -243,7 +251,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
 
-        {!hasWorkspaces && <EmptyWorkspacePrompt />}
+        {/* EmptyPrompt removed */}
 
         {/* Personal navigation */}
         {filteredPersonalNavigation.map((group) => (
@@ -340,60 +348,69 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   }
 
                   // Expanded Sidebar → Accordion
-                  return (
-                    <SidebarMenuItem
-                      key={item.title}
-                      className="relative flex flex-col"
-                    >
-                      <div className="flex items-center justify-between">
-                        {/* Clicking the text navigates directly */}
-                        <SidebarMenuButton tooltip={item.title} asChild>
-                          <Link
-                            href={item.url}
-                            className="flex items-center gap-2"
-                          >
+                  // If has children, we make the parent a TOGGLE, not a link.
+                  // This assumes the "Overview" link exists as the first child if navigation is needed.
+                  if (hasChildren) {
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          className="group/menu-button flex w-full items-center justify-between"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setExpandedAccordion(
+                              expandedAccordion === item.title
+                                ? null
+                                : item.title,
+                            );
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
                             {Icon && <Icon />}
                             <span>{item.title}</span>
-                          </Link>
+                          </div>
+                          <ChevronDown
+                            size={16}
+                            className={`transition-transform duration-200 ${
+                              expandedAccordion === item.title
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
                         </SidebarMenuButton>
 
-                        {/* Clicking the chevron toggles the accordion only */}
-                        {hasChildren && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation(); // prevent link click
-                              setExpandedAccordion(
-                                expandedAccordion === item.title
-                                  ? null
-                                  : item.title,
-                              );
-                            }}
-                            className="p-1 ml-auto"
-                          >
-                            <ChevronDown
-                              size={16}
-                              className={`transition-transform hover:cursor-pointer ${
-                                expandedAccordion === item.title
-                                  ? "rotate-180"
-                                  : ""
-                              }`}
-                            />
-                          </button>
+                        {expandedAccordion === item.title && (
+                          <SidebarMenu className="mt-1 flex flex-col gap-1">
+                            {item.items?.map((subItem) => (
+                              <SidebarMenuItem key={subItem.title}>
+                                <SidebarMenuButton asChild size="sm">
+                                  <Link
+                                    href={subItem.url}
+                                    className="pl-9 text-sidebar-foreground/70 transition-colors hover:text-sidebar-foreground"
+                                  >
+                                    {subItem.title}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
                         )}
-                      </div>
+                      </SidebarMenuItem>
+                    );
+                  }
 
-                      {hasChildren && expandedAccordion === item.title && (
-                        <SidebarMenu className="pl-7 ml-1 mt-1 flex flex-col gap-1 border-l border-sidebar-border my-2">
-                          {item.items?.map((subItem) => (
-                            <SidebarMenuItem key={subItem.title}>
-                              <SidebarMenuButton asChild>
-                                <Link href={subItem.url}>{subItem.title}</Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          ))}
-                        </SidebarMenu>
-                      )}
+                  // Standard Item (No Children)
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton tooltip={item.title} asChild>
+                        <Link
+                          href={item.url}
+                          className="flex items-center gap-2"
+                        >
+                          {Icon && <Icon />}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
                 })}
