@@ -221,7 +221,6 @@ export function SignupForm({
                         placeholder="John"
                         type="text"
                         disabled={isLoading || success}
-                        className="!shadow-none"
                         {...field}
                       />
                     </FormControl>

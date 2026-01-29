@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { ThemeLogo } from "@/components/theme-logo";
+import { BrandLogo } from "@/components/brand-logo";
 
 import { usePathname } from "next/navigation";
 
@@ -208,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       style={{ "--sidebar-width-icon": "4rem" } as React.CSSProperties}
     >
       <SidebarHeader>
-        <ThemeLogo className="px-2" width={100} height={32} priority />
+        <BrandLogo className="px-2" width={90} height={28} priority />
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
