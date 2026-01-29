@@ -109,9 +109,6 @@ export function SignupForm({
       });
 
       if (result?.ok) {
-        // Wait for session to be established (cookies to be set)
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
 
@@ -251,7 +248,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                            "bg-muted cursor-not-allowed opacity-75",
+                          "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />
