@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
-
 interface AuthGuardProps {
   children: React.ReactNode;
   redirectTo?: string;

@@ -45,12 +45,13 @@ export function ThemeLogo({
     : "/logos/rext_logo_light.svg";
 
   return (
-    <img
+    <Image
       src={logoSrc}
       alt="Rext Logo"
       width={width}
       height={height}
       className={`object-contain ${className}`}
+      priority={priority}
     />
   );
 }

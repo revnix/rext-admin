@@ -198,8 +198,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar
@@ -300,10 +300,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               >
                                 <ChevronRight
                                   size={16}
-                                  className={`transition-transform ${openDropdown === item.title
+                                  className={`transition-transform ${
+                                    openDropdown === item.title
                                       ? "rotate-90"
                                       : ""
-                                    }`}
+                                  }`}
                                 />
                               </button>
                             </PopoverTrigger>
@@ -372,10 +373,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           >
                             <ChevronDown
                               size={16}
-                              className={`transition-transform hover:cursor-pointer ${expandedAccordion === item.title
+                              className={`transition-transform hover:cursor-pointer ${
+                                expandedAccordion === item.title
                                   ? "rotate-180"
                                   : ""
-                                }`}
+                              }`}
                             />
                           </button>
                         )}

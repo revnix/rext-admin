@@ -267,7 +267,6 @@ export function FreshGenerationView({
   const workspaceId = useCurrentWorkspaceId();
 
   const {
-    step,
     userKeyword,
     country,
     primaryKeyword,
@@ -304,7 +303,6 @@ export function FreshGenerationView({
 
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
-        console.log("updates", updates);
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
