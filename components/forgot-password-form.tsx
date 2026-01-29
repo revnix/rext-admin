@@ -5,13 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -69,17 +63,17 @@ export function ForgotPasswordForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-0">
-          <CardTitle className="text-2xl font-bold">
+      <div className="bg-transparent">
+        <div className="flex flex-col space-y-1.5 px-0 mb-6">
+          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
             Reset your password
-          </CardTitle>
-          <CardDescription>
+          </h1>
+          <p className="text-sm text-muted-foreground">
             Enter your email address and we'll send you a link to reset your
             password
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-0">
+          </p>
+        </div>
+        <div className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
@@ -102,16 +96,14 @@ export function ForgotPasswordForm({
                   placeholder="m@example.com"
                   {...register("email")}
                   disabled={isLoading || success}
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  error={errors.email?.message}
+                  className="!shadow-none"
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
               </div>
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
+                  className="w-full h-11 !shadow-none"
                   disabled={isLoading || success}
                 >
                   {isLoading
@@ -132,8 +124,8 @@ export function ForgotPasswordForm({
               </Link>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

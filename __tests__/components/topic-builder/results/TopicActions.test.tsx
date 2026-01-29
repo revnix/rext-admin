@@ -4,9 +4,9 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { TopicActions } from "@/components/topic-builder/results/TopicActions";
+import userEvent from "@testing-library/user-event";
+import { render, screen, waitFor } from "../../../utils/test-utils";
 import * as useTopicMutationsModule from "@/hooks/useTopicMutations";
 import * as errorUtilsModule from "@/lib/error-utils";
 import type { BackendError } from "@/types/backend";

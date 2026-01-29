@@ -81,9 +81,7 @@ type ApiUser = {
   id: string;
   email: string;
   username: string;
-  first_name: string;
-  last_name: string;
-  display_name: string;
+  full_name: string;
   email_verified: boolean;
   status: string;
   avatar_url?: string;
@@ -180,7 +178,7 @@ export function PageLayout({
   };
 
   // User data
-  const userName = profileUser?.display_name || user?.name || "User";
+  const userName = profileUser?.full_name || user?.full_name || "User";
   const userEmail = profileUser?.email || user?.email || "";
   const userInitials = getInitials(userName);
   const effectiveRoleKey = fetchedWorkspaceRole || user?.role;

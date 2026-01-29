@@ -18,7 +18,7 @@ export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [
 ];
 
 export const TOPIC_GENERATION_STEPS: LoadingStep[] = [
-  { id: "Topic Generation", label: "Topic Generation" },
+  { id: "Topic Generation", label: "Content Type Generation" },
 ];
 
 export const CONTENT_TYPE_STEPS: LoadingStep[] = [

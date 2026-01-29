@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { log } from "@/lib/logger";
+
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -99,16 +99,9 @@ export function GuestGuard({
     if (!isLoading) {
       setIsChecking(false);
 
-      // DISABLED: Let login/signup forms handle redirect logic
-      // The forms need to check workspace availability before redirecting
-      // If we redirect here, it happens before workspace fetch completes
-
-      // if (isAuthenticated) {
-      //   router.push(redirectTo);
-      // }
-      log.info("isAuthenticated", isAuthenticated);
-      log.info("redirectTo", redirectTo);
-      log.info("router", router);
+      if (isAuthenticated) {
+        router.push(redirectTo);
+      }
     }
   }, [isLoading, isAuthenticated, redirectTo, router]);
 

@@ -23,7 +23,7 @@ export function QuickActions({ workspace }: QuickActionsProps) {
   ];
 
   return (
-    <Card className="shadow-none border border-border bg-card rounded-2xl overflow-hidden">
+    <Card className="border border-border bg-card overflow-hidden">
       <CardHeader className="p-8 pb-4">
         <CardTitle className="text-xl font-bold text-foreground">
           Quick Actions
@@ -38,7 +38,7 @@ export function QuickActions({ workspace }: QuickActionsProps) {
             <Link
               key={action.label}
               href={action.href}
-              className={`flex items-center justify-between p-4 rounded-2xl border ${action.border} bg-card transition-all duration-200 group hover:border-foreground/20 ${action.hover}`}
+              className={`flex items-center justify-between p-4 rounded-md border ${action.border} bg-card transition-all duration-200 group hover:border-foreground/20 ${action.hover}`}
             >
               <div className="flex items-center gap-4">
                 <div

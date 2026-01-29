@@ -237,7 +237,14 @@ export function customRender(ui: ReactElement, options?: CustomRenderOptions) {
 // RE-EXPORT TESTING LIBRARY
 // ============================================================================
 
-export * from "@testing-library/react";
+export {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+  renderHook,
+} from "@testing-library/react";
 export { customRender as render };
 
 // ============================================================================

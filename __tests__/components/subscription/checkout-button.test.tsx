@@ -2,16 +2,17 @@
  * Tests for CheckoutButton Component
  */
 
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { CheckoutButton } from "@/components/subscription/checkout-button";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod } from "@/types/subscription";
+import userEvent from "@testing-library/user-event";
 import {
   createMockSubscriptionPlan,
   createMockSubscriptionStore,
   mockLemonSqueezy,
   render,
+  screen,
+  waitFor,
 } from "../../utils/test-utils";
 
 // Mock the subscription store

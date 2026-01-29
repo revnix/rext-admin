@@ -7,13 +7,7 @@ import { useEffect, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,20 +176,20 @@ export function LoginForm({
         </div>
       )}
 
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-0">
-          <CardTitle className="text-2xl font-bold">
+      <div className="bg-transparent">
+        <div className="flex flex-col space-y-1.5 px-0 mb-6">
+          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
             {hasValidInvitation
               ? "Log in to join workspace"
               : "Login to your account"}
-          </CardTitle>
-          <CardDescription>
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {hasValidInvitation
               ? "Log in to accept your workspace invitation"
               : "Enter your email below to login to your account"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-0">
+          </p>
+        </div>
+        <div className="px-0">
           <form onSubmit={handleSubmit}>
             <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
@@ -211,7 +205,7 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  className="!shadow-none"
                 />
               </div>
               <div className="grid gap-3">
@@ -232,7 +226,7 @@ export function LoginForm({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 rounded-2xl bg-muted/30 border-muted"
+                  className="!shadow-none"
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -242,7 +236,6 @@ export function LoginForm({
                   onCheckedChange={(checked) =>
                     setRememberMe(checked as boolean)
                   }
-                  className="rounded-md"
                 />
                 <label
                   htmlFor="remember"
@@ -254,7 +247,7 @@ export function LoginForm({
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-2xl text-base font-medium transition-all"
+                  className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
                   disabled={isLoading || isLoadingInvitation}
                 >
                   {isLoading
@@ -281,8 +274,8 @@ export function LoginForm({
               </Link>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

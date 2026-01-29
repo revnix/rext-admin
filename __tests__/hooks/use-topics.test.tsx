@@ -3,9 +3,9 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useTopic, useTopics } from "@/hooks/use-topics";
+import { renderHook, waitFor } from "../utils/test-utils";
 
 // Mock fetch globally
 const mockFetch = jest.fn();

@@ -43,6 +43,17 @@ export interface Country {
   status: string;
 }
 
+const GLOBAL_COUNTRY: Country = {
+  alpha2: "global",
+  alpha3: "GLB",
+  countryCallingCodes: [],
+  currencies: [],
+  name: "Global",
+  status: "assigned",
+  ioc: "GLB",
+  languages: [],
+};
+
 interface CountryDropdownProps {
   options?: Country[];
   value?: string; // ISO-2 ("US") or ISO-3 ("USA")
@@ -58,10 +69,15 @@ interface CountryDropdownProps {
 
 const CountryDropdownComponent = (
   {
-    options = countries.all.filter(
-      (country: Country) =>
-        country.emoji && country.status !== "deleted" && country.ioc !== "PRK",
-    ),
+    options = [
+      GLOBAL_COUNTRY,
+      ...countries.all.filter(
+        (country: Country) =>
+          country.emoji &&
+          country.status !== "deleted" &&
+          country.ioc !== "PRK",
+      ),
+    ],
     value,
     onChange,
     disabled = false,
@@ -119,10 +135,14 @@ const CountryDropdownComponent = (
         {selectedCountry ? (
           <div className="flex items-center flex-grow w-0 gap-2 overflow-hidden">
             <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full">
-              <CircleFlag
-                countryCode={selectedCountry.alpha2.toLowerCase()}
-                height={20}
-              />
+              {selectedCountry.alpha2 === "global" ? (
+                <Globe size={18} className="text-slate-500" />
+              ) : (
+                <CircleFlag
+                  countryCode={selectedCountry.alpha2.toLowerCase()}
+                  height={20}
+                />
+              )}
             </div>
 
             {!slim && (
@@ -160,10 +180,14 @@ const CountryDropdownComponent = (
                 >
                   <div className="flex flex-grow w-0 space-x-2 overflow-hidden">
                     <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full">
-                      <CircleFlag
-                        countryCode={option.alpha2.toLowerCase()}
-                        height={20}
-                      />
+                      {option.alpha2 === "global" ? (
+                        <Globe size={18} className="text-slate-500" />
+                      ) : (
+                        <CircleFlag
+                          countryCode={option.alpha2.toLowerCase()}
+                          height={20}
+                        />
+                      )}
                     </div>
                     <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                       {option.name}

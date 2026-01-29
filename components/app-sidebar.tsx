@@ -33,7 +33,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { WorkspaceSwitcher } from "@/components/workspace-switcher";
+
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { PERMISSIONS, ROLES } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { ThemeLogo } from "@/components/theme-logo";
 
 import { usePathname } from "next/navigation";
 
@@ -197,8 +198,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+      (group) => group.groupLabel !== "Workspace",
+    );
 
   return (
     <Sidebar
@@ -207,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       style={{ "--sidebar-width-icon": "4rem" } as React.CSSProperties}
     >
       <SidebarHeader>
-        <WorkspaceSwitcher />
+        <ThemeLogo className="px-2" width={100} height={32} priority />
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
@@ -295,15 +296,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                       : item.title,
                                   );
                                 }}
-                                className="rounded-md hover:bg-sidebar-accent transition  hover:cursor-pointer"
+                                className="rounded-lg hover:bg-sidebar-accent transition  hover:cursor-pointer"
                               >
                                 <ChevronRight
                                   size={16}
-                                  className={`transition-transform ${
-                                    openDropdown === item.title
+                                  className={`transition-transform ${openDropdown === item.title
                                       ? "rotate-90"
                                       : ""
-                                  }`}
+                                    }`}
                                 />
                               </button>
                             </PopoverTrigger>
@@ -313,17 +313,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <PopoverContent
                             side="right"
                             align="start"
-                            className="w-40 bg-popover border border-border rounded-md shadow-md"
+                            className="w-40 bg-popover border border-border rounded-lg shadow-colored-md"
                           >
                             <SidebarMenu>
                               {item.items?.map((subItem) => (
                                 <SidebarMenuItem
                                   key={subItem.title}
-                                  className="rounded-md hover:bg-accent transition"
+                                  className="rounded-lg hover:bg-accent transition"
                                 >
                                   <SidebarMenuButton
                                     asChild
-                                    className="rounded-md hover:bg-accent transition"
+                                    className="rounded-lg hover:bg-accent transition"
                                   >
                                     <Link href={subItem.url}>
                                       {subItem.title}
@@ -372,11 +372,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           >
                             <ChevronDown
                               size={16}
-                              className={`transition-transform hover:cursor-pointer ${
-                                expandedAccordion === item.title
+                              className={`transition-transform hover:cursor-pointer ${expandedAccordion === item.title
                                   ? "rotate-180"
                                   : ""
-                              }`}
+                                }`}
                             />
                           </button>
                         )}

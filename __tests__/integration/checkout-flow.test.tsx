@@ -4,11 +4,10 @@
  * Tests the complete checkout journey from plan selection to subscription activation.
  */
 
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
+import userEvent from "@testing-library/user-event";
 import {
   createMockApiClient,
   createMockSubscriptionPlan,
@@ -16,6 +15,8 @@ import {
   createMockUserSubscription,
   mockLemonSqueezy,
   render,
+  screen,
+  waitFor,
 } from "../utils/test-utils";
 
 // Mock dependencies
@@ -259,7 +260,7 @@ describe("Checkout Flow Integration", () => {
       render(<CheckoutFlowComponent />);
 
       const buttons = screen.getAllByRole("button", { name: /processing/i });
-      buttons.forEach((button) => {
+      buttons.forEach((button: HTMLElement) => {
         expect(button).toBeDisabled();
       });
     });
