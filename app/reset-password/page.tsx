@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { log } from "@/lib/logger";
 import {
   type ResetPasswordData,
   resetPasswordSchema,
@@ -48,8 +47,6 @@ function ResetPasswordForm() {
     setSuccess(false);
 
     try {
-      log.info("[Auth Migration] Using direct API call for reset-password");
-
       // Direct API call - no auth session needed for password reset
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/reset-password`,

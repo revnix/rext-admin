@@ -60,8 +60,6 @@ export function useSaveTopic() {
         await onSuccess(topic.id);
       }
 
-      log.info(`Topic ${topic.id} saved successfully`);
-
       return {
         success: true,
         message: `Topic "${topic.title}" saved successfully!`,

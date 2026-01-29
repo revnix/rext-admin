@@ -718,13 +718,6 @@ export class BackendService {
       }
     }
 
-    this.log.info("Successfully validated topics", {
-      requestId,
-      topics_count: validatedResponse.topics.length,
-      warnings_count: invalidTopics.length,
-      generation_time_ms: validatedResponse.generation_time_ms || null,
-    });
-
     if (validatedResponse.topics && Array.isArray(validatedResponse.topics)) {
       validatedResponse.topics = validatedResponse.topics.map((topic) => ({
         generated_by_user_id: "unknown",

@@ -21,7 +21,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { apiClient } from "@/lib/api-client";
-import { log } from "@/lib/logger";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -39,7 +38,7 @@ export function WorkspaceSwitcher() {
   const setLastWorkspacePath = useWorkspaceStore(
     (state) => state.setLastWorkspacePath,
   );
-  const lastWorkspacePath = useWorkspaceStore(
+  const _lastWorkspacePath = useWorkspaceStore(
     (state) => state.lastWorkspacePath,
   );
 
@@ -86,17 +85,6 @@ export function WorkspaceSwitcher() {
 
   // Use current workspace or first available workspace
   const displayWorkspace = currentWorkspace || workspaces[0] || null;
-
-  // Debug logging
-  log.info("WorkspaceSwitcher Debug:", {
-    isLoading,
-    workspacesLength: workspaces.length,
-    currentWorkspace: getWorkspaceDisplayTitle(currentWorkspace),
-    displayWorkspace: getWorkspaceDisplayTitle(displayWorkspace),
-    currentPath: pathname,
-    lastWorkspacePath,
-    hasData: !!workspaceListResponse,
-  });
 
   // Always render - never return null for debugging
   return (

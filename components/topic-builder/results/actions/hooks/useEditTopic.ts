@@ -55,8 +55,6 @@ export function useEditTopic(topic: GeneratedTopic) {
 
       await onEdit(topic.id, updates);
 
-      log.info(`Topic ${topic.id} updated successfully`);
-
       // Reset form after successful submission
       editForm.reset();
 

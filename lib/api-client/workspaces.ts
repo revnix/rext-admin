@@ -9,6 +9,7 @@ import type {
   CreateWorkspaceResponse,
   WorkspaceListResponse,
   WorkspaceResponse,
+  Persona,
 } from "@/types/workspace";
 import type { WorkspaceStats } from "@/types/workspace-stats";
 import type { ApiClient } from "./core";
@@ -126,6 +127,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         brand_voice?: string[];
         competitors?: string[];
         content_strategy?: string[];
+        personas?: Persona[];
       },
     ) => {
       const payload = {
@@ -136,6 +138,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         brand_voice: data.brand_voice ?? [],
         competitors: data.competitors ?? [],
         content_pillar: data.content_strategy ?? [],
+        personas: data.personas ?? [],
       };
 
       return client.request<{

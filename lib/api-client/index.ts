@@ -32,6 +32,7 @@ import { createLicensesClient } from "./licenses";
 import { createMediaNamespace } from "./media";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createOnboardingNamespace } from "./onboarding";
+import { createPersonasNamespace } from "./personas";
 import { createAccountNamespace, createProfileNamespace } from "./profile";
 import { createRolesNamespace } from "./roles";
 import {
@@ -73,6 +74,7 @@ function createApiClient() {
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
     onboarding: createOnboardingNamespace(client),
+    personas: createPersonasNamespace(client),
 
     // Admin namespaces
     users: createUsersNamespace(client),

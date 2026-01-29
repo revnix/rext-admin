@@ -1,11 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Mail, Plus, Sparkles } from "lucide-react";
+import { Building2, Mail, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
-import { PendingInvitationsCard } from "@/components/dashboard/pending-invitations-card";
-import { OnboardingProgress } from "@/components/onboarding-progress";
+import { PendingInvitationsCard } from "@/components/dashboard/archive/pending-invitations-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -103,7 +102,7 @@ export function EnhancedDashboardEmptyState() {
 
               <div className="space-y-2">
                 <CardTitle className="text-3xl font-bold">
-                  {userName ? `Welcome, ${userName}!` : "Welcome to Wrext!"}
+                  {userName ? `Welcome, ${userName}!` : "Welcome to Rext!"}
                 </CardTitle>
                 <CardDescription className="text-base">
                   You've been invited to join{" "}
@@ -145,45 +144,7 @@ export function EnhancedDashboardEmptyState() {
     );
   }
 
-  // Scenario 2: No workspaces + No invitations
-  if (!hasWorkspaces && !hasPendingInvitations) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-full max-w-3xl px-4">
-          <Card>
-            <CardHeader className="text-center space-y-4 pb-6">
-              <div className="flex justify-center">
-                <div className="relative">
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-primary/60 flex items-center justify-center shadow-lg">
-                    <Sparkles className="h-10 w-10 text-primary-foreground" />
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full bg-background border-2 border-primary flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <CardTitle className="text-3xl font-bold">
-                  {userName ? `Welcome, ${userName}!` : "Welcome to Wrext!"}
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Let's create your first workspace to get started with
-                  AI-powered content management
-                </CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <OnboardingProgress />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Scenario 3: Has workspaces (shouldn't normally show this state)
+  // Scenario 2: Has workspaces (shouldn't normally show this state)
   // This is a fallback - user should be redirected to a workspace
   return (
     <div className="flex items-center justify-center min-h-[60vh]">

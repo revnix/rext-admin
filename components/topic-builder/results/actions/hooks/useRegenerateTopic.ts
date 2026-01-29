@@ -26,8 +26,6 @@ export function useRegenerateTopic() {
     try {
       await onRegenerate(topicId);
 
-      log.info(`Topic ${topicId} regenerated successfully`);
-
       return {
         success: true,
         message: "Topic regenerated successfully!",

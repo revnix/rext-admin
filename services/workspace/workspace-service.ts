@@ -252,12 +252,6 @@ export class WorkspaceService {
     const url = `${this.config.baseUrl}${endpoint}`;
     const startTime = Date.now();
 
-    this.log.info("Making workspace request", {
-      requestId: context.requestId,
-      method,
-      endpoint,
-    });
-
     try {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -294,12 +288,6 @@ export class WorkspaceService {
       } else {
         data = await response.json();
       }
-
-      this.log.info("Workspace request completed", {
-        requestId: context.requestId,
-        status: response.status,
-        duration,
-      });
 
       const responseData = data as { success?: boolean; data?: T };
       if (responseData?.success && responseData.data) {
@@ -457,10 +445,6 @@ export class WorkspaceService {
    * Cancel all active requests
    */
   public cancelAllRequests(): void {
-    this.log.info("Cancelling all active workspace requests", {
-      activeRequestsCount: this.activeRequests.size,
-    });
-
     for (const [requestId, controller] of this.activeRequests) {
       controller.abort();
       this.log.debug("Cancelled request", { requestId });

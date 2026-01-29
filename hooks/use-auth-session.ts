@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { log } from "@/lib/logger";
@@ -14,7 +14,6 @@ import { log } from "@/lib/logger";
  */
 export function useAuthSession() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
@@ -22,12 +21,14 @@ export function useAuthSession() {
 
   const user = session?.user
     ? {
-        id: session.user.id || "",
-        email: session.user.email || "",
-        name: session.user.name || "",
-        role: session.user.role || "user",
-        permissions: session.user.permissions || [],
-      }
+      id: session.user.id || "",
+      email: session.user.email || "",
+      name: session.user.name || "",
+      full_name: session.user.name,
+      accessToken: session.user.accessToken || "",
+      role: session.user.role || "user",
+      permissions: session.user.permissions || [],
+    }
     : null;
 
   // Track user activity
@@ -54,27 +55,49 @@ export function useAuthSession() {
 
   const logout = async () => {
     try {
-      log.info(
-        `[Auth] User logging out after ${activityCount} interactions. Last active: ${new Date(lastActivity).toLocaleTimeString()}`,
-      );
+      log.info("[Auth] Initiating comprehensive logout...");
 
-      // Disable all background queries
-      queryClient.setDefaultOptions({
-        queries: { enabled: false },
-      });
+      // 1. Reset Analytics
+      try {
+        const { analytics } = await import("@/lib/analytics");
+        analytics.reset();
+        analytics.clearStoredEvents();
+      } catch (e) {
+        log.error("[Auth] Failed to reset analytics", e);
+      }
 
-      // Clear all cached React Query data
+      // 2. Clear and cancel all React Query operations
+      // We DON'T set queries.enabled = false here because it persists across
+      // navigation if a hard reload doesn't occur, breaking the next login.
+      queryClient.cancelQueries();
       queryClient.clear();
 
-      // Perform sign out (don’t auto-redirect)
-      await signOut({ redirect: false });
+      // 3. Perform NextAuth sign out
+      // This reliably handles its own session cookies.
+      await signOut({ redirect: false, callbackUrl: "/login" });
 
-      // Redirect manually to login page
-      router.push("/login");
+      // 4. Clear Storage
+      if (typeof window !== "undefined") {
+        const theme = localStorage.getItem("theme");
+        const sidebarState = localStorage.getItem("sidebar:state");
+
+        // Clear all sensitive data
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Restore UI preferences
+        if (theme) localStorage.setItem("theme", theme);
+        if (sidebarState) localStorage.setItem("sidebar:state", sidebarState);
+      }
+
+      // 5. Force a hard reload to ensure all in-memory state is wiped.
+      // This is the only way to guarantee Zinc (Zustand) and NextAuth internal
+      // states are completely reset and don't interfere with the next login.
+      // Using router.push or router.refresh is insufficient for a secure/clean logout.
+      window.location.href = "/login";
     } catch (error) {
       log.error("[Auth] Logout failed", error);
-      // As fallback, still navigate to login
-      router.push("/login");
+      window.location.href = "/login";
     }
   };
 

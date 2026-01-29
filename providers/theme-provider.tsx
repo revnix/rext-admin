@@ -20,8 +20,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const THEME_STORAGE_KEY = "wrext-theme";
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+interface ThemeProviderProps {
+  children: ReactNode;
+  defaultTheme?: Theme;
+}
+
+export function ThemeProvider({
+  children,
+  defaultTheme = "system",
+}: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   // Load theme from localStorage on mount

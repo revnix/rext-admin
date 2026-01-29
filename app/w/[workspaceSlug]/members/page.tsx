@@ -79,7 +79,7 @@ export default function WorkspaceUsersPage() {
           </Card>
         }
       >
-        <Tabs defaultValue={currentTab} className="space-y-6">
+        <Tabs defaultValue={currentTab} className="space-y-8">
           <TabsList>
             <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>

@@ -26,8 +26,6 @@ export function useDeleteTopic() {
     try {
       await onDelete(topicId);
 
-      log.info(`Topic ${topicId} deleted successfully`);
-
       return {
         success: true,
         message: "Topic deleted successfully!",

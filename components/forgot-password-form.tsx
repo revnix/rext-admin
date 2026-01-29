@@ -5,16 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import {
   type ForgotPasswordData,
@@ -43,8 +36,6 @@ export function ForgotPasswordForm({
     setSuccess(false);
 
     try {
-      log.info("[Auth Migration] Using direct API call for forgot-password");
-
       // Direct API call - no auth session needed for forgot password
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/forgot-password`,
@@ -72,44 +63,47 @@ export function ForgotPasswordForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Reset your password</CardTitle>
-          <CardDescription>
+      <div className="bg-transparent">
+        <div className="flex flex-col space-y-1.5 px-0 mb-6">
+          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
+            Reset your password
+          </h1>
+          <p className="text-sm text-muted-foreground">
             Enter your email address and we'll send you a link to reset your
             password
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
                 Password reset email sent! Check your inbox for the reset link.
               </div>
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="ml-1">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="m@example.com"
                   {...register("email")}
                   disabled={isLoading || success}
+                  error={errors.email?.message}
+                  className="!shadow-none"
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
               </div>
               <div className="flex flex-col gap-3">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-11 !shadow-none"
                   disabled={isLoading || success}
                 >
                   {isLoading
@@ -122,13 +116,16 @@ export function ForgotPasswordForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Remember your password?{" "}
-              <Link href="/login" className="underline underline-offset-4">
+              <Link
+                href="/login"
+                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+              >
                 Back to login
               </Link>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

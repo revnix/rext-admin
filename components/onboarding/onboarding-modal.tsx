@@ -14,6 +14,8 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { OnboardingComplete } from "./steps/onboarding-complete";
 import { OnboardingMarketingQuestions } from "./steps/onboarding-marketing-questions";
+import { OnboardingStrategy } from "./steps/onboarding-strategy";
+import { OnboardingWorkspace } from "./steps/onboarding-workspace";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -23,12 +25,21 @@ interface OnboardingModalProps {
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const { status, completeStep, complete, isLoading } = useOnboarding();
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
+  const [selectedStrategy, setSelectedStrategy] = useState<
+    "analyze" | "manual" | null
+  >(null);
 
   const currentStep = status?.current_step ?? 0;
 
   const handleNext = async () => {
     setDirection("forward");
     await completeStep(currentStep);
+  };
+
+  const handleBack = () => {
+    setDirection("backward");
+    // For now, we don't have backward navigation in the API
+    // Could be implemented if needed
   };
 
   const handleComplete = async () => {
@@ -42,19 +53,45 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     onClose();
   };
 
+  const handleStrategySelection = async (strategy: "analyze" | "manual") => {
+    setSelectedStrategy(strategy);
+    setDirection("forward");
+    await completeStep(currentStep);
+  };
+
   // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        // Marketing Questions
+        // Step 1: Strategy Selection
+        return (
+          <OnboardingStrategy
+            onNext={handleStrategySelection}
+            isLoading={isLoading}
+          />
+        );
+      case 1:
+        // Step 2: If "Analyze Website" was selected, show workspace form
+        // Otherwise skip to marketing questions
+        if (selectedStrategy === "analyze") {
+          return (
+            <OnboardingWorkspace
+              onNext={handleNext}
+              onBack={handleBack}
+              isLoading={isLoading}
+              currentStep={currentStep}
+            />
+          );
+        }
+        // For "Manual Persona", go directly to marketing questions
         return (
           <OnboardingMarketingQuestions
             onNext={handleNext}
             isLoading={isLoading}
           />
         );
-      case 1:
-        // Complete
+      case 2:
+        // Step 3 (or final): Complete
         return <OnboardingComplete onComplete={handleComplete} />;
       default:
         return null;
@@ -84,7 +121,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       >
         {/* Accessible title and description for screen readers */}
         <VisuallyHidden>
-          <DialogTitle>Get Started with WREXT</DialogTitle>
+          <DialogTitle>Get Started with REXT</DialogTitle>
           <DialogDescription>
             Complete the onboarding steps to set up your account.
           </DialogDescription>

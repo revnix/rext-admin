@@ -252,16 +252,12 @@ export function createKnowledgeStore<
 // HELPER TYPES FOR STORE CREATION
 // ============================================================================
 
-export type InferStoreState<TStore> = TStore extends ReturnType<
-  typeof create<infer S>
->
-  ? S
-  : never;
+export type InferStoreState<TStore> =
+  TStore extends ReturnType<typeof create<infer S>> ? S : never;
 
-export type InferStoreActions<TStore> = TStore extends ReturnType<
-  typeof create<infer S>
->
-  ? {
-      [K in keyof S]: S[K] extends (...args: never[]) => unknown ? K : never;
-    }[keyof S]
-  : never;
+export type InferStoreActions<TStore> =
+  TStore extends ReturnType<typeof create<infer S>>
+    ? {
+        [K in keyof S]: S[K] extends (...args: never[]) => unknown ? K : never;
+      }[keyof S]
+    : never;

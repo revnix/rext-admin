@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 
 /**
- * Workspace Integrations Settings Page
+ * Workspace Integrations Settings Page (Archived)
  *
  * Manages:
  * - API keys for programmatic access

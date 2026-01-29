@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "Subscription Terms of Service",
   description:
-    "Terms and conditions governing WREXT subscription services and billing",
+    "Terms and conditions governing REXT subscription services and billing",
 };
 
 export default function SubscriptionTermsPage() {

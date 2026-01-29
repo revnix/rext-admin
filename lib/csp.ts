@@ -16,13 +16,16 @@ export function getCSPHeader(_nonce: string): string {
   // Always use unsafe-inline for styles in development to support React inline styles
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
+  // Production backend URL
+  const PRODUCTION_BACKEND = "135.181.105.165:2024";
+
   const apiUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
     "http://135.181.105.165:2024" ||
     "http://localhost:2024";
 
-  // In development, allow both localhost and 127.0.0.1 for the backend
-  // as they are distinct origins in CSP but often used interchangeably.
+  // In development, allow localhost variants
+  // In production, allow both http and https for the production backend
   const backendOrigins = isDev
     ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://135.181.105.165:2024`
     : apiUrl;
@@ -77,11 +80,6 @@ export function getCSPHeader(_nonce: string): string {
     // Frames: Block all framing
     "frame-ancestors 'none'",
   ];
-
-  // Add upgrade-insecure-requests only in production
-  if (!isDev) {
-    directives.push("upgrade-insecure-requests");
-  }
 
   return directives.join("; ");
 }

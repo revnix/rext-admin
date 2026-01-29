@@ -2,7 +2,7 @@
  * Consistent Response Type Definitions
  *
  * This module defines TypeScript interfaces for the new consistent response format
- * from the Wrext backend API. These types ensure type safety and provide utilities
+ * from the Rext backend API. These types ensure type safety and provide utilities
  * for working with the standardized response structure.
  *
  * @see Backend Response Schema: src/api/schemas/response_schemas.py

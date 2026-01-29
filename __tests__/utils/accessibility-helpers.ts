@@ -5,9 +5,8 @@
  * particularly for keyboard navigation and ARIA compliance.
  */
 
-import { screen } from "@testing-library/react";
+import { screen } from "./test-utils";
 import userEvent from "@testing-library/user-event";
-import { log } from "@/lib/logger";
 
 /**
  * Test keyboard navigation sequence for a component
@@ -68,7 +67,7 @@ export function expectScreenReaderAnnouncement(
 ) {
   const liveRegions = screen.getAllByRole("status", { hidden: true });
 
-  const hasAnnouncement = liveRegions.some((region) =>
+  const hasAnnouncement = liveRegions.some((region: HTMLElement) =>
     region.textContent?.includes(text),
   );
 
@@ -168,7 +167,7 @@ export function checkColorContrast(
   // For proper contrast testing, integrate with libraries like:
   // - color-contrast-checker
   // - axe-core
-  log.info(`Color contrast check: bg=${backgroundColor}, fg=${color}`);
+  `Color contrast check: bg=${backgroundColor}, fg=${color}`;
 }
 
 /**
@@ -239,7 +238,6 @@ export function testLandmarkNavigation() {
       expect(element).toBeInTheDocument();
     } catch (_error) {
       // Landmark not found - this might be expected depending on the component
-      log.info(`Landmark "${landmark}" not found - this may be expected`);
     }
   });
 }

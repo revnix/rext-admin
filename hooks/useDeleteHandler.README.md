@@ -328,10 +328,8 @@ All delete operations are automatically logged:
 
 ```typescript
 // On delete start
-log.info("Deleting {resourceName}", { id, resourceName });
 
 // On success
-log.info("{resourceName} deleted successfully", { id, resourceName });
 
 // On error
 log.error("Failed to delete {resourceName}", {

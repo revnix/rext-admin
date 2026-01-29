@@ -71,12 +71,6 @@ export default function ResultsPage() {
   const workspaceId = urlWorkspaceSlug || currentWorkspace?.id || "";
   const _isWorkspaceLoading = !urlWorkspaceSlug && !currentWorkspace;
 
-  log.info("[WorkspaceResults] Workspace ID:", {
-    urlWorkspaceSlug,
-    currentWorkspaceId: currentWorkspace?.id,
-    finalWorkspaceId: workspaceId,
-  });
-
   // Use workspace ID from URL or current workspace
   const bulkSaveMutation = useTopicBulkSaveMutation(
     workspaceId || "00000000-0000-0000-0000-000000000000",
@@ -105,8 +99,6 @@ export default function ResultsPage() {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        log.info(`Loading session data for temporaryId: ${temporaryId}`);
-
         const sessionData = getSession(temporaryId);
 
         if (!sessionData) {
@@ -119,12 +111,6 @@ export default function ResultsPage() {
           }));
           return;
         }
-
-        log.info(`Session loaded successfully:`, {
-          topicCount: sessionData.topics.length,
-          formData: sessionData.formData,
-          expiresAt: new Date(sessionData.expiresAt).toISOString(),
-        });
 
         setState((prev) => ({
           ...prev,
@@ -176,15 +162,12 @@ export default function ResultsPage() {
     }
 
     try {
-      log.info("Saving topic to API:", { id: topicId, title: topic.title });
-
       // Use the proper API mutation
       await topicSaveMutation.mutateAsync(topic);
 
       // Also save to localStorage as backup
       saveTopic(topic);
 
-      log.info("Topic saved successfully:", topicId);
       return { success: true, message: "Topic saved successfully" };
     } catch (error) {
       log.error("Error saving topic:", error);
@@ -225,31 +208,16 @@ export default function ResultsPage() {
       const alreadySavedCount =
         allTopicsToConsider.length - unsavedTopics.length;
       if (alreadySavedCount > 0) {
-        log.info(`Skipping ${alreadySavedCount} already saved topics`);
         toast.info(
           `Skipping ${alreadySavedCount} topic${alreadySavedCount !== 1 ? "s" : ""} already saved. Saving ${unsavedTopics.length} new topic${unsavedTopics.length !== 1 ? "s" : ""}.`,
         );
       }
-
-      log.info("Starting bulk save to API:", {
-        requestedIds: topicIds,
-        totalRequested: allTopicsToConsider.length,
-        alreadySaved: alreadySavedCount,
-        willSave: unsavedTopics.length,
-        topics: unsavedTopics.map((t) => ({
-          id: t.id,
-          title: t.title,
-          is_saved: t.is_saved,
-          _optimisticSaved: t._optimisticSaved,
-        })),
-      });
 
       // Use the proper API mutation instead of localStorage only
       await bulkSaveMutation.mutateAsync(unsavedTopics);
 
       // Also save to localStorage as backup
       saveTopics(unsavedTopics);
-      log.info("Bulk save completed successfully");
 
       // Mark all as successful
       setBulkSaveResult({
@@ -301,12 +269,10 @@ export default function ResultsPage() {
     format: "json" | "csv",
   ) => {
     exportTopics(format);
-    log.info("Exporting saved topics:", format);
   };
 
   const handleTopicDelete = async (topicId: string) => {
     removeTopic(topicId);
-    log.info("Topic deleted from localStorage:", topicId);
   };
 
   const handleGenerateMore = async (additionalCount: number) => {
@@ -318,11 +284,6 @@ export default function ResultsPage() {
     try {
       setIsGeneratingMore(true);
       clearNewlyAddedHighlights(); // Clear any existing highlights
-
-      // Generate more topics using the stored form data
-      log.info(
-        `🔄 Generating ${additionalCount} more topics with session settings`,
-      );
 
       // Create modified form data with the requested number of additional topics
       const modifiedFormData = {
@@ -349,14 +310,6 @@ export default function ResultsPage() {
             ...prev,
             session: updatedSession,
           }));
-
-          log.info(
-            `✅ Successfully generated and persisted ${result.topics.length} more topics`,
-            {
-              totalTopicsNow: updatedSession.topics.length,
-              newTopicsAdded: result.topics.length,
-            },
-          );
         } else {
           // Fallback: update local state only (session might have expired)
           setState((prev) => ({
@@ -390,8 +343,6 @@ export default function ResultsPage() {
   };
 
   const handleStartOver = () => {
-    log.info("🔄 Start Over button clicked - opening dialog");
-    log.info("Current dialog state:", showStartOverDialog);
     // Temporarily skip dialog for testing
     if (
       confirm(
@@ -404,11 +355,9 @@ export default function ResultsPage() {
   };
 
   const handleConfirmStartOver = () => {
-    log.info("✅ Confirm Start Over clicked - executing reset");
     try {
       // Reset wizard state and navigate to create page
       resetWizard();
-      log.info("🔄 Starting over: Wizard reset, navigating to topic builder");
       setShowStartOverDialog(false);
       // Navigate to create page without full refresh
       router.push(`/w/${urlWorkspaceSlug}/topics/create`);
@@ -460,7 +409,6 @@ export default function ResultsPage() {
   };
 
   const handleSessionRecover = (sessionId: string) => {
-    log.info(`Attempting to recover session: ${sessionId}`);
     router.push(`/topics/create/results/${sessionId}`);
   };
 
@@ -673,7 +621,6 @@ export default function ResultsPage() {
       <Dialog
         open={showStartOverDialog}
         onOpenChange={(open) => {
-          log.info("🔄 Dialog state changed:", open);
           setShowStartOverDialog(open);
         }}
       >

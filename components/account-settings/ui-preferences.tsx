@@ -81,7 +81,7 @@ export function UIPreferences() {
           <div>
             <h3 className="text-lg font-semibold">Appearance</h3>
             <p className="text-sm text-muted-foreground">
-              Customize how WREXT looks and feels for you
+              Customize how REXT looks and feels for you
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export function UIPreferences() {
           <div>
             <h3 className="text-lg font-semibold">Accessibility</h3>
             <p className="text-sm text-muted-foreground">
-              Configure accessibility options to make WREXT more comfortable to
+              Configure accessibility options to make REXT more comfortable to
               use
             </p>
           </div>
@@ -206,7 +206,7 @@ export function UIPreferences() {
           <p>
             <strong>Tip:</strong> Feature hints provide contextual information
             about key features as you navigate the app. They're especially
-            useful when you're getting started with WREXT.
+            useful when you're getting started with REXT.
           </p>
         </div>
       </div>

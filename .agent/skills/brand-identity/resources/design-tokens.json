@@ -1,0 +1,243 @@
+{
+  "meta": {
+    "brand_name": "[INSERT NAME]",
+    "description": "Core design tokens for UI implementation including Primitives and Semantic Tokens.",
+    "last_updated": "2026-01-28",
+    "source": "Figma Tokens"
+  },
+  "primitives": {
+    "colors": {
+      "Brand": {
+        "25": "#F2F7FF",
+        "50": "#ECF3FF",
+        "100": "#DDE9FF",
+        "200": "#C2D6FF",
+        "300": "#9CB9FF",
+        "400": "#7592FF",
+        "500": "#465FFF",
+        "600": "#3641F5",
+        "700": "#2A31D8",
+        "800": "#252DAE",
+        "900": "#262E89",
+        "950": "#161950"
+      },
+      "Gray": {
+        "25": "#FCFCFD",
+        "50": "#F9FAFB",
+        "100": "#F2F4F7",
+        "200": "#E4E7EC",
+        "300": "#D0D5DD",
+        "400": "#98A2B3",
+        "500": "#667085",
+        "600": "#475467",
+        "700": "#344054",
+        "800": "#1D2939",
+        "900": "#101828",
+        "950": "#0C111D"
+      },
+      "Error": {
+        "25": "#FFFBFA",
+        "50": "#FEF3F2",
+        "100": "#FEE4E2",
+        "200": "#FECDCA",
+        "300": "#FDA29B",
+        "400": "#F97066",
+        "500": "#F04438",
+        "600": "#D92D20",
+        "700": "#B42318",
+        "800": "#912018",
+        "900": "#7A271A",
+        "950": "#55160C"
+      },
+      "Success": {
+        "25": "#F6FEF9",
+        "50": "#ECFDF3",
+        "100": "#D1FADF",
+        "200": "#A6F4C5",
+        "300": "#6CE9A6",
+        "400": "#32D583",
+        "500": "#12B76A",
+        "600": "#039855",
+        "700": "#027A48",
+        "800": "#05603A",
+        "900": "#054F31",
+        "950": "#022C1B"
+      },
+      "Warning": {
+        "25": "#FFFCF5",
+        "50": "#FFFAEB",
+        "100": "#FEF0C7",
+        "200": "#FEDF89",
+        "300": "#FEC84B",
+        "400": "#FDB022",
+        "500": "#F79009",
+        "600": "#DC6803",
+        "700": "#B54708",
+        "800": "#93370D",
+        "900": "#7A2E0E",
+        "950": "#4E1D09"
+      },
+      "Indigo": {
+        "25": "#F5F8FF",
+        "50": "#EEF4FF",
+        "100": "#E0EAFF",
+        "200": "#C7D7FE",
+        "300": "#A4BCFD",
+        "400": "#8098F9",
+        "500": "#6172F3",
+        "600": "#444CE7",
+        "700": "#3538CD",
+        "800": "#2D31A6",
+        "900": "#2D3282",
+        "950": "#1F235B"
+      },
+      "Purple": {
+        "25": "#FAFAFF",
+        "50": "#F4F3FF",
+        "100": "#EBE9FE",
+        "200": "#D9D6FE",
+        "300": "#BDB4FE",
+        "400": "#9B8AFB",
+        "500": "#7A5AF8",
+        "600": "#6938EF",
+        "700": "#5925DC",
+        "800": "#4A1FB8",
+        "900": "#3E1C96",
+        "950": "#27115F"
+      },
+      "Pink": {
+        "25": "#FEF6FB",
+        "50": "#FDF2FA",
+        "100": "#FCE7F6",
+        "200": "#FCCCEE",
+        "300": "#FAA7E0",
+        "400": "#F670C7",
+        "500": "#EE46BC",
+        "600": "#DD2590",
+        "700": "#C11574",
+        "800": "#9E165F",
+        "900": "#851651",
+        "950": "#560B33"
+      }
+    },
+    "typography": {
+      "family": {
+        "primary": "Outfit",
+        "secondary": "Inter"
+      },
+      "size": {
+        "display_2xl": "72px",
+        "display_xl": "60px",
+        "display_lg": "48px",
+        "display_md": "36px",
+        "display_sm": "30px",
+        "display_xs": "24px",
+        "text_xl": "20px",
+        "text_lg": "18px",
+        "text_md": "16px",
+        "text_sm": "14px",
+        "text_xs": "12px"
+      },
+      "line_height": {
+        "display_2xl": "90px",
+        "display_xl": "72px",
+        "display_lg": "60px",
+        "display_md": "44px",
+        "display_sm": "38px",
+        "display_xs": "32px",
+        "text_xl": "30px",
+        "text_lg": "28px",
+        "text_md": "24px",
+        "text_sm": "20px",
+        "text_xs": "18px"
+      }
+    },
+    "spacing": {
+      "0": "0px",
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px",
+      "12": "48px",
+      "16": "64px",
+      "20": "80px",
+      "24": "96px",
+      "32": "128px"
+    },
+    "utilities": {
+      "border_radius": {
+        "sm": "2px",
+        "default": "4px",
+        "md": "6px",
+        "lg": "8px",
+        "xl": "12px",
+        "2xl": "16px",
+        "3xl": "24px",
+        "full": "999px"
+      }
+    }
+  },
+  "semantic": {
+    "colors": {
+      "primary": {
+        "DEFAULT": "{primitives.colors.Brand.600}",
+        "foreground": "#FFFFFF",
+        "hover": "{primitives.colors.Brand.700}",
+        "active": "{primitives.colors.Brand.800}"
+      },
+      "secondary": {
+        "DEFAULT": "{primitives.colors.Gray.100}",
+        "foreground": "{primitives.colors.Gray.900}"
+      },
+      "background": {
+        "DEFAULT": "#FFFFFF",
+        "secondary": "{primitives.colors.Gray.50}",
+        "tertiary": "{primitives.colors.Gray.100}"
+      },
+      "text": {
+        "DEFAULT": "{primitives.colors.Gray.700}",
+        "title": "{primitives.colors.Gray.900}",
+        "secondary": "{primitives.colors.Gray.500}",
+        "tertiary": "{primitives.colors.Gray.400}",
+        "brand": "{primitives.colors.Brand.600}"
+      },
+      "border": {
+        "DEFAULT": "{primitives.colors.Gray.200}",
+        "secondary": "{primitives.colors.Gray.100}",
+        "tertiary": "{primitives.colors.Gray.300}"
+      },
+      "success": {
+        "DEFAULT": "{primitives.colors.Success.500}",
+        "foreground": "#FFFFFF",
+        "background": "{primitives.colors.Success.50}"
+      },
+      "warning": {
+        "DEFAULT": "{primitives.colors.Warning.500}",
+        "foreground": "#FFFFFF",
+        "background": "{primitives.colors.Warning.50}"
+      },
+      "error": {
+        "DEFAULT": "{primitives.colors.Error.500}",
+        "foreground": "#FFFFFF",
+        "background": "{primitives.colors.Error.50}"
+      }
+    },
+    "shadows": {
+      "note": "Antigravity Colored Shadows Default",
+      "sm": "0 1px 2px 0 rgba(70, 95, 255, 0.05)",
+      "colored_sm": "0 1px 2px 0 {primitives.colors.Brand.500}0D",
+      "md": "0 4px 6px -1px rgba(70, 95, 255, 0.1), 0 2px 4px -1px rgba(70, 95, 255, 0.06)",
+      "colored_md": "0 4px 6px -1px {primitives.colors.Brand.500}1A, 0 2px 4px -1px {primitives.colors.Brand.500}10"
+    },
+    "grid": {
+      "note": "Asymmetric Grid System (Tailwind Defaults + Custom)",
+      "base_unit": "8px",
+      "columns": 12,
+      "gutter": "24px"
+    }
+  }
+}

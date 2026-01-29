@@ -15,7 +15,7 @@ export function ThemeSelector() {
         <div>
           <h3 className="text-lg font-semibold">Appearance</h3>
           <p className="text-sm text-muted-foreground">
-            Customize how WREXT looks and feels for you
+            Customize how REXT looks and feels for you
           </p>
         </div>
       </div>

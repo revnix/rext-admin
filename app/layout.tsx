@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Inter, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,9 +13,17 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeProvider } from "@/providers/workspace-welcome-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Design Tokens - Typography
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -25,8 +33,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Wrext Admin",
-    default: "Wrext Admin - AI-Powered Content Management Platform",
+    template: "%s | Rext Admin",
+    default: "Rext Admin - AI-Powered Content Management Platform",
   },
   description:
     "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows. Create, organize, and optimize your content strategy with intelligent insights.",
@@ -38,25 +46,39 @@ export const metadata: Metadata = {
     "automation",
     "admin dashboard",
   ],
-  authors: [{ name: "Wrext Team" }],
-  creator: "Wrext",
-  publisher: "Wrext",
+  authors: [{ name: "Rext Team" }],
+  creator: "Rext",
+  publisher: "Rext",
   metadataBase: new URL("https://admin.wrext.com"),
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://admin.wrext.com",
-    title: "Wrext Admin - AI-Powered Content Management Platform",
+    title: "Rext Admin - AI-Powered Content Management Platform",
     description:
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
-    siteName: "Wrext Admin",
+    siteName: "Rext Admin",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Wrext Admin - AI-Powered Content Management Platform",
+    title: "Rext Admin - AI-Powered Content Management Platform",
     description:
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
-    creator: "@wrext",
+    creator: "@Rext",
+  },
+  icons: {
+    icon: [
+      {
+        url: "/logos/Primary_Color.png",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/logos/Primary_Color.png",
+        type: "image/png",
+      },
+    ],
   },
   robots: {
     index: false, // Admin dashboard shouldn't be indexed
@@ -72,7 +94,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${outfit.variable} ${inter.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         {/* LemonSqueezy Checkout Overlay Script */}
@@ -81,7 +103,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-        <ThemeProvider>
+        <ThemeProvider defaultTheme="system">
           <AuthProvider>
             <SSEProvider>
               <UserNotificationsListener />

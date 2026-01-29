@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
+
 interface AuthGuardProps {
   children: React.ReactNode;
   redirectTo?: string;
@@ -98,7 +99,6 @@ export function GuestGuard({
     if (!isLoading) {
       setIsChecking(false);
 
-      // If already authenticated, redirect to dashboard
       if (isAuthenticated) {
         router.push(redirectTo);
       }

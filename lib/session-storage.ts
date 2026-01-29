@@ -94,11 +94,6 @@ export const saveSession = (
 
     const key = getSessionKey(data.id);
     localStorage.setItem(key, JSON.stringify(sessionData));
-
-    log.info(`Session saved: ${data.id}`, {
-      topicsCount: data.topics.length,
-      expiresAt: new Date(sessionData.expiresAt).toISOString(),
-    });
   } catch (error) {
     log.error("Failed to save session:", error);
     throw new Error(
@@ -131,17 +126,9 @@ export const getSession = (id: string): SessionData | null => {
 
     // Check if session has expired
     if (Date.now() > sessionData.expiresAt) {
-      log.info(`Session expired, removing: ${id}`);
       localStorage.removeItem(key);
       return null;
     }
-
-    log.info(`Session retrieved: ${id}`, {
-      topicsCount: sessionData.topics.length,
-      timeRemaining:
-        Math.round((sessionData.expiresAt - Date.now()) / (1000 * 60 * 60)) +
-        "h",
-    });
 
     return sessionData;
   } catch (error) {
@@ -196,13 +183,6 @@ export const updateSession = (
     const key = getSessionKey(id);
     localStorage.setItem(key, JSON.stringify(updatedSession));
 
-    log.info(`Session updated: ${id}`, {
-      previousTopicsCount: existingSession.topics.length,
-      newTopicsCount: newTopics.length,
-      totalTopicsCount: updatedTopics.length,
-      operation: append ? "append" : "replace",
-    });
-
     return updatedSession;
   } catch (error) {
     log.error("Failed to update session:", error);
@@ -224,7 +204,6 @@ export const removeSession = (id: string): void => {
   try {
     const key = getSessionKey(id);
     localStorage.removeItem(key);
-    log.info(`Session removed: ${id}`);
   } catch (error) {
     log.error("Failed to remove session:", error);
   }
@@ -280,10 +259,6 @@ export const getAllSessions = (): SessionData[] => {
         log.error("Failed to remove expired session:", removeError);
       }
     });
-
-    log.info(
-      `Retrieved ${sessions.length} active sessions, cleaned up ${keysToRemove.length} expired sessions`,
-    );
 
     return sessions.sort((a, b) => b.createdAt - a.createdAt); // Most recent first
   } catch (error) {

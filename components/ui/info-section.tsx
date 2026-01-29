@@ -75,7 +75,6 @@ const InfoSection = React.forwardRef<HTMLDivElement, InfoSectionComponentProps>(
       try {
         await navigator.clipboard.writeText(text);
         // You might want to add a toast notification here
-        log.info("Copied to clipboard:", text);
       } catch (error) {
         log.error("Failed to copy to clipboard:", error);
       }

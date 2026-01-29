@@ -18,24 +18,10 @@ const passwordSchema = z
 // Signup form schema
 export const signupFormSchema = z
   .object({
-    firstName: z
+    full_name: z
       .string()
       .min(1, "First name is required")
       .max(50, "First name must be 50 characters or less")
-      .trim(),
-    lastName: z
-      .string()
-      .min(1, "Last name is required")
-      .max(50, "Last name must be 50 characters or less")
-      .trim(),
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(30, "Username must be 30 characters or less")
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        "Username can only contain letters, numbers, underscores, and hyphens",
-      )
       .trim(),
     email: z.string().email("Invalid email address").trim().toLowerCase(),
     password: passwordSchema,
@@ -71,24 +57,10 @@ export const loginSchema = z.object({
 // Signup with invitation schema (merges with base signup)
 export const signupWithInvitationSchema = z
   .object({
-    firstName: z
+    full_name: z
       .string()
       .min(1, "First name is required")
       .max(50, "First name must be 50 characters or less")
-      .trim(),
-    lastName: z
-      .string()
-      .min(1, "Last name is required")
-      .max(50, "Last name must be 50 characters or less")
-      .trim(),
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(30, "Username must be 30 characters or less")
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        "Username can only contain letters, numbers, underscores, and hyphens",
-      )
       .trim(),
     email: z.string().email("Invalid email address").trim().toLowerCase(),
     password: passwordSchema,

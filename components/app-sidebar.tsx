@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  Brain,
   CreditCard,
   FileText,
-  Image,
+  Plug,
   LayoutDashboard,
-  Library,
   Mail,
   Monitor,
   Settings2,
@@ -14,6 +12,7 @@ import {
   User,
   UserCog,
   Users,
+  VenetianMask,
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
@@ -21,7 +20,6 @@ import type * as React from "react";
 import { useState } from "react";
 
 import { EmptyWorkspacePrompt } from "@/components/empty-workspace-prompt";
-import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -35,7 +33,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { WorkspaceSwitcher } from "@/components/workspace-switcher";
+
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { PERMISSIONS, ROLES } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -50,8 +48,12 @@ import {
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { ThemeLogo } from "@/components/theme-logo";
+
+import { usePathname } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
@@ -79,15 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       groupLabel: "Workspace",
       items: [
         {
-          title: "Topics",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.topics(currentWorkspace.slug)
-            : "/",
-          icon: Library,
-          permission: "topic.read",
-        },
-        {
-          title: "Content",
+          title: "Content Library",
           url: currentWorkspace?.slug
             ? workspaceRoutes.content(currentWorkspace.slug)
             : "/",
@@ -99,24 +93,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.generate_content(currentWorkspace.slug)
             : "/",
-          icon: FileText,
+          icon: FileText, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
           permission: "content.read",
         },
         {
-          title: "Knowledge",
+          title: "Persona",
           url: currentWorkspace?.slug
-            ? workspaceRoutes.knowledge(currentWorkspace.slug)
+            ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
-          icon: Brain,
-          permission: "knowledge.read",
-        },
-        {
-          title: "Media",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.media(currentWorkspace.slug)
-            : "/",
-          icon: Image,
-          permission: "media.read",
+          icon: VenetianMask,
+          permission: "content.read",
         },
         {
           title: "Members",
@@ -125,6 +111,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Users,
           permission: "member.read",
+        },
+        {
+          title: "Integrations",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.integrations(currentWorkspace.slug)
+            : "/",
+          icon: Plug,
+          permission: "workspace.update",
         },
       ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
     },
@@ -204,8 +198,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+      (group) => group.groupLabel !== "Workspace",
+    );
 
   return (
     <Sidebar
@@ -214,10 +208,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       style={{ "--sidebar-width-icon": "4rem" } as React.CSSProperties}
     >
       <SidebarHeader>
-        <WorkspaceSwitcher />
+        <ThemeLogo className="px-2" width={100} height={32} priority />
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide">
+      <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
         {/* Main navigation */}
         {displayMainNavigation.map((group) => (
           <SidebarGroup key={group.groupLabel || "main-group"}>
@@ -228,9 +222,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
+                  const isActive = pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton tooltip={item.title} asChild>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        isActive={isActive}
+                        asChild
+                      >
                         <Link href={item.url}>
                           {Icon && <Icon />}
                           <span>{item.title}</span>
@@ -297,15 +296,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                       : item.title,
                                   );
                                 }}
-                                className="rounded-md hover:bg-sidebar-accent transition  hover:cursor-pointer"
+                                className="rounded-lg hover:bg-sidebar-accent transition  hover:cursor-pointer"
                               >
                                 <ChevronRight
                                   size={16}
-                                  className={`transition-transform ${
-                                    openDropdown === item.title
+                                  className={`transition-transform ${openDropdown === item.title
                                       ? "rotate-90"
                                       : ""
-                                  }`}
+                                    }`}
                                 />
                               </button>
                             </PopoverTrigger>
@@ -315,17 +313,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <PopoverContent
                             side="right"
                             align="start"
-                            className="w-40 bg-gray-100 dark:bg-gray-800 border border-sidebar-border dark:border-gray-700 rounded-md shadow-md"
+                            className="w-40 bg-popover border border-border rounded-lg shadow-colored-md"
                           >
                             <SidebarMenu>
                               {item.items?.map((subItem) => (
                                 <SidebarMenuItem
                                   key={subItem.title}
-                                  className="rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition"
+                                  className="rounded-lg hover:bg-accent transition"
                                 >
                                   <SidebarMenuButton
                                     asChild
-                                    className="rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition"
+                                    className="rounded-lg hover:bg-accent transition"
                                   >
                                     <Link href={subItem.url}>
                                       {subItem.title}
@@ -374,11 +372,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           >
                             <ChevronDown
                               size={16}
-                              className={`transition-transform hover:cursor-pointer ${
-                                expandedAccordion === item.title
+                              className={`transition-transform hover:cursor-pointer ${expandedAccordion === item.title
                                   ? "rotate-180"
                                   : ""
-                              }`}
+                                }`}
                             />
                           </button>
                         )}
@@ -434,7 +431,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <NavUser />
+        {/* <NavUser /> */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
