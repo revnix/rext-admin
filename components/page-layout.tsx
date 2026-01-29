@@ -1,25 +1,26 @@
 "use client";
 
 import {
-  Bell,
-  Mail,
-  Settings,
-  CircleHelp,
-  Search,
-  CreditCard,
-  LogOut,
-  Book,
-  LifeBuoy,
-  Keyboard,
-  Sparkles,
-  BadgeCheck,
   ArrowLeftRight,
-  Users,
-  Sun,
-  Moon,
+  BadgeCheck,
+  Bell,
+  Book,
+  CircleHelp,
+  CreditCard,
   Laptop,
+  LifeBuoy,
+  LogOut,
+  Moon,
+  PanelLeft,
+  Search,
+  Settings,
+  Sparkles,
+  Sun,
+  Users,
+  Plus,
 } from "lucide-react";
-import { useTheme } from "@/providers/theme-provider";
+import { useTheme } from "next-themes";
+
 import { workspaceRoutes } from "@/lib/routes";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -119,9 +120,12 @@ export function PageLayout({
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
     currentWorkspace?.id,
   );
+
+  const hasWorkspaces = workspaceList.length > 0;
 
   const hasUnread = unreadNotifications > 0;
 
@@ -215,21 +219,22 @@ export function PageLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md flex h-16 shrink-0 items-center justify-between gap-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16 px-8 border-b border-border">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1 h-10 w-10 text-muted-foreground hover:bg-accent hover:text-foreground rounded-xl" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4 bg-border"
-            />
-            <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-50 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
+          <div className="flex items-center gap-4">
+            <SidebarTrigger className="-ml-1 h-10 w-10 text-muted-foreground hover:bg-transparent hover:text-foreground border border-border" />
+            <div className="hidden md:flex items-center gap-4">
               <Button
-                variant="ghost"
-                className="justify-start w-full md:w-64 h-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50 px-2"
+                variant="outline"
+                className="justify-start w-10 md:w-96 h-10 rounded-md bg-white border-input text-muted-foreground hover:text-foreground hover:bg-accent hover:border-input dark:bg-sidebar-accent/50 dark:border-sidebar-border px-0 md:px-3 overflow-hidden relative shadow-none"
                 onClick={() => setSearchOpen(true)}
               >
-                <Search className="h-4 w-4 mr-2" />
-                <span className="text-sm font-medium">Search...</span>
+                <Search className="h-4 w-4 md:mr-2 opacity-50 shrink-0 mx-auto md:mx-0" />
+                <span className="text-sm font-normal hidden md:inline-block truncate">
+                  Search or type command...
+                </span>
+                <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex border border-border">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
               </Button>
             </div>
           </div>
@@ -239,15 +244,13 @@ export function PageLayout({
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+              className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 dark:hover:bg-sidebar-accent dark:text-sidebar-foreground relative"
               onClick={() => setDrawerOpen(true)}
             >
-              <div className="relative">
-                <Bell className="h-5 w-5" />
-                {hasUnread && (
-                  <span className="absolute top-0 right-0 inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-white" />
-                )}
-              </div>
+              <Bell className="h-5 w-5" />
+              {hasUnread && (
+                <span className="absolute top-2.5 right-2.5 inline-flex h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-sidebar" />
+              )}
             </Button>
 
             {/* Settings */}
@@ -261,7 +264,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 dark:hover:bg-sidebar-accent dark:text-sidebar-foreground"
                 >
                   <Settings className="h-5 w-5" />
                 </Button>
@@ -298,10 +301,17 @@ export function PageLayout({
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/")}>
-                    <ArrowLeftRight className="mr-2 h-4 w-4" />
-                    <span>Switch Workspace</span>
-                  </DropdownMenuItem>
+                  {hasWorkspaces ? (
+                    <DropdownMenuItem onClick={() => router.push("/")}>
+                      <ArrowLeftRight className="mr-2 h-4 w-4" />
+                      <span>Switch Workspace</span>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => router.push("/w/create")}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>Create Workspace</span>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -315,7 +325,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 dark:hover:bg-sidebar-accent dark:text-sidebar-foreground"
                   id="help-trigger"
                 >
                   <CircleHelp className="h-5 w-5" />
@@ -336,7 +346,7 @@ export function PageLayout({
                       <span>Documentation</span>
                     </a>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <a
                       href="https://rext.ai/help"
                       target="_blank"
@@ -360,7 +370,7 @@ export function PageLayout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 dark:hover:bg-sidebar-accent dark:text-sidebar-foreground"
                 >
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -427,22 +437,7 @@ export function PageLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60 p-1" forceMount>
                 <DropdownMenuLabel className="p-0 font-normal mb-1">
-                  <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-muted/40 border border-border mx-0.5 mt-0.5">
-                    <Avatar className="h-9 w-9 rounded-lg border border-white shadow-sm overflow-hidden relative">
-                      {profileUser?.avatar_url ? (
-                        <Image
-                          src={getAvatarUrl(profileUser.avatar_url) || ""}
-                          alt="User avatar"
-                          fill
-                          className="object-cover"
-                          sizes="36px"
-                        />
-                      ) : (
-                        <AvatarFallback className="rounded-lg bg-background text-foreground font-semibold">
-                          {userInitials}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                  <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-muted/40 mx-0.5 mt-0.5">
                     <div className="grid flex-1 text-left leading-tight">
                       <span className="truncate font-semibold text-sm text-foreground">
                         {userName}
@@ -450,18 +445,10 @@ export function PageLayout({
                       <span className="truncate text-xs text-muted-foreground font-normal">
                         {userEmail}
                       </span>
-                      {userRole && (
-                        <Badge
-                          variant="outline"
-                          className="mt-1 w-fit rounded-sm px-1 py-0 text-[9px] h-4 font-normal text-muted-foreground border-border bg-background"
-                        >
-                          {userRole}
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 </DropdownMenuLabel>
-
+                <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings/subscription")}
@@ -517,7 +504,6 @@ export function PageLayout({
             </DropdownMenu>
           </div>
         </header>
-
         {/* Impersonation Banner */}
         <ImpersonationBanner />
 
