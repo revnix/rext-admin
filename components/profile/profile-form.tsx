@@ -61,12 +61,12 @@ export function ProfileForm() {
     resolver: zodResolver(profileSchema),
     values: profile
       ? {
-        // Combine first_name and last_name into full_name for the form
-        full_name: `${profile.first_name} ${profile.last_name}`.trim(),
-        displayName: profile.display_name || "",
-        language: profile.language || "en",
-        timezone: profile.timezone || "UTC",
-      }
+          // Combine first_name and last_name into full_name for the form
+          full_name: `${profile.first_name} ${profile.last_name}`.trim(),
+          displayName: profile.display_name || "",
+          language: profile.language || "en",
+          timezone: profile.timezone || "UTC",
+        }
       : undefined,
   });
 

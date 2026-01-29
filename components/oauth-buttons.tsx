@@ -39,7 +39,7 @@ export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
       <div className="grid grid-cols-2 gap-3">
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full !shadow-none"
           onClick={() => handleOAuthSignIn("google")}
           disabled={isGoogleLoading || isGitHubLoading}
           type="button"
@@ -76,7 +76,7 @@ export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
 
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full !shadow-none"
           onClick={() => handleOAuthSignIn("github")}
           disabled={isGoogleLoading || isGitHubLoading}
           type="button"

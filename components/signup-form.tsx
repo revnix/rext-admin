@@ -8,15 +8,16 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { Button } from "@/components/ui/button";
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
 import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
@@ -42,14 +43,11 @@ export function SignupForm({
     error: invitationError,
   } = useInvitationValidation();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<SignupFormData>({
+  const form = useForm<SignupFormData>({
     resolver: zodResolver(signupFormSchema),
   });
+
+  const { handleSubmit, setValue } = form;
 
   // Pre-fill email from invitation
   useEffect(() => {
@@ -183,125 +181,154 @@ export function SignupForm({
         </div>
       )}
 
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-0">
-          <CardTitle className="text-2xl font-bold">
+      <div className="bg-transparent">
+        <div className="flex flex-col space-y-1.5 px-0 mb-6">
+          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
             {hasValidInvitation ? "Join Workspace" : "Create your account"}
-          </CardTitle>
-          <CardDescription>
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {hasValidInvitation
               ? "Complete your profile to join the workspace"
               : "Enter your details below to create your account"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-0">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
-                {hasValidInvitation
-                  ? `Account created! Joining ${invitation?.workspace.title}...`
-                  : "Account created successfully! Redirecting to dashboard..."}
-              </div>
-            )}
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="full_name" className="ml-1">
-                  Full Name
-                </Label>
-                <Input
-                  id="full_name"
-                  type="text"
-                  placeholder="John"
-                  {...register("full_name")}
-                  disabled={isLoading || success}
-                  error={errors.full_name?.message}
-                />
-              </div>
-              
-              <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">
-                  Email
-                  {hasValidInvitation && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      (from invitation)
-                    </span>
-                  )}
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                  disabled={isLoading || success}
-                  readOnly={hasValidInvitation}
-                  className={cn(
-                    hasValidInvitation &&
-                      "bg-muted cursor-not-allowed opacity-75",
-                  )}
-                  error={errors.email?.message}
-                />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="password" className="ml-1">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  {...register("password")}
-                  disabled={isLoading || success}
-                  error={errors.password?.message}
-                />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="confirmPassword" className="ml-1">
-                  Confirm Password
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  {...register("confirmPassword")}
-                  disabled={isLoading || success}
-                  error={errors.confirmPassword?.message}
-                />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="submit"
-                  className="w-full h-11 shadow-colored-lg"
-                  disabled={isLoading || success || isLoadingInvitation}
-                >
-                  {isLoading
-                    ? hasValidInvitation
-                      ? "Creating Account & Joining Workspace..."
-                      : "Creating Account..."
-                    : success
-                      ? "Account Created!"
-                      : hasValidInvitation
-                        ? "Create Account & Join Workspace"
-                        : "Create Account"}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+          </p>
+        </div>
+        <div className="px-0">
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
+                  {hasValidInvitation
+                    ? `Account created! Joining ${invitation?.workspace.title}...`
+                    : "Account created successfully! Redirecting to dashboard..."}
+                </div>
+              )}
+
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="!text-foreground">
+                      Full Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="John"
+                        type="text"
+                        disabled={isLoading || success}
+                        className="!shadow-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="!text-foreground">
+                      Email
+                      {hasValidInvitation && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (from invitation)
+                        </span>
+                      )}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="m@example.com"
+                        type="email"
+                        disabled={isLoading || success}
+                        readOnly={hasValidInvitation}
+                        className={cn(
+                          hasValidInvitation &&
+                            "bg-muted cursor-not-allowed opacity-75",
+                        )}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="!text-foreground">Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Create a strong password"
+                        type="password"
+                        disabled={isLoading || success}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="!text-foreground">
+                      Confirm Password
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Confirm your password"
+                        type="password"
+                        disabled={isLoading || success}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button
+                type="submit"
+                className="w-full h-11 !shadow-none"
+                disabled={isLoading || success || isLoadingInvitation}
               >
-                Sign in
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                {isLoading
+                  ? hasValidInvitation
+                    ? "Creating Account & Joining Workspace..."
+                    : "Creating Account..."
+                  : success
+                    ? "Account Created!"
+                    : hasValidInvitation
+                      ? "Create Account & Join Workspace"
+                      : "Create Account"}
+              </Button>
+              <div className="!mt-0 text-center text-sm">
+                Already have an account?{" "}
+                <Link
+                  href="/login"
+                  className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 }

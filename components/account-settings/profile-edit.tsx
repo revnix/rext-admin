@@ -79,11 +79,11 @@ export function ProfileEdit() {
     },
     values: profile
       ? {
-        full_name: profile.full_name || "",
-        bio: profile.bio || "",
-        language: profile.language || "en",
-        timezone: profile.timezone || "UTC",
-      }
+          full_name: profile.full_name || "",
+          bio: profile.bio || "",
+          language: profile.language || "en",
+          timezone: profile.timezone || "UTC",
+        }
       : undefined,
   });
 

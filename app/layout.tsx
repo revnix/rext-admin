@@ -66,6 +66,20 @@ export const metadata: Metadata = {
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
     creator: "@Rext",
   },
+  icons: {
+    icon: [
+      {
+        url: "/logos/Primary_Color.png",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/logos/Primary_Color.png",
+        type: "image/png",
+      },
+    ],
+  },
   robots: {
     index: false, // Admin dashboard shouldn't be indexed
     follow: false,
@@ -89,7 +103,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-        <ThemeProvider>
+        <ThemeProvider defaultTheme="system">
           <AuthProvider>
             <SSEProvider>
               <UserNotificationsListener />

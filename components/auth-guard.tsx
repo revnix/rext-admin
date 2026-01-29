@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { log } from "@/lib/logger";
+
 
 interface AuthGuardProps {
   children: React.ReactNode;

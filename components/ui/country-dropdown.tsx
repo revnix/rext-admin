@@ -73,7 +73,9 @@ const CountryDropdownComponent = (
       GLOBAL_COUNTRY,
       ...countries.all.filter(
         (country: Country) =>
-          country.emoji && country.status !== "deleted" && country.ioc !== "PRK",
+          country.emoji &&
+          country.status !== "deleted" &&
+          country.ioc !== "PRK",
       ),
     ],
     value,
