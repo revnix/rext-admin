@@ -25,11 +25,6 @@ const WORKSPACE_STEPS: ProgressStep[] = [
     description: "Analyzing your website content",
   },
   {
-    id: "vector_store",
-    label: "Knowledge Base",
-    description: "Creating searchable knowledge vectors",
-  },
-  {
     id: "brand_voice",
     label: "Brand Voice",
     description: "Extracting brand characteristics with AI",
@@ -52,7 +47,7 @@ interface WorkspaceProgressTimelineProps {
  * WorkspaceProgressTimeline Component
  *
  * Displays real-time progress updates for workspace creation pipeline.
- * Shows 4 main steps: Scraping → Vector Store → Brand Voice → Finalization.
+ * Shows 3 main steps: Scraping → Brand Voice → Finalization.
  *
  * @example
  * ```tsx

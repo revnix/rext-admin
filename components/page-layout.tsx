@@ -219,14 +219,9 @@ export function PageLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border/40 bg-white px-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
+        <header className="sticky top-0 z-50 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
           <div className="flex items-center gap-4">
-            <SidebarTrigger className="-ml-1 h-10 w-10 text-muted-foreground hover:bg-transparent hover:text-foreground [&>svg]:hidden">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-muted-foreground transition-colors hover:bg-accent hover:text-foreground shadow-sm">
-                <PanelLeft className="h-5 w-5" />
-              </div>
-            </SidebarTrigger>
-
+            <SidebarTrigger className="-ml-1 h-10 w-10 text-muted-foreground hover:bg-transparent hover:text-foreground border border-border" />
             <div className="hidden md:flex items-center gap-4">
               <Button
                 variant="outline"
@@ -509,14 +504,12 @@ export function PageLayout({
             </DropdownMenu>
           </div>
         </header>
-
         {/* Impersonation Banner */}
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (

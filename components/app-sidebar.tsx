@@ -93,19 +93,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       groupLabel: "Workspace",
       items: [
         {
-          title: "Content Library",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.content(currentWorkspace.slug)
-            : "/",
-          icon: FileText,
-          permission: "content.read",
-        },
-        {
           title: "Generate Content",
           url: currentWorkspace?.slug
             ? workspaceRoutes.generate_content(currentWorkspace.slug)
             : "/",
           icon: FileText, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
+          permission: "content.read",
+        },
+        {
+          title: "Content Library",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.content(currentWorkspace.slug)
+            : "/",
+          icon: FileText,
           permission: "content.read",
         },
         {
@@ -218,8 +218,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+      (group) => group.groupLabel !== "Workspace",
+    );
 
   return (
     <Sidebar
