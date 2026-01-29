@@ -5,6 +5,7 @@ import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+import Image from "next/image";
 
 import {
   DropdownMenu,
@@ -97,23 +98,29 @@ export function WorkspaceSwitcher() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               data-tooltip-id="workspace-switcher"
             >
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Building2 className="size-4" />
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Image
+                  src="/logos/icon_dark.svg"
+                  alt="Rext"
+                  width={20}
+                  height={20}
+                  className="size-5"
+                />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
                   {isLoading
                     ? "Loading..."
                     : getWorkspaceDisplayTitle(
-                        displayWorkspace,
-                        "Select Workspace",
-                      )}
+                      displayWorkspace,
+                      "Select Workspace",
+                    )}
                 </span>
                 <span className="truncate text-xs">
                   {isLoading
                     ? "Fetching workspaces..."
                     : displayWorkspace?.timezone ||
-                      "Choose a workspace to start"}
+                    "Choose a workspace"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
