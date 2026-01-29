@@ -16,19 +16,14 @@ export function getCSPHeader(_nonce: string): string {
   // Always use unsafe-inline for styles in development to support React inline styles
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
-  // Production backend URL
-  const PRODUCTION_BACKEND = "api.rext.ai";
+  // Backend origins allowed by CSP
+  // In production: allow api.rext.ai + whatever NEXT_PUBLIC_API_BASE_URL is set to on Vercel
+  // In development: allow localhost variants
+  const envApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-  const apiUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    "http://192.168.1.130:2024" ||
-    "http://localhost:2024";
-
-  // In development, allow localhost variants
-  // In production, allow the api.rext.ai domain
   const backendOrigins = isDev
-    ? `${apiUrl} http://localhost:2024 http://127.0.0.1:2024 http://192.168.1.130:2024`
-    : `https://${PRODUCTION_BACKEND}`;
+    ? `${envApiUrl} http://localhost:2024 http://127.0.0.1:2024 http://192.168.1.130:2024`
+    : `https://api.rext.ai${envApiUrl ? ` ${envApiUrl}` : ""}`;
 
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
