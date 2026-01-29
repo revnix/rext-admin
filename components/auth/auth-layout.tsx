@@ -1,4 +1,3 @@
-
 import { ThemeLogo } from "@/components/theme-logo";
 
 interface AuthLayoutProps {
