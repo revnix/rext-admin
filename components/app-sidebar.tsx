@@ -218,8 +218,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar
@@ -279,7 +279,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
                   const hasChildren = item.items && item.items.length > 0;
-                  const isActive = pathname === item.url || (hasChildren && item.items?.some(sub => pathname === sub.url));
+                  const isActive =
+                    pathname === item.url ||
+                    (hasChildren &&
+                      item.items?.some((sub) => pathname === sub.url));
 
                   //  Fixed Collapsed Sidebar Popover
                   if (sidebarState === "collapsed" && hasChildren) {
@@ -345,7 +348,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           onClick={(e) => {
                             e.preventDefault();
                             setExpandedAccordion(
-                              expandedAccordion === item.title ? null : item.title,
+                              expandedAccordion === item.title
+                                ? null
+                                : item.title,
                             );
                           }}
                         >
@@ -355,10 +360,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </div>
                           <ChevronDown
                             size={16}
-                            className={`transition-transform duration-200 ${expandedAccordion === item.title
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`transition-transform duration-200 ${
+                              expandedAccordion === item.title
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         </SidebarMenuButton>
 
@@ -371,7 +377,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   isActive={pathname === subItem.url}
                                   className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)] pl-9 transition-colors"
                                 >
-                                  <Link href={subItem.url}>{subItem.title}</Link>
+                                  <Link href={subItem.url}>
+                                    {subItem.title}
+                                  </Link>
                                 </SidebarMenuButton>
                               </SidebarMenuItem>
                             ))}
@@ -390,7 +398,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         isActive={isActive}
                         className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                       >
-                        <Link href={item.url} className="flex items-center gap-2">
+                        <Link
+                          href={item.url}
+                          className="flex items-center gap-2"
+                        >
                           {Icon && <Icon />}
                           <span>{item.title}</span>
                         </Link>

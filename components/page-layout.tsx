@@ -232,7 +232,9 @@ export function PageLayout({
                 onClick={() => setSearchOpen(true)}
               >
                 <Search className="h-4 w-4 md:mr-2 opacity-50 shrink-0 mx-auto md:mx-0" />
-                <span className="text-sm font-normal hidden md:inline-block truncate">Search or type command...</span>
+                <span className="text-sm font-normal hidden md:inline-block truncate">
+                  Search or type command...
+                </span>
                 <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex border border-border">
                   <span className="text-xs">⌘</span>K
                 </kbd>
@@ -240,69 +242,7 @@ export function PageLayout({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mail */}
-            <DropdownMenu
-              open={activeDropdown === "mail"}
-              onOpenChange={(open) => setActiveDropdown(open ? "mail" : null)}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 dark:hover:bg-sidebar-accent dark:text-sidebar-foreground"
-                >
-                  <div className="relative">
-                    <Mail className="h-5 w-5" />
-                    <span className="absolute top-0 right-0 inline-flex h-2 w-2 rounded-full bg-sky-500 border-2 border-white" />
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-80 p-0 overflow-hidden"
-              >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/20">
-                  <span className="font-semibold text-sm">Messages</span>
-                  <span className="text-xs text-sky-600 hover:text-sky-700 cursor-pointer font-medium">
-                    Mark all read
-                  </span>
-                </div>
-                <ScrollArea className="h-[300px]">
-                  <div className="flex flex-col">
-                    {[1, 2, 3].map((id) => (
-                      <DropdownMenuItem
-                        key={id}
-                        className="flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent/50 focus:bg-accent/50 rounded-none transition-colors"
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-semibold text-sm text-foreground">
-                            Alice Johnson
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            2m ago
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          Hey, just checking in on the content calendar for next
-                          week.
-                        </p>
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
-                </ScrollArea>
-                <div className="p-2 border-t border-border bg-muted/30 text-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto py-1.5 text-xs w-full text-muted-foreground hover:text-primary"
-                  >
-                    View all messages
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* Notifications */}
             <Button
               variant="ghost"
@@ -391,17 +331,27 @@ export function PageLayout({
                 <DropdownMenuLabel>Help & Support</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <Book className="mr-2 h-4 w-4" />
-                    <span>Documentation</span>
+                  <DropdownMenuItem asChild>
+                    <a
+                      href="https://rext.ai/help"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center cursor-pointer"
+                    >
+                      <Book className="mr-2 h-4 w-4" />
+                      <span>Documentation</span>
+                    </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <LifeBuoy className="mr-2 h-4 w-4" />
-                    <span>Support</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Keyboard className="mr-2 h-4 w-4" />
-                    <span>Keyboard Shortcuts</span>
+                    <a
+                      href="https://rext.ai/help"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center cursor-pointer"
+                    >
+                      <LifeBuoy className="mr-2 h-4 w-4" />
+                      <span>Support</span>
+                    </a>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
@@ -449,51 +399,7 @@ export function PageLayout({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Language */}
-            <DropdownMenu
-              open={activeDropdown === "language"}
-              onOpenChange={(open) =>
-                setActiveDropdown(open ? "language" : null)
-              }
-            >
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-slate-100/50"
-                  id="language-trigger"
-                >
-                  <div className="h-5 w-5 overflow-hidden rounded-full flex items-center justify-center">
-                    <CircleFlag countryCode="gb" height={20} />
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuLabel>Language</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2">
-                  <div className="h-4 w-4 overflow-hidden rounded-full flex items-center justify-center">
-                    <CircleFlag countryCode="gb" height={16} />
-                  </div>
-                  <span>English</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2">
-                  <div className="h-4 w-4 overflow-hidden rounded-full flex items-center justify-center">
-                    <CircleFlag countryCode="fr" height={16} />
-                  </div>
-                  <span>Français</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2">
-                  <div className="h-4 w-4 overflow-hidden rounded-full flex items-center justify-center">
-                    <CircleFlag countryCode="de" height={16} />
-                  </div>
-                  <span>Deutsch</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="h-8 w-[1px] bg-slate-200 dark:bg-sidebar-border mx-1" />
+            <div className="h-8 w-[1px] bg-border mx-2" />
 
             {/* Profile */}
             <DropdownMenu
@@ -622,8 +528,9 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-            } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
+            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+          } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (
