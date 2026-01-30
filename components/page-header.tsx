@@ -22,7 +22,7 @@ export function PageHeader({
       )}
     >
       <div className="space-y-1.5">
-        <h1 className="text-fluid-2xl font-outfit font-bold tracking-tighter-title text-foreground leading-none">
+        <h1 className="text-2xl md:text-3xl font-outfit font-semibold tracking-tight text-foreground leading-none">
           {title}
         </h1>
         {description && (

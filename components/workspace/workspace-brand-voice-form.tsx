@@ -1,19 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { BookOpen, Building2, ChevronLeft, ChevronRight, Loader2, MessageSquare, Sparkles, Swords, Target, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -24,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PersonasGrid } from "@/components/workspace/persona-card";
 import { PersonaSelection } from "@/components/workspace/persona-selection";
@@ -42,6 +36,12 @@ const brandVoiceSchema = z.object({
   competitors: z.array(z.string()).optional(),
   content_strategy: z.array(z.string()).optional(),
 });
+
+/**
+ * Form tabs order
+ */
+const TABS = ["info", "voice", "strategy", "competitors", "audience", "personas"] as const;
+type TabValue = (typeof TABS)[number];
 
 type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
 
@@ -80,6 +80,8 @@ export function WorkspaceBrandVoiceForm({
   selectedPersonaId,
   onPersonaSelect,
 }: WorkspaceBrandVoiceFormProps) {
+  const [activeTab, setActiveTab] = useState<TabValue>("info");
+
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
     defaultValues: {
@@ -89,7 +91,7 @@ export function WorkspaceBrandVoiceForm({
       target_audience: data.target_audience || [],
       brand_voice: data.brand_voice || [],
       competitors: data.competitors || [],
-      content_strategy: data.content_strategy || [],
+      content_strategy: data.content_strategy || data.content_pillar || [],
     },
   });
 
@@ -133,23 +135,62 @@ export function WorkspaceBrandVoiceForm({
     );
   };
 
+  const handleNext = () => {
+    const currentIndex = TABS.indexOf(activeTab);
+    if (currentIndex < TABS.length - 1) {
+      setActiveTab(TABS[currentIndex + 1]);
+    }
+  };
+
+  const handlePrev = () => {
+    const currentIndex = TABS.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(TABS[currentIndex - 1]);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Brand Voice Form Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Review Brand Voice</CardTitle>
-          <CardDescription>
-            We've analyzed your website and extracted brand information. Review
-            and edit as needed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
-            >
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-8"
+        >
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as TabValue)}
+            className="w-full"
+          >
+            <TabsList className="mb-8 w-full border-b justify-start overflow-x-auto">
+              <TabsTrigger value="info">
+                <Building2 className="w-4 h-4" />
+                Brand Information
+              </TabsTrigger>
+              <TabsTrigger value="voice">
+                <MessageSquare className="w-4 h-4" />
+                Brand Voice
+              </TabsTrigger>
+              <TabsTrigger value="strategy">
+                <BookOpen className="w-4 h-4" />
+                Content Strategy
+              </TabsTrigger>
+              <TabsTrigger value="competitors">
+                <Swords className="w-4 h-4" />
+                Competitors
+              </TabsTrigger>
+              <TabsTrigger value="audience">
+                <Target className="w-4 h-4" />
+                Target Audience
+              </TabsTrigger>
+              <TabsTrigger value="personas">
+                <Users className="w-4 h-4" />
+                Personas
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Brand Information Tab */}
+            <TabsContent value="info" className="space-y-6">
               {/* About Field */}
               <FormField
                 control={form.control}
@@ -219,74 +260,10 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Target Audience Field (Array) */}
-              <FormField
-                control={form.control}
-                name="target_audience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Audience</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            value={targetAudienceInput}
-                            onChange={(e) =>
-                              setTargetAudienceInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("target_audience", targetAudienceInput);
-                                setTargetAudienceInput("");
-                              }
-                            }}
-                            placeholder="e.g., Small Business Owners"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              addItem("target_audience", targetAudienceInput);
-                              setTargetAudienceInput("");
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="secondary"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeItem("target_audience", index)
-                                }
-                                className="ml-1 hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Add one or more audience segments (press Enter or click
-                      Add)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Brand Voice Field (Array) */}
+            {/* Brand Voice Tab */}
+            <TabsContent value="voice" className="space-y-6">
               <FormField
                 control={form.control}
                 name="brand_voice"
@@ -306,7 +283,7 @@ export function WorkspaceBrandVoiceForm({
                                 setBrandVoiceInput("");
                               }
                             }}
-                            placeholder="e.g., Professional, Innovative"
+                            placeholder="e.g., Professional"
                           />
                           <Button
                             type="button"
@@ -346,8 +323,80 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Competitors Field (Array) */}
+            {/* Content Strategy Tab */}
+            <TabsContent value="strategy" className="space-y-6">
+              <FormField
+                control={form.control}
+                name="content_strategy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content Strategy (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            value={contentStrategyInput}
+                            onChange={(e) =>
+                              setContentStrategyInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem(
+                                  "content_strategy",
+                                  contentStrategyInput,
+                                );
+                                setContentStrategyInput("");
+                              }
+                            }}
+                            placeholder="e.g., Educational"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              addItem("content_strategy", contentStrategyInput);
+                              setContentStrategyInput("");
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value?.map((item, index) => (
+                            <Badge
+                              key={item}
+                              variant="secondary"
+                              className="gap-1"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeItem("content_strategy", index)
+                                }
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Key themes or pillars for your content
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </TabsContent>
+
+            {/* Competitors Tab */}
+            <TabsContent value="competitors" className="space-y-6">
               <FormField
                 control={form.control}
                 name="competitors"
@@ -409,40 +458,45 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Content Strategy Field (Array) */}
+            {/* Target Audience Tab */}
+            <TabsContent value="audience" className="space-y-6">
               <FormField
                 control={form.control}
-                name="content_strategy"
+                name="target_audience"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content Strategy (Optional)</FormLabel>
+                    <FormLabel>Target Audience</FormLabel>
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
                           <Input
-                            value={contentStrategyInput}
+                            value={targetAudienceInput}
                             onChange={(e) =>
-                              setContentStrategyInput(e.target.value)
+                              setTargetAudienceInput(e.target.value)
                             }
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
                                 addItem(
-                                  "content_strategy",
-                                  contentStrategyInput,
+                                  "target_audience",
+                                  targetAudienceInput,
                                 );
-                                setContentStrategyInput("");
+                                setTargetAudienceInput("");
                               }
                             }}
-                            placeholder="e.g., Educational, Thought Leadership"
+                            placeholder="e.g., Small Business Owners"
                           />
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("content_strategy", contentStrategyInput);
-                              setContentStrategyInput("");
+                              addItem(
+                                "target_audience",
+                                targetAudienceInput,
+                              );
+                              setTargetAudienceInput("");
                             }}
                           >
                             Add
@@ -459,7 +513,7 @@ export function WorkspaceBrandVoiceForm({
                               <button
                                 type="button"
                                 onClick={() =>
-                                  removeItem("content_strategy", index)
+                                  removeItem("target_audience", index)
                                 }
                                 className="ml-1 hover:text-destructive"
                               >
@@ -471,16 +525,18 @@ export function WorkspaceBrandVoiceForm({
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Key themes or pillars for your content
+                      Add one or more audience segments
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Persona Selection */}
+            {/* Personas Tab */}
+            <TabsContent value="personas" className="space-y-6">
               {workspaceId && onPersonaSelect && (
-                <div className="space-y-3 pt-4 border-t">
+                <div className="space-y-3">
                   <div>
                     <h4 className="text-sm font-medium mb-1">
                       Select Persona (Optional)
@@ -498,28 +554,62 @@ export function WorkspaceBrandVoiceForm({
                 </div>
               )}
 
-              {/* Personas Section - Display extracted personas */}
               {data.personas && data.personas.length > 0 && (
                 <div className="pt-4 border-t">
                   <PersonasGrid personas={data.personas} />
                 </div>
               )}
+            </TabsContent>
+          </Tabs>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoading ? "Saving..." : "Save & Continue"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 mt-4 border-t">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handlePrev}
+                disabled={activeTab === TABS[0]}
+                className="flex-1 sm:flex-none gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                onClick={handleNext}
+                disabled={activeTab === TABS[TABS.length - 1]}
+                className="flex-1 sm:flex-none gap-2 hover:bg-secondary/80 transition-all font-medium"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              size="lg"
+              className="w-full sm:w-auto min-w-[180px] gap-2 shadow-lg hover:shadow-xl transition-all active:scale-[0.98] bg-primary text-primary-foreground font-semibold"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving Changes...
+                </>
+              ) : (
+                <>
+                  Save & Finish
+                  <Sparkles className="h-4 w-4 fill-primary-foreground/20" />
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

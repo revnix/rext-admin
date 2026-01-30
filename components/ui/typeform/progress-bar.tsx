@@ -118,7 +118,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
           {/* Background Track */}
           <div
             className={cn(
-              "w-full h-2 bg-muted rounded-full overflow-hidden",
+              "w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden",
               "relative",
             )}
           >
@@ -145,11 +145,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               transition={
                 animated && !prefersReducedMotion
                   ? {
-                      width: {
-                        duration: 0.4,
-                        ease: "easeOut",
-                      },
-                    }
+                    width: {
+                      duration: 0.4,
+                      ease: "easeOut",
+                    },
+                  }
                   : { duration: 0 }
               }
             />

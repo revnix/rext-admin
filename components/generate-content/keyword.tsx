@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { CountryDropdown } from "../ui/country-dropdown";
+import { useEffect, useState } from "react";
 
 export function KeywordForm({
   userKeyword,
@@ -16,6 +17,17 @@ export function KeywordForm({
   onKeywordChange: (val: string) => void;
   onCountryChange: (val: string) => void;
 }) {
+  const [value, setValue] = useState(userKeyword);
+
+  useEffect(() => {
+    setValue(userKeyword);
+  }, [userKeyword]);
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    onKeywordChange(val);
+  };
+
   return (
     <div className="relative group">
       <form
@@ -23,7 +35,7 @@ export function KeywordForm({
           e.preventDefault();
           onSubmit();
         }}
-        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-white/80 border border-slate-200 rounded-xl shadow-2xl shadow-slate-200/50"
+        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-white/80 border border-slate-200 rounded-xl"
       >
         <div className="flex-1 flex items-center px-4">
           <Search className="w-6 h-6 text-slate-300 mr-4" />
@@ -31,8 +43,8 @@ export function KeywordForm({
             type="text"
             placeholder="Enter a keyword or topic..."
             className="h-12 w-full border-none shadow-none !text-lg !placeholder:text-slate-300 focus-visible:ring-0 bg-transparent px-0"
-            value={userKeyword}
-            onChange={(e) => onKeywordChange(e.target.value)}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
             required
           />
         </div>
@@ -45,7 +57,7 @@ export function KeywordForm({
           />
           <Button
             type="submit"
-            className="h-12 px-4 text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="h-12 px-4 text-lg"
           >
             Generate
           </Button>

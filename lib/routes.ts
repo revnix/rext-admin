@@ -17,6 +17,7 @@ export const WORKSPACE_PAGES = [
   "integrations",
   "personas",
   "persona_create",
+  "brand_voice",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -81,6 +82,11 @@ export const workspaceRoutes = {
   personas: (workspaceSlug: string) => `/w/${workspaceSlug}/personas`,
   persona_create: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/personas/create`,
+
+  /**
+   * Brand Voice route
+   */
+  brand_voice: (workspaceSlug: string) => `/w/${workspaceSlug}/brand_voice`,
 
   /**
    * Settings routes
@@ -169,6 +175,7 @@ export function buildWorkspacePath(
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
+    brand_voice: workspaceRoutes.brand_voice,
   };
 
   const routeFn = routeMap[pageSegment];

@@ -117,6 +117,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           permission: "content.read",
         },
         {
+          title: "Brand Voice",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.brand_voice(currentWorkspace.slug)
+            : "/",
+          icon: VenetianMask,
+          permission: "content.read",
+        },
+        {
           title: "Members",
           url: currentWorkspace?.slug
             ? workspaceRoutes.members(currentWorkspace.slug)
@@ -266,7 +274,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Separator between Main and Personal */}
         {displayMainNavigation.length > 0 &&
-          filteredPersonalNavigation.length > 0 && <ThreeDotsSeparator />}
+          filteredPersonalNavigation.length > 0 &&
+          sidebarState === "collapsed" && <ThreeDotsSeparator />}
 
         {/* Personal navigation */}
         {filteredPersonalNavigation.map((group) => (
@@ -417,7 +426,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Separator between Personal and Admin */}
         {(filteredPersonalNavigation.length > 0 ||
           displayMainNavigation.length > 0) &&
-          filteredAdministratorNavigation.length > 0 && <ThreeDotsSeparator />}
+          filteredAdministratorNavigation.length > 0 &&
+          sidebarState === "collapsed" && <ThreeDotsSeparator />}
 
         {/* Admin navigation */}
         {filteredAdministratorNavigation.map((group) => (
@@ -451,10 +461,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
-
-      <SidebarFooter className="border-t border-sidebar-border">
-        {/* <NavUser /> */}
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

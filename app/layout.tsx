@@ -68,18 +68,19 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      {
-        url: "/logos/Primary_Color.png",
-        type: "image/png",
-      },
+      { url: "/favicons/favicon.ico" },
+      { url: "/favicons/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicons/favicon-96x96.png", type: "image/png", sizes: "96x96" },
     ],
     apple: [
       {
-        url: "/logos/Primary_Color.png",
+        url: "/favicons/apple-touch-icon.png",
+        sizes: "180x180",
         type: "image/png",
       },
     ],
   },
+  manifest: "/favicons/site.webmanifest",
   robots: {
     index: false, // Admin dashboard shouldn't be indexed
     follow: false,

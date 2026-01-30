@@ -356,18 +356,18 @@ export function DataTable<
   };
 
   return (
-    <Card>
+    <Card className="border-none shadow-none bg-transparent">
       {(actions || showSearch || columnFilters.length > 0) && (
-        <CardHeader>
+        <CardHeader className="px-0 pt-0 pb-6">
           {(actions || showSearch) && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {showSearch && (
                   <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                     <Input
                       placeholder={searchPlaceholder}
-                      className="pl-8 pr-8 w-80"
+                      className="pl-9 pr-9 w-80 bg-white border-slate-200 focus-visible:ring-slate-400"
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       disabled={!hasData}
@@ -376,11 +376,11 @@ export function DataTable<
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-muted"
+                        className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-slate-100 rounded-full"
                         onClick={handleClearSearch}
                         disabled={!hasData}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3 w-3 text-slate-400" />
                       </Button>
                     )}
                   </div>
@@ -393,18 +393,18 @@ export function DataTable<
           {/* Active Filters Display */}
           {columnFilters.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-4">
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-slate-500">
                 Active filters:
               </span>
               {columnFilters.map((filter) => (
                 <Badge
                   key={`${filter.columnKey}-${filter.operator}`}
                   variant="secondary"
-                  className="text-xs"
+                  className="text-xs bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
                 >
                   {filter.label}
                   <X
-                    className="ml-1 h-3 w-3 cursor-pointer hover:text-destructive"
+                    className="ml-1 h-3 w-3 cursor-pointer text-slate-400 hover:text-red-500"
                     onClick={() => handleRemoveFilter(filter.columnKey)}
                   />
                 </Badge>
@@ -413,7 +413,7 @@ export function DataTable<
                 variant="ghost"
                 size="sm"
                 onClick={handleClearAllFilters}
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-xs text-slate-500 hover:text-slate-800"
               >
                 Clear all
               </Button>
@@ -422,7 +422,7 @@ export function DataTable<
         </CardHeader>
       )}
 
-      <CardContent>
+      <CardContent className="p-0">
         {isLoading ? (
           <TableSkeleton rows={currentPageSize} columns={columns.length} />
         ) : hasData ? (
@@ -450,7 +450,7 @@ export function DataTable<
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`h-6 w-6 p-0 ${getColumnFilter(column.key) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                                className={`h-6 w-6 p-0 ${getColumnFilter(column.key) ? "text-primary" : "text-slate-400 hover:text-slate-600"}`}
                               >
                                 <Filter className="h-3 w-3" />
                               </Button>
@@ -466,21 +466,20 @@ export function DataTable<
                   {paginatedData.map((row, index) => (
                     <TableRow
                       key={"id" in row ? (row.id as string) : `row-${index}`}
-                      className={`group ${
-                        onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
-                      }`}
+                      className={`group ${onRowClick ? "cursor-pointer hover:bg-slate-50/60" : ""
+                        }`}
                       onClick={() => onRowClick?.(row)}
                     >
                       {columns.map((column) => (
                         <TableCell key={column.key}>
                           {column.cell
                             ? column.cell(
-                                (row as Record<string, unknown>)[column.key],
-                                row as T,
-                              )
+                              (row as Record<string, unknown>)[column.key],
+                              row as T,
+                            )
                             : ((row as Record<string, unknown>)[
-                                column.key
-                              ] as string) || "--"}
+                              column.key
+                            ] as string) || "--"}
                         </TableCell>
                       ))}
                       <TableCell className="w-[200px]">
@@ -497,8 +496,8 @@ export function DataTable<
 
               {/* Pagination */}
               {(totalPages > 1 || pageSizeOptions.length > 1) && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-2">
+                  <div className="flex items-center gap-4 text-sm text-slate-500">
                     {pageSizeOptions.length > 1 && (
                       <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
@@ -506,7 +505,7 @@ export function DataTable<
                           value={currentPageSize.toString()}
                           onValueChange={handlePageSizeChange}
                         >
-                          <SelectTrigger className="h-8 w-16">
+                          <SelectTrigger className="h-8 w-16 border-slate-200">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -523,21 +522,20 @@ export function DataTable<
                       </div>
                     )}
                     <div>
-                      Showing{" "}
                       {Math.min(
                         (currentPage - 1) * currentPageSize + 1,
                         filteredData.length,
-                      )}{" "}
-                      to{" "}
+                      )}
+                      -
                       {Math.min(
                         currentPage * currentPageSize,
                         filteredData.length,
                       )}{" "}
-                      of {filteredData.length} results
+                      of {filteredData.length}
                     </div>
                   </div>
                   {totalPages > 1 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="outline"
                         size="sm"
@@ -545,12 +543,12 @@ export function DataTable<
                           setCurrentPage(Math.max(1, currentPage - 1))
                         }
                         disabled={currentPage === 1}
+                        className="h-8 w-8 p-0 border-slate-200"
                       >
                         <ChevronLeft className="h-4 w-4" />
-                        Previous
                       </Button>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 mx-2">
                         {Array.from(
                           { length: Math.min(5, totalPages) },
                           (_, i) => {
@@ -571,10 +569,10 @@ export function DataTable<
                                 variant={
                                   currentPage === pageNum
                                     ? "default"
-                                    : "outline"
+                                    : "ghost"
                                 }
                                 size="sm"
-                                className="w-8 h-8 p-0"
+                                className={`h-8 w-8 p-0 ${currentPage !== pageNum ? "text-slate-500 hover:bg-slate-100" : ""}`}
                                 onClick={() => setCurrentPage(pageNum)}
                               >
                                 {pageNum}
@@ -591,8 +589,8 @@ export function DataTable<
                           setCurrentPage(Math.min(totalPages, currentPage + 1))
                         }
                         disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0 border-slate-200"
                       >
-                        Next
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
@@ -615,11 +613,11 @@ export function DataTable<
             action={
               displayEmptyActions[0]
                 ? {
-                    label: displayEmptyActions[0].label,
-                    href: displayEmptyActions[0].href,
-                    onClick: displayEmptyActions[0].onClick,
-                    variant: displayEmptyActions[0].variant,
-                  }
+                  label: displayEmptyActions[0].label,
+                  href: displayEmptyActions[0].href,
+                  onClick: displayEmptyActions[0].onClick,
+                  variant: displayEmptyActions[0].variant,
+                }
                 : undefined
             }
           />

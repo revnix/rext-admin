@@ -12,6 +12,7 @@ import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
 import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
@@ -53,25 +54,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-];
+    {
+      id: "details",
+      title: "Workspace Details",
+      description: "Tell us about your workspace",
+      progress: 25,
+    },
+    {
+      id: "progress",
+      title: "Analysis",
+      description: "We're analyzing your website",
+      progress: 50,
+    },
+    {
+      id: "review",
+      title: "Review & Save",
+      description: "Review and edit brand information",
+      progress: 75,
+    },
+  ];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -213,6 +214,7 @@ export function WorkspaceCreateWizard() {
         ...brandVoiceData
       } = editedData;
 
+
       // Update brand voice via API
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
         about: brandVoiceData.about,
@@ -225,6 +227,7 @@ export function WorkspaceCreateWizard() {
           brandVoiceData.content_strategy || brandVoiceData.content_pillar,
         personas: selectedPersona ? [selectedPersona] : undefined,
       });
+
 
       // Manually save personas if they exist in the extracted data
       // This is a workaround because the backend updateBrandVoice endpoint
@@ -262,7 +265,7 @@ export function WorkspaceCreateWizard() {
 
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["workspace"] });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
@@ -328,6 +331,7 @@ export function WorkspaceCreateWizard() {
             title="Let's start with the basics"
             description="Tell us about your workspace and website"
             required
+            className="p-0 sm:p-0 md:p-0 max-w-none mx-0"
           >
             <form
               onSubmit={handleSubmit(handleDetailsSubmit)}
@@ -384,6 +388,7 @@ export function WorkspaceCreateWizard() {
           <QuestionCard
             title="Creating Your Workspace"
             description="Please wait while we analyze your website and extract brand information"
+            className="p-0 sm:p-0 md:p-0 max-w-none mx-0"
           >
             <div className="space-y-4">
               <WorkspaceProgressTimeline
@@ -413,6 +418,7 @@ export function WorkspaceCreateWizard() {
           <QuestionCard
             title="Review Brand Voice"
             description="Review and edit the AI-extracted brand information"
+            className="p-0 sm:p-0 md:p-0 max-w-none mx-0"
           >
             {extractedBrandVoice ? (
               <WorkspaceBrandVoiceForm
@@ -479,7 +485,9 @@ export function WorkspaceCreateWizard() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        {renderStepContent()}
+        <Card className="p-6 md:p-8">
+          {renderStepContent()}
+        </Card>
       </motion.div>
 
       {/* Navigation Buttons */}

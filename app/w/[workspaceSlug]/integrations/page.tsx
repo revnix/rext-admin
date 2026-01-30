@@ -7,13 +7,13 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { AddIntegrationModal } from "./add-integration-modal";
 import { CustomIntegrationDetailsModal } from "./custom-integration-details-modal";
 import {
@@ -21,6 +21,13 @@ import {
   type Integration,
 } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
+import { Switch } from "@/components/ui/switch";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 export default function IntegrationsPage() {
   const { workspace, workspaceSlug } = useWorkspace();
@@ -59,11 +66,7 @@ export default function IntegrationsPage() {
 
   const handleIntegrationClick = async (integration: Integration) => {
     if (!workspace?.id) return;
-
-    // Set initial view to what we have, then optionally fetch fresh details
-    // The requirement says /api/v1/content/sites/{site_id} is for rendering details
     try {
-      // Fetch fresh details with workspace context to avoid 422
       const fullDetails = await integrationsApiService.getIntegration(
         integration.id,
         workspace.id,
@@ -71,7 +74,45 @@ export default function IntegrationsPage() {
       setViewIntegration(fullDetails);
     } catch (e) {
       log.error("Failed to fetch integration details", e);
-      setViewIntegration(integration); // Fallback
+      setViewIntegration(integration);
+    }
+  };
+
+  const handleToggleActive = async (
+    integration: Integration,
+    checked: boolean,
+  ) => {
+    if (!workspace?.id) return;
+    // Optimistic update
+    setIntegrations((prev) =>
+      prev.map((i) =>
+        i.id === integration.id ? { ...i, is_active: checked } : i,
+      ),
+    );
+
+    try {
+      if (checked) {
+        await integrationsApiService.activateIntegration(
+          integration.id,
+          workspace.id,
+        );
+        toast.success(`${integration.name || "Integration"} activated`);
+      } else {
+        await integrationsApiService.deactivateIntegration(
+          integration.id,
+          workspace.id,
+        );
+        toast.success(`${integration.name || "Integration"} deactivated`);
+      }
+    } catch (error) {
+      log.error("Failed to toggle integration", error);
+      toast.error("Failed to update integration status");
+      // Revert optimism
+      setIntegrations((prev) =>
+        prev.map((i) =>
+          i.id === integration.id ? { ...i, is_active: !checked } : i,
+        ),
+      );
     }
   };
 
@@ -81,25 +122,8 @@ export default function IntegrationsPage() {
   };
 
   const handleIntegrationUpdated = async (updated: Partial<Integration>) => {
-    // This callback is called by the modal when an update happens (save or toggle).
-    // We should refresh the list.
-    // The Modal (CustomIntegrationDetailsModal) calls `onUpdate`.
-    // We can assume the API call was made inside the Modal or we make it here.
-    // Current Modal design (CustomIntegrationConfiguration) calls onUpdate with generic object.
-    // I will refactor CustomIntegrationDetailsModal to handle the API calls internally
-    // or passing explicit "onToggle", "onUpdate", "onDelete" handlers.
-    // Ideally, the Page should handle business logic.
-
-    // BUT, existing `CustomIntegrationDetailsModal` just calls `onUpdate`.
-    // I'll update it to be smarter.
     await fetchIntegrations();
-    // If it was just an update (not delete), we might keep modal open or close it?
-    // If it was a toggle, we usually keep it open.
-    // Let's refresh `viewIntegration` as well if it's still open and matches.
     if (viewIntegration && updated.id === viewIntegration.id) {
-      // Ideally re-fetch or merge.
-      // setViewIntegration(updated);
-      // But typically we re-fetch to be safe.
       try {
         if (workspace?.id && updated.id) {
           const fullDetails = await integrationsApiService.getIntegration(
@@ -110,7 +134,6 @@ export default function IntegrationsPage() {
         }
       } catch (e) {
         log.error("Failed to fetch integration details", e);
-        // Don't update view on error, keep existing view
       }
     }
   };
@@ -142,50 +165,66 @@ export default function IntegrationsPage() {
             No integrations connected yet. Click "Add Integration" to start.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {integrations.map((integration) => (
               <Card
                 key={integration.id}
-                className={`cursor-pointer transition-all border shadow-none rounded-[2rem] overflow-hidden ${
-                  !integration.is_active
-                    ? "opacity-60 bg-slate-50 border-slate-100"
-                    : "border-slate-100 hover:border-slate-300 hover:shadow-sm"
-                }`}
-                onClick={() => handleIntegrationClick(integration)}
+                className="overflow-hidden transition-all hover:shadow-md"
               >
-                <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4 p-8">
-                  <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-white p-1 border border-slate-100 shadow-sm flex items-center justify-center">
-                    {/* biome-ignore lint/performance/noImgElement: External images without config */}
-                    <img
-                      src={
-                        integration.logo ||
-                        "https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg"
-                      }
-                      alt={integration.name || integration.integration_type}
-                      className="h-full w-full object-contain"
-                    />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border bg-white">
+                      <AvatarImage
+                        src={
+                          integration.logo ||
+                          "https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg"
+                        }
+                        alt={integration.name || integration.integration_type}
+                        className="object-contain p-1"
+                      />
+                      <AvatarFallback>
+                        {(integration.name || integration.integration_type)
+                          .substring(0, 2)
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-bold text-slate-900 capitalize">
-                      {integration.name || integration.integration_type}
-                    </CardTitle>
-                  </div>
-                  {!integration.is_active && (
-                    <Badge variant="secondary" className="rounded-full px-3">
-                      Inactive
-                    </Badge>
-                  )}
-                  {integration.is_active && (
-                    <Badge variant="default" className="rounded-full px-3">
-                      Active
-                    </Badge>
-                  )}
                 </CardHeader>
-                <CardContent className="p-8 pt-0">
-                  <CardDescription className="text-base truncate">
-                    {integration.site_url}
+                <CardContent className="p-6 pt-2">
+                  <CardTitle className="text-base font-semibold mb-2 capitalize">
+                    {integration.name || integration.integration_type}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+                    {integration.description ||
+                      `Connect ${integration.name || integration.integration_type} to sync your content automatically.`}
                   </CardDescription>
                 </CardContent>
+                <CardFooter className="flex items-center justify-between p-6 border-t border-slate-100">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={() => handleIntegrationClick(integration)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span className="sr-only">Settings</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleIntegrationClick(integration)}
+                    >
+                      Details
+                    </Button>
+                  </div>
+                  <Switch
+                    checked={integration.is_active}
+                    onCheckedChange={(checked) =>
+                      handleToggleActive(integration, checked)
+                    }
+                  />
+                </CardFooter>
               </Card>
             ))}
           </div>
