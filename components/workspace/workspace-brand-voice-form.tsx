@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { BookOpen, Building2, MessageSquare, Swords, Target, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PersonasGrid } from "@/components/workspace/persona-card";
 import { PersonaSelection } from "@/components/workspace/persona-selection";
@@ -141,9 +142,36 @@ export function WorkspaceBrandVoiceForm({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-8"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Main Info */}
-            <div className="lg:col-span-2 space-y-6">
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="mb-8 w-full border-b justify-start overflow-x-auto">
+              <TabsTrigger value="info">
+                <Building2 className="w-4 h-4" />
+                Brand Information
+              </TabsTrigger>
+              <TabsTrigger value="voice">
+                <MessageSquare className="w-4 h-4" />
+                Brand Voice
+              </TabsTrigger>
+              <TabsTrigger value="strategy">
+                <BookOpen className="w-4 h-4" />
+                Content Strategy
+              </TabsTrigger>
+              <TabsTrigger value="competitors">
+                <Swords className="w-4 h-4" />
+                Competitors
+              </TabsTrigger>
+              <TabsTrigger value="audience">
+                <Target className="w-4 h-4" />
+                Target Audience
+              </TabsTrigger>
+              <TabsTrigger value="personas">
+                <Users className="w-4 h-4" />
+                Personas
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Brand Information Tab */}
+            <TabsContent value="info" className="space-y-6">
               {/* About Field */}
               <FormField
                 control={form.control}
@@ -191,36 +219,6 @@ export function WorkspaceBrandVoiceForm({
                 )}
               />
 
-              {/* Persona Selection */}
-              {workspaceId && onPersonaSelect && (
-                <div className="space-y-3 pt-4 border-t">
-                  <div>
-                    <h4 className="text-sm font-medium mb-1">
-                      Select Persona (Optional)
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Choose a persona to represent your brand voice
-                    </p>
-                  </div>
-                  <PersonaSelection
-                    personas={personas}
-                    selectedPersonaId={selectedPersonaId}
-                    onSelect={onPersonaSelect}
-                    isLoading={isLoadingPersonas}
-                  />
-                </div>
-              )}
-
-              {/* Personas Section - Display extracted personas */}
-              {data.personas && data.personas.length > 0 && (
-                <div className="pt-4 border-t">
-                  <PersonasGrid personas={data.personas} />
-                </div>
-              )}
-            </div>
-
-            {/* Right Column - Details & Personas */}
-            <div className="space-y-6">
               {/* Selling Position Field */}
               <FormField
                 control={form.control}
@@ -243,8 +241,143 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Competitors Field */}
+            {/* Brand Voice Tab */}
+            <TabsContent value="voice" className="space-y-6">
+              <FormField
+                control={form.control}
+                name="brand_voice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand Voice Characteristics</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            value={brandVoiceInput}
+                            onChange={(e) => setBrandVoiceInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem("brand_voice", brandVoiceInput);
+                                setBrandVoiceInput("");
+                              }
+                            }}
+                            placeholder="e.g., Professional"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              addItem("brand_voice", brandVoiceInput);
+                              setBrandVoiceInput("");
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value?.map((item, index) => (
+                            <Badge
+                              key={item}
+                              variant="default"
+                              className="gap-1"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() => removeItem("brand_voice", index)}
+                                className="ml-1 hover:text-destructive-foreground"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Words that describe your communication style
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </TabsContent>
+
+            {/* Content Strategy Tab */}
+            <TabsContent value="strategy" className="space-y-6">
+              <FormField
+                control={form.control}
+                name="content_strategy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content Strategy (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            value={contentStrategyInput}
+                            onChange={(e) =>
+                              setContentStrategyInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem(
+                                  "content_strategy",
+                                  contentStrategyInput,
+                                );
+                                setContentStrategyInput("");
+                              }
+                            }}
+                            placeholder="e.g., Educational"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              addItem("content_strategy", contentStrategyInput);
+                              setContentStrategyInput("");
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value?.map((item, index) => (
+                            <Badge
+                              key={item}
+                              variant="secondary"
+                              className="gap-1"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeItem("content_strategy", index)
+                                }
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Key themes or pillars for your content
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </TabsContent>
+
+            {/* Competitors Tab */}
+            <TabsContent value="competitors" className="space-y-6">
               <FormField
                 control={form.control}
                 name="competitors"
@@ -289,9 +422,7 @@ export function WorkspaceBrandVoiceForm({
                               {item}
                               <button
                                 type="button"
-                                onClick={() =>
-                                  removeItem("competitors", index)
-                                }
+                                onClick={() => removeItem("competitors", index)}
                                 className="ml-1 hover:text-destructive"
                               >
                                 <X className="h-3 w-3" />
@@ -308,8 +439,10 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Target Audience Field (Array) */}
+            {/* Target Audience Tab */}
+            <TabsContent value="audience" className="space-y-6">
               <FormField
                 control={form.control}
                 name="target_audience"
@@ -379,152 +512,42 @@ export function WorkspaceBrandVoiceForm({
                   </FormItem>
                 )}
               />
+            </TabsContent>
 
-              {/* Brand Voice Field (Array) */}
-              <FormField
-                control={form.control}
-                name="brand_voice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand Voice Characteristics</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            value={brandVoiceInput}
-                            onChange={(e) =>
-                              setBrandVoiceInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("brand_voice", brandVoiceInput);
-                                setBrandVoiceInput("");
-                              }
-                            }}
-                            placeholder="e.g., Professional"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              addItem("brand_voice", brandVoiceInput);
-                              setBrandVoiceInput("");
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="default"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeItem("brand_voice", index)
-                                }
-                                className="ml-1 hover:text-destructive-foreground"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Words that describe your communication style
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Personas Tab */}
+            <TabsContent value="personas" className="space-y-6">
+              {workspaceId && onPersonaSelect && (
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">
+                      Select Persona (Optional)
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Choose a persona to represent your brand voice
+                    </p>
+                  </div>
+                  <PersonaSelection
+                    personas={personas}
+                    selectedPersonaId={selectedPersonaId}
+                    onSelect={onPersonaSelect}
+                    isLoading={isLoadingPersonas}
+                  />
+                </div>
+              )}
 
-              {/* Content Strategy Field (Array) */}
-              <FormField
-                control={form.control}
-                name="content_strategy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Content Strategy (Optional)</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            value={contentStrategyInput}
-                            onChange={(e) =>
-                              setContentStrategyInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem(
-                                  "content_strategy",
-                                  contentStrategyInput,
-                                );
-                                setContentStrategyInput("");
-                              }
-                            }}
-                            placeholder="e.g., Educational"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              addItem(
-                                "content_strategy",
-                                contentStrategyInput,
-                              );
-                              setContentStrategyInput("");
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="secondary"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeItem("content_strategy", index)
-                                }
-                                className="ml-1 hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Key themes or pillars for your content
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-            </div>
-          </div>
+              {data.personas && data.personas.length > 0 && (
+                <div className="pt-4 border-t">
+                  <PersonasGrid personas={data.personas} />
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-6 border-t">
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full"
               size="lg"
             >
               {isLoading ? "Saving..." : "Save & Continue"}
