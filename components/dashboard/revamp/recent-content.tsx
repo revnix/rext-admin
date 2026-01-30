@@ -1,6 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MoreVertical } from "lucide-react";
 import type { Workspace } from "@/types/workspace";
 
 interface RecentContentProps {
@@ -8,82 +12,117 @@ interface RecentContentProps {
 }
 
 export function RecentContent({ workspace: _workspace }: RecentContentProps) {
-  // Mock recent activity data matching reference
-  const activities = [
+  // Mock data styled like "Product Performance" table
+  const recentActivities = [
     {
-      title: "10 Best Practices for SEO",
-      author: "Dr. Sarah Mitchell",
-      platform: "WordPress",
-      time: "Due date: Nov 26, 2024",
-      status: "published",
-      color: "bg-muted text-muted-foreground",
-      icon: CheckCircle2,
+      id: 1,
+      name: "10 Best Practices for SEO",
+      category: "Blog Post",
+      status: "Published",
+      views: "1.2k",
+      author: {
+        name: "Dr. Sarah Mitchell",
+        image: "/avatars/01.png",
+        initials: "SM"
+      }
     },
     {
-      title: "Product Launch Guide",
-      author: "Marketing Maven Maria",
-      platform: "",
-      time: "Due date: Nov 28, 2024",
-      status: "draft",
-      color: "bg-muted text-muted-foreground",
-      icon: Clock,
+      id: 2,
+      name: "Product Launch Guide",
+      category: "Guide",
+      status: "Draft",
+      views: "-",
+      author: {
+        name: "Maria Garcia",
+        image: "/avatars/02.png",
+        initials: "MG"
+      }
     },
     {
-      title: "React Performance Tips",
-      author: "Tech Bro Tom",
-      platform: "",
-      time: "Due date: Dec 5, 2024",
-      status: "draft",
-      color: "bg-muted text-muted-foreground",
-      icon: FileText,
+      id: 3,
+      name: "React Performance Tips",
+      category: "Technical",
+      status: "Under Review",
+      views: "850",
+      author: {
+        name: "Tom Wilson",
+        image: "/avatars/03.png",
+        initials: "TW"
+      }
     },
     {
-      title: "Cross-Browser Testing",
-      author: "Tech Bro Tom",
-      platform: "",
-      time: "Due date: Dec 6, 2024",
-      status: "draft",
-      color: "bg-muted text-muted-foreground",
-      icon: FileText,
+      id: 4,
+      name: "Q4 Marketing Strategy",
+      category: "Internal",
+      status: "Draft",
+      views: "-",
+      author: {
+        name: "Sarah Mitchell",
+        image: "/avatars/01.png",
+        initials: "SM"
+      }
     },
   ];
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Published': return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
+      case 'Draft': return 'text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400';
+      case 'Under Review': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
+      default: return 'text-slate-600 bg-slate-100';
+    }
+  }
+
   return (
-    <Card className="border border-border bg-card">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 p-8">
-        <CardTitle className="text-xl font-bold text-foreground">
-          Recent Content
-        </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full px-4 h-9 border-border hover:bg-accent hover:text-primary"
-        >
-          <Plus className="h-4 w-4 mr-1" /> New
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+        <CardTitle className="text-base font-semibold">Recent Activities</CardTitle>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+          <MoreVertical className="h-4 w-4" />
         </Button>
       </CardHeader>
-      <CardContent className="p-8 pt-2">
-        <div className="space-y-6">
-          {activities.map((activity) => (
-            <div
-              key={activity.title}
-              className="flex items-start gap-4 hover:bg-muted/50 p-2 rounded-md transition-colors cursor-pointer -mx-2"
-            >
-              <div
-                className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${activity.color}`}
-              >
-                <activity.icon className="h-5 w-5" />
-              </div>
-              <div className="space-y-1 flex-1">
-                <p className="font-semibold text-base text-foreground leading-tight">
-                  {activity.title}
-                </p>
-                <p className="text-sm text-muted-foreground font-medium">
-                  {activity.time}
-                </p>
-              </div>
-            </div>
-          ))}
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-muted/30 text-xs text-muted-foreground uppercase font-semibold">
+              <tr>
+                <th className="px-6 py-3">Content Title</th>
+                <th className="px-6 py-3">Author</th>
+                <th className="px-6 py-3">Type</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3 text-right">Views</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {recentActivities.map((item) => (
+                <tr key={item.id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-6 py-4 font-medium text-foreground">
+                    {item.name}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={item.author.image} />
+                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{item.author.initials}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-muted-foreground">{item.author.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {item.category}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${getStatusColor(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right font-medium text-muted-foreground">
+                    {item.views}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>

@@ -4,26 +4,27 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
-import { ContentPipeline } from "@/components/dashboard/revamp/content-pipeline";
+import { DashboardCharts } from "@/components/dashboard/revamp/dashboard-charts"; // New static charts
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
-import { WorkspaceStats } from "@/components/dashboard/revamp/workspace-stats";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { PageLoader } from "@/components/ui/loading-states";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
 
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
+
   // Auto-select workspace on load
   const {
     workspace: currentWorkspace,
     isLoading: isLoadingWorkspaces,
     hasWorkspaces,
   } = useWorkspaceAutoSelect();
+
   const router = useRouter();
 
   // Redirect to workspace creation if no workspaces exist
@@ -35,6 +36,18 @@ export default function DashboardPage() {
 
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);
+
+  // Data Fetching: Total Workspaces
+  const { data: workspacesResponse } = useQuery({
+    queryKey: ["workspaces"],
+    queryFn: () => apiClient.workspaces.list(),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!currentWorkspace // Only fetch if we have workspaces generally
+  });
+
+  // Total Workspaces Count
+  const totalWorkspaces = workspacesResponse?.total || 0;
+
 
   // Update page title and description
   usePageTitle(
@@ -65,25 +78,29 @@ export default function DashboardPage() {
         breadcrumbs={breadcrumbs}
       >
         <div className="flex flex-col gap-8">
-          {/* Top Section: Metrics Cards */}
-          <MetricsCards workspace={currentWorkspace} />
 
-          <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-            {/* Main Content */}
+          {/* Top Row: Metrics Cards (5 Cards) */}
+          <MetricsCards
+            workspace={currentWorkspace}
+            workspacesCount={totalWorkspaces}
+          />
+
+          {/* Middle Row: Charts (Static Mocks) */}
+          <DashboardCharts />
+
+          {/* Bottom Row: Recent Activities & Quick Actions */}
+          <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+            {/* Main Content: Recent Activities Table */}
             <div className="space-y-8">
-              {/* Content Pipeline */}
-              <ContentPipeline />
-
-              {/* Recent Content */}
               <RecentContent workspace={currentWorkspace} />
             </div>
 
-            {/* Sidebar - Always visible */}
-            <aside className="space-y-8">
+            {/* Sidebar: Quick Actions List */}
+            <aside className="space-y-8 h-full">
               <QuickActions workspace={currentWorkspace} />
-              <WorkspaceStats workspace={currentWorkspace} />
             </aside>
           </div>
+
         </div>
       </PageLayout>
     </AuthGuard>
