@@ -117,6 +117,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           permission: "content.read",
         },
         {
+          title: "Brand Voice",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.brand_voice(currentWorkspace.slug)
+            : "/",
+          icon: VenetianMask,
+          permission: "content.read",
+        },
+        {
           title: "Members",
           url: currentWorkspace?.slug
             ? workspaceRoutes.members(currentWorkspace.slug)

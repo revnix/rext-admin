@@ -37,7 +37,7 @@ const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
   target_audience: voice?.target_audience ?? [],
   brand_voice: voice?.brand_voice ?? [],
   competitors: voice?.competitors ?? [],
-  content_strategy: voice?.content_strategy ?? [],
+  content_strategy: voice?.content_strategy ?? voice?.content_pillar ?? [],
 });
 
 export function EditableBrandVoiceCard({
@@ -70,7 +70,9 @@ export function EditableBrandVoiceCard({
     onSuccess: (response) => {
       const updated = response.brand_voice;
       setFormData(toFormData(updated));
+      // Invalidate both ID and slug based queries to ensure UI updates regardless of which was used as the key
       queryClient.invalidateQueries({ queryKey: ["workspace", workspace.id] });
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspace.slug] });
       toast.success("Brand voice updated successfully");
       setIsEditing(false);
     },

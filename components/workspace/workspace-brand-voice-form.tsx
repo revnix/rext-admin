@@ -1,19 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Building2, MessageSquare, Swords, Target, Users, X } from "lucide-react";
+import { BookOpen, Building2, ChevronLeft, ChevronRight, Loader2, MessageSquare, Sparkles, Swords, Target, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -43,6 +36,12 @@ const brandVoiceSchema = z.object({
   competitors: z.array(z.string()).optional(),
   content_strategy: z.array(z.string()).optional(),
 });
+
+/**
+ * Form tabs order
+ */
+const TABS = ["info", "voice", "strategy", "competitors", "audience", "personas"] as const;
+type TabValue = (typeof TABS)[number];
 
 type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
 
@@ -81,6 +80,8 @@ export function WorkspaceBrandVoiceForm({
   selectedPersonaId,
   onPersonaSelect,
 }: WorkspaceBrandVoiceFormProps) {
+  const [activeTab, setActiveTab] = useState<TabValue>("info");
+
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
     defaultValues: {
@@ -90,7 +91,7 @@ export function WorkspaceBrandVoiceForm({
       target_audience: data.target_audience || [],
       brand_voice: data.brand_voice || [],
       competitors: data.competitors || [],
-      content_strategy: data.content_strategy || [],
+      content_strategy: data.content_strategy || data.content_pillar || [],
     },
   });
 
@@ -134,6 +135,20 @@ export function WorkspaceBrandVoiceForm({
     );
   };
 
+  const handleNext = () => {
+    const currentIndex = TABS.indexOf(activeTab);
+    if (currentIndex < TABS.length - 1) {
+      setActiveTab(TABS[currentIndex + 1]);
+    }
+  };
+
+  const handlePrev = () => {
+    const currentIndex = TABS.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(TABS[currentIndex - 1]);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Brand Voice Form Card */}
@@ -142,7 +157,11 @@ export function WorkspaceBrandVoiceForm({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-8"
         >
-          <Tabs defaultValue="info" className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as TabValue)}
+            className="w-full"
+          >
             <TabsList className="mb-8 w-full border-b justify-start overflow-x-auto">
               <TabsTrigger value="info">
                 <Building2 className="w-4 h-4" />
@@ -544,13 +563,49 @@ export function WorkspaceBrandVoiceForm({
           </Tabs>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 mt-4 border-t">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handlePrev}
+                disabled={activeTab === TABS[0]}
+                className="flex-1 sm:flex-none gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                onClick={handleNext}
+                disabled={activeTab === TABS[TABS.length - 1]}
+                className="flex-1 sm:flex-none gap-2 hover:bg-secondary/80 transition-all font-medium"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
             <Button
               type="submit"
               disabled={isLoading}
               size="lg"
+              className="w-full sm:w-auto min-w-[180px] gap-2 shadow-lg hover:shadow-xl transition-all active:scale-[0.98] bg-primary text-primary-foreground font-semibold"
             >
-              {isLoading ? "Saving..." : "Save & Continue"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving Changes...
+                </>
+              ) : (
+                <>
+                  Save & Finish
+                  <Sparkles className="h-4 w-4 fill-primary-foreground/20" />
+                </>
+              )}
             </Button>
           </div>
         </form>

@@ -214,6 +214,7 @@ export function WorkspaceCreateWizard() {
         ...brandVoiceData
       } = editedData;
 
+
       // Update brand voice via API
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
         about: brandVoiceData.about,
@@ -226,6 +227,7 @@ export function WorkspaceCreateWizard() {
           brandVoiceData.content_strategy || brandVoiceData.content_pillar,
         personas: selectedPersona ? [selectedPersona] : undefined,
       });
+
 
       // Manually save personas if they exist in the extracted data
       // This is a workaround because the backend updateBrandVoice endpoint
@@ -263,7 +265,7 @@ export function WorkspaceCreateWizard() {
 
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["workspace"] });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
