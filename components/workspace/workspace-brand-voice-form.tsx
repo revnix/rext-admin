@@ -136,20 +136,14 @@ export function WorkspaceBrandVoiceForm({
   return (
     <div className="space-y-6">
       {/* Brand Voice Form Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Review Brand Voice</CardTitle>
-          <CardDescription>
-            We've analyzed your website and extracted brand information. Review
-            and edit as needed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
-            >
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-8"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Main Info */}
+            <div className="lg:col-span-2 space-y-6">
               {/* About Field */}
               <FormField
                 control={form.control}
@@ -197,6 +191,36 @@ export function WorkspaceBrandVoiceForm({
                 )}
               />
 
+              {/* Persona Selection */}
+              {workspaceId && onPersonaSelect && (
+                <div className="space-y-3 pt-4 border-t">
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">
+                      Select Persona (Optional)
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Choose a persona to represent your brand voice
+                    </p>
+                  </div>
+                  <PersonaSelection
+                    personas={personas}
+                    selectedPersonaId={selectedPersonaId}
+                    onSelect={onPersonaSelect}
+                    isLoading={isLoadingPersonas}
+                  />
+                </div>
+              )}
+
+              {/* Personas Section - Display extracted personas */}
+              {data.personas && data.personas.length > 0 && (
+                <div className="pt-4 border-t">
+                  <PersonasGrid personas={data.personas} />
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Details & Personas */}
+            <div className="space-y-6">
               {/* Selling Position Field */}
               <FormField
                 control={form.control}
@@ -220,134 +244,7 @@ export function WorkspaceBrandVoiceForm({
                 )}
               />
 
-              {/* Target Audience Field (Array) */}
-              <FormField
-                control={form.control}
-                name="target_audience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Audience</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            value={targetAudienceInput}
-                            onChange={(e) =>
-                              setTargetAudienceInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("target_audience", targetAudienceInput);
-                                setTargetAudienceInput("");
-                              }
-                            }}
-                            placeholder="e.g., Small Business Owners"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              addItem("target_audience", targetAudienceInput);
-                              setTargetAudienceInput("");
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="secondary"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeItem("target_audience", index)
-                                }
-                                className="ml-1 hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Add one or more audience segments (press Enter or click
-                      Add)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Brand Voice Field (Array) */}
-              <FormField
-                control={form.control}
-                name="brand_voice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand Voice Characteristics</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            value={brandVoiceInput}
-                            onChange={(e) => setBrandVoiceInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("brand_voice", brandVoiceInput);
-                                setBrandVoiceInput("");
-                              }
-                            }}
-                            placeholder="e.g., Professional, Innovative"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              addItem("brand_voice", brandVoiceInput);
-                              setBrandVoiceInput("");
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="default"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() => removeItem("brand_voice", index)}
-                                className="ml-1 hover:text-destructive-foreground"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Words that describe your communication style
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Competitors Field (Array) */}
+              {/* Competitors Field */}
               <FormField
                 control={form.control}
                 name="competitors"
@@ -392,7 +289,9 @@ export function WorkspaceBrandVoiceForm({
                               {item}
                               <button
                                 type="button"
-                                onClick={() => removeItem("competitors", index)}
+                                onClick={() =>
+                                  removeItem("competitors", index)
+                                }
                                 className="ml-1 hover:text-destructive"
                               >
                                 <X className="h-3 w-3" />
@@ -404,6 +303,142 @@ export function WorkspaceBrandVoiceForm({
                     </FormControl>
                     <FormDescription>
                       List your main competitors
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Target Audience Field (Array) */}
+              <FormField
+                control={form.control}
+                name="target_audience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Audience</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            value={targetAudienceInput}
+                            onChange={(e) =>
+                              setTargetAudienceInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem(
+                                  "target_audience",
+                                  targetAudienceInput,
+                                );
+                                setTargetAudienceInput("");
+                              }
+                            }}
+                            placeholder="e.g., Small Business Owners"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              addItem(
+                                "target_audience",
+                                targetAudienceInput,
+                              );
+                              setTargetAudienceInput("");
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value?.map((item, index) => (
+                            <Badge
+                              key={item}
+                              variant="secondary"
+                              className="gap-1"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeItem("target_audience", index)
+                                }
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Add one or more audience segments
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Brand Voice Field (Array) */}
+              <FormField
+                control={form.control}
+                name="brand_voice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand Voice Characteristics</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            value={brandVoiceInput}
+                            onChange={(e) =>
+                              setBrandVoiceInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem("brand_voice", brandVoiceInput);
+                                setBrandVoiceInput("");
+                              }
+                            }}
+                            placeholder="e.g., Professional"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              addItem("brand_voice", brandVoiceInput);
+                              setBrandVoiceInput("");
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value?.map((item, index) => (
+                            <Badge
+                              key={item}
+                              variant="default"
+                              className="gap-1"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeItem("brand_voice", index)
+                                }
+                                className="ml-1 hover:text-destructive-foreground"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Words that describe your communication style
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -435,13 +470,16 @@ export function WorkspaceBrandVoiceForm({
                                 setContentStrategyInput("");
                               }
                             }}
-                            placeholder="e.g., Educational, Thought Leadership"
+                            placeholder="e.g., Educational"
                           />
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("content_strategy", contentStrategyInput);
+                              addItem(
+                                "content_strategy",
+                                contentStrategyInput,
+                              );
                               setContentStrategyInput("");
                             }}
                           >
@@ -478,48 +516,22 @@ export function WorkspaceBrandVoiceForm({
                 )}
               />
 
-              {/* Persona Selection */}
-              {workspaceId && onPersonaSelect && (
-                <div className="space-y-3 pt-4 border-t">
-                  <div>
-                    <h4 className="text-sm font-medium mb-1">
-                      Select Persona (Optional)
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Choose a persona to represent your brand voice
-                    </p>
-                  </div>
-                  <PersonaSelection
-                    personas={personas}
-                    selectedPersonaId={selectedPersonaId}
-                    onSelect={onPersonaSelect}
-                    isLoading={isLoadingPersonas}
-                  />
-                </div>
-              )}
+            </div>
+          </div>
 
-              {/* Personas Section - Display extracted personas */}
-              {data.personas && data.personas.length > 0 && (
-                <div className="pt-4 border-t">
-                  <PersonasGrid personas={data.personas} />
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoading ? "Saving..." : "Save & Continue"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-6 border-t">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full"
+              size="lg"
+            >
+              {isLoading ? "Saving..." : "Save & Continue"}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
