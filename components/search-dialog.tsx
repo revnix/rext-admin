@@ -261,7 +261,11 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
-                <SelectItem key={category} value={category}>
+                <SelectItem
+                  key={category}
+                  value={category}
+                  className="focus:bg-[var(--color-brand-50)] focus:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:focus:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                >
                   {category}
                 </SelectItem>
               ))}
@@ -282,7 +286,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               <CommandItem
                 key={item.id}
                 onSelect={() => handleItemSelect(item.url)}
-                className="flex items-center gap-3 px-4 py-2 cursor-pointer"
+                className="flex items-center gap-3 px-4 py-2 cursor-pointer text-slate-500 data-[selected=true]:bg-[var(--color-brand-50)] data-[selected=true]:text-[var(--color-brand-700)] hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:data-[selected=true]:bg-[var(--color-brand-900)]/50 dark:data-[selected=true]:text-[var(--color-brand-100)] dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
               >
                 <div className="flex-shrink-0">{item.icon}</div>
                 <div className="flex-1 min-w-0">
