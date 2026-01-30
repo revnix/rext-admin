@@ -25,11 +25,14 @@ export function createPersonasNamespace(client: ApiClient) {
      * Get a single persona by ID
      */
     get: async (workspaceId: string, personaId: string) => {
-      return client.request<{
-        persona: Persona;
-      }>(`/api/v1/workspaces/${workspaceId}/personas/${personaId}`, {
-        method: "GET",
-      });
+      const response = await client.request<Persona>(
+        `/api/v1/workspaces/${workspaceId}/personas/${personaId}`,
+        {
+          method: "GET",
+        }
+      );
+      // Backend returns persona data directly, wrap it for consistency
+      return { persona: response };
     },
 
     /**

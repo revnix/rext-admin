@@ -35,7 +35,7 @@ export default function PersonaForgePage() {
       actions={
         <div className="flex gap-2">
           <Link href={workspaceRoutes.persona_create(workspaceSlug)}>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl">
+            <Button>
               <Plus size={16} className="mr-2" />
               Create Persona
             </Button>
