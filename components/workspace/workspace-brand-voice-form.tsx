@@ -1,8 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Building2, ChevronLeft, ChevronRight, Loader2, MessageSquare, Sparkles, Swords, Target, Users, X } from "lucide-react";
-import { useState } from "react";
+import {
+  BookOpen,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  MessageSquare,
+  Sparkles,
+  Swords,
+  Target,
+  Users,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +52,14 @@ const brandVoiceSchema = z.object({
 /**
  * Form tabs order
  */
-const TABS = ["info", "voice", "strategy", "competitors", "audience", "personas"] as const;
+const TABS = [
+  "info",
+  "voice",
+  "strategy",
+  "competitors",
+  "audience",
+  "personas",
+] as const;
 type TabValue = (typeof TABS)[number];
 
 type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
@@ -81,6 +100,24 @@ export function WorkspaceBrandVoiceForm({
   onPersonaSelect,
 }: WorkspaceBrandVoiceFormProps) {
   const [activeTab, setActiveTab] = useState<TabValue>("info");
+
+
+  const tabsListRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (tabsListRef.current) {
+      const activeTrigger = tabsListRef.current.querySelector(
+        '[data-state="active"]',
+      ) as HTMLElement;
+      if (activeTrigger) {
+        activeTrigger.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, [activeTab]);
 
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
@@ -153,16 +190,16 @@ export function WorkspaceBrandVoiceForm({
     <div className="space-y-6">
       {/* Brand Voice Form Card */}
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-8"
-        >
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as TabValue)}
             className="w-full"
           >
-            <TabsList className="mb-8 w-full border-b justify-start overflow-x-auto">
+            <TabsList
+              ref={tabsListRef}
+              className="mb-8 w-full border-b justify-start overflow-x-auto"
+            >
               <TabsTrigger value="info">
                 <Building2 className="w-4 h-4" />
                 Brand Information
@@ -273,18 +310,20 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={brandVoiceInput}
-                            onChange={(e) => setBrandVoiceInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("brand_voice", brandVoiceInput);
-                                setBrandVoiceInput("");
-                              }
-                            }}
-                            placeholder="e.g., Professional"
-                          />
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={brandVoiceInput}
+                              onChange={(e) => setBrandVoiceInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem("brand_voice", brandVoiceInput);
+                                  setBrandVoiceInput("");
+                                }
+                              }}
+                              placeholder="e.g., Professional"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
@@ -336,23 +375,25 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={contentStrategyInput}
-                            onChange={(e) =>
-                              setContentStrategyInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem(
-                                  "content_strategy",
-                                  contentStrategyInput,
-                                );
-                                setContentStrategyInput("");
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={contentStrategyInput}
+                              onChange={(e) =>
+                                setContentStrategyInput(e.target.value)
                               }
-                            }}
-                            placeholder="e.g., Educational"
-                          />
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem(
+                                    "content_strategy",
+                                    contentStrategyInput,
+                                  );
+                                  setContentStrategyInput("");
+                                }
+                              }}
+                              placeholder="e.g., Educational"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
@@ -406,20 +447,22 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={competitorsInput}
-                            onChange={(e) =>
-                              setCompetitorsInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("competitors", competitorsInput);
-                                setCompetitorsInput("");
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={competitorsInput}
+                              onChange={(e) =>
+                                setCompetitorsInput(e.target.value)
                               }
-                            }}
-                            placeholder="e.g., Competitor Name"
-                          />
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem("competitors", competitorsInput);
+                                  setCompetitorsInput("");
+                                }
+                              }}
+                              placeholder="e.g., Competitor Name"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
@@ -471,31 +514,27 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={targetAudienceInput}
-                            onChange={(e) =>
-                              setTargetAudienceInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem(
-                                  "target_audience",
-                                  targetAudienceInput,
-                                );
-                                setTargetAudienceInput("");
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={targetAudienceInput}
+                              onChange={(e) =>
+                                setTargetAudienceInput(e.target.value)
                               }
-                            }}
-                            placeholder="e.g., Small Business Owners"
-                          />
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem("target_audience", targetAudienceInput);
+                                  setTargetAudienceInput("");
+                                }
+                              }}
+                              placeholder="e.g., Small Business Owners"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem(
-                                "target_audience",
-                                targetAudienceInput,
-                              );
+                              addItem("target_audience", targetAudienceInput);
                               setTargetAudienceInput("");
                             }}
                           >
