@@ -23,7 +23,7 @@ export default function BrandVoicePage() {
             description="Define and manage your brand's unique voice and personality for AI-powered content creation."
             breadcrumbs={breadcrumbs}
         >
-            <div className="w-full py-6">
+            <div className="max-w-4xl mx-auto py-6">
                 <BrandVoiceSection />
             </div>
         </PageLayout>

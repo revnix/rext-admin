@@ -415,20 +415,6 @@
 }
 
 /* ============================================
-   SCROLLBAR UTILITIES
-   ============================================ */
-
-/* Hide scrollbar but maintain scroll functionality */
-.scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* ============================================
    ANTIGRAVITY AESTHETIC UTILITIES
    Following brand identity guidelines
    ============================================ */
