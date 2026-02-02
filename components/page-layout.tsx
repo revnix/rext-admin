@@ -522,8 +522,9 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-            } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-4 md:px-8 py-6 ${
+            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+          } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (

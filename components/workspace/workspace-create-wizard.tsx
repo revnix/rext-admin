@@ -485,7 +485,7 @@ export function WorkspaceCreateWizard() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="p-6 md:p-8">
+        <Card className="p-4 md:p-8">
           {renderStepContent()}
         </Card>
       </motion.div>
