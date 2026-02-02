@@ -1,7 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Building2, ChevronLeft, ChevronRight, Loader2, MessageSquare, Sparkles, Swords, Target, Users, X } from "lucide-react";
+import {
+  BookOpen,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  MessageSquare,
+  Sparkles,
+  Swords,
+  Target,
+  Users,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -40,7 +52,14 @@ const brandVoiceSchema = z.object({
 /**
  * Form tabs order
  */
-const TABS = ["info", "voice", "strategy", "competitors", "audience", "personas"] as const;
+const TABS = [
+  "info",
+  "voice",
+  "strategy",
+  "competitors",
+  "audience",
+  "personas",
+] as const;
 type TabValue = (typeof TABS)[number];
 
 type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
@@ -153,10 +172,7 @@ export function WorkspaceBrandVoiceForm({
     <div className="space-y-6">
       {/* Brand Voice Form Card */}
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-8"
-        >
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as TabValue)}
@@ -479,10 +495,7 @@ export function WorkspaceBrandVoiceForm({
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                addItem(
-                                  "target_audience",
-                                  targetAudienceInput,
-                                );
+                                addItem("target_audience", targetAudienceInput);
                                 setTargetAudienceInput("");
                               }
                             }}
@@ -492,10 +505,7 @@ export function WorkspaceBrandVoiceForm({
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem(
-                                "target_audience",
-                                targetAudienceInput,
-                              );
+                              addItem("target_audience", targetAudienceInput);
                               setTargetAudienceInput("");
                             }}
                           >
