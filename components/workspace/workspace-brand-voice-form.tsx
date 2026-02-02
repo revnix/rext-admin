@@ -101,7 +101,6 @@ export function WorkspaceBrandVoiceForm({
 }: WorkspaceBrandVoiceFormProps) {
   const [activeTab, setActiveTab] = useState<TabValue>("info");
 
-
   const tabsListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -313,7 +312,9 @@ export function WorkspaceBrandVoiceForm({
                           <div className="flex-1 min-w-0">
                             <Input
                               value={brandVoiceInput}
-                              onChange={(e) => setBrandVoiceInput(e.target.value)}
+                              onChange={(e) =>
+                                setBrandVoiceInput(e.target.value)
+                              }
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
@@ -523,7 +524,10 @@ export function WorkspaceBrandVoiceForm({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  addItem("target_audience", targetAudienceInput);
+                                  addItem(
+                                    "target_audience",
+                                    targetAudienceInput,
+                                  );
                                   setTargetAudienceInput("");
                                 }
                               }}

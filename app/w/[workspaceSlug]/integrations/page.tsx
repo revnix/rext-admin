@@ -22,11 +22,7 @@ import {
 } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
 export default function IntegrationsPage() {
