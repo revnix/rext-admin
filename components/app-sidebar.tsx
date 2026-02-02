@@ -229,15 +229,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       (group) => group.groupLabel !== "Workspace",
     );
 
+  const { isMobile } = useSidebar();
+
   return (
     <Sidebar
       collapsible="icon"
       {...props}
       style={{ "--sidebar-width-icon": "5rem" } as React.CSSProperties}
     >
-      <SidebarHeader>
-        <WorkspaceSwitcher />
-      </SidebarHeader>
+      {/* Hide WorkspaceSwitcher on mobile - it's rendered in the page header instead */}
+      {!isMobile && (
+        <SidebarHeader>
+          <WorkspaceSwitcher />
+        </SidebarHeader>
+      )}
 
       <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
         {/* Main navigation */}
