@@ -27,8 +27,11 @@ export function SettingsNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-1" aria-label="Settings navigation">
-      {settingsRoutes.map((route) => {
+    <nav
+      className="flex h-auto items-center justify-start rounded-none border-b bg-transparent p-0 w-full overflow-x-auto"
+      aria-label="Settings navigation"
+    >
+      {settingsRoutes.map((route, index) => {
         const Icon = route.icon;
         const isActive = pathname === route.href;
 
@@ -37,10 +40,11 @@ export function SettingsNav() {
             key={route.href}
             href={route.href}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              "inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-all border-b-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+              index > 0 ? "ml-4" : "ml-0",
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "border-primary text-primary shadow-none"
+                : "text-muted-foreground border-transparent hover:text-foreground",
             )}
             aria-current={isActive ? "page" : undefined}
           >

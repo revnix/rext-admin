@@ -145,11 +145,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               transition={
                 animated && !prefersReducedMotion
                   ? {
-                    width: {
-                      duration: 0.4,
-                      ease: "easeOut",
-                    },
-                  }
+                      width: {
+                        duration: 0.4,
+                        ease: "easeOut",
+                      },
+                    }
                   : { duration: 0 }
               }
             />

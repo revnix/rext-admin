@@ -466,20 +466,21 @@ export function DataTable<
                   {paginatedData.map((row, index) => (
                     <TableRow
                       key={"id" in row ? (row.id as string) : `row-${index}`}
-                      className={`group ${onRowClick ? "cursor-pointer hover:bg-slate-50/60" : ""
-                        }`}
+                      className={`group ${
+                        onRowClick ? "cursor-pointer hover:bg-slate-50/60" : ""
+                      }`}
                       onClick={() => onRowClick?.(row)}
                     >
                       {columns.map((column) => (
                         <TableCell key={column.key}>
                           {column.cell
                             ? column.cell(
-                              (row as Record<string, unknown>)[column.key],
-                              row as T,
-                            )
+                                (row as Record<string, unknown>)[column.key],
+                                row as T,
+                              )
                             : ((row as Record<string, unknown>)[
-                              column.key
-                            ] as string) || "--"}
+                                column.key
+                              ] as string) || "--"}
                         </TableCell>
                       ))}
                       <TableCell className="w-[200px]">
@@ -567,9 +568,7 @@ export function DataTable<
                               <Button
                                 key={pageNum}
                                 variant={
-                                  currentPage === pageNum
-                                    ? "default"
-                                    : "ghost"
+                                  currentPage === pageNum ? "default" : "ghost"
                                 }
                                 size="sm"
                                 className={`h-8 w-8 p-0 ${currentPage !== pageNum ? "text-slate-500 hover:bg-slate-100" : ""}`}
@@ -613,11 +612,11 @@ export function DataTable<
             action={
               displayEmptyActions[0]
                 ? {
-                  label: displayEmptyActions[0].label,
-                  href: displayEmptyActions[0].href,
-                  onClick: displayEmptyActions[0].onClick,
-                  variant: displayEmptyActions[0].variant,
-                }
+                    label: displayEmptyActions[0].label,
+                    href: displayEmptyActions[0].href,
+                    onClick: displayEmptyActions[0].onClick,
+                    variant: displayEmptyActions[0].variant,
+                  }
                 : undefined
             }
           />
