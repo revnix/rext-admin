@@ -349,7 +349,7 @@ export function EditableBrandVoiceCard({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.brand_voice.map((item, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge key={`bv-${item}`} variant="secondary">
                           {item}
                           <button
                             type="button"
@@ -423,7 +423,7 @@ export function EditableBrandVoiceCard({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.target_audience.map((item, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge key={`ta-${item}`} variant="secondary">
                           {item}
                           <button
                             type="button"
@@ -493,7 +493,7 @@ export function EditableBrandVoiceCard({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.content_strategy.map((item, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge key={`cs-${item}`} variant="secondary">
                           {item}
                           <button
                             type="button"
@@ -566,7 +566,7 @@ export function EditableBrandVoiceCard({
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {formData.competitors.map((item, index) => (
-                    <Badge key={index} variant="outline">
+                    <Badge key={`comp-${item}`} variant="outline">
                       {item}
                       <button
                         type="button"

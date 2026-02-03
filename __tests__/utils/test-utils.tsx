@@ -207,7 +207,7 @@ export const mockLemonSqueezy = () => {
 // CUSTOM RENDER FUNCTION
 // ============================================================================
 
-interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
+interface CustomRenderOptions extends RenderOptions {
   queryClient?: QueryClient;
 }
 

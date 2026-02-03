@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowUpRight } from "lucide-react";
 import type { Workspace } from "@/types/workspace";
 
 interface MetricsCardsProps {
@@ -58,8 +57,8 @@ export function MetricsCards({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-      {metrics.map((metric, index) => (
-        <Card key={index}>
+      {metrics.map((metric) => (
+        <Card key={metric.label}>
           <CardContent className="p-6">
             <div className="flex flex-col gap-4">
               <div>

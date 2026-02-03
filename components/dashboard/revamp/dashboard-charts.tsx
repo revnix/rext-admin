@@ -35,6 +35,8 @@ export function DashboardCharts() {
               viewBox="0 0 100 40"
               className="w-full h-full overflow-visible"
               preserveAspectRatio="none"
+              role="img"
+              aria-label="Bounce rate trend chart"
             >
               <defs>
                 <linearGradient id="redGradient" x1="0" x2="0" y1="0" y2="1">
@@ -87,6 +89,8 @@ export function DashboardCharts() {
               viewBox="0 0 100 40"
               className="w-full h-full overflow-visible"
               preserveAspectRatio="none"
+              role="img"
+              aria-label="Session duration trend chart"
             >
               <path
                 d="M0,35 Q30,35 50,20 T100,5"
@@ -165,7 +169,7 @@ export function DashboardCharts() {
             {[40, 65, 50, 75, 45, 60, 70, 55, 60, 65, 50, 60, 65, 75, 55].map(
               (h, i) => (
                 <div
-                  key={i}
+                  key={`bar-${i}-${h}`}
                   className="w-full bg-blue-100 rounded-t-sm relative group h-full flex items-end"
                 >
                   <div
@@ -203,6 +207,8 @@ export function DashboardCharts() {
               viewBox="0 0 100 50"
               className="w-full h-full overflow-visible"
               preserveAspectRatio="none"
+              role="img"
+              aria-label="New readers trend chart"
             >
               <path
                 d="M0,35 Q25,25 50,30 T100,20 V50 H0 Z"

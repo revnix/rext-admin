@@ -4,7 +4,7 @@ import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePersona } from "@/hooks/use-personas";
 import { PersonaDetail } from "@/components/personas/persona-detail";
@@ -16,7 +16,7 @@ export default function PersonaDetailPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const params = useParams();
   const personaId = params.personaId as string;
-  const router = useRouter();
+  const _router = useRouter();
 
   const {
     data: personaData,
@@ -25,7 +25,7 @@ export default function PersonaDetailPage() {
   } = usePersona(workspace?.id || null, personaId);
   const persona = personaData?.persona;
 
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [_isDeleteDialogOpen, _setIsDeleteDialogOpen] = useState(false);
 
   // Wait for workspace to be loaded before considering it an error
   const isWorkspaceLoading = !workspace && !error;

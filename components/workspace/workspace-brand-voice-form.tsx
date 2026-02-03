@@ -116,7 +116,7 @@ export function WorkspaceBrandVoiceForm({
         });
       }
     }
-  }, [activeTab]);
+  }, []);
 
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),

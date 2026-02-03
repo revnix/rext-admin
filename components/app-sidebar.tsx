@@ -8,13 +8,11 @@ import {
   Mail,
   Monitor,
   Plus,
-  Settings2,
   Shield,
   User,
   UserCog,
   Users,
   VenetianMask,
-  ChevronRight,
   ChevronDown,
 } from "lucide-react";
 import type * as React from "react";
@@ -24,7 +22,6 @@ import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarRail,
   SidebarMenu,

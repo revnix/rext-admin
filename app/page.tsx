@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
-import { DashboardCharts } from "@/components/dashboard/revamp/dashboard-charts"; // New static charts
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
