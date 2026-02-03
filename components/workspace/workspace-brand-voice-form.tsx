@@ -195,10 +195,7 @@ export function WorkspaceBrandVoiceForm({
             onValueChange={(v) => setActiveTab(v as TabValue)}
             className="w-full"
           >
-            <TabsList
-              ref={tabsListRef}
-              className="mb-8 w-full border-b justify-start overflow-x-auto"
-            >
+            <TabsList className="mb-8 w-full border-b justify-start overflow-x-auto">
               <TabsTrigger value="info">
                 <Building2 className="w-4 h-4" />
                 Brand Information
@@ -376,25 +373,23 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <div className="flex-1 min-w-0">
-                            <Input
-                              value={contentStrategyInput}
-                              onChange={(e) =>
-                                setContentStrategyInput(e.target.value)
+                          <Input
+                            value={contentStrategyInput}
+                            onChange={(e) =>
+                              setContentStrategyInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem(
+                                  "content_strategy",
+                                  contentStrategyInput,
+                                );
+                                setContentStrategyInput("");
                               }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  addItem(
-                                    "content_strategy",
-                                    contentStrategyInput,
-                                  );
-                                  setContentStrategyInput("");
-                                }
-                              }}
-                              placeholder="e.g., Educational"
-                            />
-                          </div>
+                            }}
+                            placeholder="e.g., Educational"
+                          />
                           <Button
                             type="button"
                             variant="outline"
@@ -448,22 +443,20 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <div className="flex-1 min-w-0">
-                            <Input
-                              value={competitorsInput}
-                              onChange={(e) =>
-                                setCompetitorsInput(e.target.value)
+                          <Input
+                            value={competitorsInput}
+                            onChange={(e) =>
+                              setCompetitorsInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem("competitors", competitorsInput);
+                                setCompetitorsInput("");
                               }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  addItem("competitors", competitorsInput);
-                                  setCompetitorsInput("");
-                                }
-                              }}
-                              placeholder="e.g., Competitor Name"
-                            />
-                          </div>
+                            }}
+                            placeholder="e.g., Competitor Name"
+                          />
                           <Button
                             type="button"
                             variant="outline"
@@ -515,25 +508,20 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <div className="flex-1 min-w-0">
-                            <Input
-                              value={targetAudienceInput}
-                              onChange={(e) =>
-                                setTargetAudienceInput(e.target.value)
+                          <Input
+                            value={targetAudienceInput}
+                            onChange={(e) =>
+                              setTargetAudienceInput(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addItem("target_audience", targetAudienceInput);
+                                setTargetAudienceInput("");
                               }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  addItem(
-                                    "target_audience",
-                                    targetAudienceInput,
-                                  );
-                                  setTargetAudienceInput("");
-                                }
-                              }}
-                              placeholder="e.g., Small Business Owners"
-                            />
-                          </div>
+                            }}
+                            placeholder="e.g., Small Business Owners"
+                          />
                           <Button
                             type="button"
                             variant="outline"

@@ -36,7 +36,6 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { CircleFlag } from "react-circle-flags";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -46,7 +45,6 @@ import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
 import {
   DropdownMenu,
@@ -63,6 +61,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 
 interface BreadcrumbItemData {
   label: string;
@@ -96,7 +95,7 @@ type ApiUser = {
   updated_at: string;
 };
 
-function PageLayoutContent({
+export function PageLayout({
   title,
   hideTitle = false,
   description,
@@ -115,7 +114,6 @@ function PageLayoutContent({
   // State for exclusive dropdowns
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { setTheme } = useTheme();
-  const { isMobile } = useSidebar();
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();
@@ -219,7 +217,7 @@ function PageLayoutContent({
   }, []);
 
   return (
-    <>
+    <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
         {/* Mobile Workspace Switcher - full width at top on mobile only */}
@@ -232,7 +230,7 @@ function PageLayoutContent({
           className={`sticky z-50 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20 ${isMobile ? "top-[73px]" : "top-0"}`}
         >
           <div className="flex items-center gap-4">
-            <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-white text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current" />
+            <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-white text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current" />
             <div className="hidden md:flex items-center gap-4">
               <Button
                 variant="outline"
@@ -525,7 +523,7 @@ function PageLayoutContent({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-4 md:px-8 py-6 ${
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
             fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
           } ${className}`}
         >
@@ -549,14 +547,6 @@ function PageLayoutContent({
       />
 
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
-    </>
-  );
-}
-
-export function PageLayout(props: PageLayoutProps) {
-  return (
-    <SidebarProvider>
-      <PageLayoutContent {...props} />
     </SidebarProvider>
   );
 }
