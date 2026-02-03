@@ -376,23 +376,25 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={contentStrategyInput}
-                            onChange={(e) =>
-                              setContentStrategyInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem(
-                                  "content_strategy",
-                                  contentStrategyInput,
-                                );
-                                setContentStrategyInput("");
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={contentStrategyInput}
+                              onChange={(e) =>
+                                setContentStrategyInput(e.target.value)
                               }
-                            }}
-                            placeholder="e.g., Educational"
-                          />
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem(
+                                    "content_strategy",
+                                    contentStrategyInput,
+                                  );
+                                  setContentStrategyInput("");
+                                }
+                              }}
+                              placeholder="e.g., Educational"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
@@ -446,20 +448,22 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={competitorsInput}
-                            onChange={(e) =>
-                              setCompetitorsInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("competitors", competitorsInput);
-                                setCompetitorsInput("");
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={competitorsInput}
+                              onChange={(e) =>
+                                setCompetitorsInput(e.target.value)
                               }
-                            }}
-                            placeholder="e.g., Competitor Name"
-                          />
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem("competitors", competitorsInput);
+                                  setCompetitorsInput("");
+                                }
+                              }}
+                              placeholder="e.g., Competitor Name"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
@@ -511,20 +515,25 @@ export function WorkspaceBrandVoiceForm({
                     <FormControl>
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <Input
-                            value={targetAudienceInput}
-                            onChange={(e) =>
-                              setTargetAudienceInput(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addItem("target_audience", targetAudienceInput);
-                                setTargetAudienceInput("");
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              value={targetAudienceInput}
+                              onChange={(e) =>
+                                setTargetAudienceInput(e.target.value)
                               }
-                            }}
-                            placeholder="e.g., Small Business Owners"
-                          />
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addItem(
+                                    "target_audience",
+                                    targetAudienceInput,
+                                  );
+                                  setTargetAudienceInput("");
+                                }
+                              }}
+                              placeholder="e.g., Small Business Owners"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"

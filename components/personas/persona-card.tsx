@@ -29,17 +29,8 @@ export function PersonaCard({ persona }: PersonaCardProps) {
     .substring(0, 2)
     .toUpperCase();
 
-  // Generate a consistent color based on persona name
-  const colors = [
-    "bg-slate-800",
-    "bg-blue-600",
-    "bg-amber-500",
-    "bg-emerald-600",
-    "bg-purple-600",
-    "bg-rose-600",
-  ];
-  const colorIndex = persona.name.charCodeAt(0) % colors.length;
-  const avatarColor = colors[colorIndex];
+  // Use consistent primary brand color for all avatars
+  const avatarColor = "bg-primary";
 
   return (
     <Link

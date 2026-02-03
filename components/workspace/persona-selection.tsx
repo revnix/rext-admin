@@ -101,8 +101,8 @@ function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <User className="w-5 h-5 text-primary" />
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
           </div>
 
           {/* Name and Title */}
