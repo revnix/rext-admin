@@ -228,7 +228,9 @@ function PageLayoutContent({
             <WorkspaceSwitcher />
           </div>
         )}
-        <header className={`sticky z-50 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20 ${isMobile ? 'top-[73px]' : 'top-0'}`}>
+        <header
+          className={`sticky z-50 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20 ${isMobile ? "top-[73px]" : "top-0"}`}
+        >
           <div className="flex items-center gap-4">
             <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-white text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current" />
             <div className="hidden md:flex items-center gap-4">
@@ -480,9 +482,7 @@ function PageLayoutContent({
                     <div className="flex items-center justify-center h-5 w-5 rounded-md bg-violet-50 mr-2">
                       <Sparkles className="h-3.5 w-3.5 text-violet-600 fill-violet-200/50" />
                     </div>
-                    <span className="font-medium">
-                      Upgrade to Pro
-                    </span>
+                    <span className="font-medium">Upgrade to Pro</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border my-1" />
@@ -492,27 +492,21 @@ function PageLayoutContent({
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <BadgeCheck className="mr-2 h-4 w-4" />
-                    <span>
-                      Account
-                    </span>
+                    <span>Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings/billing")}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
-                    <span>
-                      Billing
-                    </span>
+                    <span>Billing</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings/security")}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <Bell className="mr-2 h-4 w-4" />
-                    <span>
-                      Security
-                    </span>
+                    <span>Security</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border my-1" />

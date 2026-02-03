@@ -39,7 +39,9 @@ export function SelectionView({
             <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <Sparkles className="w-7 h-7" />
             </div>
-            <CardTitle className="text-2xl font-bold mb-2">Start Fresh</CardTitle>
+            <CardTitle className="text-2xl font-bold mb-2">
+              Start Fresh
+            </CardTitle>
             <CardDescription className="text-base text-muted-foreground/80">
               Analyze a new keyword and explore the SERP landscape.
             </CardDescription>
@@ -60,7 +62,9 @@ export function SelectionView({
             <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <Library className="w-7 h-7" />
             </div>
-            <CardTitle className="text-2xl font-bold mb-2">Pick from Library</CardTitle>
+            <CardTitle className="text-2xl font-bold mb-2">
+              Pick from Library
+            </CardTitle>
             <CardDescription className="text-base text-muted-foreground/80">
               Use a previously analyzed keyword to skip the research phase.
             </CardDescription>
