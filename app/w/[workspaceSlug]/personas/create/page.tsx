@@ -92,7 +92,7 @@ export default function CreatePersonaPage() {
       breadcrumbs={breadcrumbs}
       fullWidth
     >
-      <div className="max-w-3xl mx-auto space-y-8 pb-12">
+      <div className="max-w-3xl space-y-8 pb-12">
         <Card className="shadow-sm border border-border bg-card rounded-2xl overflow-hidden">
           <CardContent className="p-8 space-y-6">
             {/* Full Name */}
