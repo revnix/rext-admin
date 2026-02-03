@@ -84,7 +84,7 @@ export default function DashboardPage() {
           />
 
           {/* Middle Row: Charts (Static Mocks) */}
-          <DashboardCharts />
+          {/* <DashboardCharts /> */}
 
           {/* Bottom Row: Recent Activities & Quick Actions */}
           <div className="grid gap-8 lg:grid-cols-[1fr_360px]">

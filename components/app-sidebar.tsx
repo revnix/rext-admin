@@ -235,7 +235,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
       style={{ "--sidebar-width-icon": "5rem" } as React.CSSProperties}
     >
-      <SidebarHeader>
+      <SidebarHeader className="hidden md:block">
         <WorkspaceSwitcher />
       </SidebarHeader>
 
