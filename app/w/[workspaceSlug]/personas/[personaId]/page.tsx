@@ -4,7 +4,7 @@ import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePersona } from "@/hooks/use-personas";
 import { PersonaDetail } from "@/components/personas/persona-detail";

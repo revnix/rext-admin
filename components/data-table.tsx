@@ -360,14 +360,14 @@ export function DataTable<
       {(actions || showSearch || columnFilters.length > 0) && (
         <CardHeader className="px-0 pt-0 pb-6">
           {(actions || showSearch) && (
-            <div className="flex flex-row flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 {showSearch && (
-                  <div className="relative w-full">
+                  <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                     <Input
                       placeholder={searchPlaceholder}
-                      className="pl-9 pr-9 w-full md:w-80 bg-white border-slate-200 focus-visible:ring-slate-400"
+                      className="pl-9 pr-9 w-80 bg-white border-slate-200 focus-visible:ring-slate-400"
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       disabled={!hasData}
@@ -386,7 +386,7 @@ export function DataTable<
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">{actions}</div>
+              <div className="flex items-center gap-2">{actions}</div>
             </div>
           )}
 

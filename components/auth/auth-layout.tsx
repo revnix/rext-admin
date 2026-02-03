@@ -117,15 +117,13 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="flex flex-col h-full min-h-screen p-6 md:p-8 bg-background relative">
+      <div className="flex items-center justify-center p-8 bg-background relative">
         {/* Mobile Header (visible only on small screens) */}
-        <div className="w-full flex justify-start lg:hidden mb-8">
+        <div className="absolute top-6 left-6 lg:hidden">
           <BrandLogo width={90} height={28} />
         </div>
 
-        <div className="w-full max-w-[420px] mx-auto flex-1 flex flex-col justify-center">
-          {children}
-        </div>
+        <div className="w-full max-w-[420px]">{children}</div>
       </div>
     </div>
   );

@@ -63,7 +63,7 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
       <motion.fieldset
         ref={ref}
         className={cn(
-          "w-full max-w-6xl mx-auto min-w-0",
+          "w-full max-w-6xl mx-auto",
           // Responsive spacing with content-aware adjustments (further reduced)
           "px-4 py-1 sm:px-6 sm:py-2 md:px-12 md:py-3",
           // Dynamic spacing based on content length (reduced)
