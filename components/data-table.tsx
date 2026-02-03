@@ -360,33 +360,32 @@ export function DataTable<
       {(actions || showSearch || columnFilters.length > 0) && (
         <CardHeader className="px-0 pt-0 pb-6">
           {(actions || showSearch) && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {showSearch && (
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder={searchPlaceholder}
-                      className="pl-9 pr-9 w-80 bg-white border-slate-200 focus-visible:ring-slate-400"
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
+            <div className="flex flex-wrap items-center gap-2">
+              {showSearch && (
+                <div className="relative flex-1 min-w-0 md:flex-none md:w-80">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder={searchPlaceholder}
+                    className="pl-9 pr-9 w-full bg-white border-slate-200 focus-visible:ring-slate-400"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    disabled={!hasData}
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-slate-100 rounded-full"
+                      onClick={handleClearSearch}
                       disabled={!hasData}
-                    />
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-slate-100 rounded-full"
-                        onClick={handleClearSearch}
-                        disabled={!hasData}
-                      >
-                        <X className="h-3 w-3 text-slate-400" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">{actions}</div>
+                    >
+                      <X className="h-3 w-3 text-slate-400" />
+                    </Button>
+                  )}
+                </div>
+              )}
+              {/* Actions container: 'contents' on mobile unwraps children so they participate in the parent flex grid */}
+              <div className="contents md:flex md:items-center md:gap-2 md:ml-auto">{actions}</div>
             </div>
           )}
 
