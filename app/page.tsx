@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
+import { DashboardCharts } from "@/components/dashboard/revamp/dashboard-charts";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
