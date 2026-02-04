@@ -36,6 +36,7 @@ import {
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+import { InputSanitizer } from "@/lib/sanitization";
 
 interface WorkspaceOverviewFormProps {
   workspace: Workspace;
@@ -102,9 +103,29 @@ export function WorkspaceOverviewForm({
   };
 
   const onSubmit = async (data: WorkspaceFormData) => {
+    // Security: Sanitize inputs
+    const sanitizedTitle = InputSanitizer.sanitizeText(data.title);
+    const sanitizedUrl = data.url ? data.url.trim() : "";
+
+    // Validate URL if provided
+    if (sanitizedUrl && !InputSanitizer.validateUrl(sanitizedUrl)) {
+      toast.error("Invalid URL format. Must be http:// or https://");
+      return;
+    }
+
+    // Check for XSS
+    if (InputSanitizer.containsXSS(data.title)) {
+      toast.error("Invalid characters in workspace title");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const updatedWorkspace = await updateWorkspace(workspace.id, data);
+      const updatedWorkspace = await updateWorkspace(workspace.id, {
+        ...data,
+        title: sanitizedTitle,
+        url: sanitizedUrl,
+      });
 
       await queryClient.invalidateQueries({
         queryKey: ["workspace", workspace.id],

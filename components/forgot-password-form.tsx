@@ -13,6 +13,10 @@ import {
   type ForgotPasswordData,
   forgotPasswordSchema,
 } from "@/schemas/auth-schemas";
+import { InputSanitizer } from "@/lib/sanitization";
+import { addCSRFHeader } from "@/lib/csrf";
+import { useHoneypot } from "@/components/ui/honeypot";
+import { useRateLimit } from "@/hooks/use-rate-limit";
 
 export function ForgotPasswordForm({
   className,
@@ -21,6 +25,15 @@ export function ForgotPasswordForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Security: Bot detection
+  const { isBot, HoneypotField } = useHoneypot();
+
+  // Security: Rate limiting (3 attempts per minute)
+  const { checkRateLimit, isLimited, remainingTime } = useRateLimit({
+    maxAttempts: 3,
+    windowMs: 60 * 1000,
+  });
 
   const {
     register,
@@ -31,6 +44,34 @@ export function ForgotPasswordForm({
   });
 
   const onSubmit = async (data: ForgotPasswordData) => {
+    // Security: Check for bot
+    if (isBot) {
+      // Silently reject bot submissions
+      return;
+    }
+
+    // Security: Check rate limit
+    if (!checkRateLimit()) {
+      setError(`Too many attempts. Please wait ${remainingTime} seconds.`);
+      return;
+    }
+
+    // Security: Sanitize and validate email
+    const sanitizedEmail = InputSanitizer.sanitizeText(
+      data.email.trim().toLowerCase(),
+    );
+
+    if (!InputSanitizer.validateEmail(sanitizedEmail)) {
+      setError("Invalid email format");
+      return;
+    }
+
+    // Check for XSS
+    if (InputSanitizer.containsXSS(data.email)) {
+      setError("Invalid characters detected");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setSuccess(false);
@@ -41,8 +82,8 @@ export function ForgotPasswordForm({
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/forgot-password`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.email }),
+          headers: addCSRFHeader({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ email: sanitizedEmail }),
         },
       );
 
@@ -75,6 +116,9 @@ export function ForgotPasswordForm({
         </div>
         <div className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Security: Honeypot field for bot detection */}
+            <HoneypotField />
+
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
                 {error}
@@ -104,13 +148,15 @@ export function ForgotPasswordForm({
                 <Button
                   type="submit"
                   className="w-full h-11 !shadow-none"
-                  disabled={isLoading || success}
+                  disabled={isLoading || success || isLimited}
                 >
-                  {isLoading
-                    ? "Sending..."
-                    : success
-                      ? "Email Sent!"
-                      : "Send Reset Link"}
+                  {isLimited
+                    ? `Wait ${remainingTime}s`
+                    : isLoading
+                      ? "Sending..."
+                      : success
+                        ? "Email Sent!"
+                        : "Send Reset Link"}
                 </Button>
               </div>
             </div>

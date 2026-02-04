@@ -25,6 +25,10 @@ import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
+import { InputSanitizer } from "@/lib/sanitization";
+import { addCSRFHeader } from "@/lib/csrf";
+import { useHoneypot } from "@/components/ui/honeypot";
+import { useRateLimit } from "@/hooks/use-rate-limit";
 
 export function SignupForm({
   className,
@@ -33,6 +37,15 @@ export function SignupForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Security: Bot detection
+  const { isBot, HoneypotField } = useHoneypot();
+
+  // Security: Rate limiting (3 signups per minute)
+  const { checkRateLimit, isLimited, remainingTime } = useRateLimit({
+    maxAttempts: 3,
+    windowMs: 60 * 1000,
+  });
 
   // Invitation validation hook
   const {
@@ -57,6 +70,38 @@ export function SignupForm({
   }, [invitation, setValue]);
 
   const onSubmit = async (data: SignupFormData) => {
+    // Security: Check for bot
+    if (isBot) {
+      // Silently reject bot submissions
+      return;
+    }
+
+    // Security: Check rate limit
+    if (!checkRateLimit()) {
+      toast.error(
+        `Too many signup attempts. Please wait ${remainingTime} seconds.`,
+      );
+      return;
+    }
+
+    // Security: Sanitize all text inputs
+    const sanitizedFullName = InputSanitizer.sanitizeText(data.full_name);
+    const sanitizedEmail = InputSanitizer.sanitizeText(
+      data.email.trim().toLowerCase(),
+    );
+
+    // Validate email
+    if (!InputSanitizer.validateEmail(sanitizedEmail)) {
+      toast.error("Invalid email format");
+      return;
+    }
+
+    // Check for XSS in name field
+    if (InputSanitizer.containsXSS(data.full_name)) {
+      toast.error("Invalid characters in name");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -66,10 +111,10 @@ export function SignupForm({
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register-with-invitation`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`;
 
-      // Build request payload
+      // Build request payload with sanitized data
       const payload: Record<string, string> = {
-        full_name: data.full_name,
-        email: data.email,
+        full_name: sanitizedFullName,
+        email: sanitizedEmail,
         password: data.password,
       };
 
@@ -81,7 +126,7 @@ export function SignupForm({
       // Register user with backend
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: addCSRFHeader({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 
@@ -163,6 +208,9 @@ export function SignupForm({
           isLoading={isLoadingInvitation}
         />
       )}
+
+      {/* Security: Honeypot field for bot detection */}
+      <HoneypotField />
 
       {/* Show invitation error if validation failed */}
       {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
@@ -288,15 +336,17 @@ export function SignupForm({
               <Button
                 type="submit"
                 className="w-full h-11 !shadow-none"
-                disabled={isLoading || isLoadingInvitation}
+                disabled={isLoading || isLoadingInvitation || isLimited}
               >
-                {isLoading
-                  ? hasValidInvitation
-                    ? "Creating Account & Joining Workspace..."
-                    : "Creating Account..."
-                  : hasValidInvitation
-                    ? "Create Account & Join Workspace"
-                    : "Create Account"}
+                {isLimited
+                  ? `Wait ${remainingTime}s`
+                  : isLoading
+                    ? hasValidInvitation
+                      ? "Creating Account & Joining Workspace..."
+                      : "Creating Account..."
+                    : hasValidInvitation
+                      ? "Create Account & Join Workspace"
+                      : "Create Account"}
               </Button>
               <div className="!mt-0 text-center text-sm">
                 Already have an account?{" "}

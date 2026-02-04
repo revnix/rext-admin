@@ -26,6 +26,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { type ProfileFormData, profileSchema } from "@/schemas/profile-schemas";
 import { AvatarUpload } from "./avatar-upload";
+import { InputSanitizer } from "@/lib/sanitization";
 
 const LANGUAGES = [
   { value: "en", label: "English" },
@@ -89,15 +90,30 @@ export function ProfileForm() {
   });
 
   const onSubmit = (data: ProfileFormData) => {
+    // Security: Sanitize text inputs
+    const sanitizedFullName = InputSanitizer.sanitizeText(data.full_name);
+    const sanitizedDisplayName = data.displayName
+      ? InputSanitizer.sanitizeText(data.displayName)
+      : undefined;
+
+    // Check for XSS
+    if (
+      InputSanitizer.containsXSS(data.full_name) ||
+      (data.displayName && InputSanitizer.containsXSS(data.displayName))
+    ) {
+      toast.error("Invalid characters detected");
+      return;
+    }
+
     // Split full_name back into first_name and last_name for the API
-    const nameParts = data.full_name.trim().split(/\s+/);
+    const nameParts = sanitizedFullName.trim().split(/\s+/);
     const first_name = nameParts[0] || "";
     const last_name = nameParts.slice(1).join(" ") || "";
 
     updateMutation.mutate({
       first_name,
       last_name,
-      display_name: data.displayName || undefined,
+      display_name: sanitizedDisplayName,
       language: data.language,
       timezone: data.timezone,
     });

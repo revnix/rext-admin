@@ -17,6 +17,10 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
+import { InputSanitizer } from "@/lib/sanitization";
+import { addCSRFHeader } from "@/lib/csrf";
+import { useHoneypot } from "@/components/ui/honeypot";
+import { useRateLimit } from "@/hooks/use-rate-limit";
 
 export function LoginForm({
   className,
@@ -30,6 +34,15 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  // Security: Bot detection
+  const { isBot, HoneypotField } = useHoneypot();
+
+  // Security: Rate limiting (5 attempts per minute)
+  const { checkRateLimit, isLimited, remainingTime } = useRateLimit({
+    maxAttempts: 5,
+    windowMs: 60 * 1000,
+  });
 
   // Invitation validation hook
   const {
@@ -66,8 +79,47 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Security: Check for bot
+    if (isBot) {
+      // Silently reject bot submissions
+      return;
+    }
+
+    // Security: Check rate limit
+    if (!checkRateLimit()) {
+      toast.error(
+        `Too many login attempts. Please wait ${remainingTime} seconds.`,
+      );
+      return;
+    }
+
     setIsLoading(true);
     setError("");
+
+    // Security: Sanitize and validate inputs
+    const sanitizedEmail = InputSanitizer.sanitizeText(
+      email.trim().toLowerCase(),
+    );
+
+    // Validate email format
+    if (!InputSanitizer.validateEmail(sanitizedEmail)) {
+      setError("Invalid email format");
+      toast.error("Invalid email format");
+      setIsLoading(false);
+      return;
+    }
+
+    // Check for XSS attempts
+    if (
+      InputSanitizer.containsXSS(email) ||
+      InputSanitizer.containsXSS(password)
+    ) {
+      setError("Invalid characters detected");
+      toast.error("Invalid characters detected");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Try to get specific error message from backend first
@@ -76,8 +128,8 @@ export function LoginForm({
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          headers: addCSRFHeader({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ email: sanitizedEmail, password }),
         },
       );
 
@@ -160,6 +212,9 @@ export function LoginForm({
           isLoading={isLoadingInvitation}
         />
       )}
+
+      {/* Security: Honeypot field for bot detection */}
+      <HoneypotField />
 
       {/* Show invitation error if validation failed */}
       {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
@@ -248,15 +303,17 @@ export function LoginForm({
                 <Button
                   type="submit"
                   className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
-                  disabled={isLoading || isLoadingInvitation}
+                  disabled={isLoading || isLoadingInvitation || isLimited}
                 >
-                  {isLoading
-                    ? hasValidInvitation
-                      ? "Logging in & joining workspace..."
-                      : "Logging in..."
-                    : hasValidInvitation
-                      ? "Login & Join Workspace"
-                      : "Login"}
+                  {isLimited
+                    ? `Wait ${remainingTime}s`
+                    : isLoading
+                      ? hasValidInvitation
+                        ? "Logging in & joining workspace..."
+                        : "Logging in..."
+                      : hasValidInvitation
+                        ? "Login & Join Workspace"
+                        : "Login"}
                 </Button>
               </div>
             </div>

@@ -23,6 +23,8 @@ import { PersonasGrid } from "@/components/workspace/persona-card";
 import { PersonaSelection } from "@/components/workspace/persona-selection";
 import { usePersonas } from "@/hooks/use-personas";
 import type { BrandVoice, Persona } from "@/types/workspace";
+import { InputSanitizer } from "@/lib/sanitization";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Validation schema for brand voice form
@@ -81,6 +83,7 @@ export function WorkspaceBrandVoiceForm({
   onPersonaSelect,
 }: WorkspaceBrandVoiceFormProps) {
   const [activeTab, setActiveTab] = useState<TabValue>("info");
+  const { toast } = useToast();
 
   const tabsListRef = useRef<HTMLDivElement>(null);
 
@@ -126,9 +129,37 @@ export function WorkspaceBrandVoiceForm({
 
   // Handle form submission
   const handleSubmit = async (formData: BrandVoiceFormData) => {
+    // Security: Sanitize all text fields
+    const sanitizedData = {
+      ...formData,
+      about: formData.about ? InputSanitizer.sanitizeText(formData.about) : undefined,
+      customer_profile: formData.customer_profile
+        ? InputSanitizer.sanitizeText(formData.customer_profile)
+        : undefined,
+      selling_position: formData.selling_position
+        ? InputSanitizer.sanitizeText(formData.selling_position)
+        : undefined,
+    };
+
+    // Check for XSS in any field
+    const fieldsToCheck = [
+      formData.about,
+      formData.customer_profile,
+      formData.selling_position,
+      ...(formData.target_audience || []),
+      ...(formData.brand_voice || []),
+      ...(formData.competitors || []),
+      ...(formData.content_strategy || []),
+    ].filter(Boolean);
+
+    if (fieldsToCheck.some((field) => InputSanitizer.containsXSS(field as string))) {
+      toast.error("Invalid characters detected in form");
+      return;
+    }
+
     const selectedPersona = personas.find((p) => p.id === selectedPersonaId);
     await onSave({
-      ...formData,
+      ...sanitizedData,
       selectedPersonaId: selectedPersonaId || undefined,
       selectedPersona: selectedPersona || undefined,
     });
@@ -138,9 +169,18 @@ export function WorkspaceBrandVoiceForm({
   const addItem = (field: keyof BrandVoiceFormData, value: string) => {
     if (!value.trim()) return;
 
+    // Security: Sanitize and validate input
+    const sanitizedValue = InputSanitizer.sanitizeText(value);
+
+    // Check for XSS
+    if (InputSanitizer.containsXSS(value)) {
+      toast.error("Invalid characters detected");
+      return;
+    }
+
     const currentArray = form.getValues(field) as string[];
-    if (!currentArray.includes(value.trim())) {
-      form.setValue(field, [...currentArray, value.trim()]);
+    if (!currentArray.includes(sanitizedValue)) {
+      form.setValue(field, [...currentArray, sanitizedValue]);
     }
   };
 
