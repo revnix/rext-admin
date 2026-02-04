@@ -87,7 +87,9 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 }
 
 export default {
-  trustHost: true, // Trust all hosts in development, use AUTH_TRUST_HOST in production
+  trustHost:
+    process.env.NODE_ENV === "development" ||
+    process.env.AUTH_TRUST_HOST === "true",
   providers: [
     Credentials({
       name: "Credentials",
@@ -365,7 +367,6 @@ export default {
         session.user.name = token.name as string;
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
-        session.user.refreshToken = token.refreshToken as string;
         session.user.role = token.role as string | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.error = token.error as string | undefined;

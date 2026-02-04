@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import type React from "react";
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -70,12 +70,15 @@ export function WorkspacePermissionProvider({
     }
   }, [workspaceId, isLoading, permissions.length, role]);
 
-  const value: WorkspacePermissionContextValue = {
-    permissions,
-    role,
-    workspaceId,
-    isLoading,
-  };
+  const value = useMemo<WorkspacePermissionContextValue>(
+    () => ({
+      permissions,
+      role,
+      workspaceId,
+      isLoading,
+    }),
+    [permissions, role, workspaceId, isLoading],
+  );
 
   return (
     <WorkspacePermissionContext.Provider value={value}>

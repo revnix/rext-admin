@@ -59,9 +59,9 @@ export function QuickActions({ workspace }: QuickActionsProps) {
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <div className="flex flex-col gap-1">
-          {actions.map((action, index) => (
+          {actions.map((action) => (
             <Link
-              key={index}
+              key={action.href}
               href={action.href}
               className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
             >

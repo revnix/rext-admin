@@ -2,7 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, type ReactNode, useContext, useEffect } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
@@ -192,17 +198,17 @@ export function WorkspaceProvider({
   // This allows components to use workspaceSlug for navigation without waiting for API
   const immediateSlug = !isUuid ? workspaceId : workspace?.slug || "";
 
-  const contextValue: WorkspaceContextType = {
-    workspace,
-    // CRITICAL FIX: Return the identifier immediately (slug or UUID from URL)
-    // Don't wait for workspace API to return UUID, as this breaks permission loading
-    // The workspaceId can be either slug or UUID - backend accepts both
-    workspaceId: workspaceId, // Immediate - from URL (slug or UUID)
-    workspaceSlug: immediateSlug, // Slug - immediately available from URL
-    identifier: workspaceId, // Original URL param
-    isLoading,
-    error: error as Error | null,
-  };
+  const contextValue = useMemo<WorkspaceContextType>(
+    () => ({
+      workspace,
+      workspaceId,
+      workspaceSlug: immediateSlug,
+      identifier: workspaceId,
+      isLoading,
+      error: error as Error | null,
+    }),
+    [workspace, workspaceId, immediateSlug, isLoading, error],
+  );
 
   return (
     <WorkspaceContext.Provider value={contextValue}>

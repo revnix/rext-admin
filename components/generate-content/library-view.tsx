@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { Search, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +73,10 @@ interface LibraryViewProps {
   onBack: () => void;
 }
 
-export function LibraryView({ onSelectKeyword, onBack }: LibraryViewProps) {
+export function LibraryView({
+  onSelectKeyword,
+  onBack: _onBack,
+}: LibraryViewProps) {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 

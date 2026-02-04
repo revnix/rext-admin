@@ -82,6 +82,23 @@ export function WorkspaceBrandVoiceForm({
 }: WorkspaceBrandVoiceFormProps) {
   const [activeTab, setActiveTab] = useState<TabValue>("info");
 
+  const tabsListRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (tabsListRef.current) {
+      const activeTrigger = tabsListRef.current.querySelector(
+        '[data-state="active"]',
+      ) as HTMLElement;
+      if (activeTrigger) {
+        activeTrigger.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, []);
+
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
     defaultValues: {

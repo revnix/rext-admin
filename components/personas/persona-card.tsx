@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import type { Persona } from "@/types/workspace";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";

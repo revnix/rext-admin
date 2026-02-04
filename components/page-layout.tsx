@@ -11,7 +11,6 @@ import {
   LifeBuoy,
   LogOut,
   Moon,
-  PanelLeft,
   Search,
   Settings,
   Sparkles,
@@ -31,13 +30,11 @@ import { ImpersonationBanner } from "@/components/impersonation/impersonation-ba
 // import { QuickAddDropdown } from "@/components/quick-add-dropdown"; // Removed
 import { SearchDialog } from "@/components/search-dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { CircleFlag } from "react-circle-flags";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useAuthSession } from "@/hooks/use-auth-session";
@@ -56,8 +53,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
@@ -189,7 +184,7 @@ export function PageLayout({
   const userEmail = profileUser?.email || user?.email || "";
   const userInitials = getInitials(userName);
   const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
-  const userRole = getRoleDisplayName(effectiveRoleKey);
+  const _userRole = getRoleDisplayName(effectiveRoleKey);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
