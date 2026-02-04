@@ -8,13 +8,11 @@ import {
   Mail,
   Monitor,
   Plus,
-  Settings2,
   Shield,
   User,
   UserCog,
   Users,
   VenetianMask,
-  ChevronRight,
   ChevronDown,
 } from "lucide-react";
 import type * as React from "react";
@@ -24,7 +22,6 @@ import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarRail,
   SidebarMenu,
@@ -169,7 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             { title: "Licenses", url: "/licenses" },
           ],
         },
-        { title: "Settings", url: "/settings", icon: Settings2 },
+        // { title: "Settings", url: "/settings", icon: Settings2 },
       ],
     },
   ];
@@ -226,8 +223,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
+
+  const { isMobile } = useSidebar();
 
   return (
     <Sidebar
@@ -235,9 +234,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
       style={{ "--sidebar-width-icon": "5rem" } as React.CSSProperties}
     >
-      <SidebarHeader>
-        <WorkspaceSwitcher />
-      </SidebarHeader>
+      {/* Hide WorkspaceSwitcher on mobile - it's rendered in the page header instead */}
+      {!isMobile && (
+        <SidebarHeader>
+          <WorkspaceSwitcher />
+        </SidebarHeader>
+      )}
 
       <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
         {/* Main navigation */}

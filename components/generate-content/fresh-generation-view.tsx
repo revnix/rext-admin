@@ -28,11 +28,9 @@ import {
   OutlineRejectSection,
 } from "@/components/generate-content/outline";
 import { ContentEditor } from "@/components/generate-content/content";
-import { Client } from "@langchain/langgraph-sdk";
 import ContentType from "./content-type";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
-const ASSISTANT_ID = "agent";
 
 const formatNodeName = (name: string) =>
   name
@@ -40,9 +38,51 @@ const formatNodeName = (name: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
-const client = new Client({
-  apiUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-});
+async function createThread(): Promise<string> {
+  const res = await fetch("/api/generate/threads", { method: "POST" });
+  if (!res.ok) throw new Error("Failed to create thread");
+  const json = await res.json();
+  return json.data.thread_id;
+}
+
+async function* streamFromSSE(
+  url: string,
+  body: Record<string, unknown>,
+): AsyncGenerator<RunStreamEvent> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok || !res.body) {
+    throw new Error(`Stream request failed: ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6);
+      if (payload === "[DONE]") return;
+      try {
+        yield JSON.parse(payload) as RunStreamEvent;
+      } catch {
+        // Skip malformed chunks
+      }
+    }
+  }
+}
 
 const initialState: PageState = {
   step: "keyword",
@@ -395,14 +435,13 @@ export function FreshGenerationView({
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
 
-    const thread = await client.threads.create();
-    if (!thread) return;
+    const newThreadId = await createThread();
+    if (!newThreadId) return;
 
-    dispatch({ type: "SET_THREAD_ID", payload: thread.thread_id });
-
+    dispatch({ type: "SET_THREAD_ID", payload: newThreadId });
     dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
-    const stream = client.runs.stream(thread.thread_id, ASSISTANT_ID, {
+    const stream = streamFromSSE(`/api/generate/${newThreadId}/stream`, {
       input: {
         serp_payload: {
           query: userKeyword,
@@ -411,8 +450,6 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
         },
       },
-      streamMode: "updates",
-      streamSubgraphs: true,
     });
 
     await processStream(stream);
@@ -430,10 +467,8 @@ export function FreshGenerationView({
       dispatch({ type: "SET_LOADING_STATUS", payload: status });
     }
 
-    const stream = client.runs.stream(threadId, ASSISTANT_ID, {
-      command: { resume: payload },
-      streamMode: "updates",
-      streamSubgraphs: true,
+    const stream = streamFromSSE(`/api/generate/${threadId}/resume`, {
+      payload,
     });
 
     await processStream(stream);

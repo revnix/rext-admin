@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
-import { DashboardCharts } from "@/components/dashboard/revamp/dashboard-charts"; // New static charts
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
@@ -42,12 +41,11 @@ export default function DashboardPage() {
     queryKey: ["workspaces"],
     queryFn: () => apiClient.workspaces.list(),
     staleTime: 5 * 60 * 1000,
-    enabled: !!currentWorkspace // Only fetch if we have workspaces generally
+    enabled: !!currentWorkspace, // Only fetch if we have workspaces generally
   });
 
   // Total Workspaces Count
   const totalWorkspaces = workspacesResponse?.total || 0;
-
 
   // Update page title and description
   usePageTitle(
@@ -78,7 +76,6 @@ export default function DashboardPage() {
         breadcrumbs={breadcrumbs}
       >
         <div className="flex flex-col gap-8">
-
           {/* Top Row: Metrics Cards (5 Cards) */}
           <MetricsCards
             workspace={currentWorkspace}
@@ -100,7 +97,6 @@ export default function DashboardPage() {
               <QuickActions workspace={currentWorkspace} />
             </aside>
           </div>
-
         </div>
       </PageLayout>
     </AuthGuard>

@@ -275,7 +275,11 @@ export function WorkspaceMembersPanel({
         tooltipMessage="Only workspace admins can invite members"
         showLockIcon
       >
-        <Button size="sm" onClick={() => setShowInviteDialog(true)}>
+        <Button
+          size="sm"
+          onClick={() => setShowInviteDialog(true)}
+          className="flex-1 md:flex-none"
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Members
         </Button>

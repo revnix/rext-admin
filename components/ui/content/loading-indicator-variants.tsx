@@ -24,7 +24,7 @@ const STEP_DATA: Record<string, { title: string }> = {
   default: { title: "Processing" },
 };
 
-import { Loader2, Check, Circle } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export function LoadingIndicatorVariants({

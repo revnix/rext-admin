@@ -54,25 +54,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-    {
-      id: "details",
-      title: "Workspace Details",
-      description: "Tell us about your workspace",
-      progress: 25,
-    },
-    {
-      id: "progress",
-      title: "Analysis",
-      description: "We're analyzing your website",
-      progress: 50,
-    },
-    {
-      id: "review",
-      title: "Review & Save",
-      description: "Review and edit brand information",
-      progress: 75,
-    },
-  ];
+  {
+    id: "details",
+    title: "Workspace Details",
+    description: "Tell us about your workspace",
+    progress: 25,
+  },
+  {
+    id: "progress",
+    title: "Analysis",
+    description: "We're analyzing your website",
+    progress: 50,
+  },
+  {
+    id: "review",
+    title: "Review & Save",
+    description: "Review and edit brand information",
+    progress: 75,
+  },
+];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -214,7 +214,6 @@ export function WorkspaceCreateWizard() {
         ...brandVoiceData
       } = editedData;
 
-
       // Update brand voice via API
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
         about: brandVoiceData.about,
@@ -227,7 +226,6 @@ export function WorkspaceCreateWizard() {
           brandVoiceData.content_strategy || brandVoiceData.content_pillar,
         personas: selectedPersona ? [selectedPersona] : undefined,
       });
-
 
       // Manually save personas if they exist in the extracted data
       // This is a workaround because the backend updateBrandVoice endpoint
@@ -485,9 +483,7 @@ export function WorkspaceCreateWizard() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="p-6 md:p-8">
-          {renderStepContent()}
-        </Card>
+        <Card className="p-4 md:p-8">{renderStepContent()}</Card>
       </motion.div>
 
       {/* Navigation Buttons */}
