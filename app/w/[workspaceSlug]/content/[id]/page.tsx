@@ -454,10 +454,12 @@ export default function WorkspaceContentDetailPage({
           {finalContent && (
             <ContentEditor
               allContent={finalContent}
+              contentId={content.id}
               readabilityScore={
                 advancedContent.review?.readability_metrics || null
               }
               eeatData={eeatData}
+              trustScore={null}
               generatedContent={contentMarkdown}
               seoScore={seoResult}
               isEditing={isEditing}

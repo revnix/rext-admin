@@ -20,7 +20,7 @@ export function getCSPHeader(_nonce: string): string {
   // In development: allow localhost variants + raw IP for local testing
   // In production: allow https://api.rext.ai (must match what NEXT_PUBLIC_API_BASE_URL points to)
   const backendOrigins = isDev
-    ? "http://localhost:2024 http://127.0.0.1:2024 http://135.181.105.165:2024"
+    ? "http://localhost:2024 http://127.0.0.1:2024 https://api.rext.ai"
     : "https://api.rext.ai";
 
   // Third-party service domains that need to be whitelisted

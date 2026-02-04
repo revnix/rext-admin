@@ -132,6 +132,21 @@ export type SchemaMarkup = {
   schema_data: string;
 };
 
+export type TrustScore = {
+  score: number,
+  author_credibility: number,
+  expertise: number,
+  authority: number,
+  trustworthiness: number,
+  citations_references: number,
+  content_accuracy: number,
+  freshness: number,
+  transparency: number,
+  spam_signals: number,
+  technical_trust: number,
+  reasoning: string;
+}
+
 export type FinalContent = {
   title: string;
   slug?: string;
@@ -162,14 +177,14 @@ export type CONTENT = {
   review?: ContentReview;
   final_content?: FinalContent;
   status:
-    | "planning"
-    | "drafting"
-    | "reviewing"
-    | "optimizing"
-    | "completed"
-    | "failed"
-    | "approved"
-    | "rejected";
+  | "planning"
+  | "drafting"
+  | "reviewing"
+  | "optimizing"
+  | "completed"
+  | "failed"
+  | "approved"
+  | "rejected";
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -254,10 +269,10 @@ export type WREXT = {
 
 export type SearchIntentState = {
   primary_intent:
-    | "informational"
-    | "commercial"
-    | "transactional"
-    | "navigational";
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
   secondary_intents: string[];
   confidence: number;
   intent_signals: Record<string, number>;
@@ -298,11 +313,11 @@ export type KeywordDifficultyState2 = {
 
 export type ContentPatternState = {
   content_type:
-    | "blog"
-    | "listicle"
-    | "landing_page"
-    | "documentation"
-    | "comparison";
+  | "blog"
+  | "listicle"
+  | "landing_page"
+  | "documentation"
+  | "comparison";
   avg_word_count: number;
   common_headings: string[];
   heading_depth: number;
@@ -453,10 +468,11 @@ export interface PageState {
   completedNodes: string[];
   readabilityScore: ReadabilityMetrics | null;
   seoScore: SEORESULT | null;
-  trustScore: number | null;
+  trustScore: TrustScore | null;
   eeatData: EEATData | null;
   allContent: FinalContent | null;
   currentLoadingSteps: LoadingStep[];
+  keywordDifficulty: number | null;
 }
 
 export type PageAction =
@@ -470,7 +486,7 @@ export type PageAction =
   | { type: "SET_GENERATED_CONTENT"; payload: string }
   | { type: "SET_ALL_CONTENT"; payload: FinalContent | null }
   | { type: "SET_READABILITY_SCORE"; payload: ReadabilityMetrics }
-  | { type: "SET_TRUST_SCORE"; payload: number }
+  | { type: "SET_TRUST_SCORE"; payload: TrustScore }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_EEAT_DATA"; payload: EEATData }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
@@ -484,6 +500,7 @@ export type PageAction =
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "CLEAR_COMPLETED_NODES" }
+  | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
   | { type: "SET_OUTLINE"; payload: ContentOutline };
 
 export type StreamInput = {

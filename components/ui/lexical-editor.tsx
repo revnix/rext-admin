@@ -37,7 +37,7 @@ import {
   $isLinkNode,
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   $getSelection,
   $isRangeSelection,
@@ -122,6 +122,36 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+const ToolbarButton = ({
+  active,
+  onClick,
+  children,
+  title,
+  disabled = false,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  title: string;
+  disabled?: boolean;
+}) => (
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      onClick();
+    }}
+    disabled={disabled}
+    className={cn(
+      "p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+      active ? "bg-gray-200 text-black" : "text-gray-600",
+    )}
+    title={title}
+    type="button"
+  >
+    {children}
+  </button>
+);
 
 function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -308,36 +338,6 @@ function ToolbarPlugin() {
       setTempLinkUrl(currentLinkUrl);
     }
   };
-
-  const ToolbarButton = ({
-    active,
-    onClick,
-    children,
-    title,
-    disabled = false,
-  }: {
-    active: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-    title: string;
-    disabled?: boolean;
-  }) => (
-    <button
-      onClick={(e) => {
-        e.preventDefault();
-        onClick();
-      }}
-      disabled={disabled}
-      className={cn(
-        "p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-        active ? "bg-gray-200 text-black" : "text-gray-600",
-      )}
-      title={title}
-      type="button"
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="flex items-center gap-1 border-b p-2 mb-2 sticky top-0 bg-white z-10 flex-wrap">
@@ -571,28 +571,26 @@ export default function LexicalEditor({
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
 
-  // We use a state to ensure the initialConfig is stable if we were using dynamic values,
-  // but here it's derived from props once.
-
-  useEffect(() => {}, []);
-
-  const initialConfig = {
+  // We use useMemo to ensure the initialConfig is stable.
+  const initialConfig = useMemo(() => ({
     namespace: "my-editor",
     theme,
     nodes: NODES,
     readOnly: readOnly,
-    onError: (_error: Error) => {},
+    onError: (error: Error) => {
+      console.error(error);
+    },
     editorState: (editor: unknown) => {
       // Convert initial markdown to editor state
       (editor as { update: (fn: () => void) => void }).update(() => {
         if (initialValue) {
           try {
             $convertFromMarkdownString(initialValue, TRANSFORMERS);
-          } catch (_e) {}
+          } catch (_e) { }
         }
       });
     },
-  };
+  }), [readOnly]); // Only recreate if readOnly status changes (which usually corresponds to a remount anyway)
 
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {

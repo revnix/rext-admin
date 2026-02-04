@@ -535,7 +535,7 @@ export function WorkspaceBrandVoiceForm({
 
             {/* Personas Tab */}
             <TabsContent value="personas" className="space-y-6">
-              {workspaceId && onPersonaSelect && (
+              {personas && workspaceId && onPersonaSelect && (
                 <div className="space-y-3">
                   <div>
                     <h4 className="text-sm font-medium mb-1">

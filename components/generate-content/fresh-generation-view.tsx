@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -71,23 +71,10 @@ const initialState: PageState = {
   readabilityScore: null,
   seoScore: null,
   trustScore: null,
-  eeatData: {
-    score: 65,
-    author_credibility: 20,
-    expertise: 70,
-    authority: 40,
-    trustworthiness: 60,
-    citations_references: 10,
-    content_accuracy: 75,
-    freshness: 80,
-    transparency: 10,
-    spam_signals: 85,
-    technical_trust: 100,
-    reasoning:
-      "The content demonstrates a solid level of expertise in SEO practices specific to Next.js, evidenced by detailed descriptions of relevant technical features and best practices. However, there is no identifiable author, which severely impacts author credibility. The information appears technically accurate and fairly up-to-date, but lacks citations to authoritative sources that would enhance trustworthiness and authority. The technical aspects of the site are sound (HTTPS, no spammy content), and there are minimal spam signals given the absence of keyword stuffing. Overall, the lack of author information and citations adversely affects the overall credibility and trust score.",
-  },
+  eeatData: null,
   allContent: null,
   currentLoadingSteps: [],
+  keywordDifficulty: null,
 };
 
 function reducer(state: PageState, action: PageAction): PageState {
@@ -133,6 +120,15 @@ function reducer(state: PageState, action: PageAction): PageState {
       return { ...state, interrupt: action.payload };
     case "SET_OUTLINE":
       return { ...state, outline: action.payload };
+    case "SET_KEYWORD_DIFFICULTY":
+      return {
+        ...state,
+        keywordDifficulty: action.payload,
+        instructionType:
+          state.instructionType === "keyword"
+            ? "keyword Selection"
+            : state.instructionType,
+      };
     case "SET_LOADING_STEPS":
       return { ...state, currentLoadingSteps: action.payload };
     case "SET_LOADING_STATUS": {
@@ -287,22 +283,48 @@ export function FreshGenerationView({
     isLoading,
     readabilityScore,
     seoScore,
+    trustScore,
     eeatData,
     allContent,
     currentLoadingSteps,
+    keywordDifficulty,
   } = state;
+  const [contentMarkdown, setContentMarkdown] = useState("");
+
+  useEffect(() => {
+    if (allContent?.body_markdown) {
+      setContentMarkdown(allContent.body_markdown);
+    }
+  }, [allContent?.body_markdown]);
+
+  useEffect(() => {
+    if (keywordDifficulty) {
+      console.log("keywordDifficulty", keywordDifficulty);
+    }
+  }, [keywordDifficulty])
 
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
   ): Promise<void> => {
     try {
+      dispatch({
+        type: "SET_KEYWORD_DIFFICULTY",
+        payload: 0,
+      });
+
       for await (const chunk of stream) {
-        if (chunk.event !== "updates" && !chunk.event.startsWith("updates|")) {
-          continue;
-        }
 
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
+        console.log("updates", updates);
+
+        if (updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty) {
+          dispatch({
+            type: "SET_KEYWORD_DIFFICULTY",
+            payload: updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd,
+          });
+          console.log("keywordDifficulty", updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd);
+        }
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
@@ -411,7 +433,7 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
         },
       },
-      streamMode: "updates",
+      streamMode: ["updates", "messages"],
       streamSubgraphs: true,
     });
 
@@ -432,7 +454,7 @@ export function FreshGenerationView({
 
     const stream = client.runs.stream(threadId, ASSISTANT_ID, {
       command: { resume: payload },
-      streamMode: "updates",
+      streamMode: ["updates", "messages"],
       streamSubgraphs: true,
     });
 
@@ -500,7 +522,11 @@ export function FreshGenerationView({
     }
   };
 
-  if (isLoading || isManualLoading) {
+  if (
+    (isLoading || isManualLoading) &&
+    instructionType !== "content" &&
+    (keywordDifficulty !== 0 || keywordDifficulty !== null)
+  ) {
     return (
       <div
         className={cn(
@@ -529,10 +555,11 @@ export function FreshGenerationView({
     "keyword Selection": (
       <SuggestionsSection
         instruction={instruction}
-        primaryKeyword={primaryKeyword}
+        primaryKeyword={primaryKeyword || userKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
         seoResult={seoResult}
+        keywordDifficulty={keywordDifficulty}
       />
     ),
 
@@ -616,22 +643,24 @@ export function FreshGenerationView({
         {instructionViewMap[instructionType]}
       </div>
 
-      {instructionType === "content" && generatedContent && (
+      {instructionType === "content" && (
         <ContentEditor
           allContent={allContent}
           readabilityScore={readabilityScore}
           seoScore={seoScore}
+          trustScore={trustScore}
           eeatData={eeatData}
-          generatedContent={generatedContent}
+          generatedContent={generatedContent || contentMarkdown}
           isEditing={isEditing}
           userKeyword={userKeyword}
           outline={outline}
           onEditToggle={() =>
             dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
           }
-          onContentChange={(val) =>
-            dispatch({ type: "SET_GENERATED_CONTENT", payload: val })
-          }
+          onContentChange={(val) => {
+            dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+            setContentMarkdown(val);
+          }}
         />
       )}
     </>

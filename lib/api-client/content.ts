@@ -70,12 +70,12 @@ export function createContentNamespace(client: ApiClient) {
     update: async (
       workspaceId: string,
       contentId: string,
-      data: UpdateContentRequest,
+      data: Record<string, unknown>,
     ) => {
       return client.request<ContentResponse>(
         `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },

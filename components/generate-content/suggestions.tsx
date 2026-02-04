@@ -1,10 +1,11 @@
 import type { SEORESULT } from "@/types/generate-content";
-import { Zap, Compass, TrendingUp, ArrowRight } from "lucide-react";
+import { Zap, Compass, TrendingUp, ArrowRight, Loader2 } from "lucide-react";
 import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { Button } from "../ui/button";
 import { useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function SuggestionsSection({
   instruction,
@@ -12,28 +13,53 @@ export function SuggestionsSection({
   suggestedKeywords,
   onSelect,
   seoResult,
+  keywordDifficulty,
 }: {
   instruction: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   onSelect: (kw: string) => void;
   seoResult: SEORESULT | null;
+  keywordDifficulty?: number | null;
 }) {
   const difficultyScore = useMemo(() => {
+    if (keywordDifficulty !== null && keywordDifficulty !== undefined) {
+      return Math.round(keywordDifficulty);
+    }
     const value = seoResult?.keyword_difficulty;
     const numberValue = typeof value === "number" ? value : Number(value);
 
     return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
-  }, [seoResult?.keyword_difficulty]);
+  }, [seoResult?.keyword_difficulty, keywordDifficulty]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  };
 
   return (
-    <div className="w-full">
-      <button
+    <motion.div
+      className="w-full"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.button
         type="button"
+        variants={itemVariants}
         onClick={() => onSelect(primaryKeyword)}
         className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4 group transition-all duration-200 hover:border-primary/60 hover:shadow-sm"
       >
-        {/* Accent bar */}
         <span className="absolute left-0 top-0 h-full w-1 bg-primary" />
         <div className="flex items-center justify-between">
           <div>
@@ -46,66 +72,146 @@ export function SuggestionsSection({
             <ArrowRight className="h-4 w-4" />
           </div>
         </div>
-      </button>
+      </motion.button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between transition-all">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between transition-all"
+        >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-400">
-              Difficulty
-            </span>
+            <span className="text-sm font-medium text-gray-400">Difficulty</span>
             <Zap className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 flex items-center justify-center">
             <ChartRadialStacked difficultyScore={difficultyScore} />
           </div>
-        </div>
+        </motion.div>
+
         <div className="flex flex-col gap-3">
-          <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all">
+          <motion.div
+            variants={itemVariants}
+            className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all"
+          >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-400">
-                Search Intent
-              </span>
+              <span className="text-sm font-medium text-gray-400">Search Intent</span>
               <Compass className="w-4 h-4 text-primary" />
             </div>
             <div className="flex items-center gap-3">
-              <SearchIntentCard
-                intent={
-                  seoResult?.intent as
-                    | "informational"
-                    | "commercial"
-                    | "transactional"
-                    | "navigational"
-                }
-              />
+              <AnimatePresence mode="wait">
+                {seoResult?.intent ? (
+                  <motion.div
+                    key="intent-content"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <SearchIntentCard
+                      intent={
+                        seoResult?.intent as
+                        | "informational"
+                        | "commercial"
+                        | "transactional"
+                        | "navigational"
+                      }
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="intent-loader"
+                    className="flex items-center gap-2 text-sm text-muted-foreground italic"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Analyzing intent...
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all">
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all"
+          >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-400">
-                Monthly Volume
-              </span>
+              <span className="text-sm font-medium text-gray-400">Monthly Volume</span>
               <TrendingUp className="w-4 h-4 text-blue-500" />
             </div>
-            <MonthlyVolumeCard volume={seoResult?.volume} />
-          </div>
+            <AnimatePresence mode="wait">
+              {seoResult?.volume ? (
+                <motion.div
+                  key="volume-content"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <MonthlyVolumeCard volume={seoResult?.volume} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="volume-loader"
+                  className="flex items-center gap-2 text-sm text-muted-foreground italic"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Fetching volume...
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 
-      <h2 className="text-xl font-semibold my-4">{instruction}</h2>
+      <AnimatePresence>
+        {instruction && (
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xl font-semibold my-4"
+          >
+            {instruction}
+          </motion.h2>
+        )}
+      </AnimatePresence>
 
       <div className="flex flex-wrap gap-2">
-        {suggestedKeywords.map((kw) => (
-          <Button
-            key={kw}
-            variant="outline"
-            onClick={() => onSelect(kw)}
-            className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
-          >
-            <strong>{kw}</strong>
-          </Button>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {suggestedKeywords.length > 0 ? (
+            suggestedKeywords.map((kw, idx) => (
+              <motion.div
+                key={kw}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Button
+                  variant="outline"
+                  onClick={() => onSelect(kw)}
+                  className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
+                >
+                  <strong>{kw}</strong>
+                </Button>
+              </motion.div>
+            ))
+          ) : (
+            <motion.div
+              key="suggestions-loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-2 text-sm text-muted-foreground italic py-2"
+            >
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Generating suggestions...
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
