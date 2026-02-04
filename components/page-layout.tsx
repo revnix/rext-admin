@@ -18,7 +18,7 @@ import {
   Users,
   Plus,
 } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/providers/theme-provider";
 
 import { workspaceRoutes } from "@/lib/routes";
 import type { ReactNode } from "react";

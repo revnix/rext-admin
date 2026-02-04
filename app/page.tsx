@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
+import { DashboardCharts } from "@/components/dashboard/revamp/dashboard-charts"; // New static charts
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
@@ -44,6 +45,16 @@ export default function DashboardPage() {
     enabled: !!currentWorkspace, // Only fetch if we have workspaces generally
   });
 
+  // Data Fetching: Dashboard Stats
+  const { data: dashboardStats, isLoading: isLoadingDashboard } = useQuery({
+    queryKey: ["dashboard-stats", currentWorkspace?.id],
+    queryFn: () => apiClient.dashboard.getStats(currentWorkspace!.id),
+    enabled: !!currentWorkspace?.id,
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    refetchInterval: 60 * 1000, // Auto-refresh every minute
+    refetchOnWindowFocus: true, // Refresh when user returns to tab
+  });
+
   // Total Workspaces Count
   const totalWorkspaces = workspacesResponse?.total || 0;
 
@@ -78,8 +89,8 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-8">
           {/* Top Row: Metrics Cards (5 Cards) */}
           <MetricsCards
-            workspace={currentWorkspace}
-            workspacesCount={totalWorkspaces}
+            dashboardStats={dashboardStats}
+            isLoading={isLoadingDashboard}
           />
 
           {/* Middle Row: Charts (Static Mocks) */}

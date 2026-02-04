@@ -300,12 +300,12 @@ export function ContentEditor({
   };
 
   return (
-    <div className="animate-in fade-in duration-700 bg-white flex flex-col -mt-9 border-t">
-      <div className="flex flex-1 overflow-hidden relative border-b">
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t">
+      <div className="flex flex-1 overflow-hidden relative border-b border-border">
         {/* Left Sidebar: Outline */}
-        <aside className="hidden lg:flex w-48 border-r bg-slate-50/50 flex-col py-6 mt-1.5">
+        <aside className="hidden lg:flex w-48 border-r border-border bg-sidebar/50 flex-col py-6 mt-1.5">
           <div className="px-4 mb-6">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">
               Structure
             </h3>
             {outline ? (
@@ -332,20 +332,20 @@ export function ContentEditor({
                       });
                     }
                   }}
-                  className="w-full flex items-center gap-3 px-1 py-1 text-sm text-left cursor-pointer hover:bg-slate-100 rounded-sm"
+                  className="w-full flex items-center gap-3 px-1 py-1 text-sm text-left cursor-pointer hover:bg-muted/50 rounded-sm"
                 >
-                  <span className="text-sm font-mono text-slate-300">
+                  <span className="text-sm font-mono text-muted-foreground">
                     {i + 1}
                   </span>
-                  <span className="truncate">{sec.heading}</span>
+                  <span className="truncate text-foreground/80">{sec.heading}</span>
                 </button>
               ))
             ) : (
               <div className="space-y-4 animate-pulse">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="flex items-center gap-3 px-1">
-                    <div className="h-3 w-3 bg-slate-200 rounded-sm shrink-0" />
-                    <div className="h-3 bg-slate-100 rounded w-full" />
+                    <div className="h-3 w-3 bg-muted rounded-sm shrink-0" />
+                    <div className="h-3 bg-muted rounded w-full" />
                   </div>
                 ))}
               </div>
@@ -354,12 +354,12 @@ export function ContentEditor({
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-white px-2 py-4 mt-2">
+        <main className="flex-1 overflow-y-auto bg-background px-2 py-4 mt-2">
           <article className="max-w-3xl mx-5">
             <div>
               {isEditing ? (
                 <div className="space-y-4">
-                  <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-8">
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">
                     {displayTitle}
                   </h1>
                   <div className="min-h-[600px]">
@@ -375,37 +375,37 @@ export function ContentEditor({
                   {body ? (
                     <>
                       <div className="space-y-4 mb-8">
-                        <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        <div className="flex flex-wrap gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                           {tags.map((t) => (
                             <span
                               key={t}
-                              className="bg-slate-50 px-2 py-1 rounded"
+                              className="bg-muted px-2 py-1 rounded"
                             >
                               #{t}
                             </span>
                           ))}
                         </div>
-                        <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+                        <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
                           {displayTitle}
                         </h1>
 
                         {allContent?.introduction && (
-                          <div className="text-xl text-slate-600 leading-relaxed font-medium border-l-4 border-slate-200 pl-6 my-8 italic">
+                          <div className="text-xl text-muted-foreground leading-relaxed font-medium border-l-4 border-border pl-6 my-8 italic">
                             {allContent?.introduction}
                           </div>
                         )}
                       </div>
-                      <div className="prose prose-slate prose-lg max-w-none">
+                      <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
                         <LexicalEditor key={`editor-preview-${contentId ?? "new"}`} initialValue={body} readOnly={true} />
                       </div>
                     </>
                   ) : (
                     <div className="space-y-4 animate-pulse">
-                      <div className="h-8 bg-slate-100 rounded w-3/4 mb-8" />
+                      <div className="h-8 bg-muted rounded w-3/4 mb-8" />
                       <div className="space-y-3">
-                        <div className="h-4 bg-slate-100 rounded w-full" />
-                        <div className="h-4 bg-slate-100 rounded w-5/6" />
-                        <div className="h-4 bg-slate-100 rounded w-4/6" />
+                        <div className="h-4 bg-muted rounded w-full" />
+                        <div className="h-4 bg-muted rounded w-5/6" />
+                        <div className="h-4 bg-muted rounded w-4/6" />
                       </div>
                     </div>
                   )}
@@ -416,12 +416,12 @@ export function ContentEditor({
         </main>
 
         {/* Right Sidebar: Analysis */}
-        <aside className="hidden xl:flex w-64 border-l bg-slate-50/30 flex-col px-1.5 py-3 space-y-8 overflow-y-auto mt-2.5">
-          <div className="flex items-center justify-around px-2">
+        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col px-1.5 py-3 space-y-8 overflow-y-auto mt-2.5">
+          <div className="flex items-center justify-around px-2 gap-2">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              className={`h-8 !px-2 text-xs font-bold transition-all bg-slate-200`}
+              className={`h-8 !px-2 text-xs font-bold transition-all flex-1`}
               onClick={onEditToggle}
             >
               {isEditing ? <Eye size={14} /> : <Pencil size={14} />}{" "}
@@ -430,9 +430,9 @@ export function ContentEditor({
             <Button
               onClick={saveContent}
               disabled={isSaving || isPublishing}
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              className={`h-8 !px-2 text-xs font-bold transition-all bg-slate-200`}
+              className={`h-8 !px-2 text-xs font-bold transition-all flex-1`}
             >
               <Save size={14} className={isSaving ? "animate-pulse" : ""} />{" "}
               {isSaving ? "Saving..." : "Save"}
@@ -441,7 +441,7 @@ export function ContentEditor({
               onClick={publishContent}
               disabled={isPublishing || isSaving}
               size="sm"
-              className="h-8 !px-2 text-xs font-bold"
+              className="h-8 !px-2 text-xs font-bold flex-1"
             >
               <Send
                 size={14}
@@ -459,12 +459,12 @@ export function ContentEditor({
               setStatusModal((prev) => ({ ...prev, isOpen: open }))
             }
           >
-            <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-[2rem] p-8">
+            <DialogContent className="sm:max-w-md bg-card border border-border shadow-2xl rounded-[2rem] p-8">
               <div className="flex flex-col items-center text-center space-y-6">
                 <div
                   className={cn(
                     "w-16 h-16 rounded-full flex items-center justify-center",
-                    statusModal.type === "success" ? "bg-emerald-50" : "bg-red-50",
+                    statusModal.type === "success" ? "bg-emerald-500/10" : "bg-red-500/10",
                   )}
                 >
                   {statusModal.type === "success" ? (
@@ -474,12 +474,12 @@ export function ContentEditor({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight">
+                  <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
                     {statusModal.type === "success"
                       ? `Content ${statusModal.action === "publish" ? "Published" : "Saved"} Successfully!`
                       : `${statusModal.action === "publish" ? "Publish" : "Save"} Failed`}
                   </DialogTitle>
-                  <DialogDescription className="text-slate-500 text-base">
+                  <DialogDescription className="text-muted-foreground text-base">
                     {statusModal.message}
                   </DialogDescription>
                 </div>
@@ -495,23 +495,23 @@ export function ContentEditor({
             </DialogContent>
           </Dialog>
 
-          <section className="space-y-4">
+            <section className="space-y-4">
             <div className="flex items-center gap-2 font-bold">
               <Activity size={16} className="text-emerald-500" />
-              <h4 className="text-xs uppercase tracking-widest text-slate-500">
+              <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
                 Performance & SEO
               </h4>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-4">
-              <h4 className="text-lg font-bold text-slate-900">Readability</h4>
+            <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
+              <h4 className="text-lg font-bold text-foreground">Readability</h4>
 
               <div className="space-y-2">
                 <div className={`text-xl font-bold ${color}`}>
                   {label} ({score.toFixed(1)})
                 </div>
 
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full ${barColor} transition-all`}
                     style={{ width: progressWidth }}
@@ -521,8 +521,8 @@ export function ContentEditor({
             </div>
 
             {seoScore ? (
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-6">
-                <h4 className="text-lg font-bold text-slate-900">
+              <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
+                <h4 className="text-lg font-bold text-foreground">
                   On-Page SEO
                 </h4>
 
@@ -540,7 +540,7 @@ export function ContentEditor({
                         stroke="currentColor"
                         strokeWidth="8"
                         fill="transparent"
-                        className="text-slate-100"
+                        className="text-muted/30"
                       />
                       <circle
                         cx="40"
@@ -554,21 +554,21 @@ export function ContentEditor({
                           226.2 * (1 - seoScore.seo_health_score / 100)
                         }
                         strokeLinecap="round"
-                        className="text-emerald-900 transition-all duration-1000"
+                        className="text-emerald-600 dark:text-emerald-500 transition-all duration-1000"
                       />
                     </svg>
-                    <span className="absolute text-xl font-bold text-slate-800">
+                    <span className="absolute text-xl font-bold text-foreground">
                       {Math.round(seoScore.seo_health_score)}
                     </span>
                   </div>
 
                   <div className="space-y-0.5">
-                    <div className="text-lg font-bold text-slate-900 leading-tight">
+                    <div className="text-lg font-bold text-foreground leading-tight">
                       {getSEOStatusText(seoScore.seo_health_score)}
                     </div>
                     {seoScore.issue_summary?.warnings ||
                       seoScore.issue_summary?.errors && (
-                        <div className="text-sm text-slate-500">
+                        <div className="text-sm text-muted-foreground">
                           {seoScore.issue_summary?.warnings} warnings
                           <br />
                           {seoScore.issue_summary?.errors} errors
@@ -590,7 +590,7 @@ export function ContentEditor({
                         {status === "success" ? (
                           <CheckCircle2
                             size={18}
-                            className="text-emerald-900 shrink-0"
+                            className="text-emerald-500 shrink-0"
                           />
                         ) : status === "warning" ? (
                           <AlertCircle
@@ -600,7 +600,7 @@ export function ContentEditor({
                         ) : (
                           <AlertCircle
                             size={18}
-                            className="text-slate-400 shrink-0"
+                            className="text-muted-foreground shrink-0"
                           />
                         )}
 
@@ -611,20 +611,20 @@ export function ContentEditor({
                 </div>
               </div>
             ) : (
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-6 animate-pulse">
-                <div className="h-4 bg-slate-100 rounded w-1/2" />
+              <div className="bg-card p-6 rounded-3xl border border-border space-y-6 animate-pulse">
+                <div className="h-4 bg-muted rounded w-1/2" />
                 <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 rounded-full bg-slate-100" />
+                  <div className="w-20 h-20 rounded-full bg-muted" />
                   <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-slate-100 rounded w-3/4" />
-                    <div className="h-3 bg-slate-100 rounded w-1/2" />
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
                   </div>
                 </div>
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="h-4 w-4 bg-slate-100 rounded-full" />
-                      <div className="h-3 bg-slate-100 rounded w-full" />
+                      <div className="h-4 w-4 bg-muted rounded-full" />
+                      <div className="h-3 bg-muted rounded w-full" />
                     </div>
                   ))}
                 </div>
@@ -637,29 +637,29 @@ export function ContentEditor({
               <>
                 <div className="flex items-center gap-2 font-bold">
                   <Sparkles size={16} className="text-blue-500" />
-                  <h4 className="text-xs uppercase tracking-widest text-slate-500">
+                  <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
                     EEAT Assistant
                   </h4>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-4">
+                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
                   <div className="space-y-1">
-                    <h4 className="text-lg font-bold text-slate-900 leading-tight">
+                    <h4 className="text-lg font-bold text-foreground leading-tight">
                       Trust Score
                     </h4>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-4xl font-bold text-emerald-900 tracking-tight">
+                    <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-500 tracking-tight">
                       {trustScore.score}%
                     </span>
                     <TrendingUp
                       size={20}
-                      className="text-emerald-600 shrink-0"
+                      className="text-emerald-500 shrink-0"
                     />
                   </div>
 
-                  <div className="text-[13px] text-slate-500 font-medium">
+                  <div className="text-[13px] text-muted-foreground font-medium">
                     {getStatusMessage(trustScore.score)}
                   </div>
                 </div>
@@ -668,13 +668,13 @@ export function ContentEditor({
               <>
                 <hr />
                 <div className="flex items-center gap-2 font-bold">
-                  <Sparkles size={16} className="text-slate-300" />
-                  <div className="h-3 bg-slate-100 rounded w-1/2 animate-pulse" />
+                  <Sparkles size={16} className="text-muted-foreground/50" />
+                  <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 space-y-4 animate-pulse">
-                  <div className="h-4 bg-slate-100 rounded w-1/2" />
-                  <div className="h-8 bg-slate-100 rounded w-1/3" />
-                  <div className="h-3 bg-slate-100 rounded w-3/4" />
+                <div className="bg-card p-6 rounded-3xl border border-border space-y-4 animate-pulse">
+                  <div className="h-4 bg-muted rounded w-1/2" />
+                  <div className="h-8 bg-muted rounded w-1/3" />
+                  <div className="h-3 bg-muted rounded w-3/4" />
                 </div>
               </>
             )}
