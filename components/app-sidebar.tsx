@@ -226,8 +226,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar

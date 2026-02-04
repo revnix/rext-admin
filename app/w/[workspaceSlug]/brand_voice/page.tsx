@@ -6,26 +6,27 @@ import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 export default function BrandVoicePage() {
-    const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
 
-    const breadcrumbs = [
-        { label: "Dashboard", href: "/" },
-        {
-            label: workspace?.title || "...",
-            href: workspaceRoutes.root(workspaceSlug),
-        },
-        { label: "Brand Voice" },
-    ];
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/" },
+    {
+      label: workspace?.title || "...",
+      href: workspaceRoutes.root(workspaceSlug),
+    },
+    { label: "Brand Voice" },
+  ];
 
-    return (
-        <PageLayout
-            title="Brand Voice"
-            description="Define and manage your brand's unique voice and personality for AI-powered content creation."
-            breadcrumbs={breadcrumbs}
-        >
-            <div className="max-w-4xl mx-auto py-6">
-                <BrandVoiceSection />
-            </div>
-        </PageLayout>
-    );
+  return (
+    <PageLayout
+      title="Brand Voice"
+      description="Define and manage your brand's unique voice and personality for AI-powered content creation."
+      breadcrumbs={breadcrumbs}
+      fullWidth
+    >
+      <div className="max-w-4xl py-6">
+        <BrandVoiceSection />
+      </div>
+    </PageLayout>
+  );
 }

@@ -478,9 +478,7 @@ export function PageLayout({
                     <div className="flex items-center justify-center h-5 w-5 rounded-md bg-violet-50 mr-2">
                       <Sparkles className="h-3.5 w-3.5 text-violet-600 fill-violet-200/50" />
                     </div>
-                    <span className="font-medium">
-                      Upgrade to Pro
-                    </span>
+                    <span className="font-medium">Upgrade to Pro</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border my-1" />
@@ -490,27 +488,21 @@ export function PageLayout({
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <BadgeCheck className="mr-2 h-4 w-4" />
-                    <span>
-                      Account
-                    </span>
+                    <span>Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings/billing")}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
-                    <span>
-                      Billing
-                    </span>
+                    <span>Billing</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/settings/security")}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <Bell className="mr-2 h-4 w-4" />
-                    <span>
-                      Security
-                    </span>
+                    <span>Security</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border my-1" />
@@ -529,8 +521,9 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-            } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
+            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+          } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (
