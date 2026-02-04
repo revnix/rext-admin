@@ -107,6 +107,9 @@ export function LoginForm({
         return;
       }
 
+      // Show success toast
+      toast.success("Login successful!");
+
       // Handle redirect based on invitation presence
       if (hasValidInvitation && invitationToken) {
         // Redirect to invitation acceptance page

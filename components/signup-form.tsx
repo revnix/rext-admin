@@ -24,15 +24,15 @@ import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
 import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
+import { useToast } from "@/hooks/use-toast";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   // Invitation validation hook
   const {
@@ -58,8 +58,6 @@ export function SignupForm({
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
-    setError("");
-    setSuccess(false);
 
     try {
       // Determine which endpoint to use
@@ -99,7 +97,9 @@ export function SignupForm({
       }
 
       const _responseData = await response.json();
-      setSuccess(true);
+      
+      // Show success toast
+      toast.success("Account created successfully! Logging you in...");
 
       // Auto-login after successful registration
       const result = await signIn("credentials", {
@@ -143,7 +143,8 @@ export function SignupForm({
         }, 2000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed");
+      const errorMessage = err instanceof Error ? err.message : "Signup failed";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -192,19 +193,6 @@ export function SignupForm({
         <div className="px-0">
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
-                  {hasValidInvitation
-                    ? `Account created! Joining ${invitation?.workspace.title}...`
-                    : "Account created successfully! Redirecting to dashboard..."}
-                </div>
-              )}
-
               <FormField
                 control={form.control}
                 name="full_name"
@@ -217,7 +205,7 @@ export function SignupForm({
                       <Input
                         placeholder="John"
                         type="text"
-                        disabled={isLoading || success}
+                        disabled={isLoading}
                         {...field}
                       />
                     </FormControl>
@@ -243,7 +231,7 @@ export function SignupForm({
                       <Input
                         placeholder="m@example.com"
                         type="email"
-                        disabled={isLoading || success}
+                        disabled={isLoading}
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
@@ -267,7 +255,7 @@ export function SignupForm({
                       <Input
                         placeholder="Create a strong password"
                         type="password"
-                        disabled={isLoading || success}
+                        disabled={isLoading}
                         {...field}
                       />
                     </FormControl>
@@ -288,7 +276,7 @@ export function SignupForm({
                       <Input
                         placeholder="Confirm your password"
                         type="password"
-                        disabled={isLoading || success}
+                        disabled={isLoading}
                         {...field}
                       />
                     </FormControl>
@@ -300,17 +288,15 @@ export function SignupForm({
               <Button
                 type="submit"
                 className="w-full h-11 !shadow-none"
-                disabled={isLoading || success || isLoadingInvitation}
+                disabled={isLoading || isLoadingInvitation}
               >
                 {isLoading
                   ? hasValidInvitation
                     ? "Creating Account & Joining Workspace..."
                     : "Creating Account..."
-                  : success
-                    ? "Account Created!"
-                    : hasValidInvitation
-                      ? "Create Account & Join Workspace"
-                      : "Create Account"}
+                  : hasValidInvitation
+                    ? "Create Account & Join Workspace"
+                    : "Create Account"}
               </Button>
               <div className="!mt-0 text-center text-sm">
                 Already have an account?{" "}

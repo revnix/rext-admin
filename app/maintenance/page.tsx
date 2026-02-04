@@ -110,8 +110,7 @@ export default function MaintenancePage() {
         {/* Action Button */}
         <Button 
             asChild 
-            variant="outline" 
-            className="h-12 px-8 rounded-xl border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
+            className="h-12 px-8 rounded-xl bg-[#465FFF] text-white font-semibold hover:bg-[#3641F5] transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
         >
           <Link href="/">Back to Home Page</Link>
         </Button>

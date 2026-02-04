@@ -141,7 +141,7 @@ export default function ComingSoonPage() {
                  className="h-12 w-full bg-slate-50 border-slate-200 focus:border-[#465FFF] focus:ring-[#465FFF]" 
                />
              </div>
-             <Button className="h-12 px-6 bg-[#1e293b] hover:bg-[#0f172a] text-white font-medium shrink-0">
+             <Button className="h-12 px-6 bg-[#465FFF] hover:bg-[#3641F5] text-white font-semibold shrink-0 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95">
                <Bell className="w-4 h-4 mr-2" />
                Notify Me
              </Button>
