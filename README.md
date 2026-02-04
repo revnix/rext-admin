@@ -26,7 +26,7 @@ Key security features implemented:
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
 - **UI Components**: Radix UI with shadcn/ui patterns
