@@ -1,33 +1,24 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import type { Workspace } from "@/types/workspace";
+import type { DashboardStats } from "@/lib/api-client/dashboard";
 
 interface MetricsCardsProps {
-  workspace: Workspace | null;
-  workspacesCount: number;
+  dashboardStats?: DashboardStats;
+  isLoading?: boolean;
 }
 
 export function MetricsCards({
-  workspace,
-  workspacesCount,
+  dashboardStats,
+  isLoading = false,  
 }: MetricsCardsProps) {
-  // Mock data for metrics not available in backend yet or to be calculated
-  // We use existing data where possible
-  const totalWorkspaces = workspacesCount || 0;
-  const totalPersonas = 7; // Mock for now, will connect to persona list length if available
-  const totalArticles = workspace?.content_count ?? 24;
-  const publishedArticles = 12; // Mock
-  const totalMembers =
-    workspace?.members_count ?? workspace?.team_metrics?.total_members ?? 4;
+  // Use real API data from dashboard stats
+  const totalPersonas = dashboardStats?.personas ?? 0;
+  const totalArticles = dashboardStats?.content.total ?? 0;
+  const publishedArticles = dashboardStats?.content.published ?? 0;
+  const totalMembers = dashboardStats?.members ?? 0;
 
   const metrics = [
-    {
-      label: "Total Workspaces",
-      value: totalWorkspaces,
-      change: "+2.5%",
-      isPositive: true,
-    },
     {
       label: "Total Personas",
       value: totalPersonas,
@@ -47,7 +38,6 @@ export function MetricsCards({
       isPositive: true,
     },
     {
-      // Added 5th card as requested
       label: "Total Members",
       value: totalMembers,
       change: "+1.2%",
@@ -55,10 +45,11 @@ export function MetricsCards({
     },
   ];
 
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-      {metrics.map((metric) => (
-        <Card key={metric.label}>
+      {metrics.map((metric, index) => (
+        <Card key={index}>
           <CardContent className="p-6">
             <div className="flex flex-col gap-4">
               <div>

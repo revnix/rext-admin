@@ -91,9 +91,9 @@ const theme = {
     ol: "list-decimal ml-4 mb-2",
     listitem: "ml-1",
   },
-  quote: "border-l-4 border-gray-300 pl-4 italic mb-2",
-  code: "bg-gray-100 p-1 rounded font-mono text-sm",
-  link: "text-blue-500 hover:underline cursor-pointer",
+  quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
+  code: "bg-muted p-1 rounded font-mono text-sm",
+  link: "text-primary hover:underline cursor-pointer",
   text: {
     bold: "font-bold",
     italic: "italic",
@@ -143,8 +143,8 @@ const ToolbarButton = ({
     }}
     disabled={disabled}
     className={cn(
-      "p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-      active ? "bg-gray-200 text-black" : "text-gray-600",
+      "p-2 rounded hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+      active ? "bg-muted text-foreground" : "text-muted-foreground",
     )}
     title={title}
     type="button"
@@ -340,7 +340,7 @@ function ToolbarPlugin() {
   };
 
   return (
-    <div className="flex items-center gap-1 border-b p-2 mb-2 sticky top-0 bg-white z-10 flex-wrap">
+    <div className="flex items-center gap-1 border-b border-border p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex-wrap">
       <ToolbarButton
         active={false}
         onClick={() => {
@@ -627,10 +627,10 @@ export default function LexicalEditor({
         />
         <div
           className={cn(
-            "border rounded-md relative min-h-[200px] bg-white text-black overflow-hidden flex flex-col",
+            "border rounded-md relative min-h-[200px] bg-background text-foreground overflow-hidden flex flex-col",
             readOnly
               ? "border-none shadow-none bg-transparent"
-              : "border-slate-200 shadow-sm",
+              : "border-border shadow-sm",
           )}
         >
           {!readOnly && <ToolbarPlugin />}

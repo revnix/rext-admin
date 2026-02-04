@@ -58,7 +58,7 @@ export function SuggestionsSection({
         type="button"
         variants={itemVariants}
         onClick={() => onSelect(primaryKeyword)}
-        className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-white p-4 group transition-all duration-200 hover:border-primary/60 hover:shadow-sm"
+        className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-card p-4 group transition-all duration-200 hover:border-primary/60 hover:shadow-sm"
       >
         <span className="absolute left-0 top-0 h-full w-1 bg-primary" />
         <div className="flex items-center justify-between">
@@ -77,10 +77,10 @@ export function SuggestionsSection({
       <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-3">
         <motion.div
           variants={itemVariants}
-          className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between transition-all"
+          className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between transition-all"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-400">Difficulty</span>
+            <span className="text-sm font-medium text-muted-foreground">Difficulty</span>
             <Zap className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 flex items-center justify-center">
@@ -91,10 +91,10 @@ export function SuggestionsSection({
         <div className="flex flex-col gap-3">
           <motion.div
             variants={itemVariants}
-            className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all"
+            className="bg-card border border-border rounded-xl p-4 h-full flex flex-col justify-between transition-all"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-400">Search Intent</span>
+              <span className="text-sm font-medium text-muted-foreground">Search Intent</span>
               <Compass className="w-4 h-4 text-primary" />
             </div>
             <div className="flex items-center gap-3">
@@ -134,10 +134,10 @@ export function SuggestionsSection({
 
           <motion.div
             variants={itemVariants}
-            className="bg-white border border-gray-200 rounded-xl p-4 h-full flex flex-col justify-between transition-all"
+            className="bg-card border border-border rounded-xl p-4 h-full flex flex-col justify-between transition-all"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-400">Monthly Volume</span>
+              <span className="text-sm font-medium text-muted-foreground">Monthly Volume</span>
               <TrendingUp className="w-4 h-4 text-blue-500" />
             </div>
             <AnimatePresence mode="wait">
@@ -192,7 +192,7 @@ export function SuggestionsSection({
                 <Button
                   variant="outline"
                   onClick={() => onSelect(kw)}
-                  className="bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-all ease-in-out duration-300"
+                  className="bg-muted hover:bg-accent rounded-full text-sm transition-all ease-in-out duration-300"
                 >
                   <strong>{kw}</strong>
                 </Button>

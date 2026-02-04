@@ -363,10 +363,10 @@ export function DataTable<
             <div className="flex flex-wrap items-center gap-2">
               {showSearch && (
                 <div className="relative flex-1 min-w-0 md:flex-none md:w-80">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={searchPlaceholder}
-                    className="pl-9 pr-9 w-full bg-white border-slate-200 focus-visible:ring-slate-400"
+                    className="pl-9 pr-9 w-full"
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     disabled={!hasData}
@@ -375,11 +375,11 @@ export function DataTable<
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-slate-100 rounded-full"
+                      className="absolute right-1 top-1 h-7 w-7 p-0 rounded-full"
                       onClick={handleClearSearch}
                       disabled={!hasData}
                     >
-                      <X className="h-3 w-3 text-slate-400" />
+                      <X className="h-3 w-3 text-muted-foreground" />
                     </Button>
                   )}
                 </div>
@@ -392,18 +392,18 @@ export function DataTable<
           {/* Active Filters Display */}
           {columnFilters.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-4">
-              <span className="text-sm font-medium text-slate-500">
+              <span className="text-sm font-medium text-muted-foreground">
                 Active filters:
               </span>
               {columnFilters.map((filter) => (
                 <Badge
                   key={`${filter.columnKey}-${filter.operator}`}
                   variant="secondary"
-                  className="text-xs bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  className="text-xs"
                 >
                   {filter.label}
                   <X
-                    className="ml-1 h-3 w-3 cursor-pointer text-slate-400 hover:text-red-500"
+                    className="ml-1 h-3 w-3 cursor-pointer text-muted-foreground hover:text-destructive"
                     onClick={() => handleRemoveFilter(filter.columnKey)}
                   />
                 </Badge>
@@ -412,7 +412,7 @@ export function DataTable<
                 variant="ghost"
                 size="sm"
                 onClick={handleClearAllFilters}
-                className="h-6 px-2 text-xs text-slate-500 hover:text-slate-800"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
                 Clear all
               </Button>
@@ -449,7 +449,7 @@ export function DataTable<
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`h-6 w-6 p-0 ${getColumnFilter(column.key) ? "text-primary" : "text-slate-400 hover:text-slate-600"}`}
+                                className={`h-6 w-6 p-0 ${getColumnFilter(column.key) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                               >
                                 <Filter className="h-3 w-3" />
                               </Button>
@@ -466,7 +466,7 @@ export function DataTable<
                     <TableRow
                       key={"id" in row ? (row.id as string) : `row-${index}`}
                       className={`group ${
-                        onRowClick ? "cursor-pointer hover:bg-slate-50/60" : ""
+                        onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
                       }`}
                       onClick={() => onRowClick?.(row)}
                     >
@@ -497,7 +497,7 @@ export function DataTable<
               {/* Pagination */}
               {(totalPages > 1 || pageSizeOptions.length > 1) && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-2">
-                  <div className="flex items-center gap-4 text-sm text-slate-500">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     {pageSizeOptions.length > 1 && (
                       <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
@@ -505,7 +505,7 @@ export function DataTable<
                           value={currentPageSize.toString()}
                           onValueChange={handlePageSizeChange}
                         >
-                          <SelectTrigger className="h-8 w-16 border-slate-200">
+                          <SelectTrigger className="h-8 w-16">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -543,7 +543,7 @@ export function DataTable<
                           setCurrentPage(Math.max(1, currentPage - 1))
                         }
                         disabled={currentPage === 1}
-                        className="h-8 w-8 p-0 border-slate-200"
+                        className="h-8 w-8 p-0"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -570,7 +570,7 @@ export function DataTable<
                                   currentPage === pageNum ? "default" : "ghost"
                                 }
                                 size="sm"
-                                className={`h-8 w-8 p-0 ${currentPage !== pageNum ? "text-slate-500 hover:bg-slate-100" : ""}`}
+                                className="h-8 w-8 p-0"
                                 onClick={() => setCurrentPage(pageNum)}
                               >
                                 {pageNum}
@@ -587,7 +587,7 @@ export function DataTable<
                           setCurrentPage(Math.min(totalPages, currentPage + 1))
                         }
                         disabled={currentPage === totalPages}
-                        className="h-8 w-8 p-0 border-slate-200"
+                        className="h-8 w-8 p-0"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>

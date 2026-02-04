@@ -27,6 +27,7 @@ export type { EmailTemplate };
 
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
+import { createDashboardNamespace } from "./dashboard";
 import { createKnowledgeNamespace } from "./knowledge";
 import { createLicensesClient } from "./licenses";
 import { createMediaNamespace } from "./media";
@@ -63,6 +64,7 @@ function createApiClient() {
     // Feature namespaces
     topics: createTopicsNamespace(client),
     content: createContentNamespace(client),
+    dashboard: createDashboardNamespace(client),
     workspaces: createWorkspacesNamespace(client),
     knowledge: createKnowledgeNamespace(client),
     media: createMediaNamespace(client),
