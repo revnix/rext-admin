@@ -29,7 +29,7 @@ export function createPersonasNamespace(client: ApiClient) {
         `/api/v1/workspaces/${workspaceId}/personas/${personaId}`,
         {
           method: "GET",
-        }
+        },
       );
       // Backend returns persona data directly, wrap it for consistency
       return { persona: response };

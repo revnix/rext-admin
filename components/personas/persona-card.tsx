@@ -42,7 +42,10 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   const avatarColor = colors[colorIndex];
 
   return (
-    <Link href={`/w/${workspaceSlug}/personas/${persona.id}`} className="block h-full">
+    <Link
+      href={`/w/${workspaceSlug}/personas/${persona.id}`}
+      className="block h-full"
+    >
       <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border bg-card flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
           <div className="flex items-center gap-3">
@@ -58,7 +61,9 @@ export function PersonaCard({ persona }: PersonaCardProps) {
             {persona.name}
           </CardTitle>
           <CardDescription className="line-clamp-2 min-h-[2.5rem]">
-            {persona.professional_title || persona.description || "No description provided."}
+            {persona.professional_title ||
+              persona.description ||
+              "No description provided."}
           </CardDescription>
         </CardContent>
         <CardFooter className="flex items-center p-6 pt-0 mt-auto border-none">

@@ -120,7 +120,7 @@ export function LibraryView({ onSelectKeyword, onBack }: LibraryViewProps) {
               "cursor-pointer transition-all duration-200 border-2 hover:border-primary/50",
               selectedId === item.id
                 ? "border-primary bg-primary/5"
-                : "border-border/50 bg-card"
+                : "border-border/50 bg-card",
             )}
           >
             <div className="p-5 space-y-3">
@@ -133,7 +133,7 @@ export function LibraryView({ onSelectKeyword, onBack }: LibraryViewProps) {
                       ? "bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-200"
                       : item.difficulty === "Medium"
                         ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-200"
-                        : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200"
+                        : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200",
                   )}
                 >
                   {item.difficulty}
@@ -144,10 +144,14 @@ export function LibraryView({ onSelectKeyword, onBack }: LibraryViewProps) {
               </div>
 
               <div>
-                <h3 className={cn(
-                  "font-bold text-lg leading-tight mb-1 transition-colors",
-                  selectedId === item.id ? "text-primary" : "text-card-foreground"
-                )}>
+                <h3
+                  className={cn(
+                    "font-bold text-lg leading-tight mb-1 transition-colors",
+                    selectedId === item.id
+                      ? "text-primary"
+                      : "text-card-foreground",
+                  )}
+                >
                   {item.keyword}
                 </h3>
                 <p className="text-sm text-muted-foreground">
@@ -161,8 +165,12 @@ export function LibraryView({ onSelectKeyword, onBack }: LibraryViewProps) {
 
       {filteredKeywords.length === 0 && (
         <div className="text-center py-12 border-2 border-dashed border-muted rounded-xl bg-muted/30">
-          <p className="text-muted-foreground font-medium">No keywords found.</p>
-          <p className="text-sm text-muted-foreground/80 mt-1">Try searching for something else.</p>
+          <p className="text-muted-foreground font-medium">
+            No keywords found.
+          </p>
+          <p className="text-sm text-muted-foreground/80 mt-1">
+            Try searching for something else.
+          </p>
         </div>
       )}
 

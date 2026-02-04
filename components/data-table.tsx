@@ -360,33 +360,32 @@ export function DataTable<
       {(actions || showSearch || columnFilters.length > 0) && (
         <CardHeader className="px-0 pt-0 pb-6">
           {(actions || showSearch) && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {showSearch && (
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder={searchPlaceholder}
-                      className="pl-9 pr-9 w-80 bg-white border-slate-200 focus-visible:ring-slate-400"
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
+            <div className="flex flex-wrap items-center gap-2">
+              {showSearch && (
+                <div className="relative flex-1 min-w-0 md:flex-none md:w-80">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder={searchPlaceholder}
+                    className="pl-9 pr-9 w-full bg-white border-slate-200 focus-visible:ring-slate-400"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    disabled={!hasData}
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-slate-100 rounded-full"
+                      onClick={handleClearSearch}
                       disabled={!hasData}
-                    />
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-1 top-1 h-7 w-7 p-0 hover:bg-slate-100 rounded-full"
-                        onClick={handleClearSearch}
-                        disabled={!hasData}
-                      >
-                        <X className="h-3 w-3 text-slate-400" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">{actions}</div>
+                    >
+                      <X className="h-3 w-3 text-slate-400" />
+                    </Button>
+                  )}
+                </div>
+              )}
+              {/* Actions container: 'contents' on mobile unwraps children so they participate in the parent flex grid */}
+              <div className="contents md:flex md:items-center md:gap-2 md:ml-auto">{actions}</div>
             </div>
           )}
 
@@ -466,20 +465,21 @@ export function DataTable<
                   {paginatedData.map((row, index) => (
                     <TableRow
                       key={"id" in row ? (row.id as string) : `row-${index}`}
-                      className={`group ${onRowClick ? "cursor-pointer hover:bg-slate-50/60" : ""
-                        }`}
+                      className={`group ${
+                        onRowClick ? "cursor-pointer hover:bg-slate-50/60" : ""
+                      }`}
                       onClick={() => onRowClick?.(row)}
                     >
                       {columns.map((column) => (
                         <TableCell key={column.key}>
                           {column.cell
                             ? column.cell(
-                              (row as Record<string, unknown>)[column.key],
-                              row as T,
-                            )
+                                (row as Record<string, unknown>)[column.key],
+                                row as T,
+                              )
                             : ((row as Record<string, unknown>)[
-                              column.key
-                            ] as string) || "--"}
+                                column.key
+                              ] as string) || "--"}
                         </TableCell>
                       ))}
                       <TableCell className="w-[200px]">
@@ -567,9 +567,7 @@ export function DataTable<
                               <Button
                                 key={pageNum}
                                 variant={
-                                  currentPage === pageNum
-                                    ? "default"
-                                    : "ghost"
+                                  currentPage === pageNum ? "default" : "ghost"
                                 }
                                 size="sm"
                                 className={`h-8 w-8 p-0 ${currentPage !== pageNum ? "text-slate-500 hover:bg-slate-100" : ""}`}
@@ -613,11 +611,11 @@ export function DataTable<
             action={
               displayEmptyActions[0]
                 ? {
-                  label: displayEmptyActions[0].label,
-                  href: displayEmptyActions[0].href,
-                  onClick: displayEmptyActions[0].onClick,
-                  variant: displayEmptyActions[0].variant,
-                }
+                    label: displayEmptyActions[0].label,
+                    href: displayEmptyActions[0].href,
+                    onClick: displayEmptyActions[0].onClick,
+                    variant: displayEmptyActions[0].variant,
+                  }
                 : undefined
             }
           />

@@ -169,7 +169,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             { title: "Licenses", url: "/licenses" },
           ],
         },
-        { title: "Settings", url: "/settings", icon: Settings2 },
+        // { title: "Settings", url: "/settings", icon: Settings2 },
       ],
     },
   ];
@@ -226,8 +226,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar
@@ -235,7 +235,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
       style={{ "--sidebar-width-icon": "5rem" } as React.CSSProperties}
     >
-      <SidebarHeader>
+      <SidebarHeader className="hidden md:block">
         <WorkspaceSwitcher />
       </SidebarHeader>
 
