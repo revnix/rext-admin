@@ -46,7 +46,8 @@ export function ThemeProvider({
 
     const updateResolvedTheme = () => {
       if (theme === "system") {
-        setResolvedTheme(mediaQuery.matches ? "dark" : "light");
+        const systemTheme = mediaQuery.matches ? "dark" : "light";
+        setResolvedTheme(systemTheme);
       } else {
         setResolvedTheme(theme);
       }
@@ -58,10 +59,14 @@ export function ThemeProvider({
     return () => mediaQuery.removeEventListener("change", updateResolvedTheme);
   }, [theme]);
 
-  // Apply theme class to document
+  // Apply theme class to document - always apply either 'light' or 'dark'
   useEffect(() => {
     const root = window.document.documentElement;
+
+    // Remove both classes first
     root.classList.remove("light", "dark");
+
+    // Apply the resolved theme class
     root.classList.add(resolvedTheme);
   }, [resolvedTheme]);
 

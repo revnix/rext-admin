@@ -72,7 +72,9 @@ export function EditableBrandVoiceCard({
       setFormData(toFormData(updated));
       // Invalidate both ID and slug based queries to ensure UI updates regardless of which was used as the key
       queryClient.invalidateQueries({ queryKey: ["workspace", workspace.id] });
-      queryClient.invalidateQueries({ queryKey: ["workspace", workspace.slug] });
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspace.slug],
+      });
       toast.success("Brand voice updated successfully");
       setIsEditing(false);
     },

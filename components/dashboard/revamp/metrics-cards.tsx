@@ -10,7 +10,7 @@ interface MetricsCardsProps {
 
 export function MetricsCards({
   dashboardStats,
-  isLoading = false,  
+  isLoading: _isLoading = false,
 }: MetricsCardsProps) {
   // Use real API data from dashboard stats
   const totalPersonas = dashboardStats?.personas ?? 0;
@@ -45,11 +45,10 @@ export function MetricsCards({
     },
   ];
 
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {metrics.map((metric, index) => (
-        <Card key={index}>
+      {metrics.map((metric, _index) => (
+        <Card key={metric.label}>
           <CardContent className="p-6">
             <div className="flex flex-col gap-4">
               <div>

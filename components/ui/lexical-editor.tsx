@@ -572,25 +572,28 @@ export default function LexicalEditor({
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
 
   // We use useMemo to ensure the initialConfig is stable.
-  const initialConfig = useMemo(() => ({
-    namespace: "my-editor",
-    theme,
-    nodes: NODES,
-    readOnly: readOnly,
-    onError: (error: Error) => {
-      console.error(error);
-    },
-    editorState: (editor: unknown) => {
-      // Convert initial markdown to editor state
-      (editor as { update: (fn: () => void) => void }).update(() => {
-        if (initialValue) {
-          try {
-            $convertFromMarkdownString(initialValue, TRANSFORMERS);
-          } catch (_e) { }
-        }
-      });
-    },
-  }), [readOnly]); // Only recreate if readOnly status changes (which usually corresponds to a remount anyway)
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "my-editor",
+      theme,
+      nodes: NODES,
+      readOnly: readOnly,
+      onError: (_error: Error) => {
+        // console.error(error);
+      },
+      editorState: (editor: unknown) => {
+        // Convert initial markdown to editor state
+        (editor as { update: (fn: () => void) => void }).update(() => {
+          if (initialValue) {
+            try {
+              $convertFromMarkdownString(initialValue, TRANSFORMERS);
+            } catch (_e) {}
+          }
+        });
+      },
+    }),
+    [readOnly, initialValue],
+  ); // Only recreate if readOnly status changes (which usually corresponds to a remount anyway)
 
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {

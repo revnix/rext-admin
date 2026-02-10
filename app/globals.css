@@ -273,73 +273,6 @@
   /* Brand.600 */
 }
 
-/* Apply dark theme based on system preference OR when .dark class is present */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0c111d;
-    /* Gray.950 */
-    --foreground: #f9fafb;
-    /* Gray.50 */
-    --card: #1d2939;
-    /* Gray.800 */
-    --card-foreground: #f9fafb;
-    /* Gray.50 */
-    --popover: #1d2939;
-    /* Gray.800 */
-    --popover-foreground: #f9fafb;
-    /* Gray.50 */
-    --primary: #3641f5;
-    /* Brand.600 */
-    --primary-foreground: #ffffff;
-    --secondary: #344054;
-    /* Gray.700 */
-    --secondary-foreground: #f9fafb;
-    /* Gray.50 */
-    --muted: #344054;
-    /* Gray.700 */
-    --muted-foreground: #98a2b3;
-    /* Gray.400 */
-    --accent: #344054;
-    /* Gray.700 */
-    --accent-foreground: #f9fafb;
-    /* Gray.50 */
-    --destructive: #f97066;
-    /* Error.400 */
-    --destructive-foreground: #ffffff;
-    --border: #344054;
-    /* Gray.700 */
-    --input: #475467;
-    /* Gray.600 */
-    --ring: #465fff;
-    /* Brand.500 */
-    --chart-1: #465fff;
-    /* Brand.500 */
-    --chart-2: #32d583;
-    /* Success.400 */
-    --chart-3: #fdb022;
-    /* Warning.400 */
-    --chart-4: #7a5af8;
-    /* Purple.500 */
-    --chart-5: #f670c7;
-    /* Pink.400 */
-    --sidebar: #1d2939;
-    /* Gray.800 */
-    --sidebar-foreground: #f9fafb;
-    /* Gray.50 */
-    --sidebar-primary: #465fff;
-    /* Brand.500 */
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #344054;
-    /* Gray.700 */
-    --sidebar-accent-foreground: #f9fafb;
-    /* Gray.50 */
-    --sidebar-border: #344054;
-    /* Gray.700 */
-    --sidebar-ring: #465fff;
-    /* Brand.500 */
-  }
-}
-
 .dark {
   --background: #0c111d;
   /* Gray.950 */
@@ -450,7 +383,7 @@
 
 /* Micro-interactions (Antigravity Standard) */
 .btn-active {
-  @apply active:scale-95 transition-transform duration-200;
+  @apply transition-transform duration-200;
 }
 
 .card-interactive {
@@ -1591,10 +1524,13 @@
 
 /* Hide scrollbar while maintaining scroll functionality */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }

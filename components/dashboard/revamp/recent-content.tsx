@@ -18,7 +18,6 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
       name: "10 Best Practices for SEO",
       category: "Blog Post",
       status: "Published",
-      views: "1.2k",
       author: {
         name: "Dr. Sarah Mitchell",
         image: "/avatars/01.png",
@@ -30,7 +29,6 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
       name: "Product Launch Guide",
       category: "Guide",
       status: "Draft",
-      views: "-",
       author: {
         name: "Maria Garcia",
         image: "/avatars/02.png",
@@ -42,7 +40,6 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
       name: "React Performance Tips",
       category: "Technical",
       status: "Under Review",
-      views: "850",
       author: {
         name: "Tom Wilson",
         image: "/avatars/03.png",
@@ -54,7 +51,6 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
       name: "Q4 Marketing Strategy",
       category: "Internal",
       status: "Draft",
-      views: "-",
       author: {
         name: "Sarah Mitchell",
         image: "/avatars/01.png",
@@ -99,7 +95,6 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
                 <th className="px-6 py-3">Author</th>
                 <th className="px-6 py-3">Type</th>
                 <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Views</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -133,9 +128,6 @@ export function RecentContent({ workspace: _workspace }: RecentContentProps) {
                     >
                       {item.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-muted-foreground">
-                    {item.views}
                   </td>
                 </tr>
               ))}

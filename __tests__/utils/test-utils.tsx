@@ -237,14 +237,11 @@ export function customRender(ui: ReactElement, options?: CustomRenderOptions) {
 // RE-EXPORT TESTING LIBRARY
 // ============================================================================
 
-export {
-  act,
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-  renderHook,
-} from "@testing-library/react";
+import * as rtl from "@testing-library/react";
+
+export const { act, renderHook } = rtl;
+// biome-ignore lint/suspicious/noExplicitAny: Temporary fix for missing types in @testing-library/react
+export const { fireEvent, screen, waitFor, within } = rtl as any;
 export { customRender as render };
 
 // ============================================================================

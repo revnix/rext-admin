@@ -19,7 +19,13 @@ interface QuickActionsProps {
 export function QuickActions({ workspace }: QuickActionsProps) {
   const slug = workspace?.slug || "default";
 
-  const actions = [
+  const actions: Array<{
+    label: string;
+    icon: typeof UserPlus;
+    href: string;
+    color: string;
+    external?: boolean;
+  }> = [
     {
       label: "Invite Team Member",
       icon: UserPlus,
@@ -29,7 +35,10 @@ export function QuickActions({ workspace }: QuickActionsProps) {
     {
       label: "Create New Persona",
       icon: FileEdit,
-      href: slug !== "default" ? `/w/${slug}/personas` : "/personas",
+      href:
+        slug !== "default"
+          ? workspaceRoutes.persona_create(slug)
+          : "/personas/create",
       color:
         "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400",
     },
@@ -47,6 +56,7 @@ export function QuickActions({ workspace }: QuickActionsProps) {
       href: workspace?.url || "#",
       color:
         "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400",
+      external: true,
     },
   ];
 
@@ -63,6 +73,9 @@ export function QuickActions({ workspace }: QuickActionsProps) {
             <Link
               key={action.href}
               href={action.href}
+              {...(action.external
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
               className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
             >
               <div className="flex items-center gap-4">

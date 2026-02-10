@@ -394,7 +394,7 @@ describe("SuccessConfirmationDialog Component", () => {
       const buttons = screen.getAllByRole("button");
 
       // All buttons should be focusable
-      buttons.forEach((button) => {
+      buttons.forEach((button: HTMLElement) => {
         expect(button).not.toHaveAttribute("tabindex", "-1");
       });
     });
