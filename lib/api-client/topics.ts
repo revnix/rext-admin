@@ -5,7 +5,7 @@
  */
 
 import type { GeneratedTopic } from "@/types/topic-builder";
-import type { ApiClient } from "./core";
+import { type ApiClient, ApiError } from "./core";
 
 export function createTopicsNamespace(client: ApiClient) {
   return {
@@ -37,6 +37,9 @@ export function createTopicsNamespace(client: ApiClient) {
           },
         )
         .catch((error) => {
+          if (error instanceof ApiError && error.statusCode === 404) {
+            return null;
+          }
           if (error instanceof Error && error.message.includes("404")) {
             return null;
           }
