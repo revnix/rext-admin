@@ -1,7 +1,8 @@
 "use client";
 
 import { AlertTriangle, Clock } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { performLogout } from "@/lib/logout-utils";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export function SessionTimeoutWarning() {
   // Handle session expiry
   useEffect(() => {
     if (sessionExpired && session) {
-      signOut({ redirect: true, callbackUrl: "/login?session=expired" });
+      performLogout("/login?session=expired");
     }
   }, [sessionExpired, session]);
 
@@ -47,7 +48,7 @@ export function SessionTimeoutWarning() {
   };
 
   const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: "/login" });
+    await performLogout("/login");
   };
 
   // Don't render if session doesn't exist or has error
@@ -58,7 +59,7 @@ export function SessionTimeoutWarning() {
   return (
     <>
       {/* Warning Dialog */}
-      <Dialog open={showWarning} onOpenChange={() => {}}>
+      <Dialog open={showWarning} onOpenChange={() => { }}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}

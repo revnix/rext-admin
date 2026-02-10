@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { performLogout } from "@/lib/logout-utils";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -64,14 +64,14 @@ export function AccountDeactivation() {
     onSuccess: async (data) => {
       toast.success(
         data.message ||
-          "Your account has been deactivated and will be deleted in 14 days.",
+        "Your account has been deactivated and will be deleted in 14 days.",
       );
 
       // Wait a moment to show the toast
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Sign out and redirect
-      await signOut({ callbackUrl: "/auth/signin" });
+      await performLogout("/auth/signin");
     },
     onError: (error: Error) => {
       toast.error(
