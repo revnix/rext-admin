@@ -218,10 +218,6 @@ export function ContentEditor({
     schema_markup: {},
   });
 
-  useEffect(() => {
-    console.log("trustScore", trustScore)
-  }, [trustScore])
-
   const publishContent = async () => {
     if (!workspaceId) return;
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { useReducer } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -59,19 +59,12 @@ async function* streamFromSSE(
     throw new Error(`Stream request failed: ${res.status}`);
   }
 
-  console.log("res", res)
-
   const reader = res.body.getReader();
-  console.log("reader", reader)
   const decoder = new TextDecoder();
-  console.log("decoder", decoder)
   let buffer = "";
-  console.log("buffer", buffer)
 
   while (true) {
     const { done, value } = await reader.read();
-    console.log("done", done)
-    console.log("value", value)
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
@@ -336,19 +329,6 @@ export function FreshGenerationView({
     currentLoadingSteps,
     keywordDifficulty,
   } = state;
-  const [contentMarkdown, setContentMarkdown] = useState("");
-
-  useEffect(() => {
-    if (allContent?.body_markdown) {
-      setContentMarkdown(allContent.body_markdown);
-    }
-  }, [allContent?.body_markdown]);
-
-  useEffect(() => {
-    if (keywordDifficulty) {
-      console.log("keywordDifficulty", keywordDifficulty);
-    }
-  }, [keywordDifficulty])
 
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
@@ -363,14 +343,12 @@ export function FreshGenerationView({
 
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
-        console.log("updates", updates);
 
         if (updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty) {
           dispatch({
             type: "SET_KEYWORD_DIFFICULTY",
             payload: updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd,
           });
-          console.log("keywordDifficulty", updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd);
         }
 
         if (updates?.generate_content?.content?.final_content) {
@@ -694,7 +672,7 @@ export function FreshGenerationView({
           seoScore={seoScore}
           trustScore={trustScore}
           eeatData={eeatData}
-          generatedContent={generatedContent || contentMarkdown}
+          generatedContent={generatedContent}
           isEditing={isEditing}
           userKeyword={userKeyword}
           outline={outline}
@@ -703,7 +681,6 @@ export function FreshGenerationView({
           }
           onContentChange={(val) => {
             dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-            setContentMarkdown(val);
           }}
         />
       )}

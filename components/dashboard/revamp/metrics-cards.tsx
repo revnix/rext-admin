@@ -47,7 +47,7 @@ export function MetricsCards({
 
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric, index) => (
         <Card key={index}>
           <CardContent className="p-6">
@@ -60,11 +60,6 @@ export function MetricsCards({
               <div className="flex items-end justify-between">
                 <span className="text-2xl font-bold text-foreground">
                   {metric.value}
-                </span>
-                <span
-                  className={`text-xs font-medium px-2 py-1 rounded-full ${metric.isPositive ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}
-                >
-                  {metric.change}
                 </span>
               </div>
             </div>
