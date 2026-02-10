@@ -16,6 +16,40 @@ let authHeadersCache: {
 } | null = null;
 const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 
+export const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+
+export function normalizeRole(role: string): string {
+  return String(role).toLowerCase().replace(/\s+/g, "_");
+}
+
+export function extractNormalizedRoles(data: {
+  roles?: string[] | null;
+  role?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}): string[] {
+  const rawRoles: string[] = Array.isArray(data.roles)
+    ? data.roles
+    : data.role
+      ? [data.role]
+      : [];
+  return rawRoles.map(normalizeRole);
+}
+
+export function getPrimaryRole(data: {
+  roles?: string[] | null;
+  role?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}): string {
+  const userRoles = extractNormalizedRoles(data);
+  return (
+    ROLE_HIERARCHY.find((role) => userRoles.includes(role)) ||
+    userRoles[0] ||
+    "user"
+  );
+}
+
 /**
  * Get authentication headers for API requests
  * Works in both client and server components

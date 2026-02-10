@@ -91,7 +91,7 @@ export function useAuthSession() {
       }
 
       // 5. Force a hard reload to ensure all in-memory state is wiped.
-      // This is the only way to guarantee Zinc (Zustand) and NextAuth internal
+      // This is the only way to guarantee Zustand and NextAuth internal
       // states are completely reset and don't interfere with the next login.
       // Using router.push or router.refresh is insufficient for a secure/clean logout.
       window.location.href = "/login";
