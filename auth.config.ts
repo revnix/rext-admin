@@ -3,6 +3,7 @@ import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import { getPrimaryRole } from "@/lib/auth-utils";
@@ -182,9 +183,9 @@ export default {
     }),
   ],
   pages: {
-    signIn: "/login",
-    signOut: "/login",
-    error: "/login",
+    signIn: AUTH_PAGES.LOGIN,
+    signOut: AUTH_PAGES.LOGIN,
+    error: AUTH_PAGES.LOGIN,
   },
   callbacks: {
     async jwt({ token, user, account }) {
@@ -355,15 +356,7 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const isOnAuthPage = [
-        "/login",
-        "/signup",
-        "/forgot-password",
-        "/reset-password",
-        "/verify-email",
-        "/accept-invitation",
-        "/accept-admin-invitation",
-      ].some((path) => nextUrl.pathname.startsWith(path));
+      const isOnAuthPage = isAuthPage(nextUrl.pathname);
 
       // If refresh error, force redirect to login
       if (hasRefreshError && !isOnAuthPage) {
