@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function ImpersonationBanner() {
   const router = useRouter();
@@ -39,12 +40,10 @@ export function ImpersonationBanner() {
       return await apiClient.impersonation.stop();
     },
     onSuccess: (data) => {
-      // Update tokens
-      if (data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-      }
-      if (data.refresh_token) {
-        localStorage.setItem("refresh_token", data.refresh_token);
+      // Store impersonation tokens in memory only (not localStorage)
+      const { setTokens } = useAuthStore.getState();
+      if (data.access_token && data.refresh_token) {
+        setTokens(data.access_token, data.refresh_token);
       }
 
       // Clear all queries to force refresh with new user context

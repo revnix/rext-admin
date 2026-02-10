@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface ImpersonateButtonProps {
   userId: string;
@@ -36,13 +37,11 @@ export function ImpersonateButton({
     mutationFn: async () => {
       return await apiClient.impersonation.start(userId);
     },
-    onSuccess: (data) => {
-      // Update tokens
-      if (data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-      }
-      if (data.refresh_token) {
-        localStorage.setItem("refresh_token", data.refresh_token);
+  onSuccess: (data) => {
+      // Store impersonation tokens in memory only (not localStorage)
+      const { setTokens } = useAuthStore.getState();
+      if (data.access_token && data.refresh_token) {
+        setTokens(data.access_token, data.refresh_token);
       }
 
       // Clear all queries to force refresh with new user context
