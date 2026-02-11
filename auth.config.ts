@@ -197,7 +197,7 @@ export default {
     error: "/login",
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -338,6 +338,24 @@ export default {
             token.picture = user.image;
           }
         }
+      }
+
+      // Handle session updates (e.g., impersonation)
+      if (trigger === "update" && session) {
+        if (session.accessToken) token.accessToken = session.accessToken;
+        if (session.refreshToken) token.refreshToken = session.refreshToken;
+
+        // Update user details if provided
+        if (session.user) {
+          if (session.user.id) token.id = session.user.id;
+          if (session.user.email) token.email = session.user.email;
+          if (session.user.name) token.name = session.user.name;
+          if (session.user.image) token.picture = session.user.image;
+          if (session.user.role) token.role = session.user.role;
+          if (session.user.permissions) token.permissions = session.user.permissions;
+        }
+
+        return token;
       }
 
       // If there's a previous refresh error, don't retry - just return the error token

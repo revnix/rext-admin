@@ -3,11 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
+import { log } from "@/lib/logger";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /**
  * Impersonation Banner Component
@@ -18,6 +20,7 @@ import { useAuthStore } from "@/stores/auth-store";
 export function ImpersonationBanner() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { update } = useSession();
   const { setTokens } = useAuthStore();
 
   // Check impersonation status
@@ -38,9 +41,30 @@ export function ImpersonationBanner() {
   // Stop impersonation mutation
   const stopImpersonationMutation = useMutation({
     mutationFn: () => apiClient.impersonation.stop(),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Update tokens to original user
       setTokens(data.access_token, data.refresh_token);
+
+      // Update NextAuth session with restored tokens
+      await update({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      });
+
+      // Fetch and update original user profile
+      try {
+        const profile = await apiClient.profile.get();
+        await update({
+          user: {
+            id: profile.id,
+            email: profile.email,
+            name: profile.full_name || profile.display_name,
+            image: profile.avatar_url,
+          },
+        });
+      } catch (error) {
+        log.error("Failed to fetch original profile during impersonation stop", error);
+      }
 
       toast.success("Impersonation stopped", {
         description: "You have returned to your original account",
@@ -67,8 +91,8 @@ export function ImpersonationBanner() {
   }
 
   return (
-    <Alert className="rounded-none border-x-0 border-t-0 bg-yellow-50 dark:bg-yellow-950/20 border-yellow-600 dark:border-yellow-500">
-      <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+    <Alert className="rounded-none border-x-0 border-t-0 bg-amber-200 dark:bg-amber-950/20 border-amber-600 dark:border-amber-500">
+      <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-2" />
       <AlertDescription className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-6 flex-1">
           <div className="flex items-center gap-2">
@@ -104,7 +128,7 @@ export function ImpersonationBanner() {
           size="sm"
           onClick={handleStopImpersonation}
           disabled={stopImpersonationMutation.isPending}
-          className="border-yellow-600 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
+          className="border-yellow-600 bg-yellow-100 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
         >
           <LogOut className="h-4 w-4 mr-2" />
           {stopImpersonationMutation.isPending
