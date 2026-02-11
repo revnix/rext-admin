@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
@@ -129,7 +130,12 @@ export default {
               errorData?.message ||
               "Invalid email or password";
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
-            return null;
+
+            // Throw CredentialsSignin with the message as the code
+            // This allows the client to access the specific message
+            const error = new CredentialsSignin(errorMessage);
+            error.code = errorMessage;
+            throw error;
           }
 
           const responseData = await response.json();
