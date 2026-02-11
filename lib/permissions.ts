@@ -103,12 +103,40 @@ export function checkAnyRole(
 export const ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
-  MANAGER: "manager",
-  DEVELOPER: "developer",
+  WORKSPACE_OWNER: "workspace_owner",
+  WORKSPACE_ADMIN: "workspace_admin",
+  EDITOR: "editor",
   VIEWER: "viewer",
+  SUPPORT: "support",
   USER: "user",
-  GUEST: "guest",
 } as const;
+
+export type RoleName = (typeof ROLES)[keyof typeof ROLES];
+
+
+export const ROLE_HIERARCHY: RoleName[] = [
+  ROLES.SUPER_ADMIN,
+  ROLES.ADMIN,
+  ROLES.WORKSPACE_OWNER,
+  ROLES.WORKSPACE_ADMIN,
+  ROLES.EDITOR,
+  ROLES.VIEWER,
+  ROLES.SUPPORT,
+  ROLES.USER,
+];
+
+export function normalizeRoles(rawRoles: string[]): string[] {
+  return rawRoles.map((r) => String(r).toLowerCase().replace(/\s+/g, "_"));
+}
+
+export function getPrimaryRole(rawRoles: string[]): string {
+  const normalized = normalizeRoles(rawRoles);
+  return (
+    ROLE_HIERARCHY.find((role) => normalized.includes(role)) ||
+    normalized[0] ||
+    "viewer"
+  );
+}
 
 /**
  * Permission constants matching backend RBAC system

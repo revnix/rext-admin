@@ -5,8 +5,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
-
-const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+import { getPrimaryRole } from "./lib/permissions";
 
 /**
  * Refresh the access token using the refresh token
@@ -144,18 +143,13 @@ export default {
 
           // Determine primary role based on hierarchy
           // Support both `roles: string[]` and `role: string` shapes; normalize casing
+
           const rawRoles: string[] = Array.isArray(data.user.roles)
             ? data.user.roles
             : data.user.role
               ? [data.user.role]
               : [];
-          const userRoles = rawRoles.map((r: string) =>
-            String(r).toLowerCase().replace(/\s+/g, "_"),
-          );
-          const primaryRole =
-            ROLE_HIERARCHY.find((role) => userRoles.includes(role)) ||
-            userRoles[0] ||
-            "user";
+          const primaryRole = getPrimaryRole(rawRoles);
 
           // Return user object with backend tokens, role, and permissions
           return {
@@ -311,16 +305,7 @@ export default {
               : oauthData.user.role
                 ? [oauthData.user.role]
                 : [];
-            const oauthUserRoles = oauthRawRoles.map((r: string) =>
-              String(r).toLowerCase().replace(/\s+/g, "_"),
-            );
-            token.role =
-              ROLE_HIERARCHY.find((role) => oauthUserRoles.includes(role)) ||
-              oauthUserRoles[0] ||
-              "user";
-            token.permissions = oauthData.user.permissions || [];
-            // Set token expiry for OAuth logins (24 hours)
-            token.accessTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+            token.role = getPrimaryRole(oauthRawRoles);
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
