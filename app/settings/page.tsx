@@ -5,7 +5,9 @@ import { DisplayPreferencesSection } from "@/components/settings/display-prefere
 import { NotificationPreferencesSection } from "@/components/settings/notification-preferences-section";
 import { PrivacyDataSection } from "@/components/settings/privacy-data-section";
 import { ProfileSection } from "@/components/settings/profile-section";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { Separator } from "@/components/ui/separator";
+
 
 /**
  * Account & Preferences Page
@@ -31,16 +33,25 @@ export default function AccountPreferencesPage() {
           Manage your profile, display preferences, and notifications
         </p>
       </div>
-
-      <ProfileSection />
+      <APIErrorBoundary>
+        <ProfileSection />
+      </APIErrorBoundary>
       <Separator />
-      <DisplayPreferencesSection />
+      <APIErrorBoundary>
+        <DisplayPreferencesSection />
+      </APIErrorBoundary>
       <Separator />
-      <NotificationPreferencesSection />
+      <APIErrorBoundary>
+        <NotificationPreferencesSection />
+      </APIErrorBoundary>
       <Separator />
-      <PrivacyDataSection />
+      <APIErrorBoundary>
+        <PrivacyDataSection />
+      </APIErrorBoundary>
       <Separator />
-      <DangerZoneSection />
+      <APIErrorBoundary>
+        <DangerZoneSection />
+      </APIErrorBoundary>
     </div>
   );
 }

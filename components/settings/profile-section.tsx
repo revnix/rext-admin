@@ -15,16 +15,16 @@ import {
  */
 export function ProfileSection() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile Information</CardTitle>
-        <CardDescription>
-          Update your personal information and preferences
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ProfileEdit />
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>
+            Update your personal information and preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProfileEdit />
+        </CardContent>
+      </Card>
   );
 }

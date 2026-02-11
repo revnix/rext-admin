@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { APIErrorBoundary } from "../ui/error-boundary";
 
 /**
  * PrivacyDataSection Component
@@ -15,6 +16,7 @@ import {
  */
 export function PrivacyDataSection() {
   return (
+    <APIErrorBoundary>
     <Card>
       <CardHeader>
         <CardTitle>Privacy & Data</CardTitle>
@@ -26,5 +28,6 @@ export function PrivacyDataSection() {
         <PrivacySettings />
       </CardContent>
     </Card>
+    </APIErrorBoundary>
   );
 }

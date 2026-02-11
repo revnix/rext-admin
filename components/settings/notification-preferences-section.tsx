@@ -1,7 +1,7 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { NotificationPreferencesForm } from "@/components/notification-settings/notification-preferences";
 import {
   Card,
@@ -11,11 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
-import { log } from "@/lib/logger";
-import {
-  transformToApiResponse,
-  type NotificationPreferencesApiResponse,
-} from "@/schemas/notification-schemas";
 
 /**
  * NotificationPreferencesSection Component
@@ -24,28 +19,11 @@ import {
  * in-app notifications, digest settings, and category-specific toggles.
  */
 export function NotificationPreferencesSection() {
-  const [preferences, setPreferences] =
-    useState<NotificationPreferencesApiResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadPreferences() {
-      try {
-        const data = await apiClient.notifications.getPreferences();
-        setPreferences(data);
-      } catch (err) {
-        log.error("[NotificationPreferencesSection] Failed to load:", err);
-        setError("Failed to load notification preferences");
-        // Set defaults if backend not ready
-        setPreferences(transformToApiResponse());
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadPreferences();
-  }, []);
+  const { data: preferences, isLoading, error } = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: () => apiClient.notifications.getPreferences(),
+    throwOnError: true,
+  });
 
   if (isLoading) {
     return (
@@ -77,7 +55,7 @@ export function NotificationPreferencesSection() {
         {error && (
           <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 mb-6">
             <p className="text-sm text-yellow-800">
-              {error}. Using default preferences.
+              {error instanceof Error ? error.message : "An error occurred"}.
             </p>
           </div>
         )}

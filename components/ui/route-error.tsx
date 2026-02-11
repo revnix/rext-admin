@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { log } from "@/lib/logger";
+import { PageLayout } from "../page-layout";
 
 /**
  * Reusable Route Error Boundary Component
@@ -152,12 +153,18 @@ export function RouteError({
   );
 
   return (
+
     <div className={containerClasses}>
-      {layout === "container" ? (
-        <div className={innerWrapperClasses}>{content}</div>
-      ) : (
-        content
-      )}
+      <PageLayout title="">
+        <div className="min-h-[80vh] flex items-center justify-center">
+          {layout === "container" ? (
+            <div className={innerWrapperClasses}>{content}</div>
+          ) : (
+            content
+          )}
+        </div>
+      </PageLayout>
     </div>
+
   );
 }
