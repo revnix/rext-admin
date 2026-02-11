@@ -203,7 +203,7 @@ export default {
     error: "/login",
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -346,6 +346,28 @@ export default {
         }
       }
 
+      // Handle session extension on update trigger
+      if (trigger === "update") {
+        log.info("[Auth] Session update triggered manually");
+        if (token.refreshToken) {
+          log.info("[Auth] Refreshing backend token via refresh token...");
+          return await refreshAccessToken(token);
+        }
+
+        if (token.accessTokenExpires) {
+          log.info("[Auth] Extending session expiry manually...");
+          const expiryDuration = token.rememberMe
+            ? 30 * 24 * 60 * 60 * 1000 // 30 days
+            : 24 * 60 * 60 * 1000; // 24 hours
+          return {
+            ...token,
+            accessTokenExpires: Date.now() + expiryDuration,
+          };
+        }
+
+        return token;
+      }
+
       // If there's a previous refresh error, don't retry - just return the error token
       // This prevents infinite loops
       if (token.error === "RefreshAccessTokenError") {
@@ -373,6 +395,7 @@ export default {
         session.user.name = token.name as string;
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
+        session.accessTokenExpires = token.accessTokenExpires as number | undefined;
         session.user.role = token.role as string | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.error = token.error as string | undefined;

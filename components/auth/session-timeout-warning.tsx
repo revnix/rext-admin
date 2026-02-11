@@ -37,8 +37,20 @@ export function SessionTimeoutWarning() {
   const handleExtendSession = async () => {
     setIsExtending(true);
     try {
+      log.info("[Auth] Extending session...");
       // Force session update which will trigger token refresh
-      await update();
+      const updatedSession = await update();
+
+      if (updatedSession?.error === "RefreshAccessTokenError") {
+        log.error("[Auth] Session extension failed: Token refresh error");
+        await signOut({
+          redirect: true,
+          callbackUrl: "/login?error=SessionExpired",
+        });
+        return;
+      }
+
+      log.info("[Auth] Session extended successfully");
     } catch (error) {
       log.error("[Auth] Failed to extend session:", error);
     } finally {
