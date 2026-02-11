@@ -88,6 +88,7 @@ export type ReadabilityMetrics = {
 
 export type ContentReview = {
   seo_score: number;
+  trust_score?: TrustScore;
   readability_metrics: ReadabilityMetrics;
   eeat_score?: number;
   eeat_data?: EEATData;
@@ -134,6 +135,7 @@ export type SchemaMarkup = {
 
 export type TrustScore = {
   score: number,
+  trust_score: number,
   author_credibility: number,
   expertise: number,
   authority: number,
