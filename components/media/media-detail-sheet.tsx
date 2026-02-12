@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { mediaQueries } from "@/lib/query-keys";
 import type { Media } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 
@@ -90,7 +91,7 @@ export function MediaDetailSheet({
     },
     onSuccess: () => {
       toast.success("Media deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["media", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: mediaQueries.all(workspaceId) });
       onOpenChange(false);
       onDeleted?.();
     },
@@ -116,7 +117,7 @@ export function MediaDetailSheet({
     },
     onSuccess: () => {
       toast.success("Media updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["media", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: mediaQueries.all(workspaceId) });
       setIsEditing(false);
     },
     onError: (error: Error) => {
@@ -138,11 +139,7 @@ export function MediaDetailSheet({
 
   // Fetch media usage information
   const { data: usageResponse } = useQuery({
-    queryKey: ["media-usage", workspaceId, media?.id],
-    queryFn: () => {
-      if (!media?.id) return null;
-      return apiClient.media.getMediaUsage(workspaceId, media.id);
-    },
+    ...mediaQueries.mediaUsage(workspaceId, media?.id || ""),
     enabled: !!workspaceId && !!media?.id && open,
   });
 

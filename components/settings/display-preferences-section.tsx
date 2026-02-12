@@ -35,6 +35,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
+import { preferencesQueries } from "@/lib/query-keys";
 
 const preferencesSchema = z.object({
   date_format: z.enum(["iso", "us", "eu", "relative"]),
@@ -58,10 +59,7 @@ export function DisplayPreferencesSection() {
     data: preferences,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["preferences"],
-    queryFn: () => apiClient.preferences.get(),
-  });
+  } = useQuery(preferencesQueries.detail());
 
   // Initialize form with default values
   const form = useForm<PreferencesFormValues>({
@@ -73,14 +71,14 @@ export function DisplayPreferencesSection() {
     },
     values: preferences
       ? {
-          date_format: preferences.date_format as
-            | "iso"
-            | "us"
-            | "eu"
-            | "relative",
-          time_format: preferences.time_format as "24h" | "12h",
-          items_per_page: preferences.items_per_page,
-        }
+        date_format: preferences.date_format as
+          | "iso"
+          | "us"
+          | "eu"
+          | "relative",
+        time_format: preferences.time_format as "24h" | "12h",
+        items_per_page: preferences.items_per_page,
+      }
       : undefined,
   });
 
@@ -89,7 +87,7 @@ export function DisplayPreferencesSection() {
     mutationFn: (data: PreferencesFormValues) =>
       apiClient.preferences.update(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preferences"] });
+      queryClient.invalidateQueries({ queryKey: preferencesQueries.detail().queryKey });
       toast.success("Preferences saved successfully");
     },
     onError: (error: Error) => {

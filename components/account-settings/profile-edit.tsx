@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { profileQueries } from "@/lib/query-keys";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -63,10 +64,7 @@ export function ProfileEdit() {
     data: profile,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["profile"],
-    queryFn: () => apiClient.profile.get(),
-  });
+  } = useQuery(profileQueries.detail());
 
   // Initialize form with default values to prevent uncontrolled component warnings
   const form = useForm<ProfileFormValues>({
@@ -79,11 +77,11 @@ export function ProfileEdit() {
     },
     values: profile
       ? {
-          full_name: profile.full_name || "",
-          bio: profile.bio || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
+        full_name: profile.full_name || "",
+        bio: profile.bio || "",
+        language: profile.language || "en",
+        timezone: profile.timezone || "UTC",
+      }
       : undefined,
   });
 
@@ -91,7 +89,7 @@ export function ProfileEdit() {
   const updateMutation = useMutation({
     mutationFn: (data: ProfileFormValues) => apiClient.profile.update(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: profileQueries.detail().queryKey });
       toast.success("Profile updated successfully");
     },
     onError: (error: Error) => {
@@ -105,7 +103,7 @@ export function ProfileEdit() {
   const uploadAvatarMutation = useMutation({
     mutationFn: (file: FormData) => apiClient.profile.uploadAvatar(file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: profileQueries.detail().queryKey });
       toast.success("Avatar uploaded successfully");
       setAvatarPreview(null);
       setAvatarFile(null);
@@ -121,7 +119,7 @@ export function ProfileEdit() {
   const deleteAvatarMutation = useMutation({
     mutationFn: () => apiClient.profile.deleteAvatar(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: profileQueries.detail().queryKey });
       toast.success("Avatar removed successfully");
       setAvatarPreview(null);
       setAvatarFile(null);

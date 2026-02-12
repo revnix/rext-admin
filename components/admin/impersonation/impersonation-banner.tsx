@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
+import { impersonationQueries } from "@/lib/query-keys";
 
 export function ImpersonationBanner() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function ImpersonationBanner() {
 
   // Check impersonation status
   const { data: statusData } = useQuery({
-    queryKey: ["impersonation", "status"],
+    ...impersonationQueries.status(),
     queryFn: async () => {
       try {
         return await apiClient.impersonation.getStatus();

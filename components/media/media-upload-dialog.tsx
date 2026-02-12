@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { mediaQueries } from "@/lib/query-keys";
 import type { MediaUploadParams } from "@/lib/api-client/media";
 
 interface MediaUploadDialogProps {
@@ -43,8 +44,7 @@ export function MediaUploadDialog({
 
   // Fetch storage usage to check quota
   const { data: usageResponse } = useQuery({
-    queryKey: ["media-usage", workspaceId],
-    queryFn: () => apiClient.media.getUsage(workspaceId),
+    ...mediaQueries.usage(workspaceId),
     enabled: !!workspaceId && open,
     staleTime: 30 * 1000, // 30 seconds
   });
@@ -58,7 +58,7 @@ export function MediaUploadDialog({
     },
     onSuccess: (data) => {
       toast.success(data.message || "File uploaded successfully");
-      queryClient.invalidateQueries({ queryKey: ["media", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: mediaQueries.all(workspaceId) });
       handleClose();
       onUploaded?.();
     },
@@ -172,11 +172,10 @@ export function MediaUploadDialog({
               {!file ? (
                 <div
                   {...getRootProps()}
-                  className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                    isDragActive
+                  className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
-                  }`}
+                    }`}
                 >
                   <input {...getInputProps()} />
                   <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />

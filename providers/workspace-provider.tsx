@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
@@ -93,21 +94,13 @@ export function WorkspaceProvider({
     }
   }, [permissionsError, workspaceId]);
 
-  // Query workspace data
+  // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      // Use appropriate method based on identifier type
-      return isUuid
-        ? apiClient.workspaces.get(workspaceId)
-        : apiClient.workspaces.getBySlug(workspaceId);
-    },
-    enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...workspaceQueries.detail(workspaceId),
     retry: (failureCount, error) => {
       // Don't retry for 404, 401, or 403 errors
       const errorMessage = (error as Error)?.message || "";
@@ -250,7 +243,7 @@ export function useWorkspace(): WorkspaceContextType {
   if (!context) {
     throw new Error(
       "useWorkspace must be used within a WorkspaceProvider. " +
-        "Make sure your component is wrapped with <WorkspaceProvider>.",
+      "Make sure your component is wrapped with <WorkspaceProvider>.",
     );
   }
 

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
+import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 
 /**
@@ -26,8 +27,7 @@ export function ImpersonationBanner() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["impersonation-status"],
-    queryFn: () => apiClient.impersonation.getStatus(),
+    ...impersonationQueries.status(),
     refetchInterval: 30000, // Refetch every 30 seconds
     staleTime: 20000, // Consider stale after 20 seconds
     retry: false, // Don't retry if endpoint doesn't exist (404)

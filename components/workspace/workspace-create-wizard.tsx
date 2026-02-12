@@ -19,6 +19,7 @@ import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import {
@@ -54,25 +55,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-];
+    {
+      id: "details",
+      title: "Workspace Details",
+      description: "Tell us about your workspace",
+      progress: 25,
+    },
+    {
+      id: "progress",
+      title: "Analysis",
+      description: "We're analyzing your website",
+      progress: 50,
+    },
+    {
+      id: "review",
+      title: "Review & Save",
+      description: "Review and edit brand information",
+      progress: 75,
+    },
+  ];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -262,8 +263,8 @@ export function WorkspaceCreateWizard() {
       }
 
       // Invalidate workspace queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace"] });
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.details() });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
@@ -282,7 +283,7 @@ export function WorkspaceCreateWizard() {
   // Step 3: Handle skip (navigate without saving edits)
   const handleSkipReview = () => {
     // Invalidate workspace queries
-    queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
 
     // Redirect directly to workspace generate content page
     if (workspaceSlug) {
