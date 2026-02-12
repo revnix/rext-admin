@@ -353,6 +353,23 @@ export default function WorkspaceContentDetailPage({
     },
     review: {
       seo_score: content.seo_data?.content_seo_score || 0,
+      trust_score: content.seo_data?.trust_score
+        ? {
+          score: content.seo_data.trust_score,
+          trust_score: content.seo_data.trust_score,
+          author_credibility: 0,
+          expertise: 0,
+          authority: 0,
+          trustworthiness: 0,
+          citations_references: 0,
+          content_accuracy: 0,
+          freshness: 0,
+          transparency: 0,
+          spam_signals: 0,
+          technical_trust: 0,
+          reasoning: "",
+        }
+        : undefined,
       readability_metrics: {
         flesch_reading_ease: content.seo_data?.readability_score || 0,
         flesch_kincaid_grade: 0,
@@ -441,8 +458,8 @@ export default function WorkspaceContentDetailPage({
           </div>
         </PageLayout>
       ) : ["generated", "draft", "review", "published", "scheduled"].includes(
-          content.status,
-        ) ? (
+        content.status,
+      ) ? (
         <PageLayout
           title={content.title}
           description="Review and edit generated content"
@@ -459,7 +476,7 @@ export default function WorkspaceContentDetailPage({
                 advancedContent.review?.readability_metrics || null
               }
               eeatData={eeatData}
-              trustScore={null}
+              trustScore={advancedContent.review?.trust_score || null}
               generatedContent={contentMarkdown}
               seoScore={seoResult}
               isEditing={isEditing}
