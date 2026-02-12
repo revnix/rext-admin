@@ -8,12 +8,38 @@ import { z } from "zod";
  */
 
 // Password validation with strength requirements
+// Password validation with strength requirements
+/**
+ * Password validation aligned with NIST SP 800-63B-4 and OWASP guidelines.
+ *
+ * Key principles:
+ * - Minimum 8 characters (the app uses MFA-capable OAuth, so 8 is acceptable per NIST)
+ * - Maximum 64+ characters to allow passphrases
+ * - NO composition rules (no required uppercase/lowercase/numbers/special chars)
+ * - Allow all printable characters including spaces and Unicode
+ * - Breach checking via HIBP API is handled separately at form submission time
+ *
+ * @see https://pages.nist.gov/800-63-4/sp800-63b.html (Section 3.1.1.2)
+ * @see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+ */
 const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters")
-  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-  .regex(/[0-9]/, "Password must contain at least one number");
+  .max(128, "Password must be 128 characters or less");
+
+// Password change form schema
+export const passwordChangeSchema = z
+  .object({
+    current_password: z.string().min(1, "Current password is required"),
+    new_password: passwordSchema,
+    confirm_password: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+export type PasswordChangeData = z.infer<typeof passwordChangeSchema>;
 
 // Signup form schema
 export const signupFormSchema = z
