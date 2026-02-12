@@ -202,6 +202,14 @@ export interface UpdateContentRequest {
   langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
+  slug?: string;
+  workspace_id?: string;
+  introduction?: string;
+  tags?: string[];
+  media_items?: any[];
+  images_data?: any;
+  links_data?: any;
+  schema_markup?: any;
 }
 
 /**

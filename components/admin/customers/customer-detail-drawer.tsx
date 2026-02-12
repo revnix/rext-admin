@@ -41,7 +41,7 @@ interface CustomerData {
   user: {
     id: string;
     email: string;
-    username?: string;
+    full_name?: string;
     display_name?: string;
     status: string;
     is_active?: boolean;
@@ -398,13 +398,12 @@ export function CustomerDetailDrawer({
                           </div>
                           <div className="h-2 bg-secondary rounded-full overflow-hidden">
                             <div
-                              className={`h-full transition-all ${
-                                percentage > 90
+                              className={`h-full transition-all ${percentage > 90
                                   ? "bg-red-600"
                                   : percentage > 75
                                     ? "bg-orange-500"
                                     : "bg-green-600"
-                              }`}
+                                }`}
                               style={{ width: `${Math.min(percentage, 100)}%` }}
                             />
                           </div>

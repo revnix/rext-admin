@@ -73,8 +73,8 @@ export default function AcceptInvitationPage() {
         const errorData = await response.json();
         throw new Error(
           errorData.message ||
-            errorData.detail ||
-            "Failed to accept invitation",
+          errorData.detail ||
+          "Failed to accept invitation",
         );
       }
 
@@ -267,8 +267,9 @@ export default function AcceptInvitationPage() {
               </p>
               <p>
                 <span className="font-medium">Invited by:</span>{" "}
-                {invitation.invited_by.first_name}{" "}
-                {invitation.invited_by.last_name}
+                {invitation.invited_by.display_name ||
+                  invitation.invited_by.full_name ||
+                  "Workspace Admin"}
               </p>
               <p>
                 <span className="font-medium">Role:</span>{" "}

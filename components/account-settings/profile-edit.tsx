@@ -45,6 +45,7 @@ const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
 
 const profileSchema = z.object({
   full_name: z.string().min(1, "Full name is required").max(100),
+  display_name: z.string().max(100).optional(),
   bio: z.string().max(500).optional(),
   language: z.string().optional(),
   timezone: z.string().optional(),
@@ -73,23 +74,31 @@ export function ProfileEdit() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: "",
+      display_name: "",
       bio: "",
       language: "",
       timezone: "",
     },
     values: profile
       ? {
-          full_name: profile.full_name || "",
-          bio: profile.bio || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
+        full_name: profile.full_name || "",
+        display_name: profile.display_name || "",
+        bio: profile.bio || "",
+        language: profile.language || "en",
+        timezone: profile.timezone || "UTC",
+      }
       : undefined,
   });
 
   // Update profile mutation
   const updateMutation = useMutation({
-    mutationFn: (data: ProfileFormValues) => apiClient.profile.update(data),
+    mutationFn: (data: {
+      full_name: string;
+      display_name?: string | null;
+      bio?: string;
+      language?: string;
+      timezone?: string;
+    }) => apiClient.profile.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Profile updated successfully");
@@ -134,7 +143,16 @@ export function ProfileEdit() {
   });
 
   const onSubmit = (data: ProfileFormValues) => {
-    updateMutation.mutate(data);
+    // Send null for empty display_name instead of undefined
+    // Backend requires the field to be present in the payload
+    const payload = {
+      full_name: data.full_name,
+      display_name: data.display_name?.trim() || null,
+      bio: data.bio,
+      language: data.language,
+      timezone: data.timezone,
+    };
+    updateMutation.mutate(payload);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -319,6 +337,23 @@ export function ProfileEdit() {
                 <FormControl>
                   <Input placeholder="John Doe" {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="display_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Name (Optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Johnny" {...field} />
+                </FormControl>
+                <FormDescription>
+                  This is how your name will be displayed across the app
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

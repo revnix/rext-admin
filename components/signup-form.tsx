@@ -97,7 +97,7 @@ export function SignupForm({
       }
 
       const _responseData = await response.json();
-      
+
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
 
@@ -157,7 +157,10 @@ export function SignupForm({
         <InvitationBanner
           workspaceName={invitation.workspace.title}
           workspaceSlug={invitation.workspace.slug}
-          inviterName={`${invitation.invited_by.first_name} ${invitation.invited_by.last_name}`}
+          inviterName={
+            invitation.invited_by.display_name ||
+            invitation.invited_by.full_name
+          }
           roleName={invitation.role.display_name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}
@@ -235,7 +238,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                            "bg-muted cursor-not-allowed opacity-75",
+                          "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />

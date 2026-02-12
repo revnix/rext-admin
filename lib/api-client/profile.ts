@@ -16,9 +16,6 @@ export function createProfileNamespace(client: ApiClient) {
         profile: {
           id: string;
           email: string;
-          username: string;
-          first_name: string;
-          last_name: string;
           full_name: string;
           display_name: string;
           email_verified: boolean;
@@ -40,22 +37,28 @@ export function createProfileNamespace(client: ApiClient) {
      * Update user profile
      */
     update: async (data: {
-      first_name?: string;
-      last_name?: string;
       full_name?: string;
-      display_name?: string;
+      display_name?: string | null;
       bio?: string;
       avatar_url?: string;
       language?: string;
       timezone?: string;
     }) => {
-      return client.request<{
-        id: string;
-        email: string;
-        first_name: string;
-        last_name: string;
-        full_name: string;
-        display_name: string;
+      const response = await client.request<{
+        user?: {
+          id: string;
+          email: string;
+          full_name: string;
+          display_name: string;
+          avatar_url?: string;
+          bio?: string;
+          language?: string;
+          timezone?: string;
+        };
+        id?: string;
+        email?: string;
+        full_name?: string;
+        display_name?: string;
         avatar_url?: string;
         bio?: string;
         language?: string;
@@ -65,6 +68,9 @@ export function createProfileNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
+      // Handle both wrapped and direct response formats
+      return response.user || response;
     },
 
     /**
