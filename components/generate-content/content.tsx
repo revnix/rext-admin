@@ -197,6 +197,7 @@ export function ContentEditor({
       seo_score: seoScore?.seo_health_score || 0,
       readability_score: score,
       seo_details: JSON.stringify(seoScore || {}),
+      trust_score: trustScore?.score || 0,
     },
     // media_items: fc?.images?.map(img => ({
     //   media_id: img.media_id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "00000000-0000-0000-0000-000000000000"),
@@ -647,7 +648,7 @@ export function ContentEditor({
 
                   <div className="flex items-center gap-2">
                     <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-500 tracking-tight">
-                      {trustScore.score}%
+                      {trustScore.score ? trustScore.score : trustScore.trust_score}%
                     </span>
                     <TrendingUp
                       size={20}
@@ -656,7 +657,7 @@ export function ContentEditor({
                   </div>
 
                   <div className="text-[13px] text-muted-foreground font-medium">
-                    {getStatusMessage(trustScore.score)}
+                    {trustScore.score ? getStatusMessage(trustScore.score) : getStatusMessage(trustScore.trust_score)}
                   </div>
                 </div>
               </>
