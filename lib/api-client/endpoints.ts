@@ -81,8 +81,8 @@ export const ENDPOINTS = {
      * @note Uses query parameter for workspace scoping
      */
     CONTENT: {
-        BASE: "/api/v1/content", // Trailing slash often used in namespace: /api/v1/content/
-        byId: (id: string) => `/api/v1/content/${id}` as const,
+        base: "/api/v1/content",
+        detail: (id: string) => `/api/v1/content/${id}` as const,
         save: "/api/v1/content/save",
         publish: "/api/v1/content/publish",
         retry: (id: string) => `/api/v1/content/${id}/retry` as const,

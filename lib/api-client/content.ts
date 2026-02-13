@@ -16,9 +16,9 @@ import type {
   ContentListResponse,
   ContentResponse,
   CreateContentRequest,
-  UpdateContentRequest,
 } from "@/types/content";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createContentNamespace(client: ApiClient) {
   return {
@@ -39,11 +39,12 @@ export function createContentNamespace(client: ApiClient) {
       if (options?.limit) params.append("limit", options.limit.toString());
       if (options?.offset) params.append("offset", options.offset.toString());
 
-      const endpoint = `/api/v1/content/?${params.toString()}`;
-
-      return client.request<ContentListResponse>(endpoint, {
-        method: "GET",
-      });
+      return client.request<ContentListResponse>(
+        `${ENDPOINTS.CONTENT.base}?${params.toString()}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -51,7 +52,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     get: async (workspaceId: string, contentId: string) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.detail(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "GET",
         },
@@ -63,7 +64,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     create: async (workspaceId: string, data: CreateContentRequest) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.base}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -81,7 +82,7 @@ export function createContentNamespace(client: ApiClient) {
       data: Record<string, unknown>,
     ) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.detail(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -95,7 +96,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     delete: async (workspaceId: string, contentId: string) => {
       return client.request<void>(
-        `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.detail(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "DELETE",
         },
@@ -107,7 +108,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     retry: async (workspaceId: string, contentId: string) => {
       return client.request<{ content_id: string; status: string }>(
-        `/api/v1/content/${contentId}/retry?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.retry(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
         },
@@ -119,7 +120,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     save: async (workspaceId: string, data: Record<string, unknown>) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/save?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.save}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -133,7 +134,7 @@ export function createContentNamespace(client: ApiClient) {
      */
     publish: async (workspaceId: string, data: Record<string, unknown>) => {
       return client.request<ContentResponse>(
-        `/api/v1/content/publish?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.publish}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
