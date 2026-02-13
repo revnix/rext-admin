@@ -19,6 +19,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createMembersNamespace(client: ApiClient) {
   return {
@@ -46,7 +47,7 @@ export function createMembersNamespace(client: ApiClient) {
           };
         }>;
         total_count: number;
-      }>(`/api/v1/workspaces/${workspaceId}/members`, {
+      }>(ENDPOINTS.MEMBERS.list(workspaceId), {
         method: "GET",
       });
     },
@@ -63,7 +64,7 @@ export function createMembersNamespace(client: ApiClient) {
           display_name: string;
           status: string;
         };
-      }>(`/api/v1/workspaces/${workspaceId}/members`, {
+      }>(ENDPOINTS.MEMBERS.add(workspaceId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -75,7 +76,7 @@ export function createMembersNamespace(client: ApiClient) {
      */
     remove: async (workspaceId: string, memberId: string) => {
       return client.request<{ member_id: string }>(
-        `/api/v1/workspaces/${workspaceId}/members/${memberId}`,
+        ENDPOINTS.MEMBERS.remove(workspaceId, memberId),
         {
           method: "DELETE",
         },
@@ -95,7 +96,7 @@ export function createMembersNamespace(client: ApiClient) {
           id: string;
           role_id: string;
         };
-      }>(`/api/v1/workspaces/${workspaceId}/members/${memberId}/role`, {
+      }>(ENDPOINTS.MEMBERS.changeRole(workspaceId, memberId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role_id: roleId }),
@@ -136,7 +137,7 @@ export function createInvitationsNamespace(client: ApiClient) {
           status: string;
           token: string;
         };
-      }>(`/api/v1/invitations/${token}/validate`, {
+      }>(ENDPOINTS.INVITATIONS.validate(token), {
         method: "GET",
       });
     },
@@ -153,7 +154,7 @@ export function createInvitationsNamespace(client: ApiClient) {
         workspace_slug: string;
         role: string;
         message: string;
-      }>(`/api/v1/invitations/${token}/accept`, {
+      }>(ENDPOINTS.INVITATIONS.accept(token), {
         method: "POST",
       });
     },
@@ -177,7 +178,7 @@ export function createInvitationsNamespace(client: ApiClient) {
           role_id: string;
           expires_at: string;
         };
-      }>(`/api/v1/workspaces/${workspaceId}/invitations`, {
+      }>(ENDPOINTS.INVITATIONS.create(workspaceId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -209,7 +210,7 @@ export function createInvitationsNamespace(client: ApiClient) {
           invitation_id?: string;
           error_message?: string;
         }>;
-      }>(`/api/v1/workspaces/${workspaceId}/invitations/bulk`, {
+      }>(ENDPOINTS.INVITATIONS.createBulk(workspaceId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -237,7 +238,7 @@ export function createInvitationsNamespace(client: ApiClient) {
           role_name?: string;
         }>;
         total_count: number;
-      }>(`/api/v1/workspaces/${workspaceId}/invitations`, {
+      }>(ENDPOINTS.INVITATIONS.listSent(workspaceId), {
         method: "GET",
       });
     },
@@ -255,7 +256,7 @@ export function createInvitationsNamespace(client: ApiClient) {
           status: string;
           expires_at: string;
         }>;
-      }>("/api/v1/workspace/invitations/received", {
+      }>(ENDPOINTS.INVITATIONS.listReceived, {
         method: "GET",
       });
     },
@@ -283,7 +284,7 @@ export function createInvitationsNamespace(client: ApiClient) {
           created_at: string;
         }>;
         count: number;
-      }>("/api/v1/user/invitations/pending", {
+      }>(ENDPOINTS.INVITATIONS.pending, {
         method: "GET",
       });
     },
@@ -299,7 +300,7 @@ export function createInvitationsNamespace(client: ApiClient) {
       return client.request<{
         invitation_id: string;
         status: string;
-      }>(`/api/v1/workspaces/${workspaceId}/invitations/${invitationId}`, {
+      }>(ENDPOINTS.INVITATIONS.revoke(workspaceId, invitationId), {
         method: "DELETE",
         headers: reason ? { "Content-Type": "application/json" } : undefined,
         body: reason ? JSON.stringify({ reason }) : undefined,
@@ -321,12 +322,9 @@ export function createInvitationsNamespace(client: ApiClient) {
           created_at: string;
           role_name?: string;
         };
-      }>(
-        `/api/v1/workspaces/${workspaceId}/invitations/${invitationId}/resend`,
-        {
-          method: "POST",
-        },
-      );
+      }>(ENDPOINTS.INVITATIONS.resend(workspaceId, invitationId), {
+        method: "POST",
+      });
     },
   };
 }

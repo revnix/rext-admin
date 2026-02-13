@@ -59,6 +59,43 @@ export const ENDPOINTS = {
     },
 
     /**
+ * Members Endpoints
+ * @note Workspace-scoped member management
+ */
+    MEMBERS: {
+        list: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/members` as const,
+        add: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/members` as const,
+        remove: (workspaceId: string, memberId: string) =>
+            `/api/v1/workspaces/${workspaceId}/members/${memberId}` as const,
+        changeRole: (workspaceId: string, memberId: string) =>
+            `/api/v1/workspaces/${workspaceId}/members/${memberId}/role` as const,
+    },
+
+    /**
+     * Invitations Endpoints
+     * @note Mixed scoping: workspace-scoped and user-scoped endpoints
+     * @note Uses inconsistent naming: /workspace/invitations (singular) vs /workspaces/{id}/invitations
+     */
+    INVITATIONS: {
+        // Workspace-scoped invitations
+        validate: (token: string) => `/api/v1/invitations/${token}/validate` as const,
+        accept: (token: string) => `/api/v1/invitations/${token}/accept` as const,
+        create: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/invitations` as const,
+        createBulk: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/invitations/bulk` as const,
+        listSent: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/invitations` as const,
+        detail: (workspaceId: string, invitationId: string) =>
+            `/api/v1/workspaces/${workspaceId}/invitations/${invitationId}` as const,
+        revoke: (workspaceId: string, invitationId: string) =>
+            `/api/v1/workspaces/${workspaceId}/invitations/${invitationId}` as const,
+        resend: (workspaceId: string, invitationId: string) =>
+            `/api/v1/workspaces/${workspaceId}/invitations/${invitationId}/resend` as const,
+
+        // User-scoped invitations (uses singular "workspace" - inconsistent)
+        listReceived: "/api/v1/workspace/invitations/received",
+        pending: "/api/v1/user/invitations/pending",
+    },
+
+    /**
      * Topic Endpoints
      * @note Uses singular `topic` namespace (Inconsistent)
      * @note Uses verb-based paths like `get-topics`, `save-topic` (RPC-style)
