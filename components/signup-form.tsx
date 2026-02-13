@@ -97,7 +97,7 @@ export function SignupForm({
       }
 
       const _responseData = await response.json();
-      
+
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
 
@@ -235,7 +235,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                            "bg-muted cursor-not-allowed opacity-75",
+                          "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />
