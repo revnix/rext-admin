@@ -135,13 +135,39 @@ export const ENDPOINTS = {
         reset: "/api/v1/onboarding/reset",
         shouldShow: "/api/v1/onboarding/should-show",
     },
-
     /**
      * Admin Endpoints
      * @note Standard admin prefix
+     * @note Email templates use singular "workspace" (Inconsistent)
      */
     ADMIN: {
         BASE: "/api/v1/admin",
+
+        // Impersonation
+        impersonation: {
+            start: "/api/v1/user/impersonate/start",
+            stop: "/api/v1/user/impersonate/stop",
+            status: "/api/v1/user/impersonate/status",
+        },
+
+        // Audit Logs
+        audit: {
+            myLogs: "/api/v1/audit/user/my-logs",
+            allLogs: "/api/v1/audit",
+            detail: (id: string) => `/api/v1/audit/${id}` as const,
+        },
+
+        // Email Templates (uses singular "workspace" - backend inconsistency)
+        emailTemplates: {
+            list: (workspaceId: string) => `/api/v1/workspace/email-templates/${workspaceId}` as const,
+            variables: (templateType: string) => `/api/v1/workspace/email-templates/variables/${templateType}` as const,
+            defaults: (templateType: string) => `/api/v1/workspace/email-templates/defaults/${templateType}` as const,
+            preview: "/api/v1/workspace/email-templates/preview",
+            create: "/api/v1/workspace/email-templates/",
+            update: (templateId: string) => `/api/v1/workspace/email-templates/${templateId}` as const,
+            delete: (templateId: string) => `/api/v1/workspace/email-templates/${templateId}` as const,
+        },
+
         // Analytics
         analytics: "/api/v1/admin/analytics",
         // Users
