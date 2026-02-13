@@ -8,6 +8,7 @@
  */
 
 import { lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
+import { buildUrl } from "../url-utils";
 
 /**
  * LemonSqueezy configuration type
@@ -151,32 +152,16 @@ export function buildCheckoutUrlWithOptions(
   options: CheckoutOptions = {},
 ): string {
   const baseUrl = buildCheckoutUrl(variantId);
-  const params = new URLSearchParams();
 
-  if (options.embed !== undefined) {
-    params.append("embed", options.embed ? "1" : "0");
-  }
+  const url = buildUrl(baseUrl, {
+    embed: options.embed ? "1" : "0",
+    dark: options.dark ? "1" : "0",
+    logo: options.logo,
+    discount: options.discount,
+    ...options.customData,
+  });
 
-  if (options.dark !== undefined) {
-    params.append("dark", options.dark ? "1" : "0");
-  }
-
-  if (options.logo) {
-    params.append("logo", options.logo);
-  }
-
-  if (options.discount) {
-    params.append("discount", options.discount);
-  }
-
-  if (options.customData) {
-    for (const [key, value] of Object.entries(options.customData)) {
-      params.append(`checkout[custom][${key}]`, value);
-    }
-  }
-
-  const queryString = params.toString();
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  return url;
 }
 
 /**

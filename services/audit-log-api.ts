@@ -5,6 +5,7 @@
  */
 
 import { authenticatedFetch } from "@/lib/auth-utils";
+import { buildUrl } from "@/lib/url-utils";
 import type {
   AuditLogDetail,
   AuditLogFilters,
@@ -23,18 +24,16 @@ const API_BASE_URL =
 export async function getMyAuditLogs(
   filters?: AuditLogFilters,
 ): Promise<AuditLogListResponse> {
-  const params = new URLSearchParams();
 
-  if (filters?.action) params.append("action", filters.action);
-  if (filters?.resource_type)
-    params.append("resource_type", filters.resource_type);
-  if (filters?.date_from) params.append("date_from", filters.date_from);
-  if (filters?.date_to) params.append("date_to", filters.date_to);
-  if (filters?.limit) params.append("limit", filters.limit.toString());
-  if (filters?.offset) params.append("offset", filters.offset.toString());
+  const url = buildUrl(`${API_BASE_URL}/api/v1/audit-logs/user/my-logs`, {
+    action: filters?.action,
+    resource_type: filters?.resource_type,
+    date_from: filters?.date_from,
+    date_to: filters?.date_to,
+    limit: filters?.limit,
+    offset: filters?.offset,
+  });
 
-  const queryString = params.toString();
-  const url = `${API_BASE_URL}/api/v1/audit-logs/user/my-logs${queryString ? `?${queryString}` : ""}`;
 
   const response = await authenticatedFetch(url, {
     method: "GET",
@@ -85,24 +84,21 @@ export async function getAllAuditLogs(
     status?: "success" | "failed" | "partial";
   },
 ): Promise<AuditLogListResponse> {
-  const params = new URLSearchParams();
 
-  if (filters?.user_id) params.append("user_id", filters.user_id);
-  if (filters?.username) params.append("username", filters.username);
-  if (filters?.user_email) params.append("user_email", filters.user_email);
-  if (filters?.action) params.append("action", filters.action);
-  if (filters?.resource_type)
-    params.append("resource_type", filters.resource_type);
-  if (filters?.workspace_id)
-    params.append("workspace_id", filters.workspace_id);
-  if (filters?.status) params.append("status_filter", filters.status);
-  if (filters?.date_from) params.append("date_from", filters.date_from);
-  if (filters?.date_to) params.append("date_to", filters.date_to);
-  if (filters?.limit) params.append("limit", filters.limit.toString());
-  if (filters?.offset) params.append("offset", filters.offset.toString());
+  const url = buildUrl(`${API_BASE_URL}/api/v1/audit-logs`, {
+    user_id: filters?.user_id,
+    username: filters?.username,
+    user_email: filters?.user_email,
+    action: filters?.action,
+    resource_type: filters?.resource_type,
+    workspace_id: filters?.workspace_id,
+    status_filter: filters?.status,
+    date_from: filters?.date_from,
+    date_to: filters?.date_to,
+    limit: filters?.limit,
+    offset: filters?.offset,
+  });
 
-  const queryString = params.toString();
-  const url = `${API_BASE_URL}/api/v1/audit-logs${queryString ? `?${queryString}` : ""}`;
 
   const response = await authenticatedFetch(url, {
     method: "GET",

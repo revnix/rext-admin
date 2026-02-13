@@ -12,6 +12,7 @@ import type {
   ValidateAdminInvitationResponse,
 } from "@/types/admin-invitation";
 import type { ApiClient } from "./core";
+import { buildUrl } from "../url-utils";
 
 export function createAdminInvitationsNamespace(client: ApiClient) {
   return {
@@ -42,9 +43,12 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
       if (filters?.limit) params.append("limit", filters.limit.toString());
       if (filters?.offset) params.append("offset", filters.offset.toString());
 
-      const queryString = params.toString();
-      const endpoint = `/api/v1/admin/platform/invitations${queryString ? `?${queryString}` : ""}`;
-
+      const endpoint = buildUrl("/api/v1/admin/platform/invitations", {
+        status: filters?.status,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
+      
       return client.request<AdminInvitationListResponse>(endpoint, {
         method: "GET",
       });

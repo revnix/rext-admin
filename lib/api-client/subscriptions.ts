@@ -18,6 +18,7 @@ import type {
   UserSubscription,
 } from "@/types/subscription";
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
 
 export function createSubscriptionsNamespace(client: ApiClient) {
   return {
@@ -219,13 +220,9 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       limit = 50,
       offset = 0,
     ): Promise<SubscriptionHistoryResponse> => {
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-        offset: offset.toString(),
-      });
 
       return client.request<SubscriptionHistoryResponse>(
-        `/api/v1/subscriptions/history?${params}`,
+        buildUrl("/api/v1/subscriptions/history", { limit, offset }),
         {
           method: "GET",
         },

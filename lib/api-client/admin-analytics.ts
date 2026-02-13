@@ -6,6 +6,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -207,9 +208,15 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
 
       const response = await client.request<
         AnalyticsApiResponse<InvitationAnalyticsData>
-      >(`/api/v1/admin/analytics/invitations/analytics?${params.toString()}`, {
-        method: "GET",
-      });
+      >(
+        buildUrl("/api/v1/admin/analytics/invitations/analytics", {
+          days,
+          workspace_id: workspaceId,
+        }),
+        {
+          method: "GET",
+        },
+      );
       return response.data;
     },
   };

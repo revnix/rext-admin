@@ -5,6 +5,7 @@
  * Requires super admin role for all endpoints
  */
 
+import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
 
 // ============================================================================
@@ -90,19 +91,15 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
     getEvents: async (
       filters: WebhookEventsFilters = {},
     ): Promise<WebhookEventsResponse> => {
-      const params = new URLSearchParams();
 
-      if (filters.page) params.append("page", filters.page.toString());
-      if (filters.per_page)
-        params.append("per_page", filters.per_page.toString());
-      if (filters.event_name) params.append("event_name", filters.event_name);
-      if (filters.processed !== undefined)
-        params.append("processed", filters.processed.toString());
-      if (filters.start_date) params.append("start_date", filters.start_date);
-      if (filters.end_date) params.append("end_date", filters.end_date);
-
-      const queryString = params.toString();
-      const url = `/api/v1/admin/subscriptions/webhooks/events${queryString ? `?${queryString}` : ""}`;
+      const url = buildUrl("/api/v1/admin/subscriptions/webhooks/events", {
+        page: filters?.page,
+        per_page: filters?.per_page,
+        event_name: filters?.event_name,
+        processed: filters?.processed,
+        start_date: filters?.start_date,
+        end_date: filters?.end_date,
+      });
 
       const response = await client.request<
         WebhookApiResponse<WebhookEventsResponse>

@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
+import { buildUrl } from "@/lib/url-utils";
 
 interface SystemHealthData {
   database: {
@@ -167,21 +168,17 @@ export default function MonitoringPage() {
       errorLogFilters,
     ],
     queryFn: async () => {
-      const params = new URLSearchParams({
+    
+      const url = buildUrl("/api/v1/admin/monitoring/error-logs", {
         page: errorLogPage.toString(),
         per_page: "50",
+        severity: errorLogFilters.severity,
+        start_date: errorLogFilters.start_date,
+        end_date: errorLogFilters.end_date,
       });
-
-      if (errorLogFilters.severity)
-        params.append("severity", errorLogFilters.severity);
-      if (errorLogFilters.start_date)
-        params.append("start_date", errorLogFilters.start_date);
-      if (errorLogFilters.end_date)
-        params.append("end_date", errorLogFilters.end_date);
-
       return apiClient
         .request<{ data: ErrorLogData }>(
-          `/api/v1/admin/monitoring/error-logs?${params.toString()}`,
+          url,
         )
         .then((res) => res.data);
     },
@@ -266,11 +263,10 @@ export default function MonitoringPage() {
                         Status
                       </span>
                       <span
-                        className={`text-sm font-medium ${
-                          health?.database?.status === "healthy"
+                        className={`text-sm font-medium ${health?.database?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                        }`}
+                          }`}
                       >
                         {health?.database?.status || "Unknown"}
                       </span>
@@ -307,11 +303,10 @@ export default function MonitoringPage() {
                         Status
                       </span>
                       <span
-                        className={`text-sm font-medium ${
-                          health?.api?.status === "healthy"
+                        className={`text-sm font-medium ${health?.api?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                        }`}
+                          }`}
                       >
                         {health?.api?.status || "Unknown"}
                       </span>

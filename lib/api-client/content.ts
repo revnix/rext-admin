@@ -11,6 +11,7 @@ import type {
   UpdateContentRequest,
 } from "@/types/content";
 import type { ApiClient } from "./core";
+import { buildUrl } from "../url-utils";
 
 export function createContentNamespace(client: ApiClient) {
   return {
@@ -25,13 +26,13 @@ export function createContentNamespace(client: ApiClient) {
         offset?: number;
       },
     ) => {
-      const params = new URLSearchParams();
-      params.append("workspace_id", workspaceId);
-      if (options?.status) params.append("status", options.status);
-      if (options?.limit) params.append("limit", options.limit.toString());
-      if (options?.offset) params.append("offset", options.offset.toString());
 
-      const endpoint = `/api/v1/content/?${params.toString()}`;
+      const endpoint = buildUrl("/api/v1/content", {
+        workspace_id: workspaceId,
+        status: options?.status,
+        limit: options?.limit,
+        offset: options?.offset,
+      });
 
       return client.request<ContentListResponse>(endpoint, {
         method: "GET",

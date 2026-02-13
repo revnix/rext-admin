@@ -27,6 +27,8 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
+import { buildUrl } from "@/lib/url-utils";
+import { useSession } from "next-auth/react";
 
 export default function AuditLogsPage() {
   const breadcrumbs = [
@@ -41,7 +43,7 @@ export default function AuditLogsPage() {
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string | null>(
     null,
   );
-
+  const { data: session, status: sessionStatus } = useSession();
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch audit logs
@@ -72,21 +74,20 @@ export default function AuditLogsPage() {
 
   const handleExport = async (format: "csv" | "json") => {
     try {
-      const params = new URLSearchParams({ format });
-      if (debouncedSearch) params.append("user_email", debouncedSearch);
-      if (actionFilter) params.append("action", actionFilter);
-      if (resourceTypeFilter)
-        params.append("resource_type", resourceTypeFilter);
+    
+      const endpoint = buildUrl(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/audit-logs/export/download`, {
+        format,
+        user_email: debouncedSearch || undefined,
+        action: actionFilter || undefined,
+        resource_type: resourceTypeFilter || undefined,
+      });
 
-      const response = await fetch(
-        `/api/v1/audit/logs/export/download?${params.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${session?.user?.accessToken}`,
           },
-        },
-      );
+      });
 
       if (!response.ok) throw new Error("Export failed");
 
