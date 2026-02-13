@@ -39,11 +39,11 @@ export interface SessionActivity {
 /**
  * Device session info (stored client-side)
  */
-export interface DeviceSession {
-  id: string;
-  deviceName: string; // e.g., "Chrome on macOS"
-  browser: string;
-  os: string;
-  lastActivity: number;
-  loginTime: number;
-}
+// export interface DeviceSession {
+//   id: string;
+//   deviceName: string; // e.g., "Chrome on macOS"
+//   browser: string;
+//   os: string;
+//   lastActivity: number;
+//   loginTime: number;
+// }
