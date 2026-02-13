@@ -251,12 +251,17 @@ export const ENDPOINTS = {
     },
 
     /**
-     * License Endpoints
-     */
+      * License Endpoints
+      * @note Manages license activation and validation
+      */
     LICENSES: {
         BASE: "/api/v1/licenses",
-        validate: "/api/v1/licenses/validate",
+        list: "/api/v1/licenses",
+        detail: (licenseId: string) => `/api/v1/licenses/${licenseId}` as const,
+        activations: (licenseId: string) => `/api/v1/licenses/${licenseId}/activations` as const,
         activate: "/api/v1/licenses/activate",
+        deactivate: (licenseId: string) => `/api/v1/licenses/${licenseId}/deactivate` as const,
+        validate: "/api/v1/licenses/validate",
     },
 
     /**
