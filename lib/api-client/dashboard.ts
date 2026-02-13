@@ -19,6 +19,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 /**
  * Dashboard statistics response
@@ -48,7 +49,7 @@ export function createDashboardNamespace(client: ApiClient) {
      */
     getStats: async (workspaceId: string) => {
       return client.request<DashboardStats>(
-        `/api/v1/dashboard/${workspaceId}`,
+        ENDPOINTS.DASHBOARD.stats(workspaceId),
         {
           method: "GET",
         },

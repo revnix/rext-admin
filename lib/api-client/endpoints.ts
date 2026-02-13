@@ -173,6 +173,14 @@ export const ENDPOINTS = {
         shouldShow: "/api/v1/onboarding/should-show",
     },
     /**
+     * Dashboard Endpoints
+     * @note Non-standard workspace scoping: uses `/api/v1/dashboard/{id}` instead of `/api/v1/workspaces/{id}/dashboard`
+     * @note Workspace ID in path but not a nested resource under workspaces
+     */
+    DASHBOARD: {
+        stats: (workspaceId: string) => `/api/v1/dashboard/${workspaceId}` as const,
+    },
+    /**
      * Admin Endpoints
      * @note Standard admin prefix
      * @note Email templates use singular "workspace" (Inconsistent)
