@@ -19,6 +19,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export interface User {
   id: string;
@@ -68,16 +69,19 @@ export function createUsersNamespace(client: ApiClient) {
       const params = workspaceId
         ? `?workspace_id=${encodeURIComponent(workspaceId)}`
         : "";
-      return client.request<UsersListResponse>(`/api/v1/user/users${params}`, {
-        method: "GET",
-      });
+      return client.request<UsersListResponse>(
+        `${ENDPOINTS.USERS.list}${params}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
      * Get a single user by ID
      */
     get: async (userId: string): Promise<User> => {
-      return client.request<User>(`/api/v1/user/${userId}`, {
+      return client.request<User>(ENDPOINTS.USERS.byId(userId), {
         method: "GET",
       });
     },
@@ -86,27 +90,36 @@ export function createUsersNamespace(client: ApiClient) {
      * Get all active sessions for current user
      */
     getSessions: async (): Promise<SessionsResponse> => {
-      return client.request<SessionsResponse>("/api/v1/user/sessions", {
-        method: "GET",
-      });
+      return client.request<SessionsResponse>(
+        ENDPOINTS.USERS.sessions.list,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
      * Revoke a specific session (logout from that device)
      */
     revokeSession: async (sessionId: string): Promise<void> => {
-      return client.request<void>(`/api/v1/user/sessions/${sessionId}`, {
-        method: "DELETE",
-      });
+      return client.request<void>(
+        ENDPOINTS.USERS.sessions.detail(sessionId),
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**
      * Revoke all other sessions (logout from all other devices)
      */
     revokeAllOtherSessions: async (): Promise<void> => {
-      return client.request<void>("/api/v1/user/sessions/revoke-all", {
-        method: "POST",
-      });
+      return client.request<void>(
+        ENDPOINTS.USERS.sessions.revokeAll,
+        {
+          method: "POST",
+        },
+      );
     },
   };
 }

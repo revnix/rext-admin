@@ -125,6 +125,7 @@ export const ENDPOINTS = {
         retry: (id: string) => `/api/v1/content/${id}/retry` as const,
     },
 
+
     /**
      * User Endpoints
      * @note Uses singular `user` namespace
@@ -134,13 +135,12 @@ export const ENDPOINTS = {
         byId: (id: string) => `/api/v1/user/${id}` as const,
 
         // Sessions
-        SESSIONS: {
+        sessions: {
             list: "/api/v1/user/sessions",
-            byId: (id: string) => `/api/v1/user/sessions/${id}` as const,
+            detail: (id: string) => `/api/v1/user/sessions/${id}` as const,
             revokeAll: "/api/v1/user/sessions/revoke-all",
         },
     },
-
     /**
      * Subscription Endpoints
      * @note Uses plural `subscriptions` namespace
