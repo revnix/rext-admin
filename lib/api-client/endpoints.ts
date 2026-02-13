@@ -218,6 +218,29 @@ export const ENDPOINTS = {
         // Webhooks
         webhooks: "/api/v1/admin/webhooks",
     },
+    /**
+     * Admin Invitations Endpoints
+     * @note Platform-level admin invitation management
+     * @note Path mismatch: CRUD uses `/admin/platform/invitations` vs token ops use `/admin-invitations/{token}`
+     * @note Only accessible to super_admin users
+     */
+    ADMIN_INVITATIONS: {
+        // CRUD operations (admin only)
+        base: "/api/v1/admin/platform/invitations",
+        create: "/api/v1/admin/platform/invitations",
+        list: "/api/v1/admin/platform/invitations",
+        detail: (invitationId: string) =>
+            `/api/v1/admin/platform/invitations/${invitationId}` as const,
+        resend: (invitationId: string) =>
+            `/api/v1/admin/platform/invitations/${invitationId}/resend` as const,
+        revoke: (invitationId: string) =>
+            `/api/v1/admin/platform/invitations/${invitationId}` as const,
+
+        // Token-based operations (public)
+        validate: (token: string) => `/api/v1/admin-invitations/${token}/validate` as const,
+        accept: (token: string) => `/api/v1/admin-invitations/${token}/accept` as const,
+        decline: (token: string) => `/api/v1/admin-invitations/${token}/decline` as const,
+    },
 
     /**
      * License Endpoints
