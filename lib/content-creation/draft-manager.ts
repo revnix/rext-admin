@@ -1,4 +1,5 @@
 import { log } from "@/lib/logger";
+import { safeJsonParse } from "@/lib/utils";
 
 /**
  * Draft Management System
@@ -144,7 +145,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
       const stored = localStorage.getItem(this.storageKey);
       if (!stored) return [];
 
-      const drafts = JSON.parse(stored) as Draft[];
+      const drafts = safeJsonParse<Draft[]>(stored, []) ?? [];
 
       // Validate draft format and remove corrupted entries
       return drafts.filter((draft) => {
@@ -470,18 +471,18 @@ export class DraftManager {
       oldestDraft:
         drafts.length > 0
           ? drafts.sort(
-              (a, b) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime(),
-            )[0]?.title
+            (a, b) =>
+              new Date(a.createdAt).getTime() -
+              new Date(b.createdAt).getTime(),
+          )[0]?.title
           : undefined,
       newestDraft:
         drafts.length > 0
           ? drafts.sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime(),
-            )[0]?.title
+            (a, b) =>
+              new Date(b.createdAt).getTime() -
+              new Date(a.createdAt).getTime(),
+          )[0]?.title
           : undefined,
     };
   }

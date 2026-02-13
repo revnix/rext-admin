@@ -26,6 +26,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { safeJsonParse } from "@/lib/utils";
 
 export interface FormPersistenceOptions<T> {
   /**
@@ -113,14 +114,14 @@ export function useFormPersistence<T extends Record<string, unknown>>(
   const [values, setValuesInternal] = useState<T>(() => {
     if (typeof window === "undefined") return defaultValues;
 
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as T;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      const parsed = safeJsonParse<T>(stored);
+      if (parsed) {
         onDraftLoaded?.(parsed);
         return parsed;
       }
-    } catch (_error) {}
+    }
     return defaultValues;
   });
 
@@ -140,7 +141,7 @@ export function useFormPersistence<T extends Record<string, unknown>>(
         localStorage.setItem(storageKey, JSON.stringify(values));
         setHasDraft(true);
         onDraftSaved?.(values);
-      } catch (_error) {}
+      } catch (_error) { }
     }, debounceDelay);
 
     return () => clearTimeout(timer);
@@ -173,7 +174,7 @@ export function useFormPersistence<T extends Record<string, unknown>>(
       setHasDraft(false);
       setValuesInternal(defaultValues);
       setIsDirty(false);
-    } catch (_error) {}
+    } catch (_error) { }
   }, [storageKey, defaultValues]);
 
   const reset = useCallback(() => {

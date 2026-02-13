@@ -5,6 +5,7 @@ import type {
   RetryConfig,
 } from "@/types/backend";
 import type { ErrorSeverity } from "@/types/consistent-response";
+import { safeJsonParse } from "./utils";
 
 /**
  * Default retry configuration for backend requests
@@ -252,22 +253,22 @@ export function sanitizeErrorForLogging(error: BackendError): Omit<
   // Remove sensitive fields from context
   const sanitizedContext = error.context
     ? Object.entries(error.context).reduce(
-        (acc, [key, value]) => {
-          // Skip sensitive fields
-          if (
-            key.toLowerCase().includes("password") ||
-            key.toLowerCase().includes("token") ||
-            key.toLowerCase().includes("secret") ||
-            key.toLowerCase().includes("key")
-          ) {
-            acc[key] = "[REDACTED]";
-          } else {
-            acc[key] = value;
-          }
-          return acc;
-        },
-        {} as Record<string, unknown>,
-      )
+      (acc, [key, value]) => {
+        // Skip sensitive fields
+        if (
+          key.toLowerCase().includes("password") ||
+          key.toLowerCase().includes("token") ||
+          key.toLowerCase().includes("secret") ||
+          key.toLowerCase().includes("key")
+        ) {
+          acc[key] = "[REDACTED]";
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    )
     : undefined;
 
   return {
@@ -308,19 +309,15 @@ export function extractValidationErrors(error: BackendError): string[] {
     return [];
   }
 
-  try {
-    const response = JSON.parse(error.context.responseText as string);
-    if (response.detail && Array.isArray(response.detail)) {
-      return response.detail.map((detail: { loc?: string[]; msg?: string }) => {
-        if (detail.loc && detail.msg) {
-          const fieldPath = detail.loc.slice(1).join(".");
-          return `${fieldPath}: ${detail.msg}`;
-        }
-        return detail.msg || "Unknown validation error";
-      });
-    }
-  } catch (_e) {
-    // Failed to parse, return empty array
+  const response = safeJsonParse<any>(error.context.responseText as string);
+  if (response?.detail && Array.isArray(response.detail)) {
+    return response.detail.map((detail: { loc?: string[]; msg?: string }) => {
+      if (detail.loc && detail.msg) {
+        const fieldPath = detail.loc.slice(1).join(".");
+        return `${fieldPath}: ${detail.msg}`;
+      }
+      return detail.msg || "Unknown validation error";
+    });
   }
 
   return [];

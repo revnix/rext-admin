@@ -17,6 +17,7 @@
  */
 
 import { log } from "@/lib/logger";
+import { safeJsonParse } from "@/lib/utils";
 
 type AnalyticsEvent =
   // Onboarding Events
@@ -129,7 +130,7 @@ class Analytics {
     try {
       const key = "wrext_analytics_events";
       const stored = localStorage.getItem(key);
-      const events = stored ? JSON.parse(stored) : [];
+      const events = safeJsonParse<any[]>(stored, []) ?? [];
 
       events.push(eventData);
 
@@ -151,7 +152,7 @@ class Analytics {
 
     try {
       const stored = localStorage.getItem("wrext_analytics_events");
-      return stored ? JSON.parse(stored) : [];
+      return safeJsonParse<unknown[]>(stored, []) ?? [];
     } catch {
       return [];
     }

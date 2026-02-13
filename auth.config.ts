@@ -5,8 +5,8 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
-
-const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+import { getPrimaryRole } from "./lib/permissions";
+import { safeJsonParse } from "@/lib/utils";
 
 /**
  * Refresh the access token using the refresh token
@@ -37,14 +37,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       const errorText = await response.text();
       log.error("[Auth] Refresh response error text:", errorText);
 
-      const errorData = await (async () => {
-        try {
-          return JSON.parse(errorText);
-        } catch (e) {
-          log.error("[Auth] Failed to parse refresh response as JSON:", e);
-          return { rawError: errorText };
-        }
-      })();
+      const errorData = safeJsonParse(errorText, { rawError: errorText }, "[Auth] refresh response error");
 
       log.error("[Auth] Token refresh failed with status:", response.status);
       log.error("[Auth] Token refresh error data:", errorData);
@@ -53,14 +46,10 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 
     const refreshResponseText = await response.text();
 
-    const refreshResponseData = await (async () => {
-      try {
-        return JSON.parse(refreshResponseText);
-      } catch (e) {
-        log.error("[Auth] Failed to parse refresh response as JSON:", e);
-        throw new Error("Invalid refresh response format");
-      }
-    })();
+    const refreshResponseData = safeJsonParse<{ data?: any }>(refreshResponseText, null, "[Auth] refresh response");
+    if (!refreshResponseData) {
+      throw new Error("Invalid refresh response format");
+    }
 
     // Extract data from wrapped response
     const refreshedTokens = refreshResponseData.data || refreshResponseData;
@@ -248,23 +237,11 @@ export default {
               const errorText = await oauthResponse.text();
               log.error("[AuthJS] OAuth response error text:", errorText);
 
-              const errorData = await (async () => {
-                try {
-                  return JSON.parse(errorText);
-                } catch (e) {
-                  log.error(
-                    "[AuthJS] Failed to parse OAuth response as JSON:",
-                    e,
-                  );
-                  return { rawError: errorText };
-                }
-              })();
+              const errorData = safeJsonParse(errorText, { rawError: errorText }, "[AuthJS] OAuth response error");
               log.error("[AuthJS] OAuth response error data:", errorData);
 
               const errorMessage =
-                errorData?.error?.message ||
-                errorData?.message ||
-                errorData?.rawError ||
+                errorData ||
                 "OAuth login failed";
               log.error(
                 "[AuthJS] OAuth login failed with message:",
@@ -275,17 +252,7 @@ export default {
 
             const oauthResponseText = await oauthResponse.text();
 
-            const oauthResponseData = await (async () => {
-              try {
-                return JSON.parse(oauthResponseText);
-              } catch (e) {
-                log.error(
-                  "[AuthJS] Failed to parse OAuth response as JSON:",
-                  e,
-                );
-                return null;
-              }
-            })();
+            const oauthResponseData = safeJsonParse<{ data?: any }>(oauthResponseText, null, "[AuthJS] OAuth response");
 
             if (!oauthResponseData) {
               return token;
