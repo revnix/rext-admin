@@ -2,6 +2,11 @@
  * Admin API Namespace
  *
  * Handles admin-only features: impersonation, audit logs, email templates
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ * - Email templates use singular "workspace" namespace (/api/v1/workspace/email-templates)
+ *
+ * See: lib/api-client/endpoints.ts for full path documentation.
  */
 
 import type { ApiClient } from "./core";

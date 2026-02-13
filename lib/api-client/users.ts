@@ -1,7 +1,21 @@
 /**
  * Users API Namespace
  *
- * Handles user management operations
+ * Handles user profile, session, and account management operations.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ *
+ * ### User List Endpoint:
+ * - Uses singular "user" as base: `/api/v1/user/users` (plural "users" under singular "user")
+ * - Expected pattern: `/api/v1/users` (consistent plural naming) or `/api/v1/admin/users` (if admin-only)
+ * - This violates REST convention of plural resource names
+ *
+ * ### Root Cause:
+ * The endpoint nests a plural resource under a singular namespace, creating ambiguity
+ * about whether it's user-scoped or platform-scoped.
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type { ApiClient } from "./core";

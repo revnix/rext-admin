@@ -1,7 +1,21 @@
 /**
  * Members & Invitations API Namespace
  *
- * Handles workspace member management and invitations
+ * Handles workspace member management, member invitations, and user-level invitation tracking.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ *
+ * ### User Invitations Section:
+ * - `listReceived()` uses singular "workspace": `/api/v1/workspace/invitations/received`
+ * - `listPending()` uses singular "user": `/api/v1/user/invitations/pending`
+ * - Expected pattern: `/api/v1/workspaces/{id}/invitations` (path-based consistency)
+ *
+ * ### Root Cause:
+ * These endpoints are user-scoped (not workspace-scoped) and use legacy singular naming.
+ * The inconsistency arises from mixing workspace-scoped and user-scoped resource patterns.
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type { ApiClient } from "./core";
@@ -259,11 +273,11 @@ export function createInvitationsNamespace(client: ApiClient) {
           role_id: string;
           role_name: string;
           invited_by:
-            | string
-            | {
-                name: string;
-                email: string;
-              };
+          | string
+          | {
+            name: string;
+            email: string;
+          };
           expires_at: string;
           status: string;
           created_at: string;

@@ -1,7 +1,15 @@
 /**
  * Content API Namespace
  *
- * Handles content CRUD operations
+ * Handles content CRUD operations, publishing, and management for workspace content.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ * - Uses query parameter `workspace_id` instead of path-based workspace scoping: `/api/v1/content/?workspace_id=...`
+ * - Expected pattern: `/api/v1/workspaces/{id}/content` (path-based like other workspace resources)
+ * - Endpoint paths not fully RESTful (e.g., /content/retry, /content/save, /content/publish)
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type {

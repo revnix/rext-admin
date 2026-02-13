@@ -3,6 +3,20 @@
  *
  * Handles platform-level admin invitation operations.
  * Only accessible to super_admin users.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ *
+ * ### Path Pattern Mismatch:
+ * - CRUD operations use: `/api/v1/admin/platform/invitations`
+ * - Token operations use: `/api/v1/admin-invitations/{token}/*` (different path structure)
+ * - Expected pattern: Consistent use of `/api/v1/admin/invitations` throughout
+ *
+ * ### Root Cause:
+ * Token-based endpoints use a non-standard CRUD separator (hyphenated `/admin-invitations/`)
+ * while main CRUD endpoints use path-based pattern (`/admin/platform/invitations`).
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type {
