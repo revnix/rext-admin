@@ -60,7 +60,7 @@ export default function WorkspacePage() {
     workspacesResponse?.workspaces || []
   ).map((workspace: Workspace) => ({
     id: workspace.id,
-    title: workspace.name || workspace.title || "Untitled Workspace", // Handle name/title mapping
+    title: workspace.name || workspace.name || "Untitled Workspace", // Handle name/title mapping
     slug: workspace.slug, // Include slug for URL navigation
     timezone: workspace.timezone,
     url: workspace.url,

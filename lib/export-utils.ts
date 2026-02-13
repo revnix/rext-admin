@@ -206,7 +206,7 @@ export function generateJsonExport(
     metadata: {
       workspace: {
         id: workspace.id,
-        title: workspace.title,
+        title: workspace.name,
         url: workspace.url,
       },
       export: {
@@ -386,7 +386,7 @@ export function generatePdfContent(
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>${workspace.title} - Knowledge Export</title>
+      <title>${workspace.name} - Knowledge Export</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
         .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -404,15 +404,15 @@ export function generatePdfContent(
     </head>
     <body>
       <div class="header">
-        <div class="workspace-title">${workspace.title}</div>
+        <div class="workspace-title">${workspace.name}</div>
         <div class="export-info">
           Knowledge Export • ${new Date().toLocaleDateString()} • ${items.length} items
         </div>
       </div>
 
       ${items
-        .map(
-          (item) => `
+      .map(
+        (item) => `
         <div class="item">
           <div class="item-header">
             <div class="item-title">${item.title}</div>
@@ -425,28 +425,26 @@ export function generatePdfContent(
           </div>
           ${item.url ? `<div class="item-meta">URL: <a href="${item.url}">${item.url}</a></div>` : ""}
           ${item.fileName ? `<div class="item-meta">File: ${item.fileName} (${item.fileType}, ${formatFileSize(item.fileSize || 0)})</div>` : ""}
-          ${
-            options.includeContent && item.content
-              ? `
+          ${options.includeContent && item.content
+            ? `
             <div class="item-content">
               ${item.content.substring(0, 1000)}${item.content.length > 1000 ? "..." : ""}
             </div>
           `
-              : ""
+            : ""
           }
-          ${
-            item.tags && item.tags.length > 0
-              ? `
+          ${item.tags && item.tags.length > 0
+            ? `
             <div class="tags">
               ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
             </div>
           `
-              : ""
+            : ""
           }
         </div>
       `,
-        )
-        .join("")}
+      )
+      .join("")}
     </body>
     </html>
   `;

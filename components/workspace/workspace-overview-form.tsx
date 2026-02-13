@@ -71,7 +71,7 @@ export function WorkspaceOverviewForm({
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
-      title: workspaceTitle,
+      name: workspaceTitle,
       timezone: workspaceTimezone,
       url: workspaceUrl,
     },
@@ -87,7 +87,7 @@ export function WorkspaceOverviewForm({
 
   useEffect(() => {
     reset({
-      title: workspaceTitle,
+      name: workspaceTitle,
       timezone: workspaceTimezone,
       url: workspaceUrl,
     });
@@ -95,7 +95,7 @@ export function WorkspaceOverviewForm({
 
   const handleReset = () => {
     reset({
-      title: workspaceTitle,
+      name: workspaceTitle,
       timezone: workspaceTimezone,
       url: workspaceUrl,
     });
@@ -116,7 +116,7 @@ export function WorkspaceOverviewForm({
       );
 
       reset({
-        title: getWorkspaceDisplayTitle(updatedWorkspace, ""),
+        name: getWorkspaceDisplayTitle(updatedWorkspace, ""),
         timezone:
           updatedWorkspace.timezone ??
           Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -138,24 +138,24 @@ export function WorkspaceOverviewForm({
       <CardHeader>
         <CardTitle className="text-lg">Workspace Details</CardTitle>
         <CardDescription>
-          Update the title, timezone, and URL for this workspace
+          Update the name, timezone, and URL for this workspace
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="workspace-title">Title</Label>
+            <Label htmlFor="workspace-name">Name</Label>
             <Input
-              id="workspace-title"
-              placeholder="Enter workspace title"
+              id="workspace-name"
+              placeholder="Enter workspace name"
               autoComplete="off"
-              {...register("title")}
+              {...register("name")}
               disabled={isSubmitting}
-              className={errors.title ? "border-destructive" : undefined}
+              className={errors.name ? "border-destructive" : undefined}
             />
-            {errors.title && (
+            {errors.name && (
               <p className="text-sm text-destructive" role="alert">
-                {errors.title.message}
+                {errors.name.message}
               </p>
             )}
           </div>

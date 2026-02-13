@@ -152,7 +152,7 @@ export function LoginForm({
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner
-          workspaceName={invitation.workspace.title}
+          workspaceName={invitation.workspace.name}
           workspaceSlug={invitation.workspace.slug}
           inviterName={`${invitation.invited_by.first_name} ${invitation.invited_by.last_name}`}
           roleName={invitation.role.display_name}

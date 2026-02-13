@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -29,9 +30,11 @@ import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { useWorkspaceStore } from "@/stores/workspace";
+import * as React from "react";
 
 const generalInfoSchema = z.object({
-  title: z.string().min(1, "Workspace name is required").max(100),
+  name: z.string().min(1, "Workspace name is required").max(100),
   slug: z
     .string()
     .min(3, "Slug must be at least 3 characters")
@@ -49,33 +52,73 @@ type GeneralInfoForm = z.infer<typeof generalInfoSchema>;
 export function GeneralInfoSection() {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const updateWorkspaceInList = useWorkspaceStore(
+    (state) => state.updateWorkspaceInList,
+  );
+  const setCurrentWorkspace = useWorkspaceStore(
+    (state) => state.setCurrentWorkspace,
+  );
 
   const form = useForm<GeneralInfoForm>({
     resolver: zodResolver(generalInfoSchema),
-    values: {
-      title: workspace?.title || "",
+    defaultValues: {
+      name: workspace?.name || "",
       slug: workspace?.slug || "",
       description: "",
       url: workspace?.url || "",
     },
   });
 
+  // Reset form when workspace changes
+  React.useEffect(() => {
+    if (workspace) {
+      form.reset({
+        name: workspace.name || "",
+        slug: workspace.slug || "",
+        description: "",
+        url: workspace.url || "",
+      });
+    }
+  }, [workspace, form]);
+
   const onSubmit = async (data: GeneralInfoForm) => {
     try {
-      await apiClient.workspaces.update(workspace?.id || "", {
-        title: data.title,
+      const response = await apiClient.workspaces.update(workspace?.id || "", {
+        name: data.name,
         url: data.url,
       });
+
+      const updatedWorkspace = response.workspace;
+
+      // Update Zustand store immediately
+      updateWorkspaceInList(updatedWorkspace);
+      setCurrentWorkspace(updatedWorkspace);
+
+      // Comprehensive cache invalidation - invalidate all workspace-related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["workspace", workspace?.id] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace", workspace?.slug] }),
+        queryClient.invalidateQueries({ queryKey: ["workspaces"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspaces", "switcher"] }),
+      ]);
+
+      // Force refetch to ensure UI updates immediately
+      await queryClient.refetchQueries({ queryKey: ["workspace", workspace?.id] });
+      await queryClient.refetchQueries({ queryKey: ["workspaces", "switcher"] });
+
+      toast.success("Workspace settings have been saved successfully.");
+
+      // Small delay to ensure store updates propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // If slug changed, redirect to new URL (note: backend doesn't allow slug changes yet)
       if (data.slug !== workspaceSlug) {
         router.push(workspaceRoutes.settings.root(data.slug));
       } else {
-        // Reload to get updated workspace data
-        router.refresh();
+        // Hard reload to ensure all components update
+        window.location.reload();
       }
-
-      toast.success("Workspace settings have been saved successfully.");
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -106,7 +149,7 @@ export function GeneralInfoSection() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="title"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Workspace Name</FormLabel>

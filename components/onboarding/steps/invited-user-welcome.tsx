@@ -78,7 +78,7 @@ export function InvitedUserWelcome({
                     You're joining
                   </p>
                   <h3 className="text-2xl font-bold">
-                    {workspace.title || workspace.name}
+                    {workspace.name || workspace.name}
                   </h3>
                 </div>
               </div>

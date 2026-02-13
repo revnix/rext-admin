@@ -58,7 +58,7 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         try {
           const { workspace, operation_id } = await apiClient.workspaces.create(
             {
-              title: data.title,
+              name: data.name,
               timezone: data.timezone,
               url: data.url,
             },
@@ -94,7 +94,7 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
 
         try {
           const response = await apiClient.workspaces.update(workspaceId, {
-            title: data.title,
+            name: data.name,
             timezone: data.timezone,
             url: data.url,
           });

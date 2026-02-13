@@ -141,7 +141,7 @@ export function WorkspaceProvider({
       const preliminaryWorkspace: Workspace = {
         id: "", // Will be filled when API returns
         slug: workspaceId, // From URL
-        title: workspaceId, // Use slug as title temporarily
+        name: workspaceId, // Use slug as name temporarily
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         url: "",
         created_at: "",
@@ -240,7 +240,7 @@ export function WorkspaceProvider({
  *   if (isLoading) return <div>Loading workspace details...</div>;
  *
  *
- *   return <div>{workspace?.title}</div>;
+ *   return <div>{workspace?.name}</div>;
  * }
  * ```
  */
@@ -250,7 +250,7 @@ export function useWorkspace(): WorkspaceContextType {
   if (!context) {
     throw new Error(
       "useWorkspace must be used within a WorkspaceProvider. " +
-        "Make sure your component is wrapped with <WorkspaceProvider>.",
+      "Make sure your component is wrapped with <WorkspaceProvider>.",
     );
   }
 
@@ -271,7 +271,7 @@ export function useWorkspace(): WorkspaceContextType {
  *     return <div>No workspace context</div>;
  *   }
  *
- *   return <div>{workspace.workspace?.title}</div>;
+ *   return <div>{workspace.workspace?.name}</div>;
  * }
  * ```
  */

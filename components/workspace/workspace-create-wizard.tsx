@@ -54,25 +54,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-];
+    {
+      id: "details",
+      title: "Workspace Details",
+      description: "Tell us about your workspace",
+      progress: 25,
+    },
+    {
+      id: "progress",
+      title: "Analysis",
+      description: "We're analyzing your website",
+      progress: 50,
+    },
+    {
+      id: "review",
+      title: "Review & Save",
+      description: "Review and edit brand information",
+      progress: 75,
+    },
+  ];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -105,7 +105,7 @@ export function WorkspaceCreateWizard() {
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
-      title: "",
+      name: "",
       url: "",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
@@ -167,7 +167,7 @@ export function WorkspaceCreateWizard() {
     try {
       // Real API call - returns workspace (operation_id is stored in currentOperation)
       const workspace = await createWorkspace({
-        title: data.title,
+        name: data.name,
         url: data.url,
         timezone: data.timezone,
       });
@@ -335,22 +335,22 @@ export function WorkspaceCreateWizard() {
               onSubmit={handleSubmit(handleDetailsSubmit)}
               className="space-y-6"
             >
-              {/* Title Field - HIDDEN */}
+              {/* Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-base font-medium">
-                  Workspace Title <span className="text-destructive">*</span>
+                <Label htmlFor="name" className="text-base font-medium">
+                  Workspace Name <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="title"
+                  id="name"
                   type="text"
                   placeholder="e.g., My Company Workspace"
-                  {...register("title")}
-                  className={`text-lg h-12 ${errors.title ? "border-destructive" : ""}`}
+                  {...register("name")}
+                  className={`text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
                   autoFocus
                 />
-                {errors.title && (
+                {errors.name && (
                   <p className="text-sm text-destructive">
-                    {errors.title.message}
+                    {errors.name.message}
                   </p>
                 )}
               </div>
