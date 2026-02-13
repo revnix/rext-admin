@@ -26,7 +26,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [, setError] = useState("");
+  // const [, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -41,6 +41,28 @@ export function LoginForm({
   } = useInvitationValidation();
 
   // Handle URL error parameters (e.g., session expired)
+  // useEffect(() => {
+  //   const urlError = searchParams.get("error");
+  //   if (urlError) {
+  //     const errorMessages: Record<string, string> = {
+  //       SessionExpired: "Your session has expired. Please log in again.",
+  //       OAuthSignin: "Error occurred during OAuth sign in.",
+  //       OAuthCallback: "Error occurred during OAuth callback.",
+  //       OAuthCreateAccount: "Could not create OAuth account.",
+  //       EmailCreateAccount: "Could not create email account.",
+  //       Callback: "Error occurred during callback.",
+  //       OAuthAccountNotLinked:
+  //         "To confirm your identity, sign in with the same account you used originally.",
+  //       EmailSignin: "Check your email for the sign in link.",
+  //       CredentialsSignin:
+  //         "Sign in failed. Check the details you provided are correct.",
+  //       Default: "An error occurred during authentication.",
+  //     };
+  //     const message = errorMessages[urlError] || errorMessages.Default;
+  //     // setError(message);
+  //     toast.error(message);
+  //   }
+  // }, [searchParams, toast]);
   useEffect(() => {
     const urlError = searchParams.get("error");
     if (urlError) {
@@ -59,19 +81,98 @@ export function LoginForm({
         Default: "An error occurred during authentication.",
       };
       const message = errorMessages[urlError] || errorMessages.Default;
-      setError(message);
       toast.error(message);
     }
   }, [searchParams, toast]);
 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  //   // setError("");
+
+  //   try {
+  //     // Try to get specific error message from backend first
+  //     // This allows us to show detailed errors like "Account locked" before NextAuth processes it
+  //     const backendResponse = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
+  //       {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ email, password }),
+  //       },
+  //     );
+
+  //     if (!backendResponse.ok) {
+  //       // Extract specific error message from backend (e.g., account lockout)
+  //       const errorData = await backendResponse.json().catch(() => ({}));
+  //       const errorMessage =
+  //         errorData?.error?.message ||
+  //         errorData?.message ||
+  //         "Invalid email or password. Please check your credentials and try again.";
+  //       // setError(errorMessage);
+  //       toast.error(errorMessage);
+  //       return;
+  //     }
+
+  //     // Backend validated successfully, now use NextAuth for session creation
+  //     const result = await signIn("credentials", {
+  //       email,
+  //       password,
+  //       redirect: false,
+  //       rememberMe: rememberMe.toString(),
+  //     });
+
+  //     if (result?.error) {
+  //       // setError("Authentication failed. Please try again.");
+  //       toast.error("Authentication failed. Please try again.");
+  //       return;
+  //     }
+
+  //     // Show success toast
+  //     toast.success("Login successful!");
+
+  //     // Handle redirect based on invitation presence
+  //     if (hasValidInvitation && invitationToken) {
+  //       // Redirect to invitation acceptance page
+  //       router.push(`/accept-invitation?token=${invitationToken}`);
+  //     } else {
+  //       // Force refresh auth headers to ensure we have the new token
+  //       await getAuthHeaders(true);
+
+  //       // Fetch workspaces to determine redirect
+  //       try {
+  //         const response = await apiClient.workspaces.list();
+  //         const workspaces = response.workspaces || [];
+
+  //         if (workspaces.length === 0) {
+  //           // No workspace exists, redirect to create workspace
+  //           router.push("/w/create");
+  //         } else {
+  //           // Workspace exists, redirect to generate content page
+  //           const firstWorkspace = workspaces[0];
+  //           router.push(`/w/${firstWorkspace.slug}/generate_content`);
+  //         }
+  //       } catch (error) {
+  //         log.error("[Auth] Failed to fetch workspaces:", error);
+  //         // Fallback to dashboard on error
+  //         const redirect = searchParams.get("redirect") || "/";
+  //         router.push(redirect);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     log.error("[AuthJS] Sign in failed:", error);
+  //     // setError("An error occurred. Please try again.");
+  //     toast.error("An error occurred. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     try {
-      // Try to get specific error message from backend first
-      // This allows us to show detailed errors like "Account locked" before NextAuth processes it
       const backendResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
         {
@@ -82,18 +183,15 @@ export function LoginForm({
       );
 
       if (!backendResponse.ok) {
-        // Extract specific error message from backend (e.g., account lockout)
         const errorData = await backendResponse.json().catch(() => ({}));
         const errorMessage =
           errorData?.error?.message ||
           errorData?.message ||
           "Invalid email or password. Please check your credentials and try again.";
-        setError(errorMessage);
         toast.error(errorMessage);
         return;
       }
 
-      // Backend validated successfully, now use NextAuth for session creation
       const result = await signIn("credentials", {
         email,
         password,
@@ -102,45 +200,35 @@ export function LoginForm({
       });
 
       if (result?.error) {
-        setError("Authentication failed. Please try again.");
         toast.error("Authentication failed. Please try again.");
         return;
       }
 
-      // Show success toast
       toast.success("Login successful!");
 
-      // Handle redirect based on invitation presence
       if (hasValidInvitation && invitationToken) {
-        // Redirect to invitation acceptance page
         router.push(`/accept-invitation?token=${invitationToken}`);
       } else {
-        // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
 
-        // Fetch workspaces to determine redirect
         try {
           const response = await apiClient.workspaces.list();
           const workspaces = response.workspaces || [];
 
           if (workspaces.length === 0) {
-            // No workspace exists, redirect to create workspace
             router.push("/w/create");
           } else {
-            // Workspace exists, redirect to generate content page
             const firstWorkspace = workspaces[0];
             router.push(`/w/${firstWorkspace.slug}/generate_content`);
           }
         } catch (error) {
           log.error("[Auth] Failed to fetch workspaces:", error);
-          // Fallback to dashboard on error
           const redirect = searchParams.get("redirect") || "/";
           router.push(redirect);
         }
       }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
-      setError("An error occurred. Please try again.");
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
