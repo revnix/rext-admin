@@ -24,8 +24,10 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
-import { PERMISSIONS } from "@/lib/permissions";
+// import { PERMISSIONS } from "@/lib/permissions";
+import { USER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
+
 
 interface UserData extends Record<string, unknown> {
   id: string;
@@ -82,17 +84,32 @@ export default function AdminUsersPage() {
   };
 
   const getUserInitials = (user: User) => {
+    // Try first_name + last_name
     if (user.first_name && user.last_name) {
       return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
     }
+
+    // Try display_name
     if (user.display_name) {
-      const parts = user.display_name.split(" ");
+      const parts = user.display_name.split(" ").filter(Boolean);
       if (parts.length >= 2) {
         return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
       }
       return user.display_name.slice(0, 2).toUpperCase();
     }
-    return user.username.slice(0, 2).toUpperCase();
+
+    // Try username
+    if (user.username) {
+      return user.username.slice(0, 2).toUpperCase();
+    }
+
+    // Fallback to email
+    if (user.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+
+    // Ultimate fallback
+    return "??";
   };
 
   // Transform users data for DataTable
@@ -204,7 +221,7 @@ export default function AdminUsersPage() {
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
-        permission={PERMISSIONS.USER_READ}
+        permission={USER_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

@@ -16,7 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
-import { PERMISSIONS } from "@/lib/permissions";
+// import { PERMISSIONS } from "@/lib/permissions";
+import { USER_PERMISSIONS } from "@/lib/permissions";
 
 export default function CustomersPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
@@ -129,7 +130,7 @@ export default function CustomersPage() {
       }
     >
       <CanAccess
-        permission={PERMISSIONS.USER_READ}
+        permission={USER_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
