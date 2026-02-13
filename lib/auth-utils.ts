@@ -114,3 +114,24 @@ export async function authenticatedFetch(
 
   return response;
 }
+
+/**
+ * Clear the auth headers cache
+ * Useful during logout to ensure fresh auth state
+ */
+export function clearAuthHeadersCache(): void {
+  authHeadersCache = null;
+  log.debug("[AuthJS] Auth headers cache cleared");
+}
+
+/**
+ * Reset any auth redirect state
+ * Clears stored redirect URLs from session/local storage
+ */
+export function resetAuthRedirectState(): void {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("auth_redirect_url");
+    sessionStorage.removeItem("pending_invitation_token");
+    log.debug("[AuthJS] Auth redirect state reset");
+  }
+}

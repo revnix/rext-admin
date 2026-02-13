@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { registerStoreReset } from "@/lib/store-registry";
 
 /**
  * User interface with permissions
@@ -166,3 +167,7 @@ export const usePermissionStore = create<PermissionStore>()(
     },
   ),
 );
+
+// Register with global store registry for logout cleanup
+const initialPermissionState = usePermissionStore.getInitialState();
+registerStoreReset(() => usePermissionStore.setState(initialPermissionState, true));
