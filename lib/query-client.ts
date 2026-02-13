@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/api-client/core";
 
 /**
  * Create a new QueryClient instance optimized for 2025 best practices
@@ -14,26 +15,32 @@ export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Optimized for 2025 collaborative scenarios
-        staleTime: 2 * 60 * 1000, // 2 minutes (reduced from 5 for better collaboration)
-        gcTime: 5 * 60 * 1000, // 5 minutes (reduced from 10 for memory efficiency)
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        gcTime: 5 * 60 * 1000, // 5 minutes
 
-        // Better for collaborative scenarios - always fetch fresh data on mount
-        refetchOnMount: true, // Changed from false - important for collaboration
-        refetchOnWindowFocus: true, // Always enabled for better UX
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
         refetchOnReconnect: true,
 
-        // No retries - fail fast for better user experience
-        retry: false,
+        // Conditional retry: skip client errors (4xx), retry server errors (5xx) and network failures
+        retry: (failureCount, error) => {
+          // Don't retry client errors — they won't succeed on retry
+          if (error instanceof ApiError && error.statusCode >= 400 && error.statusCode < 500) {
+            return false;
+          }
+          // Retry server errors and network failures up to 2 times
+          return failureCount < 2;
+        },
 
-        // Network failure detection
+        // Exponential backoff: 1s, 2s (capped at 3s)
+        retryDelay: (attemptIndex) =>
+          Math.min(1000 * 2 ** attemptIndex, 3000),
+
         networkMode: "online",
       },
       mutations: {
-        // No retries for mutations - fail fast
+        // No retries for mutations — they may not be idempotent
         retry: false,
-
-        // Network failure detection for mutations
         networkMode: "online",
       },
     },
