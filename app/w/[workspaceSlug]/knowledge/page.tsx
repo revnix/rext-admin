@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
@@ -40,7 +40,6 @@ export default function WorkspaceKnowledgePage() {
   const {
     data: response,
     isLoading: isKnowledgeLoading,
-    error,
   } = useQuery({
     queryKey: ["knowledge-bases", workspace?.id],
     queryFn: () => apiClient.knowledge.listBases(workspace?.id || ""),
