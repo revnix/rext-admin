@@ -27,6 +27,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
+import { useSession } from "next-auth/react";
 
 export default function AuditLogsPage() {
   const breadcrumbs = [
@@ -43,6 +44,7 @@ export default function AuditLogsPage() {
   );
 
   const debouncedSearch = useDebounce(search, 300);
+  const { data: session } = useSession();
 
   // Fetch audit logs
   const { data, isLoading, refetch } = useQuery({
@@ -83,7 +85,7 @@ export default function AuditLogsPage() {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${session?.user?.accessToken}`,
           },
         },
       );

@@ -4,10 +4,10 @@ import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
-
-const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+import { getPrimaryRole } from "@/lib/auth-utils";
 
 /**
  * Refresh the access token using the refresh token
@@ -150,18 +150,7 @@ export default {
 
           // Determine primary role based on hierarchy
           // Support both `roles: string[]` and `role: string` shapes; normalize casing
-          const rawRoles: string[] = Array.isArray(data.user.roles)
-            ? data.user.roles
-            : data.user.role
-              ? [data.user.role]
-              : [];
-          const userRoles = rawRoles.map((r: string) =>
-            String(r).toLowerCase().replace(/\s+/g, "_"),
-          );
-          const primaryRole =
-            ROLE_HIERARCHY.find((role) => userRoles.includes(role)) ||
-            userRoles[0] ||
-            "user";
+          const primaryRole = getPrimaryRole(data.user);
 
           // Return user object with backend tokens, role, and permissions
           return {
@@ -198,12 +187,12 @@ export default {
     }),
   ],
   pages: {
-    signIn: "/login",
-    signOut: "/login",
-    error: "/login",
+    signIn: AUTH_PAGES.LOGIN,
+    signOut: AUTH_PAGES.LOGIN,
+    error: AUTH_PAGES.LOGIN,
   },
   callbacks: {
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account, trigger, session }) {
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -312,18 +301,7 @@ export default {
             token.picture = oauthData.user.avatar_url || user.image;
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
-            const oauthRawRoles: string[] = Array.isArray(oauthData.user.roles)
-              ? oauthData.user.roles
-              : oauthData.user.role
-                ? [oauthData.user.role]
-                : [];
-            const oauthUserRoles = oauthRawRoles.map((r: string) =>
-              String(r).toLowerCase().replace(/\s+/g, "_"),
-            );
-            token.role =
-              ROLE_HIERARCHY.find((role) => oauthUserRoles.includes(role)) ||
-              oauthUserRoles[0] ||
-              "user";
+            token.role = getPrimaryRole(oauthData.user);
             token.permissions = oauthData.user.permissions || [];
             // Set token expiry for OAuth logins (24 hours)
             token.accessTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
@@ -346,7 +324,25 @@ export default {
         }
       }
 
-      // Handle session extension on update trigger
+      // Handle session updates (e.g., impersonation token swap)
+      if (trigger === "update" && session) {
+        if (session.accessToken) token.accessToken = session.accessToken;
+        if (session.refreshToken) token.refreshToken = session.refreshToken;
+
+        // Update non-sensitive user details only
+        // SECURITY: Do NOT accept role or permissions from client-side update()
+        // calls — these must come from the backend to prevent privilege escalation
+        if (session.user) {
+          if (session.user.id) token.id = session.user.id;
+          if (session.user.email) token.email = session.user.email;
+          if (session.user.name) token.name = session.user.name;
+          if (session.user.image) token.picture = session.user.image;
+        }
+
+        return token;
+      }
+
+      // Handle session extension (no session data — refresh request from timeout warning)
       const SESSION_DURATION_REMEMBER_ME = 30 * 24 * 60 * 60 * 1000; // 30 days
       const SESSION_DURATION_DEFAULT = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -408,15 +404,7 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const isOnAuthPage = [
-        "/login",
-        "/signup",
-        "/forgot-password",
-        "/reset-password",
-        "/verify-email",
-        "/accept-invitation",
-        "/accept-admin-invitation",
-      ].some((path) => nextUrl.pathname.startsWith(path));
+      const isOnAuthPage = isAuthPage(nextUrl.pathname);
 
       // If refresh error, force redirect to login
       if (hasRefreshError && !isOnAuthPage) {
