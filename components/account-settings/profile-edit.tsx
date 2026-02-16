@@ -66,6 +66,7 @@ export function ProfileEdit() {
   } = useQuery({
     queryKey: ["profile"],
     queryFn: () => apiClient.profile.get(),
+    throwOnError: true,
   });
 
   // Initialize form with default values to prevent uncontrolled component warnings
