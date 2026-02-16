@@ -37,6 +37,7 @@ interface UserData extends Record<string, unknown> {
   display_name: string | null | undefined;
   first_name: string | null | undefined;
   last_name: string | null | undefined;
+  full_name: string | null | undefined;
   initials: string;
 }
 
@@ -85,6 +86,7 @@ export default function AdminUsersPage() {
     if (user.first_name && user.last_name) {
       return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
     }
+
     if (user.display_name) {
       const parts = user.display_name.split(" ");
       if (parts.length >= 2) {
@@ -92,20 +94,39 @@ export default function AdminUsersPage() {
       }
       return user.display_name.slice(0, 2).toUpperCase();
     }
-    return user.username.slice(0, 2).toUpperCase();
+
+    if (user.full_name) {
+      const parts = user.full_name.split(" ");
+      if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      }
+      return user.full_name.slice(0, 2).toUpperCase();
+    }
+
+    if (user.username) {
+      return user.username.slice(0, 2).toUpperCase();
+    }
+
+    return (user.email || "??").slice(0, 2).toUpperCase();
   };
 
   // Transform users data for DataTable
   const tableData: UserData[] = (data?.users || []).map((user) => ({
     id: user.id,
-    name: user.display_name || user.first_name || user.username,
+    name:
+      user.display_name ||
+      user.full_name ||
+      user.first_name ||
+      user.username ||
+      user.email,
     email: user.email,
-    username: user.username,
+    username: user.username || "",
     status: user.status,
     email_verified: user.email_verified,
     display_name: user.display_name,
     first_name: user.first_name,
     last_name: user.last_name,
+    full_name: user.full_name,
     initials: getUserInitials(user),
   }));
 
