@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
@@ -129,7 +130,12 @@ export default {
               errorData?.message ||
               "Invalid email or password";
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
-            return null;
+
+            // Throw CredentialsSignin with the message as the code
+            // This allows the client to access the specific message
+            const error = new CredentialsSignin(errorMessage);
+            error.code = errorMessage;
+            throw error;
           }
 
           const responseData = await response.json();
@@ -336,6 +342,31 @@ export default {
         return token;
       }
 
+      // Handle session extension (no session data — refresh request from timeout warning)
+      const SESSION_DURATION_REMEMBER_ME = 30 * 24 * 60 * 60 * 1000; // 30 days
+      const SESSION_DURATION_DEFAULT = 24 * 60 * 60 * 1000; // 24 hours
+
+      if (trigger === "update") {
+        log.info("[Auth] Session update triggered manually");
+        if (token.refreshToken) {
+          log.info("[Auth] Refreshing backend token via refresh token...");
+          return await refreshAccessToken(token);
+        }
+
+        if (token.accessTokenExpires) {
+          log.info("[Auth] Extending session expiry manually...");
+          const expiryDuration = token.rememberMe
+            ? SESSION_DURATION_REMEMBER_ME
+            : SESSION_DURATION_DEFAULT;
+          return {
+            ...token,
+            accessTokenExpires: Date.now() + expiryDuration,
+          };
+        }
+
+        return token;
+      }
+
       // If there's a previous refresh error, don't retry - just return the error token
       // This prevents infinite loops
       if (token.error === "RefreshAccessTokenError") {
@@ -363,6 +394,7 @@ export default {
         session.user.name = token.name as string;
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
+        session.accessTokenExpires = token.accessTokenExpires as number | undefined;
         session.user.role = token.role as string | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.error = token.error as string | undefined;

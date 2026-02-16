@@ -12,6 +12,7 @@ declare module "next-auth" {
       role?: string; // User's primary role
       permissions?: string[]; // User's permissions array
     } & DefaultSession["user"];
+    accessTokenExpires?: number; // Timestamp when access token expires
     error?: string; // Error code if token refresh fails
   }
 
