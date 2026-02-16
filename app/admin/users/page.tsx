@@ -31,6 +31,8 @@ interface UserData extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
+  status: string;
+  email_verified: boolean;
   display_name: string | null | undefined;
   full_name: string | null | undefined;
   initials: string;

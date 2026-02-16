@@ -159,7 +159,8 @@ export function SignupForm({
           workspaceSlug={invitation.workspace.slug}
           inviterName={
             invitation.invited_by.display_name ||
-            invitation.invited_by.full_name
+            invitation.invited_by.full_name ||
+            "Workspace Admin"
           }
           roleName={invitation.role.display_name}
           inviteeEmail={invitation.email}
