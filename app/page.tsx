@@ -85,11 +85,11 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <APIErrorBoundary>
-      <PageLayout
-        title={currentWorkspace?.title || "Dashboard"}
-        description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
-        breadcrumbs={breadcrumbs}
-      >
+        <PageLayout
+          title={currentWorkspace?.title || "Dashboard"}
+          description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
+          breadcrumbs={breadcrumbs}
+        >
           <div className="flex flex-col gap-8">
             {/* Top Row: Metrics Cards (5 Cards) */}
             <MetricsCards
@@ -113,7 +113,7 @@ export default function DashboardPage() {
               </aside>
             </div>
           </div>
-      </PageLayout>
+        </PageLayout>
       </APIErrorBoundary>
     </AuthGuard>
   );
