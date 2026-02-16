@@ -34,11 +34,9 @@ export default function AcceptInvitationPage() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get token from URL or sessionStorage
-  const tokenFromUrl = searchParams.get("token");
-  const [invitationToken] = useState(() => {
-    return tokenFromUrl || sessionStorage.getItem("pending_invitation_token");
-  });
+  // Get token from URL only (no sessionStorage for security — prevents XSS token theft)
+  const invitationToken =
+    searchParams.get("token") || searchParams.get("invitation_token");
 
   // Validate invitation
   const {
@@ -73,16 +71,13 @@ export default function AcceptInvitationPage() {
         const errorData = await response.json();
         throw new Error(
           errorData.message ||
-          errorData.detail ||
-          "Failed to accept invitation",
+            errorData.detail ||
+            "Failed to accept invitation",
         );
       }
 
       const data = await response.json();
       setAccepted(true);
-
-      // Clean up session storage
-      sessionStorage.removeItem("pending_invitation_token");
 
       // Redirect to workspace after short delay
       setTimeout(() => {

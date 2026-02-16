@@ -44,10 +44,7 @@ export function SessionTimeoutWarning() {
 
       if (updatedSession?.error === "RefreshAccessTokenError") {
         log.error("[Auth] Session extension failed: Token refresh error");
-        await signOut({
-          redirect: true,
-          callbackUrl: "/login?error=SessionExpired",
-        });
+        await performLogout("/login?error=SessionExpired");
         return;
       }
 

@@ -143,9 +143,6 @@ export function SignupForm({
           // Fallback to dashboard on error
           router.push("/");
         }
-
-        // Clean up session storage
-        sessionStorage.removeItem("pending_invitation_token");
       } else {
         // If auto-login fails, redirect to login page
         setTimeout(() => {
@@ -249,7 +246,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                          "bg-muted cursor-not-allowed opacity-75",
+                            "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />

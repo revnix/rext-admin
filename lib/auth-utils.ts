@@ -31,8 +31,7 @@ export function normalizeRole(role: string): string {
 export function extractNormalizedRoles(data: {
   roles?: string[] | null;
   role?: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+  [key: string]: unknown;
 }): string[] {
   const rawRoles: string[] = Array.isArray(data.roles)
     ? data.roles
@@ -45,8 +44,7 @@ export function extractNormalizedRoles(data: {
 export function getPrimaryRole(data: {
   roles?: string[] | null;
   role?: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+  [key: string]: unknown;
 }): string {
   const userRoles = extractNormalizedRoles(data);
   return (
