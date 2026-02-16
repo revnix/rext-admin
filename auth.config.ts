@@ -156,7 +156,9 @@ export default {
           return {
             id: data.user.id,
             email: data.user.email,
-            name: `${data.user.first_name || ""} ${data.user.last_name || ""}`.trim(),
+            name: data.user.display_name || data.user.full_name || data.user.email,
+            full_name: data.user.full_name,
+            display_name: data.user.display_name,
             image: data.user.avatar_url || null,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
@@ -200,6 +202,8 @@ export default {
           token.id = user.id;
           token.email = user.email;
           token.name = user.name;
+          token.full_name = user.full_name;
+          token.display_name = user.display_name;
           token.picture = user.image;
           token.accessToken = user.accessToken;
           token.refreshToken = user.refreshToken;
@@ -296,8 +300,12 @@ export default {
 
             token.id = oauthData.user.id;
             token.email = oauthData.user.email;
+            token.full_name = oauthData.user.full_name;
+            token.display_name = oauthData.user.display_name;
             token.name =
-              `${oauthData.user.first_name} ${oauthData.user.last_name}`.trim();
+              oauthData.user.display_name ||
+              oauthData.user.full_name ||
+              oauthData.user.email;
             token.picture = oauthData.user.avatar_url || user.image;
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
@@ -392,6 +400,8 @@ export default {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
+        session.user.full_name = token.full_name as string;
+        session.user.display_name = (token.display_name as string) || null;
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
         session.accessTokenExpires = token.accessTokenExpires as number | undefined;

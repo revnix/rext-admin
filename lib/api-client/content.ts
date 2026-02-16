@@ -70,7 +70,7 @@ export function createContentNamespace(client: ApiClient) {
     update: async (
       workspaceId: string,
       contentId: string,
-      data: UpdateContentRequest | Record<string, unknown>,
+      data: UpdateContentRequest,
     ) => {
       return client.request<ContentResponse>(
         `/api/v1/content/${contentId}?workspace_id=${encodeURIComponent(workspaceId)}`,

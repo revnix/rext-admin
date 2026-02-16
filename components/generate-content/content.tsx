@@ -1,4 +1,7 @@
 import type {
+  ContentStatus,
+} from "@/types/content";
+import type {
   FinalContent,
   Outline,
   ReadabilityMeta,
@@ -180,7 +183,7 @@ export function ContentEditor({
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
-    status: "draft",
+    status: "draft" as ContentStatus,
     workspace_id: workspaceId,
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
@@ -196,6 +199,8 @@ export function ContentEditor({
       search_intent: ["informational"],
       seo_score: seoScore?.seo_health_score || 0,
       readability_score: score,
+      content_primary_keywords: [allContent?.focus_keyphrase || userKeyword].filter(Boolean),
+      content_meta_description: allContent?.meta_description || "",
       seo_details: JSON.stringify(seoScore || {}),
       trust_score: trustScore?.score || 0,
     },

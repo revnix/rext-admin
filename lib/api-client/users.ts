@@ -9,10 +9,7 @@ import type { ApiClient } from "./core";
 export interface User {
   id: string;
   email: string;
-  username?: string;
   full_name?: string;
-  first_name?: string;
-  last_name?: string;
   display_name?: string;
   status: string;
   email_verified: boolean;

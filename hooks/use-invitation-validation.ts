@@ -18,9 +18,7 @@ interface InvitationDetails {
   };
   invited_by: {
     id: string;
-    username: string;
-    first_name: string;
-    last_name: string;
+    full_name: string;
     display_name?: string;
   };
   expires_at: string;

@@ -138,7 +138,11 @@ export function LoginForm({
         <InvitationBanner
           workspaceName={invitation.workspace.title}
           workspaceSlug={invitation.workspace.slug}
-          inviterName={`${invitation.invited_by.first_name} ${invitation.invited_by.last_name}`}
+          inviterName={
+            invitation.invited_by.display_name ||
+            invitation.invited_by.full_name ||
+            "Workspace Admin"
+          }
           roleName={invitation.role.display_name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}
