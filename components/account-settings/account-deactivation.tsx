@@ -64,7 +64,7 @@ export function AccountDeactivation() {
     onSuccess: async (data) => {
       toast.success(
         data.message ||
-        "Your account has been deactivated and will be deleted in 14 days.",
+          "Your account has been deactivated and will be deleted in 14 days.",
       );
 
       // Wait a moment to show the toast

@@ -14,20 +14,19 @@ import { log } from "@/lib/logger";
 export function useAuthSession() {
   const { data: session, status } = useSession();
 
-
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [activityCount, setActivityCount] = useState<number>(0);
 
   const user = session?.user
     ? {
-      id: session.user.id || "",
-      email: session.user.email || "",
-      name: session.user.name || "",
-      full_name: session.user.name,
-      accessToken: session.user.accessToken || "",
-      role: session.user.role || "user",
-      permissions: session.user.permissions || [],
-    }
+        id: session.user.id || "",
+        email: session.user.email || "",
+        name: session.user.name || "",
+        full_name: session.user.name,
+        accessToken: session.user.accessToken || "",
+        role: session.user.role || "user",
+        permissions: session.user.permissions || [],
+      }
     : null;
 
   // Track user activity
