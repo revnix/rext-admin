@@ -8,6 +8,7 @@
 import { getSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { log } from "@/lib/logger";
+import { useAuthStore } from "@/stores/auth-store";
 
 // Cache for auth headers to avoid excessive session checks
 let authHeadersCache: {
@@ -23,6 +24,19 @@ const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 export async function getAuthHeaders(
   skipCache: boolean = false,
 ): Promise<Record<string, string>> {
+  // Check in-memory store for impersonation token first (client-side only)
+  // This ensures we always use the latest impersonation token if one exists, bypassing cache
+  if (typeof window !== "undefined") {
+    const store = useAuthStore.getState();
+    const { accessToken } = store;
+
+    if (accessToken) {
+      return {
+        Authorization: `Bearer ${accessToken}`,
+      };
+    }
+  }
+
   // Check cache first (only on client-side)
   if (typeof window !== "undefined" && !skipCache && authHeadersCache) {
     const now = Date.now();

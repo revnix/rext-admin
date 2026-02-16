@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
-import { DashboardCharts } from "@/components/dashboard/revamp/dashboard-charts"; // New static charts
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
@@ -50,6 +49,7 @@ export default function DashboardPage() {
   // Data Fetching: Dashboard Stats
   const { data: dashboardStats, isLoading: isLoadingDashboard } = useQuery({
     queryKey: ["dashboard-stats", currentWorkspace?.id],
+    // biome-ignore lint/style/noNonNullAssertion: guarded by enabled check below
     queryFn: () => apiClient.dashboard.getStats(currentWorkspace!.id),
     enabled: !!currentWorkspace?.id,
     throwOnError: true,
@@ -59,7 +59,7 @@ export default function DashboardPage() {
   });
 
   // Total Workspaces Count
-  const totalWorkspaces = workspacesResponse?.total || 0;
+  const _totalWorkspaces = workspacesResponse?.total || 0;
 
   // Update page title and description
   usePageTitle(
