@@ -163,8 +163,9 @@ export interface CreateContentRequest {
  * Request schema for updating content
  */
 export interface UpdateContentRequest {
-   workspace_id?: string;
+  workspace_id?: string;
   title: string;
+  slug?: string;
   introduction?: string;
   body_markdown?: string;
   body_html?: string;
