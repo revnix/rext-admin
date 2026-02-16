@@ -13,6 +13,7 @@ import { useWorkspaceContextStore } from "./use-workspace-context-store";
 import { useWorkspaceCrudStore } from "./use-workspace-crud-store";
 import { useWorkspaceFormStore } from "./use-workspace-form-store";
 import { useWorkspaceKnowledgeStore } from "./use-workspace-knowledge-store";
+import { useMemo } from "react";
 
 // ============================================================================
 // WORKSPACE CONTEXT STORE
@@ -90,89 +91,89 @@ export function useWorkspaceStore<T = WorkspaceState>(
   const knowledgeStore = useWorkspaceKnowledgeStore();
   const brandVoiceStore = useBrandVoiceRefreshStore();
 
-  // Build combined state object
-  const combinedState: WorkspaceState = {
-    // Context state
-    currentWorkspace: contextStore.currentWorkspace,
-    workspaceList: contextStore.workspaceList,
-    recentWorkspaces: contextStore.recentWorkspaces,
-    lastWorkspacePath: contextStore.lastWorkspacePath,
-    _hasHydrated: contextStore._hasHydrated,
+  const combinedState = useMemo<WorkspaceState>(
+    () => ({
+      // Context state
+      currentWorkspace: contextStore.currentWorkspace,
+      workspaceList: contextStore.workspaceList,
+      recentWorkspaces: contextStore.recentWorkspaces,
+      lastWorkspacePath: contextStore.lastWorkspacePath,
+      _hasHydrated: contextStore._hasHydrated,
 
-    // CRUD state
-    loadingStates: crudStore.loadingStates,
-    currentOperation: crudStore.currentOperation,
+      // CRUD state
+      loadingStates: crudStore.loadingStates,
+      currentOperation: crudStore.currentOperation,
 
-    // Form state
-    workspaceForm: formStore.workspaceForm,
+      // Form state
+      workspaceForm: formStore.workspaceForm,
 
-    // Knowledge state
-    knowledge: knowledgeStore.knowledge,
+      // Knowledge state
+      knowledge: knowledgeStore.knowledge,
 
-    // Brand voice state
-    brandVoiceRefresh: brandVoiceStore.brandVoiceRefresh,
+      // Brand voice state
+      brandVoiceRefresh: brandVoiceStore.brandVoiceRefresh,
 
-    // Context actions
-    setCurrentWorkspace: contextStore.setCurrentWorkspace,
-    setWorkspaceList: contextStore.setWorkspaceList,
-    updateWorkspaceInList: contextStore.updateWorkspaceInList,
-    removeWorkspaceFromList: contextStore.removeWorkspaceFromList,
-    addWorkspaceToList: contextStore.addWorkspaceToList,
-    addToRecentWorkspaces: contextStore.addToRecentWorkspaces,
-    removeFromRecentWorkspaces: contextStore.removeFromRecentWorkspaces,
-    clearRecentWorkspaces: contextStore.clearRecentWorkspaces,
-    setLastWorkspacePath: contextStore.setLastWorkspacePath,
-    optimisticallyUpdateWorkspace: contextStore.optimisticallyUpdateWorkspace,
-    revertOptimisticUpdate: contextStore.revertOptimisticUpdate,
-    setHasHydrated: contextStore.setHasHydrated,
+      // Context actions
+      setCurrentWorkspace: contextStore.setCurrentWorkspace,
+      setWorkspaceList: contextStore.setWorkspaceList,
+      updateWorkspaceInList: contextStore.updateWorkspaceInList,
+      removeWorkspaceFromList: contextStore.removeWorkspaceFromList,
+      addWorkspaceToList: contextStore.addWorkspaceToList,
+      addToRecentWorkspaces: contextStore.addToRecentWorkspaces,
+      removeFromRecentWorkspaces: contextStore.removeFromRecentWorkspaces,
+      clearRecentWorkspaces: contextStore.clearRecentWorkspaces,
+      setLastWorkspacePath: contextStore.setLastWorkspacePath,
+      optimisticallyUpdateWorkspace: contextStore.optimisticallyUpdateWorkspace,
+      revertOptimisticUpdate: contextStore.revertOptimisticUpdate,
+      setHasHydrated: contextStore.setHasHydrated,
 
-    // CRUD actions
-    createWorkspace: crudStore.createWorkspace,
-    updateWorkspace: crudStore.updateWorkspace,
-    deleteWorkspace: crudStore.deleteWorkspace,
-    duplicateWorkspace: crudStore.duplicateWorkspace,
-    fetchWorkspaces: crudStore.fetchWorkspaces,
-    fetchWorkspace: crudStore.fetchWorkspace,
-    setLoading: crudStore.setLoading,
-    setCurrentOperation: crudStore.setCurrentOperation,
-    clearCurrentOperation: crudStore.clearCurrentOperation,
+      // CRUD actions
+      createWorkspace: crudStore.createWorkspace,
+      updateWorkspace: crudStore.updateWorkspace,
+      deleteWorkspace: crudStore.deleteWorkspace,
+      duplicateWorkspace: crudStore.duplicateWorkspace,
+      fetchWorkspaces: crudStore.fetchWorkspaces,
+      fetchWorkspace: crudStore.fetchWorkspace,
+      setLoading: crudStore.setLoading,
+      setCurrentOperation: crudStore.setCurrentOperation,
+      clearCurrentOperation: crudStore.clearCurrentOperation,
 
-    // Form actions
-    openWorkspaceForm: formStore.openWorkspaceForm,
-    closeWorkspaceForm: formStore.closeWorkspaceForm,
-    updateWorkspaceFormData: formStore.updateWorkspaceFormData,
-    setWorkspaceFormSubmitting: formStore.setWorkspaceFormSubmitting,
-    setWorkspaceFormErrors: formStore.setWorkspaceFormErrors,
-    resetWorkspaceForm: formStore.resetWorkspaceForm,
+      // Form actions
+      openWorkspaceForm: formStore.openWorkspaceForm,
+      closeWorkspaceForm: formStore.closeWorkspaceForm,
+      updateWorkspaceFormData: formStore.updateWorkspaceFormData,
+      setWorkspaceFormSubmitting: formStore.setWorkspaceFormSubmitting,
+      setWorkspaceFormErrors: formStore.setWorkspaceFormErrors,
+      resetWorkspaceForm: formStore.resetWorkspaceForm,
 
-    // Knowledge actions
-    setSelectedKnowledgeType: knowledgeStore.setSelectedKnowledgeType,
-    toggleKnowledgeSelection: knowledgeStore.toggleKnowledgeSelection,
-    selectAllKnowledge: knowledgeStore.selectAllKnowledge,
-    deselectAllKnowledge: knowledgeStore.deselectAllKnowledge,
-    openUploadModal: knowledgeStore.openUploadModal,
-    closeUploadModal: knowledgeStore.closeUploadModal,
-    setUploadProgress: knowledgeStore.setUploadProgress,
-    removeUploadProgress: knowledgeStore.removeUploadProgress,
+      // Knowledge actions
+      setSelectedKnowledgeType: knowledgeStore.setSelectedKnowledgeType,
+      toggleKnowledgeSelection: knowledgeStore.toggleKnowledgeSelection,
+      selectAllKnowledge: knowledgeStore.selectAllKnowledge,
+      deselectAllKnowledge: knowledgeStore.deselectAllKnowledge,
+      openUploadModal: knowledgeStore.openUploadModal,
+      closeUploadModal: knowledgeStore.closeUploadModal,
+      setUploadProgress: knowledgeStore.setUploadProgress,
+      removeUploadProgress: knowledgeStore.removeUploadProgress,
 
-    // Brand voice actions
-    refreshBrandVoice: brandVoiceStore.refreshBrandVoice,
-    setBrandVoiceRefreshState: brandVoiceStore.setBrandVoiceRefreshState,
+      // Brand voice actions
+      refreshBrandVoice: brandVoiceStore.refreshBrandVoice,
+      setBrandVoiceRefreshState: brandVoiceStore.setBrandVoiceRefreshState,
 
-    // Combined utility action
-    resetStore: () => {
-      // Reset all stores to initial state
-      contextStore.setCurrentWorkspace(null);
-      contextStore.setWorkspaceList([]);
-      contextStore.clearRecentWorkspaces();
-      contextStore.setLastWorkspacePath(null);
-      formStore.resetWorkspaceForm();
-      knowledgeStore.deselectAllKnowledge();
-      knowledgeStore.closeUploadModal();
-    },
-  };
+      // Combined utility action
+      resetStore: () => {
+        contextStore.setCurrentWorkspace(null);
+        contextStore.setWorkspaceList([]);
+        contextStore.clearRecentWorkspaces();
+        contextStore.setLastWorkspacePath(null);
+        formStore.resetWorkspaceForm();
+        knowledgeStore.deselectAllKnowledge();
+        knowledgeStore.closeUploadModal();
+      },
+    }),
+    [contextStore, crudStore, formStore, knowledgeStore, brandVoiceStore],
+  );
 
-  // Support both selector pattern and direct access
   if (selector) {
     return selector(combinedState);
   }
