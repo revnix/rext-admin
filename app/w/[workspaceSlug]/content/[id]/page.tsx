@@ -25,7 +25,12 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { useContentDetail } from "@/hooks/use-content";
 import type { GenerationStep } from "@/types/content-generation-progress";
 import type { SSEEvent } from "@/types/sse";
-import type { CONTENT, SEORESULT, Outline, EEATData } from "@/types/generate-content";
+import type {
+  CONTENT,
+  SEORESULT,
+  Outline,
+  EEATData,
+} from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
 import { safeJsonParse } from "@/lib/utils";
 
@@ -292,17 +297,17 @@ export default function WorkspaceContentDetailPage({
     );
   }
 
-const seoResult = safeJsonParse<SEORESULT>(
-  content.seo_data?.seo_details,
-  null,
-  "seo_details",
-);
+  const seoResult = safeJsonParse<SEORESULT>(
+    content.seo_data?.seo_details,
+    null,
+    "seo_details",
+  );
 
-const eeatData = safeJsonParse<EEATData>(
-  content.seo_data?.eeat_data,
-  null,
-  "eeat_data",
-);
+  const eeatData = safeJsonParse<EEATData>(
+    content.seo_data?.eeat_data,
+    null,
+    "eeat_data",
+  );
 
   // Construct Outline object (mocked or extracted from content if possible)
   // For now, we can extract headings from markdown if outline is missing in API

@@ -471,18 +471,18 @@ export class DraftManager {
       oldestDraft:
         drafts.length > 0
           ? drafts.sort(
-            (a, b) =>
-              new Date(a.createdAt).getTime() -
-              new Date(b.createdAt).getTime(),
-          )[0]?.title
+              (a, b) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime(),
+            )[0]?.title
           : undefined,
       newestDraft:
         drafts.length > 0
           ? drafts.sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() -
-              new Date(a.createdAt).getTime(),
-          )[0]?.title
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            )[0]?.title
           : undefined,
     };
   }

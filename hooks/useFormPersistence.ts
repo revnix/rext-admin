@@ -141,7 +141,7 @@ export function useFormPersistence<T extends Record<string, unknown>>(
         localStorage.setItem(storageKey, JSON.stringify(values));
         setHasDraft(true);
         onDraftSaved?.(values);
-      } catch (_error) { }
+      } catch (_error) {}
     }, debounceDelay);
 
     return () => clearTimeout(timer);
@@ -174,7 +174,7 @@ export function useFormPersistence<T extends Record<string, unknown>>(
       setHasDraft(false);
       setValuesInternal(defaultValues);
       setIsDirty(false);
-    } catch (_error) { }
+    } catch (_error) {}
   }, [storageKey, defaultValues]);
 
   const reset = useCallback(() => {

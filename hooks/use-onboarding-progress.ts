@@ -102,7 +102,7 @@ export function useOnboardingProgress(
 
   const skippedSteps: string[] =
     typeof window !== "undefined"
-      ? safeJsonParse<string[]>(localStorage.getItem(skippedKey), []) ?? []
+      ? (safeJsonParse<string[]>(localStorage.getItem(skippedKey), []) ?? [])
       : [];
 
   // Calculate milestone completion based on real-time stats
