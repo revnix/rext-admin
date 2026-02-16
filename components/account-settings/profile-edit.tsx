@@ -82,12 +82,12 @@ export function ProfileEdit() {
     },
     values: profile
       ? {
-        full_name: profile.full_name || "",
-        display_name: profile.display_name || "",
-        bio: profile.bio || "",
-        language: profile.language || "en",
-        timezone: profile.timezone || "UTC",
-      }
+          full_name: profile.full_name || "",
+          display_name: profile.display_name || "",
+          bio: profile.bio || "",
+          language: profile.language || "en",
+          timezone: profile.timezone || "UTC",
+        }
       : undefined,
   });
 

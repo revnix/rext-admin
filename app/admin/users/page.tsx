@@ -124,11 +124,11 @@ export default function AdminUsersPage() {
           </Avatar>
           <div>
             <p className="font-medium">{value as string}</p>
-            {row.full_name && row.display_name && row.full_name !== row.display_name && (
-              <p className="text-sm text-muted-foreground">
-                {row.full_name}
-              </p>
-            )}
+            {row.full_name &&
+              row.display_name &&
+              row.full_name !== row.display_name && (
+                <p className="text-sm text-muted-foreground">{row.full_name}</p>
+              )}
           </div>
         </div>
       ),
@@ -145,9 +145,7 @@ export default function AdminUsersPage() {
       header: "Full Name",
       width: "150px",
       cell: (value) => (
-        <span className="text-sm text-muted-foreground">
-          {value as string}
-        </span>
+        <span className="text-sm text-muted-foreground">{value as string}</span>
       ),
       searchable: true,
     },

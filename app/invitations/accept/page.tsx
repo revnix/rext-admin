@@ -72,8 +72,8 @@ export default function AcceptInvitationPage() {
         typeof invitation.invited_by === "string"
           ? invitation.invited_by
           : invitation.invited_by?.display_name ||
-          invitation.invited_by?.full_name ||
-          "Workspace Admin";
+            invitation.invited_by?.full_name ||
+            "Workspace Admin";
 
       const roleName =
         invitation.role?.display_name || invitation.role?.name || "Member";
@@ -314,8 +314,8 @@ export default function AcceptInvitationPage() {
                   {typeof invitation.invited_by === "string"
                     ? invitation.invited_by
                     : invitation.invited_by?.display_name ||
-                    invitation.invited_by?.full_name ||
-                    "Workspace Admin"}
+                      invitation.invited_by?.full_name ||
+                      "Workspace Admin"}
                 </p>
               </div>
             </div>

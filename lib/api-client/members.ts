@@ -257,11 +257,11 @@ export function createInvitationsNamespace(client: ApiClient) {
           role_id: string;
           role_name: string;
           invited_by:
-          | string
-          | {
-            name: string;
-            email: string;
-          };
+            | string
+            | {
+                name: string;
+                email: string;
+              };
           expires_at: string;
           status: string;
           created_at: string;

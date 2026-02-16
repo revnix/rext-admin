@@ -41,7 +41,11 @@ export function createTopicsNamespace(client: ApiClient) {
             return null;
           }
           // Fallback for non-ApiError errors (e.g. network layer) that may contain "404"
-          if (!(error instanceof ApiError) && error instanceof Error && error.message.includes("404")) {
+          if (
+            !(error instanceof ApiError) &&
+            error instanceof Error &&
+            error.message.includes("404")
+          ) {
             return null;
           }
           throw error;

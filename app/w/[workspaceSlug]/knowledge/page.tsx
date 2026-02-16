@@ -37,10 +37,7 @@ export default function WorkspaceKnowledgePage() {
   const [kbToEdit, setKbToEdit] = useState<KnowledgeBase | null>(null);
   const [kbToDelete, setKbToDelete] = useState<KnowledgeBase | null>(null);
 
-  const {
-    data: response,
-    isLoading: isKnowledgeLoading,
-  } = useQuery({
+  const { data: response, isLoading: isKnowledgeLoading } = useQuery({
     queryKey: ["knowledge-bases", workspace?.id],
     queryFn: () => apiClient.knowledge.listBases(workspace?.id || ""),
     enabled: !!workspace?.id,

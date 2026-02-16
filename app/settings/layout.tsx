@@ -21,9 +21,7 @@ export default function SettingsLayout({
 
         {/* Main Content */}
         <main className="w-full">
-          <APIErrorBoundary>
-            {children}
-          </APIErrorBoundary>
+          <APIErrorBoundary>{children}</APIErrorBoundary>
         </main>
       </div>
     </PageLayout>

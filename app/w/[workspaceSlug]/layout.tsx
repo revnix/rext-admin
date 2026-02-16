@@ -32,9 +32,7 @@ export default async function WorkspaceLayout({
   // Provide workspace context to all child pages
   return (
     <WorkspaceProvider workspaceId={workspaceSlug}>
-      <APIErrorBoundary>
-        {children}
-      </APIErrorBoundary>
+      <APIErrorBoundary>{children}</APIErrorBoundary>
     </WorkspaceProvider>
   );
 }

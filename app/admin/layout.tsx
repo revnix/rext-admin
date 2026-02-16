@@ -54,9 +54,5 @@ export default function AdminLayout({
 
   // Render admin content
   // Note: PageLayout handles title, description, sidebar, and impersonation banner
-  return (
-    <APIErrorBoundary>
-      {children}
-    </APIErrorBoundary>
-  );
+  return <APIErrorBoundary>{children}</APIErrorBoundary>;
 }

@@ -1,6 +1,4 @@
-import type {
-  ContentStatus,
-} from "@/types/content";
+import type { ContentStatus } from "@/types/content";
 import type {
   FinalContent,
   Outline,
@@ -199,7 +197,9 @@ export function ContentEditor({
       search_intent: ["informational"],
       seo_score: seoScore?.seo_health_score || 0,
       readability_score: score,
-      content_primary_keywords: [allContent?.focus_keyphrase || userKeyword].filter(Boolean),
+      content_primary_keywords: [
+        allContent?.focus_keyphrase || userKeyword,
+      ].filter(Boolean),
       content_meta_description: allContent?.meta_description || "",
       seo_details: JSON.stringify(seoScore || {}),
       trust_score: trustScore?.score || 0,

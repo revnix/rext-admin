@@ -249,7 +249,10 @@ export class ApiErrorHandler {
 
     // Check for ApiError
     if (error instanceof ApiError) {
-      if (error.statusCode === HTTP_FORBIDDEN || error.statusCode === HTTP_UNAUTHORIZED) {
+      if (
+        error.statusCode === HTTP_FORBIDDEN ||
+        error.statusCode === HTTP_UNAUTHORIZED
+      ) {
         return "PERMISSION_DENIED";
       }
     }

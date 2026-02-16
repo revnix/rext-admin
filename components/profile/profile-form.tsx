@@ -61,11 +61,11 @@ export function ProfileForm() {
     resolver: zodResolver(profileSchema),
     values: profile
       ? {
-        full_name: profile.full_name || "",
-        displayName: profile.display_name || "",
-        language: profile.language || "en",
-        timezone: profile.timezone || "UTC",
-      }
+          full_name: profile.full_name || "",
+          displayName: profile.display_name || "",
+          language: profile.language || "en",
+          timezone: profile.timezone || "UTC",
+        }
       : undefined,
   });
 

@@ -110,7 +110,11 @@ export function WorkspaceProvider({
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry for 4xx client errors
-      if (error instanceof ApiError && error.statusCode >= 400 && error.statusCode < 500) {
+      if (
+        error instanceof ApiError &&
+        error.statusCode >= 400 &&
+        error.statusCode < 500
+      ) {
         return false;
       }
 
