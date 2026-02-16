@@ -97,7 +97,7 @@ export function SignupForm({
       }
 
       const _responseData = await response.json();
-      
+
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
 

@@ -46,6 +46,7 @@ export default function WorkspaceKnowledgePage() {
     queryFn: () => apiClient.knowledge.listBases(workspace?.id || ""),
     enabled: !!workspace?.id,
     staleTime: 2 * 60 * 1000,
+    throwOnError: true,
   });
 
   const knowledgeBases = response?.knowledge_bases || [];
@@ -205,28 +206,13 @@ export default function WorkspaceKnowledgePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {error ? (
-                  <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
-                    <BookOpen className="h-12 w-12 text-destructive mb-4" />
-                    <p className="text-lg font-medium mb-2 text-destructive">
-                      Failed to load knowledge bases
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      There was an error loading the knowledge bases list
-                    </p>
-                    <Button variant="outline" onClick={handleRefresh}>
-                      Try Again
-                    </Button>
-                  </div>
-                ) : (
-                  <WorkspaceKnowledgeBasesTable
-                    knowledgeBases={knowledgeBases}
-                    onView={handleView}
-                    onEdit={setKbToEdit}
-                    onDelete={setKbToDelete}
-                    isLoading={isKnowledgeLoading}
-                  />
-                )}
+                <WorkspaceKnowledgeBasesTable
+                  knowledgeBases={knowledgeBases}
+                  onView={handleView}
+                  onEdit={setKbToEdit}
+                  onDelete={setKbToDelete}
+                  isLoading={isKnowledgeLoading}
+                />
               </CardContent>
             </Card>
 
