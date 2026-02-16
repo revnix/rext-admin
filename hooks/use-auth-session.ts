@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react";
 import { performLogout } from "@/lib/logout-utils";
 import { useEffect, useState } from "react";
-import { log } from "@/lib/logger";
 
 /**
  * Backward-compatible auth hook using AuthJS
