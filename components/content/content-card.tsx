@@ -101,7 +101,7 @@ export function ContentCard({
     getDescription: (item: ContentItem) => (
       <span className="text-xs text-muted-foreground line-clamp-1">
         {item.content_metadata?.content_type || "Article"} •{" "}
-        {item.content_format || "Markdown"}
+        {item.content_metadata?.content_type || "Article"} • Markdown
       </span>
     ),
     getStatusConfig: (item: ContentItem) => statusConfig[item.status] || null,

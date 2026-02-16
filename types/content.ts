@@ -124,84 +124,58 @@ export interface ContentMetadataSchema {
  * SEO data schema for content
  */
 export interface ContentSEODataSchema {
-  /**
-   * Primary SEO keywords for content optimization
-   * @minLength 1 - At least one keyword is required by backend
-   */
-  content_primary_keywords: string[];
-
-  /** Secondary/supporting keywords for SEO */
-  content_secondary_keywords?: string[];
-
-  /**
-   * Meta description for SEO and social sharing
-   * @minLength 1 - Cannot be empty (backend validation)
-   * @maxLength 160 - Recommended SEO limit
-   */
-  content_meta_description: string;
-
-  /** Search intent categories (informational, transactional, etc.) */
-  content_search_intent?: string[];
-
-  /** SEO quality score (0-100) */
-  content_seo_score?: number;
-
-  /** Content readability score */
-  readability_score?: number;
-
-  /** Meta title for SEO */
   meta_title?: string;
-
-  /** Meta description for SEO (alternative to content_meta_description) */
   meta_description?: string;
-
-  /** Focus keyphrase for SEO */
   focus_keyphrase?: string;
-
-  /** Keyphrase density score */
   keyphrase_density?: number;
-
-  /** Full SEO assessment details as JSON string */
+  secondary_keywords?: string[];
+  search_intent?: string[];
+  seo_score?: number;
+  readability_score?: number;
+  trust_score?: number;
   seo_details?: string;
 
-  /** Trust score for content */
-  trust_score?: number;
-
-  /** EEAT data for content */
-  eeat_data?: EEATData | string;
+  // Frontend-enriched fields (computed client-side, not from backend)
+  /** @deprecated Use seo_score directly */
+  content_seo_score?: number;
+  /** Parsed from seo_details JSON string */
+  eeat_data?: import("./generate-content").EEATData | string;
 }
-
 /**
  * Request schema for creating content
  */
 export interface CreateContentRequest {
-  workspace_id?: string; // Optional - provided via query parameter
-  topic_id?: string;
+  workspace_id?: string;
   title: string;
-  content_format?: string;
+  introduction?: string;
   body_markdown?: string;
+  body_html?: string;
+  tags?: string[];
   status?: ContentStatus;
   content_language?: string;
-  assigned_to_user_id?: string;
-  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
-  metadata?: ContentMetadataSchema;
-  seo_data?: ContentSEODataSchema;
+  seo_data?: Omit<ContentSEODataSchema, 'content_seo_score' | 'eeat_data'>;
+  media_items?: Array<{ media_id: string; usage_type?: string; position?: number }>;
+  images_data?: Record<string, unknown>;
+  links_data?: Record<string, unknown>;
+  schema_markup?: Record<string, unknown>;
 }
-
 /**
  * Request schema for updating content
  */
 export interface UpdateContentRequest {
-  title?: string;
+   workspace_id?: string;
+  title: string;
+  introduction?: string;
   body_markdown?: string;
   body_html?: string;
+  tags?: string[];
   status?: ContentStatus;
   content_language?: string;
-  assigned_to_user_id?: string;
-  topic_id?: string;
-  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
-  metadata?: ContentMetadataSchema;
-  seo_data?: ContentSEODataSchema;
+  seo_data?: Omit<ContentSEODataSchema, 'content_seo_score' | 'eeat_data'>;
+  media_items?: Array<{ media_id: string; usage_type?: string; position?: number }>;
+  images_data?: Record<string, unknown>;
+  links_data?: Record<string, unknown>;
+  schema_markup?: Record<string, unknown>;
 }
 
 /**
@@ -210,25 +184,40 @@ export interface UpdateContentRequest {
 export interface ContentItem {
   id: string;
   workspace_id: string;
-  topic_id?: string;
   created_by_user_id: string;
-  assigned_to_user_id?: string;
-  author_id?: string;
   title: string;
   slug: string;
-  body_markdown?: string;
-  body_html?: string;
-  content_format: string;
   status: ContentStatus;
   content_language: string;
-  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
+
+  // Core content fields
+  introduction?: string;
+  body_markdown?: string;
+  body_html?: string;
+  tags?: string[];
+
+  // Relations
+  topic_id?: string;
+  seo_data?: ContentSEODataSchema;
+  content_metadata?: ContentMetadataSchema;
+
+  // Flow-generated structured data
+  images_data?: Record<string, unknown>;
+  links_data?: Record<string, unknown>;
+  schema_markup?: Record<string, unknown>;
+
+  // LangGraph workflow tracking
+  langgraph_thread_id?: string;
+
+  // WordPress publishing fields
+  wordpress_post_id?: number;
+  wordpress_url?: string;
+  wordpress_published_at?: string;
+
+  // Timestamps
   created_at: string;
   updated_at?: string;
   deleted_at?: string;
-  tags?: string[];
-  introduction?: string;
-  content_metadata?: ContentMetadataSchema;
-  seo_data?: ContentSEODataSchema;
 }
 
 /**
