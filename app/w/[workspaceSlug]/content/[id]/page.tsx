@@ -174,12 +174,21 @@ export default function WorkspaceContentDetailPage({
   const [isEditing, setIsEditing] = useState(false);
   const [contentMarkdown, setContentMarkdown] = useState("");
 
-  // Update local content state when fetched
   useEffect(() => {
-    if (content?.body_markdown) {
+  if (content?.body_markdown && typeof content.body_markdown === "string") {
+    // Basic validation: ensure it's a string and within reasonable bounds
+    const MAX_CONTENT_LENGTH = 500_000; // 500KB max
+    if (content.body_markdown.length <= MAX_CONTENT_LENGTH) {
       setContentMarkdown(content.body_markdown);
+    } else {
+      log.warn("Content body_markdown exceeds maximum length", {
+        length: content.body_markdown.length,
+        max: MAX_CONTENT_LENGTH,
+      });
+      setContentMarkdown(content.body_markdown.slice(0, MAX_CONTENT_LENGTH));
     }
-  }, [content?.body_markdown]);
+  }
+}, [content?.body_markdown]);
 
   // Map SSE events to timeline steps
   const timelineSteps: GenerationStep[] = Object.entries(STEP_MAPPING)

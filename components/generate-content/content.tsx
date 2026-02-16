@@ -21,7 +21,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
   Dialog,
@@ -185,7 +185,7 @@ export function ContentEditor({
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
-    body_html: body,
+    body_html: "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
