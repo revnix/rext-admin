@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { WorkspaceProvider } from "@/providers/workspace-provider";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 /**
  * Workspace Layout
@@ -31,7 +32,9 @@ export default async function WorkspaceLayout({
   // Provide workspace context to all child pages
   return (
     <WorkspaceProvider workspaceId={workspaceSlug}>
-      {children}
+      <APIErrorBoundary>
+        {children}
+      </APIErrorBoundary>
     </WorkspaceProvider>
   );
 }
