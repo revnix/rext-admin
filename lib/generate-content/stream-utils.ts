@@ -1,4 +1,8 @@
 import type { RunStreamEvent } from "@/types/generate-content";
+import { RunStreamEventSchema } from "@/schemas/sse-schemas";
+import { log } from "@/lib/logger";
+
+const sseLogger = log.forComponent("sse-stream");
 
 export async function createThread(): Promise<string> {
   const res = await fetch("/api/generate/threads", { method: "POST" });
@@ -36,9 +40,25 @@ export async function* streamFromSSE(
       const payload = line.slice(6);
       if (payload === "[DONE]") return;
       try {
-        yield JSON.parse(payload) as RunStreamEvent;
-      } catch {
-        // Skip malformed chunks
+        const parsed = JSON.parse(payload);
+
+        const result = RunStreamEventSchema.safeParse(parsed);
+
+        if (result.success) {
+          yield result.data as RunStreamEvent;
+        } else {
+          sseLogger.warn("Malformed SSE event: schema validation failed", {
+            errors: result.error.issues.map(
+              (i) => `${i.path.join(".")}: ${i.message}`
+            ),
+            payloadPreview: payload.substring(0, 200),
+          });
+        }
+      } catch (error) {
+        sseLogger.warn("Malformed SSE event: JSON parse failed", {
+          error: error instanceof Error ? error.message : String(error),
+          payloadPreview: payload.substring(0, 200),
+        });
       }
     }
   }

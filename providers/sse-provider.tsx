@@ -11,6 +11,7 @@ import {
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
+import { SSEEventSchema } from "@/schemas/sse-schemas";
 
 interface SSEContextType {
   subscribe: (
@@ -284,7 +285,17 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                 });
 
                 try {
-                  const event: SSEEvent = JSON.parse(message.data);
+                  const parsed = JSON.parse(message.data);
+                  const validationResult = SSEEventSchema.safeParse(parsed);
+                  if (!validationResult.success) {
+                    sseLogger.warn("SSE event failed schema validation", {
+                      operationId,
+                      errors: validationResult.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+                      dataPreview: message.data?.substring(0, 100),
+                    });
+                    return; // Skip invalid events rather than passing them to handlers
+                  }
+                  const event = validationResult.data;
 
                   sseLogger.debug("Received SSE event", {
                     operationId,
@@ -346,9 +357,13 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                       actualData = dataMatch[1];
                       // Try parsing the extracted data
                       try {
-                        const event: SSEEvent = JSON.parse(actualData);
-                        onEvent(event);
-                        return;
+                        const parsedFallback = JSON.parse(actualData);
+                        const fallbackValidation = SSEEventSchema.safeParse(parsedFallback);
+
+                        if (fallbackValidation.success) {
+                          onEvent(fallbackValidation.data);
+                          return;
+                        }
                       } catch (_retryError) {
                         // Continue to log the original error
                       }
