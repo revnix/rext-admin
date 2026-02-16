@@ -340,14 +340,17 @@ export function FreshGenerationView({
       });
 
       for await (const chunk of stream) {
-
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
 
-        if (updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty) {
+        if (
+          updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty
+        ) {
           dispatch({
             type: "SET_KEYWORD_DIFFICULTY",
-            payload: updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd,
+            payload:
+              updates.compute_keyword_difficulty.seo_result.keyword_difficulty
+                .kd,
           });
         }
 

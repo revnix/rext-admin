@@ -46,7 +46,6 @@ export default function AuditLogsPage() {
   const debouncedSearch = useDebounce(search, 300);
   const { data: session } = useSession();
 
-
   // Fetch audit logs
   const { data, isLoading, refetch } = useQuery({
     queryKey: [

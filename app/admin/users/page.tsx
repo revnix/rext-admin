@@ -113,7 +113,12 @@ export default function AdminUsersPage() {
   // Transform users data for DataTable
   const tableData: UserData[] = (data?.users || []).map((user) => ({
     id: user.id,
-    name: user.display_name || user.full_name || user.first_name || user.username || user.email,
+    name:
+      user.display_name ||
+      user.full_name ||
+      user.first_name ||
+      user.username ||
+      user.email,
     email: user.email,
     username: user.username || "",
     status: user.status,

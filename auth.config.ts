@@ -340,19 +340,19 @@ export default {
         }
       }
 
-      // Handle session updates (e.g., impersonation)
+      // Handle session updates (e.g., impersonation token swap)
       if (trigger === "update" && session) {
         if (session.accessToken) token.accessToken = session.accessToken;
         if (session.refreshToken) token.refreshToken = session.refreshToken;
 
-        // Update user details if provided
+        // Update non-sensitive user details only
+        // SECURITY: Do NOT accept role or permissions from client-side update()
+        // calls — these must come from the backend to prevent privilege escalation
         if (session.user) {
           if (session.user.id) token.id = session.user.id;
           if (session.user.email) token.email = session.user.email;
           if (session.user.name) token.name = session.user.name;
           if (session.user.image) token.picture = session.user.image;
-          if (session.user.role) token.role = session.user.role;
-          if (session.user.permissions) token.permissions = session.user.permissions;
         }
 
         return token;

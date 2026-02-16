@@ -24,7 +24,6 @@ const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 export async function getAuthHeaders(
   skipCache: boolean = false,
 ): Promise<Record<string, string>> {
-
   // Check in-memory store for impersonation token first (client-side only)
   // This ensures we always use the latest impersonation token if one exists, bypassing cache
   if (typeof window !== "undefined") {

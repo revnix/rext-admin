@@ -17,9 +17,6 @@ interface AuthProviderProps {
  * - Disabled automatic refetch to prevent cross-tab interference
  * - Session changes only detected on user interaction (navigation, etc.)
  */
-
-
-
 export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Clean up legacy token storage from localStorage

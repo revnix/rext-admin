@@ -63,7 +63,10 @@ export function ImpersonationBanner() {
           },
         });
       } catch (error) {
-        log.error("Failed to fetch original profile during impersonation stop", error);
+        log.error(
+          "Failed to fetch original profile during impersonation stop",
+          error,
+        );
       }
 
       toast.success("Impersonation stopped", {
