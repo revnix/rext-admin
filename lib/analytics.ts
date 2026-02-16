@@ -130,7 +130,7 @@ class Analytics {
     try {
       const key = "wrext_analytics_events";
       const stored = localStorage.getItem(key);
-      const events = safeJsonParse<any[]>(stored, []) ?? [];
+      const events = safeJsonParse<unknown[]>(stored, []) ?? [];
 
       events.push(eventData);
 

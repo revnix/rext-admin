@@ -58,7 +58,6 @@ import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
-
 interface BreadcrumbItemData {
   label: string;
   href?: string;
@@ -79,7 +78,6 @@ interface PageLayoutProps {
 type ApiUser = {
   id: string;
   email: string;
-  username: string;
   full_name: string;
   email_verified: boolean;
   status: string;
@@ -516,9 +514,8 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (

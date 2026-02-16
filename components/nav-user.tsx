@@ -45,7 +45,6 @@ import { log } from "@/lib/logger";
 export type ApiUser = {
   id: string;
   email: string;
-  username: string;
   full_name: string;
   email_verified: boolean;
   status: string;

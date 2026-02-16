@@ -9,6 +9,7 @@ import {
   useMemo,
 } from "react";
 import { getAuthHeaders } from "@/lib/auth-utils";
+import { ApiError } from "@/lib/api-client/core";
 import { safeJsonParse } from "@/lib/utils";
 import { log } from "@/lib/logger";
 import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
@@ -264,10 +265,11 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                       error: errorMessage,
                     });
                   }
-                  throw new Error(errorMessage);
+                  // Throw ApiError for better classification downstream
+                  throw new ApiError(status, errorMessage);
                 }
 
-                throw new Error(errorMessage);
+                throw new ApiError(status, errorMessage);
               },
               onmessage: (message) => {
                 if (!message.data) {
@@ -397,6 +399,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
             // Check if error is rate limit related
             if (
+              (error instanceof ApiError && error.statusCode === 429) ||
               errorMessage.includes("429") ||
               errorMessage.toLowerCase().includes("rate limit")
             ) {

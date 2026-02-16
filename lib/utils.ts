@@ -1,8 +1,8 @@
 // File: lib/utils.ts
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { logger } from "@/lib/logger"; 
-import { z } from "zod"; // Standardized import
+import { logger } from "@/lib/logger";
+import type { z } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

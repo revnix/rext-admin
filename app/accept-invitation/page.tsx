@@ -34,11 +34,9 @@ export default function AcceptInvitationPage() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get token from URL or sessionStorage
-  const tokenFromUrl = searchParams.get("token");
-  const [invitationToken] = useState(() => {
-    return tokenFromUrl || sessionStorage.getItem("pending_invitation_token");
-  });
+  // Get token from URL only (no sessionStorage for security — prevents XSS token theft)
+  const invitationToken =
+    searchParams.get("token") || searchParams.get("invitation_token");
 
   // Validate invitation
   const {
@@ -80,9 +78,6 @@ export default function AcceptInvitationPage() {
 
       const data = await response.json();
       setAccepted(true);
-
-      // Clean up session storage
-      sessionStorage.removeItem("pending_invitation_token");
 
       // Redirect to workspace after short delay
       setTimeout(() => {
@@ -267,8 +262,9 @@ export default function AcceptInvitationPage() {
               </p>
               <p>
                 <span className="font-medium">Invited by:</span>{" "}
-                {invitation.invited_by.first_name}{" "}
-                {invitation.invited_by.last_name}
+                {invitation.invited_by.display_name ||
+                  invitation.invited_by.full_name ||
+                  "Workspace Admin"}
               </p>
               <p>
                 <span className="font-medium">Role:</span>{" "}
