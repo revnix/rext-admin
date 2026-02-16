@@ -19,8 +19,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // Don't show onboarding on certain pages
   const isExcludedPage =
-    (pathname && isAuthPage(pathname)) ||
-    pathname?.startsWith("/onboarding");
+    (pathname && isAuthPage(pathname)) || pathname?.startsWith("/onboarding");
 
   useEffect(() => {
     // Only show onboarding for authenticated users

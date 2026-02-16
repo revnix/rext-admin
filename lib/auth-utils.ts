@@ -16,7 +16,12 @@ let authHeadersCache: {
 } | null = null;
 const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 
-export const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+export const ROLE_HIERARCHY = [
+  "super_admin",
+  "admin",
+  "editor",
+  "viewer",
+] as const;
 
 export function normalizeRole(role: string): string {
   return String(role).toLowerCase().replace(/\s+/g, "_");

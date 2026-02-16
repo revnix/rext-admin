@@ -8,8 +8,6 @@ import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import { getPrimaryRole } from "@/lib/auth-utils";
 
-
-
 /**
  * Refresh the access token using the refresh token
  */
