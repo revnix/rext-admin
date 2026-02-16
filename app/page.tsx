@@ -13,6 +13,7 @@ import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { PageLoader } from "@/components/ui/loading-states";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function DashboardPage() {
   const breadcrumbs = [{ label: "Dashboard" }];
@@ -41,6 +42,7 @@ export default function DashboardPage() {
     queryKey: ["workspaces"],
     queryFn: () => apiClient.workspaces.list(),
     staleTime: 5 * 60 * 1000,
+    throwOnError: true,
     enabled: !!currentWorkspace, // Only fetch if we have workspaces generally
   });
 
@@ -50,6 +52,7 @@ export default function DashboardPage() {
     // biome-ignore lint/style/noNonNullAssertion: guarded by enabled check below
     queryFn: () => apiClient.dashboard.getStats(currentWorkspace!.id),
     enabled: !!currentWorkspace?.id,
+    throwOnError: true,
     staleTime: 30 * 1000, // Consider data fresh for 30 seconds
     refetchInterval: 60 * 1000, // Auto-refresh every minute
     refetchOnWindowFocus: true, // Refresh when user returns to tab
@@ -81,35 +84,37 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
+      <APIErrorBoundary>
       <PageLayout
         title={currentWorkspace?.title || "Dashboard"}
         description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
         breadcrumbs={breadcrumbs}
       >
-        <div className="flex flex-col gap-8">
-          {/* Top Row: Metrics Cards (5 Cards) */}
-          <MetricsCards
-            dashboardStats={dashboardStats}
-            isLoading={isLoadingDashboard}
-          />
+          <div className="flex flex-col gap-8">
+            {/* Top Row: Metrics Cards (5 Cards) */}
+            <MetricsCards
+              dashboardStats={dashboardStats}
+              isLoading={isLoadingDashboard}
+            />
 
-          {/* Middle Row: Charts (Static Mocks) */}
-          {/* <DashboardCharts /> */}
+            {/* Middle Row: Charts (Static Mocks) */}
+            {/* <DashboardCharts /> */}
 
-          {/* Bottom Row: Recent Activities & Quick Actions */}
-          <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-            {/* Main Content: Recent Activities Table */}
-            <div className="space-y-8">
-              <RecentContent workspace={currentWorkspace} />
+            {/* Bottom Row: Recent Activities & Quick Actions */}
+            <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+              {/* Main Content: Recent Activities Table */}
+              <div className="space-y-8">
+                <RecentContent workspace={currentWorkspace} />
+              </div>
+
+              {/* Sidebar: Quick Actions List */}
+              <aside className="space-y-8 h-full">
+                <QuickActions workspace={currentWorkspace} />
+              </aside>
             </div>
-
-            {/* Sidebar: Quick Actions List */}
-            <aside className="space-y-8 h-full">
-              <QuickActions workspace={currentWorkspace} />
-            </aside>
           </div>
-        </div>
       </PageLayout>
+      </APIErrorBoundary>
     </AuthGuard>
   );
 }
