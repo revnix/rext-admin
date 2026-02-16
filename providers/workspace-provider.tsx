@@ -10,10 +10,13 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
+import { ApiError } from "@/lib/api-client/core";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+
+const NON_RETRYABLE_STATUS_CODES = [401, 403, 404] as const;
 
 /**
  * Workspace Context Type
@@ -57,6 +60,23 @@ interface WorkspaceProviderProps {
  * </WorkspaceProvider>
  * ```
  */
+function isNonRetryableError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return (NON_RETRYABLE_STATUS_CODES as readonly number[]).includes(error.statusCode);
+  }
+  return false;
+}
+
+/** Check if an error is an auth/permission error (401 or 403) */
+function isAuthError(error: unknown): boolean {
+  return error instanceof ApiError && (error.statusCode === 401 || error.statusCode === 403);
+}
+
+/** Check if an error is a not-found error (404) */
+function isNotFoundError(error: unknown): boolean {
+  return error instanceof ApiError && error.statusCode === 404;
+}
+
 export function WorkspaceProvider({
   children,
   workspaceId,
@@ -109,17 +129,8 @@ export function WorkspaceProvider({
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
-      // Don't retry for 404, 401, or 403 errors
-      const errorMessage = (error as Error)?.message || "";
-      if (
-        errorMessage.includes("404") ||
-        errorMessage.includes("401") ||
-        errorMessage.includes("403") ||
-        errorMessage.includes("not found") ||
-        errorMessage.includes("Not Found") ||
-        errorMessage.includes("Unauthorized") ||
-        errorMessage.includes("Forbidden")
-      ) {
+      // Don't retry for auth errors (401/403) or not found (404)
+      if (isNonRetryableError(error)) {
         return false;
       }
       // Retry up to 2 times for other errors (network issues, etc.)
@@ -163,26 +174,14 @@ export function WorkspaceProvider({
   // Handle invalid workspace - redirect to workspace list
   // Only redirect for permission errors (401/403) or workspace not found (404)
   // Don't redirect for temporary network issues to prevent unwanted redirects
-  useEffect(() => {
+ useEffect(() => {
     if (error && !isLoading) {
-      // Check if error is a permission/auth error or not found that warrants redirect
-      const errorMessage = error?.message || "";
-      const isAuthError =
-        errorMessage.includes("401") ||
-        errorMessage.includes("403") ||
-        errorMessage.includes("Unauthorized") ||
-        errorMessage.includes("Forbidden");
-      const isNotFoundError =
-        errorMessage.includes("404") ||
-        errorMessage.includes("not found") ||
-        errorMessage.includes("Not Found");
-
-      if (isAuthError || isNotFoundError) {
+      if (isAuthError(error) || isNotFoundError(error)) {
         log.error(
           "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
           error,
         );
-        router.push("/workspaces");
+        router.push("/w");
       } else {
         // For other errors (network, temporary issues), just log but don't redirect
         // This prevents unwanted redirects during form interactions

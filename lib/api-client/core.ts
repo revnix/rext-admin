@@ -13,9 +13,6 @@ const log = logger.forComponent("ApiClient");
 // ERROR HANDLING
 // ============================================================================
 
-/**
- * Custom API error class with status code and context
- */
 export class ApiError extends Error {
   constructor(
     public readonly statusCode: number,
@@ -25,6 +22,39 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+
+  /** Check if an error is an ApiError */
+  static is(error: unknown): error is ApiError {
+    return error instanceof ApiError;
+  }
+
+  /** Check if an error is a specific status code */
+  static hasStatus(error: unknown, status: number | number[]): boolean {
+    if (!ApiError.is(error)) return false;
+    return Array.isArray(status)
+      ? status.includes(error.statusCode)
+      : error.statusCode === status;
+  }
+
+  /** Is this an authentication or permission error (401/403) */
+  get isAuthError(): boolean {
+    return this.statusCode === 401 || this.statusCode === 403;
+  }
+
+  /** Is this a not found error (404) */
+  get isNotFoundError(): boolean {
+    return this.statusCode === 404;
+  }
+
+  /** Is this a rate limit error (429) */
+  get isRateLimitError(): boolean {
+    return this.statusCode === 429;
+  }
+
+  /** Should this error typically NOT be retried (401, 403, 404) */
+  get isNonRetryable(): boolean {
+    return [401, 403, 404].includes(this.statusCode);
   }
 }
 
@@ -67,14 +97,14 @@ export class ApiClient {
           error?: { message?: string; code?: string };
           message?: string;
           detail?:
-            | Array<{
-                type: string;
-                loc: string[];
-                msg: string;
-                input?: unknown;
-                ctx?: unknown;
-              }>
-            | string;
+          | Array<{
+            type: string;
+            loc: string[];
+            msg: string;
+            input?: unknown;
+            ctx?: unknown;
+          }>
+          | string;
         };
 
         // Handle FastAPI validation errors
