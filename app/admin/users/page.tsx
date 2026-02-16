@@ -26,7 +26,6 @@ import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
-import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 interface UserData extends Record<string, unknown> {
   id: string;
@@ -82,29 +81,25 @@ export default function AdminUsersPage() {
     const config = variants[status] || variants.active;
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
- const getUserInitials = (user: User) => {
-    try {
-      if (user.first_name && user.last_name) {
-        return `${user.first_name[0] || ""}${user.last_name[0] || ""}`.toUpperCase() || "U";
+  const getUserInitials = (user: User) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+    }
+    if (user.display_name) {
+      const parts = user.display_name.split(" ");
+      if (parts.length >= 2 && parts[0]?.[0] && parts[1]?.[0]) {
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
       }
-      if (user.display_name) {
-        const parts = user.display_name.split(" ");
-        if (parts.length >= 2 && parts[0]?.[0] && parts[1]?.[0]) {
-          return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-        }
-        return user.display_name.slice(0, 2).toUpperCase();
-      }
-      if (user.username) {
-        return user.username.slice(0, 2).toUpperCase();
-      }
-      if (user.email) {
-        return user.email.slice(0, 2).toUpperCase();
-      }
-    } catch (err) {
-      console.error("Error getting user initials:", err);
+      return user.display_name.slice(0, 2).toUpperCase();
+    }
+    if (user.username) {
+      return user.username.slice(0, 2).toUpperCase();
+    }
+    if (user.email) {
+      return user.email.slice(0, 2).toUpperCase();
     }
     return "U";
-};
+  };
 
   // Transform users data for DataTable
   const tableData: UserData[] = (data?.users || []).map((user) => ({
@@ -209,7 +204,6 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <APIErrorBoundary>
     <PageLayout
       title="User Management"
       description="Manage system users and impersonation"
@@ -361,6 +355,5 @@ export default function AdminUsersPage() {
         </div>
       </CanAccess>
     </PageLayout>
-    </APIErrorBoundary>
   );
 }

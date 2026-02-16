@@ -111,7 +111,7 @@ export default function SubscriptionDashboardPage() {
     );
   }
 
-  if (!subscription || !subscription.data) {
+  if (!subscription) {
     return (
       <PageLayout
         title="Subscription Management"

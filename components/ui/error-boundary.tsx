@@ -305,12 +305,15 @@ export function APIErrorBoundary({
           }}
           fallbackRender={({ error, resetErrorBoundary }) => {
             const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const requestId = generateRequestId("error_boundary");
+            const normalizedError =
+              error instanceof Error ? error : new Error(String(error));
             return (
               <APIErrorFallbackWithRouter
-                error={error}
+                error={normalizedError}
                 resetError={resetErrorBoundary}
                 errorId={errorId}
-                requestId={undefined}
+                requestId={requestId}
                 onRetry={onRetry}
               />
             );

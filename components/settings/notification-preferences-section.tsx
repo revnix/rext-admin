@@ -19,10 +19,13 @@ import { apiClient } from "@/lib/api-client";
  * in-app notifications, digest settings, and category-specific toggles.
  */
 export function NotificationPreferencesSection() {
-  const { data: preferences, isLoading, error } = useQuery({
+  const {
+    data: preferences,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["notification-preferences"],
     queryFn: () => apiClient.notifications.getPreferences(),
-    throwOnError: true,
   });
 
   if (isLoading) {

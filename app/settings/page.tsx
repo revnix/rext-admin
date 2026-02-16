@@ -8,7 +8,6 @@ import { ProfileSection } from "@/components/settings/profile-section";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { Separator } from "@/components/ui/separator";
 
-
 /**
  * Account & Preferences Page
  *

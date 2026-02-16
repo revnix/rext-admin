@@ -83,7 +83,6 @@ export interface SubscriptionPlanUpdate {
 // ============================================================================
 
 export interface UserSubscription {
-  data: UserSubscription;
   id: string;
   user_id: string;
   plan_id: string;
