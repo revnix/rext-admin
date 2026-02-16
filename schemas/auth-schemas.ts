@@ -4,10 +4,9 @@ import { z } from "zod";
  * Zod Validation Schemas for Authentication Forms
  *
  * These schemas validate auth forms, ensuring proper data before API submission.
- * Password requirements: min 8 chars, uppercase, lowercase, number
+ * Password policy: NIST SP 800-63B-4 aligned — length-based, no composition rules.
  */
 
-// Password validation with strength requirements
 // Password validation with strength requirements
 /**
  * Password validation aligned with NIST SP 800-63B-4 and OWASP guidelines.
