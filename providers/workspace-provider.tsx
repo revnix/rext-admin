@@ -10,7 +10,7 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
@@ -109,20 +109,12 @@ export function WorkspaceProvider({
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
-      // Don't retry for 404, 401, or 403 errors
-      const errorMessage = (error as Error)?.message || "";
-      if (
-        errorMessage.includes("404") ||
-        errorMessage.includes("401") ||
-        errorMessage.includes("403") ||
-        errorMessage.includes("not found") ||
-        errorMessage.includes("Not Found") ||
-        errorMessage.includes("Unauthorized") ||
-        errorMessage.includes("Forbidden")
-      ) {
+      // Don't retry for 4xx client errors
+      if (error instanceof ApiError && error.statusCode >= 400 && error.statusCode < 500) {
         return false;
       }
-      // Retry up to 2 times for other errors (network issues, etc.)
+
+      // Retry server errors (5xx) and network failures up to 2 times
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff, max 3s
@@ -166,16 +158,13 @@ export function WorkspaceProvider({
   useEffect(() => {
     if (error && !isLoading) {
       // Check if error is a permission/auth error or not found that warrants redirect
-      const errorMessage = error?.message || "";
-      const isAuthError =
-        errorMessage.includes("401") ||
-        errorMessage.includes("403") ||
-        errorMessage.includes("Unauthorized") ||
-        errorMessage.includes("Forbidden");
-      const isNotFoundError =
-        errorMessage.includes("404") ||
-        errorMessage.includes("not found") ||
-        errorMessage.includes("Not Found");
+      let isAuthError = false;
+      let isNotFoundError = false;
+
+      if (error instanceof ApiError) {
+        isAuthError = error.statusCode === 401 || error.statusCode === 403;
+        isNotFoundError = error.statusCode === 404;
+      }
 
       if (isAuthError || isNotFoundError) {
         log.error(

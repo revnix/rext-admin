@@ -51,6 +51,7 @@ export default function AdminUsersPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => apiClient.users.list(),
+    throwOnError: true,
   });
 
   const handleImpersonate = (userId: string) => {
@@ -78,11 +79,10 @@ export default function AdminUsersPage() {
     const config = variants[status] || variants.active;
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
-
   const getUserInitials = (user: User) => {
     if (user.display_name) {
       const parts = user.display_name.split(" ");
-      if (parts.length >= 2) {
+      if (parts.length >= 2 && parts[0]?.[0] && parts[1]?.[0]) {
         return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
       }
       return user.display_name.slice(0, 2).toUpperCase();

@@ -58,7 +58,6 @@ import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
-
 interface BreadcrumbItemData {
   label: string;
   href?: string;

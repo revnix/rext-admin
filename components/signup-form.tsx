@@ -25,6 +25,7 @@ import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
+import { checkPasswordBreach } from "@/lib/password-utils";
 
 export function SignupForm({
   className,
@@ -60,6 +61,15 @@ export function SignupForm({
     setIsLoading(true);
 
     try {
+      // Check for breached password
+      const breachResult = await checkPasswordBreach(data.password);
+      if (breachResult.breached) {
+        form.setError("password", {
+          message: `This password has appeared in ${breachResult.count.toLocaleString()} data breaches. Please choose a different password.`,
+        });
+        setIsLoading(false);
+        return;
+      }
       // Determine which endpoint to use
       const isInvitationSignup = hasValidInvitation && invitationToken;
       const endpoint = isInvitationSignup
