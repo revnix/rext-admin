@@ -347,6 +347,9 @@ export default {
       }
 
       // Handle session extension on update trigger
+      const SESSION_DURATION_REMEMBER_ME = 30 * 24 * 60 * 60 * 1000; // 30 days
+      const SESSION_DURATION_DEFAULT = 24 * 60 * 60 * 1000; // 24 hours
+
       if (trigger === "update") {
         log.info("[Auth] Session update triggered manually");
         if (token.refreshToken) {
@@ -357,8 +360,8 @@ export default {
         if (token.accessTokenExpires) {
           log.info("[Auth] Extending session expiry manually...");
           const expiryDuration = token.rememberMe
-            ? 30 * 24 * 60 * 60 * 1000 // 30 days
-            : 24 * 60 * 60 * 1000; // 24 hours
+            ? SESSION_DURATION_REMEMBER_ME
+            : SESSION_DURATION_DEFAULT;
           return {
             ...token,
             accessTokenExpires: Date.now() + expiryDuration,

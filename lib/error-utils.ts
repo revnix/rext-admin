@@ -116,12 +116,10 @@ export function classifyError(
     let errorType: BackendErrorType = "unknown_error";
     const technicalMessage = error.message;
     let statusCode: number | undefined;
-    let context: Record<string, unknown> | undefined;
 
-    // Check for ApiError first
+    // Check for ApiError first — use status code for reliable classification
     if (error instanceof ApiError) {
       statusCode = error.statusCode;
-      context = error.context as Record<string, unknown> | undefined;
 
       if (statusCode >= 500) {
         errorType = "server_error";
