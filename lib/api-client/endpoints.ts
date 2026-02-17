@@ -309,6 +309,17 @@ export const ENDPOINTS = {
     },
 
     /**
+     * Admin Refunds Endpoints
+     * @note Platform-level refund management
+     * @note Requires super admin role
+     */
+    ADMIN_REFUNDS: {
+        list: "/api/v1/admin/subscriptions/refunds",
+        get: (refundId: string) => `/api/v1/admin/subscriptions/refunds/${refundId}` as const,
+        create: "/api/v1/admin/subscriptions/refunds/create",
+    },
+
+    /**
      * Admin Invitations Endpoints
      * @note Platform-level admin invitation management
      * @note Path mismatch: CRUD uses `/admin/platform/invitations` vs token ops use `/admin-invitations/{token}`
