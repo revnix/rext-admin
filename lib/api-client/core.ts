@@ -6,6 +6,7 @@
 
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { safeJsonParse } from "@/lib/utils";
 
 const log = logger.forComponent("ApiClient");
 
@@ -57,11 +58,7 @@ export class ApiClient {
         const errorText = await response.text().catch(() => "Unknown error");
         let errorData: unknown = null;
 
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          // Not JSON, use text
-        }
+        errorData = safeJsonParse(errorText, null, "API error body");
 
         const parsedError = errorData as {
           error?: { message?: string; code?: string };

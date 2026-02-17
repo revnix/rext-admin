@@ -19,6 +19,7 @@ import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import {
@@ -262,8 +263,8 @@ export function WorkspaceCreateWizard() {
       }
 
       // Invalidate workspace queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace"] });
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.details() });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
@@ -282,7 +283,7 @@ export function WorkspaceCreateWizard() {
   // Step 3: Handle skip (navigate without saving edits)
   const handleSkipReview = () => {
     // Invalidate workspace queries
-    queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
 
     // Redirect directly to workspace generate content page
     if (workspaceSlug) {

@@ -8,6 +8,7 @@
 import { getSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { log } from "@/lib/logger";
+import { useAuthStore } from "@/stores/auth-store";
 
 // Cache for auth headers to avoid excessive session checks
 let authHeadersCache: {
@@ -15,6 +16,46 @@ let authHeadersCache: {
   timestamp: number;
 } | null = null;
 const CACHE_TTL_MS = 10000; // Cache for 10 seconds
+
+export const ROLE_HIERARCHY = [
+  "super_admin",
+  "admin",
+  "workspace_owner",
+  "workspace_admin",
+  "editor",
+  "viewer",
+  "user",
+] as const;
+
+export function normalizeRole(role: string): string {
+  return String(role).toLowerCase().replace(/\s+/g, "_");
+}
+
+export function extractNormalizedRoles(data: {
+  roles?: string[] | null;
+  role?: string | null;
+  [key: string]: unknown;
+}): string[] {
+  const rawRoles: string[] = Array.isArray(data.roles)
+    ? data.roles
+    : data.role
+      ? [data.role]
+      : [];
+  return rawRoles.map(normalizeRole);
+}
+
+export function getPrimaryRole(data: {
+  roles?: string[] | null;
+  role?: string | null;
+  [key: string]: unknown;
+}): string {
+  const userRoles = extractNormalizedRoles(data);
+  return (
+    ROLE_HIERARCHY.find((role) => userRoles.includes(role)) ||
+    userRoles[0] ||
+    "user"
+  );
+}
 
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
@@ -36,9 +77,10 @@ function redirectToLogin(): void {
   setTimeout(() => {
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname + window.location.search;
-      const redirectParam = currentPath !== "/login" && currentPath !== "/"
-        ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
-        : "?error=SessionExpired";
+      const redirectParam =
+        currentPath !== "/login" && currentPath !== "/"
+          ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
+          : "?error=SessionExpired";
       window.location.href = `/login${redirectParam}`;
     }
   }, 0);
@@ -51,6 +93,19 @@ function redirectToLogin(): void {
 export async function getAuthHeaders(
   skipCache: boolean = false,
 ): Promise<Record<string, string>> {
+  // Check in-memory store for impersonation token first (client-side only)
+  // This ensures we always use the latest impersonation token if one exists, bypassing cache
+  if (typeof window !== "undefined") {
+    const store = useAuthStore.getState();
+    const { accessToken } = store;
+
+    if (accessToken) {
+      return {
+        Authorization: `Bearer ${accessToken}`,
+      };
+    }
+  }
+
   // Check cache first (only on client-side)
   if (typeof window !== "undefined" && !skipCache && authHeadersCache) {
     const now = Date.now();
@@ -146,7 +201,6 @@ export async function authenticatedFetch(
 export function clearAuthHeadersCache(): void {
   authHeadersCache = null;
   log.debug("[AuthJS] Auth headers cache cleared");
-  authHeadersCache = null;
 }
 
 /**

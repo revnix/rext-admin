@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
+import { adminQueries } from "@/lib/query-keys";
 import type { Permission, RoleWithPermissions } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
 
@@ -73,7 +74,7 @@ export function ManageRolePermissionsDialog({
       toast.success(
         `Permissions updated: ${data.added} added, ${data.removed} removed`,
       );
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
       onOpenChange(false);
     },
     onError: (error: Error) => {

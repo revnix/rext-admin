@@ -5,6 +5,8 @@ import type {
   RetryConfig,
 } from "@/types/backend";
 import type { ErrorSeverity } from "@/types/consistent-response";
+import { ApiError } from "@/lib/api-client/core";
+import { safeJsonParse } from "./utils";
 
 /**
  * Default retry configuration for backend requests
@@ -116,8 +118,22 @@ export function classifyError(
     const technicalMessage = error.message;
     let statusCode: number | undefined;
 
-    // Network and fetch-related errors
-    if (error.name === "AbortError") {
+    // Check for ApiError first — use status code for reliable classification
+    if (error instanceof ApiError) {
+      statusCode = error.statusCode;
+
+      if (statusCode >= 500) {
+        errorType = "server_error";
+      } else if (statusCode === 429) {
+        errorType = "rate_limit_error";
+      } else if (statusCode === 401 || statusCode === 403) {
+        errorType = "authentication_error";
+      } else if (statusCode >= 400) {
+        errorType = "validation_error";
+      }
+    }
+    // Network and fetch-related errors (Fallback)
+    else if (error.name === "AbortError") {
       errorType = "abort_error";
     } else if (error.name === "TimeoutError") {
       errorType = "timeout_error";
@@ -127,7 +143,7 @@ export function classifyError(
       errorType = "cors_error";
     }
 
-    // Backend API specific errors
+    // Backend API specific errors (Fallback for non-ApiError string matches if any remain)
     else if (error.message.includes("Backend API error:")) {
       const statusMatch = error.message.match(/(\d{3})/);
       if (statusMatch) {
@@ -308,19 +324,17 @@ export function extractValidationErrors(error: BackendError): string[] {
     return [];
   }
 
-  try {
-    const response = JSON.parse(error.context.responseText as string);
-    if (response.detail && Array.isArray(response.detail)) {
-      return response.detail.map((detail: { loc?: string[]; msg?: string }) => {
-        if (detail.loc && detail.msg) {
-          const fieldPath = detail.loc.slice(1).join(".");
-          return `${fieldPath}: ${detail.msg}`;
-        }
-        return detail.msg || "Unknown validation error";
-      });
-    }
-  } catch (_e) {
-    // Failed to parse, return empty array
+  const response = safeJsonParse<Record<string, unknown>>(
+    error.context.responseText as string,
+  );
+  if (response?.detail && Array.isArray(response.detail)) {
+    return response.detail.map((detail: { loc?: string[]; msg?: string }) => {
+      if (detail.loc && detail.msg) {
+        const fieldPath = detail.loc.slice(1).join(".");
+        return `${fieldPath}: ${detail.msg}`;
+      }
+      return detail.msg || "Unknown validation error";
+    });
   }
 
   return [];
