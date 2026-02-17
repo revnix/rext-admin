@@ -97,20 +97,28 @@ export function GeneralInfoSection() {
 
       // Comprehensive cache invalidation - invalidate all workspace-related queries
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["workspace", workspace?.id] }),
-        queryClient.invalidateQueries({ queryKey: ["workspace", workspace?.slug] }),
+        queryClient.invalidateQueries({
+          queryKey: ["workspace", workspace?.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["workspace", workspace?.slug],
+        }),
         queryClient.invalidateQueries({ queryKey: ["workspaces"] }),
         queryClient.invalidateQueries({ queryKey: ["workspaces", "switcher"] }),
       ]);
 
       // Force refetch to ensure UI updates immediately
-      await queryClient.refetchQueries({ queryKey: ["workspace", workspace?.id] });
-      await queryClient.refetchQueries({ queryKey: ["workspaces", "switcher"] });
+      await queryClient.refetchQueries({
+        queryKey: ["workspace", workspace?.id],
+      });
+      await queryClient.refetchQueries({
+        queryKey: ["workspaces", "switcher"],
+      });
 
       toast.success("Workspace settings have been saved successfully.");
 
       // Small delay to ensure store updates propagate
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // If slug changed, redirect to new URL (note: backend doesn't allow slug changes yet)
       if (data.slug !== workspaceSlug) {

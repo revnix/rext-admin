@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -16,7 +17,6 @@ import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
-import { getAuthHeaders } from "@/lib/auth-utils";
 
 export function LoginForm({
   className,
@@ -70,29 +70,6 @@ export function LoginForm({
     setError("");
 
     try {
-      // Try to get specific error message from backend first
-      // This allows us to show detailed errors like "Account locked" before NextAuth processes it
-      const backendResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        },
-      );
-
-      if (!backendResponse.ok) {
-        // Extract specific error message from backend (e.g., account lockout)
-        const errorData = await backendResponse.json().catch(() => ({}));
-        const errorMessage =
-          errorData?.error?.message ||
-          errorData?.message ||
-          "Invalid email or password. Please check your credentials and try again.";
-        setError(errorMessage);
-        toast.error(errorMessage);
-        return;
-      }
-
       // Backend validated successfully, now use NextAuth for session creation
       const result = await signIn("credentials", {
         email,
@@ -102,13 +79,21 @@ export function LoginForm({
       });
 
       if (result?.error) {
-        setError("Authentication failed. Please try again.");
-        toast.error("Authentication failed. Please try again.");
+        // Use the error message from the backend if available (stored in result.code)
+        // Fallback to a generic message if result.code is just "CredentialsSignin" or missing
+        const errorMessage =
+          result.code && result.code !== "CredentialsSignin"
+            ? result.code
+            : "Authentication failed. Please check your credentials and try again.";
+
+        setError(errorMessage);
+        toast.error(errorMessage);
         return;
       }
 
       // Show success toast
       toast.success("Login successful!");
+      resetAuthRedirectState();
 
       // Handle redirect based on invitation presence
       if (hasValidInvitation && invitationToken) {
@@ -154,7 +139,11 @@ export function LoginForm({
         <InvitationBanner
           workspaceName={invitation.workspace.name}
           workspaceSlug={invitation.workspace.slug}
-          inviterName={`${invitation.invited_by.first_name} ${invitation.invited_by.last_name}`}
+          inviterName={
+            invitation.invited_by.display_name ||
+            invitation.invited_by.full_name ||
+            "Workspace Admin"
+          }
           roleName={invitation.role.display_name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}

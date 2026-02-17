@@ -512,8 +512,8 @@ export const getStorage = () => {
   if (typeof window === "undefined") {
     return {
       getItem: () => null,
-      setItem: () => { },
-      removeItem: () => { },
+      setItem: () => {},
+      removeItem: () => {},
     };
   }
   return localStorage;
@@ -648,10 +648,10 @@ export interface BrandVoiceRefreshStoreState {
  */
 export interface WorkspaceState
   extends WorkspaceContextState,
-  WorkspaceCrudState,
-  WorkspaceFormStoreState,
-  WorkspaceKnowledgeState,
-  BrandVoiceRefreshStoreState {
+    WorkspaceCrudState,
+    WorkspaceFormStoreState,
+    WorkspaceKnowledgeState,
+    BrandVoiceRefreshStoreState {
   // Utility actions
   resetStore: () => void;
 }

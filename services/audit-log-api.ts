@@ -79,7 +79,7 @@ export async function getAuditLogById(logId: string): Promise<AuditLogDetail> {
 export async function getAllAuditLogs(
   filters?: AuditLogFilters & {
     user_id?: string;
-    username?: string;
+    full_name?: string;
     user_email?: string;
     workspace_id?: string;
     status?: "success" | "failed" | "partial";
@@ -88,7 +88,7 @@ export async function getAllAuditLogs(
   const params = new URLSearchParams();
 
   if (filters?.user_id) params.append("user_id", filters.user_id);
-  if (filters?.username) params.append("username", filters.username);
+  if (filters?.full_name) params.append("full_name", filters.full_name);
   if (filters?.user_email) params.append("user_email", filters.user_email);
   if (filters?.action) params.append("action", filters.action);
   if (filters?.resource_type)

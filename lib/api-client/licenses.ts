@@ -16,6 +16,7 @@ import type {
   LicenseValidateResponse,
 } from "@/types/license";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createLicensesClient(client: ApiClient) {
   return {
@@ -23,7 +24,7 @@ export function createLicensesClient(client: ApiClient) {
      * Get all licenses for the current user
      */
     getLicenses: async (): Promise<LicenseListResponse> => {
-      return client.request<LicenseListResponse>("/api/v1/licenses", {
+      return client.request<LicenseListResponse>(ENDPOINTS.LICENSES.list, {
         method: "GET",
       });
     },
@@ -32,7 +33,7 @@ export function createLicensesClient(client: ApiClient) {
      * Get a specific license by ID
      */
     getLicense: async (licenseId: string): Promise<License> => {
-      return client.request<License>(`/api/v1/licenses/${licenseId}`, {
+      return client.request<License>(ENDPOINTS.LICENSES.detail(licenseId), {
         method: "GET",
       });
     },
@@ -44,7 +45,7 @@ export function createLicensesClient(client: ApiClient) {
       licenseId: string,
     ): Promise<LicenseActivationListResponse> => {
       return client.request<LicenseActivationListResponse>(
-        `/api/v1/licenses/${licenseId}/activations`,
+        ENDPOINTS.LICENSES.activations(licenseId),
         {
           method: "GET",
         },
@@ -58,7 +59,7 @@ export function createLicensesClient(client: ApiClient) {
       data: LicenseActivateRequest,
     ): Promise<LicenseActivateResponse> => {
       return client.request<LicenseActivateResponse>(
-        "/api/v1/licenses/activate",
+        ENDPOINTS.LICENSES.activate,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,7 +76,7 @@ export function createLicensesClient(client: ApiClient) {
       data: LicenseDeactivateRequest,
     ): Promise<LicenseActivation> => {
       return client.request<LicenseActivation>(
-        `/api/v1/licenses/${licenseId}/deactivate`,
+        ENDPOINTS.LICENSES.deactivate(licenseId),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -91,7 +92,7 @@ export function createLicensesClient(client: ApiClient) {
       data: LicenseValidateRequest,
     ): Promise<LicenseValidateResponse> => {
       return client.request<LicenseValidateResponse>(
-        "/api/v1/licenses/validate",
+        ENDPOINTS.LICENSES.validate,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

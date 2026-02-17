@@ -167,9 +167,7 @@ export function InvitedUserOnboardingModal({
       >
         {/* Accessible title and description for screen readers */}
         <VisuallyHidden>
-          <DialogTitle>
-            Welcome to {workspace.name || workspace.name}
-          </DialogTitle>
+          <DialogTitle>Welcome to {workspace.name || "Workspace"}</DialogTitle>
           <DialogDescription>
             Get started with your new workspace as a {roleName}.
           </DialogDescription>
@@ -180,7 +178,7 @@ export function InvitedUserOnboardingModal({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">
-                Welcome to {workspace.name || workspace.name}
+                Welcome to {workspace.name || "Workspace"}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Step {currentStep + 1} of {STEPS.length}

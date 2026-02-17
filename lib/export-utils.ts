@@ -411,8 +411,8 @@ export function generatePdfContent(
       </div>
 
       ${items
-      .map(
-        (item) => `
+        .map(
+          (item) => `
         <div class="item">
           <div class="item-header">
             <div class="item-title">${item.title}</div>
@@ -425,26 +425,28 @@ export function generatePdfContent(
           </div>
           ${item.url ? `<div class="item-meta">URL: <a href="${item.url}">${item.url}</a></div>` : ""}
           ${item.fileName ? `<div class="item-meta">File: ${item.fileName} (${item.fileType}, ${formatFileSize(item.fileSize || 0)})</div>` : ""}
-          ${options.includeContent && item.content
-            ? `
+          ${
+            options.includeContent && item.content
+              ? `
             <div class="item-content">
               ${item.content.substring(0, 1000)}${item.content.length > 1000 ? "..." : ""}
             </div>
           `
-            : ""
+              : ""
           }
-          ${item.tags && item.tags.length > 0
-            ? `
+          ${
+            item.tags && item.tags.length > 0
+              ? `
             <div class="tags">
               ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
             </div>
           `
-            : ""
+              : ""
           }
         </div>
       `,
-      )
-      .join("")}
+        )
+        .join("")}
     </body>
     </html>
   `;

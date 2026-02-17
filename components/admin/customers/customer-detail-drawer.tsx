@@ -41,7 +41,7 @@ interface CustomerData {
   user: {
     id: string;
     email: string;
-    username?: string;
+    full_name?: string;
     display_name?: string;
     status: string;
     is_active?: boolean;

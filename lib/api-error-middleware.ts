@@ -8,6 +8,7 @@
 
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { ApiError } from "@/lib/api-client/core";
 import { WorkspaceServiceError as WorkspaceApiError } from "@/services/workspace/workspace-service";
 import type { ErrorSeverity } from "@/types/consistent-response";
 import type { WorkspaceErrorCode } from "@/types/workspace";
@@ -244,6 +245,16 @@ export class ApiErrorHandler {
   private extractErrorCode(error: Error): WorkspaceErrorCode {
     if (error instanceof WorkspaceApiError) {
       return error.code;
+    }
+
+    // Check for ApiError
+    if (error instanceof ApiError) {
+      if (
+        error.statusCode === HTTP_FORBIDDEN ||
+        error.statusCode === HTTP_UNAUTHORIZED
+      ) {
+        return "PERMISSION_DENIED";
+      }
     }
 
     // Try to extract error code from error message or properties

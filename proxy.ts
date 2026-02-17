@@ -1,3 +1,4 @@
+import { AUTH_PAGE_PATHS } from "@/lib/auth-routes";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
@@ -91,11 +92,7 @@ export default auth((request) => {
 
   // Public routes that don't require authentication
   const publicRoutes = [
-    "/login",
-    "/signup",
-    "/forgot-password",
-    "/reset-password",
-    "/verify-email",
+    ...AUTH_PAGE_PATHS,
     "/invitations/accept", // Allow unauthenticated users to view and accept invitations
   ];
 

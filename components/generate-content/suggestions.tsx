@@ -80,7 +80,9 @@ export function SuggestionsSection({
           className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between transition-all"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Difficulty</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Difficulty
+            </span>
             <Zap className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 flex items-center justify-center">
@@ -94,7 +96,9 @@ export function SuggestionsSection({
             className="bg-card border border-border rounded-xl p-4 h-full flex flex-col justify-between transition-all"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-muted-foreground">Search Intent</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Search Intent
+              </span>
               <Compass className="w-4 h-4 text-primary" />
             </div>
             <div className="flex items-center gap-3">
@@ -109,10 +113,10 @@ export function SuggestionsSection({
                     <SearchIntentCard
                       intent={
                         seoResult?.intent as
-                        | "informational"
-                        | "commercial"
-                        | "transactional"
-                        | "navigational"
+                          | "informational"
+                          | "commercial"
+                          | "transactional"
+                          | "navigational"
                       }
                     />
                   </motion.div>
@@ -137,7 +141,9 @@ export function SuggestionsSection({
             className="bg-card border border-border rounded-xl p-4 h-full flex flex-col justify-between transition-all"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">Monthly Volume</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Monthly Volume
+              </span>
               <TrendingUp className="w-4 h-4 text-blue-500" />
             </div>
             <AnimatePresence mode="wait">
