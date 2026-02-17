@@ -156,6 +156,30 @@ export const ENDPOINTS = {
             revokeAll: "/api/v1/user/sessions/revoke-all",
         },
     },
+
+    /**
+     * Profile Endpoints
+     * @note User profile management
+     */
+    PROFILE: {
+        get: "/api/v1/user/profile",
+        update: "/api/v1/user/profile",
+        changePassword: "/api/v1/user/change-password",
+        avatar: {
+            upload: "/api/v1/user/avatar/upload",
+            delete: "/api/v1/user/avatar",
+        },
+    },
+
+    /**
+     * Account Endpoints
+     * @note User account operations (data export, deactivation)
+     */
+    ACCOUNT: {
+        exportData: "/api/v1/user/export-data",
+        deactivate: "/api/v1/user/deactivate",
+    },
+
     /**
      * Subscription Endpoints
      * @note Uses plural `subscriptions` namespace

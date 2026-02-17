@@ -5,6 +5,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createProfileNamespace(client: ApiClient) {
   return {
@@ -30,7 +31,7 @@ export function createProfileNamespace(client: ApiClient) {
           created_at: string;
           updated_at: string;
         };
-      }>("/api/v1/user/profile", {
+      }>(ENDPOINTS.PROFILE.get, {
         method: "GET",
       });
       return response.profile;
@@ -60,7 +61,7 @@ export function createProfileNamespace(client: ApiClient) {
         bio?: string;
         language?: string;
         timezone?: string;
-      }>("/api/v1/user/profile", {
+      }>(ENDPOINTS.PROFILE.update, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -78,7 +79,7 @@ export function createProfileNamespace(client: ApiClient) {
       return client.request<{
         success: boolean;
         message: string;
-      }>("/api/v1/user/change-password", {
+      }>(ENDPOINTS.PROFILE.changePassword, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -91,7 +92,7 @@ export function createProfileNamespace(client: ApiClient) {
     uploadAvatar: async (file: FormData) => {
       return client.request<{
         avatar_url: string;
-      }>("/api/v1/user/avatar/upload", {
+      }>(ENDPOINTS.PROFILE.avatar.upload, {
         method: "POST",
         body: file, // FormData handles its own content-type
       });
@@ -101,7 +102,7 @@ export function createProfileNamespace(client: ApiClient) {
      * Delete avatar
      */
     deleteAvatar: async () => {
-      return client.request<void>("/api/v1/user/avatar", {
+      return client.request<void>(ENDPOINTS.PROFILE.avatar.delete, {
         method: "DELETE",
       });
     },
@@ -125,7 +126,7 @@ export function createAccountNamespace(client: ApiClient) {
         success: boolean;
         message: string;
         export_id: string;
-      }>("/api/v1/user/export-data", {
+      }>(ENDPOINTS.ACCOUNT.exportData, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -144,7 +145,7 @@ export function createAccountNamespace(client: ApiClient) {
       return client.request<{
         success: boolean;
         message: string;
-      }>("/api/v1/user/deactivate", {
+      }>(ENDPOINTS.ACCOUNT.deactivate, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
