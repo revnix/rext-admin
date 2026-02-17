@@ -20,8 +20,11 @@ const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 export const ROLE_HIERARCHY = [
   "super_admin",
   "admin",
+  "workspace_owner",
+  "workspace_admin",
   "editor",
   "viewer",
+  "user",
 ] as const;
 
 export function normalizeRole(role: string): string {
