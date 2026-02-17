@@ -1,5 +1,5 @@
 // Content management types
-import type { EEATData } from "./generate-content";
+import type { SchemaMarkup } from "./generate-content";
 
 export type ContentStatus =
   | "draft"
@@ -134,6 +134,9 @@ export interface ContentSEODataSchema {
   readability_score?: number;
   trust_score?: number;
   seo_details?: string;
+  content_primary_keywords?: string[];
+  content_search_intent?: string[];
+  content_meta_description?: string;
 
   // Frontend-enriched fields (computed client-side, not from backend)
   /** @deprecated Use seo_score directly */
@@ -153,8 +156,15 @@ export interface CreateContentRequest {
   tags?: string[];
   status?: ContentStatus;
   content_language?: string;
-  seo_data?: Omit<ContentSEODataSchema, 'content_seo_score' | 'eeat_data'>;
-  media_items?: Array<{ media_id: string; usage_type?: string; position?: number }>;
+  content_format?: string;
+  topic_id?: string;
+  metadata?: ContentMetadataSchema;
+  seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
+  media_items?: Array<{
+    media_id: string;
+    usage_type?: string;
+    position?: number;
+  }>;
   images_data?: Record<string, unknown>;
   links_data?: Record<string, unknown>;
   schema_markup?: Record<string, unknown>;
@@ -172,11 +182,19 @@ export interface UpdateContentRequest {
   tags?: string[];
   status?: ContentStatus;
   content_language?: string;
-  seo_data?: Omit<ContentSEODataSchema, 'content_seo_score' | 'eeat_data'>;
-  media_items?: Array<{ media_id: string; usage_type?: string; position?: number }>;
+  assigned_to_user_id?: string;
+  topic_id?: string;
+  langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
+  metadata?: ContentMetadataSchema;
+  seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
+  media_items?: Array<{
+    media_id: string;
+    usage_type?: string;
+    position?: number;
+  }>;
   images_data?: Record<string, unknown>;
   links_data?: Record<string, unknown>;
-  schema_markup?: Record<string, unknown>;
+  schema_markup?: SchemaMarkup | Record<string, unknown>;
 }
 
 /**

@@ -338,7 +338,7 @@ export function UnifiedKnowledgeList({
                 Unified Knowledge
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                {workspace?.title ? `${workspace.title} · ` : ""}
+                {workspace?.name ? `${workspace.name} · ` : ""}
                 {counts.total} item{counts.total === 1 ? "" : "s"} across web,
                 files, and text sources
               </p>

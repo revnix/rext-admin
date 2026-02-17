@@ -197,7 +197,7 @@ export function useExport(): UseExportReturn {
         }
 
         // Generate filename
-        const filename = generateExportFilename(workspace.title, options);
+        const filename = generateExportFilename(workspace.name, options);
 
         // Step 5: Generate export based on format
         updateProgress({

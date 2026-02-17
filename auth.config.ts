@@ -1,12 +1,14 @@
 import type { NextAuthConfig } from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
-
-const ROLE_HIERARCHY = ["super_admin", "admin", "editor", "viewer"];
+import { getPrimaryRole } from "@/lib/auth-utils";
+import { safeJsonParse } from "@/lib/utils";
 
 /**
  * Refresh the access token using the refresh token
@@ -37,14 +39,11 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       const errorText = await response.text();
       log.error("[Auth] Refresh response error text:", errorText);
 
-      const errorData = await (async () => {
-        try {
-          return JSON.parse(errorText);
-        } catch (e) {
-          log.error("[Auth] Failed to parse refresh response as JSON:", e);
-          return { rawError: errorText };
-        }
-      })();
+      const errorData = safeJsonParse(
+        errorText,
+        { rawError: errorText },
+        "[Auth] refresh response error",
+      );
 
       log.error("[Auth] Token refresh failed with status:", response.status);
       log.error("[Auth] Token refresh error data:", errorData);
@@ -53,14 +52,15 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 
     const refreshResponseText = await response.text();
 
-    const refreshResponseData = await (async () => {
-      try {
-        return JSON.parse(refreshResponseText);
-      } catch (e) {
-        log.error("[Auth] Failed to parse refresh response as JSON:", e);
-        throw new Error("Invalid refresh response format");
-      }
-    })();
+    // biome-ignore lint/suspicious/noExplicitAny: dynamic backend auth response
+    const refreshResponseData = safeJsonParse<{ data?: any }>(
+      refreshResponseText,
+      null,
+      "[Auth] refresh response",
+    );
+    if (!refreshResponseData) {
+      throw new Error("Invalid refresh response format");
+    }
 
     // Extract data from wrapped response
     const refreshedTokens = refreshResponseData.data || refreshResponseData;
@@ -129,7 +129,12 @@ export default {
               errorData?.message ||
               "Invalid email or password";
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
-            return null;
+
+            // Throw CredentialsSignin with the message as the code
+            // This allows the client to access the specific message
+            const error = new CredentialsSignin(errorMessage);
+            error.code = errorMessage;
+            throw error;
           }
 
           const responseData = await response.json();
@@ -144,24 +149,16 @@ export default {
 
           // Determine primary role based on hierarchy
           // Support both `roles: string[]` and `role: string` shapes; normalize casing
-          const rawRoles: string[] = Array.isArray(data.user.roles)
-            ? data.user.roles
-            : data.user.role
-              ? [data.user.role]
-              : [];
-          const userRoles = rawRoles.map((r: string) =>
-            String(r).toLowerCase().replace(/\s+/g, "_"),
-          );
-          const primaryRole =
-            ROLE_HIERARCHY.find((role) => userRoles.includes(role)) ||
-            userRoles[0] ||
-            "user";
+          const primaryRole = getPrimaryRole(data.user);
 
           // Return user object with backend tokens, role, and permissions
           return {
             id: data.user.id,
             email: data.user.email,
-            name: `${data.user.first_name || ""} ${data.user.last_name || ""}`.trim(),
+            name:
+              data.user.display_name || data.user.full_name || data.user.email,
+            full_name: data.user.full_name,
+            display_name: data.user.display_name,
             image: data.user.avatar_url || null,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
@@ -192,12 +189,12 @@ export default {
     }),
   ],
   pages: {
-    signIn: "/login",
-    signOut: "/login",
-    error: "/login",
+    signIn: AUTH_PAGES.LOGIN,
+    signOut: AUTH_PAGES.LOGIN,
+    error: AUTH_PAGES.LOGIN,
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
       // On initial sign in, store backend tokens
       if (user) {
         // For credentials provider, we already have backend tokens
@@ -205,6 +202,8 @@ export default {
           token.id = user.id;
           token.email = user.email;
           token.name = user.name;
+          token.full_name = user.full_name;
+          token.display_name = user.display_name;
           token.picture = user.image;
           token.accessToken = user.accessToken;
           token.refreshToken = user.refreshToken;
@@ -248,23 +247,19 @@ export default {
               const errorText = await oauthResponse.text();
               log.error("[AuthJS] OAuth response error text:", errorText);
 
-              const errorData = await (async () => {
-                try {
-                  return JSON.parse(errorText);
-                } catch (e) {
-                  log.error(
-                    "[AuthJS] Failed to parse OAuth response as JSON:",
-                    e,
-                  );
-                  return { rawError: errorText };
-                }
-              })();
+              const errorData = safeJsonParse<Record<string, unknown>>(
+                errorText,
+                { rawError: errorText },
+                "[AuthJS] OAuth response error",
+              );
               log.error("[AuthJS] OAuth response error data:", errorData);
 
+              const err = errorData as Record<string, unknown> | null;
+              const nested = err?.error as Record<string, unknown> | undefined;
               const errorMessage =
-                errorData?.error?.message ||
-                errorData?.message ||
-                errorData?.rawError ||
+                nested?.message ||
+                err?.message ||
+                err?.rawError ||
                 "OAuth login failed";
               log.error(
                 "[AuthJS] OAuth login failed with message:",
@@ -275,17 +270,12 @@ export default {
 
             const oauthResponseText = await oauthResponse.text();
 
-            const oauthResponseData = await (async () => {
-              try {
-                return JSON.parse(oauthResponseText);
-              } catch (e) {
-                log.error(
-                  "[AuthJS] Failed to parse OAuth response as JSON:",
-                  e,
-                );
-                return null;
-              }
-            })();
+            // biome-ignore lint/suspicious/noExplicitAny: dynamic backend auth response
+            const oauthResponseData = safeJsonParse<{ data?: any }>(
+              oauthResponseText,
+              null,
+              "[AuthJS] OAuth response",
+            );
 
             if (!oauthResponseData) {
               return token;
@@ -301,23 +291,16 @@ export default {
 
             token.id = oauthData.user.id;
             token.email = oauthData.user.email;
+            token.full_name = oauthData.user.full_name;
+            token.display_name = oauthData.user.display_name;
             token.name =
-              `${oauthData.user.first_name} ${oauthData.user.last_name}`.trim();
+              oauthData.user.display_name ||
+              oauthData.user.full_name ||
+              oauthData.user.email;
             token.picture = oauthData.user.avatar_url || user.image;
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
-            const oauthRawRoles: string[] = Array.isArray(oauthData.user.roles)
-              ? oauthData.user.roles
-              : oauthData.user.role
-                ? [oauthData.user.role]
-                : [];
-            const oauthUserRoles = oauthRawRoles.map((r: string) =>
-              String(r).toLowerCase().replace(/\s+/g, "_"),
-            );
-            token.role =
-              ROLE_HIERARCHY.find((role) => oauthUserRoles.includes(role)) ||
-              oauthUserRoles[0] ||
-              "user";
+            token.role = getPrimaryRole(oauthData.user);
             token.permissions = oauthData.user.permissions || [];
             // Set token expiry for OAuth logins (24 hours)
             token.accessTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
@@ -338,6 +321,49 @@ export default {
             token.picture = user.image;
           }
         }
+      }
+
+      // Handle session updates (e.g., impersonation token swap)
+      if (trigger === "update" && session) {
+        if (session.accessToken) token.accessToken = session.accessToken;
+        if (session.refreshToken) token.refreshToken = session.refreshToken;
+
+        // Update non-sensitive user details only
+        // SECURITY: Do NOT accept role or permissions from client-side update()
+        // calls — these must come from the backend to prevent privilege escalation
+        if (session.user) {
+          if (session.user.id) token.id = session.user.id;
+          if (session.user.email) token.email = session.user.email;
+          if (session.user.name) token.name = session.user.name;
+          if (session.user.image) token.picture = session.user.image;
+        }
+
+        return token;
+      }
+
+      // Handle session extension (no session data — refresh request from timeout warning)
+      const SESSION_DURATION_REMEMBER_ME = 30 * 24 * 60 * 60 * 1000; // 30 days
+      const SESSION_DURATION_DEFAULT = 24 * 60 * 60 * 1000; // 24 hours
+
+      if (trigger === "update") {
+        log.info("[Auth] Session update triggered manually");
+        if (token.refreshToken) {
+          log.info("[Auth] Refreshing backend token via refresh token...");
+          return await refreshAccessToken(token);
+        }
+
+        if (token.accessTokenExpires) {
+          log.info("[Auth] Extending session expiry manually...");
+          const expiryDuration = token.rememberMe
+            ? SESSION_DURATION_REMEMBER_ME
+            : SESSION_DURATION_DEFAULT;
+          return {
+            ...token,
+            accessTokenExpires: Date.now() + expiryDuration,
+          };
+        }
+
+        return token;
       }
 
       // If there's a previous refresh error, don't retry - just return the error token
@@ -365,8 +391,13 @@ export default {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
+        session.user.full_name = token.full_name as string;
+        session.user.display_name = (token.display_name as string) || null;
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
+        session.accessTokenExpires = token.accessTokenExpires as
+          | number
+          | undefined;
         session.user.role = token.role as string | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.error = token.error as string | undefined;
@@ -376,15 +407,7 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const isOnAuthPage = [
-        "/login",
-        "/signup",
-        "/forgot-password",
-        "/reset-password",
-        "/verify-email",
-        "/accept-invitation",
-        "/accept-admin-invitation",
-      ].some((path) => nextUrl.pathname.startsWith(path));
+      const isOnAuthPage = isAuthPage(nextUrl.pathname);
 
       // If refresh error, force redirect to login
       if (hasRefreshError && !isOnAuthPage) {

@@ -30,9 +30,15 @@ import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
-import { generationReducer, initialState } from "@/lib/generate-content/generation-reducer";
-import { createThread, streamFromSSE, formatNodeName } from "@/lib/generate-content/stream-utils";
-
+import {
+  generationReducer,
+  initialState,
+} from "@/lib/generate-content/generation-reducer";
+import {
+  createThread,
+  streamFromSSE,
+  formatNodeName,
+} from "@/lib/generate-content/stream-utils";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -87,13 +93,16 @@ export function FreshGenerationView({
       });
 
       for await (const chunk of stream) {
-
         const updates = chunk.data as StreamUpdates;
 
-        if (updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty) {
+        if (
+          updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty
+        ) {
           dispatch({
             type: "SET_KEYWORD_DIFFICULTY",
-            payload: updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd,
+            payload:
+              updates.compute_keyword_difficulty.seo_result.keyword_difficulty
+                .kd,
           });
         }
 
