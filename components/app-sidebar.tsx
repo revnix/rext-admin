@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-// import { PERMISSIONS, ROLES } from "@/lib/permissions";
 import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";

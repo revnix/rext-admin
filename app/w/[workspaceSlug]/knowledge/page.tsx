@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
@@ -37,15 +37,12 @@ export default function WorkspaceKnowledgePage() {
   const [kbToEdit, setKbToEdit] = useState<KnowledgeBase | null>(null);
   const [kbToDelete, setKbToDelete] = useState<KnowledgeBase | null>(null);
 
-  const {
-    data: response,
-    isLoading: isKnowledgeLoading,
-    error,
-  } = useQuery({
+  const { data: response, isLoading: isKnowledgeLoading } = useQuery({
     queryKey: ["knowledge-bases", workspace?.id],
     queryFn: () => apiClient.knowledge.listBases(workspace?.id || ""),
     enabled: !!workspace?.id,
     staleTime: 2 * 60 * 1000,
+    throwOnError: true,
   });
 
   const knowledgeBases = response?.knowledge_bases || [];
@@ -79,7 +76,7 @@ export default function WorkspaceKnowledgePage() {
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Knowledge" },
@@ -201,32 +198,17 @@ export default function WorkspaceKnowledgePage() {
                 <CardTitle>Knowledge Bases</CardTitle>
                 <CardDescription>
                   {totalCount} {totalCount === 1 ? "base" : "bases"} in{" "}
-                  {workspace?.title || "this workspace"}
+                  {workspace?.name || "this workspace"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {error ? (
-                  <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
-                    <BookOpen className="h-12 w-12 text-destructive mb-4" />
-                    <p className="text-lg font-medium mb-2 text-destructive">
-                      Failed to load knowledge bases
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      There was an error loading the knowledge bases list
-                    </p>
-                    <Button variant="outline" onClick={handleRefresh}>
-                      Try Again
-                    </Button>
-                  </div>
-                ) : (
-                  <WorkspaceKnowledgeBasesTable
-                    knowledgeBases={knowledgeBases}
-                    onView={handleView}
-                    onEdit={setKbToEdit}
-                    onDelete={setKbToDelete}
-                    isLoading={isKnowledgeLoading}
-                  />
-                )}
+                <WorkspaceKnowledgeBasesTable
+                  knowledgeBases={knowledgeBases}
+                  onView={handleView}
+                  onEdit={setKbToEdit}
+                  onDelete={setKbToDelete}
+                  isLoading={isKnowledgeLoading}
+                />
               </CardContent>
             </Card>
 

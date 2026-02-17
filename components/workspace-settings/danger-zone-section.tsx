@@ -129,7 +129,7 @@ export function DangerZoneSection() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Delete "{workspace?.title}"?
+                      Delete "{workspace?.name}"?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       This will soft-delete the workspace. You'll have{" "}

@@ -50,6 +50,19 @@ export interface SessionStorageAPI {
 
   /** Generate a unique session ID */
   generateSessionId: () => string;
+
+  /** Get lightweight session metadata by ID */
+  getSessionMetadata: (id: string) => SessionMetadata | null;
+
+  /** Get metadata for all available sessions */
+  getAllSessionMetadata: () => SessionMetadata[];
+
+  /** Update an existing session's topics */
+  updateSession: (
+    id: string,
+    newTopics: GeneratedTopic[],
+    append?: boolean,
+  ) => SessionData | null;
 }
 
 /**

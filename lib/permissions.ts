@@ -103,11 +103,11 @@ export function checkAnyRole(
 export const ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
-  MANAGER: "manager",
-  DEVELOPER: "developer",
+  WORKSPACE_OWNER: "workspace_owner",
+  WORKSPACE_ADMIN: "workspace_admin",
+  EDITOR: "editor",
   VIEWER: "viewer",
   USER: "user",
-  GUEST: "guest",
 } as const;
 
 /**
@@ -234,33 +234,6 @@ export const SUPPORT_PERMISSIONS = {
   VIEW_WORKSPACE: "support.view_workspace",
   VIEW_BILLING: "support.view_billing",
 } as const;
-
-// Legacy permission constants (deprecated, use resource-specific ones above)
-// export const PERMISSIONS = {
-//   // User management
-//   USER_CREATE: "user.create",
-//   USER_READ: "user.read",
-//   USER_UPDATE: "user.update",
-//   USER_DELETE: "user.delete",
-
-//   // Role management
-//   ROLE_CREATE: "role.create",
-//   ROLE_READ: "role.read",
-//   ROLE_UPDATE: "role.update",
-//   ROLE_DELETE: "role.delete",
-
-//   // Permission management
-//   PERMISSION_CREATE: "permission.create",
-//   PERMISSION_READ: "permission.read",
-//   PERMISSION_UPDATE: "permission.update",
-//   PERMISSION_DELETE: "permission.delete",
-
-//   // Workspace management
-//   WORKSPACE_CREATE: "workspace.create",
-//   WORKSPACE_READ: "workspace.read",
-//   WORKSPACE_UPDATE: "workspace.update",
-//   WORKSPACE_DELETE: "workspace.delete",
-// } as const;
 
 /**
  * Helper to get all permissions for a category

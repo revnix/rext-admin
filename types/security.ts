@@ -10,7 +10,7 @@
 export interface FailedLoginAttempt {
   id: string;
   email: string;
-  username: string;
+  full_name: string;
   failed_attempts: number;
   locked_until: string | null;
   last_failed_at: string | null;
@@ -32,7 +32,7 @@ export interface FailedLoginsResponse {
 export interface LockedAccount {
   id: string;
   email: string;
-  username: string;
+  full_name: string;
   locked_until: string;
   failed_attempts: number;
   remaining_lock_time_minutes: number;
@@ -93,7 +93,7 @@ export interface LoginEvent {
 
 export interface LoginHistory {
   user_id: string;
-  username: string;
+  full_name: string;
   email: string;
   total_logins: number;
   last_login_at: string | null;

@@ -3,10 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import type {
-  DeclineInvitationRequest,
   DeclineInvitationResponse,
   PendingInvitationsResponse,
 } from "@/types/invitation";
+import { apiClient } from "@/lib/api-client";
 
 interface UsePendingInvitationsReturn {
   invitations: PendingInvitationsResponse | null;
@@ -23,7 +23,7 @@ interface UsePendingInvitationsReturn {
  * Hook to fetch and manage pending invitations for current user
  *
  * Features:
- * - Fetches pending invitations from API
+ * - Fetches pending invitations from API via apiClient
  * - Provides accept/decline mutation functions
  * - Auto-refetches after accept/decline
  * - Only fetches when user is authenticated
@@ -48,7 +48,7 @@ export function usePendingInvitations(): UsePendingInvitationsReturn {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
-  // Fetch pending invitations
+  // Fetch pending invitations via apiClient
   const {
     data: invitationsData,
     isLoading,
@@ -56,104 +56,36 @@ export function usePendingInvitations(): UsePendingInvitationsReturn {
     refetch,
   } = useQuery<PendingInvitationsResponse>({
     queryKey: ["pending-invitations"],
-    queryFn: async () => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/invitations/pending`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.user?.accessToken}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message ||
-            errorData.detail ||
-            "Failed to fetch pending invitations",
-        );
-      }
-
-      const result = await response.json();
-      return result.data as PendingInvitationsResponse;
-    },
+    queryFn: () =>
+      apiClient.invitations.pending() as Promise<PendingInvitationsResponse>,
     enabled: !!session?.user?.accessToken,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
   });
 
-  // Accept invitation mutation
+  // Accept invitation mutation via apiClient
   const { mutateAsync: acceptInvitation, isPending: isAccepting } = useMutation(
     {
       mutationFn: async (token: string) => {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/invitations/${token}/accept`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.user?.accessToken}`,
-            },
-          },
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.message ||
-              errorData.detail ||
-              "Failed to accept invitation",
-          );
-        }
-
-        return response.json();
+        return apiClient.invitations.accept(token);
       },
       onSuccess: () => {
-        // Invalidate and refetch pending invitations
         queryClient.invalidateQueries({ queryKey: ["pending-invitations"] });
-        // Also invalidate workspaces list since user now has a new workspace
         queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       },
     },
   );
 
-  // Decline invitation mutation
+  // Decline invitation mutation via apiClient
   const { mutateAsync: declineInvitation, isPending: isDeclining } =
     useMutation({
       mutationFn: async (params: { invitationId: string; reason?: string }) => {
-        const body: DeclineInvitationRequest = params.reason
-          ? { reason: params.reason }
-          : {};
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/invitations/${params.invitationId}/decline`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.user?.accessToken}`,
-            },
-            body: JSON.stringify(body),
-          },
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.message ||
-              errorData.detail ||
-              "Failed to decline invitation",
-          );
-        }
-
-        const result = await response.json();
-        return result.data as DeclineInvitationResponse;
+        return apiClient.invitations.decline(
+          params.invitationId,
+          params.reason,
+        ) as Promise<DeclineInvitationResponse>;
       },
       onSuccess: () => {
-        // Invalidate and refetch pending invitations
         queryClient.invalidateQueries({ queryKey: ["pending-invitations"] });
       },
     });

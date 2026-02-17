@@ -40,7 +40,6 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-// import { PERMISSIONS } from "@/lib/permissions";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { PermissionWithRoles, RoleWithPermissions } from "@/types/role";
@@ -93,12 +92,14 @@ export default function AdminRolesPage() {
   const { data: rolesData, isLoading: rolesLoading } = useQuery({
     queryKey: ["roles"],
     queryFn: () => apiClient.roles.list(true),
+    throwOnError: true,
   });
 
   // Fetch permissions with roles
   const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
     queryKey: ["permissions"],
     queryFn: () => apiClient.roles.listPermissions(undefined, true),
+    throwOnError: true,
   });
 
   // Transform roles data for DataTable

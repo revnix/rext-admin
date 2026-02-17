@@ -16,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
-// import { PERMISSIONS } from "@/lib/permissions";
 import { USER_PERMISSIONS } from "@/lib/permissions";
 
 export default function CustomersPage() {
