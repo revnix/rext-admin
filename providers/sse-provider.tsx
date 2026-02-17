@@ -10,13 +10,13 @@ import {
 } from "react";
 import { ApiError } from "@/lib/api-client/core";
 import { getAuthHeaders } from "@/lib/auth-utils";
-import { safeJsonParse } from "@/lib/utils";
 import { log } from "@/lib/logger";
 import {
   type SSEConnectionStatus,
   type SSEEvent,
   SSE_ERROR_CODES,
 } from "@/types/sse";
+import { SSEEventSchema } from "@/schemas/sse-schemas";
 
 interface SSEContextType {
   subscribe: (
@@ -268,9 +268,23 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   dataLength: message.data?.length,
                 });
 
-                const event = safeJsonParse<SSEEvent>(message.data);
+                try {
+                  const parsed = JSON.parse(message.data);
+                  const validationResult = SSEEventSchema.safeParse(parsed);
 
-                if (event) {
+                  if (!validationResult.success) {
+                    sseLogger.warn("SSE event failed schema validation", {
+                      operationId,
+                      errors: validationResult.error.issues.map(
+                        (i) => `${i.path.join(".")}: ${i.message}`,
+                      ),
+                      dataPreview: message.data?.substring(0, 100),
+                    });
+                    return; // Skip invalid events rather than passing them to handlers
+                  }
+
+                  const event = validationResult.data as SSEEvent;
+
                   sseLogger.debug("Received SSE event", {
                     operationId,
                     event: {
@@ -315,8 +329,11 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     // Return early to prevent the connection from being treated as closed unexpectedly
                     return;
                   }
-                } else {
+                } catch (error) {
                   // Log the parse error but don't stop the connection
+                  const errorMessage =
+                    error instanceof Error ? error.message : String(error);
+
                   // Try to extract the actual data if it looks like SSE format
                   let actualData = message.data;
                   if (
@@ -326,17 +343,25 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     const dataMatch = actualData.match(/\ndata: (.+)/);
                     if (dataMatch) {
                       actualData = dataMatch[1];
-                      // Try parsing the extracted data
-                      const retryEvent = safeJsonParse<SSEEvent>(actualData);
-                      if (retryEvent) {
-                        onEvent(retryEvent);
-                        return;
+                      // Try parsing the extracted data with Zod validation
+                      try {
+                        const parsedFallback = JSON.parse(actualData);
+                        const fallbackValidation =
+                          SSEEventSchema.safeParse(parsedFallback);
+
+                        if (fallbackValidation.success) {
+                          onEvent(fallbackValidation.data as SSEEvent);
+                          return;
+                        }
+                      } catch (_retryError) {
+                        // Continue to log the original error
                       }
                     }
                   }
 
                   sseLogger.error("Failed to parse SSE event", {
                     operationId,
+                    error: errorMessage,
                     dataLength: message.data?.length,
                     dataPreview: message.data?.substring(0, 100),
                   });
