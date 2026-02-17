@@ -181,6 +181,31 @@ export const ENDPOINTS = {
     },
 
     /**
+     * Settings Endpoints
+     * @note User settings and preferences (notifications, sessions, security, preferences)
+     */
+    SETTINGS: {
+        notifications: {
+            getPreferences: "/api/v1/user/preferences/notifications",
+            updatePreferences: "/api/v1/user/preferences/notifications",
+        },
+        sessions: {
+            list: "/api/v1/user/sessions",
+            revoke: (sessionId: string) => `/api/v1/user/sessions/${sessionId}` as const,
+            revokeAll: "/api/v1/user/sessions",
+        },
+        security: {
+            stats: "/api/v1/user/security/stats",
+            loginHistory: "/api/v1/user/security/login-history",
+            activeSessionsCount: "/api/v1/user/security/active-sessions-count",
+        },
+        preferences: {
+            get: "/api/v1/user/preferences",
+            update: "/api/v1/user/preferences",
+        },
+    },
+
+    /**
      * Subscription Endpoints
      * @note Uses plural `subscriptions` namespace
      */
