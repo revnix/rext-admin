@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -44,11 +44,9 @@ export function WorkspaceSwitcher() {
   );
 
   // Fetch all workspaces for the switcher
-  const { data: workspaceListResponse, isLoading } = useQuery({
-    queryKey: ["workspaces", "switcher"],
-    queryFn: () => apiClient.workspaces.list(),
-    staleTime: 2 * 60 * 1000, // 2 minutes - shorter for switcher
-  });
+  const { data: workspaceListResponse, isLoading } = useQuery(
+    workspaceQueries.switcher(),
+  );
 
   const workspaces = workspaceListResponse?.workspaces || [];
 

@@ -25,8 +25,14 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { useContentDetail } from "@/hooks/use-content";
 import type { GenerationStep } from "@/types/content-generation-progress";
 import type { SSEEvent } from "@/types/sse";
-import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
+import type {
+  CONTENT,
+  SEORESULT,
+  Outline,
+  EEATData,
+} from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
+import { safeJsonParse } from "@/lib/utils";
 
 const contentLogger = log.forComponent("ContentDetailPage");
 
@@ -214,7 +220,7 @@ export default function WorkspaceContentDetailPage({
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Content", href: workspaceRoutes.content(workspaceSlug) },
@@ -291,16 +297,17 @@ export default function WorkspaceContentDetailPage({
     );
   }
 
-  // Construct SEORESULT object
-  const seoResult: SEORESULT | null = content.seo_data?.seo_details
-    ? JSON.parse(content.seo_data.seo_details)
-    : null;
+  const seoResult = safeJsonParse<SEORESULT>(
+    content.seo_data?.seo_details,
+    null,
+    "seo_details",
+  );
 
-  const eeatData = content.seo_data?.eeat_data
-    ? typeof content.seo_data.eeat_data === "string"
-      ? JSON.parse(content.seo_data.eeat_data)
-      : content.seo_data.eeat_data
-    : null;
+  const eeatData = safeJsonParse<EEATData>(
+    content.seo_data?.eeat_data,
+    null,
+    "eeat_data",
+  );
 
   // Construct Outline object (mocked or extracted from content if possible)
   // For now, we can extract headings from markdown if outline is missing in API
@@ -355,20 +362,20 @@ export default function WorkspaceContentDetailPage({
       seo_score: content.seo_data?.content_seo_score || 0,
       trust_score: content.seo_data?.trust_score
         ? {
-          score: content.seo_data.trust_score,
-          trust_score: content.seo_data.trust_score,
-          author_credibility: 0,
-          expertise: 0,
-          authority: 0,
-          trustworthiness: 0,
-          citations_references: 0,
-          content_accuracy: 0,
-          freshness: 0,
-          transparency: 0,
-          spam_signals: 0,
-          technical_trust: 0,
-          reasoning: "",
-        }
+            score: content.seo_data.trust_score,
+            trust_score: content.seo_data.trust_score,
+            author_credibility: 0,
+            expertise: 0,
+            authority: 0,
+            trustworthiness: 0,
+            citations_references: 0,
+            content_accuracy: 0,
+            freshness: 0,
+            transparency: 0,
+            spam_signals: 0,
+            technical_trust: 0,
+            reasoning: "",
+          }
         : undefined,
       readability_metrics: {
         flesch_reading_ease: content.seo_data?.readability_score || 0,
@@ -458,8 +465,8 @@ export default function WorkspaceContentDetailPage({
           </div>
         </PageLayout>
       ) : ["generated", "draft", "review", "published", "scheduled"].includes(
-        content.status,
-      ) ? (
+          content.status,
+        ) ? (
         <PageLayout
           title={content.title}
           description="Review and edit generated content"

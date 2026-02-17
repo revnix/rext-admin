@@ -19,6 +19,7 @@ import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-
 import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import {
@@ -105,7 +106,7 @@ export function WorkspaceCreateWizard() {
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
-      title: "",
+      name: "",
       url: "",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
@@ -167,7 +168,7 @@ export function WorkspaceCreateWizard() {
     try {
       // Real API call - returns workspace (operation_id is stored in currentOperation)
       const workspace = await createWorkspace({
-        title: data.title,
+        name: data.name,
         url: data.url,
         timezone: data.timezone,
       });
@@ -262,8 +263,8 @@ export function WorkspaceCreateWizard() {
       }
 
       // Invalidate workspace queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace"] });
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.details() });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
@@ -282,7 +283,7 @@ export function WorkspaceCreateWizard() {
   // Step 3: Handle skip (navigate without saving edits)
   const handleSkipReview = () => {
     // Invalidate workspace queries
-    queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
 
     // Redirect directly to workspace generate content page
     if (workspaceSlug) {
@@ -335,22 +336,22 @@ export function WorkspaceCreateWizard() {
               onSubmit={handleSubmit(handleDetailsSubmit)}
               className="space-y-6"
             >
-              {/* Title Field - HIDDEN */}
+              {/* Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-base font-medium">
-                  Workspace Title <span className="text-destructive">*</span>
+                <Label htmlFor="name" className="text-base font-medium">
+                  Workspace Name <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="title"
+                  id="name"
                   type="text"
                   placeholder="e.g., My Company Workspace"
-                  {...register("title")}
-                  className={`text-lg h-12 ${errors.title ? "border-destructive" : ""}`}
+                  {...register("name")}
+                  className={`text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
                   autoFocus
                 />
-                {errors.title && (
+                {errors.name && (
                   <p className="text-sm text-destructive">
-                    {errors.title.message}
+                    {errors.name.message}
                   </p>
                 )}
               </div>

@@ -20,7 +20,7 @@ import { useAuthStore } from "@/stores/auth-store";
 interface User {
   id: string;
   email: string;
-  username?: string;
+  full_name?: string;
   display_name?: string;
 }
 
@@ -80,7 +80,7 @@ export function ImpersonationStartDialog({
 
   if (!user) return null;
 
-  const displayName = user.display_name || user.username || user.email;
+  const displayName = user.display_name || user.full_name || user.email;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
