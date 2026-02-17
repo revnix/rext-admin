@@ -1,5 +1,8 @@
 /**
  * Onboarding API Client Namespace
+ *
+ * Handles user onboarding workflow including step progression,
+ * marketing data collection, and status tracking.
  */
 
 import type {
@@ -9,16 +12,15 @@ import type {
   OnboardingStepUpdate,
 } from "@/types/onboarding";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createOnboardingNamespace(client: ApiClient) {
-  const ONBOARDING_BASE = "/api/v1/onboarding";
-
   return {
     /**
      * Get current user's onboarding status
      */
     async getStatus(): Promise<OnboardingStatus> {
-      return client.request<OnboardingStatus>(ONBOARDING_BASE, {
+      return client.request<OnboardingStatus>(ENDPOINTS.ONBOARDING.BASE, {
         method: "GET",
       });
     },
@@ -27,7 +29,7 @@ export function createOnboardingNamespace(client: ApiClient) {
      * Update onboarding step
      */
     async updateStep(data: OnboardingStepUpdate): Promise<OnboardingStatus> {
-      return client.request<OnboardingStatus>(`${ONBOARDING_BASE}/update`, {
+      return client.request<OnboardingStatus>(ENDPOINTS.ONBOARDING.update, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -40,18 +42,21 @@ export function createOnboardingNamespace(client: ApiClient) {
     async updateMarketingData(
       data: OnboardingMarketingData,
     ): Promise<OnboardingStatus> {
-      return client.request<OnboardingStatus>(`${ONBOARDING_BASE}/marketing`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      return client.request<OnboardingStatus>(
+        ENDPOINTS.ONBOARDING.marketing,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
     },
 
     /**
      * Mark onboarding as fully completed
      */
     async complete(): Promise<OnboardingStatus> {
-      return client.request<OnboardingStatus>(`${ONBOARDING_BASE}/complete`, {
+      return client.request<OnboardingStatus>(ENDPOINTS.ONBOARDING.complete, {
         method: "POST",
       });
     },
@@ -60,7 +65,7 @@ export function createOnboardingNamespace(client: ApiClient) {
      * Reset onboarding to start from beginning
      */
     async reset(data: OnboardingReset): Promise<OnboardingStatus> {
-      return client.request<OnboardingStatus>(`${ONBOARDING_BASE}/reset`, {
+      return client.request<OnboardingStatus>(ENDPOINTS.ONBOARDING.reset, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -72,7 +77,7 @@ export function createOnboardingNamespace(client: ApiClient) {
      */
     async shouldShow(): Promise<{ should_show: boolean }> {
       return client.request<{ should_show: boolean }>(
-        `${ONBOARDING_BASE}/should-show`,
+        ENDPOINTS.ONBOARDING.shouldShow,
         {
           method: "GET",
         },
