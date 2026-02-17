@@ -12,6 +12,7 @@ import type {
   UpdateRoleRequest,
 } from "@/types/role";
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
 
 export function createRolesNamespace(client: ApiClient) {
@@ -168,12 +169,10 @@ export function createRolesNamespace(client: ApiClient) {
      * List all permissions with optional roles
      */
     listPermissions: async (resource?: string, includeRoles = false) => {
-      const params = new URLSearchParams();
-      if (resource) params.append("resource", resource);
-      if (includeRoles) params.append("include_roles", "true");
-
-      const queryString = params.toString();
-      const url = `${ENDPOINTS.PERMISSIONS.list}${queryString ? `?${queryString}` : ""}`;
+      const url = buildUrl(ENDPOINTS.PERMISSIONS.list, {
+        resource,
+        include_roles: includeRoles ? "true" : undefined,
+      });
 
       const response = await client.request<{
         message: string;

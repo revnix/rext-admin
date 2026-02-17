@@ -1,3 +1,4 @@
+import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -142,18 +143,13 @@ export function createMediaNamespace(client: ApiClient) {
       workspaceId: string,
       params?: MediaListParams,
     ): Promise<MediaListResponse> {
-      const searchParams = new URLSearchParams();
-
-      if (params?.folder) searchParams.append("folder", params.folder);
-      if (params?.file_type) searchParams.append("file_type", params.file_type);
-      if (params?.tags?.length)
-        searchParams.append("tags", params.tags.join(","));
-      if (params?.page) searchParams.append("page", String(params.page));
-      if (params?.per_page)
-        searchParams.append("per_page", String(params.per_page));
-
-      const queryString = searchParams.toString();
-      const url = `${ENDPOINTS.MEDIA.base(workspaceId)}${queryString ? `?${queryString}` : ""}`;
+      const url = buildUrl(ENDPOINTS.MEDIA.base(workspaceId), {
+        folder: params?.folder,
+        file_type: params?.file_type,
+        tags: params?.tags?.join(","),
+        page: params?.page,
+        per_page: params?.per_page,
+      });
 
       return client.request<MediaListResponse>(url);
     },

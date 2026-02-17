@@ -10,6 +10,7 @@ import type {
 } from "@/schemas/notification-schemas";
 import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
@@ -122,12 +123,10 @@ export function createSecurityNamespace(client: ApiClient) {
      * Get login history for current user
      */
     getLoginHistory: async (options?: { limit?: number; offset?: number }) => {
-      const params = new URLSearchParams();
-      if (options?.limit) params.append("limit", options.limit.toString());
-      if (options?.offset) params.append("offset", options.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `${ENDPOINTS.SETTINGS.security.loginHistory}${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.SETTINGS.security.loginHistory, {
+        limit: options?.limit,
+        offset: options?.offset,
+      });
 
       return client.request<{
         history: Array<{

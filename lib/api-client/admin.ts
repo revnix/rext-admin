@@ -11,6 +11,7 @@
  * See: lib/api-client/endpoints.ts for full path documentation.
  */
 
+import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -97,15 +98,13 @@ export function createAuditLogsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
-      const params = new URLSearchParams();
-      if (filters?.action) params.append("action", filters.action);
-      if (filters?.start_date) params.append("start_date", filters.start_date);
-      if (filters?.end_date) params.append("end_date", filters.end_date);
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.offset) params.append("offset", filters.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `${ENDPOINTS.ADMIN.audit.myLogs}${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.myLogs, {
+        action: filters?.action,
+        start_date: filters?.start_date,
+        end_date: filters?.end_date,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
 
       return client.request<{
         logs: Array<{
@@ -144,26 +143,20 @@ export function createAuditLogsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
-      const params = new URLSearchParams();
-      if (filters?.user_id) params.append("user_id", filters.user_id);
-      if (filters?.full_name) params.append("full_name", filters.full_name);
-      if (filters?.user_email) params.append("user_email", filters.user_email);
-      if (filters?.action) params.append("action", filters.action);
-      if (filters?.resource_type)
-        params.append("resource_type", filters.resource_type);
-      if (filters?.resource_id)
-        params.append("resource_id", filters.resource_id);
-      if (filters?.workspace_id)
-        params.append("workspace_id", filters.workspace_id);
-      if (filters?.status_filter)
-        params.append("status_filter", filters.status_filter);
-      if (filters?.date_from) params.append("date_from", filters.date_from);
-      if (filters?.date_to) params.append("date_to", filters.date_to);
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.offset) params.append("offset", filters.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `${ENDPOINTS.ADMIN.audit.allLogs}${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.allLogs, {
+        user_id: filters?.user_id,
+        full_name: filters?.full_name,
+        user_email: filters?.user_email,
+        action: filters?.action,
+        resource_type: filters?.resource_type,
+        resource_id: filters?.resource_id,
+        workspace_id: filters?.workspace_id,
+        status_filter: filters?.status_filter,
+        date_from: filters?.date_from,
+        date_to: filters?.date_to,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
 
       return client.request<{
         logs: Array<{

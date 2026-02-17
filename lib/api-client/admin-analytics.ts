@@ -6,6 +6,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
@@ -204,15 +205,13 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
       days = 30,
       workspaceId?: string,
     ): Promise<InvitationAnalyticsData> => {
-      const params = new URLSearchParams({ days: days.toString() });
-      if (workspaceId) {
-        params.append("workspace_id", workspaceId);
-      }
-
       const response = await client.request<
         AnalyticsApiResponse<InvitationAnalyticsData>
       >(
-        `${ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics}?${params.toString()}`,
+        buildUrl(ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics, {
+          days,
+          workspace_id: workspaceId,
+        }),
         {
           method: "GET",
         },

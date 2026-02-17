@@ -26,6 +26,7 @@ import type {
   ValidateAdminInvitationResponse,
 } from "@/types/admin-invitation";
 import type { ApiClient } from "./core";
+import { buildUrl } from "../url-utils";
 import { ENDPOINTS } from "./endpoints";
 
 export function createAdminInvitationsNamespace(client: ApiClient) {
@@ -52,13 +53,11 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
-      const params = new URLSearchParams();
-      if (filters?.status) params.append("status", filters.status);
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.offset) params.append("offset", filters.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `${ENDPOINTS.ADMIN_INVITATIONS.list}${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.ADMIN_INVITATIONS.list, {
+        status: filters?.status,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
 
       return client.request<AdminInvitationListResponse>(endpoint, {
         method: "GET",
