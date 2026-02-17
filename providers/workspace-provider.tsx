@@ -10,7 +10,7 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
-import { apiClient } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -102,20 +102,16 @@ export function WorkspaceProvider({
   } = useQuery({
     ...workspaceQueries.detail(workspaceId),
     retry: (failureCount, error) => {
-      // Don't retry for 404, 401, or 403 errors
-      const errorMessage = (error as Error)?.message || "";
+      // Don't retry for 4xx client errors
       if (
-        errorMessage.includes("404") ||
-        errorMessage.includes("401") ||
-        errorMessage.includes("403") ||
-        errorMessage.includes("not found") ||
-        errorMessage.includes("Not Found") ||
-        errorMessage.includes("Unauthorized") ||
-        errorMessage.includes("Forbidden")
+        error instanceof ApiError &&
+        error.statusCode >= 400 &&
+        error.statusCode < 500
       ) {
         return false;
       }
-      // Retry up to 2 times for other errors (network issues, etc.)
+
+      // Retry server errors (5xx) and network failures up to 2 times
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff, max 3s
@@ -159,16 +155,13 @@ export function WorkspaceProvider({
   useEffect(() => {
     if (error && !isLoading) {
       // Check if error is a permission/auth error or not found that warrants redirect
-      const errorMessage = error?.message || "";
-      const isAuthError =
-        errorMessage.includes("401") ||
-        errorMessage.includes("403") ||
-        errorMessage.includes("Unauthorized") ||
-        errorMessage.includes("Forbidden");
-      const isNotFoundError =
-        errorMessage.includes("404") ||
-        errorMessage.includes("not found") ||
-        errorMessage.includes("Not Found");
+      let isAuthError = false;
+      let isNotFoundError = false;
+
+      if (error instanceof ApiError) {
+        isAuthError = error.statusCode === 401 || error.statusCode === 403;
+        isNotFoundError = error.statusCode === 404;
+      }
 
       if (isAuthError || isNotFoundError) {
         log.error(
@@ -243,7 +236,7 @@ export function useWorkspace(): WorkspaceContextType {
   if (!context) {
     throw new Error(
       "useWorkspace must be used within a WorkspaceProvider. " +
-      "Make sure your component is wrapped with <WorkspaceProvider>.",
+        "Make sure your component is wrapped with <WorkspaceProvider>.",
     );
   }
 

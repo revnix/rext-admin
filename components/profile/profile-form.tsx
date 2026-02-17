@@ -61,8 +61,7 @@ export function ProfileForm() {
     resolver: zodResolver(profileSchema),
     values: profile
       ? {
-          // Combine first_name and last_name into full_name for the form
-          full_name: `${profile.first_name} ${profile.last_name}`.trim(),
+          full_name: profile.full_name || "",
           displayName: profile.display_name || "",
           language: profile.language || "en",
           timezone: profile.timezone || "UTC",
@@ -73,8 +72,7 @@ export function ProfileForm() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: (data: {
-      first_name?: string;
-      last_name?: string;
+      full_name?: string;
       display_name?: string;
       language?: string;
       timezone?: string;
@@ -89,14 +87,8 @@ export function ProfileForm() {
   });
 
   const onSubmit = (data: ProfileFormData) => {
-    // Split full_name back into first_name and last_name for the API
-    const nameParts = data.full_name.trim().split(/\s+/);
-    const first_name = nameParts[0] || "";
-    const last_name = nameParts.slice(1).join(" ") || "";
-
     updateMutation.mutate({
-      first_name,
-      last_name,
+      full_name: data.full_name,
       display_name: data.displayName || undefined,
       language: data.language,
       timezone: data.timezone,
@@ -120,8 +112,7 @@ export function ProfileForm() {
   }
 
   const userInitials =
-    `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""}`.toUpperCase() ||
-    "U";
+    (profile.full_name || profile.email).slice(0, 2).toUpperCase() || "U";
 
   return (
     <div className="space-y-6">
@@ -146,15 +137,6 @@ export function ProfileForm() {
             <FormDescription>
               Email cannot be changed. Contact support if needed.
             </FormDescription>
-          </FormItem>
-
-          {/* Username (read-only) */}
-          <FormItem>
-            <FormLabel>Username</FormLabel>
-            <FormControl>
-              <Input value={profile.username} disabled />
-            </FormControl>
-            <FormDescription>Username cannot be changed.</FormDescription>
           </FormItem>
 
           {/* First Name */}

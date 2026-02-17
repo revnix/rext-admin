@@ -91,7 +91,9 @@ export function MediaDetailSheet({
     },
     onSuccess: () => {
       toast.success("Media deleted successfully");
-      queryClient.invalidateQueries({ queryKey: mediaQueries.all(workspaceId) });
+      queryClient.invalidateQueries({
+        queryKey: mediaQueries.all(workspaceId),
+      });
       onOpenChange(false);
       onDeleted?.();
     },
@@ -117,7 +119,9 @@ export function MediaDetailSheet({
     },
     onSuccess: () => {
       toast.success("Media updated successfully");
-      queryClient.invalidateQueries({ queryKey: mediaQueries.all(workspaceId) });
+      queryClient.invalidateQueries({
+        queryKey: mediaQueries.all(workspaceId),
+      });
       setIsEditing(false);
     },
     onError: (error: Error) => {

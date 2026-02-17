@@ -21,7 +21,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { apiClient } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
@@ -111,9 +110,9 @@ export function WorkspaceSwitcher() {
                   {isLoading
                     ? "Loading..."
                     : getWorkspaceDisplayTitle(
-                      displayWorkspace,
-                      "Select Workspace",
-                    )}
+                        displayWorkspace,
+                        "Select Workspace",
+                      )}
                 </span>
                 <span className="truncate text-xs">
                   {isLoading

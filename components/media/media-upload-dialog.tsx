@@ -58,7 +58,9 @@ export function MediaUploadDialog({
     },
     onSuccess: (data) => {
       toast.success(data.message || "File uploaded successfully");
-      queryClient.invalidateQueries({ queryKey: mediaQueries.all(workspaceId) });
+      queryClient.invalidateQueries({
+        queryKey: mediaQueries.all(workspaceId),
+      });
       handleClose();
       onUploaded?.();
     },
@@ -172,10 +174,11 @@ export function MediaUploadDialog({
               {!file ? (
                 <div
                   {...getRootProps()}
-                  className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive
+                  className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                    isDragActive
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
-                    }`}
+                  }`}
                 >
                   <input {...getInputProps()} />
                   <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />

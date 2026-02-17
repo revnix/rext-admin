@@ -59,7 +59,10 @@ export function DisplayPreferencesSection() {
     data: preferences,
     isLoading,
     error,
-  } = useQuery(preferencesQueries.detail());
+  } = useQuery({
+    ...preferencesQueries.detail(),
+    throwOnError: true,
+  });
 
   // Initialize form with default values
   const form = useForm<PreferencesFormValues>({
@@ -71,14 +74,14 @@ export function DisplayPreferencesSection() {
     },
     values: preferences
       ? {
-        date_format: preferences.date_format as
-          | "iso"
-          | "us"
-          | "eu"
-          | "relative",
-        time_format: preferences.time_format as "24h" | "12h",
-        items_per_page: preferences.items_per_page,
-      }
+          date_format: preferences.date_format as
+            | "iso"
+            | "us"
+            | "eu"
+            | "relative",
+          time_format: preferences.time_format as "24h" | "12h",
+          items_per_page: preferences.items_per_page,
+        }
       : undefined,
   });
 
@@ -87,7 +90,9 @@ export function DisplayPreferencesSection() {
     mutationFn: (data: PreferencesFormValues) =>
       apiClient.preferences.update(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: preferencesQueries.detail().queryKey });
+      queryClient.invalidateQueries({
+        queryKey: preferencesQueries.detail().queryKey,
+      });
       toast.success("Preferences saved successfully");
     },
     onError: (error: Error) => {

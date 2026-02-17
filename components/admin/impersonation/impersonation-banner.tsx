@@ -3,16 +3,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, UserX } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { impersonationQueries } from "@/lib/query-keys";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function ImpersonationBanner() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { update } = useSession();
   const [isVisible, setIsVisible] = useState(false);
 
   // Check impersonation status
@@ -39,13 +42,17 @@ export function ImpersonationBanner() {
     mutationFn: async () => {
       return await apiClient.impersonation.stop();
     },
-    onSuccess: (data) => {
-      // Update tokens
-      if (data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-      }
-      if (data.refresh_token) {
-        localStorage.setItem("refresh_token", data.refresh_token);
+    onSuccess: async (data) => {
+      // Store restored tokens in memory
+      const { setTokens } = useAuthStore.getState();
+      if (data.access_token && data.refresh_token) {
+        setTokens(data.access_token, data.refresh_token);
+
+        // Persist to NextAuth session so tokens survive page reload
+        await update({
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+        });
       }
 
       // Clear all queries to force refresh with new user context
