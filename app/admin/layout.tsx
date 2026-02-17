@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useIsAdmin } from "@/hooks/use-permission";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 /**
  * Admin layout with role-based access control
@@ -53,5 +54,5 @@ export default function AdminLayout({
 
   // Render admin content
   // Note: PageLayout handles title, description, sidebar, and impersonation banner
-  return <>{children}</>;
+  return <APIErrorBoundary>{children}</APIErrorBoundary>;
 }

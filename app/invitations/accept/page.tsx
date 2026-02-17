@@ -72,8 +72,7 @@ export default function AcceptInvitationPage() {
         typeof invitation.invited_by === "string"
           ? invitation.invited_by
           : invitation.invited_by?.display_name ||
-            `${invitation.invited_by?.first_name || ""} ${invitation.invited_by?.last_name || ""}`.trim() ||
-            invitation.invited_by?.username ||
+            invitation.invited_by?.full_name ||
             "Workspace Admin";
 
       const roleName =
@@ -315,8 +314,7 @@ export default function AcceptInvitationPage() {
                   {typeof invitation.invited_by === "string"
                     ? invitation.invited_by
                     : invitation.invited_by?.display_name ||
-                      `${invitation.invited_by?.first_name || ""} ${invitation.invited_by?.last_name || ""}`.trim() ||
-                      invitation.invited_by?.username ||
+                      invitation.invited_by?.full_name ||
                       "Workspace Admin"}
                 </p>
               </div>

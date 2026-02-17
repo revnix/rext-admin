@@ -11,7 +11,7 @@
 export interface AuditLog {
   id: string;
   user_id: string | null;
-  username: string | null;
+  full_name: string | null;
   user_email: string | null;
   action: string;
   resource_type: string;

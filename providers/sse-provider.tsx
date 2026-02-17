@@ -9,6 +9,8 @@ import {
   useMemo,
 } from "react";
 import { getAuthHeaders } from "@/lib/auth-utils";
+import { ApiError } from "@/lib/api-client/core";
+import { safeJsonParse } from "@/lib/utils";
 import { log } from "@/lib/logger";
 import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
 
@@ -263,10 +265,11 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                       error: errorMessage,
                     });
                   }
-                  throw new Error(errorMessage);
+                  // Throw ApiError for better classification downstream
+                  throw new ApiError(status, errorMessage);
                 }
 
-                throw new Error(errorMessage);
+                throw new ApiError(status, errorMessage);
               },
               onmessage: (message) => {
                 if (!message.data) {
@@ -283,9 +286,9 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   dataLength: message.data?.length,
                 });
 
-                try {
-                  const event: SSEEvent = JSON.parse(message.data);
+                const event = safeJsonParse<SSEEvent>(message.data);
 
+                if (event) {
                   sseLogger.debug("Received SSE event", {
                     operationId,
                     event: {
@@ -330,11 +333,8 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     // Return early to prevent the connection from being treated as closed unexpectedly
                     return;
                   }
-                } catch (error) {
+                } else {
                   // Log the parse error but don't stop the connection
-                  const errorMessage =
-                    error instanceof Error ? error.message : String(error);
-
                   // Try to extract the actual data if it looks like SSE format
                   let actualData = message.data;
                   if (
@@ -345,19 +345,16 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     if (dataMatch) {
                       actualData = dataMatch[1];
                       // Try parsing the extracted data
-                      try {
-                        const event: SSEEvent = JSON.parse(actualData);
-                        onEvent(event);
+                      const retryEvent = safeJsonParse<SSEEvent>(actualData);
+                      if (retryEvent) {
+                        onEvent(retryEvent);
                         return;
-                      } catch (_retryError) {
-                        // Continue to log the original error
                       }
                     }
                   }
 
                   sseLogger.error("Failed to parse SSE event", {
                     operationId,
-                    error: errorMessage,
                     dataLength: message.data?.length,
                     dataPreview: message.data?.substring(0, 100),
                   });
@@ -402,6 +399,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
             // Check if error is rate limit related
             if (
+              (error instanceof ApiError && error.statusCode === 429) ||
               errorMessage.includes("429") ||
               errorMessage.toLowerCase().includes("rate limit")
             ) {

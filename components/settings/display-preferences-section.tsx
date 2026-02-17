@@ -60,6 +60,7 @@ export function DisplayPreferencesSection() {
     error,
   } = useQuery({
     queryKey: ["preferences"],
+    throwOnError: true,
     queryFn: () => apiClient.preferences.get(),
   });
 

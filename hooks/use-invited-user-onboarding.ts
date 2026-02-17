@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
+import { safeJsonParse } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 
@@ -45,13 +46,8 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
     queryFn: async () => {
       if (!invitationToken) return null;
 
-      try {
-        // Parse the stored invitation context
-        const context = JSON.parse(invitationToken);
-        return context as InvitationContext;
-      } catch {
-        return null;
-      }
+      // Parse the stored invitation context
+      return safeJsonParse<InvitationContext>(invitationToken);
     },
     enabled: !!invitationToken && status === "authenticated",
     staleTime: Infinity, // Context doesn't change

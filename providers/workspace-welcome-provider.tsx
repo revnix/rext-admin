@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { WorkspaceWelcomeModal } from "@/components/workspace/workspace-welcome-modal";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { safeJsonParse } from "@/lib/utils";
 
 interface WorkspaceWelcomeProviderProps {
   children: React.ReactNode;
@@ -60,8 +61,8 @@ export function WorkspaceWelcomeProvider({
     const storedData = sessionStorage.getItem(welcomeKey);
 
     if (storedData) {
-      try {
-        const data = JSON.parse(storedData);
+      const data = safeJsonParse<WelcomeData>(storedData);
+      if (data) {
         setWelcomeData(data);
 
         // Small delay to let the page load
@@ -73,7 +74,7 @@ export function WorkspaceWelcomeProvider({
         sessionStorage.removeItem(welcomeKey);
 
         return () => clearTimeout(timer);
-      } catch (_e) {
+      } else {
         // Invalid data, ignore
         sessionStorage.removeItem(welcomeKey);
       }
