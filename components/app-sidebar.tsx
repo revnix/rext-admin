@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { PERMISSIONS, ROLES } from "@/lib/permissions";
+import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -182,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "User Management",
           url: "/admin/users",
           icon: UserCog,
-          permission: PERMISSIONS.USER_READ,
+          permission: USER_PERMISSIONS.READ,
         },
         {
           title: "Subscriptions",
@@ -206,7 +206,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Roles & Permissions",
           url: "/admin/roles",
           icon: Shield,
-          anyPermission: [PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ],
+          anyPermission: [ADMIN_PERMISSIONS.ROLE_READ, ADMIN_PERMISSIONS.PERMISSION_READ],
         },
       ],
     },
@@ -223,8 +223,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+      (group) => group.groupLabel !== "Workspace",
+    );
 
   return (
     <Sidebar
@@ -366,11 +366,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </div>
                           <ChevronDown
                             size={16}
-                            className={`transition-transform duration-200 ${
-                              expandedAccordion === item.title
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`transition-transform duration-200 ${expandedAccordion === item.title
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         </SidebarMenuButton>
 
