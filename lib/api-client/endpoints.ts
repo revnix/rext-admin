@@ -320,6 +320,18 @@ export const ENDPOINTS = {
     },
 
     /**
+     * Admin Webhooks Endpoints
+     * @note Platform-level webhook event monitoring
+     * @note Requires super admin role
+     */
+    ADMIN_WEBHOOKS: {
+        events: "/api/v1/admin/subscriptions/webhooks/events",
+        failed: "/api/v1/admin/subscriptions/webhooks/failed",
+        retry: (eventId: string) => `/api/v1/admin/subscriptions/webhooks/${eventId}/retry` as const,
+        stats: "/api/v1/admin/subscriptions/webhooks/stats",
+    },
+
+    /**
      * Admin Invitations Endpoints
      * @note Platform-level admin invitation management
      * @note Path mismatch: CRUD uses `/admin/platform/invitations` vs token ops use `/admin-invitations/{token}`
