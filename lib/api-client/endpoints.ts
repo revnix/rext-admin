@@ -323,6 +323,35 @@ export const ENDPOINTS = {
     },
 
     /**
+     * Roles Endpoints
+     * @note Platform-level role management
+     */
+    ROLES: {
+        list: "/api/v1/roles",
+        get: (roleId: string) => `/api/v1/roles/${roleId}` as const,
+        create: "/api/v1/roles",
+        update: (roleId: string) => `/api/v1/roles/${roleId}` as const,
+        delete: (roleId: string) => `/api/v1/roles/${roleId}` as const,
+        permissions: {
+            assign: (roleId: string) => `/api/v1/roles/${roleId}/permissions` as const,
+            revoke: (roleId: string, permissionId: string) =>
+                `/api/v1/roles/${roleId}/permissions/${permissionId}` as const,
+        },
+    },
+
+    /**
+     * Permissions Endpoints
+     * @note Platform-level permission management
+     */
+    PERMISSIONS: {
+        list: "/api/v1/permissions",
+        get: (permissionId: string) => `/api/v1/permissions/${permissionId}` as const,
+        create: "/api/v1/permissions",
+        update: (permissionId: string) => `/api/v1/permissions/${permissionId}` as const,
+        delete: (permissionId: string) => `/api/v1/permissions/${permissionId}` as const,
+    },
+
+    /**
      * Public Endpoints
      * Accessible without session authentication (usually via token)
      */
