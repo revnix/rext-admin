@@ -206,7 +206,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Roles & Permissions",
           url: "/admin/roles",
           icon: Shield,
-          anyPermission: [ADMIN_PERMISSIONS.ROLE_READ, ADMIN_PERMISSIONS.PERMISSION_READ],
+          anyPermission: [
+            ADMIN_PERMISSIONS.ROLE_READ,
+            ADMIN_PERMISSIONS.PERMISSION_READ,
+          ],
         },
       ],
     },
@@ -223,8 +226,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar
@@ -366,10 +369,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </div>
                           <ChevronDown
                             size={16}
-                            className={`transition-transform duration-200 ${expandedAccordion === item.title
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`transition-transform duration-200 ${
+                              expandedAccordion === item.title
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         </SidebarMenuButton>
 

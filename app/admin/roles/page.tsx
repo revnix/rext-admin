@@ -330,7 +330,10 @@ export default function AdminRolesPage() {
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
-        anyPermission={[ADMIN_PERMISSIONS.ROLE_READ, ADMIN_PERMISSIONS.PERMISSION_READ]}
+        anyPermission={[
+          ADMIN_PERMISSIONS.ROLE_READ,
+          ADMIN_PERMISSIONS.PERMISSION_READ,
+        ]}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
