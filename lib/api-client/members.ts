@@ -158,6 +158,20 @@ export function createInvitationsNamespace(client: ApiClient) {
     },
 
     /**
+     * Decline a pending invitation
+     */
+    decline: async (invitationId: string, reason?: string) => {
+      return client.request<{
+        invitation_id: string;
+        status: string;
+      }>(`/api/v1/user/invitations/${invitationId}/decline`, {
+        method: "POST",
+        headers: reason ? { "Content-Type": "application/json" } : undefined,
+        body: reason ? JSON.stringify({ reason }) : undefined,
+      });
+    },
+
+    /**
      * Create invitation
      */
     create: async (
@@ -272,11 +286,12 @@ export function createInvitationsNamespace(client: ApiClient) {
           role_id: string;
           role_name: string;
           invited_by:
-            | string
-            | {
-                name: string;
-                email: string;
-              };
+          | string
+          | {
+            name: string;
+            email: string;
+          };
+          token: string;
           expires_at: string;
           status: string;
           created_at: string;
