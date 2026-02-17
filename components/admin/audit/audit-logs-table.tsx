@@ -31,7 +31,7 @@ import {
 interface AuditLog {
   id: string;
   user_id?: string;
-  username?: string;
+  full_name?: string;
   user_email?: string;
   action: string;
   resource_type: string;
@@ -161,7 +161,7 @@ export function AuditLogsTable({
                 <TableCell>
                   <div className="text-sm">
                     <div className="font-medium">
-                      {log.username || "System"}
+                      {log.full_name || "System"}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {log.user_email}

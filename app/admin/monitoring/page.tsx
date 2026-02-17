@@ -168,18 +168,15 @@ export default function MonitoringPage() {
       errorLogFilters,
     ],
     queryFn: async () => {
-    
       const url = buildUrl("/api/v1/admin/monitoring/error-logs", {
         page: errorLogPage.toString(),
         per_page: "50",
-        severity: errorLogFilters.severity,
-        start_date: errorLogFilters.start_date,
-        end_date: errorLogFilters.end_date,
+        severity: errorLogFilters.severity || undefined,
+        start_date: errorLogFilters.start_date || undefined,
+        end_date: errorLogFilters.end_date || undefined,
       });
       return apiClient
-        .request<{ data: ErrorLogData }>(
-          url,
-        )
+        .request<{ data: ErrorLogData }>(url)
         .then((res) => res.data);
     },
   });
@@ -263,10 +260,11 @@ export default function MonitoringPage() {
                         Status
                       </span>
                       <span
-                        className={`text-sm font-medium ${health?.database?.status === "healthy"
+                        className={`text-sm font-medium ${
+                          health?.database?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                          }`}
+                        }`}
                       >
                         {health?.database?.status || "Unknown"}
                       </span>
@@ -303,10 +301,11 @@ export default function MonitoringPage() {
                         Status
                       </span>
                       <span
-                        className={`text-sm font-medium ${health?.api?.status === "healthy"
+                        className={`text-sm font-medium ${
+                          health?.api?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                          }`}
+                        }`}
                       >
                         {health?.api?.status || "Unknown"}
                       </span>

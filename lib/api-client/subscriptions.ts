@@ -19,6 +19,7 @@ import type {
 } from "@/types/subscription";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
+import { ENDPOINTS } from "./endpoints";
 
 export function createSubscriptionsNamespace(client: ApiClient) {
   return {
@@ -31,7 +32,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getCurrentPlan: async (): Promise<UserSubscription> => {
       return client.request<UserSubscription>(
-        "/api/v1/subscriptions/my-subscription",
+        ENDPOINTS.SUBSCRIPTIONS.mySubscription,
         {
           method: "GET",
         },
@@ -43,7 +44,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getPlans: async (): Promise<SubscriptionListResponse> => {
       return client.request<SubscriptionListResponse>(
-        "/api/v1/subscriptions/plans",
+        ENDPOINTS.SUBSCRIPTIONS.plans,
         {
           method: "GET",
         },
@@ -78,7 +79,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
           : "http://localhost:3000";
 
       return client.request<CheckoutSessionResponse>(
-        "/api/v1/subscriptions/checkout",
+        ENDPOINTS.SUBSCRIPTIONS.checkout,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -101,7 +102,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getCustomerPortalUrl: async (): Promise<CustomerPortalResponse> => {
       return client.request<CustomerPortalResponse>(
-        "/api/v1/subscriptions/portal",
+        ENDPOINTS.SUBSCRIPTIONS.portal,
         {
           method: "GET",
         },
@@ -128,7 +129,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         billing_period: billingPeriod,
       };
 
-      return client.request<UserSubscription>("/api/v1/subscriptions/upgrade", {
+      return client.request<UserSubscription>(ENDPOINTS.SUBSCRIPTIONS.upgrade, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
@@ -152,7 +153,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       };
 
       return client.request<UserSubscription>(
-        "/api/v1/subscriptions/downgrade",
+        ENDPOINTS.SUBSCRIPTIONS.downgrade,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -180,7 +181,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       return client.request<{
         success: boolean;
         message: string;
-      }>("/api/v1/subscriptions/cancel", {
+      }>(ENDPOINTS.SUBSCRIPTIONS.cancel, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
@@ -198,7 +199,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getInvoices: async (): Promise<InvoiceListResponse> => {
       return client.request<InvoiceListResponse>(
-        "/api/v1/subscriptions/invoices",
+        ENDPOINTS.SUBSCRIPTIONS.invoices,
         {
           method: "GET",
         },
@@ -220,9 +221,8 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       limit = 50,
       offset = 0,
     ): Promise<SubscriptionHistoryResponse> => {
-
       return client.request<SubscriptionHistoryResponse>(
-        buildUrl("/api/v1/subscriptions/history", { limit, offset }),
+        buildUrl(ENDPOINTS.SUBSCRIPTIONS.history, { limit, offset }),
         {
           method: "GET",
         },
@@ -235,7 +235,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @returns Current usage stats
      */
     getUsageStats: async (): Promise<UsageStats> => {
-      return client.request<UsageStats>("/api/v1/subscriptions/usage", {
+      return client.request<UsageStats>(ENDPOINTS.SUBSCRIPTIONS.usage, {
         method: "GET",
       });
     },
@@ -246,7 +246,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @returns Trial status information
      */
     getTrialStatus: async (): Promise<TrialStatus> => {
-      return client.request<TrialStatus>("/api/v1/subscriptions/trial-status", {
+      return client.request<TrialStatus>(ENDPOINTS.SUBSCRIPTIONS.trialStatus, {
         method: "GET",
       });
     },

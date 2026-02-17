@@ -5,9 +5,7 @@
 export interface UserProfile {
   id: string;
   email: string;
-  username: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;
   display_name: string | null;
   language: string;
   timezone: string;
@@ -22,8 +20,7 @@ export interface UserProfile {
  * Profile update request
  */
 export interface UpdateProfileRequest {
-  first_name?: string;
-  last_name?: string;
+  full_name?: string;
   display_name?: string;
   language?: string;
   timezone?: string;

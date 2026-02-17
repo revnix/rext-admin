@@ -19,6 +19,7 @@ import {
   type ResetPasswordData,
   resetPasswordSchema,
 } from "@/schemas/auth-schemas";
+import { checkPasswordBreach } from "@/lib/password-utils";
 
 function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +48,16 @@ function ResetPasswordForm() {
     setSuccess(false);
 
     try {
+      // Check for breached password
+      const breachResult = await checkPasswordBreach(data.password);
+      if (breachResult.breached) {
+        setError(
+          `This password has appeared in ${breachResult.count.toLocaleString()} data breaches. Please choose a different password.`,
+        );
+        setIsLoading(false);
+        return;
+      }
+
       // Direct API call - no auth session needed for password reset
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/reset-password`,

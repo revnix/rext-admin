@@ -1,5 +1,6 @@
 import { PageLayout } from "@/components/page-layout";
 import { SettingsNav } from "@/components/settings/settings-nav";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function SettingsLayout({
   children,
@@ -19,7 +20,9 @@ export default function SettingsLayout({
         <SettingsNav />
 
         {/* Main Content */}
-        <main className="w-full">{children}</main>
+        <main className="w-full">
+          <APIErrorBoundary>{children}</APIErrorBoundary>
+        </main>
       </div>
     </PageLayout>
   );

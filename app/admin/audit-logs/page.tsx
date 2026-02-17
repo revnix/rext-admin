@@ -43,7 +43,7 @@ export default function AuditLogsPage() {
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string | null>(
     null,
   );
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session } = useSession();
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch audit logs
@@ -74,8 +74,7 @@ export default function AuditLogsPage() {
 
   const handleExport = async (format: "csv" | "json") => {
     try {
-    
-      const endpoint = buildUrl(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/audit-logs/export/download`, {
+      const endpoint = buildUrl(`/api/v1/audit/logs/export/download`, {
         format,
         user_email: debouncedSearch || undefined,
         action: actionFilter || undefined,
@@ -85,8 +84,8 @@ export default function AuditLogsPage() {
       const response = await fetch(endpoint, {
         method: "GET",
         headers: {
-            Authorization: `Bearer ${session?.user?.accessToken}`,
-          },
+          Authorization: `Bearer ${session?.user?.accessToken}`,
+        },
       });
 
       if (!response.ok) throw new Error("Export failed");

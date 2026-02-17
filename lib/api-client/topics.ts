@@ -1,11 +1,19 @@
 /**
  * Topics API Namespace
  *
- * Handles topic generation, CRUD operations, and management
+ * Handles topic creation, generation, and management for workspace content.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ * - Uses singular "topic" instead of plural "topics" in path: `/api/v1/topic/*`
+ * - Uses verb-based paths (get-topics, save-topic, update-topic, delete-topic) instead of RESTful resources
+ * - Uses query parameter `workspace_id` instead of path-based workspace scoping
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type { GeneratedTopic } from "@/types/topic-builder";
-import type { ApiClient } from "./core";
+import { type ApiClient, ApiError } from "./core";
 
 export function createTopicsNamespace(client: ApiClient) {
   return {
@@ -37,7 +45,15 @@ export function createTopicsNamespace(client: ApiClient) {
           },
         )
         .catch((error) => {
-          if (error instanceof Error && error.message.includes("404")) {
+          if (error instanceof ApiError && error.statusCode === 404) {
+            return null;
+          }
+          // Fallback for non-ApiError errors (e.g. network layer) that may contain "404"
+          if (
+            !(error instanceof ApiError) &&
+            error instanceof Error &&
+            error.message.includes("404")
+          ) {
             return null;
           }
           throw error;

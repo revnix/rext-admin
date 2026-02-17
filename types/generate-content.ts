@@ -134,20 +134,20 @@ export type SchemaMarkup = {
 };
 
 export type TrustScore = {
-  score: number,
-  trust_score: number,
-  author_credibility: number,
-  expertise: number,
-  authority: number,
-  trustworthiness: number,
-  citations_references: number,
-  content_accuracy: number,
-  freshness: number,
-  transparency: number,
-  spam_signals: number,
-  technical_trust: number,
+  score: number;
+  trust_score: number;
+  author_credibility: number;
+  expertise: number;
+  authority: number;
+  trustworthiness: number;
+  citations_references: number;
+  content_accuracy: number;
+  freshness: number;
+  transparency: number;
+  spam_signals: number;
+  technical_trust: number;
   reasoning: string;
-}
+};
 
 export type FinalContent = {
   title: string;
@@ -179,14 +179,14 @@ export type CONTENT = {
   review?: ContentReview;
   final_content?: FinalContent;
   status:
-  | "planning"
-  | "drafting"
-  | "reviewing"
-  | "optimizing"
-  | "completed"
-  | "failed"
-  | "approved"
-  | "rejected";
+    | "planning"
+    | "drafting"
+    | "reviewing"
+    | "optimizing"
+    | "completed"
+    | "failed"
+    | "approved"
+    | "rejected";
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -271,10 +271,10 @@ export type WREXT = {
 
 export type SearchIntentState = {
   primary_intent:
-  | "informational"
-  | "commercial"
-  | "transactional"
-  | "navigational";
+    | "informational"
+    | "commercial"
+    | "transactional"
+    | "navigational";
   secondary_intents: string[];
   confidence: number;
   intent_signals: Record<string, number>;
@@ -315,11 +315,11 @@ export type KeywordDifficultyState2 = {
 
 export type ContentPatternState = {
   content_type:
-  | "blog"
-  | "listicle"
-  | "landing_page"
-  | "documentation"
-  | "comparison";
+    | "blog"
+    | "listicle"
+    | "landing_page"
+    | "documentation"
+    | "comparison";
   avg_word_count: number;
   common_headings: string[];
   heading_depth: number;
@@ -433,6 +433,43 @@ export type SEORESULT = {
   issues: Issue[];
 };
 
+export type StreamUpdates = Partial<WREXT> & {
+  compute_keyword_difficulty?: {
+    seo_result?: {
+      keyword_difficulty?: {
+        kd: number;
+      };
+    };
+  };
+  generate_content?: {
+    content?: {
+      final_content?: FinalContent;
+    };
+  };
+  calculate_on_page_seo?: {
+    content?: {
+      review?: {
+        on_page_metrics?: SEORESULT;
+      };
+    };
+  };
+  calculate_eeat_trust?: {
+    content?: {
+      review?: {
+        trust_score?: TrustScore;
+        eeat_data?: EEATData;
+      };
+    };
+  };
+  calculate_readability?: {
+    content?: {
+      review?: {
+        readability_metrics?: ReadabilityMetrics;
+      };
+    };
+  };
+} & Record<string, unknown>;
+
 export type AppStep =
   | "keyword"
   | "suggestions"
@@ -492,7 +529,7 @@ export type PageAction =
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_EEAT_DATA"; payload: EEATData }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
-  | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
+  | { type: "UPDATE_FROM_STREAM"; payload: StreamUpdates }
   | { type: "RESET_FOR_REJECT" }
   | { type: "SUBMIT_REJECT_REASON" }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }

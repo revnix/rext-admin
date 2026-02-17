@@ -13,6 +13,7 @@ import type {
 } from "@/types/role";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
+import { ENDPOINTS } from "./endpoints";
 
 export function createRolesNamespace(client: ApiClient) {
   return {
@@ -42,7 +43,7 @@ export function createRolesNamespace(client: ApiClient) {
           }>;
           count: number;
         };
-      }>(`/api/v1/roles/?include_permissions=${includePermissions}`, {
+      }>(`${ENDPOINTS.ROLES.list}?include_permissions=${includePermissions}`, {
         method: "GET",
       });
       return response.data;
@@ -70,9 +71,12 @@ export function createRolesNamespace(client: ApiClient) {
             action: string;
           }>;
         };
-      }>(`/api/v1/roles/${roleId}?include_permissions=${includePermissions}`, {
-        method: "GET",
-      });
+      }>(
+        `${ENDPOINTS.ROLES.get(roleId)}?include_permissions=${includePermissions}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -90,7 +94,7 @@ export function createRolesNamespace(client: ApiClient) {
           created_at: string;
           updated_at: string;
         };
-      }>("/api/v1/roles", {
+      }>(ENDPOINTS.ROLES.create, {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -111,7 +115,7 @@ export function createRolesNamespace(client: ApiClient) {
           created_at: string;
           updated_at: string;
         };
-      }>(`/api/v1/roles/${roleId}`, {
+      }>(ENDPOINTS.ROLES.update(roleId), {
         method: "PUT",
         body: JSON.stringify(data),
       });
@@ -123,7 +127,7 @@ export function createRolesNamespace(client: ApiClient) {
     delete: async (roleId: string) => {
       return client.request<{
         role_id: string;
-      }>(`/api/v1/roles/${roleId}`, {
+      }>(ENDPOINTS.ROLES.delete(roleId), {
         method: "DELETE",
       });
     },
@@ -141,7 +145,7 @@ export function createRolesNamespace(client: ApiClient) {
         added_count: number;
         skipped_count: number;
         invalid_count: number;
-      }>(`/api/v1/roles/${roleId}/permissions`, {
+      }>(ENDPOINTS.ROLES.permissions.assign(roleId), {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -156,7 +160,7 @@ export function createRolesNamespace(client: ApiClient) {
         role_name: string;
         permission_id: string;
         permission_name: string;
-      }>(`/api/v1/roles/${roleId}/permissions/${permissionId}`, {
+      }>(ENDPOINTS.ROLES.permissions.revoke(roleId, permissionId), {
         method: "DELETE",
       });
     },
@@ -165,7 +169,7 @@ export function createRolesNamespace(client: ApiClient) {
      * List all permissions with optional roles
      */
     listPermissions: async (resource?: string, includeRoles = false) => {
-      const url = buildUrl("/api/v1/permissions", {
+      const url = buildUrl(ENDPOINTS.PERMISSIONS.list, {
         resource,
         include_roles: includeRoles ? "true" : undefined,
       });
@@ -216,9 +220,12 @@ export function createRolesNamespace(client: ApiClient) {
             hierarchy_level: number;
           }>;
         };
-      }>(`/api/v1/permissions/${permissionId}?include_roles=${includeRoles}`, {
-        method: "GET",
-      });
+      }>(
+        `${ENDPOINTS.PERMISSIONS.get(permissionId)}?include_roles=${includeRoles}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -235,7 +242,7 @@ export function createRolesNamespace(client: ApiClient) {
           action: string;
           created_at: string;
         };
-      }>("/api/v1/permissions", {
+      }>(ENDPOINTS.PERMISSIONS.create, {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -258,7 +265,7 @@ export function createRolesNamespace(client: ApiClient) {
           action: string;
           created_at: string;
         };
-      }>(`/api/v1/permissions/${permissionId}`, {
+      }>(ENDPOINTS.PERMISSIONS.update(permissionId), {
         method: "PUT",
         body: JSON.stringify(data),
       });
@@ -270,7 +277,7 @@ export function createRolesNamespace(client: ApiClient) {
     deletePermission: async (permissionId: string) => {
       return client.request<{
         permission_id: string;
-      }>(`/api/v1/permissions/${permissionId}`, {
+      }>(ENDPOINTS.PERMISSIONS.delete(permissionId), {
         method: "DELETE",
       });
     },

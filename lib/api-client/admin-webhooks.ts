@@ -7,6 +7,7 @@
 
 import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -91,8 +92,7 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
     getEvents: async (
       filters: WebhookEventsFilters = {},
     ): Promise<WebhookEventsResponse> => {
-
-      const url = buildUrl("/api/v1/admin/subscriptions/webhooks/events", {
+      const url = buildUrl(ENDPOINTS.ADMIN_WEBHOOKS.events, {
         page: filters?.page,
         per_page: filters?.per_page,
         event_name: filters?.event_name,
@@ -125,7 +125,7 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
       const response = await client.request<
         WebhookApiResponse<WebhookEventsResponse>
       >(
-        `/api/v1/admin/subscriptions/webhooks/failed?page=${page}&per_page=${perPage}&hours=${hours}`,
+        `${ENDPOINTS.ADMIN_WEBHOOKS.failed}?page=${page}&per_page=${perPage}&hours=${hours}`,
         {
           method: "GET",
         },
@@ -144,7 +144,7 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
     ): Promise<{ success: boolean; message: string }> => {
       const response = await client.request<
         WebhookApiResponse<{ success: boolean; message: string }>
-      >(`/api/v1/admin/subscriptions/webhooks/${eventId}/retry`, {
+      >(ENDPOINTS.ADMIN_WEBHOOKS.retry(eventId), {
         method: "POST",
       });
       return response.data;
@@ -157,7 +157,7 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
      */
     getStats: async (): Promise<WebhookStats> => {
       const response = await client.request<WebhookApiResponse<WebhookStats>>(
-        "/api/v1/admin/subscriptions/webhooks/stats",
+        ENDPOINTS.ADMIN_WEBHOOKS.stats,
         {
           method: "GET",
         },

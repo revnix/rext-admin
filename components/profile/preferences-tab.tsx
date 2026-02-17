@@ -14,6 +14,7 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/providers/theme-provider";
+import { safeJsonParse } from "@/lib/utils";
 
 interface AccessibilityPreferences {
   reduceMotion: boolean;
@@ -33,9 +34,10 @@ export function PreferencesTab() {
   useEffect(() => {
     const saved = localStorage.getItem(ACCESSIBILITY_STORAGE_KEY);
     if (saved) {
-      try {
-        setAccessibility(JSON.parse(saved));
-      } catch (_e) {}
+      const data = safeJsonParse<AccessibilityPreferences>(saved);
+      if (data) {
+        setAccessibility(data);
+      }
     }
   }, []);
 

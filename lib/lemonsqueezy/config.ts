@@ -153,12 +153,22 @@ export function buildCheckoutUrlWithOptions(
 ): string {
   const baseUrl = buildCheckoutUrl(variantId);
 
+  // Build custom data params with checkout[custom][key] wrapping for LemonSqueezy
+  const customDataParams: Record<string, string> = {};
+  if (options.customData) {
+    for (const [key, value] of Object.entries(options.customData)) {
+      customDataParams[`checkout[custom][${key}]`] = value;
+    }
+  }
+
   const url = buildUrl(baseUrl, {
-    embed: options.embed ? "1" : "0",
-    dark: options.dark ? "1" : "0",
+    // Only include embed and dark when explicitly set (not undefined)
+    embed:
+      options.embed !== undefined ? (options.embed ? "1" : "0") : undefined,
+    dark: options.dark !== undefined ? (options.dark ? "1" : "0") : undefined,
     logo: options.logo,
     discount: options.discount,
-    ...options.customData,
+    ...customDataParams,
   });
 
   return url;
