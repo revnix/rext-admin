@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
 
 interface InvitationDetails {
@@ -19,9 +18,7 @@ interface InvitationDetails {
   };
   invited_by: {
     id: string;
-    username: string;
-    first_name: string;
-    last_name: string;
+    full_name: string;
     display_name?: string;
   };
   expires_at: string;
@@ -76,13 +73,6 @@ export function useInvitationValidation(): UseInvitationValidationReturn {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on failed validation
   });
-
-  // Store token in sessionStorage for persistence across page reloads
-  useEffect(() => {
-    if (invitationToken) {
-      sessionStorage.setItem("pending_invitation_token", invitationToken);
-    }
-  }, [invitationToken]);
 
   return {
     invitationToken,

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
+import { adminQueries } from "@/lib/query-keys";
 import type { Permission, Role } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
 
@@ -80,7 +81,7 @@ export function BulkAssignPermissionsDialog({
           `Completed with mixed results: ${data.successful} succeeded, ${data.failed} failed`,
         );
       }
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
       handleClose();
     },
     onError: (error: Error) => {

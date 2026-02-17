@@ -6,7 +6,6 @@ import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,24 +18,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
+import {
+  passwordChangeSchema,
+  type PasswordChangeData,
+} from "@/schemas/auth-schemas";
+import { checkPasswordBreach } from "@/lib/password-utils";
 
-const passwordSchema = z
-  .object({
-    current_password: z.string().min(1, "Current password is required"),
-    new_password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
-    confirm_password: z.string().min(1, "Please confirm your new password"),
-  })
-  .refine((data) => data.new_password === data.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
-
-type PasswordFormValues = z.infer<typeof passwordSchema>;
+type PasswordFormValues = PasswordChangeData;
 
 export function PasswordChange() {
   const [showCurrent, setShowCurrent] = useState(false);
@@ -44,7 +32,7 @@ export function PasswordChange() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const form = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
+    resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
       current_password: "",
       new_password: "",
@@ -68,7 +56,16 @@ export function PasswordChange() {
     },
   });
 
-  const onSubmit = (data: PasswordFormValues) => {
+  const onSubmit = async (data: PasswordFormValues) => {
+    // Check for breached password
+    const breachResult = await checkPasswordBreach(data.new_password);
+    if (breachResult.breached) {
+      form.setError("new_password", {
+        message: `This password has appeared in ${breachResult.count.toLocaleString()} data breaches. Please choose a different password.`,
+      });
+      return;
+    }
+
     changePasswordMutation.mutate(data);
   };
 
@@ -149,8 +146,8 @@ export function PasswordChange() {
                   </div>
                 </FormControl>
                 <FormDescription>
-                  Must be at least 8 characters with uppercase, lowercase, and
-                  numbers
+                  Must be at least 8 characters. Longer passwords and
+                  passphrases are encouraged.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

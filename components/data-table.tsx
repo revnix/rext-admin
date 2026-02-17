@@ -385,7 +385,9 @@ export function DataTable<
                 </div>
               )}
               {/* Actions container: 'contents' on mobile unwraps children so they participate in the parent flex grid */}
-              <div className="contents md:flex md:items-center md:gap-2 md:ml-auto">{actions}</div>
+              <div className="contents md:flex md:items-center md:gap-2 md:ml-auto">
+                {actions}
+              </div>
             </div>
           )}
 
