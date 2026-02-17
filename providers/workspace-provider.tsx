@@ -155,20 +155,21 @@ export function WorkspaceProvider({
   useEffect(() => {
     if (error && !isLoading) {
       // Check if error is a permission/auth error or not found that warrants redirect
-      let isAuthError = false;
-      let isNotFoundError = false;
+      let shouldRedirect = false;
 
       if (error instanceof ApiError) {
-        isAuthError = error.statusCode === 401 || error.statusCode === 403;
-        isNotFoundError = error.statusCode === 404;
+        shouldRedirect =
+          error.statusCode === 401 ||
+          error.statusCode === 403 ||
+          error.statusCode === 404;
       }
 
-      if (isAuthError || isNotFoundError) {
+      if (shouldRedirect) {
         log.error(
           "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
           error,
         );
-        router.push("/workspaces");
+        router.push("/w");
       } else {
         // For other errors (network, temporary issues), just log but don't redirect
         // This prevents unwanted redirects during form interactions

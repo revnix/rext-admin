@@ -25,10 +25,19 @@ export interface SSEEvent {
   timestamp: string;
 }
 
+export const SSE_ERROR_CODES = {
+  OPERATION_COMPLETED: "OPERATION_COMPLETED",
+  CONNECTION_LOST: "CONNECTION_LOST",
+  RETRYING: "RETRYING",
+  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
+  CONNECTION_ESTABLISHED: "CONNECTION_ESTABLISHED",
+} as const;
+
 export interface SSEConnectionStatus {
   connected: boolean;
   retryCount: number;
   error?: string;
+  code?: keyof typeof SSE_ERROR_CODES | string;
 }
 
 export type OperationNotificationType =
