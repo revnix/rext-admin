@@ -100,7 +100,6 @@ export function ContentCard({
     getTitle: (item: ContentItem) => item.title,
     getDescription: (item: ContentItem) => (
       <span className="text-xs text-muted-foreground line-clamp-1">
-        {item.content_metadata?.content_type || "Article"} •{" "}
         {item.content_metadata?.content_type || "Article"} • Markdown
       </span>
     ),
