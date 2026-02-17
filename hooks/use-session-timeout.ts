@@ -20,7 +20,10 @@ export function useSessionTimeout() {
     }
 
     const checkTimeout = () => {
-      const expiresAt = new Date(session.expires).getTime();
+      // Prioritize backend accessTokenExpires for accuracy, fall back to NextAuth session expiry
+      const expiresAt = session.accessTokenExpires
+        ? session.accessTokenExpires
+        : new Date(session.expires).getTime();
       const now = Date.now();
       const remaining = expiresAt - now;
 

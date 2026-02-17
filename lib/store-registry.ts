@@ -8,6 +8,8 @@
  * @see https://zustand.docs.pmnd.rs/guides/how-to-reset-state
  */
 
+import { log } from "@/lib/logger";
+
 const storeResetFunctions = new Set<() => void>();
 
 /**
@@ -15,7 +17,7 @@ const storeResetFunctions = new Set<() => void>();
  * Call this when creating a Zustand store to register it for global reset.
  */
 export function registerStoreReset(resetFn: () => void): void {
-    storeResetFunctions.add(resetFn);
+  storeResetFunctions.add(resetFn);
 }
 
 /**
@@ -23,7 +25,7 @@ export function registerStoreReset(resetFn: () => void): void {
  * Call this if a store is destroyed (unlikely in most apps).
  */
 export function unregisterStoreReset(resetFn: () => void): void {
-    storeResetFunctions.delete(resetFn);
+  storeResetFunctions.delete(resetFn);
 }
 
 /**
@@ -31,11 +33,11 @@ export function unregisterStoreReset(resetFn: () => void): void {
  * Call this during logout to purge all in-memory user data.
  */
 export function resetAllStores(): void {
-    storeResetFunctions.forEach((resetFn) => {
-        try {
-            resetFn();
-        } catch (error) {
-            console.error("[StoreRegistry] Failed to reset store:", error);
-        }
-    });
+  storeResetFunctions.forEach((resetFn) => {
+    try {
+      resetFn();
+    } catch (error) {
+      log.error("[StoreRegistry] Failed to reset store:", error);
+    }
+  });
 }

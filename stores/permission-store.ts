@@ -170,4 +170,6 @@ export const usePermissionStore = create<PermissionStore>()(
 
 // Register with global store registry for logout cleanup
 const initialPermissionState = usePermissionStore.getInitialState();
-registerStoreReset(() => usePermissionStore.setState(initialPermissionState, true));
+registerStoreReset(() =>
+  usePermissionStore.setState(initialPermissionState, true),
+);

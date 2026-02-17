@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ApiError } from "@/lib/api-client/core";
 
 interface PermissionErrorBoundaryProps {
   children: React.ReactNode;
@@ -46,7 +47,12 @@ export class PermissionErrorBoundary extends React.Component<
 
   static getDerivedStateFromError(error: Error) {
     // Check if it's a permission error
+    const isApiPermissionError =
+      error instanceof ApiError &&
+      (error.statusCode === 403 || error.statusCode === 401);
+
     const isPermissionError =
+      isApiPermissionError ||
       error.message.toLowerCase().includes("permission") ||
       error.message.includes("403") ||
       error.message.toLowerCase().includes("unauthorized") ||

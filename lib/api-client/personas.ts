@@ -6,6 +6,7 @@
 
 import type { Persona } from "@/types/workspace";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createPersonasNamespace(client: ApiClient) {
   return {
@@ -16,7 +17,7 @@ export function createPersonasNamespace(client: ApiClient) {
       return client.request<{
         personas: Persona[];
         total: number;
-      }>(`/api/v1/workspaces/${workspaceId}/personas`, {
+      }>(ENDPOINTS.PERSONAS.list(workspaceId), {
         method: "GET",
       });
     },
@@ -26,7 +27,7 @@ export function createPersonasNamespace(client: ApiClient) {
      */
     get: async (workspaceId: string, personaId: string) => {
       const response = await client.request<Persona>(
-        `/api/v1/workspaces/${workspaceId}/personas/${personaId}`,
+        ENDPOINTS.PERSONAS.get(workspaceId, personaId),
         {
           method: "GET",
         },
@@ -41,7 +42,7 @@ export function createPersonasNamespace(client: ApiClient) {
     create: async (workspaceId: string, data: Omit<Persona, "id">) => {
       return client.request<{
         persona: Persona;
-      }>(`/api/v1/workspaces/${workspaceId}/personas`, {
+      }>(ENDPOINTS.PERSONAS.create(workspaceId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -58,7 +59,7 @@ export function createPersonasNamespace(client: ApiClient) {
     ) => {
       return client.request<{
         persona: Persona;
-      }>(`/api/v1/workspaces/${workspaceId}/personas/${personaId}`, {
+      }>(ENDPOINTS.PERSONAS.update(workspaceId, personaId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -70,7 +71,7 @@ export function createPersonasNamespace(client: ApiClient) {
      */
     delete: async (workspaceId: string, personaId: string) => {
       return client.request<void>(
-        `/api/v1/workspaces/${workspaceId}/personas/${personaId}`,
+        ENDPOINTS.PERSONAS.delete(workspaceId, personaId),
         {
           method: "DELETE",
         },
