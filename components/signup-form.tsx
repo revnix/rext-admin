@@ -25,6 +25,7 @@ import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
+import { checkPasswordBreach } from "@/lib/password-utils";
 
 export function SignupForm({
   className,
@@ -60,6 +61,15 @@ export function SignupForm({
     setIsLoading(true);
 
     try {
+      // Check for breached password
+      const breachResult = await checkPasswordBreach(data.password);
+      if (breachResult.breached) {
+        form.setError("password", {
+          message: `This password has appeared in ${breachResult.count.toLocaleString()} data breaches. Please choose a different password.`,
+        });
+        setIsLoading(false);
+        return;
+      }
       // Determine which endpoint to use
       const isInvitationSignup = hasValidInvitation && invitationToken;
       const endpoint = isInvitationSignup
@@ -97,7 +107,7 @@ export function SignupForm({
       }
 
       const _responseData = await response.json();
-      
+
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
 
@@ -133,9 +143,6 @@ export function SignupForm({
           // Fallback to dashboard on error
           router.push("/");
         }
-
-        // Clean up session storage
-        sessionStorage.removeItem("pending_invitation_token");
       } else {
         // If auto-login fails, redirect to login page
         setTimeout(() => {
@@ -157,7 +164,11 @@ export function SignupForm({
         <InvitationBanner
           workspaceName={invitation.workspace.title}
           workspaceSlug={invitation.workspace.slug}
-          inviterName={`${invitation.invited_by.first_name} ${invitation.invited_by.last_name}`}
+          inviterName={
+            invitation.invited_by.display_name ||
+            invitation.invited_by.full_name ||
+            "Workspace Admin"
+          }
           roleName={invitation.role.display_name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}

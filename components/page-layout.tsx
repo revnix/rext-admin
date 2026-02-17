@@ -58,7 +58,6 @@ import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
-
 interface BreadcrumbItemData {
   label: string;
   href?: string;
@@ -79,7 +78,6 @@ interface PageLayoutProps {
 type ApiUser = {
   id: string;
   email: string;
-  username: string;
   full_name: string;
   email_verified: boolean;
   status: string;

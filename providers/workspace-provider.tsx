@@ -10,13 +10,11 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
-import { ApiError } from "@/lib/api-client/core";
-import { apiClient } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
-
-const NON_RETRYABLE_STATUS_CODES = [401, 403, 404] as const;
 
 /**
  * Workspace Context Type
@@ -60,23 +58,6 @@ interface WorkspaceProviderProps {
  * </WorkspaceProvider>
  * ```
  */
-function isNonRetryableError(error: unknown): boolean {
-  if (error instanceof ApiError) {
-    return (NON_RETRYABLE_STATUS_CODES as readonly number[]).includes(error.statusCode);
-  }
-  return false;
-}
-
-/** Check if an error is an auth/permission error (401 or 403) */
-function isAuthError(error: unknown): boolean {
-  return error instanceof ApiError && (error.statusCode === 401 || error.statusCode === 403);
-}
-
-/** Check if an error is a not-found error (404) */
-function isNotFoundError(error: unknown): boolean {
-  return error instanceof ApiError && error.statusCode === 404;
-}
-
 export function WorkspaceProvider({
   children,
   workspaceId,
@@ -113,27 +94,24 @@ export function WorkspaceProvider({
     }
   }, [permissionsError, workspaceId]);
 
-  // Query workspace data
+  // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      // Use appropriate method based on identifier type
-      return isUuid
-        ? apiClient.workspaces.get(workspaceId)
-        : apiClient.workspaces.getBySlug(workspaceId);
-    },
-    enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...workspaceQueries.detail(workspaceId),
     retry: (failureCount, error) => {
-      // Don't retry for auth errors (401/403) or not found (404)
-      if (isNonRetryableError(error)) {
+      // Don't retry for 4xx client errors
+      if (
+        error instanceof ApiError &&
+        error.statusCode >= 400 &&
+        error.statusCode < 500
+      ) {
         return false;
       }
-      // Retry up to 2 times for other errors (network issues, etc.)
+
+      // Retry server errors (5xx) and network failures up to 2 times
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff, max 3s
@@ -174,9 +152,19 @@ export function WorkspaceProvider({
   // Handle invalid workspace - redirect to workspace list
   // Only redirect for permission errors (401/403) or workspace not found (404)
   // Don't redirect for temporary network issues to prevent unwanted redirects
- useEffect(() => {
+  useEffect(() => {
     if (error && !isLoading) {
-      if (isAuthError(error) || isNotFoundError(error)) {
+      // Check if error is a permission/auth error or not found that warrants redirect
+      let shouldRedirect = false;
+
+      if (error instanceof ApiError) {
+        shouldRedirect =
+          error.statusCode === 401 ||
+          error.statusCode === 403 ||
+          error.statusCode === 404;
+      }
+
+      if (shouldRedirect) {
         log.error(
           "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
           error,

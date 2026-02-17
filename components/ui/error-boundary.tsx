@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { log } from "@/lib/logger";
 import { generateRequestId } from "@/lib/response-utils";
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -293,24 +295,33 @@ export function APIErrorBoundary({
   children: React.ReactNode;
   onRetry?: () => void;
 }) {
-  const fallback: React.ComponentType<ErrorFallbackProps> = ({
-    error,
-    resetError,
-    errorId,
-    requestId,
-  }) => (
-    <APIErrorFallbackWithRouter
-      error={error}
-      resetError={resetError}
-      errorId={errorId}
-      requestId={requestId}
-      onRetry={onRetry}
-    />
-  );
-
   return (
-    <ErrorBoundary fallback={fallback} resetOnPropsChange={true}>
-      {children}
-    </ErrorBoundary>
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ReactErrorBoundary
+          onReset={() => {
+            reset();
+            onRetry?.();
+          }}
+          fallbackRender={({ error, resetErrorBoundary }) => {
+            const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const requestId = generateRequestId("error_boundary");
+            const normalizedError =
+              error instanceof Error ? error : new Error(String(error));
+            return (
+              <APIErrorFallbackWithRouter
+                error={normalizedError}
+                resetError={resetErrorBoundary}
+                errorId={errorId}
+                requestId={requestId}
+                onRetry={onRetry}
+              />
+            );
+          }}
+        >
+          {children}
+        </ReactErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
   );
 }

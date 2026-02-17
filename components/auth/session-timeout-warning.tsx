@@ -1,7 +1,8 @@
 "use client";
 
 import { AlertTriangle, Clock } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { performLogout } from "@/lib/logout-utils";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -30,15 +31,24 @@ export function SessionTimeoutWarning() {
   // Handle session expiry
   useEffect(() => {
     if (sessionExpired && session) {
-      signOut({ redirect: true, callbackUrl: "/login?session=expired" });
+      performLogout("/login?session=expired");
     }
   }, [sessionExpired, session]);
 
   const handleExtendSession = async () => {
     setIsExtending(true);
     try {
+      log.info("[Auth] Extending session...");
       // Force session update which will trigger token refresh
-      await update();
+      const updatedSession = await update();
+
+      if (updatedSession?.error === "RefreshAccessTokenError") {
+        log.error("[Auth] Session extension failed: Token refresh error");
+        await performLogout("/login?error=SessionExpired");
+        return;
+      }
+
+      log.info("[Auth] Session extended successfully");
     } catch (error) {
       log.error("[Auth] Failed to extend session:", error);
     } finally {
@@ -47,7 +57,7 @@ export function SessionTimeoutWarning() {
   };
 
   const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: "/login" });
+    await performLogout("/login");
   };
 
   // Don't render if session doesn't exist or has error
