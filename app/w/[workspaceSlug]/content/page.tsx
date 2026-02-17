@@ -51,7 +51,7 @@ export default function WorkspaceContentPage() {
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Content" },
@@ -59,9 +59,9 @@ export default function WorkspaceContentPage() {
 
   // Update page title and description
   usePageTitle(
-    `Content Library - ${workspace?.title || "Workspace"}`,
+    `Content Library - ${workspace?.name || "Workspace"}`,
     `Manage published and scheduled content for ${
-      workspace?.title || "this workspace"
+      workspace?.name || "this workspace"
     }.`,
   );
 
@@ -112,7 +112,7 @@ export default function WorkspaceContentPage() {
     <PageLayout
       title="Generated Content"
       description={`View, edit, and manage AI-generated content for ${
-        workspace?.title || "this workspace"
+        workspace?.name || "this workspace"
       }.`}
       breadcrumbs={breadcrumbs}
       actions={headerActions}

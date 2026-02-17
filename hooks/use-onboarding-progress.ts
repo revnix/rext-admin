@@ -6,6 +6,7 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { safeJsonParse } from "@/lib/utils";
 
 /**
  * Onboarding Progress Hook (Hybrid Approach)
@@ -101,7 +102,7 @@ export function useOnboardingProgress(
 
   const skippedSteps: string[] =
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem(skippedKey) || "[]")
+      ? (safeJsonParse<string[]>(localStorage.getItem(skippedKey), []) ?? [])
       : [];
 
   // Calculate milestone completion based on real-time stats
@@ -260,9 +261,8 @@ export function useOnboardingProgress(
   const skipMilestone = useCallback(
     (milestoneId: string) => {
       if (typeof window !== "undefined") {
-        const currentSkipped = JSON.parse(
-          localStorage.getItem(skippedKey) || "[]",
-        );
+        const currentSkipped =
+          safeJsonParse<string[]>(localStorage.getItem(skippedKey), []) ?? [];
         if (!currentSkipped.includes(milestoneId)) {
           const updated = [...currentSkipped, milestoneId];
           localStorage.setItem(skippedKey, JSON.stringify(updated));

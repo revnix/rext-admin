@@ -1,3 +1,4 @@
+import type { ContentStatus } from "@/types/content";
 import type {
   FinalContent,
   Outline,
@@ -21,7 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
   Dialog,
@@ -131,7 +132,7 @@ export function ContentEditor({
   contentId,
   allContent,
   readabilityScore,
-  eeatData,
+  eeatData: _eeatData,
   trustScore,
   generatedContent,
   seoScore,
@@ -180,12 +181,12 @@ export function ContentEditor({
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
-    status: "draft",
-    workspace_id: workspaceId,
+    status: "draft" as ContentStatus,
+    workspace_id: workspaceId ?? undefined,
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
-    body_html: body,
+    body_html: "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
@@ -196,6 +197,10 @@ export function ContentEditor({
       search_intent: ["informational"],
       seo_score: seoScore?.seo_health_score || 0,
       readability_score: score,
+      content_primary_keywords: [
+        allContent?.focus_keyphrase || userKeyword,
+      ].filter(Boolean),
+      content_meta_description: allContent?.meta_description || "",
       seo_details: JSON.stringify(seoScore || {}),
       trust_score: trustScore?.score || 0,
     },
@@ -223,13 +228,17 @@ export function ContentEditor({
     if (!workspaceId) return;
     try {
       setIsPublishing(true);
-      const response = await apiClient.content.publish(workspaceId, getContentPayload());
+      const response = await apiClient.content.publish(
+        workspaceId,
+        getContentPayload(),
+      );
       setStatusModal({
         isOpen: true,
         type: "success",
         action: "publish",
         message:
-          response.message || "Your content has been published as a draft and is ready for review.",
+          response.message ||
+          "Your content has been published as a draft and is ready for review.",
       });
     } catch (error) {
       const err = error as Error;
@@ -255,17 +264,26 @@ export function ContentEditor({
     if (!workspaceId) return;
     try {
       setIsSaving(true);
-      let response;
+      let response: { message?: string } | undefined;
       if (contentId) {
-        response = await apiClient.content.update(workspaceId, contentId, getContentPayload());
+        response = await apiClient.content.update(
+          workspaceId,
+          contentId,
+          getContentPayload(),
+        );
       } else {
-        response = await apiClient.content.save(workspaceId, getContentPayload());
+        response = await apiClient.content.save(
+          workspaceId,
+          getContentPayload(),
+        );
       }
       setStatusModal({
         isOpen: true,
         type: "success",
         action: "save",
-        message: response.message || "Your changes have been saved successfully to the workspace.",
+        message:
+          response.message ||
+          "Your changes have been saved successfully to the workspace.",
       });
     } catch (error) {
       const err = error as Error;
@@ -334,7 +352,9 @@ export function ContentEditor({
                   <span className="text-sm font-mono text-muted-foreground">
                     {i + 1}
                   </span>
-                  <span className="truncate text-foreground/80">{sec.heading}</span>
+                  <span className="truncate text-foreground/80">
+                    {sec.heading}
+                  </span>
                 </button>
               ))
             ) : (
@@ -393,7 +413,11 @@ export function ContentEditor({
                         )}
                       </div>
                       <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
-                        <LexicalEditor key={`editor-preview-${contentId ?? "new"}`} initialValue={body} readOnly={true} />
+                        <LexicalEditor
+                          key={`editor-preview-${contentId ?? "new"}`}
+                          initialValue={body}
+                          readOnly={true}
+                        />
                       </div>
                     </>
                   ) : (
@@ -444,9 +468,7 @@ export function ContentEditor({
                 size={14}
                 className={cn("", isPublishing ? "animate-pulse" : "")}
               />{" "}
-              {isPublishing
-                ? "Publishing"
-                : "Publish"}
+              {isPublishing ? "Publishing" : "Publish"}
             </Button>
           </div>
           {/* Status Modal (Unified Success/Error) */}
@@ -461,7 +483,9 @@ export function ContentEditor({
                 <div
                   className={cn(
                     "w-16 h-16 rounded-full flex items-center justify-center",
-                    statusModal.type === "success" ? "bg-emerald-500/10" : "bg-red-500/10",
+                    statusModal.type === "success"
+                      ? "bg-emerald-500/10"
+                      : "bg-red-500/10",
                   )}
                 >
                   {statusModal.type === "success" ? (
@@ -486,13 +510,15 @@ export function ContentEditor({
                   }
                   className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
                 >
-                  {statusModal.type === "success" ? "Great, thanks!" : "Try Again"}
+                  {statusModal.type === "success"
+                    ? "Great, thanks!"
+                    : "Try Again"}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
 
-            <section className="space-y-4">
+          <section className="space-y-4">
             <div className="flex items-center gap-2 font-bold">
               <Activity size={16} className="text-emerald-500" />
               <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -564,47 +590,49 @@ export function ContentEditor({
                       {getSEOStatusText(seoScore.seo_health_score)}
                     </div>
                     {seoScore.issue_summary?.warnings ||
-                      seoScore.issue_summary?.errors && (
+                      (seoScore.issue_summary?.errors && (
                         <div className="text-sm text-muted-foreground">
                           {seoScore.issue_summary?.warnings} warnings
                           <br />
                           {seoScore.issue_summary?.errors} errors
                         </div>
-                      )}
+                      ))}
                   </div>
                 </div>
 
                 {/* Issues */}
                 <div className="space-y-3 pt-2">
-                  {seoScore.issues && seoScore.issues.length > 0 && seoScore.issues.map((issue: Issue) => {
-                    const status = levelToStatus(issue.level);
+                  {seoScore.issues &&
+                    seoScore.issues.length > 0 &&
+                    seoScore.issues.map((issue: Issue) => {
+                      const status = levelToStatus(issue.level);
 
-                    return (
-                      <div
-                        key={issue.message}
-                        className="flex items-center gap-3 text-sm"
-                      >
-                        {status === "success" ? (
-                          <CheckCircle2
-                            size={18}
-                            className="text-emerald-500 shrink-0"
-                          />
-                        ) : status === "warning" ? (
-                          <AlertCircle
-                            size={18}
-                            className="text-orange-500 shrink-0"
-                          />
-                        ) : (
-                          <AlertCircle
-                            size={18}
-                            className="text-muted-foreground shrink-0"
-                          />
-                        )}
+                      return (
+                        <div
+                          key={issue.message}
+                          className="flex items-center gap-3 text-sm"
+                        >
+                          {status === "success" ? (
+                            <CheckCircle2
+                              size={18}
+                              className="text-emerald-500 shrink-0"
+                            />
+                          ) : status === "warning" ? (
+                            <AlertCircle
+                              size={18}
+                              className="text-orange-500 shrink-0"
+                            />
+                          ) : (
+                            <AlertCircle
+                              size={18}
+                              className="text-muted-foreground shrink-0"
+                            />
+                          )}
 
-                        <span className="leading-tight">{issue.message}</span>
-                      </div>
-                    );
-                  })}
+                          <span className="leading-tight">{issue.message}</span>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             ) : (
@@ -648,7 +676,10 @@ export function ContentEditor({
 
                   <div className="flex items-center gap-2">
                     <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-500 tracking-tight">
-                      {trustScore.score ? trustScore.score : trustScore.trust_score}%
+                      {trustScore.score
+                        ? trustScore.score
+                        : trustScore.trust_score}
+                      %
                     </span>
                     <TrendingUp
                       size={20}
@@ -657,7 +688,9 @@ export function ContentEditor({
                   </div>
 
                   <div className="text-[13px] text-muted-foreground font-medium">
-                    {trustScore.score ? getStatusMessage(trustScore.score) : getStatusMessage(trustScore.trust_score)}
+                    {trustScore.score
+                      ? getStatusMessage(trustScore.score)
+                      : getStatusMessage(trustScore.trust_score)}
                   </div>
                 </div>
               </>

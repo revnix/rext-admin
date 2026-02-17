@@ -49,7 +49,7 @@ export async function* streamFromSSE(
         } else {
           sseLogger.warn("Malformed SSE event: schema validation failed", {
             errors: result.error.issues.map(
-              (i) => `${i.path.join(".")}: ${i.message}`
+              (i) => `${i.path.join(".")}: ${i.message}`,
             ),
             payloadPreview: payload.substring(0, 200),
           });
