@@ -290,6 +290,24 @@ export const ENDPOINTS = {
         // Webhooks
         webhooks: "/api/v1/admin/webhooks",
     },
+
+    /**
+     * Admin Analytics Endpoints
+     * @note Platform-level analytics for subscriptions and invitations
+     * @note Requires super admin role
+     */
+    ADMIN_ANALYTICS: {
+        subscriptions: {
+            overview: "/api/v1/admin/subscriptions/stats/overview",
+            revenue: "/api/v1/admin/subscriptions/stats/revenue",
+            churn: "/api/v1/admin/subscriptions/stats/churn",
+            trialConversion: "/api/v1/admin/subscriptions/stats/trial-conversion",
+        },
+        invitations: {
+            analytics: "/api/v1/admin/analytics/invitations/analytics",
+        },
+    },
+
     /**
      * Admin Invitations Endpoints
      * @note Platform-level admin invitation management
