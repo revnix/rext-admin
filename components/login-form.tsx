@@ -26,7 +26,6 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -59,7 +58,6 @@ export function LoginForm({
         Default: "An error occurred during authentication.",
       };
       const message = errorMessages[urlError] || errorMessages.Default;
-      setError(message);
       toast.error(message);
     }
   }, [searchParams, toast]);
@@ -67,7 +65,6 @@ export function LoginForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     try {
       // Backend validated successfully, now use NextAuth for session creation
@@ -86,46 +83,36 @@ export function LoginForm({
             ? result.code
             : "Authentication failed. Please check your credentials and try again.";
 
-        setError(errorMessage);
         toast.error(errorMessage);
         return;
       }
 
-      // Show success toast
       toast.success("Login successful!");
       resetAuthRedirectState();
 
-      // Handle redirect based on invitation presence
       if (hasValidInvitation && invitationToken) {
-        // Redirect to invitation acceptance page
         router.push(`/accept-invitation?token=${invitationToken}`);
       } else {
-        // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
 
-        // Fetch workspaces to determine redirect
         try {
           const response = await apiClient.workspaces.list();
           const workspaces = response.workspaces || [];
 
           if (workspaces.length === 0) {
-            // No workspace exists, redirect to create workspace
             router.push("/w/create");
           } else {
-            // Workspace exists, redirect to generate content page
             const firstWorkspace = workspaces[0];
             router.push(`/w/${firstWorkspace.slug}/generate_content`);
           }
         } catch (error) {
           log.error("[Auth] Failed to fetch workspaces:", error);
-          // Fallback to dashboard on error
           const redirect = searchParams.get("redirect") || "/";
           router.push(redirect);
         }
       }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
-      setError("An error occurred. Please try again.");
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
