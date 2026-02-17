@@ -20,7 +20,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * List all workspaces
      */
     list: async () => {
-      return client.request<WorkspaceListResponse>("/api/v1/workspaces", {
+      return client.request<WorkspaceListResponse>("/api/v1/workspaces/", {
         method: "GET",
       });
     },
@@ -59,7 +59,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         timezone: data.timezone,
         url: data.url,
       };
-      return client.request<CreateWorkspaceResponse>("/api/v1/workspaces", {
+      return client.request<CreateWorkspaceResponse>("/api/v1/workspaces/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
