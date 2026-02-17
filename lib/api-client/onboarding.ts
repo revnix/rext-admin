@@ -42,14 +42,11 @@ export function createOnboardingNamespace(client: ApiClient) {
     async updateMarketingData(
       data: OnboardingMarketingData,
     ): Promise<OnboardingStatus> {
-      return client.request<OnboardingStatus>(
-        ENDPOINTS.ONBOARDING.marketing,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+      return client.request<OnboardingStatus>(ENDPOINTS.ONBOARDING.marketing, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
     },
 
     /**

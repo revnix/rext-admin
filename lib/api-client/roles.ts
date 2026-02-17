@@ -70,9 +70,12 @@ export function createRolesNamespace(client: ApiClient) {
             action: string;
           }>;
         };
-      }>(`${ENDPOINTS.ROLES.get(roleId)}?include_permissions=${includePermissions}`, {
-        method: "GET",
-      });
+      }>(
+        `${ENDPOINTS.ROLES.get(roleId)}?include_permissions=${includePermissions}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -218,9 +221,12 @@ export function createRolesNamespace(client: ApiClient) {
             hierarchy_level: number;
           }>;
         };
-      }>(`${ENDPOINTS.PERMISSIONS.get(permissionId)}?include_roles=${includeRoles}`, {
-        method: "GET",
-      });
+      }>(
+        `${ENDPOINTS.PERMISSIONS.get(permissionId)}?include_roles=${includeRoles}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**

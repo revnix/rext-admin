@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { profileQueries } from "@/lib/query-keys";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -65,8 +66,7 @@ export function ProfileEdit() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["profile"],
-    queryFn: () => apiClient.profile.get(),
+    ...profileQueries.detail(),
     throwOnError: true,
   });
 
@@ -101,7 +101,9 @@ export function ProfileEdit() {
       timezone?: string;
     }) => apiClient.profile.update(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({
+        queryKey: profileQueries.detail().queryKey,
+      });
       toast.success("Profile updated successfully");
     },
     onError: (error: Error) => {
@@ -115,7 +117,9 @@ export function ProfileEdit() {
   const uploadAvatarMutation = useMutation({
     mutationFn: (file: FormData) => apiClient.profile.uploadAvatar(file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({
+        queryKey: profileQueries.detail().queryKey,
+      });
       toast.success("Avatar uploaded successfully");
       setAvatarPreview(null);
       setAvatarFile(null);
@@ -131,7 +135,9 @@ export function ProfileEdit() {
   const deleteAvatarMutation = useMutation({
     mutationFn: () => apiClient.profile.deleteAvatar(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({
+        queryKey: profileQueries.detail().queryKey,
+      });
       toast.success("Avatar removed successfully");
       setAvatarPreview(null);
       setAvatarFile(null);

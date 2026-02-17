@@ -33,12 +33,9 @@ export function createLicensesClient(client: ApiClient) {
      * Get a specific license by ID
      */
     getLicense: async (licenseId: string): Promise<License> => {
-      return client.request<License>(
-        ENDPOINTS.LICENSES.detail(licenseId),
-        {
-          method: "GET",
-        },
-      );
+      return client.request<License>(ENDPOINTS.LICENSES.detail(licenseId), {
+        method: "GET",
+      });
     },
 
     /**

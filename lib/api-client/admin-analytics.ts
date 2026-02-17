@@ -168,9 +168,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
     getChurnAnalysis: async (periodDays = 30): Promise<ChurnAnalysis> => {
       const response = await client.request<
         AnalyticsApiResponse<ChurnAnalysis>
-      >(`${ENDPOINTS.ADMIN_ANALYTICS.subscriptions.churn}?period_days=${periodDays}`, {
-        method: "GET",
-      });
+      >(
+        `${ENDPOINTS.ADMIN_ANALYTICS.subscriptions.churn}?period_days=${periodDays}`,
+        {
+          method: "GET",
+        },
+      );
       return response.data;
     },
 
@@ -208,9 +211,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
 
       const response = await client.request<
         AnalyticsApiResponse<InvitationAnalyticsData>
-      >(`${ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics}?${params.toString()}`, {
-        method: "GET",
-      });
+      >(
+        `${ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics}?${params.toString()}`,
+        {
+          method: "GET",
+        },
+      );
       return response.data;
     },
   };

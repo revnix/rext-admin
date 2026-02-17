@@ -63,11 +63,14 @@ export function createWorkspacesNamespace(client: ApiClient) {
         timezone: data.timezone,
         url: data.url,
       };
-      return client.request<CreateWorkspaceResponse>(ENDPOINTS.WORKSPACES.BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      return client.request<CreateWorkspaceResponse>(
+        ENDPOINTS.WORKSPACES.BASE,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
     },
 
     /**

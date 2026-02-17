@@ -161,10 +161,7 @@ export function createMediaNamespace(client: ApiClient) {
     /**
      * Get media file details
      */
-    async get(
-      workspaceId: string,
-      mediaId: string,
-    ): Promise<{ data: Media }> {
+    async get(workspaceId: string, mediaId: string): Promise<{ data: Media }> {
       return client.request<{ data: Media }>(
         ENDPOINTS.MEDIA.detail(workspaceId, mediaId),
       );
@@ -273,9 +270,7 @@ export function createMediaNamespace(client: ApiClient) {
         total_usages: number;
       };
     }> {
-      return client.request(
-        ENDPOINTS.MEDIA.usage.detail(workspaceId, mediaId),
-      );
+      return client.request(ENDPOINTS.MEDIA.usage.detail(workspaceId, mediaId));
     },
   };
 }

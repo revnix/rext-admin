@@ -10,7 +10,8 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
-import { apiClient, ApiError } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
@@ -93,21 +94,13 @@ export function WorkspaceProvider({
     }
   }, [permissionsError, workspaceId]);
 
-  // Query workspace data
+  // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      // Use appropriate method based on identifier type
-      return isUuid
-        ? apiClient.workspaces.get(workspaceId)
-        : apiClient.workspaces.getBySlug(workspaceId);
-    },
-    enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...workspaceQueries.detail(workspaceId),
     retry: (failureCount, error) => {
       // Don't retry for 4xx client errors
       if (

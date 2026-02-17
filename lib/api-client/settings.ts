@@ -181,9 +181,12 @@ export function createPreferencesNamespace(client: ApiClient) {
      * Get user preferences
      */
     get: async () => {
-      return client.request<UserPreferences>(ENDPOINTS.SETTINGS.preferences.get, {
-        method: "GET",
-      });
+      return client.request<UserPreferences>(
+        ENDPOINTS.SETTINGS.preferences.get,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -196,11 +199,14 @@ export function createPreferencesNamespace(client: ApiClient) {
       items_per_page?: number;
       sidebar_collapsed?: boolean;
     }) => {
-      return client.request<UserPreferences>(ENDPOINTS.SETTINGS.preferences.update, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
-      });
+      return client.request<UserPreferences>(
+        ENDPOINTS.SETTINGS.preferences.update,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(preferences),
+        },
+      );
     },
   };
 }

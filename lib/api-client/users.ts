@@ -88,36 +88,27 @@ export function createUsersNamespace(client: ApiClient) {
      * Get all active sessions for current user
      */
     getSessions: async (): Promise<SessionsResponse> => {
-      return client.request<SessionsResponse>(
-        ENDPOINTS.USERS.sessions.list,
-        {
-          method: "GET",
-        },
-      );
+      return client.request<SessionsResponse>(ENDPOINTS.USERS.sessions.list, {
+        method: "GET",
+      });
     },
 
     /**
      * Revoke a specific session (logout from that device)
      */
     revokeSession: async (sessionId: string): Promise<void> => {
-      return client.request<void>(
-        ENDPOINTS.USERS.sessions.detail(sessionId),
-        {
-          method: "DELETE",
-        },
-      );
+      return client.request<void>(ENDPOINTS.USERS.sessions.detail(sessionId), {
+        method: "DELETE",
+      });
     },
 
     /**
      * Revoke all other sessions (logout from all other devices)
      */
     revokeAllOtherSessions: async (): Promise<void> => {
-      return client.request<void>(
-        ENDPOINTS.USERS.sessions.revokeAll,
-        {
-          method: "POST",
-        },
-      );
+      return client.request<void>(ENDPOINTS.USERS.sessions.revokeAll, {
+        method: "POST",
+      });
     },
   };
 }

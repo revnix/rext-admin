@@ -16,6 +16,7 @@ import type {
   ContentListResponse,
   ContentResponse,
   CreateContentRequest,
+  UpdateContentRequest,
 } from "@/types/content";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
