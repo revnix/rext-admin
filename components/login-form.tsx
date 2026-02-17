@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -16,7 +17,6 @@ import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
-import { getAuthHeaders } from "@/lib/auth-utils";
 
 export function LoginForm({
   className,
@@ -93,6 +93,7 @@ export function LoginForm({
 
       // Show success toast
       toast.success("Login successful!");
+      resetAuthRedirectState();
 
       // Handle redirect based on invitation presence
       if (hasValidInvitation && invitationToken) {
