@@ -20,7 +20,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * List all workspaces
      */
     list: async () => {
-      return client.request<WorkspaceListResponse>("/api/v1/workspaces/", {
+      return client.request<WorkspaceListResponse>("/api/v1/workspaces/all", {
         method: "GET",
       });
     },
