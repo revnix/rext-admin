@@ -124,8 +124,9 @@ export function PendingInvitationsCard() {
         <CardDescription>
           {isLoading
             ? "Loading invitations..."
-            : `${invitations?.count || 0} workspace invitation${invitations?.count === 1 ? "" : "s"
-            }`}
+            : `${invitations?.count || 0} workspace invitation${
+                invitations?.count === 1 ? "" : "s"
+              }`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -152,8 +153,9 @@ export function PendingInvitationsCard() {
               return (
                 <div
                   key={invitation.id}
-                  className={`p-4 border rounded-lg space-y-3 ${isExpired ? "opacity-60 bg-muted/30" : "bg-card"
-                    }`}
+                  className={`p-4 border rounded-lg space-y-3 ${
+                    isExpired ? "opacity-60 bg-muted/30" : "bg-card"
+                  }`}
                 >
                   {/* Workspace Info */}
                   <div className="space-y-2">
@@ -164,7 +166,9 @@ export function PendingInvitationsCard() {
                           {invitation.workspace_name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {typeof invitation.invited_by === 'string' ? invitation.invited_by : invitation.invited_by.name}
+                          {typeof invitation.invited_by === "string"
+                            ? invitation.invited_by
+                            : invitation.invited_by.name}
                         </p>
                       </div>
                     </div>

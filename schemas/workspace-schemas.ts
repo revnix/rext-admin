@@ -37,10 +37,10 @@ const timezoneSchema = z
 
 // Main workspace form validation schema
 export const workspaceFormSchema = z.object({
-  title: z
+  name: z
     .string()
-    .min(1, "Title is required")
-    .max(200, "Title must be 200 characters or less")
+    .min(1, "Name is required")
+    .max(200, "Name must be 200 characters or less")
     .trim(),
 
   url: urlSchema,
@@ -50,14 +50,14 @@ export const workspaceFormSchema = z.object({
 
 // Create workspace API request schema
 export const createWorkspaceRequestSchema = z.object({
-  title: z.string().min(1).max(200).trim(),
+  name: z.string().min(1).max(200).trim(),
   url: urlSchema,
   timezone: timezoneSchema,
 });
 
 // Update workspace API request schema
 export const updateWorkspaceRequestSchema = z.object({
-  title: z.string().min(1).max(200).trim().optional(),
+  name: z.string().min(1).max(200).trim().optional(),
   url: urlSchema.optional(),
   timezone: timezoneSchema,
 });
@@ -73,6 +73,6 @@ export type UpdateWorkspaceRequest = z.infer<
 
 // Form validation constants
 export const WORKSPACE_VALIDATION = {
-  TITLE_MIN_LENGTH: 1,
-  TITLE_MAX_LENGTH: 200,
+  NAME_MIN_LENGTH: 1,
+  NAME_MAX_LENGTH: 200,
 } as const;

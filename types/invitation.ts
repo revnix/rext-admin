@@ -16,11 +16,11 @@ export interface PendingInvitation {
   role_id: string;
   role_name: string;
   invited_by:
-  | string
-  | {
-    name: string;
-    email: string;
-  };
+    | string
+    | {
+        name: string;
+        email: string;
+      };
   token: string;
   expires_at: string;
   status: string;

@@ -117,7 +117,6 @@ export function createInvitationsNamespace(client: ApiClient) {
           email: string;
           workspace: {
             id: string;
-            title: string;
             name: string;
             slug: string;
           };
@@ -286,11 +285,11 @@ export function createInvitationsNamespace(client: ApiClient) {
           role_id: string;
           role_name: string;
           invited_by:
-          | string
-          | {
-            name: string;
-            email: string;
-          };
+            | string
+            | {
+                name: string;
+                email: string;
+              };
           token: string;
           expires_at: string;
           status: string;

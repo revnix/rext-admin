@@ -61,7 +61,6 @@ export default function AcceptInvitationPage() {
 
       const workspaceData = {
         id: result.workspace_id,
-        title: result.workspace_name,
         name: result.workspace_name,
         slug: result.workspace_slug,
         url: "",
@@ -212,7 +211,7 @@ export default function AcceptInvitationPage() {
               </AlertTitle>
               <AlertDescription>
                 {invitation.status === "accepted"
-                  ? `You are already a member of ${invitation.workspace?.title || invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
+                  ? `You are already a member of ${invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
                   : `This invitation expired on ${new Date(invitation.expires_at).toLocaleDateString()}. Please request a new invitation from your workspace administrator.`}
               </AlertDescription>
             </Alert>
@@ -283,9 +282,7 @@ export default function AcceptInvitationPage() {
                   Workspace
                 </p>
                 <p className="text-base font-semibold">
-                  {invitation.workspace?.title ||
-                    invitation.workspace?.name ||
-                    "Workspace"}
+                  {invitation.workspace?.name || "Workspace"}
                 </p>
               </div>
             </div>

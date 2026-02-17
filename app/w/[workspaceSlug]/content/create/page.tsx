@@ -35,7 +35,7 @@ export default function WorkspaceContentCreatePage({
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Content", href: workspaceRoutes.content(workspaceSlug) },
@@ -141,7 +141,7 @@ export default function WorkspaceContentCreatePage({
   return (
     <PageLayout
       title="Create Content"
-      description={`Create new content for ${workspace?.title || "workspace"}`}
+      description={`Create new content for ${workspace?.name || "workspace"}`}
       breadcrumbs={breadcrumbs}
     >
       <CanAccess

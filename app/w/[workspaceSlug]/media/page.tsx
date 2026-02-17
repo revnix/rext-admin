@@ -195,7 +195,7 @@ export default function WorkspaceMediaPage() {
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Media Library" },

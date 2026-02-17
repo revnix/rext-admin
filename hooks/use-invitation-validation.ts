@@ -9,7 +9,7 @@ interface InvitationDetails {
   workspace: {
     id: string;
     slug: string;
-    title: string;
+    name: string;
   };
   role: {
     id: string;

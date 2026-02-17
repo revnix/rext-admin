@@ -18,8 +18,8 @@
  */
 export interface Workspace {
   id: string; // UUID
-  title: string; // unique, required
-  name?: string; // alternative to title (backend uses name)
+  title?: string; // optional for backward compatibility - deprecated, use 'name' instead
+  name: string; // unique, required — workspace display name
   slug: string; // URL-safe identifier for workspace
   timezone?: string; // optional IANA timezone
   url: string; // required
@@ -202,7 +202,7 @@ export type WorkspaceStatus = "active" | "inactive" | "archived" | "deleted";
  * Request payload for creating a new workspace
  */
 export interface CreateWorkspaceRequest {
-  title: string;
+  name: string;
   timezone?: string;
   url: string;
 }
@@ -211,7 +211,7 @@ export interface CreateWorkspaceRequest {
  * Request payload for updating workspace details
  */
 export interface UpdateWorkspaceRequest {
-  title?: string;
+  name?: string;
   timezone?: string;
   url?: string;
 }
@@ -294,7 +294,7 @@ export interface UpdateTextKnowledgeRequest {
  * Form data for workspace creation
  */
 export interface WorkspaceFormData {
-  title: string;
+  name: string;
   timezone?: string;
   url: string;
 }
@@ -305,7 +305,7 @@ export interface WorkspaceFormData {
 export interface WorkspaceFilters {
   search?: string;
   status?: WorkspaceStatus;
-  sortBy?: "title" | "created_at" | "updated_at";
+  sortBy?: "name" | "created_at" | "updated_at";
   sortOrder?: "asc" | "desc";
 }
 

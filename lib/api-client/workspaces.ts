@@ -56,19 +56,13 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Create workspace
      */
-    create: async (data: { title: string; timezone?: string; url: string }) => {
-      // Backend expects 'name' instead of 'title'
-      const payload = {
-        name: data.title,
-        timezone: data.timezone,
-        url: data.url,
-      };
+    create: async (data: { name: string; timezone?: string; url: string }) => {
       return client.request<CreateWorkspaceResponse>(
         ENDPOINTS.WORKSPACES.BASE,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(data),
         },
       );
     },
@@ -79,23 +73,17 @@ export function createWorkspacesNamespace(client: ApiClient) {
     update: async (
       workspaceId: string,
       data: {
-        title?: string;
+        name?: string;
         timezone?: string;
         url?: string;
       },
     ) => {
-      // Backend expects 'name' instead of 'title'
-      const payload: Record<string, unknown> = {};
-      if (data.title !== undefined) payload.name = data.title;
-      if (data.timezone !== undefined) payload.timezone = data.timezone;
-      if (data.url !== undefined) payload.url = data.url;
-
       return client.request<WorkspaceResponse>(
         ENDPOINTS.WORKSPACES.byId(workspaceId),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(data),
         },
       );
     },

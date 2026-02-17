@@ -56,7 +56,8 @@ export function usePendingInvitations(): UsePendingInvitationsReturn {
     refetch,
   } = useQuery<PendingInvitationsResponse>({
     queryKey: ["pending-invitations"],
-    queryFn: () => apiClient.invitations.pending() as Promise<PendingInvitationsResponse>,
+    queryFn: () =>
+      apiClient.invitations.pending() as Promise<PendingInvitationsResponse>,
     enabled: !!session?.user?.accessToken,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
@@ -79,7 +80,10 @@ export function usePendingInvitations(): UsePendingInvitationsReturn {
   const { mutateAsync: declineInvitation, isPending: isDeclining } =
     useMutation({
       mutationFn: async (params: { invitationId: string; reason?: string }) => {
-        return apiClient.invitations.decline(params.invitationId, params.reason) as Promise<DeclineInvitationResponse>;
+        return apiClient.invitations.decline(
+          params.invitationId,
+          params.reason,
+        ) as Promise<DeclineInvitationResponse>;
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["pending-invitations"] });
