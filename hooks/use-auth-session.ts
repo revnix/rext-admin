@@ -15,7 +15,6 @@ export function useAuthSession() {
 
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [activityCount, setActivityCount] = useState<number>(0);
-
   const user = session?.user
     ? {
         id: session.user.id || "",

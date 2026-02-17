@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { registerStoreReset } from "@/lib/store-registry";
 
 interface AuthStore {
   accessToken: string | null;
@@ -27,3 +28,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ accessToken: null, refreshToken: null });
   },
 }));
+
+// Register with global store registry for logout cleanup
+const initialAuthState = useAuthStore.getInitialState();
+registerStoreReset(() => useAuthStore.setState(initialAuthState, true));
