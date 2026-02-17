@@ -72,6 +72,21 @@ export const ENDPOINTS = {
     },
 
     /**
+     * Personas Endpoints
+     * @note Workspace-scoped persona management
+     */
+    PERSONAS: {
+        list: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/personas` as const,
+        create: (workspaceId: string) => `/api/v1/workspaces/${workspaceId}/personas` as const,
+        get: (workspaceId: string, personaId: string) =>
+            `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
+        update: (workspaceId: string, personaId: string) =>
+            `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
+        delete: (workspaceId: string, personaId: string) =>
+            `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
+    },
+
+    /**
      * Invitations Endpoints
      * @note Mixed scoping: workspace-scoped and user-scoped endpoints
      * @note Uses inconsistent naming: /workspace/invitations (singular) vs /workspaces/{id}/invitations
