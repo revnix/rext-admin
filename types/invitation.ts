@@ -6,26 +6,24 @@
 
 /**
  * Pending invitation for current user
+ * Matches the structure returned by apiClient.invitations.pending()
  */
 export interface PendingInvitation {
   id: string;
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  role: {
-    id: string;
-    name: string;
-    display_name: string;
-  };
-  invited_by: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  email: string;
+  workspace_id: string;
+  workspace_name: string;
+  role_id: string;
+  role_name: string;
+  invited_by:
+    | string
+    | {
+        name: string;
+        email: string;
+      };
   token: string;
   expires_at: string;
+  status: string;
   created_at: string;
 }
 

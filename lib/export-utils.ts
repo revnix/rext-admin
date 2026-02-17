@@ -206,7 +206,7 @@ export function generateJsonExport(
     metadata: {
       workspace: {
         id: workspace.id,
-        title: workspace.title,
+        title: workspace.name,
         url: workspace.url,
       },
       export: {
@@ -386,7 +386,7 @@ export function generatePdfContent(
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>${workspace.title} - Knowledge Export</title>
+      <title>${workspace.name} - Knowledge Export</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
         .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -404,7 +404,7 @@ export function generatePdfContent(
     </head>
     <body>
       <div class="header">
-        <div class="workspace-title">${workspace.title}</div>
+        <div class="workspace-title">${workspace.name}</div>
         <div class="export-info">
           Knowledge Export • ${new Date().toLocaleDateString()} • ${items.length} items
         </div>

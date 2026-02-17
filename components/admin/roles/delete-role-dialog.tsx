@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
+import { adminQueries } from "@/lib/query-keys";
 import type { Role } from "@/types/role";
 
 interface DeleteRoleDialogProps {
@@ -36,7 +37,7 @@ export function DeleteRoleDialog({
     },
     onSuccess: () => {
       toast.success("Role deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
       onOpenChange(false);
     },
     onError: (error: Error) => {

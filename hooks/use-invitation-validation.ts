@@ -2,14 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
 
 interface InvitationDetails {
   email: string;
   workspace: {
     id: string;
     slug: string;
-    title: string;
+    name: string;
   };
   role: {
     id: string;
@@ -18,9 +18,7 @@ interface InvitationDetails {
   };
   invited_by: {
     id: string;
-    username: string;
-    first_name: string;
-    last_name: string;
+    full_name: string;
     display_name?: string;
   };
   expires_at: string;
@@ -39,7 +37,7 @@ interface UseInvitationValidationReturn {
  * Hook to validate invitation token from URL
  *
  * Automatically reads `token` or `invitation_token` from URL query params,
- * validates it with the backend, and returns invitation details.
+ * validates it with the backend via apiClient, and returns invitation details.
  *
  * Usage:
  * ```tsx
@@ -58,7 +56,7 @@ export function useInvitationValidation(): UseInvitationValidationReturn {
   const invitationToken =
     searchParams.get("token") || searchParams.get("invitation_token");
 
-  // Validate invitation token with backend
+  // Validate invitation token with backend via apiClient
   const {
     data: invitationData,
     isLoading,
@@ -68,42 +66,13 @@ export function useInvitationValidation(): UseInvitationValidationReturn {
     queryFn: async () => {
       if (!invitationToken) return null;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/invitations/${invitationToken}/validate`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Backend returns { error: { message: "...", code: "..." } }
-        const errorMessage =
-          errorData.error?.message ||
-          errorData.message ||
-          errorData.detail ||
-          "Invalid invitation";
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      // Backend returns { success: true, data: { invitation: {...} } }
-      return result.data.invitation as InvitationDetails;
+      const result = await apiClient.invitations.validate(invitationToken);
+      return result.invitation as InvitationDetails;
     },
     enabled: !!invitationToken,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on failed validation
   });
-
-  // Store token in sessionStorage for persistence across page reloads
-  useEffect(() => {
-    if (invitationToken) {
-      sessionStorage.setItem("pending_invitation_token", invitationToken);
-    }
-  }, [invitationToken]);
 
   return {
     invitationToken,

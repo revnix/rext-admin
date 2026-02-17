@@ -34,11 +34,9 @@ export default function AcceptInvitationPage() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get token from URL or sessionStorage
-  const tokenFromUrl = searchParams.get("token");
-  const [invitationToken] = useState(() => {
-    return tokenFromUrl || sessionStorage.getItem("pending_invitation_token");
-  });
+  // Get token from URL only (no sessionStorage for security — prevents XSS token theft)
+  const invitationToken =
+    searchParams.get("token") || searchParams.get("invitation_token");
 
   // Validate invitation
   const {
@@ -80,9 +78,6 @@ export default function AcceptInvitationPage() {
 
       const data = await response.json();
       setAccepted(true);
-
-      // Clean up session storage
-      sessionStorage.removeItem("pending_invitation_token");
 
       // Redirect to workspace after short delay
       setTimeout(() => {
@@ -191,7 +186,7 @@ export default function AcceptInvitationPage() {
             </div>
             <CardDescription>
               You've successfully joined{" "}
-              {invitation?.workspace.title || "the workspace"}
+              {invitation?.workspace.name || "the workspace"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -206,7 +201,7 @@ export default function AcceptInvitationPage() {
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>
                   <span className="font-medium">Workspace:</span>{" "}
-                  {invitation.workspace.title}
+                  {invitation.workspace.name}
                 </p>
                 <p>
                   <span className="font-medium">Your role:</span>{" "}
@@ -232,7 +227,7 @@ export default function AcceptInvitationPage() {
             </div>
             <CardDescription>
               Please wait while we add you to{" "}
-              {invitation?.workspace.title || "the workspace"}
+              {invitation?.workspace.name || "the workspace"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -255,7 +250,7 @@ export default function AcceptInvitationPage() {
           <CardTitle>Join Workspace</CardTitle>
           <CardDescription>
             Accept your invitation to join{" "}
-            {invitation?.workspace.title || "the workspace"}
+            {invitation?.workspace.name || "the workspace"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -263,12 +258,13 @@ export default function AcceptInvitationPage() {
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2 text-sm">
               <p>
                 <span className="font-medium">Workspace:</span>{" "}
-                {invitation.workspace.title}
+                {invitation.workspace.name}
               </p>
               <p>
                 <span className="font-medium">Invited by:</span>{" "}
-                {invitation.invited_by.first_name}{" "}
-                {invitation.invited_by.last_name}
+                {invitation.invited_by.display_name ||
+                  invitation.invited_by.full_name ||
+                  "Workspace Admin"}
               </p>
               <p>
                 <span className="font-medium">Role:</span>{" "}

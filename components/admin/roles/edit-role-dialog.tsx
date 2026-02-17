@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { adminQueries } from "@/lib/query-keys";
 import type { RoleWithPermissions } from "@/types/role";
 
 interface EditRoleDialogProps {
@@ -60,7 +61,7 @@ export function EditRoleDialog({
     },
     onSuccess: () => {
       toast.success("Role updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
       onOpenChange(false);
     },
     onError: (error: Error) => {

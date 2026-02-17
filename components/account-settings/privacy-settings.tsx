@@ -44,7 +44,7 @@ export function PrivacySettings() {
     {
       id: "include_profile",
       label: "Profile Information",
-      description: "Basic account details, email, username, and settings",
+      description: "Basic account details, email, name, and settings",
     },
     {
       id: "include_roles",

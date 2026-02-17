@@ -1,5 +1,6 @@
 "use client";
 
+import { isAuthPage } from "@/lib/auth-routes";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -33,12 +34,7 @@ export function InvitedUserOnboardingProvider({
 
   // Don't show onboarding on certain pages
   const isExcludedPage =
-    pathname?.startsWith("/login") ||
-    pathname?.startsWith("/register") ||
-    pathname?.startsWith("/signup") ||
-    pathname?.startsWith("/forgot-password") ||
-    pathname?.startsWith("/reset-password") ||
-    pathname?.startsWith("/verify-email") ||
+    (pathname && isAuthPage(pathname)) ||
     pathname?.startsWith("/invitations/accept") ||
     pathname?.startsWith("/onboarding");
 

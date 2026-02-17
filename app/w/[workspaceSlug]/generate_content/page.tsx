@@ -20,7 +20,7 @@ export default function Page() {
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Generate Content" },
@@ -49,7 +49,7 @@ export default function Page() {
     <PageLayout
       title="Generate Content"
       hideTitle={true}
-      description={`View, edit, and manage AI-generated content for ${workspace?.title || "this workspace"}.`}
+      description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"}.`}
       breadcrumbs={breadcrumbs}
       fullWidth
     >

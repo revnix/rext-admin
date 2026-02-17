@@ -1,5 +1,5 @@
 // Content management types
-import type { EEATData } from "./generate-content";
+import type { EEATData, SchemaMarkup } from "./generate-content";
 
 export type ContentStatus =
   | "draft"
@@ -202,6 +202,14 @@ export interface UpdateContentRequest {
   langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: ContentSEODataSchema;
+  slug?: string;
+  workspace_id?: string | null;
+  introduction?: string;
+  tags?: string[];
+  media_items?: Record<string, unknown>[];
+  images_data?: Record<string, unknown>;
+  links_data?: Record<string, unknown>;
+  schema_markup?: SchemaMarkup | Record<string, unknown>;
 }
 
 /**
