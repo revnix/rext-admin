@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer } from "react";
-import { cn } from "@/lib/utils";
+import { cn, safeJsonParse } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
 import type {
@@ -75,10 +75,9 @@ async function* streamFromSSE(
       if (!line.startsWith("data: ")) continue;
       const payload = line.slice(6);
       if (payload === "[DONE]") return;
-      try {
-        yield JSON.parse(payload) as RunStreamEvent;
-      } catch {
-        // Skip malformed chunks
+      const eventData = safeJsonParse<RunStreamEvent>(payload);
+      if (eventData) {
+        yield eventData;
       }
     }
   }
@@ -340,14 +339,17 @@ export function FreshGenerationView({
       });
 
       for await (const chunk of stream) {
-
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
         const updates = chunk.data as any;
 
-        if (updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty) {
+        if (
+          updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty
+        ) {
           dispatch({
             type: "SET_KEYWORD_DIFFICULTY",
-            payload: updates.compute_keyword_difficulty.seo_result.keyword_difficulty.kd,
+            payload:
+              updates.compute_keyword_difficulty.seo_result.keyword_difficulty
+                .kd,
           });
         }
 

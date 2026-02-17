@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { performLogout } from "@/lib/logout-utils";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -71,7 +71,7 @@ export function AccountDeactivation() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Sign out and redirect
-      await signOut({ callbackUrl: "/auth/signin" });
+      await performLogout("/auth/signin");
     },
     onError: (error: Error) => {
       toast.error(

@@ -1,3 +1,5 @@
+import { safeJsonParse } from "./utils";
+
 export const InputSanitizer = {
   sanitizeHtml(html: string): string {
     // Basic HTML sanitization without external dependencies
@@ -45,13 +47,8 @@ export const InputSanitizer = {
   },
 
   sanitizeJson(input: string): string {
-    try {
-      // Parse and re-stringify to ensure valid JSON
-      const parsed = JSON.parse(input);
-      return JSON.stringify(parsed);
-    } catch {
-      return "{}"; // Return empty object for invalid JSON
-    }
+    const parsed = safeJsonParse(input, {});
+    return JSON.stringify(parsed ?? {});
   },
 
   containsXSS(input: string): boolean {

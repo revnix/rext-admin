@@ -1,4 +1,5 @@
 import { log } from "@/lib/logger";
+import { safeJsonParse } from "@/lib/utils";
 
 /**
  * Session Storage Utility
@@ -122,7 +123,11 @@ export const getSession = (id: string): SessionData | null => {
       return null;
     }
 
-    const sessionData = JSON.parse(stored) as SessionData;
+    const sessionData = safeJsonParse<SessionData>(stored);
+
+    if (!sessionData) {
+      return null;
+    }
 
     // Check if session has expired
     if (Date.now() > sessionData.expiresAt) {
@@ -236,7 +241,12 @@ export const getAllSessions = (): SessionData[] => {
         const stored = localStorage.getItem(key);
         if (!stored) continue;
 
-        const sessionData = JSON.parse(stored) as SessionData;
+        const sessionData = safeJsonParse<SessionData>(stored);
+
+        if (!sessionData) {
+          keysToRemove.push(key);
+          continue;
+        }
 
         // Check if session has expired
         if (Date.now() > sessionData.expiresAt) {
@@ -293,9 +303,16 @@ export const cleanupExpiredSessions = (): void => {
         const stored = localStorage.getItem(key);
         if (!stored) continue;
 
-        const sessionData = JSON.parse(stored) as SessionData;
+        const sessionData = safeJsonParse<SessionData>(stored);
 
-        // Remove if expired
+        // Remove if expired or corrupted
+        if (!sessionData || Date.now() > sessionData.expiresAt) {
+          localStorage.removeItem(key);
+          cleanedCount++;
+          continue;
+        }
+
+        // Double check expiration (redundant but safe)
         if (Date.now() > sessionData.expiresAt) {
           localStorage.removeItem(key);
           cleanedCount++;
@@ -338,7 +355,11 @@ export const getSessionMetadata = (id: string): SessionMetadata | null => {
       return null;
     }
 
-    const sessionData = JSON.parse(stored) as SessionData;
+    const sessionData = safeJsonParse<SessionData>(stored);
+
+    if (!sessionData) {
+      return null;
+    }
 
     // Check if session has expired
     if (Date.now() > sessionData.expiresAt) {
@@ -383,7 +404,12 @@ export const getAllSessionMetadata = (): SessionMetadata[] => {
         const stored = localStorage.getItem(key);
         if (!stored) continue;
 
-        const sessionData = JSON.parse(stored) as SessionData;
+        const sessionData = safeJsonParse<SessionData>(stored);
+
+        if (!sessionData) {
+          keysToRemove.push(key);
+          continue;
+        }
 
         // Check if session has expired
         if (Date.now() > sessionData.expiresAt) {
@@ -435,8 +461,8 @@ export const sessionStorageAPI: SessionStorageAPI = {
   removeSession,
   getAllSessions,
   cleanupExpiredSessions,
+  getSessionMetadata,
+  getAllSessionMetadata,
+  updateSession,
   generateSessionId,
 };
-
-// Default export for convenience
-export default sessionStorageAPI;

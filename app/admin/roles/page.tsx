@@ -92,12 +92,14 @@ export default function AdminRolesPage() {
   const { data: rolesData, isLoading: rolesLoading } = useQuery({
     queryKey: ["roles"],
     queryFn: () => apiClient.roles.list(true),
+    throwOnError: true,
   });
 
   // Fetch permissions with roles
   const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
     queryKey: ["permissions"],
     queryFn: () => apiClient.roles.listPermissions(undefined, true),
+    throwOnError: true,
   });
 
   // Transform roles data for DataTable
