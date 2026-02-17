@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
 /**
  * Invitation Acceptance Page
@@ -68,11 +69,9 @@ export default function AcceptInvitationPage() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await safeParseErrorBody(response);
         throw new Error(
-          errorData.message ||
-            errorData.detail ||
-            "Failed to accept invitation",
+          extractApiError(errorData, "Failed to accept invitation"),
         );
       }
 
