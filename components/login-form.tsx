@@ -42,6 +42,8 @@ export function LoginForm({
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
     const urlError = searchParams.get("error");
+    const errorCode = searchParams.get("code");
+
     if (urlError) {
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
@@ -57,7 +59,13 @@ export function LoginForm({
           "Sign in failed. Check the details you provided are correct.",
         Default: "An error occurred during authentication.",
       };
-      const message = errorMessages[urlError] || errorMessages.Default;
+
+      // Use errorCode if it's a descriptive message (not generic)
+      const message =
+        urlError === "CredentialsSignin" && errorCode && errorCode !== "credentials"
+          ? errorCode
+          : errorMessages[urlError] || errorMessages.Default;
+
       toast.error(message);
     }
   }, [searchParams, toast]);

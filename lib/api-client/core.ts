@@ -7,6 +7,7 @@
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { safeJsonParse } from "@/lib/utils";
+import { extractApiError } from "@/lib/error-utils";
 
 const log = logger.forComponent("ApiClient");
 
@@ -104,27 +105,11 @@ export class ApiClient {
             | string;
         };
 
-        // Handle FastAPI validation errors
-        let errorMessage: string;
-        if (parsedError?.detail) {
-          if (Array.isArray(parsedError.detail)) {
-            // Extract validation error messages
-            errorMessage = parsedError.detail
-              .map((err) => {
-                const field = err.loc[err.loc.length - 1];
-                return `${field}: ${err.msg}`;
-              })
-              .join(", ");
-          } else {
-            // String detail message
-            errorMessage = parsedError.detail;
-          }
-        } else {
-          errorMessage =
-            parsedError?.error?.message ||
-            parsedError?.message ||
-            `Request failed: ${response.statusText}`;
-        }
+        // Use shared utility to extract error message
+        const errorMessage = extractApiError(
+          errorData,
+          `Request failed: ${response.statusText}`,
+        );
 
         throw new ApiError(
           response.status,
