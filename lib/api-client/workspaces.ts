@@ -24,7 +24,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * List all workspaces
      */
     list: async () => {
-      return client.request<WorkspaceListResponse>(ENDPOINTS.WORKSPACES.BASE, {
+      return client.request<WorkspaceListResponse>(ENDPOINTS.WORKSPACES.BASE_ALL, {
         method: "GET",
       });
     },

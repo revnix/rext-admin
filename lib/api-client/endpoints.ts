@@ -34,7 +34,8 @@ export const ENDPOINTS = {
    * Standard RESTful resource for workspace management.
    */
   WORKSPACES: {
-    BASE: "/api/v1/workspaces",
+    BASE: "/api/v1/workspaces/",
+    BASE_ALL: "/api/v1/workspaces/all",
     byId: (id: string) => `/api/v1/workspaces/${id}` as const,
     bySlug: (slug: string) => `/api/v1/workspaces/slug/${slug}` as const,
 
