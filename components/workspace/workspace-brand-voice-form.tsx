@@ -46,7 +46,7 @@ const brandVoiceSchema = z.object({
   target_audience: z.array(z.string()).optional(),
   brand_voice: z.array(z.string()).optional(),
   competitors: z.array(z.string()).optional(),
-  content_strategy: z.array(z.string()).optional(),
+  content_pillar: z.array(z.string()).optional(),
 });
 
 /**
@@ -86,7 +86,7 @@ interface WorkspaceBrandVoiceFormProps {
  *
  * Features:
  * - Editable text fields for about, customer_profile, selling_position
- * - Tag-based input for arrays (target_audience, brand_voice, competitors, content_strategy)
+ * - Tag-based input for arrays (target_audience, brand_voice, competitors, content_pillar)
  * - Form validation with Zod
  * - Loading states during save
  * - Dynamic persona selection from database
@@ -127,7 +127,7 @@ export function WorkspaceBrandVoiceForm({
       target_audience: data.target_audience || [],
       brand_voice: data.brand_voice || [],
       competitors: data.competitors || [],
-      content_strategy: data.content_strategy || data.content_pillar || [],
+      content_pillar: data.content_pillar || [],
     },
   });
 
@@ -141,7 +141,7 @@ export function WorkspaceBrandVoiceForm({
   const [targetAudienceInput, setTargetAudienceInput] = useState("");
   const [brandVoiceInput, setBrandVoiceInput] = useState("");
   const [competitorsInput, setCompetitorsInput] = useState("");
-  const [contentStrategyInput, setContentStrategyInput] = useState("");
+  const [contentPillarInput, setContentPillarInput] = useState("");
 
   // Handle form submission
   const handleSubmit = async (formData: BrandVoiceFormData) => {
@@ -369,7 +369,7 @@ export function WorkspaceBrandVoiceForm({
             <TabsContent value="strategy" className="space-y-6">
               <FormField
                 control={form.control}
-                name="content_strategy"
+                name="content_pillar"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Content Strategy (Optional)</FormLabel>
@@ -378,18 +378,18 @@ export function WorkspaceBrandVoiceForm({
                         <div className="flex gap-2">
                           <div className="flex-1 min-w-0">
                             <Input
-                              value={contentStrategyInput}
+                              value={contentPillarInput}
                               onChange={(e) =>
-                                setContentStrategyInput(e.target.value)
+                                setContentPillarInput(e.target.value)
                               }
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
                                   addItem(
-                                    "content_strategy",
-                                    contentStrategyInput,
+                                    "content_pillar",
+                                    contentPillarInput,
                                   );
-                                  setContentStrategyInput("");
+                                  setContentPillarInput("");
                                 }
                               }}
                               placeholder="e.g., Educational"
@@ -399,8 +399,8 @@ export function WorkspaceBrandVoiceForm({
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("content_strategy", contentStrategyInput);
-                              setContentStrategyInput("");
+                              addItem("content_pillar", contentPillarInput);
+                              setContentPillarInput("");
                             }}
                           >
                             Add
@@ -417,7 +417,7 @@ export function WorkspaceBrandVoiceForm({
                               <button
                                 type="button"
                                 onClick={() =>
-                                  removeItem("content_strategy", index)
+                                  removeItem("content_pillar", index)
                                 }
                                 className="ml-1 hover:text-destructive"
                               >

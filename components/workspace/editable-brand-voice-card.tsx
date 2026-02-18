@@ -27,7 +27,7 @@ interface BrandVoiceFormData {
   target_audience: string[];
   brand_voice: string[];
   competitors: string[];
-  content_strategy: string[];
+  content_pillar: string[];
 }
 
 const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
@@ -37,7 +37,7 @@ const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
   target_audience: voice?.target_audience ?? [],
   brand_voice: voice?.brand_voice ?? [],
   competitors: voice?.competitors ?? [],
-  content_strategy: voice?.content_strategy ?? voice?.content_pillar ?? [],
+  content_pillar: voice?.content_pillar ?? [],
 });
 
 export function EditableBrandVoiceCard({
@@ -64,7 +64,7 @@ export function EditableBrandVoiceCard({
         target_audience: data.target_audience,
         brand_voice: data.brand_voice,
         competitors: data.competitors,
-        content_strategy: data.content_strategy,
+        content_pillar: data.content_pillar,
       });
     },
     onSuccess: (response) => {
@@ -402,30 +402,30 @@ export function EditableBrandVoiceCard({
 
         {/* Content Strategy */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">Content Strategy</Label>
+          <Label className="text-sm font-semibold">Content Pillars</Label>
           {isEditing ? (
             <div className="space-y-2">
               <div className="flex gap-2">
                 <Input
-                  id="content_strategy-input"
+                  id="content_pillar-input"
                   placeholder="Add content pillar"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      handleArrayItemAdd("content_strategy");
+                      handleArrayItemAdd("content_pillar");
                     }
                   }}
                 />
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => handleArrayItemAdd("content_strategy")}
+                  onClick={() => handleArrayItemAdd("content_pillar")}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {formData.content_strategy.map((item, index) => (
+                {formData.content_pillar.map((item, index) => (
                   <Badge
                     key={item}
                     variant="secondary"
@@ -435,7 +435,7 @@ export function EditableBrandVoiceCard({
                     <button
                       type="button"
                       onClick={() =>
-                        handleArrayItemRemove("content_strategy", index)
+                        handleArrayItemRemove("content_pillar", index)
                       }
                       className="ml-2 hover:text-destructive"
                     >
@@ -447,7 +447,7 @@ export function EditableBrandVoiceCard({
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {brandVoice.content_strategy?.map((item) => (
+              {brandVoice.content_pillar?.map((item) => (
                 <Badge key={item} variant="secondary" className="text-sm">
                   {item}
                 </Badge>

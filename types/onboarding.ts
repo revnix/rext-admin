@@ -55,7 +55,7 @@ export interface OnboardingStep {
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 0,
-    name: "content_strategy",
+    name: "content_pillar",
     title: "Welcome to Rext",
     description: "Choose your content strategy foundation",
     required: true,

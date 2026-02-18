@@ -121,7 +121,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         target_audience?: string[];
         brand_voice?: string[];
         competitors?: string[];
-        content_strategy?: string[];
+        content_pillar?: string[];
         personas?: Persona[];
       },
     ) => {
@@ -132,7 +132,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         target_audience: data.target_audience ?? [],
         brand_voice: data.brand_voice ?? [],
         competitors: data.competitors ?? [],
-        content_pillar: data.content_strategy ?? [],
+        content_pillar: data.content_pillar ?? [],
         personas: data.personas ?? [],
       };
 

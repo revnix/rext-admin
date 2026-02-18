@@ -55,25 +55,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-];
+    {
+      id: "details",
+      title: "Workspace Details",
+      description: "Tell us about your workspace",
+      progress: 25,
+    },
+    {
+      id: "progress",
+      title: "Analysis",
+      description: "We're analyzing your website",
+      progress: 50,
+    },
+    {
+      id: "review",
+      title: "Review & Save",
+      description: "Review and edit brand information",
+      progress: 75,
+    },
+  ];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -223,8 +223,7 @@ export function WorkspaceCreateWizard() {
         target_audience: brandVoiceData.target_audience,
         brand_voice: brandVoiceData.brand_voice,
         competitors: brandVoiceData.competitors,
-        content_strategy:
-          brandVoiceData.content_strategy || brandVoiceData.content_pillar,
+        content_pillar: brandVoiceData.content_pillar,
         personas: selectedPersona ? [selectedPersona] : undefined,
       });
 

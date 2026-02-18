@@ -108,8 +108,7 @@ export interface BrandVoice {
   target_audience?: string[]; // Array of audience segments
   brand_voice?: string[]; // Communication tone/style characteristics
   competitors?: string[]; // Array of competitor names
-  content_strategy?: string[]; // Content pillars/themes
-  content_pillar?: string[]; // Alternative name for content strategy
+  content_pillar?: string[]; // Content pillars/themes for content strategy
   personas?: Persona[]; // Target audience personas
   created_at?: string;
   updated_at?: string;
@@ -512,8 +511,8 @@ export const getStorage = () => {
   if (typeof window === "undefined") {
     return {
       getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
+      setItem: () => { },
+      removeItem: () => { },
     };
   }
   return localStorage;
@@ -648,10 +647,10 @@ export interface BrandVoiceRefreshStoreState {
  */
 export interface WorkspaceState
   extends WorkspaceContextState,
-    WorkspaceCrudState,
-    WorkspaceFormStoreState,
-    WorkspaceKnowledgeState,
-    BrandVoiceRefreshStoreState {
+  WorkspaceCrudState,
+  WorkspaceFormStoreState,
+  WorkspaceKnowledgeState,
+  BrandVoiceRefreshStoreState {
   // Utility actions
   resetStore: () => void;
 }
