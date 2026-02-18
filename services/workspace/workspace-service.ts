@@ -178,10 +178,10 @@ export class WorkspaceService {
     const sourceResponse = await this.getWorkspace(sourceWorkspaceId);
     const sourceWorkspace = sourceResponse.workspace;
 
-    const duplicateTitle = this.generateDuplicateTitle(sourceWorkspace.title);
+    const duplicateName = this.generateDuplicateName(sourceWorkspace.name);
 
     const duplicateData: CreateWorkspaceRequest = {
-      title: duplicateTitle,
+      name: duplicateName,
       timezone: sourceWorkspace.timezone,
       url: sourceWorkspace.url,
     };
@@ -207,15 +207,15 @@ export class WorkspaceService {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
-  private generateDuplicateTitle(originalTitle: string): string {
+  private generateDuplicateName(originalName: string): string {
     const copyPattern = / \(Copy( \d+)?\)$/;
-    const match = originalTitle.match(copyPattern);
+    const match = originalName.match(copyPattern);
 
     if (match) {
       const copyNumber = match[1] ? parseInt(match[1].trim(), 10) + 1 : 2;
-      return originalTitle.replace(copyPattern, ` (Copy ${copyNumber})`);
+      return originalName.replace(copyPattern, ` (Copy ${copyNumber})`);
     } else {
-      return `${originalTitle} (Copy)`;
+      return `${originalName} (Copy)`;
     }
   }
 
@@ -363,14 +363,14 @@ export class WorkspaceService {
   }
 
   private validateWorkspaceData(data: CreateWorkspaceRequest): void {
-    if (!data.title || data.title.trim().length === 0) {
-      throw new WorkspaceServiceError("INVALID_REQUEST", "Title is required");
+    if (!data.name || data.name.trim().length === 0) {
+      throw new WorkspaceServiceError("INVALID_REQUEST", "Name is required");
     }
 
-    if (data.title.length > 200) {
+    if (data.name.length > 200) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        "Title must be 200 characters or less",
+        "Name must be 200 characters or less",
       );
     }
 
@@ -380,17 +380,17 @@ export class WorkspaceService {
   }
 
   private validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
-    if (data.title !== undefined) {
-      if (!data.title || data.title.trim().length === 0) {
+    if (data.name !== undefined) {
+      if (!data.name || data.name.trim().length === 0) {
         throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          "Title cannot be empty",
+          "Name cannot be empty",
         );
       }
-      if (data.title.length > 200) {
+      if (data.name.length > 200) {
         throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          "Title must be 200 characters or less",
+          "Name must be 200 characters or less",
         );
       }
     }
@@ -417,7 +417,7 @@ export class WorkspaceService {
     data: CreateWorkspaceRequest,
   ): Record<string, unknown> {
     return {
-      name: InputSanitizer.sanitizeText(data.title.trim()),
+      name: InputSanitizer.sanitizeText(data.name.trim()),
       timezone: data.timezone,
       url: data.url.trim(),
     };
@@ -428,8 +428,8 @@ export class WorkspaceService {
   ): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
-    if (data.title !== undefined) {
-      result.name = InputSanitizer.sanitizeText(data.title.trim());
+    if (data.name !== undefined) {
+      result.name = InputSanitizer.sanitizeText(data.name.trim());
     }
     if (data.timezone !== undefined) {
       result.timezone = data.timezone;

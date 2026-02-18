@@ -64,7 +64,7 @@ export default function ContentType({
         <motion.h2
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-bold text-slate-900 tracking-tight"
+          className="text-2xl font-bold text-foreground tracking-tight"
         >
           {instruction}
         </motion.h2>
@@ -84,26 +84,26 @@ export default function ContentType({
               onClick={() => handleContentTypeSelect(type)}
               className={cn(
                 "group cursor-pointer relative flex flex-col items-start text-left p-8 rounded-3xl border-2 transition-all duration-300 w-full outline-none h-full",
-                "bg-white border-[#F1F5F9] hover:border-[#3B82F6] hover:shadow-xl hover:shadow-blue-500/5 active:scale-[0.98]",
+                "bg-card border-border hover:border-primary hover:shadow-xl hover:shadow-colored-sm active:scale-[0.98]",
               )}
             >
               {/* Icon Container */}
-              <div className="mb-8 p-3.5 rounded-2xl bg-[#F1F5F9] group-hover:bg-[#EFF6FF] transition-colors">
-                <Icon className="w-6 h-6 text-[#475569] group-hover:text-[#3B82F6] transition-colors" />
+              <div className="mb-8 p-3.5 rounded-2xl bg-muted group-hover:bg-accent transition-colors">
+                <Icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
 
               {/* Content */}
               <div className="flex-1 w-full mb-2">
-                <h3 className="text-2xl font-bold text-[#1E293B] group-hover:text-[#2563EB] transition-colors mb-3 capitalize">
+                <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 capitalize">
                   {type}
                 </h3>
-                <p className="text-[15px] text-[#64748B] leading-[1.6] group-hover:text-[#475569] transition-colors">
+                <p className="text-[15px] text-muted-foreground leading-[1.6] group-hover:text-foreground transition-colors">
                   {description}
                 </p>
               </div>
 
               {/* Subtle hover gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-[22px] -z-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[22px] -z-10" />
             </motion.button>
           );
         })}

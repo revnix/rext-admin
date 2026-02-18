@@ -5,11 +5,10 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
 import type {
-  ContentOutline,
-  PageAction,
   PageState,
   ResumeOptions,
   RunStreamEvent,
+  StreamUpdates,
   WorkflowStep,
 } from "@/types/generate-content";
 import {
@@ -31,265 +30,15 @@ import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
-
-const formatNodeName = (name: string) =>
-  name
-    .split(/[_-]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
-async function createThread(): Promise<string> {
-  const res = await fetch("/api/generate/threads", { method: "POST" });
-  if (!res.ok) throw new Error("Failed to create thread");
-  const json = await res.json();
-  return json.data.thread_id;
-}
-
-async function* streamFromSSE(
-  url: string,
-  body: Record<string, unknown>,
-): AsyncGenerator<RunStreamEvent> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok || !res.body) {
-    throw new Error(`Stream request failed: ${res.status}`);
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6);
-      if (payload === "[DONE]") return;
-      try {
-        yield JSON.parse(payload) as RunStreamEvent;
-      } catch {
-        // Skip malformed chunks
-      }
-    }
-  }
-}
-
-const initialState: PageState = {
-  step: "keyword",
-  userKeyword: "",
-  country: "us",
-  primaryKeyword: "",
-  suggestedKeywords: [],
-  generatedContent: "",
-  threadId: null,
-  rejectedReason: "",
-  outline: null,
-  isLoading: false,
-  topics: [],
-  instruction: "",
-  instructionType: "keyword",
-  isEditing: false,
-  seoResult: null,
-  serp: null,
-  competitors: null,
-  currentContentState: null,
-  interrupt: null,
-  contentTypes: [],
-  loadingStatus: "",
-  isManualLoading: false,
-  completedNodes: [],
-  readabilityScore: null,
-  seoScore: null,
-  trustScore: null,
-  eeatData: {
-    score: 65,
-    author_credibility: 20,
-    expertise: 70,
-    authority: 40,
-    trustworthiness: 60,
-    citations_references: 10,
-    content_accuracy: 75,
-    freshness: 80,
-    transparency: 10,
-    spam_signals: 85,
-    technical_trust: 100,
-    reasoning:
-      "The content demonstrates a solid level of expertise in SEO practices specific to Next.js, evidenced by detailed descriptions of relevant technical features and best practices. However, there is no identifiable author, which severely impacts author credibility. The information appears technically accurate and fairly up-to-date, but lacks citations to authoritative sources that would enhance trustworthiness and authority. The technical aspects of the site are sound (HTTPS, no spammy content), and there are minimal spam signals given the absence of keyword stuffing. Overall, the lack of author information and citations adversely affects the overall credibility and trust score.",
-  },
-  allContent: null,
-  currentLoadingSteps: [],
-};
-
-function reducer(state: PageState, action: PageAction): PageState {
-  switch (action.type) {
-    case "SET_INSTRUCTION_TYPE":
-      return { ...state, instructionType: action.payload };
-    case "SET_USER_KEYWORD":
-      return { ...state, userKeyword: action.payload };
-    case "SET_COUNTRY":
-      return { ...state, country: action.payload };
-    case "SET_THREAD_ID":
-      if (state.threadId === action.payload) return state;
-      return { ...state, threadId: action.payload };
-    case "SET_REJECTED_REASON":
-      if (state.rejectedReason === action.payload) return state;
-      return { ...state, rejectedReason: action.payload };
-    case "SET_IS_EDITING":
-      if (state.isEditing === action.payload) return state;
-      return { ...state, isEditing: action.payload };
-    case "SET_GENERATED_CONTENT":
-      if (state.generatedContent === action.payload) return state;
-      return { ...state, generatedContent: action.payload };
-    case "SET_ALL_CONTENT":
-      if (state.allContent === action.payload) return state;
-      return { ...state, allContent: action.payload };
-    case "SET_READABILITY_SCORE":
-      if (state.readabilityScore === action.payload) return state;
-      return { ...state, readabilityScore: action.payload };
-    case "SET_TRUST_SCORE":
-      if (state.trustScore === action.payload) return state;
-      return { ...state, trustScore: action.payload };
-    case "SET_SEO_SCORE":
-      if (state.seoScore === action.payload) return state;
-      return { ...state, seoScore: action.payload };
-    case "SET_EEAT_DATA":
-      if (state.eeatData === action.payload) return state;
-      return { ...state, eeatData: action.payload };
-    case "RESET_FOR_REJECT":
-      return { ...state, instruction: "", step: "outline-reject" };
-    case "SUBMIT_REJECT_REASON":
-      return { ...state, step: "outline", rejectedReason: "", outline: null };
-    case "SET_INTERRUPT":
-      return { ...state, interrupt: action.payload };
-    case "SET_OUTLINE":
-      return { ...state, outline: action.payload };
-    case "SET_LOADING_STEPS":
-      return { ...state, currentLoadingSteps: action.payload };
-    case "SET_LOADING_STATUS": {
-      const nextStatus = action.payload;
-      const prevStatus = state.loadingStatus;
-
-      const nextCompleted = [...state.completedNodes];
-      if (prevStatus?.endsWith("...") && prevStatus !== nextStatus) {
-        const finishedNode = prevStatus.slice(0, -3);
-        if (!nextCompleted.includes(finishedNode)) {
-          nextCompleted.push(finishedNode);
-        }
-      }
-
-      return {
-        ...state,
-        loadingStatus: nextStatus,
-        completedNodes: nextCompleted,
-      };
-    }
-    case "SET_MANUAL_LOADING":
-      return { ...state, isManualLoading: action.payload };
-    case "CLEAR_COMPLETED_NODES":
-      return { ...state, completedNodes: [] };
-    case "ADD_COMPLETED_NODE":
-      if (state.completedNodes.includes(action.payload)) return state;
-      return {
-        ...state,
-        completedNodes: [...state.completedNodes, action.payload],
-      };
-    case "UPDATE_FROM_STREAM": {
-      const updates = action.payload;
-      let changed = false;
-      const newState = { ...state };
-
-      const interrupt = updates.__interrupt__;
-
-      if (interrupt && interrupt.length > 0) {
-        const newInstruction =
-          interrupt[0].value.instruction || interrupt[0].value.instructions;
-        const newInstructionType =
-          interrupt[0].value.instruction_type || interrupt[0].value.type;
-
-        if (
-          newInstruction !== undefined &&
-          state.instruction !== newInstruction
-        ) {
-          newState.instruction = newInstruction as string;
-          changed = true;
-        }
-        if (
-          newInstructionType !== undefined &&
-          state.instructionType !== (newInstructionType as string)
-        ) {
-          newState.instructionType = newInstructionType as string;
-          changed = true;
-        }
-
-        if (interrupt[0]?.value.Recommendations) {
-          const keywords = interrupt[0]?.value.Recommendations;
-          const primaryKeyword = interrupt[0]?.value["Primary Keyword"] as
-            | string
-            | undefined;
-          if (keywords && keywords.length > 0) {
-            if (
-              JSON.stringify(state.suggestedKeywords) !==
-              JSON.stringify(keywords)
-            ) {
-              newState.primaryKeyword = primaryKeyword || "";
-              newState.suggestedKeywords = keywords;
-              if (interrupt[0]?.value.seo_state) {
-                newState.seoResult = interrupt[0]?.value.seo_state;
-              }
-              changed = true;
-            }
-            if (state.step === "keyword") {
-              newState.step = "suggestions";
-              changed = true;
-            }
-          }
-        } else if (interrupt[0]?.value.topics) {
-          const newTopics = interrupt[0].value.topics as string[];
-          if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
-            newState.topics = newTopics;
-            changed = true;
-          }
-        } else if (interrupt[0]?.value.content_types) {
-          const newContentTypes = interrupt[0].value.content_types as string[];
-          if (
-            JSON.stringify(state.contentTypes) !==
-            JSON.stringify(newContentTypes)
-          ) {
-            newState.contentTypes = newContentTypes;
-            changed = true;
-          }
-        } else if (interrupt[0]?.value.type === "outline_review") {
-          const newOutline = interrupt[0].value.data as ContentOutline;
-          if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
-            newState.outline = newOutline;
-            changed = true;
-          }
-          if (
-            state.step !== "outline" &&
-            state.step !== "outline-reject" &&
-            state.step !== "content"
-          ) {
-            newState.step = "outline";
-            changed = true;
-          }
-        }
-      }
-      return changed ? newState : state;
-    }
-    default:
-      return state;
-  }
-}
+import {
+  generationReducer,
+  initialState,
+} from "@/lib/generate-content/generation-reducer";
+import {
+  createThread,
+  streamFromSSE,
+  formatNodeName,
+} from "@/lib/generate-content/stream-utils";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -302,7 +51,7 @@ export function FreshGenerationView({
   initialKeyword: _initialKeyword = "",
   initialStep: _initialStep = "keyword",
 }: FreshGenerationViewProps) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(generationReducer, initialState);
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
 
@@ -327,22 +76,35 @@ export function FreshGenerationView({
     isLoading,
     readabilityScore,
     seoScore,
+    trustScore,
     eeatData,
     allContent,
     currentLoadingSteps,
+    keywordDifficulty,
   } = state;
 
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
   ): Promise<void> => {
     try {
-      for await (const chunk of stream) {
-        if (chunk.event !== "updates" && !chunk.event.startsWith("updates|")) {
-          continue;
-        }
+      dispatch({
+        type: "SET_KEYWORD_DIFFICULTY",
+        payload: 0,
+      });
 
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic runtime data with unknown structure
-        const updates = chunk.data as any;
+      for await (const chunk of stream) {
+        const updates = chunk.data as StreamUpdates;
+
+        if (
+          updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty
+        ) {
+          dispatch({
+            type: "SET_KEYWORD_DIFFICULTY",
+            payload:
+              updates.compute_keyword_difficulty.seo_result.keyword_difficulty
+                .kd,
+          });
+        }
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
@@ -450,6 +212,8 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
         },
       },
+      streamMode: ["updates", "messages"],
+      streamSubgraphs: true,
     });
 
     await processStream(stream);
@@ -535,7 +299,11 @@ export function FreshGenerationView({
     }
   };
 
-  if (isLoading || isManualLoading) {
+  if (
+    (isLoading || isManualLoading) &&
+    instructionType !== "content" &&
+    (keywordDifficulty !== 0 || keywordDifficulty !== null)
+  ) {
     return (
       <div
         className={cn(
@@ -564,10 +332,11 @@ export function FreshGenerationView({
     "keyword Selection": (
       <SuggestionsSection
         instruction={instruction}
-        primaryKeyword={primaryKeyword}
+        primaryKeyword={primaryKeyword || userKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
         seoResult={seoResult}
+        keywordDifficulty={keywordDifficulty}
       />
     ),
 
@@ -651,11 +420,12 @@ export function FreshGenerationView({
         {instructionViewMap[instructionType]}
       </div>
 
-      {instructionType === "content" && generatedContent && (
+      {instructionType === "content" && (
         <ContentEditor
           allContent={allContent}
           readabilityScore={readabilityScore}
           seoScore={seoScore}
+          trustScore={trustScore}
           eeatData={eeatData}
           generatedContent={generatedContent}
           isEditing={isEditing}
@@ -664,9 +434,9 @@ export function FreshGenerationView({
           onEditToggle={() =>
             dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
           }
-          onContentChange={(val) =>
-            dispatch({ type: "SET_GENERATED_CONTENT", payload: val })
-          }
+          onContentChange={(val) => {
+            dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+          }}
         />
       )}
     </>

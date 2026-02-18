@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
+import { adminQueries } from "@/lib/query-keys";
 import type { PermissionWithRoles } from "@/types/role";
 
 interface DeletePermissionDialogProps {
@@ -37,7 +38,7 @@ export function DeletePermissionDialog({
     onSuccess: () => {
       toast.success("Permission deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["permissions"] });
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
       onOpenChange(false);
     },
     onError: (error: Error) => {

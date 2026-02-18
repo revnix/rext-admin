@@ -6,6 +6,7 @@
 
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { buildUrl } from "@/lib/url-utils";
 import type {
   ContentListResponse,
   ContentResponse,
@@ -52,13 +53,11 @@ export class ContentApiService {
       offset?: number;
     },
   ): Promise<ContentListResponse> {
-    const params = new URLSearchParams();
-    if (options?.status) params.append("status", options.status);
-    if (options?.limit) params.append("limit", options.limit.toString());
-    if (options?.offset) params.append("offset", options.offset.toString());
-
-    const queryString = params.toString();
-    const url = `${this.baseUrl}/api/v1/content/${workspaceId}${queryString ? `?${queryString}` : ""}`;
+    const url = buildUrl(`${this.baseUrl}/api/v1/content/${workspaceId}`, {
+      status: options?.status,
+      limit: options?.limit,
+      offset: options?.offset,
+    });
 
     this.log.info("Fetching content list", { workspaceId, options });
 

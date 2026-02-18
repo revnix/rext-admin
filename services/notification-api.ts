@@ -6,6 +6,7 @@
 
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
+import { buildUrl } from "@/lib/url-utils";
 import { useNotificationStore } from "@/stores/notification-store";
 import type { ApiNotification } from "@/types/notifications";
 import type { OperationNotification } from "@/types/sse";
@@ -65,13 +66,9 @@ function mapStatusToType(status: string): OperationNotification["type"] {
 export async function markNotificationsAsRead(
   notificationIds: string[],
 ): Promise<{ success: boolean; message: string }> {
-  const params = new URLSearchParams();
-
-  for (const id of notificationIds) {
-    params.append("notification_ids", id);
-  }
-
-  const url = `${API_BASE_URL}/api/v1/notifications/mark-as-read?${params.toString()}`;
+  const url = buildUrl(`${API_BASE_URL}/api/v1/notifications/mark-as-read`, {
+    notification_ids: notificationIds,
+  });
 
   const response = await authenticatedFetch(url, {
     method: "POST",
@@ -95,7 +92,9 @@ export async function markAllNotificationsAsRead(): Promise<{
   success: boolean;
   message: string;
 }> {
-  const url = `${API_BASE_URL}/api/v1/notifications/mark-as-read?mark_all=true`;
+  const url = buildUrl(`${API_BASE_URL}/api/v1/notifications/mark-as-read`, {
+    mark_all: true,
+  });
 
   const response = await authenticatedFetch(url, {
     method: "POST",

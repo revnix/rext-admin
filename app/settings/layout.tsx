@@ -1,5 +1,6 @@
 import { PageLayout } from "@/components/page-layout";
 import { SettingsNav } from "@/components/settings/settings-nav";
+import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function SettingsLayout({
   children,
@@ -14,14 +15,14 @@ export default function SettingsLayout({
       description="Manage your account settings and preferences"
       breadcrumbs={breadcrumbs}
     >
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Sidebar Navigation */}
-        <aside className="md:w-64 shrink-0">
-          <SettingsNav />
-        </aside>
+      <div className="space-y-6">
+        {/* Top Navigation */}
+        <SettingsNav />
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="w-full">
+          <APIErrorBoundary>{children}</APIErrorBoundary>
+        </main>
       </div>
     </PageLayout>
   );

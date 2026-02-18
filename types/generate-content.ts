@@ -88,6 +88,7 @@ export type ReadabilityMetrics = {
 
 export type ContentReview = {
   seo_score: number;
+  trust_score?: TrustScore;
   readability_metrics: ReadabilityMetrics;
   eeat_score?: number;
   eeat_data?: EEATData;
@@ -130,6 +131,22 @@ export type ContentLink = {
 export type SchemaMarkup = {
   schema_type: string;
   schema_data: string;
+};
+
+export type TrustScore = {
+  score: number;
+  trust_score: number;
+  author_credibility: number;
+  expertise: number;
+  authority: number;
+  trustworthiness: number;
+  citations_references: number;
+  content_accuracy: number;
+  freshness: number;
+  transparency: number;
+  spam_signals: number;
+  technical_trust: number;
+  reasoning: string;
 };
 
 export type FinalContent = {
@@ -416,6 +433,43 @@ export type SEORESULT = {
   issues: Issue[];
 };
 
+export type StreamUpdates = Partial<WREXT> & {
+  compute_keyword_difficulty?: {
+    seo_result?: {
+      keyword_difficulty?: {
+        kd: number;
+      };
+    };
+  };
+  generate_content?: {
+    content?: {
+      final_content?: FinalContent;
+    };
+  };
+  calculate_on_page_seo?: {
+    content?: {
+      review?: {
+        on_page_metrics?: SEORESULT;
+      };
+    };
+  };
+  calculate_eeat_trust?: {
+    content?: {
+      review?: {
+        trust_score?: TrustScore;
+        eeat_data?: EEATData;
+      };
+    };
+  };
+  calculate_readability?: {
+    content?: {
+      review?: {
+        readability_metrics?: ReadabilityMetrics;
+      };
+    };
+  };
+} & Record<string, unknown>;
+
 export type AppStep =
   | "keyword"
   | "suggestions"
@@ -453,10 +507,11 @@ export interface PageState {
   completedNodes: string[];
   readabilityScore: ReadabilityMetrics | null;
   seoScore: SEORESULT | null;
-  trustScore: number | null;
+  trustScore: TrustScore | null;
   eeatData: EEATData | null;
   allContent: FinalContent | null;
   currentLoadingSteps: LoadingStep[];
+  keywordDifficulty: number | null;
 }
 
 export type PageAction =
@@ -470,11 +525,11 @@ export type PageAction =
   | { type: "SET_GENERATED_CONTENT"; payload: string }
   | { type: "SET_ALL_CONTENT"; payload: FinalContent | null }
   | { type: "SET_READABILITY_SCORE"; payload: ReadabilityMetrics }
-  | { type: "SET_TRUST_SCORE"; payload: number }
+  | { type: "SET_TRUST_SCORE"; payload: TrustScore }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_EEAT_DATA"; payload: EEATData }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
-  | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
+  | { type: "UPDATE_FROM_STREAM"; payload: StreamUpdates }
   | { type: "RESET_FOR_REJECT" }
   | { type: "SUBMIT_REJECT_REASON" }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
@@ -484,6 +539,7 @@ export type PageAction =
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "CLEAR_COMPLETED_NODES" }
+  | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
   | { type: "SET_OUTLINE"; payload: ContentOutline };
 
 export type StreamInput = {

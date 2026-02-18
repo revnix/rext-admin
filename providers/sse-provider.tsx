@@ -8,9 +8,15 @@ import {
   useContext,
   useMemo,
 } from "react";
+import { ApiError } from "@/lib/api-client/core";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
-import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
+import {
+  type SSEConnectionStatus,
+  type SSEEvent,
+  SSE_ERROR_CODES,
+} from "@/types/sse";
+import { SSEEventSchema } from "@/schemas/sse-schemas";
 
 interface SSEContextType {
   subscribe: (
@@ -115,6 +121,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         onStatus?.({
           connected: false,
           retryCount: 0,
+          code: SSE_ERROR_CODES.OPERATION_COMPLETED,
         });
 
         return () => undefined;
@@ -210,6 +217,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   notifyStatus({
                     connected: true,
                     retryCount: 0,
+                    code: SSE_ERROR_CODES.CONNECTION_ESTABLISHED,
                   });
                   return;
                 }
@@ -232,41 +240,18 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     stop({
                       connected: false,
                       retryCount,
+                      code: SSE_ERROR_CODES.OPERATION_COMPLETED,
                       // Don't show error for completed operations
                     });
                     // Don't throw for 422 - just return to exit the loop gracefully
                     return;
-                  } else if (status === 429) {
-                    // Rate limit exceeded - stop trying
-                    sseLogger.error(
-                      "Rate limit exceeded, stopping all reconnection attempts",
-                      {
-                        operationId,
-                        status,
-                      },
-                    );
-                    stop({
-                      connected: false,
-                      retryCount,
-                      error: "Rate limit exceeded. Please try again later.",
-                    });
-                    // Exit the loop completely for rate limit errors
-                    return;
-                  } else {
-                    sseLogger.error("Client error, stopping reconnection", {
-                      operationId,
-                      status,
-                    });
-                    stop({
-                      connected: false,
-                      retryCount,
-                      error: errorMessage,
-                    });
                   }
-                  throw new Error(errorMessage);
+
+                  // For other 4xx errors, throw ApiError to be handled in the catch block
+                  throw new ApiError(status, errorMessage);
                 }
 
-                throw new Error(errorMessage);
+                throw new ApiError(status, errorMessage);
               },
               onmessage: (message) => {
                 if (!message.data) {
@@ -284,7 +269,21 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                 });
 
                 try {
-                  const event: SSEEvent = JSON.parse(message.data);
+                  const parsed = JSON.parse(message.data);
+                  const validationResult = SSEEventSchema.safeParse(parsed);
+
+                  if (!validationResult.success) {
+                    sseLogger.warn("SSE event failed schema validation", {
+                      operationId,
+                      errors: validationResult.error.issues.map(
+                        (i) => `${i.path.join(".")}: ${i.message}`,
+                      ),
+                      dataPreview: message.data?.substring(0, 100),
+                    });
+                    return; // Skip invalid events rather than passing them to handlers
+                  }
+
+                  const event = validationResult.data as SSEEvent;
 
                   sseLogger.debug("Received SSE event", {
                     operationId,
@@ -344,11 +343,16 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     const dataMatch = actualData.match(/\ndata: (.+)/);
                     if (dataMatch) {
                       actualData = dataMatch[1];
-                      // Try parsing the extracted data
+                      // Try parsing the extracted data with Zod validation
                       try {
-                        const event: SSEEvent = JSON.parse(actualData);
-                        onEvent(event);
-                        return;
+                        const parsedFallback = JSON.parse(actualData);
+                        const fallbackValidation =
+                          SSEEventSchema.safeParse(parsedFallback);
+
+                        if (fallbackValidation.success) {
+                          onEvent(fallbackValidation.data as SSEEvent);
+                          return;
+                        }
                       } catch (_retryError) {
                         // Continue to log the original error
                       }
@@ -400,9 +404,9 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
             const errorMessage =
               error instanceof Error ? error.message : String(error);
 
-            // Check if error is rate limit related
+            // Check if error is rate limit related (HTTP 429)
             if (
-              errorMessage.includes("429") ||
+              (error instanceof ApiError && error.statusCode === 429) ||
               errorMessage.toLowerCase().includes("rate limit")
             ) {
               sseLogger.error(
@@ -416,6 +420,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                 connected: false,
                 retryCount,
                 error: "Rate limit exceeded. Please try again later.",
+                code: SSE_ERROR_CODES.RATE_LIMIT_EXCEEDED,
               });
               break;
             }
@@ -439,6 +444,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               connected: false,
               retryCount,
               error: "Connection lost, retrying...",
+              code: SSE_ERROR_CODES.CONNECTION_LOST,
             });
 
             const delay = Math.min(

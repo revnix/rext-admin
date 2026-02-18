@@ -294,7 +294,7 @@ export function ExportDialog({
             Export Knowledge
           </DialogTitle>
           <DialogDescription>
-            Export knowledge from <strong>{workspace.title}</strong> in your
+            Export knowledge from <strong>{workspace.name}</strong> in your
             preferred format
           </DialogDescription>
         </DialogHeader>

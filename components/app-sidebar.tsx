@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { PERMISSIONS, ROLES } from "@/lib/permissions";
+import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -182,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "User Management",
           url: "/admin/users",
           icon: UserCog,
-          permission: PERMISSIONS.USER_READ,
+          permission: USER_PERMISSIONS.READ,
         },
         {
           title: "Subscriptions",
@@ -206,7 +206,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Roles & Permissions",
           url: "/admin/roles",
           icon: Shield,
-          anyPermission: [PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ],
+          anyPermission: [
+            ADMIN_PERMISSIONS.ROLE_READ,
+            ADMIN_PERMISSIONS.PERMISSION_READ,
+          ],
         },
       ],
     },
@@ -226,20 +229,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         (group) => group.groupLabel !== "Workspace",
       );
 
-  const { isMobile } = useSidebar();
-
   return (
     <Sidebar
       collapsible="icon"
       {...props}
       style={{ "--sidebar-width-icon": "5rem" } as React.CSSProperties}
     >
-      {/* Hide WorkspaceSwitcher on mobile - it's rendered in the page header instead */}
-      {!isMobile && (
-        <SidebarHeader>
-          <WorkspaceSwitcher />
-        </SidebarHeader>
-      )}
+      <SidebarHeader className="hidden md:block">
+        <WorkspaceSwitcher />
+      </SidebarHeader>
 
       <SidebarContent className="flex flex-col overflow-y-auto scrollbar-hide py-4 gap-6">
         {/* Main navigation */}
