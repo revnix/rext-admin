@@ -7,6 +7,7 @@ import type {
 import type { ErrorSeverity } from "@/types/consistent-response";
 import { ApiError } from "@/lib/api-client/core";
 import { safeJsonParse } from "./utils";
+import { sanitizeObject } from "@/lib/sensitive-fields";
 
 /**
  * Default retry configuration for backend requests
@@ -265,25 +266,9 @@ export function sanitizeErrorForLogging(error: BackendError): Omit<
   stackTrace?: string;
   sanitizedContext?: Record<string, unknown>;
 } {
-  // Remove sensitive fields from context
+  // Use recursive sanitization for context
   const sanitizedContext = error.context
-    ? Object.entries(error.context).reduce(
-        (acc, [key, value]) => {
-          // Skip sensitive fields
-          if (
-            key.toLowerCase().includes("password") ||
-            key.toLowerCase().includes("token") ||
-            key.toLowerCase().includes("secret") ||
-            key.toLowerCase().includes("key")
-          ) {
-            acc[key] = "[REDACTED]";
-          } else {
-            acc[key] = value;
-          }
-          return acc;
-        },
-        {} as Record<string, unknown>,
-      )
+    ? (sanitizeObject(error.context) as Record<string, unknown>)
     : undefined;
 
   return {
