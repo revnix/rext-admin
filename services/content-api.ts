@@ -53,7 +53,6 @@ export class ContentApiService {
       offset?: number;
     },
   ): Promise<ContentListResponse> {
-
     const url = buildUrl(`${this.baseUrl}/api/v1/content/${workspaceId}`, {
       status: options?.status,
       limit: options?.limit,
