@@ -8,6 +8,7 @@
  */
 
 import { lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
+import { buildUrl } from "../url-utils";
 
 /**
  * LemonSqueezy configuration type
@@ -151,32 +152,26 @@ export function buildCheckoutUrlWithOptions(
   options: CheckoutOptions = {},
 ): string {
   const baseUrl = buildCheckoutUrl(variantId);
-  const params = new URLSearchParams();
 
-  if (options.embed !== undefined) {
-    params.append("embed", options.embed ? "1" : "0");
-  }
-
-  if (options.dark !== undefined) {
-    params.append("dark", options.dark ? "1" : "0");
-  }
-
-  if (options.logo) {
-    params.append("logo", options.logo);
-  }
-
-  if (options.discount) {
-    params.append("discount", options.discount);
-  }
-
+  // Build custom data params with checkout[custom][key] wrapping for LemonSqueezy
+  const customDataParams: Record<string, string> = {};
   if (options.customData) {
     for (const [key, value] of Object.entries(options.customData)) {
-      params.append(`checkout[custom][${key}]`, value);
+      customDataParams[`checkout[custom][${key}]`] = value;
     }
   }
 
-  const queryString = params.toString();
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  const url = buildUrl(baseUrl, {
+    // Only include embed and dark when explicitly set (not undefined)
+    embed:
+      options.embed !== undefined ? (options.embed ? "1" : "0") : undefined,
+    dark: options.dark !== undefined ? (options.dark ? "1" : "0") : undefined,
+    logo: options.logo,
+    discount: options.discount,
+    ...customDataParams,
+  });
+
+  return url;
 }
 
 /**

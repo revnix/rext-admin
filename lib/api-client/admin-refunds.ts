@@ -6,6 +6,7 @@
  */
 
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -110,7 +111,7 @@ export function createAdminRefundsNamespace(client: ApiClient) {
         params.append("per_page", filters.per_page.toString());
 
       const queryString = params.toString();
-      const url = `/api/v1/admin/subscriptions/refunds${queryString ? `?${queryString}` : ""}`;
+      const url = `${ENDPOINTS.ADMIN_REFUNDS.list}${queryString ? `?${queryString}` : ""}`;
 
       const response = await client.request<
         RefundApiResponse<RefundListResponse>
@@ -128,7 +129,7 @@ export function createAdminRefundsNamespace(client: ApiClient) {
      */
     get: async (refundId: string): Promise<Refund> => {
       const response = await client.request<RefundApiResponse<Refund>>(
-        `/api/v1/admin/subscriptions/refunds/${refundId}`,
+        ENDPOINTS.ADMIN_REFUNDS.get(refundId),
         {
           method: "GET",
         },
@@ -147,7 +148,7 @@ export function createAdminRefundsNamespace(client: ApiClient) {
     ): Promise<RefundCreateResponse> => {
       const response = await client.request<
         RefundApiResponse<RefundCreateResponse>
-      >("/api/v1/admin/subscriptions/refunds/create", {
+      >(ENDPOINTS.ADMIN_REFUNDS.create, {
         method: "POST",
         body: JSON.stringify(data),
       });

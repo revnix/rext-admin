@@ -433,6 +433,43 @@ export type SEORESULT = {
   issues: Issue[];
 };
 
+export type StreamUpdates = Partial<WREXT> & {
+  compute_keyword_difficulty?: {
+    seo_result?: {
+      keyword_difficulty?: {
+        kd: number;
+      };
+    };
+  };
+  generate_content?: {
+    content?: {
+      final_content?: FinalContent;
+    };
+  };
+  calculate_on_page_seo?: {
+    content?: {
+      review?: {
+        on_page_metrics?: SEORESULT;
+      };
+    };
+  };
+  calculate_eeat_trust?: {
+    content?: {
+      review?: {
+        trust_score?: TrustScore;
+        eeat_data?: EEATData;
+      };
+    };
+  };
+  calculate_readability?: {
+    content?: {
+      review?: {
+        readability_metrics?: ReadabilityMetrics;
+      };
+    };
+  };
+} & Record<string, unknown>;
+
 export type AppStep =
   | "keyword"
   | "suggestions"
@@ -492,7 +529,7 @@ export type PageAction =
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_EEAT_DATA"; payload: EEATData }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
-  | { type: "UPDATE_FROM_STREAM"; payload: WREXT }
+  | { type: "UPDATE_FROM_STREAM"; payload: StreamUpdates }
   | { type: "RESET_FOR_REJECT" }
   | { type: "SUBMIT_REJECT_REASON" }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }

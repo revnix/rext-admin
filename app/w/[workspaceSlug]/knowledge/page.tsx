@@ -76,7 +76,7 @@ export default function WorkspaceKnowledgePage() {
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Knowledge" },
@@ -198,7 +198,7 @@ export default function WorkspaceKnowledgePage() {
                 <CardTitle>Knowledge Bases</CardTitle>
                 <CardDescription>
                   {totalCount} {totalCount === 1 ? "base" : "bases"} in{" "}
-                  {workspace?.title || "this workspace"}
+                  {workspace?.name || "this workspace"}
                 </CardDescription>
               </CardHeader>
               <CardContent>

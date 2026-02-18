@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-import { PERMISSIONS } from "@/lib/permissions";
+import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { PermissionWithRoles, RoleWithPermissions } from "@/types/role";
 
@@ -330,7 +330,10 @@ export default function AdminRolesPage() {
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
-        anyPermission={[PERMISSIONS.ROLE_READ, PERMISSIONS.PERMISSION_READ]}
+        anyPermission={[
+          ADMIN_PERMISSIONS.ROLE_READ,
+          ADMIN_PERMISSIONS.PERMISSION_READ,
+        ]}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
@@ -453,7 +456,7 @@ export default function AdminRolesPage() {
                         <History className="h-4 w-4 mr-2" />
                         Audit Log
                       </Button>
-                      <CanAccess permission={PERMISSIONS.ROLE_CREATE}>
+                      <CanAccess permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
                         <Button
                           variant="outline"
                           onClick={() => setBulkAssignOpen(true)}
@@ -462,7 +465,7 @@ export default function AdminRolesPage() {
                           Bulk Assign
                         </Button>
                       </CanAccess>
-                      <CanAccess permission={PERMISSIONS.ROLE_CREATE}>
+                      <CanAccess permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
                         <Button onClick={() => setCreateRoleOpen(true)}>
                           <Plus className="h-4 w-4 mr-2" />
                           Create Role
@@ -500,7 +503,7 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
-                    <CanAccess permission={PERMISSIONS.PERMISSION_CREATE}>
+                    <CanAccess permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}>
                       <Button onClick={() => setCreatePermissionOpen(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         Create Permission

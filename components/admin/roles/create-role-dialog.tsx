@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { adminQueries } from "@/lib/query-keys";
 import type { Permission } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
 
@@ -64,7 +65,7 @@ export function CreateRoleDialog({
     },
     onSuccess: () => {
       toast.success("Role created successfully");
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
       handleClose();
     },
     onError: (error: Error) => {

@@ -2,6 +2,9 @@
  * Workspaces API Namespace
  *
  * Handles workspace CRUD operations and brand voice
+ *
+ * @note Migrated to use centralized ENDPOINTS registry.
+ * @see lib/api-client/endpoints.ts for path conventions.
  */
 
 import type {
@@ -13,6 +16,7 @@ import type {
 } from "@/types/workspace";
 import type { WorkspaceStats } from "@/types/workspace-stats";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export function createWorkspacesNamespace(client: ApiClient) {
   return {
@@ -20,7 +24,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * List all workspaces
      */
     list: async () => {
-      return client.request<WorkspaceListResponse>("/api/v1/workspaces/all", {
+      return client.request<WorkspaceListResponse>(ENDPOINTS.WORKSPACES.BASE_ALL, {
         method: "GET",
       });
     },
@@ -30,7 +34,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      */
     get: async (workspaceId: string) => {
       return client.request<WorkspaceResponse>(
-        `/api/v1/workspaces/${workspaceId}`,
+        ENDPOINTS.WORKSPACES.byId(workspaceId),
         {
           method: "GET",
         },
@@ -42,7 +46,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      */
     getBySlug: async (slug: string) => {
       return client.request<WorkspaceResponse>(
-        `/api/v1/workspaces/slug/${slug}`,
+        ENDPOINTS.WORKSPACES.bySlug(slug),
         {
           method: "GET",
         },
@@ -52,18 +56,15 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Create workspace
      */
-    create: async (data: { title: string; timezone?: string; url: string }) => {
-      // Backend expects 'name' instead of 'title'
-      const payload = {
-        name: data.title,
-        timezone: data.timezone,
-        url: data.url,
-      };
-      return client.request<CreateWorkspaceResponse>("/api/v1/workspaces/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    create: async (data: { name: string; timezone?: string; url: string }) => {
+      return client.request<CreateWorkspaceResponse>(
+        ENDPOINTS.WORKSPACES.BASE,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
     },
 
     /**
@@ -72,23 +73,17 @@ export function createWorkspacesNamespace(client: ApiClient) {
     update: async (
       workspaceId: string,
       data: {
-        title?: string;
+        name?: string;
         timezone?: string;
         url?: string;
       },
     ) => {
-      // Backend expects 'name' instead of 'title'
-      const payload: Record<string, unknown> = {};
-      if (data.title !== undefined) payload.name = data.title;
-      if (data.timezone !== undefined) payload.timezone = data.timezone;
-      if (data.url !== undefined) payload.url = data.url;
-
       return client.request<WorkspaceResponse>(
-        `/api/v1/workspaces/${workspaceId}`,
+        ENDPOINTS.WORKSPACES.byId(workspaceId),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(data),
         },
       );
     },
@@ -97,7 +92,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Delete workspace
      */
     delete: async (workspaceId: string) => {
-      return client.request<void>(`/api/v1/workspaces/${workspaceId}`, {
+      return client.request<void>(ENDPOINTS.WORKSPACES.byId(workspaceId), {
         method: "DELETE",
       });
     },
@@ -109,7 +104,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
     refreshBrandVoice: async (workspaceId: string) => {
       return client.request<{
         operation_id: string;
-      }>(`/api/v1/workspaces/${workspaceId}/brand-voice/refresh`, {
+      }>(ENDPOINTS.WORKSPACES.refreshBrandVoice(workspaceId), {
         method: "POST",
       });
     },
@@ -143,7 +138,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
 
       return client.request<{
         brand_voice: BrandVoice;
-      }>(`/api/v1/workspaces/${workspaceId}/brand-voice`, {
+      }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -162,7 +157,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         workspace_slug: string;
         user_role: string; // Simplified: single role name instead of array
         permissions: string[]; // Dot notation: "topic.create", "content.read", etc.
-      }>(`/api/v1/workspaces/${workspaceId}/permissions/me`, {
+      }>(ENDPOINTS.WORKSPACES.permissions.me(workspaceId), {
         method: "GET",
       });
     },
@@ -176,7 +171,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         permission: string;
         workspace_id: string;
       }>(
-        `/api/v1/workspaces/${workspaceId}/permissions/check?permission=${permission}`,
+        `${ENDPOINTS.WORKSPACES.permissions.check(workspaceId)}?permission=${permission}`,
         {
           method: "GET",
         },
@@ -194,7 +189,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         workspace_slug: string;
         user_role: string;
         permissions: string[];
-      }>(`/api/v1/workspaces/${workspaceId}/permissions/refresh`, {
+      }>(ENDPOINTS.WORKSPACES.permissions.refresh(workspaceId), {
         method: "POST",
       });
     },
@@ -213,7 +208,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
           workspace_id: string | null;
         }>;
         permissions: string[];
-      }>(`/api/v1/workspaces/${workspaceId}/members/${userId}/permissions`, {
+      }>(ENDPOINTS.WORKSPACES.permissions.member(workspaceId, userId), {
         method: "GET",
       });
     },
@@ -226,7 +221,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      */
     getStats: async (workspaceId: string) => {
       return client.request<WorkspaceStats>(
-        `/api/v1/workspaces/${workspaceId}/stats`,
+        ENDPOINTS.WORKSPACES.stats(workspaceId),
         {
           method: "GET",
         },
@@ -252,7 +247,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
           updated_at: string;
         }>;
         total_count: number;
-      }>("/api/v1/workspaces/available-roles", {
+      }>(ENDPOINTS.WORKSPACES.availableRoles, {
         method: "GET",
       });
     },

@@ -10,7 +10,8 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
-import { apiClient, ApiError } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
@@ -93,21 +94,13 @@ export function WorkspaceProvider({
     }
   }, [permissionsError, workspaceId]);
 
-  // Query workspace data
+  // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      // Use appropriate method based on identifier type
-      return isUuid
-        ? apiClient.workspaces.get(workspaceId)
-        : apiClient.workspaces.getBySlug(workspaceId);
-    },
-    enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...workspaceQueries.detail(workspaceId),
     retry: (failureCount, error) => {
       // Don't retry for 4xx client errors
       if (
@@ -137,7 +130,7 @@ export function WorkspaceProvider({
       const preliminaryWorkspace: Workspace = {
         id: "", // Will be filled when API returns
         slug: workspaceId, // From URL
-        title: workspaceId, // Use slug as title temporarily
+        name: workspaceId, // Use slug as name temporarily
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         url: "",
         created_at: "",
@@ -162,20 +155,21 @@ export function WorkspaceProvider({
   useEffect(() => {
     if (error && !isLoading) {
       // Check if error is a permission/auth error or not found that warrants redirect
-      let isAuthError = false;
-      let isNotFoundError = false;
+      let shouldRedirect = false;
 
       if (error instanceof ApiError) {
-        isAuthError = error.statusCode === 401 || error.statusCode === 403;
-        isNotFoundError = error.statusCode === 404;
+        shouldRedirect =
+          error.statusCode === 401 ||
+          error.statusCode === 403 ||
+          error.statusCode === 404;
       }
 
-      if (isAuthError || isNotFoundError) {
+      if (shouldRedirect) {
         log.error(
           "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
           error,
         );
-        router.push("/workspaces");
+        router.push("/w");
       } else {
         // For other errors (network, temporary issues), just log but don't redirect
         // This prevents unwanted redirects during form interactions
@@ -233,7 +227,7 @@ export function WorkspaceProvider({
  *   if (isLoading) return <div>Loading workspace details...</div>;
  *
  *
- *   return <div>{workspace?.title}</div>;
+ *   return <div>{workspace?.name}</div>;
  * }
  * ```
  */
@@ -264,7 +258,7 @@ export function useWorkspace(): WorkspaceContextType {
  *     return <div>No workspace context</div>;
  *   }
  *
- *   return <div>{workspace.workspace?.title}</div>;
+ *   return <div>{workspace.workspace?.name}</div>;
  * }
  * ```
  */

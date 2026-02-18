@@ -186,7 +186,7 @@ export default function AcceptInvitationPage() {
             </div>
             <CardDescription>
               You've successfully joined{" "}
-              {invitation?.workspace.title || "the workspace"}
+              {invitation?.workspace.name || "the workspace"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -201,7 +201,7 @@ export default function AcceptInvitationPage() {
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>
                   <span className="font-medium">Workspace:</span>{" "}
-                  {invitation.workspace.title}
+                  {invitation.workspace.name}
                 </p>
                 <p>
                   <span className="font-medium">Your role:</span>{" "}
@@ -227,7 +227,7 @@ export default function AcceptInvitationPage() {
             </div>
             <CardDescription>
               Please wait while we add you to{" "}
-              {invitation?.workspace.title || "the workspace"}
+              {invitation?.workspace.name || "the workspace"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -250,7 +250,7 @@ export default function AcceptInvitationPage() {
           <CardTitle>Join Workspace</CardTitle>
           <CardDescription>
             Accept your invitation to join{" "}
-            {invitation?.workspace.title || "the workspace"}
+            {invitation?.workspace.name || "the workspace"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -258,7 +258,7 @@ export default function AcceptInvitationPage() {
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2 text-sm">
               <p>
                 <span className="font-medium">Workspace:</span>{" "}
-                {invitation.workspace.title}
+                {invitation.workspace.name}
               </p>
               <p>
                 <span className="font-medium">Invited by:</span>{" "}

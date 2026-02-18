@@ -57,6 +57,35 @@ export function getPrimaryRole(data: {
   );
 }
 
+// Debounced redirect state to prevent multiple simultaneous 401 redirects
+let isRedirectingToLogin = false;
+
+/**
+ * Debounced redirect to login page.
+ * Ensures only one redirect occurs even when multiple parallel requests return 401.
+ */
+function redirectToLogin(): void {
+  if (isRedirectingToLogin) return;
+  isRedirectingToLogin = true;
+
+  log.error("[AuthJS] Session expired, redirecting to login");
+
+  // Clear the auth headers cache immediately
+  authHeadersCache = null;
+
+  // Use setTimeout(0) to batch multiple 401 responses in the same tick
+  setTimeout(() => {
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname + window.location.search;
+      const redirectParam =
+        currentPath !== "/login" && currentPath !== "/"
+          ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
+          : "?error=SessionExpired";
+      window.location.href = `/login${redirectParam}`;
+    }
+  }, 0);
+}
+
 /**
  * Get authentication headers for API requests
  * Works in both client and server components
@@ -158,13 +187,31 @@ export async function authenticatedFetch(
 
   // Handle 401 Unauthorized - session expired
   if (response.status === 401) {
-    log.error("[AuthJS] Session expired, redirecting to login");
-    // Redirect to login
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
+    redirectToLogin();
     throw new Error("Session expired");
   }
 
   return response;
+}
+
+/**
+ * Clear the auth headers cache
+ * Useful during logout to ensure fresh auth state
+ */
+export function clearAuthHeadersCache(): void {
+  authHeadersCache = null;
+  log.debug("[AuthJS] Auth headers cache cleared");
+}
+
+/**
+ * Reset any auth redirect state
+ * Clears stored redirect URLs from session/local storage
+ */
+export function resetAuthRedirectState(): void {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("auth_redirect_url");
+    sessionStorage.removeItem("pending_invitation_token");
+    log.debug("[AuthJS] Auth redirect state reset");
+    isRedirectingToLogin = false;
+  }
 }

@@ -102,11 +102,9 @@ export function WorkspaceWelcomeModal({
       >
         {/* Accessible title and description */}
         <VisuallyHidden>
-          <DialogTitle>
-            Welcome to {workspace.title || workspace.name}
-          </DialogTitle>
+          <DialogTitle>Welcome to {workspace.name || "Workspace"}</DialogTitle>
           <DialogDescription>
-            You've successfully joined {workspace.title || workspace.name} as{" "}
+            You've successfully joined {workspace.name || "Workspace"} as{" "}
             {roleName}
           </DialogDescription>
         </VisuallyHidden>
@@ -140,7 +138,7 @@ export function WorkspaceWelcomeModal({
             </div>
             <div>
               <h2 className="text-3xl font-bold mb-2">
-                Welcome to {workspace.title || workspace.name}!
+                Welcome to {workspace.name || "Workspace"}!
               </h2>
               <p className="text-muted-foreground text-lg">
                 You've successfully joined the workspace

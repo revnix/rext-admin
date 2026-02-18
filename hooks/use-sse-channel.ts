@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
-import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
+import {
+  type SSEConnectionStatus,
+  type SSEEvent,
+  SSE_ERROR_CODES,
+} from "@/types/sse";
 import { fetchNotifications } from "@/services/notification-api";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
@@ -68,47 +72,67 @@ export function useSSEChannel(
   }, []);
 
   const handleError = useCallback(
-    (errorMessage?: string) => {
-      if (!errorMessage) {
+    (errorMessage?: string, code?: string) => {
+      if (!errorMessage && !code) {
         return;
       }
+
       // Don't show error for "Operation already completed" messages
-      if (errorMessage.includes("already completed")) {
+      if (
+        code === SSE_ERROR_CODES.OPERATION_COMPLETED ||
+        errorMessage?.includes("already completed")
+      ) {
         sseChannelLogger.info("Operation already completed", {
           operationId: operationIdRef.current,
         });
         return;
       }
+
       // Skip connection retry notifications
-      if (errorMessage.includes("Connection lost, retrying")) {
+      if (
+        code === SSE_ERROR_CODES.CONNECTION_LOST ||
+        errorMessage?.includes("Connection lost, retrying")
+      ) {
         sseChannelLogger.debug("Skipping connection retry notification", {
           operationId: operationIdRef.current,
           errorMessage,
         });
         return;
       }
+
       // Skip "Retrying..." notifications
-      if (errorMessage.includes("Retrying...")) {
+      if (
+        code === SSE_ERROR_CODES.RETRYING ||
+        errorMessage?.includes("Retrying...")
+      ) {
         sseChannelLogger.debug("Skipping retry notification", {
           operationId: operationIdRef.current,
           errorMessage,
         });
         return;
       }
+
       // Skip "SSE connection established" notifications
-      if (errorMessage.includes("SSE connection established")) {
+      if (
+        code === SSE_ERROR_CODES.CONNECTION_ESTABLISHED ||
+        errorMessage?.includes("SSE connection established")
+      ) {
         sseChannelLogger.debug("Skipping connection established notification", {
           operationId: operationIdRef.current,
           errorMessage,
         });
         return;
       }
+
       fetchNotifications();
       sseChannelLogger.error("SSE channel error", {
         errorMessage,
         operationId: operationIdRef.current,
+        code,
       });
-      onErrorRef.current?.(errorMessage);
+      if (errorMessage) {
+        onErrorRef.current?.(errorMessage);
+      }
     },
     [], // No dependencies - uses ref
   );
@@ -161,8 +185,8 @@ export function useSSEChannel(
       });
       setStatus(newStatus);
 
-      if (newStatus.error) {
-        handleError(newStatus.error);
+      if (newStatus.error || newStatus.code) {
+        handleError(newStatus.error, newStatus.code);
       }
     },
     [handleError], // Only depends on handleError which is stable
