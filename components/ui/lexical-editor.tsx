@@ -37,7 +37,7 @@ import {
   $isLinkNode,
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   $getSelection,
   $isRangeSelection,
@@ -91,9 +91,9 @@ const theme = {
     ol: "list-decimal ml-4 mb-2",
     listitem: "ml-1",
   },
-  quote: "border-l-4 border-gray-300 pl-4 italic mb-2",
-  code: "bg-gray-100 p-1 rounded font-mono text-sm",
-  link: "text-blue-500 hover:underline cursor-pointer",
+  quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
+  code: "bg-muted p-1 rounded font-mono text-sm",
+  link: "text-primary hover:underline cursor-pointer",
   text: {
     bold: "font-bold",
     italic: "italic",
@@ -122,6 +122,36 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+const ToolbarButton = ({
+  active,
+  onClick,
+  children,
+  title,
+  disabled = false,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  title: string;
+  disabled?: boolean;
+}) => (
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      onClick();
+    }}
+    disabled={disabled}
+    className={cn(
+      "p-2 rounded hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+      active ? "bg-muted text-foreground" : "text-muted-foreground",
+    )}
+    title={title}
+    type="button"
+  >
+    {children}
+  </button>
+);
 
 function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -309,38 +339,8 @@ function ToolbarPlugin() {
     }
   };
 
-  const ToolbarButton = ({
-    active,
-    onClick,
-    children,
-    title,
-    disabled = false,
-  }: {
-    active: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-    title: string;
-    disabled?: boolean;
-  }) => (
-    <button
-      onClick={(e) => {
-        e.preventDefault();
-        onClick();
-      }}
-      disabled={disabled}
-      className={cn(
-        "p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-        active ? "bg-gray-200 text-black" : "text-gray-600",
-      )}
-      title={title}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-
   return (
-    <div className="flex items-center gap-1 border-b p-2 mb-2 sticky top-0 bg-white z-10 flex-wrap">
+    <div className="flex items-center gap-1 border-b border-border p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex-wrap">
       <ToolbarButton
         active={false}
         onClick={() => {
@@ -571,28 +571,31 @@ export default function LexicalEditor({
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
 
-  // We use a state to ensure the initialConfig is stable if we were using dynamic values,
-  // but here it's derived from props once.
-
-  useEffect(() => {}, []);
-
-  const initialConfig = {
-    namespace: "my-editor",
-    theme,
-    nodes: NODES,
-    readOnly: readOnly,
-    onError: (_error: Error) => {},
-    editorState: (editor: unknown) => {
-      // Convert initial markdown to editor state
-      (editor as { update: (fn: () => void) => void }).update(() => {
-        if (initialValue) {
-          try {
-            $convertFromMarkdownString(initialValue, TRANSFORMERS);
-          } catch (_e) {}
-        }
-      });
-    },
-  };
+  // We use useMemo to ensure the initialConfig is stable.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialValue excluded to prevent re-creating editor state
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "my-editor",
+      theme,
+      nodes: NODES,
+      readOnly: readOnly,
+      onError: (error: Error) => {
+        // biome-ignore lint/suspicious/noConsole: Lexical editor error handler
+        console.error(error);
+      },
+      editorState: (editor: unknown) => {
+        // Convert initial markdown to editor state
+        (editor as { update: (fn: () => void) => void }).update(() => {
+          if (initialValue) {
+            try {
+              $convertFromMarkdownString(initialValue, TRANSFORMERS);
+            } catch (_e) {}
+          }
+        });
+      },
+    }),
+    [readOnly],
+  );
 
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {
@@ -629,10 +632,10 @@ export default function LexicalEditor({
         />
         <div
           className={cn(
-            "border rounded-md relative min-h-[200px] bg-white text-black overflow-hidden flex flex-col",
+            "border rounded-md relative min-h-[200px] bg-background text-foreground overflow-hidden flex flex-col",
             readOnly
               ? "border-none shadow-none bg-transparent"
-              : "border-slate-200 shadow-sm",
+              : "border-border shadow-sm",
           )}
         >
           {!readOnly && <ToolbarPlugin />}

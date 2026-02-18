@@ -1,4 +1,5 @@
 import { log } from "@/lib/logger";
+import { safeJsonParse } from "@/lib/utils";
 
 /**
  * Draft Management System
@@ -144,7 +145,7 @@ export class LocalStorageDraftStorage implements DraftStorage {
       const stored = localStorage.getItem(this.storageKey);
       if (!stored) return [];
 
-      const drafts = JSON.parse(stored) as Draft[];
+      const drafts = safeJsonParse<Draft[]>(stored, []) ?? [];
 
       // Validate draft format and remove corrupted entries
       return drafts.filter((draft) => {

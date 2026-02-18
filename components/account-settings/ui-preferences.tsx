@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/providers/theme-provider";
 import { useTooltips } from "@/providers/tooltip-provider";
+import { safeJsonParse } from "@/lib/utils";
 
 interface AccessibilityPreferences {
   reduceMotion: boolean;
@@ -35,10 +36,9 @@ export function UIPreferences() {
   useEffect(() => {
     const saved = localStorage.getItem(ACCESSIBILITY_STORAGE_KEY);
     if (saved) {
-      try {
-        setAccessibility(JSON.parse(saved));
-      } catch (_e) {
-        // Ignore parse errors
+      const data = safeJsonParse<AccessibilityPreferences>(saved);
+      if (data) {
+        setAccessibility(data);
       }
     }
   }, []);

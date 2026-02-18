@@ -10,7 +10,7 @@ import type {
  * Default workspace form data
  */
 const initialWorkspaceFormData: WorkspaceFormData = {
-  title: "",
+  name: "",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   url: "",
 };
@@ -44,7 +44,7 @@ export const useWorkspaceFormStore = create<WorkspaceFormStoreState>()(
             mode,
             data: workspace
               ? {
-                  title: getWorkspaceDisplayTitle(workspace),
+                  name: getWorkspaceDisplayTitle(workspace),
                   timezone:
                     workspace.timezone ||
                     Intl.DateTimeFormat().resolvedOptions().timeZone,

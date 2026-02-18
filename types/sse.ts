@@ -5,13 +5,16 @@
  * SSE service (see `wrext-backend/src/services/sse_service.py`).
  */
 
-export type SSEEventStatus =
-  | "connected"
-  | "started"
-  | "progress"
-  | "completed"
-  | "failed"
-  | "info";
+export const SSE_EVENT_STATUSES = [
+  "connected",
+  "started",
+  "progress",
+  "completed",
+  "failed",
+  "info",
+] as const;
+
+export type SSEEventStatus = (typeof SSE_EVENT_STATUSES)[number];
 
 export interface SSEEvent {
   id: string;
@@ -25,10 +28,19 @@ export interface SSEEvent {
   timestamp: string;
 }
 
+export const SSE_ERROR_CODES = {
+  OPERATION_COMPLETED: "OPERATION_COMPLETED",
+  CONNECTION_LOST: "CONNECTION_LOST",
+  RETRYING: "RETRYING",
+  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
+  CONNECTION_ESTABLISHED: "CONNECTION_ESTABLISHED",
+} as const;
+
 export interface SSEConnectionStatus {
   connected: boolean;
   retryCount: number;
   error?: string;
+  code?: keyof typeof SSE_ERROR_CODES | string;
 }
 
 export type OperationNotificationType =

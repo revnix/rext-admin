@@ -10,6 +10,8 @@ import type {
 } from "@/schemas/notification-schemas";
 import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
+import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
 // NOTIFICATIONS
@@ -22,7 +24,7 @@ export function createNotificationsNamespace(client: ApiClient) {
      */
     getPreferences: async () => {
       return client.request<NotificationPreferencesApiResponse>(
-        "/api/v1/user/preferences/notifications",
+        ENDPOINTS.SETTINGS.notifications.getPreferences,
         {
           method: "GET",
         },
@@ -36,7 +38,7 @@ export function createNotificationsNamespace(client: ApiClient) {
       preferences: Partial<NotificationPreferences>,
     ) => {
       return client.request<NotificationPreferencesApiResponse>(
-        "/api/v1/user/preferences/notifications",
+        ENDPOINTS.SETTINGS.notifications.updatePreferences,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -68,7 +70,7 @@ export function createSessionsNamespace(client: ApiClient) {
           created_at: string;
           is_current: boolean;
         }>;
-      }>("/api/v1/user/sessions", {
+      }>(ENDPOINTS.SETTINGS.sessions.list, {
         method: "GET",
       });
     },
@@ -80,7 +82,7 @@ export function createSessionsNamespace(client: ApiClient) {
       return client.request<{
         success: boolean;
         message: string;
-      }>(`/api/v1/user/sessions/${sessionId}`, {
+      }>(ENDPOINTS.SETTINGS.sessions.revoke(sessionId), {
         method: "DELETE",
       });
     },
@@ -93,7 +95,7 @@ export function createSessionsNamespace(client: ApiClient) {
         success: boolean;
         message: string;
         revoked_count: number;
-      }>("/api/v1/user/sessions", {
+      }>(ENDPOINTS.SETTINGS.sessions.revokeAll, {
         method: "DELETE",
       });
     },
@@ -112,7 +114,7 @@ export function createSecurityNamespace(client: ApiClient) {
      * Get security stats for current user
      */
     getStats: async () => {
-      return client.request<SecurityStats>("/api/v1/user/security/stats", {
+      return client.request<SecurityStats>(ENDPOINTS.SETTINGS.security.stats, {
         method: "GET",
       });
     },
@@ -121,12 +123,10 @@ export function createSecurityNamespace(client: ApiClient) {
      * Get login history for current user
      */
     getLoginHistory: async (options?: { limit?: number; offset?: number }) => {
-      const params = new URLSearchParams();
-      if (options?.limit) params.append("limit", options.limit.toString());
-      if (options?.offset) params.append("offset", options.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `/api/v1/user/security/login-history${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.SETTINGS.security.loginHistory, {
+        limit: options?.limit,
+        offset: options?.offset,
+      });
 
       return client.request<{
         history: Array<{
@@ -151,7 +151,7 @@ export function createSecurityNamespace(client: ApiClient) {
       return client.request<{
         user_id: string;
         active_sessions_count: number;
-      }>("/api/v1/user/security/active-sessions-count", {
+      }>(ENDPOINTS.SETTINGS.security.activeSessionsCount, {
         method: "GET",
       });
     },
@@ -180,9 +180,12 @@ export function createPreferencesNamespace(client: ApiClient) {
      * Get user preferences
      */
     get: async () => {
-      return client.request<UserPreferences>("/api/v1/user/preferences", {
-        method: "GET",
-      });
+      return client.request<UserPreferences>(
+        ENDPOINTS.SETTINGS.preferences.get,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -195,11 +198,14 @@ export function createPreferencesNamespace(client: ApiClient) {
       items_per_page?: number;
       sidebar_collapsed?: boolean;
     }) => {
-      return client.request<UserPreferences>("/api/v1/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
-      });
+      return client.request<UserPreferences>(
+        ENDPOINTS.SETTINGS.preferences.update,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(preferences),
+        },
+      );
     },
   };
 }

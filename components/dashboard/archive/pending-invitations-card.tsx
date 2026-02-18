@@ -64,11 +64,11 @@ export function PendingInvitationsCard() {
       await acceptInvitation(invitation.token);
 
       toast.success("Invitation Accepted!", {
-        description: `You've successfully joined ${invitation.workspace.name}`,
+        description: `You've successfully joined ${invitation.workspace_name}`,
       });
 
-      // Redirect to the newly joined workspace
-      router.push(`/w/${invitation.workspace.slug}`);
+      // Note: We don't have workspace slug in this response, so redirect to dashboard
+      router.refresh();
     } catch (error) {
       toast.error("Failed to Accept Invitation", {
         description:
@@ -87,7 +87,7 @@ export function PendingInvitationsCard() {
       await declineInvitation(invitation.id);
 
       toast.success("Invitation Declined", {
-        description: `You've declined the invitation to ${invitation.workspace.name}`,
+        description: `You've declined the invitation to ${invitation.workspace_name}`,
       });
     } catch (error) {
       toast.error("Failed to Decline Invitation", {
@@ -163,10 +163,12 @@ export function PendingInvitationsCard() {
                       <Building2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-foreground truncate">
-                          {invitation.workspace.name}
+                          {invitation.workspace_name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {invitation.invited_by.name}
+                          {typeof invitation.invited_by === "string"
+                            ? invitation.invited_by
+                            : invitation.invited_by.name}
                         </p>
                       </div>
                     </div>
@@ -177,7 +179,7 @@ export function PendingInvitationsCard() {
                       <span className="text-muted-foreground">
                         Role:{" "}
                         <span className="font-medium text-foreground">
-                          {invitation.role.display_name}
+                          {invitation.role_name}
                         </span>
                       </span>
                     </div>

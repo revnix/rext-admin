@@ -1,33 +1,24 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import type { Workspace } from "@/types/workspace";
+import type { DashboardStats } from "@/lib/api-client/dashboard";
 
 interface MetricsCardsProps {
-  workspace: Workspace | null;
-  workspacesCount: number;
+  dashboardStats?: DashboardStats;
+  isLoading?: boolean;
 }
 
 export function MetricsCards({
-  workspace,
-  workspacesCount,
+  dashboardStats,
+  isLoading: _isLoading = false,
 }: MetricsCardsProps) {
-  // Mock data for metrics not available in backend yet or to be calculated
-  // We use existing data where possible
-  const totalWorkspaces = workspacesCount || 0;
-  const totalPersonas = 7; // Mock for now, will connect to persona list length if available
-  const totalArticles = workspace?.content_count ?? 24;
-  const publishedArticles = 12; // Mock
-  const totalMembers =
-    workspace?.members_count ?? workspace?.team_metrics?.total_members ?? 4;
+  // Use real API data from dashboard stats
+  const totalPersonas = dashboardStats?.personas ?? 0;
+  const totalArticles = dashboardStats?.content.total ?? 0;
+  const publishedArticles = dashboardStats?.content.published ?? 0;
+  const totalMembers = dashboardStats?.members ?? 0;
 
   const metrics = [
-    {
-      label: "Total Workspaces",
-      value: totalWorkspaces,
-      change: "+2.5%",
-      isPositive: true,
-    },
     {
       label: "Total Personas",
       value: totalPersonas,
@@ -47,7 +38,6 @@ export function MetricsCards({
       isPositive: true,
     },
     {
-      // Added 5th card as requested
       label: "Total Members",
       value: totalMembers,
       change: "+1.2%",
@@ -56,7 +46,7 @@ export function MetricsCards({
   ];
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => (
         <Card key={metric.label}>
           <CardContent className="p-6">
@@ -69,11 +59,6 @@ export function MetricsCards({
               <div className="flex items-end justify-between">
                 <span className="text-2xl font-bold text-foreground">
                   {metric.value}
-                </span>
-                <span
-                  className={`text-xs font-medium px-2 py-1 rounded-full ${metric.isPositive ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}
-                >
-                  {metric.change}
                 </span>
               </div>
             </div>
