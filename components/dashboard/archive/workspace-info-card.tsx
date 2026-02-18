@@ -62,7 +62,7 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Current Workspace
             </CardTitle>
-            <h3 className="text-lg font-semibold mt-1">{workspace.title}</h3>
+            <h3 className="text-lg font-semibold mt-1">{workspace.name}</h3>
           </div>
           <Building2 className="h-5 w-5 text-muted-foreground" />
         </div>

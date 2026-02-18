@@ -159,7 +159,7 @@ export function SignupForm({
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner
-          workspaceName={invitation.workspace.title}
+          workspaceName={invitation.workspace.name}
           workspaceSlug={invitation.workspace.slug}
           inviterName={
             invitation.invited_by.display_name ||

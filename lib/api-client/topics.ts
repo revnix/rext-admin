@@ -1,7 +1,15 @@
 /**
  * Topics API Namespace
  *
- * Handles topic generation, CRUD operations, and management
+ * Handles topic creation, generation, and management for workspace content.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ * - Uses singular "topic" instead of plural "topics" in path: `/api/v1/topic/*`
+ * - Uses verb-based paths (get-topics, save-topic, update-topic, delete-topic) instead of RESTful resources
+ * - Uses query parameter `workspace_id` instead of path-based workspace scoping
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type { GeneratedTopic } from "@/types/topic-builder";

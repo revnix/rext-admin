@@ -35,6 +35,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
+import { preferencesQueries } from "@/lib/query-keys";
 
 const preferencesSchema = z.object({
   date_format: z.enum(["iso", "us", "eu", "relative"]),
@@ -59,9 +60,8 @@ export function DisplayPreferencesSection() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["preferences"],
+    ...preferencesQueries.detail(),
     throwOnError: true,
-    queryFn: () => apiClient.preferences.get(),
   });
 
   // Initialize form with default values
@@ -90,7 +90,9 @@ export function DisplayPreferencesSection() {
     mutationFn: (data: PreferencesFormValues) =>
       apiClient.preferences.update(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preferences"] });
+      queryClient.invalidateQueries({
+        queryKey: preferencesQueries.detail().queryKey,
+      });
       toast.success("Preferences saved successfully");
     },
     onError: (error: Error) => {

@@ -220,6 +220,10 @@ export const ADMIN_PERMISSIONS = {
   ROLE_UPDATE: "role.update",
   ROLE_DELETE: "role.delete",
   ROLE_MANAGE_PERMISSIONS: "role.manage_permissions",
+  PERMISSION_CREATE: "permission.create",
+  PERMISSION_READ: "permission.read",
+  PERMISSION_UPDATE: "permission.update",
+  PERMISSION_DELETE: "permission.delete",
   AUDIT_READ: "audit.read",
   AUDIT_EXPORT: "audit.export",
   ADMIN_INVITE: "admin.invite",
@@ -229,33 +233,6 @@ export const ADMIN_PERMISSIONS = {
 export const SUPPORT_PERMISSIONS = {
   VIEW_WORKSPACE: "support.view_workspace",
   VIEW_BILLING: "support.view_billing",
-} as const;
-
-// Legacy permission constants (deprecated, use resource-specific ones above)
-export const PERMISSIONS = {
-  // User management
-  USER_CREATE: "user.create",
-  USER_READ: "user.read",
-  USER_UPDATE: "user.update",
-  USER_DELETE: "user.delete",
-
-  // Role management
-  ROLE_CREATE: "role.create",
-  ROLE_READ: "role.read",
-  ROLE_UPDATE: "role.update",
-  ROLE_DELETE: "role.delete",
-
-  // Permission management
-  PERMISSION_CREATE: "permission.create",
-  PERMISSION_READ: "permission.read",
-  PERMISSION_UPDATE: "permission.update",
-  PERMISSION_DELETE: "permission.delete",
-
-  // Workspace management
-  WORKSPACE_CREATE: "workspace.create",
-  WORKSPACE_READ: "workspace.read",
-  WORKSPACE_UPDATE: "workspace.update",
-  WORKSPACE_DELETE: "workspace.delete",
 } as const;
 
 /**

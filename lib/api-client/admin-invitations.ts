@@ -3,6 +3,20 @@
  *
  * Handles platform-level admin invitation operations.
  * Only accessible to super_admin users.
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ *
+ * ### Path Pattern Mismatch:
+ * - CRUD operations use: `/api/v1/admin/platform/invitations`
+ * - Token operations use: `/api/v1/admin-invitations/{token}/*` (different path structure)
+ * - Expected pattern: Consistent use of `/api/v1/admin/invitations` throughout
+ *
+ * ### Root Cause:
+ * Token-based endpoints use a non-standard CRUD separator (hyphenated `/admin-invitations/`)
+ * while main CRUD endpoints use path-based pattern (`/admin/platform/invitations`).
+ *
+ * These will be addressed in a backend API v2 migration.
+ * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
 import type {
@@ -12,6 +26,8 @@ import type {
   ValidateAdminInvitationResponse,
 } from "@/types/admin-invitation";
 import type { ApiClient } from "./core";
+import { buildUrl } from "../url-utils";
+import { ENDPOINTS } from "./endpoints";
 
 export function createAdminInvitationsNamespace(client: ApiClient) {
   return {
@@ -20,7 +36,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     create: async (data: CreateAdminInvitationRequest) => {
       return client.request<AdminInvitation>(
-        "/api/v1/admin/platform/invitations",
+        ENDPOINTS.ADMIN_INVITATIONS.create,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -37,13 +53,11 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
-      const params = new URLSearchParams();
-      if (filters?.status) params.append("status", filters.status);
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.offset) params.append("offset", filters.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `/api/v1/admin/platform/invitations${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.ADMIN_INVITATIONS.list, {
+        status: filters?.status,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
 
       return client.request<AdminInvitationListResponse>(endpoint, {
         method: "GET",
@@ -55,7 +69,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     get: async (invitationId: string) => {
       return client.request<AdminInvitation>(
-        `/api/v1/admin/platform/invitations/${invitationId}`,
+        ENDPOINTS.ADMIN_INVITATIONS.detail(invitationId),
         {
           method: "GET",
         },
@@ -67,7 +81,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     resend: async (invitationId: string, expiryDays?: number) => {
       return client.request<AdminInvitation>(
-        `/api/v1/admin/platform/invitations/${invitationId}/resend`,
+        ENDPOINTS.ADMIN_INVITATIONS.resend(invitationId),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -81,7 +95,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     revoke: async (invitationId: string, reason?: string) => {
       return client.request<{ success: boolean; message: string }>(
-        `/api/v1/admin/platform/invitations/${invitationId}`,
+        ENDPOINTS.ADMIN_INVITATIONS.revoke(invitationId),
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -95,7 +109,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     validateToken: async (token: string) => {
       return client.request<ValidateAdminInvitationResponse>(
-        `/api/v1/admin-invitations/${token}/validate`,
+        ENDPOINTS.ADMIN_INVITATIONS.validate(token),
         {
           method: "GET",
         },
@@ -107,7 +121,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     accept: async (token: string) => {
       return client.request<AdminInvitation>(
-        `/api/v1/admin-invitations/${token}/accept`,
+        ENDPOINTS.ADMIN_INVITATIONS.accept(token),
         {
           method: "POST",
         },
@@ -119,7 +133,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     decline: async (token: string, reason?: string) => {
       return client.request<{ success: boolean; message: string }>(
-        `/api/v1/admin-invitations/${token}/decline`,
+        ENDPOINTS.ADMIN_INVITATIONS.decline(token),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
+import { buildUrl } from "@/lib/url-utils";
 
 interface SystemHealthData {
   database: {
@@ -167,22 +168,15 @@ export default function MonitoringPage() {
       errorLogFilters,
     ],
     queryFn: async () => {
-      const params = new URLSearchParams({
+      const url = buildUrl("/api/v1/admin/monitoring/error-logs", {
         page: errorLogPage.toString(),
         per_page: "50",
+        severity: errorLogFilters.severity || undefined,
+        start_date: errorLogFilters.start_date || undefined,
+        end_date: errorLogFilters.end_date || undefined,
       });
-
-      if (errorLogFilters.severity)
-        params.append("severity", errorLogFilters.severity);
-      if (errorLogFilters.start_date)
-        params.append("start_date", errorLogFilters.start_date);
-      if (errorLogFilters.end_date)
-        params.append("end_date", errorLogFilters.end_date);
-
       return apiClient
-        .request<{ data: ErrorLogData }>(
-          `/api/v1/admin/monitoring/error-logs?${params.toString()}`,
-        )
+        .request<{ data: ErrorLogData }>(url)
         .then((res) => res.data);
     },
   });

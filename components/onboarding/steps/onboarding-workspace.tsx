@@ -70,7 +70,7 @@ export function OnboardingWorkspace({
         : `https://${websiteUrl}`;
 
       const response = await apiClient.workspaces.create({
-        title: workspaceTitle,
+        name: workspaceTitle,
         url: normalizedUrl,
       });
       toast.success("Workspace created successfully!");

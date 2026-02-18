@@ -6,6 +6,8 @@
  */
 
 import type { ApiClient } from "./core";
+import { buildUrl } from "@/lib/url-utils";
+import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -137,7 +139,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
     getOverview: async (): Promise<AnalyticsOverview> => {
       const response = await client.request<
         AnalyticsApiResponse<AnalyticsOverview>
-      >("/api/v1/admin/subscriptions/stats/overview", {
+      >(ENDPOINTS.ADMIN_ANALYTICS.subscriptions.overview, {
         method: "GET",
       });
       return response.data;
@@ -152,7 +154,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
     getRevenueMetrics: async (): Promise<RevenueMetrics> => {
       const response = await client.request<
         AnalyticsApiResponse<RevenueMetrics>
-      >("/api/v1/admin/subscriptions/stats/revenue", {
+      >(ENDPOINTS.ADMIN_ANALYTICS.subscriptions.revenue, {
         method: "GET",
       });
       return response.data;
@@ -167,9 +169,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
     getChurnAnalysis: async (periodDays = 30): Promise<ChurnAnalysis> => {
       const response = await client.request<
         AnalyticsApiResponse<ChurnAnalysis>
-      >(`/api/v1/admin/subscriptions/stats/churn?period_days=${periodDays}`, {
-        method: "GET",
-      });
+      >(
+        `${ENDPOINTS.ADMIN_ANALYTICS.subscriptions.churn}?period_days=${periodDays}`,
+        {
+          method: "GET",
+        },
+      );
       return response.data;
     },
 
@@ -182,7 +187,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
     getTrialConversion: async (): Promise<TrialConversionMetrics> => {
       const response = await client.request<
         AnalyticsApiResponse<TrialConversionMetrics>
-      >("/api/v1/admin/subscriptions/stats/trial-conversion", {
+      >(ENDPOINTS.ADMIN_ANALYTICS.subscriptions.trialConversion, {
         method: "GET",
       });
       return response.data;
@@ -200,16 +205,17 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
       days = 30,
       workspaceId?: string,
     ): Promise<InvitationAnalyticsData> => {
-      const params = new URLSearchParams({ days: days.toString() });
-      if (workspaceId) {
-        params.append("workspace_id", workspaceId);
-      }
-
       const response = await client.request<
         AnalyticsApiResponse<InvitationAnalyticsData>
-      >(`/api/v1/admin/analytics/invitations/analytics?${params.toString()}`, {
-        method: "GET",
-      });
+      >(
+        buildUrl(ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics, {
+          days,
+          workspace_id: workspaceId,
+        }),
+        {
+          method: "GET",
+        },
+      );
       return response.data;
     },
   };

@@ -2,9 +2,18 @@
  * Admin API Namespace
  *
  * Handles admin-only features: impersonation, audit logs, email templates
+ *
+ * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
+ * - Email templates use singular "workspace" namespace (/api/v1/workspace/email-templates)
+ * - Impersonation endpoints use /api/v1/user/impersonate (not under /admin)
+ * - Audit uses /api/v1/audit (not under /admin)
+ *
+ * See: lib/api-client/endpoints.ts for full path documentation.
  */
 
+import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
 
 export interface EmailTemplate {
   id: string;
@@ -35,7 +44,7 @@ export function createImpersonationNamespace(client: ApiClient) {
         access_token: string;
         refresh_token: string;
         impersonated_user_name?: string;
-      }>("/api/v1/user/impersonate/start", {
+      }>(ENDPOINTS.ADMIN.impersonation.start, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId }),
@@ -51,7 +60,7 @@ export function createImpersonationNamespace(client: ApiClient) {
         access_token: string;
         refresh_token: string;
         stopped_at: string;
-      }>("/api/v1/user/impersonate/stop", {
+      }>(ENDPOINTS.ADMIN.impersonation.stop, {
         method: "POST",
       });
     },
@@ -66,7 +75,7 @@ export function createImpersonationNamespace(client: ApiClient) {
         impersonated_user_email?: string;
         impersonated_user_name?: string;
         started_at?: string;
-      }>("/api/v1/user/impersonate/status", {
+      }>(ENDPOINTS.ADMIN.impersonation.status, {
         method: "GET",
       });
     },
@@ -89,15 +98,13 @@ export function createAuditLogsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
-      const params = new URLSearchParams();
-      if (filters?.action) params.append("action", filters.action);
-      if (filters?.start_date) params.append("start_date", filters.start_date);
-      if (filters?.end_date) params.append("end_date", filters.end_date);
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.offset) params.append("offset", filters.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `/api/v1/audit/user/my-logs${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.myLogs, {
+        action: filters?.action,
+        start_date: filters?.start_date,
+        end_date: filters?.end_date,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
 
       return client.request<{
         logs: Array<{
@@ -136,26 +143,20 @@ export function createAuditLogsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
-      const params = new URLSearchParams();
-      if (filters?.user_id) params.append("user_id", filters.user_id);
-      if (filters?.full_name) params.append("full_name", filters.full_name);
-      if (filters?.user_email) params.append("user_email", filters.user_email);
-      if (filters?.action) params.append("action", filters.action);
-      if (filters?.resource_type)
-        params.append("resource_type", filters.resource_type);
-      if (filters?.resource_id)
-        params.append("resource_id", filters.resource_id);
-      if (filters?.workspace_id)
-        params.append("workspace_id", filters.workspace_id);
-      if (filters?.status_filter)
-        params.append("status_filter", filters.status_filter);
-      if (filters?.date_from) params.append("date_from", filters.date_from);
-      if (filters?.date_to) params.append("date_to", filters.date_to);
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.offset) params.append("offset", filters.offset.toString());
-
-      const queryString = params.toString();
-      const endpoint = `/api/v1/audit/${queryString ? `?${queryString}` : ""}`;
+      const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.allLogs, {
+        user_id: filters?.user_id,
+        full_name: filters?.full_name,
+        user_email: filters?.user_email,
+        action: filters?.action,
+        resource_type: filters?.resource_type,
+        resource_id: filters?.resource_id,
+        workspace_id: filters?.workspace_id,
+        status_filter: filters?.status_filter,
+        date_from: filters?.date_from,
+        date_to: filters?.date_to,
+        limit: filters?.limit,
+        offset: filters?.offset,
+      });
 
       return client.request<{
         logs: Array<{
@@ -196,7 +197,7 @@ export function createAuditLogsNamespace(client: ApiClient) {
         user_agent: string;
         created_at: string;
         status?: string;
-      }>(`/api/v1/audit/${logId}`, {
+      }>(ENDPOINTS.ADMIN.audit.detail(logId), {
         method: "GET",
       });
     },
@@ -215,7 +216,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
     list: async (workspaceId: string) => {
       return client.request<{
         templates: EmailTemplate[];
-      }>(`/api/v1/workspace/email-templates/${workspaceId}`, {
+      }>(ENDPOINTS.ADMIN.emailTemplates.list(workspaceId), {
         method: "GET",
       });
     },
@@ -230,7 +231,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
           description: string;
           example: string;
         }>;
-      }>(`/api/v1/workspace/email-templates/variables/${templateType}`, {
+      }>(ENDPOINTS.ADMIN.emailTemplates.variables(templateType), {
         method: "GET",
       });
     },
@@ -242,7 +243,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
       return client.request<{
         subject: string;
         body: string;
-      }>(`/api/v1/workspace/email-templates/defaults/${templateType}`, {
+      }>(ENDPOINTS.ADMIN.emailTemplates.defaults(templateType), {
         method: "GET",
       });
     },
@@ -259,7 +260,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
       return client.request<{
         rendered_subject: string;
         rendered_body: string;
-      }>("/api/v1/workspace/email-templates/preview", {
+      }>(ENDPOINTS.ADMIN.emailTemplates.preview, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -276,7 +277,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
       body: string;
     }) => {
       return client.request<EmailTemplate>(
-        "/api/v1/workspace/email-templates/",
+        ENDPOINTS.ADMIN.emailTemplates.create,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -297,7 +298,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
       },
     ) => {
       return client.request<EmailTemplate>(
-        `/api/v1/workspace/email-templates/${templateId}`,
+        ENDPOINTS.ADMIN.emailTemplates.update(templateId),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -311,7 +312,7 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
      */
     delete: async (templateId: string) => {
       return client.request<void>(
-        `/api/v1/workspace/email-templates/${templateId}`,
+        ENDPOINTS.ADMIN.emailTemplates.delete(templateId),
         {
           method: "DELETE",
         },

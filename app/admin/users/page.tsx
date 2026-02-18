@@ -24,7 +24,7 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
-import { PERMISSIONS } from "@/lib/permissions";
+import { USER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 
 interface UserData extends Record<string, unknown> {
@@ -202,7 +202,7 @@ export default function AdminUsersPage() {
       breadcrumbs={breadcrumbs}
     >
       <CanAccess
-        permission={PERMISSIONS.USER_READ}
+        permission={USER_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

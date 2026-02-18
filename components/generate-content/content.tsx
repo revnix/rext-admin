@@ -182,11 +182,11 @@ export function ContentEditor({
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
     status: "draft" as ContentStatus,
-    workspace_id: workspaceId,
+    workspace_id: workspaceId ?? undefined,
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
-    body_html: body,
+    body_html: "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,

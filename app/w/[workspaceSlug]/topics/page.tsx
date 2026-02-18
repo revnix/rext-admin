@@ -66,7 +66,7 @@ export default function WorkspaceTopicsPage() {
   const breadcrumbs = [
     { label: "Dashboard", href: "/" },
     {
-      label: workspace?.title || "...",
+      label: workspace?.name || "...",
       href: workspaceRoutes.root(workspaceSlug),
     },
     { label: "Topics" },
@@ -110,7 +110,7 @@ export default function WorkspaceTopicsPage() {
     <PageLayout
       title="Topic Library"
       description={`Browse AI-generated topics for ${
-        workspace?.title || "this workspace"
+        workspace?.name || "this workspace"
       }. Generate new topics or explore your saved collection.`}
       breadcrumbs={breadcrumbs}
     >
