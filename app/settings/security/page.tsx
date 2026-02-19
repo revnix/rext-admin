@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsAdmin } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import type { UserSession } from "@/types/user-session";
 
 export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
@@ -263,55 +264,55 @@ export default function SecuritySettingsPage() {
               {/* Top Offenders */}
               {(securityStats.top_failed_login_ips.length > 0 ||
                 securityStats.top_failed_login_users.length > 0) && (
-                <>
-                  <Separator className="my-4" />
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {/* Top IPs */}
-                    {securityStats.top_failed_login_ips.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
-                          Top Failed Login IPs
-                        </p>
-                        <div className="space-y-1">
-                          {securityStats.top_failed_login_ips.map((item) => (
-                            <div
-                              key={item.ip}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="font-mono">{item.ip}</span>
-                              <Badge variant="destructive" className="text-xs">
-                                {item.count} attempts
-                              </Badge>
-                            </div>
-                          ))}
+                  <>
+                    <Separator className="my-4" />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Top IPs */}
+                      {securityStats.top_failed_login_ips.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">
+                            Top Failed Login IPs
+                          </p>
+                          <div className="space-y-1">
+                            {securityStats.top_failed_login_ips.map((item) => (
+                              <div
+                                key={item.ip}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="font-mono">{item.ip}</span>
+                                <Badge variant="destructive" className="text-xs">
+                                  {item.count} attempts
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Top Users */}
-                    {securityStats.top_failed_login_users.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
-                          Top Failed Login Users
-                        </p>
-                        <div className="space-y-1">
-                          {securityStats.top_failed_login_users.map((item) => (
-                            <div
-                              key={item.email}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="truncate">{item.email}</span>
-                              <Badge variant="destructive" className="text-xs">
-                                {item.count} attempts
-                              </Badge>
-                            </div>
-                          ))}
+                      {/* Top Users */}
+                      {securityStats.top_failed_login_users.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">
+                            Top Failed Login Users
+                          </p>
+                          <div className="space-y-1">
+                            {securityStats.top_failed_login_users.map((item) => (
+                              <div
+                                key={item.email}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="truncate">{item.email}</span>
+                                <Badge variant="destructive" className="text-xs">
+                                  {item.count} attempts
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+                      )}
+                    </div>
+                  </>
+                )}
             </CardContent>
           </Card>
         ) : null)}
@@ -369,12 +370,12 @@ export default function SecuritySettingsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <div className="rounded-full bg-primary/10 p-2">
-                        {getDeviceIcon(currentSession.device)}
+                        {getDeviceIcon(currentSession.device as string | null)}
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">
-                            {currentSession.device || "Unknown Device"}
+                            {currentSession.device_name || currentSession.device || "Unknown Device"}
                           </p>
                           <Badge variant="default">Current Session</Badge>
                         </div>
@@ -393,7 +394,7 @@ export default function SecuritySettingsPage() {
                           <Clock className="h-3 w-3" />
                           <span>
                             Last active:{" "}
-                            {formatTimestamp(currentSession.last_active)}
+                            {formatTimestamp(currentSession.last_activity_at || currentSession.last_active || "")}
                           </span>
                         </div>
                       </div>
@@ -412,11 +413,11 @@ export default function SecuritySettingsPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-4">
                             <div className="rounded-full bg-muted p-2">
-                              {getDeviceIcon(session.device)}
+                              {getDeviceIcon(session.device as string | null)}
                             </div>
                             <div className="space-y-1">
                               <p className="font-medium">
-                                {session.device || "Unknown Device"}
+                                {session.device_name || session.device || "Unknown Device"}
                               </p>
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 {session.ip_address && (
@@ -433,7 +434,7 @@ export default function SecuritySettingsPage() {
                                 <Clock className="h-3 w-3" />
                                 <span>
                                   Last active:{" "}
-                                  {formatTimestamp(session.last_active)}
+                                  {formatTimestamp(session.last_activity_at || session.last_active || "")}
                                 </span>
                               </div>
                             </div>

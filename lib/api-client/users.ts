@@ -18,6 +18,10 @@
  * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
+import type {
+  RevokeAllSessionsResponse,
+  SessionListResponse,
+} from "@/types/user-session";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -39,23 +43,6 @@ export interface UsersListResponse {
   users: User[];
   total_count: number;
   workspace_id?: string | null;
-}
-
-export interface UserSession {
-  id: string;
-  device_name: string;
-  device_type: "desktop" | "mobile" | "tablet";
-  ip_address: string | null;
-  user_agent: string;
-  created_at: string;
-  last_activity_at: string | null;
-  is_current: boolean;
-}
-
-export interface SessionsResponse {
-  sessions: UserSession[];
-  total_count: number;
-  active_count: number;
 }
 
 export function createUsersNamespace(client: ApiClient) {
@@ -87,8 +74,8 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * Get all active sessions for current user
      */
-    getSessions: async (): Promise<SessionsResponse> => {
-      return client.request<SessionsResponse>(ENDPOINTS.USERS.sessions.list, {
+    getSessions: async (): Promise<SessionListResponse> => {
+      return client.request<SessionListResponse>(ENDPOINTS.USERS.sessions.list, {
         method: "GET",
       });
     },

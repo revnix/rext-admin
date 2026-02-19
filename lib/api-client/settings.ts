@@ -8,6 +8,11 @@ import type {
   NotificationPreferences,
   NotificationPreferencesApiResponse,
 } from "@/schemas/notification-schemas";
+import type {
+  RevokeAllSessionsResponse,
+  RevokeSessionResponse,
+  SessionListResponse,
+} from "@/types/user-session";
 import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
@@ -59,18 +64,7 @@ export function createSessionsNamespace(client: ApiClient) {
      * List active sessions
      */
     list: async () => {
-      return client.request<{
-        sessions: Array<{
-          id: string;
-          device: string;
-          browser: string;
-          ip_address: string;
-          location: string;
-          last_active: string;
-          created_at: string;
-          is_current: boolean;
-        }>;
-      }>(ENDPOINTS.SETTINGS.sessions.list, {
+      return client.request<SessionListResponse>(ENDPOINTS.SETTINGS.sessions.list, {
         method: "GET",
       });
     },
@@ -79,25 +73,24 @@ export function createSessionsNamespace(client: ApiClient) {
      * Revoke a specific session
      */
     revoke: async (sessionId: string) => {
-      return client.request<{
-        success: boolean;
-        message: string;
-      }>(ENDPOINTS.SETTINGS.sessions.revoke(sessionId), {
-        method: "DELETE",
-      });
+      return client.request<RevokeSessionResponse>(
+        ENDPOINTS.SETTINGS.sessions.revoke(sessionId),
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**
      * Revoke all sessions except current
      */
     revokeAll: async () => {
-      return client.request<{
-        success: boolean;
-        message: string;
-        revoked_count: number;
-      }>(ENDPOINTS.SETTINGS.sessions.revokeAll, {
-        method: "DELETE",
-      });
+      return client.request<RevokeAllSessionsResponse>(
+        ENDPOINTS.SETTINGS.sessions.revokeAll,
+        {
+          method: "DELETE",
+        },
+      );
     },
   };
 }
