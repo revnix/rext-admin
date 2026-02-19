@@ -12,6 +12,7 @@ import type {
   RevokeAllSessionsResponse,
   RevokeSessionResponse,
   SessionListResponse,
+  UserSession,
 } from "@/types/user-session";
 import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
@@ -63,10 +64,30 @@ export function createSessionsNamespace(client: ApiClient) {
     /**
      * List active sessions
      */
-    list: async () => {
-      return client.request<SessionListResponse>(ENDPOINTS.SETTINGS.sessions.list, {
-        method: "GET",
-      });
+    list: async (): Promise<SessionListResponse> => {
+      const response = await client.request<SessionListResponse>(
+        ENDPOINTS.SETTINGS.sessions.list,
+        {
+          method: "GET",
+        },
+      );
+
+      return {
+        ...response,
+        sessions: response.sessions.map((s): UserSession => {
+          const session = s as any;
+          return {
+            ...s,
+            device_name: session.device_name ?? session.device ?? "Unknown Device",
+            device_type: session.device_type ?? null,
+            ip_address: session.ip_address ?? null,
+            user_agent: session.user_agent ?? session.browser ?? null,
+            created_at: session.created_at ?? null,
+            last_activity_at: session.last_activity_at ?? session.last_active ?? null,
+            is_current: Boolean(session.is_current),
+          };
+        }),
+      };
     },
 
     /**

@@ -16,17 +16,12 @@ export interface UserSession {
   created_at: string | null;
   last_activity_at: string | null;
   is_current: boolean;
-  // Optional legacy/extended fields that may be present depending on backend version
+  // Optional extension fields
   user_id?: string;
   country?: string | null;
   city?: string | null;
   is_active?: boolean;
   expires_at?: string | null;
-  // Fields for settings namespace if used there
-  device?: string | null;
-  browser?: string | null;
-  location?: string | null;
-  last_active?: string | null;
 }
 
 export interface SessionListResponse {

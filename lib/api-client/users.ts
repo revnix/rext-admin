@@ -21,6 +21,7 @@
 import type {
   RevokeAllSessionsResponse,
   SessionListResponse,
+  UserSession,
 } from "@/types/user-session";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
@@ -75,9 +76,31 @@ export function createUsersNamespace(client: ApiClient) {
      * Get all active sessions for current user
      */
     getSessions: async (): Promise<SessionListResponse> => {
-      return client.request<SessionListResponse>(ENDPOINTS.USERS.sessions.list, {
-        method: "GET",
-      });
+      const response = await client.request<SessionListResponse>(
+        ENDPOINTS.USERS.sessions.list,
+        {
+          method: "GET",
+        },
+      );
+
+      return {
+        ...response,
+        sessions: response.sessions.map(
+          (s): UserSession => {
+            const session = s as any;
+            return {
+              ...s,
+              device_name: session.device_name ?? session.device ?? "Unknown Device",
+              device_type: session.device_type ?? null,
+              ip_address: session.ip_address ?? null,
+              user_agent: session.user_agent ?? session.browser ?? null,
+              created_at: session.created_at ?? null,
+              last_activity_at: session.last_activity_at ?? session.last_active ?? null,
+              is_current: Boolean(session.is_current),
+            };
+          },
+        ),
+      };
     },
 
     /**
@@ -92,10 +115,13 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * Revoke all other sessions (logout from all other devices)
      */
-    revokeAllOtherSessions: async (): Promise<void> => {
-      return client.request<void>(ENDPOINTS.USERS.sessions.revokeAll, {
-        method: "POST",
-      });
+    revokeAllOtherSessions: async (): Promise<RevokeAllSessionsResponse> => {
+      return client.request<RevokeAllSessionsResponse>(
+        ENDPOINTS.USERS.sessions.revokeAll,
+        {
+          method: "DELETE",
+        },
+      );
     },
   };
 }

@@ -164,7 +164,7 @@ export const ENDPOINTS = {
     sessions: {
       list: "/api/v1/user/sessions",
       detail: (id: string) => `/api/v1/user/sessions/${id}` as const,
-      revokeAll: "/api/v1/user/sessions/revoke-all",
+      revokeAll: "/api/v1/user/sessions",
     },
   },
 

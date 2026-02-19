@@ -33,6 +33,7 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
 
 import type { UserSession } from "@/types/user-session";
 
@@ -42,10 +43,7 @@ export default function SessionsPage() {
   const queryClient = useQueryClient();
 
   // Fetch sessions
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["user-sessions"],
-    queryFn: () => apiClient.users.getSessions(),
-  });
+  const { data, isLoading, error, refetch } = useQuery(userSessionsQueryOptions());
 
   // Revoke single session
   const revokeMutation = useMutation({
