@@ -74,20 +74,7 @@ interface PageLayoutProps {
   fullWidth?: boolean;
 }
 
-// Redefine ApiUser locally to ensure safety if not exported
-type ApiUser = {
-  id: string;
-  email: string;
-  full_name: string;
-  email_verified: boolean;
-  status: string;
-  avatar_url?: string;
-  bio?: string;
-  language?: string;
-  timezone?: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { UserProfile } from "@/types/profile";
 
 export function PageLayout({
   title,
@@ -111,7 +98,7 @@ export function PageLayout({
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();
-  const [profileUser, setProfileUser] = useState<ApiUser | null>(null);
+  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);

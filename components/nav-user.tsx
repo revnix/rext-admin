@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { UserProfile } from "@/types/profile";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -42,19 +43,7 @@ import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { log } from "@/lib/logger";
 
-export type ApiUser = {
-  id: string;
-  email: string;
-  full_name: string;
-  email_verified: boolean;
-  status: string;
-  avatar_url?: string;
-  bio?: string;
-  language?: string;
-  timezone?: string;
-  created_at: string;
-  updated_at: string;
-};
+
 
 export function NavUser() {
   const router = useRouter();
@@ -62,7 +51,7 @@ export function NavUser() {
 
   const { user, isAuthenticated, isLoading, logout } = useAuthSession();
 
-  const [profileUser, setProfileUser] = useState<ApiUser | null>(null);
+  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   // ----------------------------------

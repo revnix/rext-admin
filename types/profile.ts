@@ -5,13 +5,14 @@
 export interface UserProfile {
   id: string;
   email: string;
-  full_name: string;
+  full_name: string | null;
   display_name: string | null;
+  bio: string | null;
   language: string;
   timezone: string;
   status: string;
   email_verified: boolean;
-  avatar_url?: string | null;
+  avatar_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -20,8 +21,9 @@ export interface UserProfile {
  * Profile update request
  */
 export interface UpdateProfileRequest {
-  full_name?: string;
-  display_name?: string;
+  full_name?: string | null;
+  display_name?: string | null;
+  bio?: string | null;
   language?: string;
   timezone?: string;
 }
