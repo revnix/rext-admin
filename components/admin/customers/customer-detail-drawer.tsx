@@ -27,7 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-import { ImpersonateButton } from "../impersonation/impersonate-button";
+import { ImpersonateButton } from "@/components/impersonation/impersonate-button";
 import { CustomerActionsDropdown } from "./customer-actions-dropdown";
 import { CustomerNotesTimeline } from "./customer-notes-timeline";
 
