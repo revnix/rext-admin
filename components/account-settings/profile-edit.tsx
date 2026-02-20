@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { profileQueries } from "@/lib/query-keys";
 
 // Helper to convert relative avatar URLs to absolute URLs
@@ -36,10 +37,7 @@ const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
   if (!avatarUrl) return null;
   if (avatarUrl.startsWith("http")) return avatarUrl;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   return `${baseUrl}${avatarUrl}`;
 };

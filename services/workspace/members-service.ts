@@ -4,6 +4,7 @@
  * Handles workspace member and invitation operations
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
@@ -47,7 +48,7 @@ export class MembersService {
 
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     this.config = {
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024",
+      baseUrl: resolveApiBaseUrl(),
       timeout: 30000,
       enableRequestDeduplication: true,
       ...config,

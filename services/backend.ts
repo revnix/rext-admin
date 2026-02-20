@@ -1,3 +1,4 @@
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
   classifyError,
   DEFAULT_RETRY_CONFIG,
@@ -76,8 +77,7 @@ export class BackendService {
     validationConfig?: BackendValidationConfig,
   ) {
     this.config = {
-      baseUrl:
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024",
+      baseUrl: resolveApiBaseUrl(),
       timeout: 120000, // 2 minutes for AI operations like topic generation
       retry: { ...DEFAULT_RETRY_CONFIG, maxAttempts: 1 }, // No retries
       enableDeduplication: true,

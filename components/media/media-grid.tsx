@@ -4,6 +4,7 @@ import { FileText, Image as ImageIcon, Video } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import type { Media } from "@/lib/api-client/media";
 
 interface MediaGridProps {
@@ -103,10 +104,7 @@ function MediaCard({
       return url; // Already absolute
     }
     // Relative URL - prepend backend URL
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://127.0.0.1:2024";
+    const backendUrl = resolveApiBaseUrl();
     return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 

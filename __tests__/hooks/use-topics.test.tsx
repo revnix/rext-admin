@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useTopic, useTopics } from "@/hooks/use-topics";
 import { renderHook, waitFor } from "../utils/test-utils";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -75,7 +76,7 @@ describe("useTopics", () => {
 
     expect(result.current.data).toEqual(mockTopics);
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:2024/api/v1/topic/get-topics",
+      `${resolveApiBaseUrl()}/api/v1/topic/get-topics`,
       {
         method: "GET",
         headers: {
@@ -145,7 +146,7 @@ describe("useTopic", () => {
 
     expect(result.current.data).toEqual(mockTopic);
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:2024/api/v1/topic/get-topic/1",
+      `${resolveApiBaseUrl()}/api/v1/topic/get-topic/1`,
       {
         method: "GET",
         headers: {

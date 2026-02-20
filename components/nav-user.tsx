@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
   BadgeCheck,
   Bell,
@@ -171,10 +172,7 @@ export function NavUser() {
   const effectiveRoleKey = fetchedWorkspaceRole || user.role;
   const userRole = getRoleDisplayName(effectiveRoleKey);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   // Helper to get full avatar URL
   const getAvatarUrl = (avatarUrl?: string) => {

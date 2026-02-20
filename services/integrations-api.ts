@@ -4,6 +4,7 @@
  * API client for managing integrations (sites)
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 
@@ -66,8 +67,7 @@ export class IntegrationsApiService {
   private readonly log = logger.forComponent("IntegrationsApiService");
 
   constructor() {
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024";
+    this.baseUrl = resolveApiBaseUrl();
   }
 
   /**
