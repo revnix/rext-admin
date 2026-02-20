@@ -9,6 +9,7 @@ import {
   SSE_ERROR_CODES,
 } from "@/types/sse";
 import { fetchNotifications } from "@/services/notification-api";
+import { useNotificationStore } from "@/stores/notification-store";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
@@ -72,13 +73,20 @@ export function useSSEChannel(
   }, []);
 
   const refreshNotificationsSafely = useCallback(() => {
-    void fetchNotifications().catch((error) => {
-      sseChannelLogger.error("Failed to refresh notifications", {
-        operationId: operationIdRef.current,
-        error,
+    // Fetch notifications from API
+    void fetchNotifications()
+      .then((incoming) => {
+        useNotificationStore.getState().mergeNotifications(incoming);
+      })
+      .catch((error) => {
+        // The original snippet had `userNotificationsLogger` and `userId` which are not defined in this context.
+        // Reverting to `sseChannelLogger` and `operationIdRef.current` for correctness within `useSSEChannel`.
+        sseChannelLogger.error("Failed to refresh notifications", {
+          operationId: operationIdRef.current,
+          error,
+        });
+        onErrorRef.current?.("Failed to refresh notifications");
       });
-      onErrorRef.current?.("Failed to refresh notifications");
-    });
   }, []);
 
   const handleError = useCallback(
