@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, UserCog } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ export function ImpersonateButton({
     const queryClient = useQueryClient();
     const { setTokens } = useAuthStore();
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [isPendingRoute, startTransition] = useTransition();
 
     const impersonateMutation = useMutation({
         mutationFn: () => apiClient.impersonation.start(userId),
@@ -53,10 +54,11 @@ export function ImpersonateButton({
             setConfirmOpen(false);
 
             // Redirect to main dashboard
-            router.push("/");
-
-            // Refresh page to update UI with new user context
-            router.refresh();
+            startTransition(() => {
+                router.push("/");
+                // Refresh page to update UI with new user context
+                router.refresh();
+            });
         },
         onError: (error: Error) => {
             toast.error(`Failed to start impersonation: ${error.message}`);
@@ -113,15 +115,15 @@ export function ImpersonateButton({
                         <Button
                             variant="outline"
                             onClick={() => setConfirmOpen(false)}
-                            disabled={impersonateMutation.isPending}
+                            disabled={impersonateMutation.isPending || isPendingRoute}
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={() => impersonateMutation.mutate()}
-                            disabled={impersonateMutation.isPending}
+                            disabled={impersonateMutation.isPending || isPendingRoute}
                         >
-                            {impersonateMutation.isPending
+                            {impersonateMutation.isPending || isPendingRoute
                                 ? "Starting..."
                                 : "Start Impersonation"}
                         </Button>
