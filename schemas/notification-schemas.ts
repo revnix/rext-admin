@@ -129,40 +129,46 @@ export type NotificationPreferencesApiResponse = z.infer<
   typeof notificationPreferencesApiSchema
 >;
 // Transform flat preferences to API response structure
-export function transformToApiResponse(): NotificationPreferencesApiResponse {
-  const defaults = defaultNotificationPreferences;
+export function transformToApiResponse(
+  preferences: Partial<NotificationPreferences> = {},
+): NotificationPreferencesApiResponse {
+  const merged: NotificationPreferences = {
+    ...defaultNotificationPreferences,
+    ...preferences,
+  };
+
   return {
     workspace_notifications: {
-      invite_received: defaults.ws_invite_received,
-      invite_accepted: defaults.ws_invite_accepted,
-      role_changed: defaults.ws_role_changed,
-      member_removed: defaults.ws_member_removed,
+      invite_received: merged.ws_invite_received,
+      invite_accepted: merged.ws_invite_accepted,
+      role_changed: merged.ws_role_changed,
+      member_removed: merged.ws_member_removed,
     },
     content_generation: {
-      generation_started: defaults.gen_started,
-      generation_completed: defaults.gen_completed,
-      generation_failed: defaults.gen_failed,
-      content_published: defaults.gen_published,
+      generation_started: merged.gen_started,
+      generation_completed: merged.gen_completed,
+      generation_failed: merged.gen_failed,
+      content_published: merged.gen_published,
     },
     billing: {
-      payment_success: defaults.billing_payment_success,
-      payment_failed: defaults.billing_payment_failed,
-      subscription_cancelled: defaults.billing_subscription_cancelled,
-      subscription_expiring: defaults.billing_subscription_expiring,
-      trial_ending: defaults.billing_trial_ending,
-      usage_limit_warning: defaults.billing_usage_limit_warning,
-      usage_limit_exceeded: defaults.billing_usage_limit_exceeded,
+      payment_success: merged.billing_payment_success,
+      payment_failed: merged.billing_payment_failed,
+      subscription_cancelled: merged.billing_subscription_cancelled,
+      subscription_expiring: merged.billing_subscription_expiring,
+      trial_ending: merged.billing_trial_ending,
+      usage_limit_warning: merged.billing_usage_limit_warning,
+      usage_limit_exceeded: merged.billing_usage_limit_exceeded,
     },
     knowledge_base: {
-      processing_completed: defaults.kb_processing_completed,
-      processing_failed: defaults.kb_processing_failed,
+      processing_completed: merged.kb_processing_completed,
+      processing_failed: merged.kb_processing_failed,
     },
     email_digest: {
-      enabled: defaults.digest_enabled,
-      frequency: defaults.digest_frequency,
+      enabled: merged.digest_enabled,
+      frequency: merged.digest_frequency,
     },
     marketing: {
-      marketing_updates: defaults.marketing_updates,
+      marketing_updates: merged.marketing_updates,
     },
   };
 }
