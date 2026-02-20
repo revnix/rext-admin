@@ -14,15 +14,19 @@ import type { OperationNotification } from "@/types/sse";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
 
-export async function fetchNotifications() {
+export async function fetchNotifications(): Promise<void> {
   try {
     const res = await authenticatedFetch(
       `${API_BASE_URL}/api/v1/notifications`,
     );
-    if (!res.ok) throw new Error("Failed to fetch notifications");
+    if (!res.ok) {
+      throw new Error(`Failed to fetch notifications: ${res.status}`);
+    }
 
     const json = await res.json();
-    if (!json.success) return;
+    if (!json.success) {
+      throw new Error("Notification API returned success=false");
+    }
 
     const notifications: ApiNotification[] = json.data.notifications;
     const store = useNotificationStore.getState();
@@ -40,7 +44,9 @@ export async function fetchNotifications() {
       });
     });
   } catch (err) {
-    log.error("Error fetching notifications:", err);
+    const normalizedError = err instanceof Error ? err : new Error(String(err));
+    log.error("Error fetching notifications", { error: normalizedError });
+    throw normalizedError;
   }
 }
 

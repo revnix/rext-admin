@@ -41,7 +41,12 @@ export function useUserNotifications() {
         );
 
         // Fetch notifications from API
-        fetchNotifications();
+        void fetchNotifications().catch((error) => {
+          userNotificationsLogger.error("Failed to refresh user notifications", {
+            userId,
+            error,
+          });
+        });
       },
       (status) => {
         userNotificationsLogger.debug("User notification connection status", {

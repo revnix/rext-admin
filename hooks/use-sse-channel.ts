@@ -71,6 +71,16 @@ export function useSSEChannel(
     }
   }, []);
 
+  const refreshNotificationsSafely = useCallback(() => {
+    void fetchNotifications().catch((error) => {
+      sseChannelLogger.error("Failed to refresh notifications", {
+        operationId: operationIdRef.current,
+        error,
+      });
+      onErrorRef.current?.("Failed to refresh notifications");
+    });
+  }, []);
+
   const handleError = useCallback(
     (errorMessage?: string, code?: string) => {
       if (!errorMessage && !code) {
@@ -124,7 +134,7 @@ export function useSSEChannel(
         return;
       }
 
-      fetchNotifications();
+      refreshNotificationsSafely();
       sseChannelLogger.error("SSE channel error", {
         errorMessage,
         operationId: operationIdRef.current,
@@ -134,7 +144,7 @@ export function useSSEChannel(
         onErrorRef.current?.(errorMessage);
       }
     },
-    [], // No dependencies - uses ref
+    [refreshNotificationsSafely],
   );
 
   const handleEvent = useCallback(
@@ -158,7 +168,7 @@ export function useSSEChannel(
       onEventRef.current?.(event);
 
       if (COMPLETION_STEPS.has(event.step)) {
-        fetchNotifications();
+        refreshNotificationsSafely();
         onCompleteRef.current?.(event.payload);
       }
 
@@ -174,7 +184,7 @@ export function useSSEChannel(
         handleError(message);
       }
     },
-    [handleError], // Only depends on handleError which is stable
+    [handleError, refreshNotificationsSafely],
   );
 
   const handleStatus = useCallback(
@@ -189,7 +199,7 @@ export function useSSEChannel(
         handleError(newStatus.error, newStatus.code);
       }
     },
-    [handleError], // Only depends on handleError which is stable
+    [handleError],
   );
 
   const connect = useCallback(() => {
