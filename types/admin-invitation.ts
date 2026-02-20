@@ -13,6 +13,11 @@ export interface AdminInvitation {
   message?: string;
   permissions?: Record<string, unknown>;
 
+  // Email delivery telemetry from backend (optional for backward compatibility)
+  email_delivery_status?: "pending" | "sent" | "failed";
+  email_delivery_error?: string;
+  invitation_url?: string;
+
   // Inviter info
   invited_by_admin_id?: string;
   invited_by_name?: string;

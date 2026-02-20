@@ -89,6 +89,21 @@ const STATUS_CONFIG = {
   },
 } as const;
 
+const DELIVERY_CONFIG = {
+  pending: {
+    label: "Email Pending",
+    className: "bg-amber-500/10 text-amber-700 border-amber-200",
+  },
+  sent: {
+    label: "Email Sent",
+    className: "bg-green-500/10 text-green-700 border-green-200",
+  },
+  failed: {
+    label: "Email Failed",
+    className: "bg-red-500/10 text-red-700 border-red-200",
+  },
+} as const;
+
 export default function AdminInvitationsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -120,8 +135,14 @@ export default function AdminInvitationsPage() {
   const resendMutation = useMutation({
     mutationFn: (invitationId: string) =>
       apiClient.adminInvitations.resend(invitationId),
-    onSuccess: () => {
-      toast.success("Invitation resent - A new invitation email has been sent");
+    onSuccess: (data) => {
+      const deliveryStatus = data.email_delivery_status ?? "pending";
+      toast.success("Invitation resend requested", {
+        description:
+          deliveryStatus === "sent"
+            ? "Email delivery confirmed."
+            : "Email delivery pending. You can copy the invitation link.",
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-invitations"] });
     },
     onError: (error: Error) => {
@@ -149,6 +170,16 @@ export default function AdminInvitationsPage() {
 
   const handleRevoke = (invitation: AdminInvitation) => {
     setRevokeDialog({ open: true, invitation });
+  };
+
+  const handleCopyInviteLink = async (invitation: AdminInvitation) => {
+    if (!invitation.invitation_url) {
+      toast.error("No invitation link returned by API for this invitation");
+      return;
+    }
+
+    await navigator.clipboard.writeText(invitation.invitation_url);
+    toast.success("Invitation link copied to clipboard");
   };
 
   const confirmRevoke = () => {
@@ -289,6 +320,7 @@ export default function AdminInvitationsPage() {
                     <TableHead>Invited By</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Expires</TableHead>
+                    <TableHead>Delivery</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -339,6 +371,23 @@ export default function AdminInvitationsPage() {
                             "-"
                           )}
                         </TableCell>
+                        <TableCell>
+                          {invitation.status === "pending" && (
+                            <>
+                              {(() => {
+                                const deliveryStatus = invitation.email_delivery_status ?? "pending";
+                                return (
+                                  <Badge
+                                    variant="outline"
+                                    className={DELIVERY_CONFIG[deliveryStatus].className}
+                                  >
+                                    {DELIVERY_CONFIG[deliveryStatus].label}
+                                  </Badge>
+                                );
+                              })()}
+                            </>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -358,6 +407,13 @@ export default function AdminInvitationsPage() {
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Resend Invitation
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleCopyInviteLink(invitation)}
+                                  >
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Copy Invite Link
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={() => handleRevoke(invitation)}
                                     disabled={revokeMutation.isPending}

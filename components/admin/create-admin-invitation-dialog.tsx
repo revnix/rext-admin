@@ -73,7 +73,14 @@ export function CreateAdminInvitationDialog({
   const createMutation = useMutation({
     mutationFn: (data: FormValues) => apiClient.adminInvitations.create(data),
     onSuccess: (data) => {
-      toast.success(`Admin invitation sent to ${data.email}`);
+      const deliveryStatus = data.email_delivery_status ?? "pending";
+
+      toast.success(`Admin invitation created for ${data.email}`, {
+        description:
+          deliveryStatus === "sent"
+            ? "Email delivery confirmed."
+            : "Email delivery is pending. Share the invite link if needed.",
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-invitations"] });
       onOpenChange(false);
       form.reset();
