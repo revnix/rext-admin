@@ -19,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { isMediaKind } from "@/lib/media-type";
 import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
@@ -152,7 +153,7 @@ export function MediaDetailSheet({
 
   if (!media) return null;
 
-  const isImage = media.file_type.startsWith("image/");
+  const isImage = isMediaKind(media.file_type, "image");
 
   const publicUrl = toAbsoluteMediaUrl(media.public_url);
 

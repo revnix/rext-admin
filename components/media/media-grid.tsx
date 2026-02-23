@@ -4,6 +4,7 @@ import { FileText, Image as ImageIcon, Video } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getMediaKind } from "@/lib/media-type";
 import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import type { Media } from "@/lib/api-client/media";
 
@@ -83,11 +84,10 @@ function MediaCard({
   onSelectionChange,
   selectionMode = false,
 }: MediaCardProps) {
-  const isImage = media.file_type.startsWith("image/");
-  const isVideo = media.file_type.startsWith("video/");
-  const isDocument =
-    media.file_type.startsWith("application/") ||
-    media.file_type.startsWith("text/");
+  const mediaKind = getMediaKind(media.file_type);
+  const isImage = mediaKind === "image";
+  const isVideo = mediaKind === "video";
+  const isDocument = mediaKind === "document";
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";

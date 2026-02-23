@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getMediaKind } from "@/lib/media-type";
 import type { Media } from "@/lib/api-client/media";
 import { toAbsoluteMediaUrl } from "@/lib/media-url";
 
@@ -148,11 +149,10 @@ function MediaRow({
   onSelectionChange,
   selectionMode = false,
 }: MediaRowProps) {
-  const isImage = media.file_type.startsWith("image/");
-  const isVideo = media.file_type.startsWith("video/");
-  const isDocument =
-    media.file_type.startsWith("application/") ||
-    media.file_type.startsWith("text/");
+  const mediaKind = getMediaKind(media.file_type);
+  const isImage = mediaKind === "image";
+  const isVideo = mediaKind === "video";
+  const isDocument = mediaKind === "document";
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
