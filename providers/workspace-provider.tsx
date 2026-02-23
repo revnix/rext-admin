@@ -76,13 +76,10 @@ export function WorkspaceProvider({
       workspaceId,
     );
 
-  // Load workspace permissions (Phase 1 integration)
-  // This loads workspace-scoped permissions dynamically for the current workspace
-  const {
-    permissions: _permissions,
-    role: _role,
-    error: permissionsError,
-  } = useWorkspacePermissions(workspaceId);
+// Load workspace permissions (Phase 1 integration)
+// Triggers permission loading and Zustand store sync via internal hook effects.
+// Permissions and role are consumed by WorkspacePermissionProvider and individual components.
+ const { error: permissionsError } = useWorkspacePermissions(workspaceId);
 
   // Log permission errors
   useEffect(() => {
