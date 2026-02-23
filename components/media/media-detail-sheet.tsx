@@ -19,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getBackendBaseUrl } from "@/lib/backend-url";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   AlertDialog,
@@ -159,12 +160,16 @@ export function MediaDetailSheet({
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url; // Already absolute
     }
-    // Relative URL - prepend backend URL
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://127.0.0.1:2024";
-    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+
+    const backendUrl = getBackendBaseUrl();
+    if (!backendUrl) {
+      console.warn(
+        "Media URL resolution skipped: NEXT_PUBLIC_BACKEND_API_URL / NEXT_PUBLIC_API_BASE_URL is not configured.",
+      );
+      return null;
+    }
+
+    return new URL(url, `${backendUrl}/`).toString();
   };
 
   const publicUrl = getAbsoluteUrl(media.public_url);
