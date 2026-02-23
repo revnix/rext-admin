@@ -17,6 +17,7 @@ import type {
 import type { WorkspaceStats } from "@/types/workspace-stats";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+import { InputSanitizer } from "@/lib/sanitization";
 
 export function createWorkspacesNamespace(client: ApiClient) {
   return {
@@ -60,33 +61,36 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Create workspace
      */
     create: async (data: { name: string; timezone?: string; url: string }) => {
+      const payload = {
+        name: InputSanitizer.sanitizeText(data.name.trim()),
+        timezone: data.timezone,
+        url: data.url.trim(),
+      };
       return client.request<CreateWorkspaceResponse>(
         ENDPOINTS.WORKSPACES.BASE,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
     },
 
-    /**
-     * Update workspace
-     */
+    // Update the update method to sanitize input:
     update: async (
       workspaceId: string,
-      data: {
-        name?: string;
-        timezone?: string;
-        url?: string;
-      },
+      data: { name?: string; timezone?: string; url?: string },
     ) => {
+      const payload: Record<string, unknown> = {};
+      if (data.name !== undefined) payload.name = InputSanitizer.sanitizeText(data.name.trim());
+      if (data.timezone !== undefined) payload.timezone = data.timezone;
+      if (data.url !== undefined) payload.url = data.url.trim();
+
       return client.request<WorkspaceResponse>(
         ENDPOINTS.WORKSPACES.byId(workspaceId),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         },
       );
     },
