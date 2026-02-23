@@ -33,6 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 
 interface MediaPickerDialogProps {
   workspaceId: string;
@@ -266,6 +267,9 @@ function MediaPickerCard({ media, selected, onSelect }: MediaPickerCardProps) {
     media.file_type.startsWith("application/") ||
     media.file_type.startsWith("text/");
 
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+
   return (
     <button
       type="button"
@@ -277,17 +281,17 @@ function MediaPickerCard({ media, selected, onSelect }: MediaPickerCardProps) {
       }`}
     >
       {/* Preview */}
-      {isImage && media.thumbnail_url ? (
+      {isImage && thumbnailUrl ? (
         <Image
-          src={media.thumbnail_url}
+          src={thumbnailUrl}
           alt={media.alt_text || media.title || media.filename}
           fill
           className="object-cover"
           sizes="200px"
         />
-      ) : isImage && media.public_url ? (
+      ) : isImage && publicUrl ? (
         <Image
-          src={media.public_url}
+          src={publicUrl}
           alt={media.alt_text || media.title || media.filename}
           fill
           className="object-cover"

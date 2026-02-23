@@ -4,7 +4,7 @@ import { FileText, Image as ImageIcon, Video } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getBackendBaseUrl } from "@/lib/backend-url";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import type { Media } from "@/lib/api-client/media";
 
 interface MediaGridProps {
@@ -97,26 +97,8 @@ function MediaCard({
     return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
-  // Convert relative URLs to absolute URLs pointing to backend
-  const getAbsoluteUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url; // Already absolute
-    }
-
-    const backendUrl = getBackendBaseUrl();
-    if (!backendUrl) {
-      console.warn(
-        "Media URL resolution skipped: NEXT_PUBLIC_BACKEND_API_URL / NEXT_PUBLIC_API_BASE_URL is not configured.",
-      );
-      return null;
-    }
-
-    return new URL(url, `${backendUrl}/`).toString();
-  };
-
-  const thumbnailUrl = getAbsoluteUrl(media.thumbnail_url);
-  const publicUrl = getAbsoluteUrl(media.public_url);
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {

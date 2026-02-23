@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Media } from "@/lib/api-client/media";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 
 interface MediaListProps {
   media: Media[];
@@ -161,6 +162,9 @@ function MediaRow({
     return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
       onSelectionChange(media.id, !isSelected);
@@ -191,17 +195,17 @@ function MediaRow({
       {/* Preview */}
       <TableCell>
         <div className="w-10 h-10 bg-muted relative rounded overflow-hidden">
-          {isImage && media.thumbnail_url ? (
+          {isImage && thumbnailUrl ? (
             <Image
-              src={media.thumbnail_url}
+              src={thumbnailUrl}
               alt={media.alt_text || media.title || media.filename}
               fill
               className="object-cover"
               sizes="40px"
             />
-          ) : isImage && media.public_url ? (
+          ) : isImage && publicUrl ? (
             <Image
-              src={media.public_url}
+              src={publicUrl}
               alt={media.alt_text || media.title || media.filename}
               fill
               className="object-cover"

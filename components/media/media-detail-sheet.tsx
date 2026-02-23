@@ -19,7 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getBackendBaseUrl } from "@/lib/backend-url";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   AlertDialog,
@@ -154,25 +154,7 @@ export function MediaDetailSheet({
 
   const isImage = media.file_type.startsWith("image/");
 
-  // Convert relative URLs to absolute URLs pointing to backend
-  const getAbsoluteUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url; // Already absolute
-    }
-
-    const backendUrl = getBackendBaseUrl();
-    if (!backendUrl) {
-      console.warn(
-        "Media URL resolution skipped: NEXT_PUBLIC_BACKEND_API_URL / NEXT_PUBLIC_API_BASE_URL is not configured.",
-      );
-      return null;
-    }
-
-    return new URL(url, `${backendUrl}/`).toString();
-  };
-
-  const publicUrl = getAbsoluteUrl(media.public_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
