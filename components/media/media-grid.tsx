@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Media } from "@/lib/api-client/media";
+import { formatFileSize } from "@/lib/formatters/number-formatters";
 
 interface MediaGridProps {
   media: Media[];
@@ -88,13 +89,8 @@ function MediaCard({
     media.file_type.startsWith("application/") ||
     media.file_type.startsWith("text/");
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
-  };
+  // local `formatFileSize` declaration is removed.
+  // Existing render calls are kept and now use the shared import
 
   // Convert relative URLs to absolute URLs pointing to backend
   const getAbsoluteUrl = (url: string | null): string | null => {

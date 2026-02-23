@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
 import type { Media } from "@/lib/api-client/media";
+import { formatFileSize } from "@/lib/formatters/number-formatters";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 
 interface MediaDetailSheetProps {
@@ -168,15 +169,7 @@ export function MediaDetailSheet({
   };
 
   const publicUrl = getAbsoluteUrl(media.public_url);
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
-  };
-
+  // local `formatFileSize` declaration is removed.
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",

@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Media } from "@/lib/api-client/media";
+import { formatFileSize } from "@/lib/formatters/number-formatters";
 
 interface MediaListProps {
   media: Media[];
@@ -152,15 +153,7 @@ function MediaRow({
   const isDocument =
     media.file_type.startsWith("application/") ||
     media.file_type.startsWith("text/");
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
-  };
-
+  // local `formatFileSize` declaration is removed.
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
       onSelectionChange(media.id, !isSelected);
