@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
@@ -75,15 +75,24 @@ export function MediaDetailSheet({
   const [editTags, setEditTags] = useState("");
 
   // Initialize edit fields when media changes
-  useState(() => {
-    if (media) {
-      setEditTitle(media.title || "");
-      setEditDescription(media.description || "");
-      setEditAltText(media.alt_text || "");
-      setEditFolder(media.folder || "");
-      setEditTags(media.tags.join(", "));
+  useEffect(() => {
+    if (!media) {
+      setEditTitle("");
+      setEditDescription("");
+      setEditAltText("");
+      setEditFolder("");
+      setEditTags("");
+      setIsEditing(false);
+      return;
     }
-  });
+
+    setEditTitle(media.title ?? "");
+    setEditDescription(media.description ?? "");
+    setEditAltText(media.alt_text ?? "");
+    setEditFolder(media.folder ?? "");
+    setEditTags(media.tags.join(", "));
+    setIsEditing(false);
+  }, [media?.id, media?.updated_at, open]);
 
   const { mutate: deleteMedia, isPending: isDeleting } = useMutation({
     mutationFn: () => {
@@ -133,12 +142,19 @@ export function MediaDetailSheet({
   const handleCancelEdit = () => {
     // Reset to original values
     if (media) {
-      setEditTitle(media.title || "");
-      setEditDescription(media.description || "");
-      setEditAltText(media.alt_text || "");
-      setEditFolder(media.folder || "");
+      setEditTitle(media.title ?? "");
+      setEditDescription(media.description ?? "");
+      setEditAltText(media.alt_text ?? "");
+      setEditFolder(media.folder ?? "");
       setEditTags(media.tags.join(", "));
+    } else {
+      setEditTitle("");
+      setEditDescription("");
+      setEditAltText("");
+      setEditFolder("");
+      setEditTags("");
     }
+
     setIsEditing(false);
   };
 
