@@ -35,12 +35,25 @@ const timezoneSchema = z
     "Please select a valid timezone",
   );
 
-// Main workspace form validation schema
+  // Form validation constants
+export const WORKSPACE_CONSTRAINTS = {
+  TITLE_MIN_LENGTH: 1,
+  TITLE_MAX_LENGTH: 200,
+  DESCRIPTION_MAX_LENGTH: 500,
+  SLUG_MIN_LENGTH: 3,
+  SLUG_MAX_LENGTH: 50,
+  URL_PATTERN: /^https?:\/\/.+/,
+} as const;
+
+
 export const workspaceFormSchema = z.object({
-  name: z
+  title: z
     .string()
-    .min(1, "Name is required")
-    .max(200, "Name must be 200 characters or less")
+    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Title is required")
+    .max(
+      WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH,
+      `Title must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
+    )
     .trim(),
 
   url: urlSchema,
@@ -48,16 +61,23 @@ export const workspaceFormSchema = z.object({
   timezone: timezoneSchema,
 });
 
-// Create workspace API request schema
 export const createWorkspaceRequestSchema = z.object({
-  name: z.string().min(1).max(200).trim(),
+  title: z
+    .string()
+    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
+    .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
+    .trim(),
   url: urlSchema,
   timezone: timezoneSchema,
 });
 
-// Update workspace API request schema
 export const updateWorkspaceRequestSchema = z.object({
-  name: z.string().min(1).max(200).trim().optional(),
+  title: z
+    .string()
+    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
+    .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
+    .trim()
+    .optional(),
   url: urlSchema.optional(),
   timezone: timezoneSchema,
 });
@@ -95,11 +115,6 @@ export type UpdateWorkspaceRequest = z.infer<
   typeof updateWorkspaceRequestSchema
 >;
 
-// Form validation constants
-export const WORKSPACE_VALIDATION = {
-  NAME_MIN_LENGTH: 1,
-  NAME_MAX_LENGTH: 200,
-} as const;
 
 /**
  * Workspace analytics schema (nested under 'analytics' key)
@@ -208,6 +223,10 @@ export const workspacePermissionsResponseSchema = z.object({
   workspace_slug: z.string(),
   user_role: z.string(),
   permissions: z.array(z.string()),
+});
+
+export const refreshBrandVoiceResponseSchema = z.object({
+  operation_id: z.string(),
 });
 
 // Type inference for responses

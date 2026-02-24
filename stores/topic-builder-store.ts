@@ -9,20 +9,7 @@ import type {
   TopicBuilderFormData,
   ValidationResult,
 } from "@/types/topic-builder";
-
-// SSR-safe storage implementation
-const getStorage = () => {
-  // SSR guard - only access localStorage on client-side
-  if (typeof window === "undefined") {
-    // Return a no-op storage for SSR
-    return {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    };
-  }
-  return localStorage;
-};
+import { getStorage } from "@/lib/storage";
 
 /**
  * Topic Builder Store Interface

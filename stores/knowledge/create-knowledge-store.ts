@@ -13,18 +13,8 @@
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { getStorage } from "@/lib/storage";
 
-// SSR-safe storage implementation
-const getStorage = () => {
-  if (typeof window === "undefined") {
-    return {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    };
-  }
-  return localStorage;
-};
 
 // ============================================================================
 // BASE TYPES
