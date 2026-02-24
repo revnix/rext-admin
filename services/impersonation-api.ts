@@ -5,6 +5,7 @@
  * Admin users can impersonate other users to troubleshoot issues or provide support.
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 
@@ -46,8 +47,7 @@ export class ImpersonationApiService {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024";
+    this.baseUrl = resolveApiBaseUrl();
   }
 
   /**

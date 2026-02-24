@@ -4,6 +4,7 @@
  * Handles marking notifications as read via the backend API.
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { buildUrl } from "@/lib/url-utils";
@@ -11,8 +12,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 import type { ApiNotification } from "@/types/notifications";
 import type { OperationNotification } from "@/types/sse";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+const API_BASE_URL = resolveApiBaseUrl();
 
 export async function fetchNotifications() {
   try {

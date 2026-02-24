@@ -45,6 +45,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import type { Media } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 
@@ -160,10 +161,7 @@ export function MediaDetailSheet({
       return url; // Already absolute
     }
     // Relative URL - prepend backend URL
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://127.0.0.1:2024";
+    const backendUrl = resolveApiBaseUrl();
     return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 

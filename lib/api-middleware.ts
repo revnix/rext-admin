@@ -13,6 +13,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { generateRequestId } from "@/lib/response-utils";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import type { BackendErrorCode } from "@/types/consistent-response";
 
 // ============================================================================
@@ -480,7 +481,7 @@ export async function proxyToBackend(
   } = {},
 ): Promise<Response> {
   const {
-    apiUrl = process.env.BACKEND_API_URL || "http://localhost:2024",
+    apiUrl = resolveApiBaseUrl(process.env.BACKEND_API_URL),
     apiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY,
     timeout = 30000,
   } = options;

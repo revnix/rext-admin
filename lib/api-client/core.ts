@@ -4,6 +4,7 @@
  * Base client class with generic request handling
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { safeJsonParse } from "@/lib/utils";
@@ -69,10 +70,7 @@ export class ApiClient {
   private readonly activeRequests = new Map<string, AbortController>();
 
   constructor() {
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://127.0.0.1:2024";
+    this.baseUrl = resolveApiBaseUrl();
   }
 
   /**

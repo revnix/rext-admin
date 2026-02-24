@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
   ArrowLeftRight,
   BadgeCheck,
@@ -163,10 +164,7 @@ export function PageLayout({
   const userInitials = getInitials(userName);
   const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   const getAvatarUrl = (avatarUrl?: string) => {
     if (!avatarUrl) return null;

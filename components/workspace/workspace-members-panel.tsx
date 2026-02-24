@@ -23,6 +23,7 @@ import { WorkspaceInviteMembersDialog } from "@/components/workspace/workspace-i
 import { WorkspaceRemoveMemberDialog } from "@/components/workspace/workspace-remove-member-dialog";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
@@ -95,10 +96,7 @@ export function WorkspaceMembersPanel({
 
   const members = membersResponse?.members || [];
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
   // Get initials for avatar
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
