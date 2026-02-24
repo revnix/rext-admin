@@ -19,6 +19,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { isMediaKind } from "@/lib/media-type";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   AlertDialog,
@@ -168,20 +170,9 @@ export function MediaDetailSheet({
 
   if (!media) return null;
 
-  const isImage = media.file_type.startsWith("image/");
+  const isImage = isMediaKind(media.file_type, "image");
 
-  // Convert relative URLs to absolute URLs pointing to backend
-  const getAbsoluteUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url; // Already absolute
-    }
-    // Relative URL - prepend backend URL
-    const backendUrl = resolveApiBaseUrl();
-    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
-  };
-
-  const publicUrl = getAbsoluteUrl(media.public_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";

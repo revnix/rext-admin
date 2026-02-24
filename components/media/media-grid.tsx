@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import { getMediaKind } from "@/lib/media-type";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import type { Media } from "@/lib/api-client/media";
 
 interface MediaGridProps {
@@ -83,11 +85,10 @@ function MediaCard({
   onSelectionChange,
   selectionMode = false,
 }: MediaCardProps) {
-  const isImage = media.file_type.startsWith("image/");
-  const isVideo = media.file_type.startsWith("video/");
-  const isDocument =
-    media.file_type.startsWith("application/") ||
-    media.file_type.startsWith("text/");
+  const mediaKind = getMediaKind(media.file_type);
+  const isImage = mediaKind === "image";
+  const isVideo = mediaKind === "video";
+  const isDocument = mediaKind === "document";
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -108,8 +109,8 @@ function MediaCard({
     return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
-  const thumbnailUrl = getAbsoluteUrl(media.thumbnail_url);
-  const publicUrl = getAbsoluteUrl(media.public_url);
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
