@@ -12,6 +12,8 @@
  * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
+// Note: Content endpoints use query param (?workspace_id=) instead of path param.
+
 import type {
   ContentListResponse,
   ContentResponse,
