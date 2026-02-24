@@ -1,6 +1,7 @@
 import { signOut } from "next-auth/react";
 import { log } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
+import { clearAuthHeadersCache } from "@/lib/auth-utils";
 
 /**
  * Performs a comprehensive and secure logout operation.
@@ -16,6 +17,8 @@ import { getQueryClient } from "@/lib/query-client";
 export async function performLogout(callbackUrl: string = "/login") {
   try {
     log.info("[Auth] Initiating comprehensive logout via utility...");
+
+    clearAuthHeadersCache();
 
     // 1. Reset Analytics
     try {
@@ -55,6 +58,7 @@ export async function performLogout(callbackUrl: string = "/login") {
   } catch (error) {
     log.error("[Auth] Logout failed", error);
     // Fallback force reload even if something failed
+    clearAuthHeadersCache();
     window.location.href = callbackUrl;
   }
 }

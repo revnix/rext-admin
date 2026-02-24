@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import {
   createContext,
@@ -60,30 +61,8 @@ const activeSubscriptions = new Map<
   }
 >();
 
-function resolveBaseUrl(explicitBaseUrl?: string): string {
-  if (explicitBaseUrl && explicitBaseUrl.trim().length > 0) {
-    return explicitBaseUrl.replace(/\/+$/, "");
-  }
-
-  // Check environment variables FIRST (before window.location)
-  const envBaseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  if (envBaseUrl && envBaseUrl.trim().length > 0) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  // Fall back to window.location.origin only if no env var is set
-  if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin.replace(/\/+$/, "");
-  }
-
-  return "";
-}
-
 export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
-  const resolvedBaseUrl = useMemo(() => resolveBaseUrl(baseUrl), [baseUrl]);
+  const resolvedBaseUrl = useMemo(() => resolveApiBaseUrl(baseUrl), [baseUrl]);
 
   const subscribe = useCallback<SSEContextType["subscribe"]>(
     (operationId, onEvent, onStatus) => {
@@ -161,7 +140,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       let retryCount = 0;
       let abortController = new AbortController();
 
-      const baseEndpoint = resolvedBaseUrl || resolveBaseUrl();
+      const baseEndpoint = resolvedBaseUrl || resolveApiBaseUrl();
 
       const buildUrl = () =>
         baseEndpoint

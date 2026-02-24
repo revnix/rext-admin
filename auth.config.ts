@@ -9,6 +9,7 @@ import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import { getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
 /**
  * Refresh the access token using the refresh token
@@ -122,12 +123,12 @@ export default {
           );
 
           if (!response.ok) {
-            // Extract detailed error message from backend
-            const errorData = await response.json().catch(() => ({}));
-            const errorMessage =
-              errorData?.error?.message ||
-              errorData?.message ||
-              "Invalid email or password";
+            // Extract detailed error message from backend using shared utility
+            const errorData = await safeParseErrorBody(response);
+            const errorMessage = extractApiError(
+              errorData,
+              "Invalid email or password",
+            );
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
 
             // Throw CredentialsSignin with the message as the code
@@ -167,6 +168,10 @@ export default {
             rememberMe,
           };
         } catch (error) {
+          // Re-throw CredentialsSignin to propagate the specific error message to the client
+          if (error instanceof CredentialsSignin) {
+            throw error;
+          }
           log.error("[AuthJS] Authorization error:", error);
           return null;
         }
@@ -244,23 +249,11 @@ export default {
             );
 
             if (!oauthResponse.ok) {
-              const errorText = await oauthResponse.text();
-              log.error("[AuthJS] OAuth response error text:", errorText);
-
-              const errorData = safeJsonParse<Record<string, unknown>>(
-                errorText,
-                { rawError: errorText },
-                "[AuthJS] OAuth response error",
+              const errorData = await safeParseErrorBody(oauthResponse);
+              const errorMessage = extractApiError(
+                errorData,
+                "OAuth login failed",
               );
-              log.error("[AuthJS] OAuth response error data:", errorData);
-
-              const err = errorData as Record<string, unknown> | null;
-              const nested = err?.error as Record<string, unknown> | undefined;
-              const errorMessage =
-                nested?.message ||
-                err?.message ||
-                err?.rawError ||
-                "OAuth login failed";
               log.error(
                 "[AuthJS] OAuth login failed with message:",
                 errorMessage,

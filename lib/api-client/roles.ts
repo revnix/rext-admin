@@ -96,6 +96,7 @@ export function createRolesNamespace(client: ApiClient) {
         };
       }>(ENDPOINTS.ROLES.create, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
@@ -117,6 +118,7 @@ export function createRolesNamespace(client: ApiClient) {
         };
       }>(ENDPOINTS.ROLES.update(roleId), {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
@@ -147,6 +149,7 @@ export function createRolesNamespace(client: ApiClient) {
         invalid_count: number;
       }>(ENDPOINTS.ROLES.permissions.assign(roleId), {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
@@ -244,6 +247,7 @@ export function createRolesNamespace(client: ApiClient) {
         };
       }>(ENDPOINTS.PERMISSIONS.create, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
@@ -267,6 +271,7 @@ export function createRolesNamespace(client: ApiClient) {
         };
       }>(ENDPOINTS.PERMISSIONS.update(permissionId), {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },

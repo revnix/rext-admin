@@ -4,8 +4,10 @@
  * API client for managing integrations (sites)
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
 // ============================================================================
 // TYPES
@@ -66,8 +68,7 @@ export class IntegrationsApiService {
   private readonly log = logger.forComponent("IntegrationsApiService");
 
   constructor() {
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024";
+    this.baseUrl = resolveApiBaseUrl();
   }
 
   /**
@@ -178,20 +179,11 @@ export class IntegrationsApiService {
       });
 
       if (!response.ok) {
-        let errorMessage = "Failed to create integration";
-        try {
-          const errorData = await response.json();
-          if (errorData.detail) {
-            errorMessage =
-              typeof errorData.detail === "string"
-                ? errorData.detail
-                : JSON.stringify(errorData.detail);
-          } else {
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          }
-        } catch (_e) {
-          // Ignore JSON parse error
-        }
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(
+          errorData,
+          "Failed to create integration",
+        );
 
         this.log.error("Failed to create integration", {
           status: response.status,
@@ -235,20 +227,11 @@ export class IntegrationsApiService {
       });
 
       if (!response.ok) {
-        let errorMessage = "Failed to update integration";
-        try {
-          const errorData = await response.json();
-          if (errorData.detail) {
-            errorMessage =
-              typeof errorData.detail === "string"
-                ? errorData.detail
-                : JSON.stringify(errorData.detail);
-          } else {
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          }
-        } catch (_e) {
-          /* ignore */
-        }
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(
+          errorData,
+          "Failed to update integration",
+        );
 
         this.log.error("Failed to update integration", {
           siteId,
@@ -282,20 +265,11 @@ export class IntegrationsApiService {
       const response = await authenticatedFetch(url, { method: "DELETE" });
 
       if (!response.ok) {
-        let errorMessage = "Failed to delete integration";
-        try {
-          const errorData = await response.json();
-          if (errorData.detail) {
-            errorMessage =
-              typeof errorData.detail === "string"
-                ? errorData.detail
-                : JSON.stringify(errorData.detail);
-          } else {
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          }
-        } catch (_e) {
-          /* ignore */
-        }
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(
+          errorData,
+          "Failed to delete integration",
+        );
 
         this.log.error("Failed to delete integration", {
           siteId,
@@ -327,20 +301,11 @@ export class IntegrationsApiService {
     try {
       const response = await authenticatedFetch(url, { method: "POST" });
       if (!response.ok) {
-        let errorMessage = "Failed to activate integration";
-        try {
-          const errorData = await response.json();
-          if (errorData.detail) {
-            errorMessage =
-              typeof errorData.detail === "string"
-                ? errorData.detail
-                : JSON.stringify(errorData.detail);
-          } else {
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          }
-        } catch (_e) {
-          /* ignore */
-        }
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(
+          errorData,
+          "Failed to activate integration",
+        );
         this.log.error("Failed to activate integration", {
           siteId,
           error: errorMessage,
@@ -371,20 +336,11 @@ export class IntegrationsApiService {
     try {
       const response = await authenticatedFetch(url, { method: "POST" });
       if (!response.ok) {
-        let errorMessage = "Failed to deactivate integration";
-        try {
-          const errorData = await response.json();
-          if (errorData.detail) {
-            errorMessage =
-              typeof errorData.detail === "string"
-                ? errorData.detail
-                : JSON.stringify(errorData.detail);
-          } else {
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          }
-        } catch (_e) {
-          /* ignore */
-        }
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(
+          errorData,
+          "Failed to deactivate integration",
+        );
         this.log.error("Failed to deactivate integration", {
           siteId,
           error: errorMessage,

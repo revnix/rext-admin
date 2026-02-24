@@ -4,6 +4,7 @@
  * This module provides API client for role and permission management.
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 
@@ -44,8 +45,7 @@ export class RoleApiService {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024";
+    this.baseUrl = resolveApiBaseUrl();
   }
 
   /**

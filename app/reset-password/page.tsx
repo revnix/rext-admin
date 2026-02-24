@@ -20,6 +20,7 @@ import {
   resetPasswordSchema,
 } from "@/schemas/auth-schemas";
 import { checkPasswordBreach } from "@/lib/password-utils";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
 function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,8 +70,8 @@ function ResetPasswordForm() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Password reset failed");
+        const errorData = await safeParseErrorBody(response);
+        throw new Error(extractApiError(errorData, "Password reset failed"));
       }
 
       setSuccess(true);

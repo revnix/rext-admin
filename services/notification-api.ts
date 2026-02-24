@@ -4,43 +4,43 @@
  * Handles marking notifications as read via the backend API.
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { buildUrl } from "@/lib/url-utils";
-import { useNotificationStore } from "@/stores/notification-store";
 import type { ApiNotification } from "@/types/notifications";
 import type { OperationNotification } from "@/types/sse";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+const API_BASE_URL = resolveApiBaseUrl();
 
-export async function fetchNotifications() {
+export async function fetchNotifications(): Promise<OperationNotification[]> {
   try {
     const res = await authenticatedFetch(
       `${API_BASE_URL}/api/v1/notifications`,
     );
-    if (!res.ok) throw new Error("Failed to fetch notifications");
+    if (!res.ok) {
+      throw new Error(`Failed to fetch notifications: ${res.status}`);
+    }
 
     const json = await res.json();
-    if (!json.success) return;
+    if (!json.success) {
+      throw new Error("Notification API returned success=false");
+    }
 
     const notifications: ApiNotification[] = json.data.notifications;
-    const store = useNotificationStore.getState();
 
-    // API returns notifications from newest to oldest
-    // Add them in reverse order so the newest ends up first in the store
-    [...notifications].reverse().forEach((n) => {
-      store.addNotification({
-        id: n.id,
-        title: n.title,
-        message: n.message,
-        type: mapStatusToType(n.status),
-        read: n.is_read,
-        createdAt: n.created_at,
-      });
-    });
+    return [...notifications].map((n) => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      type: mapStatusToType(n.status),
+      read: n.is_read,
+      createdAt: n.created_at,
+    }));
   } catch (err) {
-    log.error("Error fetching notifications:", err);
+    const normalizedError = err instanceof Error ? err : new Error(String(err));
+    log.error("Error fetching notifications", { error: normalizedError });
+    throw normalizedError;
   }
 }
 
