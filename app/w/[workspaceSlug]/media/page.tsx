@@ -46,6 +46,7 @@ import {
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
+import { formatFileSize } from "@/lib/formatters/number-formatters";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -140,12 +141,7 @@ export default function WorkspaceMediaPage() {
   const handleUploaded = () => handleRefresh();
   const handleDeleted = () => handleRefresh();
 
-  const formatFileSize = (bytes: number): string => {
-    if (!bytes) return "0 B";
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`;
-  };
+  // local `formatFileSize` declaration is removed.
 
   // Bulk delete
   const bulkDeleteMutation = useMutation({
