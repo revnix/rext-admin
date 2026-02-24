@@ -58,16 +58,10 @@ import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
-interface BreadcrumbItemData {
-  label: string;
-  href?: string;
-}
-
 interface PageLayoutProps {
   title: string;
   hideTitle?: boolean;
   description?: string;
-  breadcrumbs?: BreadcrumbItemData[];
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -93,7 +87,6 @@ export function PageLayout({
   title,
   hideTitle = false,
   description,
-  breadcrumbs: _breadcrumbs = [],
   actions,
   children,
   className = "",
@@ -182,7 +175,6 @@ export function PageLayout({
   const userEmail = profileUser?.email || user?.email || "";
   const userInitials = getInitials(userName);
   const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
-  const _userRole = getRoleDisplayName(effectiveRoleKey);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
