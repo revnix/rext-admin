@@ -4,66 +4,59 @@
  * Handles user profile and account management
  */
 
+import { z } from "zod";
+import type { UpdateProfileRequest, UserProfile } from "@/types/profile";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+
+const profileEnvelopeSchema = z.object({
+  profile: z.object({
+    id: z.string(),
+    email: z.string().email(),
+    full_name: z.string().nullable(),
+    display_name: z.string().nullable(),
+    bio: z.string().nullable().optional(),
+    language: z.string(),
+    timezone: z.string(),
+    status: z.string(),
+    email_verified: z.boolean(),
+    avatar_url: z.string().nullable().optional(),
+    created_at: z.string().nullable(),
+    updated_at: z.string().nullable(),
+  }),
+});
 
 export function createProfileNamespace(client: ApiClient) {
   return {
     /**
      * Get user profile
      */
-    get: async () => {
-      const response = await client.request<{
-        profile: {
-          id: string;
-          email: string;
-          full_name: string;
-          display_name: string;
-          email_verified: boolean;
-          status: string;
-          avatar_url?: string;
-          bio?: string;
-          language?: string;
-          timezone?: string;
-          created_at: string;
-          updated_at: string;
-        };
-      }>(ENDPOINTS.PROFILE.get, {
+    get: async (): Promise<UserProfile> => {
+      const response = await client.request<unknown>(ENDPOINTS.PROFILE.get, {
         method: "GET",
       });
-      return response.profile;
+
+      const parsed = profileEnvelopeSchema.safeParse(response);
+      if (!parsed.success) {
+        throw new Error("Invalid /api/v1/user/profile response contract");
+      }
+
+      const { profile } = parsed.data;
+      return {
+        ...profile,
+        bio: profile.bio ?? null,
+        avatar_url: profile.avatar_url ?? null,
+      };
     },
 
     /**
      * Update user profile
      */
-    update: async (data: {
-      full_name?: string;
-      display_name?: string | null;
-      bio?: string;
-      avatar_url?: string;
-      language?: string;
-      timezone?: string;
-    }) => {
+    update: async (data: UpdateProfileRequest): Promise<UserProfile> => {
       const response = await client.request<{
-        user?: {
-          id: string;
-          email: string;
-          full_name: string;
-          display_name: string;
-          avatar_url?: string;
-          bio?: string;
-          language?: string;
-          timezone?: string;
-        };
+        profile?: UserProfile;
+        user?: UserProfile;
         id?: string;
-        email?: string;
-        full_name?: string;
-        display_name?: string;
-        avatar_url?: string;
-        bio?: string;
-        language?: string;
-        timezone?: string;
       }>(ENDPOINTS.PROFILE.update, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -71,7 +64,11 @@ export function createProfileNamespace(client: ApiClient) {
       });
 
       // Handle both wrapped and direct response formats
-      return response.user || response;
+      const profile = response.profile || response.user;
+      if (!profile) {
+        throw new Error("Invalid update response: missing profile data");
+      }
+      return profile;
     },
 
     /**

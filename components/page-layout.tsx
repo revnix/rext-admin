@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
   ArrowLeftRight,
   BadgeCheck,
@@ -68,20 +69,7 @@ interface PageLayoutProps {
   fullWidth?: boolean;
 }
 
-// Redefine ApiUser locally to ensure safety if not exported
-type ApiUser = {
-  id: string;
-  email: string;
-  full_name: string;
-  email_verified: boolean;
-  status: string;
-  avatar_url?: string;
-  bio?: string;
-  language?: string;
-  timezone?: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { UserProfile } from "@/types/profile";
 
 export function PageLayout({
   title,
@@ -104,7 +92,7 @@ export function PageLayout({
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();
-  const [profileUser, setProfileUser] = useState<ApiUser | null>(null);
+  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -176,10 +164,7 @@ export function PageLayout({
   const userInitials = getInitials(userName);
   const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   const getAvatarUrl = (avatarUrl?: string) => {
     if (!avatarUrl) return null;

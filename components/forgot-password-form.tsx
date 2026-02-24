@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
@@ -47,8 +48,10 @@ export function ForgotPasswordForm({
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to send reset email");
+        const errorData = await safeParseErrorBody(response);
+        throw new Error(
+          extractApiError(errorData, "Failed to send reset email"),
+        );
       }
 
       setSuccess(true);

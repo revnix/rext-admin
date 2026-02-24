@@ -25,12 +25,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspaceStore } from "@/stores/workspace";
+import {
+  workspaceSettingsSchema,
+  type WorkspaceSettingsFormData,
+} from "@/schemas/workspace-schemas";
 import * as React from "react";
 
 const generalInfoSchema = z.object({
@@ -62,10 +65,9 @@ export function GeneralInfoSection() {
 
   const form = useForm<GeneralInfoForm>({
     resolver: zodResolver(generalInfoSchema),
-    defaultValues: {
+    values: {
       name: workspace?.name || "",
       slug: workspace?.slug || "",
-      description: "",
       url: workspace?.url || "",
     },
   });
@@ -76,7 +78,6 @@ export function GeneralInfoSection() {
       form.reset({
         name: workspace.name || "",
         slug: workspace.slug || "",
-        description: "",
         url: workspace.url || "",
       });
     }
@@ -125,7 +126,7 @@ export function GeneralInfoSection() {
         router.push(workspaceRoutes.settings.root(data.slug));
       } else {
         // Hard reload to ensure all components update
-        window.location.reload();
+        // window.location.reload();
       }
     } catch (error) {
       const errorMessage =
@@ -183,28 +184,6 @@ export function GeneralInfoSection() {
                     </FormControl>
                     <FormDescription>
                       Used in URLs. Cannot be changed after creation
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="What is this workspace about?"
-                        className="resize-none"
-                        rows={3}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      A brief description of this workspace
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

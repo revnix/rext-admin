@@ -62,6 +62,30 @@ export const updateWorkspaceRequestSchema = z.object({
   timezone: timezoneSchema,
 });
 
+export const workspaceSettingsSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Workspace name is required")
+    .max(200, "Title must be 200 characters or less")
+    .trim(),
+  title: z
+    .string()
+    .min(1, "Workspace name is required")
+    .max(200, "Title must be 200 characters or less")
+    .trim(),
+  slug: z
+    .string()
+    .min(3, "Slug must be at least 3 characters")
+    .max(50)
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug can only contain lowercase letters, numbers, and hyphens",
+    ),
+  url: urlSchema.optional().or(z.literal("")),
+});
+
+export type WorkspaceSettingsFormData = z.infer<typeof workspaceSettingsSchema>;
+
 // Type inference for forms
 export type WorkspaceFormData = z.infer<typeof workspaceFormSchema>;
 export type CreateWorkspaceRequest = z.infer<

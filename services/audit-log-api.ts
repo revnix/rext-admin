@@ -4,6 +4,7 @@
  * Handles fetching and filtering audit logs for activity tracking.
  */
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { buildUrl } from "@/lib/url-utils";
 import type {
@@ -12,8 +13,7 @@ import type {
   AuditLogListResponse,
 } from "@/types/audit-log";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+const API_BASE_URL = resolveApiBaseUrl();
 
 /**
  * Fetch user's own audit logs

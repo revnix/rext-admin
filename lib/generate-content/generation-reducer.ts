@@ -73,9 +73,6 @@ export function generationReducer(
     case "SET_SEO_SCORE":
       if (state.seoScore === action.payload) return state;
       return { ...state, seoScore: action.payload };
-    case "SET_EEAT_DATA":
-      if (state.eeatData === action.payload) return state;
-      return { ...state, eeatData: action.payload };
     case "RESET_FOR_REJECT":
       return { ...state, instruction: "", step: "outline-reject" };
     case "SUBMIT_REJECT_REASON":

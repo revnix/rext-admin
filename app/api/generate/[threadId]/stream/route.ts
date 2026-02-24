@@ -1,14 +1,13 @@
 import type { NextRequest } from "next/server";
 import { Client } from "@langchain/langgraph-sdk";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
+
 const ASSISTANT_ID = "agent";
 
 const getClient = () =>
   new Client({
-    apiUrl:
-      process.env.LANGGRAPH_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://localhost:2024",
+    apiUrl: resolveApiBaseUrl(process.env.LANGGRAPH_API_URL),
   });
 
 export async function POST(

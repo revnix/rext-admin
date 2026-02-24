@@ -2,9 +2,6 @@
  * Workspaces API Namespace
  *
  * Handles workspace CRUD operations and brand voice
- *
- * @note Migrated to use centralized ENDPOINTS registry.
- * @see lib/api-client/endpoints.ts for path conventions.
  */
 
 import type {
@@ -23,6 +20,75 @@ import {
   createWorkspaceResponseSchema,
 } from "@/schemas/workspace-schemas";
 import { validateResponse } from "@/lib/api-response-validator";
+
+interface WorkspaceCreatePayload {
+  name: string;
+  timezone?: string;
+  url: string;
+}
+
+interface WorkspaceUpdatePayload {
+  name?: string;
+  timezone?: string;
+  url?: string;
+}
+
+function toCreatePayload(data: {
+  name: string;
+  timezone?: string;
+  url: string;
+}): WorkspaceCreatePayload {
+  return {
+    name: data.name,
+    timezone: data.timezone,
+    url: data.url,
+  };
+}
+
+function toUpdatePayload(data: {
+  title?: string;
+  timezone?: string;
+  url?: string;
+}): WorkspaceUpdatePayload {
+  const payload: WorkspaceUpdatePayload = {};
+  if (data.title !== undefined) payload.name = data.title;
+  if (data.timezone !== undefined) payload.timezone = data.timezone;
+  if (data.url !== undefined) payload.url = data.url;
+  return payload;
+}
+
+interface BrandVoicePayload {
+  about: string;
+  customer_profile: string;
+  selling_position: string;
+  target_audience: string[];
+  brand_voice: string[];
+  competitors: string[];
+  content_pillar: string[];
+  personas: Persona[];
+}
+
+function toBrandVoicePayload(data: {
+  about?: string;
+  customer_profile?: string;
+  selling_position?: string;
+  target_audience?: string[];
+  brand_voice?: string[];
+  competitors?: string[];
+  content_strategy?: string[];
+  personas?: Persona[];
+}): BrandVoicePayload {
+  return {
+    about: data.about ?? "",
+    customer_profile: data.customer_profile ?? "",
+    selling_position: data.selling_position ?? "",
+    target_audience: data.target_audience ?? [],
+    brand_voice: data.brand_voice ?? [],
+    competitors: data.competitors ?? [],
+    content_pillar: data.content_strategy ?? [],
+    personas: data.personas ?? [],
+  };
+}
 
 export function createWorkspacesNamespace(client: ApiClient) {
   return {
@@ -74,7 +140,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+          body: JSON.stringify(toCreatePayload(payload)),
       });
       return validateResponse(createWorkspaceResponseSchema, response, "workspaces.create");
     },
@@ -100,7 +166,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(toUpdatePayload(data)),
         },
       );
       return validateResponse(workspaceResponseSchema, response, "workspaces.update");
@@ -161,7 +227,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
       }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(toBrandVoicePayload(payload)),
       });
       return validateResponse(workspaceResponseSchema, response, "workspaces.updateBrandVoice");
     },

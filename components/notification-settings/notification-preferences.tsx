@@ -29,7 +29,7 @@ interface NotificationPreferencesFormProps {
 }
 
 // Transform API response to form structure
-function transformApiToFormData(
+export function transformApiToFormData(
   apiData: NotificationPreferencesApiResponse,
 ): NotificationPreferences {
   return {
@@ -42,8 +42,8 @@ function transformApiToFormData(
     ws_member_removed: apiData.workspace_notifications?.member_removed ?? false,
 
     // Content generation
-    gen_completed: apiData.content_generation?.generation_started ?? false,
-    gen_started: apiData.content_generation?.generation_completed ?? false,
+    gen_completed: apiData.content_generation?.generation_completed ?? false,
+    gen_started: apiData.content_generation?.generation_started ?? false,
     gen_failed: apiData.content_generation?.generation_failed ?? false,
     gen_published: apiData.content_generation?.content_published ?? false,
 

@@ -145,7 +145,7 @@ export const ENDPOINTS = {
    * @note Uses query parameter for workspace scoping
    */
   CONTENT: {
-    base: "/api/v1/content",
+    base: "/api/v1/content/",
     detail: (id: string) => `/api/v1/content/${id}` as const,
     save: "/api/v1/content/save",
     publish: "/api/v1/content/publish",
@@ -164,7 +164,7 @@ export const ENDPOINTS = {
     sessions: {
       list: "/api/v1/user/sessions",
       detail: (id: string) => `/api/v1/user/sessions/${id}` as const,
-      revokeAll: "/api/v1/user/sessions/revoke-all",
+      revokeAll: "/api/v1/user/sessions",
     },
   },
 
@@ -419,9 +419,9 @@ export const ENDPOINTS = {
    * @note Platform-level role management
    */
   ROLES: {
-    list: "/api/v1/roles",
+    list: "/api/v1/roles/",
     get: (roleId: string) => `/api/v1/roles/${roleId}` as const,
-    create: "/api/v1/roles",
+    create: "/api/v1/roles/",
     update: (roleId: string) => `/api/v1/roles/${roleId}` as const,
     delete: (roleId: string) => `/api/v1/roles/${roleId}` as const,
     permissions: {
@@ -437,10 +437,10 @@ export const ENDPOINTS = {
    * @note Platform-level permission management
    */
   PERMISSIONS: {
-    list: "/api/v1/permissions",
+    list: "/api/v1/permissions/",
     get: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    create: "/api/v1/permissions",
+    create: "/api/v1/permissions/",
     update: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
     delete: (permissionId: string) =>
