@@ -9,7 +9,6 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { ApiError } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
@@ -76,20 +75,6 @@ export function WorkspaceProvider({
       workspaceId,
     );
 
-// Load workspace permissions (Phase 1 integration)
-// Triggers permission loading and Zustand store sync via internal hook effects.
-// Permissions and role are consumed by WorkspacePermissionProvider and individual components.
- const { error: permissionsError } = useWorkspacePermissions(workspaceId);
-
-  // Log permission errors
-  useEffect(() => {
-    if (permissionsError) {
-      log.error("[WorkspaceProvider] Failed to load permissions:", {
-        workspaceId,
-        error: permissionsError,
-      });
-    }
-  }, [permissionsError, workspaceId]);
 
   // Query workspace data using centralized query factory
   const {
