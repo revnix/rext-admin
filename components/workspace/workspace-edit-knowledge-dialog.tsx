@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { KnowledgeItem } from "@/components/workspace/workspace-knowledge-table";
+import type { KnowledgeItem } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
 
 // Edit schemas for each type

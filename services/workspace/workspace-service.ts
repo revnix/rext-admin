@@ -15,15 +15,12 @@
  * - Brand voice refresh
  */
 
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import {
-  extractApiError,
   generateRequestId,
   sanitizeErrorForLogging,
 } from "@/lib/error-utils";
-import { logger } from "@/lib/logger";
 import { InputSanitizer } from "@/lib/sanitization";
 import type {
   CreateWorkspaceRequest,
@@ -32,58 +29,25 @@ import type {
   UpdateWorkspaceRequest,
   WorkspaceApiConfig,
   WorkspaceApiContext,
-  WorkspaceErrorCode,
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
+import { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-service";
+
 
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================
 
-export class WorkspaceServiceError extends Error {
-  constructor(
-    public readonly code: WorkspaceErrorCode,
-    public readonly message: string,
-    public readonly details?: Record<string, unknown>,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "WorkspaceServiceError";
-  }
+export { WorkspaceApiError as WorkspaceServiceError };
 
-  static fromResponse(
-    response: unknown,
-    statusCode: number,
-  ): WorkspaceServiceError {
-    const responseObj = response as Record<string, unknown>;
-    const code =
-      (responseObj.error_code as WorkspaceErrorCode) || "INVALID_REQUEST";
-
-    // Use shared utility for message extraction
-    const message = extractApiError(response, "An unknown error occurred");
-    const details = (responseObj.details as Record<string, unknown>) || {};
-
-    return new WorkspaceServiceError(code, message, details, statusCode);
-  }
-}
 
 // ============================================================================
 // MAIN SERVICE CLASS
 // ============================================================================
-
-export class WorkspaceService {
-  private readonly config: WorkspaceApiConfig;
-  private readonly log = logger.forComponent("WorkspaceService");
-  private readonly activeRequests = new Map<string, AbortController>();
-
+export class WorkspaceService extends BaseWorkspaceService {
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
-    this.config = {
-      baseUrl: resolveApiBaseUrl(),
-      timeout: 30000,
-      enableRequestDeduplication: true,
-      ...config,
-    };
+    super("WorkspaceService", config);
   }
 
   // ============================================================================
@@ -123,7 +87,7 @@ export class WorkspaceService {
    */
   async getWorkspaceBySlug(workspaceSlug: string): Promise<WorkspaceResponse> {
     if (!/^[a-z0-9-]+$/.test(workspaceSlug)) {
-      throw new WorkspaceServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         "Invalid workspace slug format",
         { slug: workspaceSlug },
@@ -221,7 +185,7 @@ export class WorkspaceService {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
-  private generateDuplicateName(originalName: string): string {
+  protected generateDuplicateName(originalName: string): string {
     const copyPattern = / \(Copy( \d+)?\)$/;
     const match = originalName.match(copyPattern);
 
@@ -233,7 +197,7 @@ export class WorkspaceService {
     }
   }
 
-  private async makeRequest<T>(
+  protected async makeRequest<T>(
     method: string,
     endpoint: string,
     body?: unknown,
@@ -256,7 +220,7 @@ export class WorkspaceService {
     }
   }
 
-  private async executeRequest<T>(
+  protected async executeRequest<T>(
     method: string,
     endpoint: string,
     body: unknown,
@@ -316,7 +280,7 @@ export class WorkspaceService {
     }
   }
 
-  private async handleErrorResponse(
+  protected async handleErrorResponse(
     response: Response,
     context: WorkspaceApiContext,
     duration: number,
@@ -331,10 +295,10 @@ export class WorkspaceService {
       errorData: sanitizeErrorForLogging(errorData),
     });
 
-    throw WorkspaceServiceError.fromResponse(errorData, response.status);
+    throw WorkspaceApiError.fromResponse(errorData, response.status);
   }
 
-  private async handleRequestError(
+  protected async handleRequestError(
     error: unknown,
     context: WorkspaceApiContext,
     duration: number,
@@ -353,7 +317,7 @@ export class WorkspaceService {
     throw error;
   }
 
-  private createRequestContext(requestId: string): WorkspaceApiContext {
+  protected createRequestContext(requestId: string): WorkspaceApiContext {
     return {
       requestId,
       timestamp: new Date().toISOString(),
@@ -365,44 +329,44 @@ export class WorkspaceService {
   // VALIDATION METHODS
   // ============================================================================
 
-  private validateUuid(id: string, fieldName: string): void {
+  protected validateUuid(id: string, fieldName: string): void {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!id || !uuidRegex.test(id)) {
-      throw new WorkspaceServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         `Invalid ${fieldName}: must be a valid UUID`,
       );
     }
   }
 
-  private validateWorkspaceData(data: CreateWorkspaceRequest): void {
+  protected validateWorkspaceData(data: CreateWorkspaceRequest): void {
     if (!data.name || data.name.trim().length === 0) {
-      throw new WorkspaceServiceError("INVALID_REQUEST", "Name is required");
+      throw new WorkspaceApiError("INVALID_REQUEST", "Name is required");
     }
 
     if (data.name.length > 200) {
-      throw new WorkspaceServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         "Name must be 200 characters or less",
       );
     }
 
     if (!data.url || !this.isValidUrl(data.url)) {
-      throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceApiError("INVALID_URL", "Valid URL is required");
     }
   }
 
-  private validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
+  protected validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
     if (data.name !== undefined) {
       if (!data.name || data.name.trim().length === 0) {
-        throw new WorkspaceServiceError(
+        throw new WorkspaceApiError(
           "INVALID_REQUEST",
           "Name cannot be empty",
         );
       }
       if (data.name.length > 200) {
-        throw new WorkspaceServiceError(
+        throw new WorkspaceApiError(
           "INVALID_REQUEST",
           "Name must be 200 characters or less",
         );
@@ -410,11 +374,11 @@ export class WorkspaceService {
     }
 
     if (data.url !== undefined && !this.isValidUrl(data.url)) {
-      throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceApiError("INVALID_URL", "Valid URL is required");
     }
   }
 
-  private isValidUrl(url: string): boolean {
+  protected isValidUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
       return parsed.protocol === "http:" || parsed.protocol === "https:";

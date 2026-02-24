@@ -19,7 +19,7 @@ import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
+import { WorkspaceDeleteDialog } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";

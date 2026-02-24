@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
+import { WorkspaceProgressTimeline } from "@/components/workspace";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace";

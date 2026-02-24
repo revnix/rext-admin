@@ -161,8 +161,7 @@ export const brandVoiceSchema = z.object({
  */
 export const workspaceSchema = z.object({
   id: z.string(),
-  title: z.string(),
-  name: z.string().optional(),
+  name: z.string(),
   slug: z.string(),
   timezone: z.string().optional(),
   url: z.string(),

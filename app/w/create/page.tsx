@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
+import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { usePermission } from "@/hooks/use-permission";
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import {
   markWelcomeModalShown,
   shouldShowWelcomeModal,
-} from "@/components/workspace/workspace-welcome-modal";
+} from "@/components/workspace";
 import type { Workspace } from "@/types/workspace";
 
 interface WelcomeModalState {

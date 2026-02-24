@@ -8,7 +8,6 @@
  * - Workspace-specific knowledge queries
  */
 
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
@@ -24,57 +23,20 @@ import type {
   WebKnowledge,
   WorkspaceApiConfig,
   WorkspaceApiContext,
-  WorkspaceErrorCode,
 } from "@/types/workspace";
-
-// ============================================================================
-// ERROR HANDLING
-// ============================================================================
-
-export class KnowledgeServiceError extends Error {
-  constructor(
-    public readonly code: WorkspaceErrorCode,
-    public readonly message: string,
-    public readonly details?: Record<string, unknown>,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "KnowledgeServiceError";
-  }
-
-  static fromResponse(
-    response: unknown,
-    statusCode: number,
-  ): KnowledgeServiceError {
-    const responseObj = response as Record<string, unknown>;
-    const code =
-      (responseObj.error_code as WorkspaceErrorCode) || "INVALID_REQUEST";
-    const message =
-      (responseObj.error as string) || "An unknown error occurred";
-    const details = (responseObj.details as Record<string, unknown>) || {};
-
-    return new KnowledgeServiceError(code, message, details, statusCode);
-  }
-}
+import { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-service";
 
 // ============================================================================
 // MAIN SERVICE CLASS
 // ============================================================================
 
-export class KnowledgeService {
-  private readonly config: WorkspaceApiConfig;
-  private readonly log = logger.forComponent("KnowledgeService");
-  private readonly activeRequests = new Map<string, AbortController>();
+export { WorkspaceApiError as KnowledgeServiceError };
+
+export class KnowledgeService extends BaseWorkspaceService {
 
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
-    this.config = {
-      baseUrl: resolveApiBaseUrl(),
-      timeout: 30000,
-      enableRequestDeduplication: true,
-      ...config,
-    };
+    super("KnowledgeService", config);
   }
-
   // ============================================================================
   // WEB KNOWLEDGE OPERATIONS
   // ============================================================================
@@ -246,7 +208,7 @@ export class KnowledgeService {
     const sanitized = this.sanitizeUpdateTextKnowledgeData(data);
 
     if (Object.keys(sanitized).length === 0) {
-      throw new KnowledgeServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         "At least one field (title, content, tags) must be provided",
       );
@@ -339,7 +301,7 @@ export class KnowledgeService {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
-  private async makeRequest<T>(
+  protected async makeRequest<T>(
     method: string,
     endpoint: string,
     body?: unknown,
@@ -385,7 +347,7 @@ export class KnowledgeService {
     }
   }
 
-  private async executeRequest<T>(
+  protected async executeRequest<T>(
     method: string,
     endpoint: string,
     body: unknown,
@@ -502,7 +464,7 @@ export class KnowledgeService {
     }
   }
 
-  private async handleErrorResponse(
+  protected async handleErrorResponse(
     response: Response,
     context: WorkspaceApiContext,
     duration: number,
@@ -517,10 +479,10 @@ export class KnowledgeService {
       errorData: sanitizeErrorForLogging(errorData),
     });
 
-    throw KnowledgeServiceError.fromResponse(errorData, response.status);
+    throw WorkspaceApiError.fromResponse(errorData, response.status);
   }
 
-  private async handleRequestError(
+  protected async handleRequestError(
     error: unknown,
     context: WorkspaceApiContext,
     duration: number,
@@ -539,7 +501,7 @@ export class KnowledgeService {
     throw error;
   }
 
-  private createRequestContext(requestId: string): WorkspaceApiContext {
+  protected createRequestContext(requestId: string): WorkspaceApiContext {
     return {
       requestId,
       timestamp: new Date().toISOString(),
@@ -551,52 +513,52 @@ export class KnowledgeService {
   // VALIDATION METHODS
   // ============================================================================
 
-  private validateUuid(id: string, fieldName: string): void {
+  protected validateUuid(id: string, fieldName: string): void {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!id || !uuidRegex.test(id)) {
-      throw new KnowledgeServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         `Invalid ${fieldName}: must be a valid UUID`,
       );
     }
   }
 
-  private validateWebKnowledgeData(data: AddWebKnowledgeRequest): void {
+  protected validateWebKnowledgeData(data: AddWebKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.url || !this.isValidUrl(data.url)) {
-      throw new KnowledgeServiceError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceApiError("INVALID_URL", "Valid URL is required");
     }
   }
 
-  private validateFileKnowledgeData(data: AddFileKnowledgeRequest): void {
+  protected validateFileKnowledgeData(data: AddFileKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.file || !(data.file instanceof File)) {
-      throw new KnowledgeServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         "Valid file is required",
       );
     }
 
     if (data.file.size > 10 * 1024 * 1024) {
-      throw new KnowledgeServiceError(
+      throw new WorkspaceApiError(
         "INVALID_REQUEST",
         "File size must be 10MB or less",
       );
     }
   }
 
-  private validateTextKnowledgeData(data: AddTextKnowledgeRequest): void {
+  protected validateTextKnowledgeData(data: AddTextKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.title || data.title.trim().length === 0) {
-      throw new KnowledgeServiceError("INVALID_REQUEST", "Title is required");
+      throw new WorkspaceApiError("INVALID_REQUEST", "Title is required");
     }
     if (!data.content || data.content.trim().length === 0) {
-      throw new KnowledgeServiceError("INVALID_REQUEST", "Content is required");
+      throw new WorkspaceApiError("INVALID_REQUEST", "Content is required");
     }
   }
 
-  private isValidUrl(url: string): boolean {
+  protected isValidUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
       return parsed.protocol === "http:" || parsed.protocol === "https:";

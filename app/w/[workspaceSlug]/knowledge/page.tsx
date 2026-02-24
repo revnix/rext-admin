@@ -14,10 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { WorkspaceCreateKnowledgeBaseDialog } from "@/components/workspace/workspace-create-knowledge-base-dialog";
-import { WorkspaceDeleteKnowledgeBaseDialog } from "@/components/workspace/workspace-delete-knowledge-base-dialog";
-import { WorkspaceEditKnowledgeBaseDialog } from "@/components/workspace/workspace-edit-knowledge-base-dialog";
-import { WorkspaceKnowledgeBasesTable } from "@/components/workspace/workspace-knowledge-bases-table";
+import {
+  WorkspaceCreateKnowledgeBaseDialog,
+  WorkspaceDeleteKnowledgeBaseDialog,
+  WorkspaceEditKnowledgeBaseDialog,
+  WorkspaceKnowledgeBasesTable
+} from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";

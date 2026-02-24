@@ -13,8 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WorkspaceInvitationsPanel } from "@/components/workspace/workspace-invitations-panel";
-import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-panel";
+import { WorkspaceInvitationsPanel, WorkspaceMembersPanel } from "@/components/workspace";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
