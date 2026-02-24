@@ -6,7 +6,11 @@
 
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
-import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
+import {
+  extractApiError,
+  generateRequestId,
+  sanitizeErrorForLogging,
+} from "@/lib/error-utils";
 import { logger } from "@/lib/logger";
 import type {
   WorkspaceApiConfig,
@@ -32,8 +36,9 @@ export class MembersServiceError extends Error {
     const responseObj = response as Record<string, unknown>;
     const code =
       (responseObj.error_code as WorkspaceErrorCode) || "INVALID_REQUEST";
-    const message =
-      (responseObj.error as string) || "An unknown error occurred";
+
+    // Use shared utility for message extraction
+    const message = extractApiError(response, "An unknown error occurred");
     const details = (responseObj.details as Record<string, unknown>) || {};
 
     return new MembersServiceError(code, message, details, statusCode);

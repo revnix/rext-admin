@@ -268,22 +268,22 @@ export function sanitizeErrorForLogging(error: BackendError): Omit<
   // Remove sensitive fields from context
   const sanitizedContext = error.context
     ? Object.entries(error.context).reduce(
-        (acc, [key, value]) => {
-          // Skip sensitive fields
-          if (
-            key.toLowerCase().includes("password") ||
-            key.toLowerCase().includes("token") ||
-            key.toLowerCase().includes("secret") ||
-            key.toLowerCase().includes("key")
-          ) {
-            acc[key] = "[REDACTED]";
-          } else {
-            acc[key] = value;
-          }
-          return acc;
-        },
-        {} as Record<string, unknown>,
-      )
+      (acc, [key, value]) => {
+        // Skip sensitive fields
+        if (
+          key.toLowerCase().includes("password") ||
+          key.toLowerCase().includes("token") ||
+          key.toLowerCase().includes("secret") ||
+          key.toLowerCase().includes("key")
+        ) {
+          acc[key] = "[REDACTED]";
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    )
     : undefined;
 
   return {
@@ -417,7 +417,6 @@ export function getFallbackBehavior(operation: string): {
         message:
           "Topic generation requires an active connection. Please check your internet and try again.",
       };
-
     default:
       return {
         enableOfflineMode: false,
@@ -428,3 +427,97 @@ export function getFallbackBehavior(operation: string): {
       };
   }
 }
+
+// ============================================================================
+// NEW SHARED ERROR UTILITIES
+// ============================================================================
+
+/**
+ * Interface representing the structure of a backend error response.
+ * Handles standard { error: { message } }, { message }, and FastAPI { detail } formats.
+ */
+interface BackendErrorResponse {
+  error?: {
+    message?: string;
+    code?: string;
+  };
+  message?: string;
+  detail?:
+  | Array<{
+    type: string;
+    loc: (string | number)[];
+    msg: string;
+    input?: unknown;
+    ctx?: unknown;
+  }>
+  | string;
+}
+
+/**
+ * Extract a human-readable error message from various backend error formats.
+ *
+ * Handles:
+ * - Structured { error: { message } }
+ * - Simple { message }
+ * - FastAPI string { detail: string }
+ * - FastAPI array { detail: [{ loc, msg }] }
+ *
+ * @param data The unknown error data from the API response
+ * @param fallback A fallback message to return if extraction fails
+ * @returns The extracted error message or the fallback
+ */
+export function extractApiError(data: unknown, fallback?: string): string {
+  if (!data || typeof data !== "object") {
+    return fallback || "An unexpected error occurred";
+  }
+
+  const parsedError = data as BackendErrorResponse;
+
+  // Handle FastAPI validation errors (array or string)
+  if (parsedError.detail) {
+    if (Array.isArray(parsedError.detail)) {
+      // Extract validation error messages: "field: message"
+      return parsedError.detail
+        .map((err) => {
+          const field =
+            err.loc && err.loc.length > 0
+              ? err.loc[err.loc.length - 1]
+              : "unknown";
+          return `${field}: ${err.msg}`;
+        })
+        .join(", ");
+    } else if (typeof parsedError.detail === "string") {
+      return parsedError.detail;
+    }
+  }
+
+  // Handle standard error formats
+  const extractedMessage = parsedError.error?.message || parsedError.message;
+
+  if (extractedMessage) {
+    return extractedMessage;
+  }
+
+  return fallback || "An unexpected error occurred";
+}
+
+/**
+ * Safely parses the response body as JSON.
+ * Returns an empty object if parsing fails, ensuring it never throws.
+ *
+ * @param response The fetch Response object
+ * @returns The parsed JSON object or an empty object
+ */
+export async function safeParseErrorBody(
+  response: Response,
+): Promise<unknown> {
+  try {
+    const errorText = await response.text();
+    // Re-use safeJsonParse from utils for consistent parsing logic
+    return safeJsonParse(errorText, {});
+  } catch {
+    // If text() fails (e.g. strict CORS or network issue reading body), return empty object
+    return {};
+  }
+}
+
