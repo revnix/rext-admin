@@ -3,6 +3,7 @@
  */
 
 import { BackendService } from "@/services/backend";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -14,7 +15,7 @@ describe("BackendService deleteTopics", () => {
     // Reset mock and create new service instance
     (fetch as jest.Mock).mockClear();
     backendService = new BackendService({
-      baseUrl: "http://localhost:2024",
+      baseUrl: resolveApiBaseUrl(),
       timeout: 5000,
     });
 
@@ -47,7 +48,7 @@ describe("BackendService deleteTopics", () => {
 
       // Verify the direct API call
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/v1/topic/delete-topic",
+        `${resolveApiBaseUrl()}/api/v1/topic/delete-topic`,
         expect.objectContaining({
           method: "DELETE",
           headers: expect.objectContaining({
@@ -99,7 +100,7 @@ describe("BackendService deleteTopics", () => {
 
       // Verify it made the direct API call
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/v1/topic/delete-topic",
+        `${resolveApiBaseUrl()}/api/v1/topic/delete-topic`,
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -149,7 +150,7 @@ describe("BackendService deleteTopics", () => {
 
       // Verify it IS calling the backend directly with DELETE method
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/v1/topic/delete-topic",
+        `${resolveApiBaseUrl()}/api/v1/topic/delete-topic`,
         expect.objectContaining({
           method: "DELETE",
         }),
@@ -198,7 +199,7 @@ describe("BackendService deleteTopics", () => {
       const [url, options] = fetchCall;
 
       // Should use base URL like other direct endpoints
-      expect(url).toMatch(/^http:\/\/localhost:2024\/api\/topic\//);
+      expect(url).toBe(`${resolveApiBaseUrl()}/api/v1/topic/delete-topic`);
 
       // Should include API key header like other direct endpoints
       expect(options.headers["content-api-key"]).toBe("test-api-key");

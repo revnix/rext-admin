@@ -6,6 +6,7 @@ import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import type { SSEEvent } from "@/types/sse";
 import { fetchNotifications } from "@/services/notification-api";
+import { useNotificationStore } from "@/stores/notification-store";
 
 const userNotificationsLogger = log.forComponent("useUserNotifications");
 
@@ -41,7 +42,16 @@ export function useUserNotifications() {
         );
 
         // Fetch notifications from API
-        fetchNotifications();
+        void fetchNotifications()
+          .then((incoming) => {
+            useNotificationStore.getState().mergeNotifications(incoming);
+          })
+          .catch((error) => {
+            userNotificationsLogger.error("Failed to refresh user notifications", {
+              userId,
+              error,
+            });
+          });
       },
       (status) => {
         userNotificationsLogger.debug("User notification connection status", {

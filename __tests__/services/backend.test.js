@@ -3,6 +3,7 @@
  */
 
 import { BackendService } from "@/services/backend";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -19,7 +20,7 @@ describe("BackendService", () => {
 
   beforeEach(() => {
     service = new BackendService({
-      baseUrl: "http://localhost:2024",
+      baseUrl: resolveApiBaseUrl(),
       timeout: 30000,
       retry: { maxAttempts: 1 }, // No retries in current implementation
     });
@@ -60,7 +61,7 @@ describe("BackendService", () => {
       const result = await service.generateTopics(mockFormData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:2024/api/v1/topic/generate-topic",
+        `${resolveApiBaseUrl()}/api/v1/topic/generate-topic`,
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({

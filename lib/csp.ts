@@ -1,10 +1,4 @@
-/**
- * Content Security Policy (CSP) Configuration
- *
- * This module provides environment-aware CSP headers for the application.
- * In development, it allows unsafe-eval and unsafe-inline for hot reload.
- * In production, it enforces strict CSP with nonce-based scripts/styles.
- */
+import { resolveApiBaseUrl } from "./api-base-url";
 
 /**
  * Builds a Content Security Policy header string
@@ -17,11 +11,21 @@ export function getCSPHeader(_nonce: string): string {
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
 
+  // Get base URL for backend (trims trailing slash)
+  let apiBaseUrl;
+  try {
+    apiBaseUrl = resolveApiBaseUrl();
+  } catch (_e) {
+    // If we can't resolve (e.g. no window in some server context), 
+    // fallback to production default for CSP
+    apiBaseUrl = "https://api.rext.ai";
+  }
+
   // In development: allow localhost variants + raw IP for local testing
-  // In production: allow https://api.rext.ai (must match what NEXT_PUBLIC_API_BASE_URL points to)
+  // In production: allow resolved API base URL
   const backendOrigins = isDev
-    ? "http://localhost:2024 http://127.0.0.1:2024 https://api.rext.ai"
-    : "https://api.rext.ai";
+    ? `http://localhost:2024 http://127.0.0.1:2024 ${apiBaseUrl}`
+    : apiBaseUrl;
 
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.

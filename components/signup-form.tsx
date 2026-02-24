@@ -1,5 +1,7 @@
 "use client";
 
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -96,13 +98,8 @@ export function SignupForm({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        // Backend returns { error: { message: "...", code: "..." } }
-        const errorMessage =
-          errorData.error?.message ||
-          errorData.message ||
-          errorData.detail ||
-          "Registration failed";
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(errorData, "Registration failed");
         throw new Error(errorMessage);
       }
 
