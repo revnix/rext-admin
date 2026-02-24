@@ -258,7 +258,6 @@ export type {
 } from "./workspace";
 export {
   FILE_CONSTRAINTS,
-  WORKSPACE_CONSTRAINTS,
 } from "./workspace";
 
 // ============================================================================

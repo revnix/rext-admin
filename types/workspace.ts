@@ -420,16 +420,6 @@ export interface KnowledgeManagementState {
 // ============================================================================
 // VALIDATION SCHEMAS (for use with Zod)
 // ============================================================================
-
-/**
- * Workspace validation constraints
- */
-export const WORKSPACE_CONSTRAINTS = {
-  TITLE_MIN_LENGTH: 1,
-  TITLE_MAX_LENGTH: 200,
-  URL_PATTERN: /^https?:\/\/.+/,
-} as const;
-
 /**
  * File upload constraints
  */
