@@ -419,9 +419,9 @@ export const ENDPOINTS = {
    * @note Platform-level role management
    */
   ROLES: {
-    list: "/api/v1/roles",
+    list: "/api/v1/roles/",
     get: (roleId: string) => `/api/v1/roles/${roleId}` as const,
-    create: "/api/v1/roles",
+    create: "/api/v1/roles/",
     update: (roleId: string) => `/api/v1/roles/${roleId}` as const,
     delete: (roleId: string) => `/api/v1/roles/${roleId}` as const,
     permissions: {
@@ -437,10 +437,10 @@ export const ENDPOINTS = {
    * @note Platform-level permission management
    */
   PERMISSIONS: {
-    list: "/api/v1/permissions",
+    list: "/api/v1/permissions/",
     get: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    create: "/api/v1/permissions",
+    create: "/api/v1/permissions/",
     update: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
     delete: (permissionId: string) =>

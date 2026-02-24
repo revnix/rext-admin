@@ -226,6 +226,7 @@ export function createMediaNamespace(client: ApiClient) {
         message: string;
       }>(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mediaIds),
       });
     },

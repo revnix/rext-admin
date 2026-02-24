@@ -150,6 +150,7 @@ export function createAdminRefundsNamespace(client: ApiClient) {
         RefundApiResponse<RefundCreateResponse>
       >(ENDPOINTS.ADMIN_REFUNDS.create, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       return response.data;
