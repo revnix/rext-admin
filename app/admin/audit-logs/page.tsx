@@ -28,6 +28,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 import { buildUrl } from "@/lib/url-utils";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { useSession } from "next-auth/react";
 
 export default function AuditLogsPage() {
@@ -81,11 +82,8 @@ export default function AuditLogsPage() {
         resource_type: resourceTypeFilter || undefined,
       });
 
-      const response = await fetch(endpoint, {
+      const response = await authenticatedFetch(endpoint, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${session?.user?.accessToken}`,
-        },
       });
 
       if (!response.ok) throw new Error("Export failed");
