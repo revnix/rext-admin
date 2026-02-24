@@ -11,6 +11,24 @@
  *   const workspace = await apiClient.workspaces.get(workspaceId);
  */
 
+/**
+ * Workspace ID Parameter Convention
+ *
+ * The backend uses two patterns for workspace-scoped endpoints:
+ *
+ * 1. Path parameter: /api/v1/workspaces/{workspaceId}/...
+ *    Used by: workspaces, members, media, knowledge, personas
+ *
+ * 2. Query parameter: ?workspace_id={workspaceId}
+ *    Used by: content, topics, users (list), admin-analytics
+ *
+ * Convention for NEW endpoints: Prefer path parameters for workspace scoping
+ * (Pattern 1) as it follows REST resource hierarchy best practices.
+ *
+ * A future migration to standardize all endpoints on path parameters
+ * requires backend coordination. See TASK-037 for the full inventory.
+ */
+
 import {
   createAuditLogsNamespace,
   createEmailTemplatesNamespace,

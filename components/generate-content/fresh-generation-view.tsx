@@ -77,7 +77,6 @@ export function FreshGenerationView({
     readabilityScore,
     seoScore,
     trustScore,
-    eeatData,
     allContent,
     currentLoadingSteps,
     keywordDifficulty,
@@ -126,12 +125,6 @@ export function FreshGenerationView({
             type: "SET_TRUST_SCORE",
             payload: updates.calculate_eeat_trust.content.review.trust_score,
           });
-          if (updates.calculate_eeat_trust.content.review.eeat_data) {
-            dispatch({
-              type: "SET_EEAT_DATA",
-              payload: updates.calculate_eeat_trust.content.review.eeat_data,
-            });
-          }
         }
 
         if (
@@ -426,7 +419,6 @@ export function FreshGenerationView({
           readabilityScore={readabilityScore}
           seoScore={seoScore}
           trustScore={trustScore}
-          eeatData={eeatData}
           generatedContent={generatedContent}
           isEditing={isEditing}
           userKeyword={userKeyword}

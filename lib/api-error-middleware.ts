@@ -9,7 +9,7 @@
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { ApiError } from "@/lib/api-client/core";
-import { WorkspaceServiceError as WorkspaceApiError } from "@/services/workspace/workspace-service";
+import { WorkspaceServiceError as WorkspaceApiError } from "@/lib/api-client/errors";
 import type { ErrorSeverity } from "@/types/consistent-response";
 import type { WorkspaceErrorCode } from "@/types/workspace";
 

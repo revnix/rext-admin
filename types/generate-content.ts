@@ -53,8 +53,8 @@ export type ContentSection = {
 };
 
 export type ContentOutline = {
-  title: string;
-  brief: string;
+  title: string | undefined;
+  brief: string | undefined;
   sections: ContentSection[];
   target_audience: string[];
   tone: string;
@@ -68,7 +68,7 @@ export type ContentOutline = {
 };
 
 export type ContentDraft = {
-  title: string;
+  title: string | undefined;
   body_markdown: string;
   word_count: number;
   sections_completed: string[];
@@ -150,7 +150,7 @@ export type TrustScore = {
 };
 
 export type FinalContent = {
-  title: string;
+  title: string | undefined;
   slug?: string;
   content?: string; // Kept for backward compatibility if needed, though backend uses body_markdown
   body_markdown: string;
@@ -173,7 +173,7 @@ export type FinalContent = {
 
 export type CONTENT = {
   topics: string[];
-  selected_topic: string;
+  selected_topic: string | undefined;
   outline: ContentOutline;
   draft: ContentDraft;
   review?: ContentReview;
@@ -527,7 +527,6 @@ export type PageAction =
   | { type: "SET_READABILITY_SCORE"; payload: ReadabilityMetrics }
   | { type: "SET_TRUST_SCORE"; payload: TrustScore }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
-  | { type: "SET_EEAT_DATA"; payload: EEATData }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
   | { type: "UPDATE_FROM_STREAM"; payload: StreamUpdates }
   | { type: "RESET_FOR_REJECT" }

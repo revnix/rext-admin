@@ -5,19 +5,23 @@
  * Separate from topic generation sessions (types/session.ts).
  */
 
+export type DeviceType = "desktop" | "mobile" | "tablet";
+
 export interface UserSession {
   id: string;
-  user_id: string;
-  device_name: string | null; // e.g., "Chrome on Windows"
-  device_type: string | null; // "desktop" | "mobile" | "tablet"
+  device_name: string | null;
+  device_type: DeviceType | null;
   ip_address: string | null;
-  country: string | null;
-  city: string | null;
-  is_active: boolean;
-  is_current: boolean; // True for the current session
-  created_at: string; // ISO timestamp
-  last_activity_at: string; // ISO timestamp
-  expires_at: string; // ISO timestamp
+  user_agent: string | null;
+  created_at: string | null;
+  last_activity_at: string | null;
+  is_current: boolean;
+  // Optional extension fields
+  user_id?: string;
+  country?: string | null;
+  city?: string | null;
+  is_active?: boolean;
+  expires_at?: string | null;
 }
 
 export interface SessionListResponse {
@@ -37,9 +41,13 @@ export interface RevokeAllSessionsRequest {
 export interface RevokeSessionResponse {
   session_id: string;
   revoked: boolean;
+  success?: boolean;
+  message?: string;
 }
 
 export interface RevokeAllSessionsResponse {
   revoked_count: number;
   current_session_preserved: boolean;
+  success?: boolean;
+  message?: string;
 }

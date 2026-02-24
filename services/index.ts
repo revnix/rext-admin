@@ -101,7 +101,9 @@ export type {
 } from "@/types/topic-builder";
 // Export session types
 export type {
+  RevokeAllSessionsRequest,
   RevokeAllSessionsResponse,
+  RevokeSessionRequest,
   RevokeSessionResponse,
   SessionListResponse,
   UserSession,
