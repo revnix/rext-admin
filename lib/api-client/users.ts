@@ -18,6 +18,11 @@
  * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
+import type {
+  RevokeAllSessionsResponse,
+  SessionListResponse,
+  UserSession,
+} from "@/types/user-session";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -39,23 +44,6 @@ export interface UsersListResponse {
   users: User[];
   total_count: number;
   workspace_id?: string | null;
-}
-
-export interface UserSession {
-  id: string;
-  device_name: string;
-  device_type: "desktop" | "mobile" | "tablet";
-  ip_address: string | null;
-  user_agent: string;
-  created_at: string;
-  last_activity_at: string | null;
-  is_current: boolean;
-}
-
-export interface SessionsResponse {
-  sessions: UserSession[];
-  total_count: number;
-  active_count: number;
 }
 
 export function createUsersNamespace(client: ApiClient) {
@@ -87,10 +75,32 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * Get all active sessions for current user
      */
-    getSessions: async (): Promise<SessionsResponse> => {
-      return client.request<SessionsResponse>(ENDPOINTS.USERS.sessions.list, {
-        method: "GET",
-      });
+    getSessions: async (): Promise<SessionListResponse> => {
+      const response = await client.request<SessionListResponse>(
+        ENDPOINTS.USERS.sessions.list,
+        {
+          method: "GET",
+        },
+      );
+
+      return {
+        ...response,
+        sessions: response.sessions.map(
+          (s): UserSession => {
+            const session = s as any;
+            return {
+              ...s,
+              device_name: session.device_name ?? session.device ?? "Unknown Device",
+              device_type: session.device_type ?? null,
+              ip_address: session.ip_address ?? null,
+              user_agent: session.user_agent ?? session.browser ?? null,
+              created_at: session.created_at ?? null,
+              last_activity_at: session.last_activity_at ?? session.last_active ?? null,
+              is_current: Boolean(session.is_current),
+            };
+          },
+        ),
+      };
     },
 
     /**
@@ -105,10 +115,13 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * Revoke all other sessions (logout from all other devices)
      */
-    revokeAllOtherSessions: async (): Promise<void> => {
-      return client.request<void>(ENDPOINTS.USERS.sessions.revokeAll, {
-        method: "POST",
-      });
+    revokeAllOtherSessions: async (): Promise<RevokeAllSessionsResponse> => {
+      return client.request<RevokeAllSessionsResponse>(
+        ENDPOINTS.USERS.sessions.revokeAll,
+        {
+          method: "DELETE",
+        },
+      );
     },
   };
 }
