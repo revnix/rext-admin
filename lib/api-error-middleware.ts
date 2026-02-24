@@ -12,6 +12,7 @@ import { ApiError } from "@/lib/api-client/core";
 import { WorkspaceServiceError as WorkspaceApiError } from "@/lib/api-client/errors";
 import type { ErrorSeverity } from "@/types/consistent-response";
 import type { WorkspaceErrorCode } from "@/types/workspace";
+import { accountSettingsRoutes } from "@/lib/routes";
 
 // ============================================================================
 // ERROR SEVERITY MAPPING
@@ -121,7 +122,7 @@ const RECOVERY_ACTIONS: Partial<
     {
       label: "Contact Admin",
       action: () => {
-        window.location.href = "/settings";
+        window.location.href = accountSettingsRoutes.root;
       },
       type: "secondary",
     },
@@ -353,9 +354,9 @@ export class ApiErrorHandler {
           description: "Please check your input and try again.",
           action: recoveryActions[0]
             ? {
-                label: recoveryActions[0].label,
-                onClick: recoveryActions[0].action,
-              }
+              label: recoveryActions[0].label,
+              onClick: recoveryActions[0].action,
+            }
             : undefined,
         });
         break;
@@ -364,9 +365,9 @@ export class ApiErrorHandler {
           description: "If this problem persists, please contact support.",
           action: recoveryActions[0]
             ? {
-                label: recoveryActions[0].label,
-                onClick: recoveryActions[0].action,
-              }
+              label: recoveryActions[0].label,
+              onClick: recoveryActions[0].action,
+            }
             : undefined,
         });
         break;

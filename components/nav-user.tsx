@@ -1,6 +1,7 @@
 "use client";
 
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import { accountSettingsRoutes } from "@/lib/routes";
 import {
   BadgeCheck,
   Bell,
@@ -278,7 +279,7 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/subscription")}
+                onClick={() => router.push(accountSettingsRoutes.subscription)}
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -288,18 +289,20 @@ export function NavUser() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <DropdownMenuItem
+                onClick={() => router.push(accountSettingsRoutes.root)}
+              >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/billing")}
+                onClick={() => router.push(accountSettingsRoutes.billing)}
               >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/security")}
+                onClick={() => router.push(accountSettingsRoutes.security)}
               >
                 <Bell />
                 Security

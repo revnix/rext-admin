@@ -13,6 +13,7 @@ import confetti from "canvas-confetti";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { accountSettingsRoutes } from "@/lib/routes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,7 +98,7 @@ export default function CheckoutSuccessPage() {
   };
 
   const handleViewBilling = () => {
-    router.push("/settings/subscription");
+    router.push(accountSettingsRoutes.subscription);
   };
 
   return (

@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import { accountSettingsRoutes } from "@/lib/routes";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,10 +118,10 @@ function BillingDashboardContent() {
         fetchSubscriptionStatus();
       }
       // Clean up URL
-      router.replace("/settings/billing", { scroll: false });
+      router.replace(accountSettingsRoutes.billing, { scroll: false });
     } else if (checkout === "cancelled") {
       toast.info("Checkout was cancelled");
-      router.replace("/settings/billing", { scroll: false });
+      router.replace(accountSettingsRoutes.billing, { scroll: false });
     }
   }, [searchParams, router, session, fetchSubscriptionStatus]);
 
@@ -345,8 +346,8 @@ function BillingDashboardContent() {
                     Your subscription will end on{" "}
                     {subscription.current_period_end
                       ? new Date(
-                          subscription.current_period_end,
-                        ).toLocaleDateString()
+                        subscription.current_period_end,
+                      ).toLocaleDateString()
                       : "N/A"}
                     . You can reactivate it anytime before this date.
                   </AlertDescription>

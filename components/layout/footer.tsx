@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LemonSqueezyBadge } from "@/components/ui/security-badge";
+import { accountSettingsRoutes } from "@/lib/routes";
 
 /**
  * Footer Component with Policy Links
@@ -110,7 +111,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
             </li>
             <li>
               <Link
-                href="/settings/subscription"
+                href={accountSettingsRoutes.subscription}
                 className="hover:text-foreground transition-colors"
               >
                 Manage Subscription

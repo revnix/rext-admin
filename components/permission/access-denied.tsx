@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowLeft, HelpCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { accountSettingsRoutes } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -209,7 +210,7 @@ export function AccessDenied({
         {/* Help Link */}
         <div className="text-center pt-2">
           <Link
-            href="/settings"
+            href={accountSettingsRoutes.root}
             className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
           >
             Contact Support

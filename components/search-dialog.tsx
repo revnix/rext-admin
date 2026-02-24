@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { accountSettingsRoutes } from "@/lib/routes";
 import {
   CommandDialog,
   CommandEmpty,
@@ -169,7 +170,7 @@ const searchData: SearchResult[] = [
     title: "Account & Preferences",
     description: "Configure your account and preferences",
     category: "Settings",
-    url: "/settings",
+    url: accountSettingsRoutes.root,
     icon: <Settings className="h-4 w-4" />,
   },
   {
