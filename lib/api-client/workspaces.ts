@@ -89,6 +89,7 @@ function toBrandVoicePayload(data: {
     personas: data.personas ?? [],
   };
 }
+import { InputSanitizer } from "@/lib/sanitization";
 
 export function createWorkspacesNamespace(client: ApiClient) {
   return {
@@ -128,39 +129,36 @@ export function createWorkspacesNamespace(client: ApiClient) {
       );
       return validateResponse(workspaceResponseSchema, data, "workspaces.getBySlug");
     },
-    // In the create method:
-    create: async (data: { title: string; timezone?: string; url: string }) => {
+
+    /**
+     * Create workspace
+     */
+    create: async (data: { name: string; timezone?: string; url: string }) => {
       const payload = {
-        name: data.title,
+        name: InputSanitizer.sanitizeText(data.name.trim()),
         timezone: data.timezone,
-        url: data.url,
+        url: data.url.trim(),
       };
       const response = await client.request<CreateWorkspaceResponse>(
         ENDPOINTS.WORKSPACES.BASE,
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(toCreatePayload(payload)),
-      });
-      return validateResponse(createWorkspaceResponseSchema, response, "workspaces.create");
+        },
+      );
+            return validateResponse(createWorkspaceResponseSchema, response, "workspaces.create");
     },
 
-    /**
-     * Update workspace
-     */
+    // Update the update method to sanitize input:
     update: async (
       workspaceId: string,
-      data: {
-        name?: string;
-        timezone?: string;
-        url?: string;
-      },
+      data: { name?: string; timezone?: string; url?: string },
     ) => {
-      const payload = {
-        name: data.name,
-        timezone: data.timezone,
-        url: data.url,
-      };
+const payload: Record<string, unknown> = {};
+      if (data.name !== undefined) payload.name = InputSanitizer.sanitizeText(data.name.trim());
+      if (data.timezone !== undefined) payload.timezone = data.timezone;
+      if (data.url !== undefined) payload.url = data.url.trim();
       const response = await client.request<WorkspaceResponse>(
         ENDPOINTS.WORKSPACES.byId(workspaceId),
         {

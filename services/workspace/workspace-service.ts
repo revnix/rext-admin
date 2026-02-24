@@ -1,4 +1,12 @@
 /**
+ * @deprecated Use `apiClient.workspaces` from `@/lib/api-client` instead.
+ * This service uses legacy `/api/v1/workspace/*` endpoints that may be removed.
+ * The API Client uses the canonical RESTful `/api/v1/workspaces/*` endpoints.
+ *
+ * Migration: Replace `workspaceService.listWorkspaces()` with `apiClient.workspaces.list()`, etc.
+ */
+
+/**
  * Workspace Service - Core CRUD Operations
  *
  * Handles core workspace management operations including:
