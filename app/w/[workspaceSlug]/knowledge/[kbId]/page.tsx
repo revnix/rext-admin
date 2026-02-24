@@ -14,14 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { WorkspaceAddKnowledgeDialog } from "@/components/workspace/workspace-add-knowledge-dialog";
-import { WorkspaceDeleteKnowledgeDialog } from "@/components/workspace/workspace-delete-knowledge-dialog";
-import { WorkspaceEditKnowledgeDialog } from "@/components/workspace/workspace-edit-knowledge-dialog";
 import {
+  WorkspaceAddKnowledgeDialog,
+  WorkspaceDeleteKnowledgeDialog,
+  WorkspaceEditKnowledgeDialog,
   convertToKnowledgeItems,
   type KnowledgeItem,
   WorkspaceKnowledgeTable,
-} from "@/components/workspace/workspace-knowledge-table";
+} from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";

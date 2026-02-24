@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { EditableBrandVoiceCard } from "@/components/workspace/editable-brand-voice-card";
+import { EditableBrandVoiceCard } from "@/components/workspace";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 

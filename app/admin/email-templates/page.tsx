@@ -41,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmailTemplateEditor } from "@/components/workspace/email-template-editor";
+import { EmailTemplateEditor } from "@/components/workspace";
 import { apiClient, type EmailTemplate } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 

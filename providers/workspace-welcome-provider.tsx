@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { WorkspaceWelcomeModal } from "@/components/workspace/workspace-welcome-modal";
+import { WorkspaceWelcomeModal } from "@/components/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { safeJsonParse } from "@/lib/utils";
 
