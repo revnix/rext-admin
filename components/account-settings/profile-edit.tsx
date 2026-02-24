@@ -94,9 +94,9 @@ export function ProfileEdit() {
   // Update profile mutation
   const updateMutation = useMutation({
     mutationFn: (data: {
-      full_name: string;
+      full_name: string | null;
       display_name?: string | null;
-      bio?: string;
+      bio?: string | null;
       language?: string;
       timezone?: string;
     }) => apiClient.profile.update(data),
@@ -155,7 +155,7 @@ export function ProfileEdit() {
     const payload = {
       full_name: data.full_name,
       display_name: data.display_name?.trim() || null,
-      bio: data.bio,
+      bio: data.bio?.trim() || null,
       language: data.language,
       timezone: data.timezone,
     };
