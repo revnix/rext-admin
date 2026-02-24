@@ -504,21 +504,6 @@ export interface GlobalSearchResult {
   contentPreview: string;
 }
 
-/**
- * SSR-safe storage implementation for Zustand persist middleware
- * Returns a dummy storage object during SSR, real localStorage in browser
- */
-export const getStorage = () => {
-  if (typeof window === "undefined") {
-    return {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    };
-  }
-  return localStorage;
-};
-
 // ============================================================================
 // WORKSPACE STORE STATE INTERFACES
 // ============================================================================
