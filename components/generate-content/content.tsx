@@ -22,7 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import LexicalEditor from "../ui/lexical-editor";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
   Dialog,
@@ -128,11 +128,10 @@ const getSEOStatusText = (score: number) => {
   return "Poor SEO Score";
 };
 
-export function ContentEditor({
+function ContentEditorInner({
   contentId,
   allContent,
   readabilityScore,
-  eeatData: _eeatData,
   trustScore,
   generatedContent,
   seoScore,
@@ -145,7 +144,6 @@ export function ContentEditor({
   contentId?: string;
   allContent: FinalContent | null;
   readabilityScore: ReadabilityMetrics | null;
-  eeatData: EEATData | null;
   trustScore: TrustScore | null;
   generatedContent: string;
   isEditing: boolean;
@@ -381,7 +379,6 @@ export function ContentEditor({
                   </h1>
                   <div className="min-h-[600px]">
                     <LexicalEditor
-                      key={`editor-${contentId ?? "new"}-${isEditing}`}
                       initialValue={body}
                       onChange={onContentChange}
                     />
@@ -414,7 +411,6 @@ export function ContentEditor({
                       </div>
                       <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
                         <LexicalEditor
-                          key={`editor-preview-${contentId ?? "new"}`}
                           initialValue={body}
                           readOnly={true}
                         />
@@ -722,3 +718,6 @@ export function ContentEditor({
     </div>
   );
 }
+
+export const ContentEditor = memo(ContentEditorInner);
+ContentEditor.displayName = "ContentEditor";
