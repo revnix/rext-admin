@@ -210,6 +210,10 @@ export const workspacePermissionsResponseSchema = z.object({
   permissions: z.array(z.string()),
 });
 
+export const refreshBrandVoiceResponseSchema = z.object({
+  operation_id: z.string(),
+});
+
 // Type inference for responses
 export type WorkspaceSchemaType = z.infer<typeof workspaceSchema>;
 export type WorkspaceResponseSchemaType = z.infer<typeof workspaceResponseSchema>;

@@ -1,28 +1,18 @@
+
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
 import type { BrandVoiceRefreshStoreState } from "@/types/workspace";
 import { useWorkspaceCrudStore } from "./use-workspace-crud-store";
 
-/**
- * Brand Voice Refresh Store
- *
- * Manages brand voice refresh operations and tracking.
- * Handles async refresh requests and SSE operation tracking.
- */
 export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
   devtools(
     (set) => ({
-      // Initial state
       brandVoiceRefresh: {
         isRefreshing: false,
         operationId: undefined,
         refreshError: undefined,
       },
-
-      // ============================================================================
-      // BRAND VOICE REFRESH ACTIONS
-      // ============================================================================
 
       refreshBrandVoice: async (workspaceId) => {
         try {
@@ -39,6 +29,8 @@ export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
 
           const operationId = response.operation_id;
 
+          useWorkspaceCrudStore.getState().setCurrentOperation({ operationId, workspaceId });
+
           set((state) => ({
             brandVoiceRefresh: {
               ...state.brandVoiceRefresh,
@@ -47,12 +39,7 @@ export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
             },
           }));
 
-          // Set operation in CRUD store for SSE tracking
-          useWorkspaceCrudStore.getState().setCurrentOperation({
-            operationId,
-            workspaceId,
-          });
-
+          // Return operationId so the caller can set it on the CRUD store
           return operationId;
         } catch (error) {
           set((state) => ({

@@ -18,6 +18,7 @@ import {
   workspaceResponseSchema,
   workspaceListResponseSchema,
   createWorkspaceResponseSchema,
+  refreshBrandVoiceResponseSchema
 } from "@/schemas/workspace-schemas";
 import { validateResponse } from "@/lib/api-response-validator";
 
@@ -147,7 +148,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toCreatePayload(payload)),
         },
       );
-            return validateResponse(createWorkspaceResponseSchema, response, "workspaces.create");
+      return validateResponse(createWorkspaceResponseSchema, response, "workspaces.create");
     },
 
     // Update the update method to sanitize input:
@@ -155,7 +156,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
       workspaceId: string,
       data: { name?: string; timezone?: string; url?: string },
     ) => {
-const payload: Record<string, unknown> = {};
+      const payload: Record<string, unknown> = {};
       if (data.name !== undefined) payload.name = InputSanitizer.sanitizeText(data.name.trim());
       if (data.timezone !== undefined) payload.timezone = data.timezone;
       if (data.url !== undefined) payload.url = data.url.trim();
@@ -190,7 +191,12 @@ const payload: Record<string, unknown> = {};
       }>(ENDPOINTS.WORKSPACES.refreshBrandVoice(workspaceId), {
         method: "POST",
       });
-      return validateResponse(workspaceResponseSchema, response, "workspaces.refreshBrandVoice");
+
+      return validateResponse(
+        refreshBrandVoiceResponseSchema,
+        response,
+        "workspaces.refreshBrandVoice"
+      );
     },
 
     /**
