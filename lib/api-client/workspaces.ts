@@ -166,7 +166,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(toUpdatePayload(data)),
+          body: JSON.stringify(toUpdatePayload(payload)),
         },
       );
       return validateResponse(workspaceResponseSchema, response, "workspaces.update");
