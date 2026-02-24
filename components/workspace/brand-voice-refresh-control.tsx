@@ -16,7 +16,7 @@ import {
 import { WorkspaceProgressTimeline } from "@/components/workspace";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { cn } from "@/lib/utils";
-import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 
 interface BrandVoiceRefreshControlProps {
   workspaceId: string;
@@ -56,6 +56,7 @@ export function BrandVoiceRefreshControl({
     })),
   );
 
+  const { setCurrentOperation } = useWorkspaceCrudStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
 
@@ -114,10 +115,11 @@ export function BrandVoiceRefreshControl({
 
   const handleRefresh = useCallback(async () => {
     try {
-      const id = await refreshBrandVoice(workspaceId);
+      const operationId = await refreshBrandVoice(workspaceId);
+      setCurrentOperation({ operationId, workspaceId });
       setBrandVoiceRefreshState({
         isRefreshing: true,
-        operationId: id,
+        operationId: operationId,
         refreshError: undefined,
       });
       toast.success("Refreshing brand voice...");

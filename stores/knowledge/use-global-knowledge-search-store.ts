@@ -8,7 +8,7 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { GlobalKnowledgeSearchState } from "@/types/knowledge";
 import type { GlobalSearchResult } from "@/types/workspace";
-import { getStorage } from "@/types/workspace";
+import { getStorage } from "@/lib/storage";
 import { useFileKnowledgeStore } from "./use-file-knowledge-store";
 import { useTextKnowledgeStore } from "./use-text-knowledge-store";
 import { useWebKnowledgeStore } from "./use-web-knowledge-store";

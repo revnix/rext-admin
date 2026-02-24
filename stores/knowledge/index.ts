@@ -16,7 +16,6 @@ export type {
   TextKnowledge,
   WebKnowledge,
 } from "@/types/workspace";
-export { getStorage } from "@/types/workspace";
 // Factory pattern types
 export type {
   BaseActions,

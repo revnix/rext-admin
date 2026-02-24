@@ -1,19 +1,12 @@
+
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
 import type { WorkspaceCrudState } from "@/types/workspace";
-import { useWorkspaceContextStore } from "./use-workspace-context-store";
 
-/**
- * Workspace CRUD Store
- *
- * Manages workspace create, read, update, delete operations.
- * Handles loading states and operation tracking for SSE.
- */
 export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
   devtools(
     (set) => ({
-      // Initial state
       loadingStates: {
         switching: false,
         creating: false,
@@ -23,10 +16,6 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
       },
       currentOperation: null,
 
-      // ============================================================================
-      // OPERATION TRACKING ACTIONS
-      // ============================================================================
-
       setCurrentOperation: (operation) => {
         set({ currentOperation: operation });
       },
@@ -35,19 +24,11 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         set({ currentOperation: null });
       },
 
-      // ============================================================================
-      // LOADING STATE ACTIONS
-      // ============================================================================
-
       setLoading: (operation, loading) => {
         set((state) => ({
           loadingStates: { ...state.loadingStates, [operation]: loading },
         }));
       },
-
-      // ============================================================================
-      // ASYNC WORKSPACE CRUD ACTIONS
-      // ============================================================================
 
       createWorkspace: async (data) => {
         set((state) => ({
@@ -56,18 +37,13 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         }));
 
         try {
-          const { workspace, operation_id } = await apiClient.workspaces.create(
-            {
-              name: data.name,
-              timezone: data.timezone,
-              url: data.url,
-            },
-          );
+          const { workspace, operation_id } = await apiClient.workspaces.create({
+            name: data.name,
+            timezone: data.timezone,
+            url: data.url,
+          });
 
-          // Optimistically add to context store and set operation for SSE
-          useWorkspaceContextStore.getState().addWorkspaceToList(workspace);
-          useWorkspaceContextStore.getState().setCurrentWorkspace(workspace);
-
+          // Only update CRUD store's own state
           set((state) => ({
             currentOperation: {
               operationId: operation_id,
@@ -101,9 +77,6 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
 
           const workspace = response.workspace;
 
-          // Update in context store
-          useWorkspaceContextStore.getState().updateWorkspaceInList(workspace);
-
           set((state) => ({
             loadingStates: { ...state.loadingStates, updating: false },
           }));
@@ -127,14 +100,11 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         try {
           await apiClient.workspaces.delete(workspaceId);
 
-          // Remove from context store
-          useWorkspaceContextStore
-            .getState()
-            .removeWorkspaceFromList(workspaceId);
-
           set((state) => ({
             loadingStates: { ...state.loadingStates, deleting: false },
           }));
+
+          return workspaceId;
         } catch (error) {
           set((state) => ({
             ...state,
@@ -153,8 +123,6 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         try {
           const response = await apiClient.workspaces.list();
           const workspaces = response.workspaces;
-
-          useWorkspaceContextStore.getState().setWorkspaceList(workspaces);
 
           set((state) => ({
             loadingStates: { ...state.loadingStates, switching: false },
@@ -180,20 +148,6 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
           const response = await apiClient.workspaces.get(workspaceId);
           const workspace = response.workspace;
 
-          // Update workspace in list if it exists, otherwise add it
-          const contextStore = useWorkspaceContextStore.getState();
-          const existingIndex = contextStore.workspaceList.findIndex(
-            (w) => w.id === workspaceId,
-          );
-
-          if (existingIndex >= 0) {
-            contextStore.updateWorkspaceInList(workspace);
-          } else {
-            contextStore.addWorkspaceToList(workspace);
-          }
-
-          contextStore.setCurrentWorkspace(workspace);
-
           set((state) => ({
             loadingStates: { ...state.loadingStates, switching: false },
           }));
@@ -213,21 +167,3 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
     },
   ),
 );
-
-// ============================================================================
-// SELECTOR HOOKS FOR PERFORMANCE
-// ============================================================================
-
-/**
- * Hook to get loading states
- */
-export const useWorkspaceLoadingStates = () => {
-  return useWorkspaceCrudStore((state) => state.loadingStates);
-};
-
-/**
- * Hook to get current operation (for SSE tracking)
- */
-export const useCurrentOperation = () => {
-  return useWorkspaceCrudStore((state) => state.currentOperation);
-};

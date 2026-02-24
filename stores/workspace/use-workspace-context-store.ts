@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { Workspace, WorkspaceContextState } from "@/types/workspace";
-import { getStorage } from "@/types/workspace";
+import { getStorage } from "@/lib/storage";
 
 /**
  * Workspace Context Store
