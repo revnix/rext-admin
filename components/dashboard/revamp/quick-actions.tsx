@@ -9,7 +9,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
-import { workspaceRoutes, accountSettingsRoutes } from "@/lib/routes";
+import { workspaceRoutes } from "@/lib/routes";
 import type { Workspace } from "@/types/workspace";
 
 interface QuickActionsProps {
@@ -37,7 +37,7 @@ export function QuickActions({ workspace }: QuickActionsProps) {
       label: "Workspace Settings",
       icon: Settings,
       href:
-        slug !== "default" ? workspaceRoutes.settings.root(slug) : accountSettingsRoutes.root,
+        slug !== "default" ? workspaceRoutes.settings.root(slug) : "/settings",
       color:
         "text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400",
     },

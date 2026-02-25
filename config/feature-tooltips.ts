@@ -1,10 +1,8 @@
 /**
- * Feature Tooltip Configuration
+ * Feature Tooltips Configuration
  *
  * Defines tooltips for key features throughout the application
  */
-
-import { accountSettingsRoutes } from "@/lib/routes";
 
 export interface FeatureTooltip {
   id: string;
@@ -142,7 +140,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     content:
       "Define your brand's unique voice and tone. REXT will use these guidelines to ensure all generated content matches your brand personality.",
     placement: "right",
-    page: accountSettingsRoutes.root,
+    page: "/settings",
   },
   {
     id: "team-management",
@@ -171,7 +169,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     content:
       "Monitor your plan usage: content generations, storage, and API calls. Upgrade your plan if you need more resources.",
     placement: "top",
-    page: accountSettingsRoutes.billing,
+    page: "/settings/billing",
   },
   {
     id: "upgrade-plan",
@@ -180,7 +178,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     content:
       "Upgrade to unlock more features, higher limits, and priority support. Choose the plan that fits your content needs.",
     placement: "left",
-    page: accountSettingsRoutes.subscription,
+    page: "/settings/subscription",
   },
 ];
 

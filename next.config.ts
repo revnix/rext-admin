@@ -8,12 +8,6 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 const nextConfig: NextConfig = {
   // ============================================================================
-  // 0. TYPED ROUTES
-  // ============================================================================
-  // Enable compile-time route validation with Next.js typedRoutes
-  typedRoutes: true,
-
-  // ============================================================================
   // 1. PACKAGE IMPORT OPTIMIZATION
   // ============================================================================
   // Reduces bundle size by tree-shaking large libraries

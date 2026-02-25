@@ -100,20 +100,6 @@ export const workspaceRoutes = {
 } as const;
 
 /**
- * Account Settings Routes
- * Centralized route definitions for user account and billing settings
- */
-export const accountSettingsRoutes = {
-  root: "/settings",
-  security: "/settings/security",
-  billing: "/settings/billing",
-  subscription: "/settings/subscription",
-} as const;
-
-export type AccountSettingsRoute =
-  (typeof accountSettingsRoutes)[keyof typeof accountSettingsRoutes];
-
-/**
  * Extract workspace ID from a pathname
  *
  * @param pathname - The URL pathname to parse

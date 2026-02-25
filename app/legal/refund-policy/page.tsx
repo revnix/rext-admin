@@ -1,7 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { accountSettingsRoutes } from "@/lib/routes";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +21,7 @@ export default function RefundPolicyPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={accountSettingsRoutes.subscription}>
+          <Link href="/settings/subscription">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Subscription
           </Link>
@@ -228,14 +227,9 @@ export default function RefundPolicyPage() {
             </li>
             <li>
               Support Portal:{" "}
-              <a
-                href="https://wrext.com/help"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline"
-              >
+              <Link href="/help" className="text-primary underline">
                 wrext.com/help
-              </a>
+              </Link>
             </li>
             <li>Response Time: Within 24 hours on business days</li>
           </ul>
@@ -244,7 +238,7 @@ export default function RefundPolicyPage() {
             <p className="text-sm font-semibold mb-2">Quick Actions</p>
             <div className="flex flex-wrap gap-4 text-sm">
               <Link
-                href={accountSettingsRoutes.subscription}
+                href="/settings/subscription"
                 className="text-primary hover:underline"
               >
                 Cancel Subscription
@@ -255,14 +249,9 @@ export default function RefundPolicyPage() {
               >
                 Subscription Terms
               </Link>
-              <a
-                href="https://wrext.com/contact"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
+              <Link href="/contact" className="text-primary hover:underline">
                 Contact Support
-              </a>
+              </Link>
             </div>
           </div>
         </CardContent>

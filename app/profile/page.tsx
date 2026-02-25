@@ -3,7 +3,6 @@
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { accountSettingsRoutes } from "@/lib/routes";
 
 /**
  * Profile page redirect
@@ -14,7 +13,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(accountSettingsRoutes.root);
+    router.replace("/settings");
   }, [router]);
 
   return (

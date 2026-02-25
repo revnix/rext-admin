@@ -1,7 +1,6 @@
 import { ArrowLeft, Shield } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { accountSettingsRoutes } from "@/lib/routes";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +22,7 @@ export default function PrivacyPolicyPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={accountSettingsRoutes.root}>
+          <Link href="/settings">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Settings
           </Link>
@@ -299,11 +298,11 @@ export default function PrivacyPolicyPage() {
               Your Data, Your Control
             </p>
             <div className="flex flex-wrap gap-4 text-sm">
-              <Link href={accountSettingsRoutes.root} className="text-primary hover:underline">
+              <Link href="/settings" className="text-primary hover:underline">
                 Export My Data
               </Link>
               <Link
-                href={accountSettingsRoutes.subscription}
+                href="/settings/subscription"
                 className="text-primary hover:underline"
               >
                 Manage Subscription

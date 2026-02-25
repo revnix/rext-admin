@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Workspace } from "@/types/workspace";
-import { workspaceRoutes, accountSettingsRoutes } from "@/lib/routes";
+import { workspaceRoutes } from "@/lib/routes";
 import {
   Settings,
   Building2,
@@ -84,11 +84,11 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
           </div>
 
           <Link
-            href={(
+            href={
               workspace?.slug
                 ? workspaceRoutes.settings.root(workspace.slug)
-                : accountSettingsRoutes.root
-            ) as any}
+                : "/settings"
+            }
           >
             <Button
               variant="outline"

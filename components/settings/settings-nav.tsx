@@ -1,34 +1,24 @@
 "use client";
 
-import { CreditCard, type LucideIcon, Shield, User } from "lucide-react";
+import { CreditCard, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  accountSettingsRoutes,
-  type AccountSettingsRoute,
-} from "@/lib/routes";
 
-type SettingsNavItem = {
-  label: string;
-  href: AccountSettingsRoute;
-  icon: LucideIcon;
-};
-
-const settingsNavItems: SettingsNavItem[] = [
+const settingsRoutes = [
   {
     label: "Account & Preferences",
-    href: accountSettingsRoutes.root,
+    href: "/settings",
     icon: User,
   },
   {
     label: "Security",
-    href: accountSettingsRoutes.security,
+    href: "/settings/security",
     icon: Shield,
   },
   {
     label: "Billing",
-    href: accountSettingsRoutes.billing,
+    href: "/settings/billing",
     icon: CreditCard,
   },
 ];
@@ -41,7 +31,7 @@ export function SettingsNav() {
       className="flex h-auto items-center justify-start rounded-none border-b bg-transparent p-0 w-full overflow-x-auto"
       aria-label="Settings navigation"
     >
-      {settingsNavItems.map((route, index) => {
+      {settingsRoutes.map((route, index) => {
         const Icon = route.icon;
         const isActive = pathname === route.href;
 

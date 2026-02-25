@@ -1,7 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { accountSettingsRoutes } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -219,14 +218,9 @@ export default function SubscriptionTermsPage() {
             </li>
             <li>
               Support Portal:{" "}
-              <a
-                href="https://wrext.com/help"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline"
-              >
+              <Link href="/help" className="text-primary underline">
                 wrext.com/help
-              </a>
+              </Link>
             </li>
           </ul>
 
@@ -252,7 +246,7 @@ export default function SubscriptionTermsPage() {
                 Privacy Policy
               </Link>
               <Link
-                href={accountSettingsRoutes.subscription}
+                href="/settings/subscription"
                 className="text-primary hover:underline"
               >
                 Manage Subscription
