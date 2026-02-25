@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { settingsRoutes } from "@/lib/routes";
 
 /**
  * Sessions Page - Redirect
@@ -7,5 +8,5 @@ import { redirect } from "next/navigation";
  * This page redirects to /settings/security for better organization.
  */
 export default function SessionsPage() {
-  redirect("/settings/security");
+  redirect(settingsRoutes.security);
 }

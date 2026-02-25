@@ -1,3 +1,5 @@
+import type { Route } from "next";
+
 /**
  * Route Helper Utilities for Workspace-Scoped URLs
  *
@@ -21,6 +23,16 @@ export const WORKSPACE_PAGES = [
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
+
+export const settingsRoutes = {
+  root: "/settings",
+  security: "/settings/security",
+  billing: "/settings/billing",
+  subscription: "/settings/subscription",
+} as const satisfies Record<string, Route>;
+
+export type SettingsRoute =
+  (typeof settingsRoutes)[keyof typeof settingsRoutes];
 
 /**
  * Workspace-scoped route generators
