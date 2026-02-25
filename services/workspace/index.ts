@@ -15,3 +15,4 @@ export {
 export { WorkspaceService, workspaceService } from "./workspace-service";
 export { KnowledgeService, knowledgeService } from "./knowledge-service";
 export { MembersService, membersService } from "./members-service";
+export { VALIDATION_MESSAGES } from "./validation-messages";
