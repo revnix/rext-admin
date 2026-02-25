@@ -12,7 +12,7 @@
 import confetti from "canvas-confetti";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,11 @@ import {
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Route } from "next";
 
+// Polling configuration
+const POLL_INTERVAL_MS = 1500;
+const POLL_TIMEOUT_MS = 20_000;
+const READY_STATUSES = new Set(["active", "trial", "cancelled"]);
+
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,33 +38,29 @@ export default function CheckoutSuccessPage() {
   const [syncTimedOut, setSyncTimedOut] = useState(false);
   const { subscription, fetchSubscription } = useSubscriptionStore();
 
-  // Polling configuration
-  const POLL_INTERVAL_MS = 1500;
-  const POLL_TIMEOUT_MS = 20_000;
-  const READY_STATUSES = new Set(["active", "trial", "cancelled"]);
+  const waitForSubscriptionSync = useCallback(
+    async (signal: AbortSignal): Promise<boolean> => {
+      const startedAt = Date.now();
 
-  const waitForSubscriptionSync = async (
-    signal: AbortSignal,
-  ): Promise<boolean> => {
-    const startedAt = Date.now();
+      while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+        if (signal.aborted) return false;
 
-    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
-      if (signal.aborted) return false;
+        await fetchSubscription();
+        const latest = useSubscriptionStore.getState().subscription;
 
-      await fetchSubscription();
-      const latest = useSubscriptionStore.getState().subscription;
+        if (latest && READY_STATUSES.has(latest.status)) {
+          return true;
+        }
 
-      if (latest && READY_STATUSES.has(latest.status)) {
-        return true;
+        await new Promise<void>((resolve) =>
+          setTimeout(resolve, POLL_INTERVAL_MS),
+        );
       }
 
-      await new Promise<void>((resolve) =>
-        setTimeout(resolve, POLL_INTERVAL_MS),
-      );
-    }
-
-    return false;
-  };
+      return false;
+    },
+    [fetchSubscription],
+  );
 
   // Get query parameters from LemonSqueezy redirect
   const checkoutId = searchParams.get("checkout_id");
@@ -128,7 +129,7 @@ export default function CheckoutSuccessPage() {
 
     refreshSubscription();
     return () => controller.abort();
-  }, [fetchSubscription]);
+  }, [waitForSubscriptionSync]);
 
   const handleGoToDashboard = () => {
     router.push("/" as Route);
