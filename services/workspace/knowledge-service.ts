@@ -570,7 +570,6 @@ export class KnowledgeService extends BaseWorkspaceService {
     }
   }
 
-
   protected isValidUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
