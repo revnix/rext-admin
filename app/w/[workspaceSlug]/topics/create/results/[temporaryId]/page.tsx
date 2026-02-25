@@ -420,17 +420,6 @@ export default function ResultsPage() {
       .join(" ");
   };
 
-  // Dynamic breadcrumbs configuration based on session data
-  const breadcrumbs = [
-    { label: "Topics", href: "/topics" },
-    { label: "Topic Builder", href: "/topics/create" },
-    {
-      label: state.session
-        ? `Results - ${formatIndustryName(state.session.formData.industry)}`
-        : "Results",
-    },
-  ];
-
   // Generate page title and description based on session data
   const pageTitle = state.session
     ? `${formatIndustryName(state.session.formData.industry)} Topics (${state.session.topics.length} results)`
@@ -446,7 +435,6 @@ export default function ResultsPage() {
       <PageLayout
         title="Loading Results..."
         description="Retrieving your generated topics"
-        breadcrumbs={breadcrumbs}
         className="p-0"
       >
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -463,7 +451,6 @@ export default function ResultsPage() {
       <PageLayout
         title="Results Not Found"
         description="Unable to load your topic results"
-        breadcrumbs={breadcrumbs}
         className="p-0"
       >
         <div className="flex flex-col min-h-[400px] space-y-6 p-6">
@@ -518,7 +505,6 @@ export default function ResultsPage() {
       <PageLayout
         title={pageTitle}
         description={pageDescription}
-        breadcrumbs={breadcrumbs}
         className="p-0"
       >
         {/* Storage Error Display */}
@@ -582,7 +568,6 @@ export default function ResultsPage() {
     <PageLayout
       title="No Results"
       description="No topic results found"
-      breadcrumbs={breadcrumbs}
       className="p-0"
     >
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">

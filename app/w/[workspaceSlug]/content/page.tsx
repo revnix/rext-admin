@@ -47,16 +47,6 @@ export default function WorkspaceContentPage() {
   const isPermissionLoading =
     isCreateLoading || isUpdateLoading || isDeleteLoading;
 
-  // Breadcrumbs for navigation
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Content" },
-  ];
-
   // Update page title and description
   usePageTitle(
     `Content Library - ${workspace?.name || "Workspace"}`,
@@ -114,7 +104,6 @@ export default function WorkspaceContentPage() {
       description={`View, edit, and manage AI-generated content for ${
         workspace?.name || "this workspace"
       }.`}
-      breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
       {/* Inline loader inside PageLayout */}

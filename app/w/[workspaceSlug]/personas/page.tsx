@@ -17,20 +17,10 @@ export default function PersonaForgePage() {
   const { data: personasData, isLoading } = usePersonas(workspace?.id || null);
   const personas = personasData?.personas || [];
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Personas" },
-  ];
-
   return (
     <PageLayout
       title="Personas"
       description={`${personas.length} personas created`}
-      breadcrumbs={breadcrumbs}
       fullWidth
       actions={
         <div className="flex gap-2">

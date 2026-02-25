@@ -89,11 +89,6 @@ interface EmailFailure {
 }
 
 export default function EmailAnalyticsPage() {
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Email Analytics" },
-  ];
-
   const [dateRange, setDateRange] = useState("30d");
   const [period, setPeriod] = useState("daily");
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -174,7 +169,6 @@ export default function EmailAnalyticsPage() {
       <PageLayout
         title="Email Analytics"
         description="Monitor email delivery, engagement, and performance"
-        breadcrumbs={breadcrumbs}
         actions={
           <>
             <Select

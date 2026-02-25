@@ -247,18 +247,11 @@ export default function SubscriptionAnalyticsPage() {
     fetchAnalytics();
   };
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Analytics", href: "/admin/analytics" },
-    { label: "Subscriptions" },
-  ];
-
   if (loading) {
     return (
       <PageLayout
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
-        breadcrumbs={breadcrumbs}
       >
         <AnalyticsLoadingSkeleton />
       </PageLayout>
@@ -270,7 +263,6 @@ export default function SubscriptionAnalyticsPage() {
       <PageLayout
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
-        breadcrumbs={breadcrumbs}
       >
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -323,7 +315,6 @@ export default function SubscriptionAnalyticsPage() {
       <PageLayout
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
-        breadcrumbs={breadcrumbs}
         actions={
           <Button onClick={handleRefresh} disabled={refreshing}>
             {refreshing ? "Refreshing..." : "Refresh Data"}

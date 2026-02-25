@@ -40,7 +40,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 
@@ -97,9 +96,9 @@ export function PageLayout({
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-  const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
-    currentWorkspace?.id,
-  );
+  // const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
+  //   currentWorkspace?.id,
+  // );
 
   const hasWorkspaces = workspaceList.length > 0;
 
@@ -137,32 +136,31 @@ export function PageLayout({
       .toUpperCase()
       .slice(0, 2) ?? "?";
 
-  const getRoleDisplayName = (role?: string) => {
-    const map: Record<string, string> = {
-      super_admin: "Super Admin",
-      workspace_owner: "Workspace Owner",
-      workspace_admin: "Workspace Admin",
-      admin: "Admin",
-      manager: "Manager",
-      developer: "Developer",
-      editor: "Editor",
-      viewer: "Viewer",
-      user: "User",
-      guest: "Guest",
-      owner: "Owner",
-    };
-    if (!role) return "";
-    return (
-      map[role] ??
-      role.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    );
-  };
+  // const getRoleDisplayName = (role?: string) => {
+  //   const map: Record<string, string> = {
+  //     super_admin: "Super Admin",
+  //     workspace_owner: "Workspace Owner",
+  //     workspace_admin: "Workspace Admin",
+  //     admin: "Admin",
+  //     manager: "Manager",
+  //     developer: "Developer",
+  //     editor: "Editor",
+  //     viewer: "Viewer",
+  //     user: "User",
+  //     guest: "Guest",
+  //     owner: "Owner",
+  //   };
+  //   if (!role) return "";
+  //   return (
+  //     map[role] ??
+  //     role.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  //   );
+  // };
 
   // User data
   const userName = profileUser?.full_name || user?.full_name || "User";
   const userEmail = profileUser?.email || user?.email || "";
   const userInitials = getInitials(userName);
-  const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
 
   const baseUrl = resolveApiBaseUrl();
 

@@ -2,7 +2,6 @@
 
 import {
   CreditCard,
-  FileText,
   Plug,
   LayoutDashboard,
   Mail,
@@ -12,8 +11,12 @@ import {
   User,
   UserCog,
   Users,
-  VenetianMask,
   ChevronDown,
+  Settings2,
+  FolderOpen,
+  Sparkles,
+  Library,
+  Palette,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -84,7 +87,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const mainNavigationGroups: NavGroup[] = [
     {
       groupLabel: "",
-      items: [{ title: "Dashboard", url: "/", icon: LayoutDashboard }],
+      items: [
+        {
+          title: "Dashboard",
+          url: "/",
+          icon: LayoutDashboard,
+        },
+        {
+          title: "All Workspaces",
+          url: "/w",
+          icon: FolderOpen,
+        },
+      ],
     },
     {
       groupLabel: "Workspace",
@@ -94,7 +108,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.generate_content(currentWorkspace.slug)
             : "/",
-          icon: FileText, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
+          icon: Sparkles, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
           permission: "content.read",
         },
         {
@@ -102,7 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.content(currentWorkspace.slug)
             : "/",
-          icon: FileText,
+          icon: Library,
           permission: "content.read",
         },
         {
@@ -110,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
-          icon: VenetianMask,
+          icon: User,
           permission: "content.read",
         },
         {
@@ -118,7 +132,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.brand_voice(currentWorkspace.slug)
             : "/",
-          icon: VenetianMask,
+          icon: Palette,
           permission: "content.read",
         },
         {
@@ -135,6 +149,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.integrations(currentWorkspace.slug)
             : "/",
           icon: Plug,
+          permission: "workspace.update",
+        },
+        {
+          title: "Settings",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.settings.root(currentWorkspace.slug)
+            : "/",
+          icon: Settings2,
           permission: "workspace.update",
         },
       ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),

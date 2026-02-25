@@ -35,8 +35,8 @@ export function useSessionTimeout() {
         return;
       }
 
-      // Show warning 5 minutes before expiry
-      const warningThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+      // Show warning 2 minutes before expiry
+      const warningThreshold = 2 * 60 * 1000; // 2 minutes in milliseconds
       if (remaining < warningThreshold) {
         setShowWarning(true);
         setTimeRemaining(Math.floor(remaining / 1000)); // Convert to seconds

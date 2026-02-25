@@ -549,12 +549,12 @@ export interface WorkspaceCrudState {
   } | null;
 
   // Actions
-  createWorkspace: (data: WorkspaceFormData) => Promise<Workspace>;
+  createWorkspace: (data: CreateWorkspaceRequest) => Promise<Workspace>;
   updateWorkspace: (
     workspaceId: string,
-    data: WorkspaceFormData,
+    data: UpdateWorkspaceRequest,
   ) => Promise<Workspace>;
-  deleteWorkspace: (workspaceId: string) => Promise<void>;
+  deleteWorkspace: (workspaceId: string) => Promise<string>;
   duplicateWorkspace: (sourceWorkspaceId: string) => Promise<Workspace>;
   fetchWorkspaces: () => Promise<Workspace[]>;
   fetchWorkspace: (workspaceId: string) => Promise<Workspace>;

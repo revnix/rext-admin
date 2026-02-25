@@ -6,24 +6,22 @@
 
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
-import {
-  generateRequestId,
-  sanitizeErrorForLogging,
-} from "@/lib/error-utils";
+import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
 import type {
   WorkspaceApiConfig,
   WorkspaceApiContext,
 } from "@/types/workspace";
-import { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-service";
+import {
+  BaseWorkspaceService,
+  WorkspaceApiError,
+} from "./base-workspace-service";
 
 export { WorkspaceApiError as MembersServiceError };
 
 export class MembersService extends BaseWorkspaceService {
-
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     super("MembersService", config);
   }
-
 
   // ============================================================================
   // WORKSPACE MEMBERS OPERATIONS
@@ -65,10 +63,7 @@ export class MembersService extends BaseWorkspaceService {
   }> {
     this.validateUuid(workspaceId, "workspace_id");
     if (!email || !this.isValidEmail(email)) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        "Valid email is required",
-      );
+      throw new WorkspaceApiError("INVALID_REQUEST", "Valid email is required");
     }
 
     return this.makeRequest(
@@ -138,10 +133,7 @@ export class MembersService extends BaseWorkspaceService {
     this.validateUuid(data.workspace_id, "workspace_id");
     this.validateUuid(data.role_id, "role_id");
     if (!data.email || !this.isValidEmail(data.email)) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        "Valid email is required",
-      );
+      throw new WorkspaceApiError("INVALID_REQUEST", "Valid email is required");
     }
 
     return this.makeRequest(

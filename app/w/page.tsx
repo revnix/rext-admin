@@ -71,8 +71,6 @@ export default function WorkspacePage() {
     status: "active", // Default status since it's not in Workspace type
   }));
 
-  const breadcrumbs = [{ label: "Workspaces" }];
-
   // Define columns for the DataTable
   const columns: Column<WorkspaceData>[] = [
     {
@@ -91,7 +89,7 @@ export default function WorkspacePage() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Link
-                href={`/w/${row.slug}`}
+                href={`/w/${row.slug}/settings`}
                 className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
                 onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
               >
@@ -234,7 +232,7 @@ export default function WorkspacePage() {
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.slug}`);
+        router.push(`/w/${row.slug}/settings`);
       },
       tooltip: "View workspace details",
     },
@@ -253,7 +251,6 @@ export default function WorkspacePage() {
     <PageLayout
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
-      breadcrumbs={breadcrumbs}
     >
       <DataTable<WorkspaceData>
         columns={columns}

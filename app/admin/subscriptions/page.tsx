@@ -129,11 +129,6 @@ export default function SubscriptionAnalyticsPage() {
     "3_months" | "6_months" | "12_months"
   >("12_months");
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Subscription Analytics" },
-  ];
-
   // Fetch analytics overview
   const { data: overview, isLoading: overviewLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
@@ -208,7 +203,6 @@ export default function SubscriptionAnalyticsPage() {
     <PageLayout
       title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
-      breadcrumbs={breadcrumbs}
       actions={
         <Link href="/admin/subscriptions/plans">
           <Button variant="outline">

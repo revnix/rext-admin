@@ -47,10 +47,13 @@ export function useUserNotifications() {
             useNotificationStore.getState().mergeNotifications(incoming);
           })
           .catch((error) => {
-            userNotificationsLogger.error("Failed to refresh user notifications", {
-              userId,
-              error,
-            });
+            userNotificationsLogger.error(
+              "Failed to refresh user notifications",
+              {
+                userId,
+                error,
+              },
+            );
           });
       },
       (status) => {

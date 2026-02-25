@@ -63,15 +63,6 @@ export default function WorkspaceTopicsPage() {
     queryClient.invalidateQueries();
   };
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Topics" },
-  ];
-
   // 🧩 Wait for all permission states before showing layout
   if (!workspace?.id || isCreatePermissionLoading || isReadPermissionLoading) {
     return (
@@ -112,7 +103,6 @@ export default function WorkspaceTopicsPage() {
       description={`Browse AI-generated topics for ${
         workspace?.name || "this workspace"
       }. Generate new topics or explore your saved collection.`}
-      breadcrumbs={breadcrumbs}
     >
       <CanAccess
         permission={TOPIC_PERMISSIONS.READ}

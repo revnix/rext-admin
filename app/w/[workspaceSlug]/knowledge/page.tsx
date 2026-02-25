@@ -18,17 +18,16 @@ import {
   WorkspaceCreateKnowledgeBaseDialog,
   WorkspaceDeleteKnowledgeBaseDialog,
   WorkspaceEditKnowledgeBaseDialog,
-  WorkspaceKnowledgeBasesTable
+  WorkspaceKnowledgeBasesTable,
 } from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 export default function WorkspaceKnowledgePage() {
-  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -75,15 +74,6 @@ export default function WorkspaceKnowledgePage() {
     (kb) => kb.type === "custom",
   ).length;
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Knowledge" },
-  ];
-
   const headerActions = (
     <>
       <Button
@@ -109,7 +99,6 @@ export default function WorkspaceKnowledgePage() {
     <PageLayout
       title="Knowledge"
       description="Organize and manage your workspace knowledge bases"
-      breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
       {/* Loading state inside layout */}

@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
@@ -29,7 +28,9 @@ export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
 
           const operationId = response.operation_id;
 
-          useWorkspaceCrudStore.getState().setCurrentOperation({ operationId, workspaceId });
+          useWorkspaceCrudStore
+            .getState()
+            .setCurrentOperation({ operationId, workspaceId });
 
           set((state) => ({
             brandVoiceRefresh: {

@@ -32,16 +32,6 @@ export default function WorkspaceContentCreatePage({
   const searchParams = useSearchParams();
   const topicId = searchParams.get("topicId");
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Content", href: workspaceRoutes.content(workspaceSlug) },
-    { label: "Create" },
-  ];
-
   const handleSubmit = async (formData: ContentCreationFormData) => {
     try {
       // Generate placeholder SEO data if missing
@@ -142,7 +132,6 @@ export default function WorkspaceContentCreatePage({
     <PageLayout
       title="Create Content"
       description={`Create new content for ${workspace?.name || "workspace"}`}
-      breadcrumbs={breadcrumbs}
     >
       <CanAccess
         permission={CONTENT_PERMISSIONS.CREATE}

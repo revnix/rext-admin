@@ -17,10 +17,7 @@
 
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
-import {
-  generateRequestId,
-  sanitizeErrorForLogging,
-} from "@/lib/error-utils";
+import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
 import { InputSanitizer } from "@/lib/sanitization";
 import type {
   CreateWorkspaceRequest,
@@ -32,7 +29,10 @@ import type {
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
-import { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-service";
+import {
+  BaseWorkspaceService,
+  WorkspaceApiError,
+} from "./base-workspace-service";
 import { WORKSPACE_CONSTRAINTS } from "@/schemas/workspace-schemas";
 import { WorkspaceServiceError } from ".";
 
@@ -41,7 +41,6 @@ import { WorkspaceServiceError } from ".";
 // ============================================================================
 
 export { WorkspaceApiError as WorkspaceServiceError };
-
 
 // ============================================================================
 // MAIN SERVICE CLASS
@@ -342,29 +341,26 @@ export class WorkspaceService extends BaseWorkspaceService {
   }
 
   protected validateWorkspaceData(data: CreateWorkspaceRequest): void {
-  if (!data.name || data.name.trim().length === 0) {
-    throw new WorkspaceServiceError("INVALID_REQUEST", "Title is required");
-  }
+    if (!data.name || data.name.trim().length === 0) {
+      throw new WorkspaceServiceError("INVALID_REQUEST", "Title is required");
+    }
 
-  if (data.name.length > WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH) {
-    throw new WorkspaceServiceError(
-      "INVALID_REQUEST",
-      `Title must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
-    );
-  }
+    if (data.name.length > WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH) {
+      throw new WorkspaceServiceError(
+        "INVALID_REQUEST",
+        `Title must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
+      );
+    }
 
-  if (!data.url || !this.isValidUrl(data.url)) {
-    throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+    if (!data.url || !this.isValidUrl(data.url)) {
+      throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+    }
   }
-}
 
   protected validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
     if (data.name !== undefined) {
       if (!data.name || data.name.trim().length === 0) {
-        throw new WorkspaceApiError(
-          "INVALID_REQUEST",
-          "Name cannot be empty",
-        );
+        throw new WorkspaceApiError("INVALID_REQUEST", "Name cannot be empty");
       }
       if (data.name.length > 200) {
         throw new WorkspaceApiError(

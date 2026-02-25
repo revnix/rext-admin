@@ -130,7 +130,12 @@ export function BrandVoiceRefreshControl({
           : "Failed to start brand voice refresh";
       toast.error(message);
     }
-  }, [refreshBrandVoice, workspaceId, setBrandVoiceRefreshState]);
+  }, [
+    refreshBrandVoice,
+    workspaceId,
+    setBrandVoiceRefreshState,
+    setCurrentOperation,
+  ]);
 
   const idleContent = useMemo(() => {
     if (children) {

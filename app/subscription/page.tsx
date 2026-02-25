@@ -89,17 +89,11 @@ export default function SubscriptionDashboardPage() {
     loadData();
   }, [fetchSubscription, fetchUsage, loadPlans]);
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Subscription" },
-  ];
-
   if (loading) {
     return (
       <PageLayout
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
-        breadcrumbs={breadcrumbs}
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -116,7 +110,6 @@ export default function SubscriptionDashboardPage() {
       <PageLayout
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
-        breadcrumbs={breadcrumbs}
       >
         <Card>
           <CardHeader>
@@ -152,7 +145,6 @@ export default function SubscriptionDashboardPage() {
     <PageLayout
       title="Subscription Management"
       description="Manage your subscription, view usage, and access billing"
-      breadcrumbs={breadcrumbs}
     >
       {/* Trial Banner */}
       {isTrial && <TrialStatusBanner showGlobally={false} />}

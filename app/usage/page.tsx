@@ -60,8 +60,6 @@ export default function UsagePage() {
     }
   };
 
-  const breadcrumbs = [{ label: "Dashboard", href: "/" }, { label: "Usage" }];
-
   return (
     <PermissionGuard
       permission={USAGE_READ}
@@ -69,7 +67,6 @@ export default function UsagePage() {
         <PageLayout
           title="Access Denied"
           description="You don't have permission to view usage statistics"
-          breadcrumbs={breadcrumbs}
         >
           <Card className="border-destructive">
             <CardHeader>
@@ -102,7 +99,6 @@ export default function UsagePage() {
       <PageLayout
         title="Usage Dashboard"
         description="Monitor your usage and plan limits"
-        breadcrumbs={breadcrumbs}
         actions={
           <Button
             onClick={handleRefresh}

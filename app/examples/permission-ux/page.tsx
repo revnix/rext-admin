@@ -39,17 +39,10 @@ import {
  * - AccessDenied component
  */
 export default function PermissionUXExamplesPage() {
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Examples" },
-    { label: "Permission UX" },
-  ];
-
   return (
     <PageLayout
       title="Permission UX Examples"
       description="Interactive examples of permission-based UX improvements"
-      breadcrumbs={breadcrumbs}
     >
       <div className="space-y-8">
         {/* Section 1: Locked Feature Tooltips */}

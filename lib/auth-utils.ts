@@ -63,6 +63,7 @@ let isRedirectingToLogin = false;
 /**
  * Debounced redirect to login page.
  * Ensures only one redirect occurs even when multiple parallel requests return 401.
+ * Performs full cleanup of state and storage.
  */
 function redirectToLogin(): void {
   if (isRedirectingToLogin) return;
@@ -74,14 +75,29 @@ function redirectToLogin(): void {
   authHeadersCache = null;
 
   // Use setTimeout(0) to batch multiple 401 responses in the same tick
-  setTimeout(() => {
+  setTimeout(async () => {
     if (typeof window !== "undefined") {
-      const currentPath = window.location.pathname + window.location.search;
-      const redirectParam =
-        currentPath !== "/login" && currentPath !== "/"
-          ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
-          : "?error=SessionExpired";
-      window.location.href = `/login${redirectParam}`;
+      try {
+        // Use dynamic import to avoid circular dependency
+        const { performLogout } = await import("./logout-utils");
+
+        const currentPath = window.location.pathname + window.location.search;
+        const redirectParam =
+          currentPath !== "/login" && currentPath !== "/"
+            ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
+            : "?error=SessionExpired";
+
+        await performLogout(`/login${redirectParam}`);
+      } catch (error) {
+        log.error(
+          "[AuthJS] Failed to perform controlled logout, falling back to basic redirect",
+          error,
+        );
+        // Fallback cleanup
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = "/login?error=SessionExpired";
+      }
     }
   }, 0);
 }
@@ -160,12 +176,15 @@ export async function getAuthHeaders(
 /**
  * Authenticated fetch wrapper using AuthJS tokens
  * Automatically adds Authorization header from session
+ * Handles 401 Unauthorized by attempting to refresh the session once
  */
 export async function authenticatedFetch(
   url: string,
   options: RequestInit = {},
+  retry: boolean = true,
 ): Promise<Response> {
-  const authHeaders = await getAuthHeaders();
+  // Pass skipCache=true if we are in a retry to get the fresh token
+  const authHeaders = await getAuthHeaders(!retry);
   const isFormDataBody =
     typeof FormData !== "undefined" && options.body instanceof FormData;
 
@@ -185,8 +204,34 @@ export async function authenticatedFetch(
     headers,
   });
 
-  // Handle 401 Unauthorized - session expired
+  // Handle 401 Unauthorized - session might be expired
   if (response.status === 401) {
+    if (retry) {
+      log.info("[AuthJS] Got 401, attempting to refresh session and retry...");
+
+      // Clear the auth headers cache to force a fresh session check
+      clearAuthHeadersCache();
+
+      // For client-side, we can try to get a fresh session which triggers refresh logic
+      if (typeof window !== "undefined") {
+        const session = await getSession();
+
+        if (session?.user?.accessToken && !session.error) {
+          log.info("[AuthJS] Session refreshed successfully, retrying request");
+          // Re-run the fetch once with the new token
+          return authenticatedFetch(url, options, false);
+        }
+
+        if (session?.error) {
+          log.error(
+            "[AuthJS] Session refresh failed with error:",
+            session.error,
+          );
+        }
+      }
+    }
+
+    // If refresh failed or already retried, redirect to login
     redirectToLogin();
     throw new Error("Session expired");
   }

@@ -1,7 +1,6 @@
 import type { OperationNotification } from "@/types/sse";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { log } from "@/lib/logger";
 
 const MAX_NOTIFICATIONS = 50;
 
@@ -54,7 +53,7 @@ const revertAllRead = (
 
 export const useNotificationStore = create<NotificationStore>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       notifications: [],
       unreadCount: 0,
       isDrawerOpen: false,
@@ -84,7 +83,8 @@ export const useNotificationStore = create<NotificationStore>()(
           const merged = Array.from(map.values())
             .sort(
               (a, b) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
             )
             .slice(0, MAX_NOTIFICATIONS);
 
@@ -102,7 +102,9 @@ export const useNotificationStore = create<NotificationStore>()(
       setAllNotificationsRead: (revertUnreadIds) =>
         set((state) => {
           if (revertUnreadIds) {
-            return updateState(revertAllRead(state.notifications, revertUnreadIds));
+            return updateState(
+              revertAllRead(state.notifications, revertUnreadIds),
+            );
           }
           return {
             notifications: markAllRead(state.notifications),
