@@ -64,10 +64,11 @@ export function AccountDeactivation() {
     onSuccess: async (data) => {
       toast.success(
         data.message ||
-          "Your account has been deactivated and will be deleted in 14 days.",
+        "Your account has been deactivated and will be deleted in 14 days.",
       );
 
-      // Wait a moment to show the toast
+      // Intentional UX delay: allow the success toast to be visible before
+      // redirect. This is NOT waiting on external/async backend state.
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Sign out and redirect
