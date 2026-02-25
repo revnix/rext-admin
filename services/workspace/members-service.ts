@@ -15,6 +15,8 @@ import {
   BaseWorkspaceService,
   WorkspaceApiError,
 } from "./base-workspace-service";
+import { MembersServiceError } from ".";
+import { VALIDATION_MESSAGES } from "./validation-messages";
 
 export { WorkspaceApiError as MembersServiceError };
 
@@ -62,9 +64,13 @@ export class MembersService extends BaseWorkspaceService {
     };
   }> {
     this.validateUuid(workspaceId, "workspace_id");
-    if (!email || !this.isValidEmail(email)) {
-      throw new WorkspaceApiError("INVALID_REQUEST", "Valid email is required");
-    }
+  if (!email || !this.isValidEmail(email)) {
+  throw new MembersServiceError(
+    "INVALID_REQUEST",
+    VALIDATION_MESSAGES.EMAIL_REQUIRED,
+  );
+}
+
 
     return this.makeRequest(
       "POST",
@@ -132,9 +138,13 @@ export class MembersService extends BaseWorkspaceService {
   }> {
     this.validateUuid(data.workspace_id, "workspace_id");
     this.validateUuid(data.role_id, "role_id");
-    if (!data.email || !this.isValidEmail(data.email)) {
-      throw new WorkspaceApiError("INVALID_REQUEST", "Valid email is required");
-    }
+  if (!data.email || !this.isValidEmail(data.email)) {
+  throw new MembersServiceError(
+    "INVALID_REQUEST",
+    VALIDATION_MESSAGES.EMAIL_REQUIRED,
+  );
+}
+
 
     return this.makeRequest(
       "POST",
@@ -156,12 +166,12 @@ export class MembersService extends BaseWorkspaceService {
       status: string;
     };
   }> {
-    if (!token || token.trim().length === 0) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        "Invitation token is required",
-      );
-    }
+  if (!token || token.trim().length === 0) {
+  throw new MembersServiceError(
+    "INVALID_REQUEST",
+    VALIDATION_MESSAGES.INVITATION_TOKEN_REQUIRED,
+  );
+}
 
     return this.makeRequest("POST", "/api/v1/workspace/invitations/accept", {
       token,
@@ -244,20 +254,20 @@ export class MembersService extends BaseWorkspaceService {
     this.validateUuid(data.workspace_id, "workspace_id");
     this.validateUuid(data.role_id, "role_id");
 
-    if (!data.emails || data.emails.length === 0) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        "At least one email is required",
-      );
-    }
+// Update bulkInvite validations (around line 284):
+if (!data.emails || data.emails.length === 0) {
+  throw new MembersServiceError(
+    "INVALID_REQUEST",
+    VALIDATION_MESSAGES.EMAILS_MIN_REQUIRED,
+  );
+}
 
-    if (data.emails.length > 50) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        "Maximum 50 emails allowed per request",
-      );
-    }
-
+if (data.emails.length > 50) {
+  throw new MembersServiceError(
+    "INVALID_REQUEST",
+    VALIDATION_MESSAGES.EMAILS_MAX_EXCEEDED(50),
+  );
+}
     return this.makeRequest(
       "POST",
       `/api/v1/workspaces/${data.workspace_id}/invitations/bulk`,
@@ -398,15 +408,16 @@ export class MembersService extends BaseWorkspaceService {
   }
 
   protected validateUuid(id: string, fieldName: string): void {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!id || !uuidRegex.test(id)) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        `Invalid ${fieldName}: must be a valid UUID`,
-      );
-    }
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!id || !uuidRegex.test(id)) {
+    throw new MembersServiceError(
+      "INVALID_REQUEST",
+      VALIDATION_MESSAGES.INVALID_UUID(fieldName),
+    );
   }
+}
+
 
   private isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

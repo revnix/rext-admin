@@ -27,6 +27,8 @@ import {
   BaseWorkspaceService,
   WorkspaceApiError,
 } from "./base-workspace-service";
+import { VALIDATION_MESSAGES } from "./validation-messages";
+import { KnowledgeServiceError } from ".";
 
 // ============================================================================
 // MAIN SERVICE CLASS
@@ -209,9 +211,9 @@ export class KnowledgeService extends BaseWorkspaceService {
     const sanitized = this.sanitizeUpdateTextKnowledgeData(data);
 
     if (Object.keys(sanitized).length === 0) {
-      throw new WorkspaceApiError(
+      throw new KnowledgeServiceError(
         "INVALID_REQUEST",
-        "At least one field (title, content, tags) must be provided",
+        VALIDATION_MESSAGES.UPDATE_FIELDS_REQUIRED,
       );
     }
 
@@ -518,9 +520,9 @@ export class KnowledgeService extends BaseWorkspaceService {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!id || !uuidRegex.test(id)) {
-      throw new WorkspaceApiError(
+      throw new KnowledgeServiceError(
         "INVALID_REQUEST",
-        `Invalid ${fieldName}: must be a valid UUID`,
+        VALIDATION_MESSAGES.INVALID_UUID(fieldName),
       );
     }
   }
@@ -528,20 +530,26 @@ export class KnowledgeService extends BaseWorkspaceService {
   protected validateWebKnowledgeData(data: AddWebKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.url || !this.isValidUrl(data.url)) {
-      throw new WorkspaceApiError("INVALID_URL", "Valid URL is required");
+      throw new KnowledgeServiceError(
+        "INVALID_URL",
+        VALIDATION_MESSAGES.URL_REQUIRED,
+      );
     }
   }
 
   protected validateFileKnowledgeData(data: AddFileKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.file || !(data.file instanceof File)) {
-      throw new WorkspaceApiError("INVALID_REQUEST", "Valid file is required");
+      throw new KnowledgeServiceError(
+        "INVALID_REQUEST",
+        VALIDATION_MESSAGES.FILE_REQUIRED,
+      );
     }
 
     if (data.file.size > 10 * 1024 * 1024) {
-      throw new WorkspaceApiError(
+      throw new KnowledgeServiceError(
         "INVALID_REQUEST",
-        "File size must be 10MB or less",
+        VALIDATION_MESSAGES.FILE_SIZE_EXCEEDED(10),
       );
     }
   }
@@ -549,12 +557,19 @@ export class KnowledgeService extends BaseWorkspaceService {
   protected validateTextKnowledgeData(data: AddTextKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.title || data.title.trim().length === 0) {
-      throw new WorkspaceApiError("INVALID_REQUEST", "Title is required");
+      throw new KnowledgeServiceError(
+        "INVALID_REQUEST",
+        VALIDATION_MESSAGES.TITLE_REQUIRED,
+      );
     }
     if (!data.content || data.content.trim().length === 0) {
-      throw new WorkspaceApiError("INVALID_REQUEST", "Content is required");
+      throw new KnowledgeServiceError(
+        "INVALID_REQUEST",
+        VALIDATION_MESSAGES.CONTENT_REQUIRED,
+      );
     }
   }
+
 
   protected isValidUrl(url: string): boolean {
     try {
