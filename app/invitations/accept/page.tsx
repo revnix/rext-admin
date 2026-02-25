@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { storeInvitationContext } from "@/hooks/use-invited-user-onboarding";
 import { apiClient } from "@/lib/api-client";
 import { storeWelcomeData } from "@/providers/workspace-welcome-provider";
+import type { Route } from "next";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
@@ -95,7 +96,7 @@ export default function AcceptInvitationPage() {
 
       toast.success(`Welcome to ${result.workspace_name}!`);
       // Redirect to workspace
-      router.push(`/w/${result.workspace_slug}`);
+      router.push(`/w/${result.workspace_slug}` as Route);
     } catch (error) {
       const err = error as Error;
       toast.error(`Failed to accept invitation: ${err.message}`);
@@ -117,13 +118,15 @@ export default function AcceptInvitationPage() {
 
   // Handle login redirect
   const handleLogin = () => {
-    router.push(`/login?callbackUrl=/invitations/accept?token=${token}`);
+    router.push(
+      `/login?callbackUrl=/invitations/accept?token=${token}` as Route,
+    );
   };
 
   // Handle signup redirect
   const handleSignup = () => {
     router.push(
-      `/signup?invitation_token=${token}&email=${encodeURIComponent(invitation?.email || "")}`,
+      `/signup?invitation_token=${token}&email=${encodeURIComponent(invitation?.email || "")}` as Route,
     );
   };
 
@@ -172,7 +175,7 @@ export default function AcceptInvitationPage() {
             <Button
               className="w-full"
               variant="outline"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/" as Route)}
             >
               Go to Home
             </Button>
@@ -216,14 +219,17 @@ export default function AcceptInvitationPage() {
               </AlertDescription>
             </Alert>
             {invitation.status === "accepted" && session ? (
-              <Button className="w-full" onClick={() => router.push("/")}>
+              <Button
+                className="w-full"
+                onClick={() => router.push("/" as Route)}
+              >
                 Go to Dashboard
               </Button>
             ) : (
               <Button
                 className="w-full"
                 variant="outline"
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/" as Route)}
               >
                 Go to Home
               </Button>

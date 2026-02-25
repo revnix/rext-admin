@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace";
+import type { Route } from "next";
 
 /**
  * Onboarding Progress Component (Hybrid Approach)
@@ -317,7 +318,7 @@ export function OnboardingProgress({
                           size="sm"
                           disabled={!action.enabled}
                         >
-                          <Link href={action.href}>
+                          <Link href={action.href as Route}>
                             {action.label}
                             <action.icon className="h-3.5 w-3.5 ml-1.5" />
                           </Link>

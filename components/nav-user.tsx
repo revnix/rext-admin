@@ -43,6 +43,7 @@ import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { log } from "@/lib/logger";
+import type { Route } from "next";
 
 export function NavUser() {
   const router = useRouter();
@@ -137,7 +138,10 @@ export function NavUser() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="lg" onClick={() => router.push("/login")}>
+          <SidebarMenuButton
+            size="lg"
+            onClick={() => router.push("/login" as Route)}
+          >
             <Avatar className="h-8 w-8 rounded-lg">
               <AvatarFallback className="rounded-lg">?</AvatarFallback>
             </Avatar>
@@ -276,7 +280,7 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/subscription")}
+                onClick={() => router.push("/settings/subscription" as Route)}
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -286,18 +290,20 @@ export function NavUser() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/settings" as Route)}
+              >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/billing")}
+                onClick={() => router.push("/settings/billing" as Route)}
               >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/security")}
+                onClick={() => router.push("/settings/security" as Route)}
               >
                 <Bell />
                 Security

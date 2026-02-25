@@ -36,6 +36,7 @@ import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import { useCurrentWorkspace } from "@/stores/workspace";
 import type { SessionData } from "@/types/session";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import type { Route } from "next";
 
 interface ResultsPageState {
   session: SessionData | null;
@@ -360,7 +361,7 @@ export default function ResultsPage() {
       resetWizard();
       setShowStartOverDialog(false);
       // Navigate to create page without full refresh
-      router.push(`/w/${urlWorkspaceSlug}/topics/create`);
+      router.push(`/w/${urlWorkspaceSlug}/topics/create` as Route);
     } catch (error) {
       log.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
@@ -372,7 +373,7 @@ export default function ResultsPage() {
   };
 
   const handleNavigateToTopics = () => {
-    router.push(`/w/${urlWorkspaceSlug}/topics`);
+    router.push(`/w/${urlWorkspaceSlug}/topics` as Route);
   };
 
   const handleRetryLoad = () => {
@@ -409,7 +410,7 @@ export default function ResultsPage() {
   };
 
   const handleSessionRecover = (sessionId: string) => {
-    router.push(`/topics/create/results/${sessionId}`);
+    router.push(`/topics/create/results/${sessionId}` as Route);
   };
 
   // Helper function to format industry name for display

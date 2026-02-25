@@ -30,6 +30,7 @@ import {
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { BrandVoice, Persona } from "@/types/workspace";
+import type { Route } from "next";
 
 /**
  * Workspace Creation Wizard
@@ -270,7 +271,7 @@ export function WorkspaceCreateWizard() {
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
-        router.push(`/w/${workspaceSlug}/generate_content`);
+        router.push(`/w/${workspaceSlug}/generate_content` as Route);
       }
 
       toast.success("Workspace setup complete!");
@@ -289,7 +290,7 @@ export function WorkspaceCreateWizard() {
 
     // Redirect directly to workspace generate content page
     if (workspaceSlug) {
-      router.push(`/w/${workspaceSlug}/generate_content`);
+      router.push(`/w/${workspaceSlug}/generate_content` as Route);
     }
 
     toast.success("Workspace created!");

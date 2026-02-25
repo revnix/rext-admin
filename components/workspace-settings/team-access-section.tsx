@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export function TeamAccessSection() {
   const { workspaceSlug } = useWorkspace();
@@ -31,7 +32,7 @@ export function TeamAccessSection() {
             Add, remove, or manage individual team members and their roles
           </p>
           <Button variant="outline" asChild>
-            <Link href={`/w/${workspaceSlug}/members`}>
+            <Link href={`/w/${workspaceSlug}/members` as Route}>
               <Users className="h-4 w-4 mr-2" />
               Manage Team Members
             </Link>

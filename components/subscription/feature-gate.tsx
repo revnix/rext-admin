@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { resolvePlanFeatureAccess } from "@/lib/subscription/feature-access";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Feature Gate Component
@@ -131,7 +132,7 @@ export function FeatureGate({
   }, [subscription, feature, requiredPlan]);
 
   const handleUpgrade = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   const handleManageSubscription = () => {

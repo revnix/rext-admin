@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { SubscriptionStatus } from "@/types/subscription";
+import type { Route } from "next";
 
 /**
  * Trial Status Banner Component
@@ -155,7 +156,7 @@ export function TrialStatusBanner({
   const colors = getBannerColors();
 
   const handleUpgrade = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   const handleDismiss = () => {

@@ -25,6 +25,7 @@ import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export default function WorkspaceKnowledgePage() {
   const { workspace, workspaceId } = useWorkspace();
@@ -62,7 +63,7 @@ export default function WorkspaceKnowledgePage() {
   const handleView = (kb: KnowledgeBase) => {
     // Navigate to knowledge base items page
     // For now, just show a toast - you can implement a detail page later
-    router.push(`/w/${workspace?.slug}/knowledge/${kb.id}`);
+    router.push(`/w/${workspace?.slug}/knowledge/${kb.id}` as Route);
   };
 
   // Calculate stats

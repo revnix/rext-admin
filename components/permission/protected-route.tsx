@@ -9,6 +9,7 @@ import {
   useIsAdmin,
   usePermission,
 } from "@/hooks/use-permission";
+import type { Route } from "next";
 
 /**
  * Protected route component props
@@ -116,7 +117,7 @@ export function ProtectedRoute({
   // Handle redirect with useEffect (always at top level)
   useEffect(() => {
     if (!hasAccess) {
-      router.push(redirectTo);
+      router.push(redirectTo as Route);
     }
   }, [hasAccess, router, redirectTo]);
 

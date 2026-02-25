@@ -49,6 +49,7 @@ import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
 import type { Media } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
+import type { Route } from "next";
 
 interface MediaDetailSheetProps {
   workspaceId: string;
@@ -539,7 +540,9 @@ export function MediaDetailSheet({
                       {usage.featured_in.map((content) => (
                         <Link
                           key={content.id}
-                          href={`/w/${workspaceId}/content/${content.id}`}
+                          href={
+                            `/w/${workspaceId}/content/${content.id}` as Route
+                          }
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
                         >
                           <div className="flex-1 min-w-0">
@@ -566,7 +569,9 @@ export function MediaDetailSheet({
                       {usage.used_in_content.map((content) => (
                         <Link
                           key={`${content.id}-${content.position || 0}`}
-                          href={`/w/${workspaceId}/content/${content.id}`}
+                          href={
+                            `/w/${workspaceId}/content/${content.id}` as Route
+                          }
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
                         >
                           <div className="flex-1 min-w-0">

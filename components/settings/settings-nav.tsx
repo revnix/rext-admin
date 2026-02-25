@@ -4,6 +4,7 @@ import { CreditCard, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import type { Route } from "next";
 
 const settingsRoutes = [
   {
@@ -38,7 +39,7 @@ export function SettingsNav() {
         return (
           <Link
             key={route.href}
-            href={route.href}
+            href={route.href as Route}
             className={cn(
               "inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-all border-b-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
               index > 0 ? "ml-4" : "ml-0",

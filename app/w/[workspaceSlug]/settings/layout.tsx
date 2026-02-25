@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 const settingsTabs = [
   {
@@ -42,7 +43,7 @@ export default function WorkspaceSettingsLayout({
               return (
                 <Link
                   key={tab.name}
-                  href={href}
+                  href={href as Route}
                   className={cn(
                     "inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     isActive

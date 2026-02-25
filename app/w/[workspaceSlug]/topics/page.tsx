@@ -22,6 +22,7 @@ import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export default function WorkspaceTopicsPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
@@ -90,7 +91,7 @@ export default function WorkspaceTopicsPage() {
 
   const tableActions = canCreateTopic ? (
     <Button asChild>
-      <Link href={workspaceRoutes.topicCreate(workspaceSlug)}>
+      <Link href={workspaceRoutes.topicCreate(workspaceSlug) as Route}>
         <Plus className="h-4 w-4 mr-2" />
         Generate Topics
       </Link>

@@ -21,6 +21,7 @@ import { useContentDetail } from "@/hooks/use-content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
 import { safeJsonParse } from "@/lib/utils";
+import type { Route } from "next";
 
 type WorkspaceContentDetailPageProps = {
   params: Promise<{
@@ -231,7 +232,7 @@ export default function WorkspaceContentDetailPage({
               </p>
               <Button
                 onClick={() =>
-                  router.push(workspaceRoutes.content(workspaceSlug))
+                  router.push(workspaceRoutes.content(workspaceSlug) as Route)
                 }
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
