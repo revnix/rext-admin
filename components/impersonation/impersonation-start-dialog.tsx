@@ -14,8 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
+import { syncImpersonationTokens } from "@/lib/impersonation-token-sync";
 
 interface User {
   id: string;
@@ -45,14 +46,20 @@ export function ImpersonationStartDialog({
 }: ImpersonationStartDialogProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { setTokens } = useAuthStore();
+  const { update } = useSession();
 
   // Start impersonation mutation
   const startImpersonationMutation = useMutation({
     mutationFn: (userId: string) => apiClient.impersonation.start(userId),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Update tokens to impersonated user
-      setTokens(data.access_token, data.refresh_token);
+      await syncImpersonationTokens(
+        {
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+        },
+        update,
+      );
 
       toast.success(`Now impersonating ${data.impersonated_user_name}`, {
         description: "All actions will be performed as this user",

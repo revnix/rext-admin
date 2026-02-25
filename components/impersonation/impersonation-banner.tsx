@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { impersonationQueries } from "@/lib/query-keys";
-import { useAuthStore } from "@/stores/auth-store";
+import { syncImpersonationTokens } from "@/lib/impersonation-token-sync";
 import { log } from "@/lib/logger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -23,7 +23,6 @@ export function ImpersonationBanner() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { update } = useSession();
-  const { setTokens } = useAuthStore();
   const [isPendingRoute, startTransition] = useTransition();
 
   // Check impersonation status
@@ -44,14 +43,14 @@ export function ImpersonationBanner() {
   const stopImpersonationMutation = useMutation({
     mutationFn: () => apiClient.impersonation.stop(),
     onSuccess: async (data) => {
-      // Update tokens to original user
-      setTokens(data.access_token, data.refresh_token);
-
-      // Update NextAuth session with restored tokens
-      await update({
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-      });
+      // Restore tokens to original user (memory + session)
+      await syncImpersonationTokens(
+        {
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+        },
+        update,
+      );
 
       // Fetch and update original user profile
       try {

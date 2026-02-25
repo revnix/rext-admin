@@ -15,8 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
+import { syncImpersonationTokens } from "@/lib/impersonation-token-sync";
 
 interface ImpersonateButtonProps {
   userId: string;
@@ -37,15 +38,21 @@ export function ImpersonateButton({
 }: ImpersonateButtonProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { setTokens } = useAuthStore();
+  const { update } = useSession();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isPendingRoute, startTransition] = useTransition();
 
   const impersonateMutation = useMutation({
     mutationFn: () => apiClient.impersonation.start(userId),
-    onSuccess: (data) => {
-      // Update tokens through centralized auth store
-      setTokens(data.access_token, data.refresh_token);
+    onSuccess: async (data) => {
+      // Update tokens to impersonated user (memory + session)
+      await syncImpersonationTokens(
+        {
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+        },
+        update,
+      );
 
       // Invalidate all queries to refresh data with new user context
       queryClient.invalidateQueries();
