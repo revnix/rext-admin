@@ -36,6 +36,7 @@ import { useTopicBuilderStore } from "@/stores/topic-builder-store";
 import { useCurrentWorkspace } from "@/stores/workspace";
 import type { SessionData } from "@/types/session";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import type { Route } from "next";
 
 interface ResultsPageState {
   session: SessionData | null;
@@ -360,7 +361,7 @@ export default function ResultsPage() {
       resetWizard();
       setShowStartOverDialog(false);
       // Navigate to create page without full refresh
-      router.push(`/w/${urlWorkspaceSlug}/topics/create`);
+      router.push(`/w/${urlWorkspaceSlug}/topics/create` as Route);
     } catch (error) {
       log.error("❌ Error resetting wizard:", error);
       setShowStartOverDialog(false);
@@ -372,7 +373,7 @@ export default function ResultsPage() {
   };
 
   const handleNavigateToTopics = () => {
-    router.push(`/w/${urlWorkspaceSlug}/topics`);
+    router.push(`/w/${urlWorkspaceSlug}/topics` as Route);
   };
 
   const handleRetryLoad = () => {
@@ -409,7 +410,7 @@ export default function ResultsPage() {
   };
 
   const handleSessionRecover = (sessionId: string) => {
-    router.push(`/topics/create/results/${sessionId}`);
+    router.push(`/topics/create/results/${sessionId}` as Route);
   };
 
   // Helper function to format industry name for display
@@ -419,17 +420,6 @@ export default function ResultsPage() {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
-
-  // Dynamic breadcrumbs configuration based on session data
-  const breadcrumbs = [
-    { label: "Topics", href: "/topics" },
-    { label: "Topic Builder", href: "/topics/create" },
-    {
-      label: state.session
-        ? `Results - ${formatIndustryName(state.session.formData.industry)}`
-        : "Results",
-    },
-  ];
 
   // Generate page title and description based on session data
   const pageTitle = state.session
@@ -446,7 +436,6 @@ export default function ResultsPage() {
       <PageLayout
         title="Loading Results..."
         description="Retrieving your generated topics"
-        breadcrumbs={breadcrumbs}
         className="p-0"
       >
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -463,7 +452,6 @@ export default function ResultsPage() {
       <PageLayout
         title="Results Not Found"
         description="Unable to load your topic results"
-        breadcrumbs={breadcrumbs}
         className="p-0"
       >
         <div className="flex flex-col min-h-[400px] space-y-6 p-6">
@@ -518,7 +506,6 @@ export default function ResultsPage() {
       <PageLayout
         title={pageTitle}
         description={pageDescription}
-        breadcrumbs={breadcrumbs}
         className="p-0"
       >
         {/* Storage Error Display */}
@@ -582,7 +569,6 @@ export default function ResultsPage() {
     <PageLayout
       title="No Results"
       description="No topic results found"
-      breadcrumbs={breadcrumbs}
       className="p-0"
     >
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">

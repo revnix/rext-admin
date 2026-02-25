@@ -42,11 +42,6 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "User Management" },
-  ];
-
   // Fetch all users
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-users"],
@@ -199,7 +194,6 @@ export default function AdminUsersPage() {
     <PageLayout
       title="User Management"
       description="Manage system users and impersonation"
-      breadcrumbs={breadcrumbs}
     >
       <CanAccess
         permission={USER_PERMISSIONS.READ}

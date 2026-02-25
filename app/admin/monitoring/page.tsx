@@ -126,11 +126,6 @@ interface UsageTrendsData {
 }
 
 export default function MonitoringPage() {
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "System Monitoring" },
-  ];
-
   const [errorLogPage, setErrorLogPage] = useState(1);
   const [errorLogFilters, setErrorLogFilters] = useState<{
     severity?: string;
@@ -217,7 +212,6 @@ export default function MonitoringPage() {
     <PageLayout
       title="System Monitoring"
       description="Monitor system health, errors, and platform usage"
-      breadcrumbs={breadcrumbs}
     >
       <AdminGuard>
         <div className="space-y-8">

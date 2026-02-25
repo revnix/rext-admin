@@ -111,8 +111,9 @@ export function ProfileForm() {
     );
   }
 
-  const userInitials =
-    (profile.full_name || profile.email).slice(0, 2).toUpperCase() || "U";
+  const userInitials = (profile.full_name || profile.email || "U")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="space-y-6">

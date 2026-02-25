@@ -8,6 +8,12 @@ import type {
   NotificationPreferences,
   NotificationPreferencesApiResponse,
 } from "@/schemas/notification-schemas";
+import type {
+  RevokeAllSessionsResponse,
+  RevokeSessionResponse,
+  SessionListResponse,
+  UserSession,
+} from "@/types/user-session";
 import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
@@ -58,46 +64,60 @@ export function createSessionsNamespace(client: ApiClient) {
     /**
      * List active sessions
      */
-    list: async () => {
-      return client.request<{
-        sessions: Array<{
-          id: string;
-          device: string;
-          browser: string;
-          ip_address: string;
-          location: string;
-          last_active: string;
-          created_at: string;
-          is_current: boolean;
-        }>;
-      }>(ENDPOINTS.SETTINGS.sessions.list, {
-        method: "GET",
-      });
+    list: async (): Promise<SessionListResponse> => {
+      const response = await client.request<SessionListResponse>(
+        ENDPOINTS.SETTINGS.sessions.list,
+        {
+          method: "GET",
+        },
+      );
+
+      return {
+        ...response,
+        sessions: response.sessions.map((s): UserSession => {
+          const session = s as UserSession & {
+            device?: string;
+            browser?: string;
+            last_active?: string;
+          };
+          return {
+            ...s,
+            device_name:
+              session.device_name ?? session.device ?? "Unknown Device",
+            device_type: session.device_type ?? null,
+            ip_address: session.ip_address ?? null,
+            user_agent: session.user_agent ?? session.browser ?? null,
+            created_at: session.created_at ?? null,
+            last_activity_at:
+              session.last_activity_at ?? session.last_active ?? null,
+            is_current: Boolean(session.is_current),
+          };
+        }),
+      };
     },
 
     /**
      * Revoke a specific session
      */
     revoke: async (sessionId: string) => {
-      return client.request<{
-        success: boolean;
-        message: string;
-      }>(ENDPOINTS.SETTINGS.sessions.revoke(sessionId), {
-        method: "DELETE",
-      });
+      return client.request<RevokeSessionResponse>(
+        ENDPOINTS.SETTINGS.sessions.revoke(sessionId),
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**
      * Revoke all sessions except current
      */
     revokeAll: async () => {
-      return client.request<{
-        success: boolean;
-        message: string;
-        revoked_count: number;
-      }>(ENDPOINTS.SETTINGS.sessions.revokeAll, {
-        method: "DELETE",
-      });
+      return client.request<RevokeAllSessionsResponse>(
+        ENDPOINTS.SETTINGS.sessions.revokeAll,
+        {
+          method: "DELETE",
+        },
+      );
     },
   };
 }

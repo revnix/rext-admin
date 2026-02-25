@@ -10,12 +10,13 @@ import type {
   OnboardingStepUpdate,
 } from "@/types/onboarding";
 
-export function useOnboarding() {
+export function useOnboarding(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
+  const featureEnabled = options?.enabled ?? true;
 
-  // Only fetch onboarding data when user is authenticated
-  const isAuthenticated = sessionStatus === "authenticated";
+  // Only fetch onboarding data when user is authenticated and feature is enabled
+  const isAuthenticated = sessionStatus === "authenticated" && featureEnabled;
 
   // Fetch onboarding status
   const {

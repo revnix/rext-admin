@@ -23,8 +23,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getMediaKind } from "@/lib/media-type";
 import type { Media } from "@/lib/api-client/media";
-import { formatFileSize } from "@/lib/formatters/number-formatters";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 
 interface MediaListProps {
   media: Media[];
@@ -148,12 +149,22 @@ function MediaRow({
   onSelectionChange,
   selectionMode = false,
 }: MediaRowProps) {
-  const isImage = media.file_type.startsWith("image/");
-  const isVideo = media.file_type.startsWith("video/");
-  const isDocument =
-    media.file_type.startsWith("application/") ||
-    media.file_type.startsWith("text/");
-  // local `formatFileSize` declaration is removed.
+  const mediaKind = getMediaKind(media.file_type);
+  const isImage = mediaKind === "image";
+  const isVideo = mediaKind === "video";
+  const isDocument = mediaKind === "document";
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
+  };
+
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
       onSelectionChange(media.id, !isSelected);
@@ -184,17 +195,17 @@ function MediaRow({
       {/* Preview */}
       <TableCell>
         <div className="w-10 h-10 bg-muted relative rounded overflow-hidden">
-          {isImage && media.thumbnail_url ? (
+          {isImage && thumbnailUrl ? (
             <Image
-              src={media.thumbnail_url}
+              src={thumbnailUrl}
               alt={media.alt_text || media.title || media.filename}
               fill
               className="object-cover"
               sizes="40px"
             />
-          ) : isImage && media.public_url ? (
+          ) : isImage && publicUrl ? (
             <Image
-              src={media.public_url}
+              src={publicUrl}
               alt={media.alt_text || media.title || media.filename}
               fill
               className="object-cover"

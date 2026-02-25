@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Feature Gate Component
@@ -152,11 +153,11 @@ export function FeatureGate({
   }, [subscription, feature, requiredPlan]);
 
   const handleUpgrade = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   const handleManageSubscription = () => {
-    router.push("/dashboard/subscription");
+    router.push("/dashboard/subscription" as Route);
   };
 
   // Loading state

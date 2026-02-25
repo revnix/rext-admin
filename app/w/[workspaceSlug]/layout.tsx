@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { WorkspaceProvider } from "@/providers/workspace-provider";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import type { Route } from "next";
 
 /**
  * Workspace Layout
@@ -23,7 +24,7 @@ export default async function WorkspaceLayout({
   // Check authentication
   const session = await auth();
   if (!session) {
-    redirect("/login");
+    redirect("/login" as Route);
   }
 
   // Await params (Next.js 15 requirement)

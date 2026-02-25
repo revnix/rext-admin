@@ -256,10 +256,7 @@ export type {
   WorkspaceResponse,
   WorkspaceStatus,
 } from "./workspace";
-export {
-  FILE_CONSTRAINTS,
-  WORKSPACE_CONSTRAINTS,
-} from "./workspace";
+export { FILE_CONSTRAINTS } from "./workspace";
 
 // ============================================================================
 // DEPRECATED ALIASES (for backwards compatibility)

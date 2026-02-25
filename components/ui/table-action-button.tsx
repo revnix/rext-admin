@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { TableLevelAction } from "@/types/data-table";
+import type { Route } from "next";
 
 interface TableActionButtonProps
   extends Omit<TableLevelAction, "id" | "onClick"> {
@@ -65,7 +66,7 @@ export const TableActionButton = forwardRef<
         asChild
         {...props}
       >
-        <Link href={href}>{buttonContent}</Link>
+        <Link href={href as Route}>{buttonContent}</Link>
       </Button>
     ) : (
       <Button

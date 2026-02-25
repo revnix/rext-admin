@@ -7,9 +7,10 @@ import { useEffect } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
+import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { usePermission } from "@/hooks/use-permission";
+import type { Route } from "next";
 
 /**
  * Create Workspace Page
@@ -46,17 +47,12 @@ export default function CreateWorkspacePage() {
     if (!canCreateWorkspace) {
       // Don't redirect immediately to avoid flash
       const timer = setTimeout(() => {
-        router.push("/");
+        router.push("/" as Route);
       }, 100);
       return () => clearTimeout(timer);
     }
     return undefined;
   }, [canCreateWorkspace, router]);
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Create Workspace" },
-  ];
 
   // Show permission denied message if no access
   if (!canCreateWorkspace) {
@@ -64,7 +60,6 @@ export default function CreateWorkspacePage() {
       <PageLayout
         title="Permission Required"
         description="You need permission to create workspaces"
-        breadcrumbs={breadcrumbs}
       >
         <div className="max-w-2xl mx-auto py-12">
           <Card className="p-8">
@@ -99,7 +94,6 @@ export default function CreateWorkspacePage() {
     <PageLayout
       title="Create Workspace"
       description="Set up a new workspace with guided configuration"
-      breadcrumbs={breadcrumbs}
     >
       <div className="w-full mx-auto space-y-6">
         {/* Back Navigation */}

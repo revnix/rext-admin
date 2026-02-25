@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
-import { workspaceRoutes } from "@/lib/routes";
 import { SelectionView } from "@/components/generate-content/selection-view";
 import { LibraryView } from "@/components/generate-content/library-view";
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
@@ -11,20 +10,11 @@ import { FreshGenerationView } from "@/components/generate-content/fresh-generat
 type PageView = "selection" | "fresh" | "library";
 
 export default function Page() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace } = useWorkspace();
   const [view, setView] = useState<PageView>("selection");
   const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
     string | undefined
   >(undefined);
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Generate Content" },
-  ];
 
   const handleStartFresh = () => {
     setSelectedLibraryKeyword(undefined);
@@ -50,7 +40,6 @@ export default function Page() {
       title="Generate Content"
       hideTitle={true}
       description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"}.`}
-      breadcrumbs={breadcrumbs}
       fullWidth
     >
       <div className="w-full">

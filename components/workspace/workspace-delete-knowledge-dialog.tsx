@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { KnowledgeItem } from "@/components/workspace/workspace-knowledge-table";
+import type { KnowledgeItem } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
 
 interface WorkspaceDeleteKnowledgeDialogProps {

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
@@ -11,6 +12,7 @@ import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { Route } from "next";
 
 /**
  * Impersonation Banner Component
@@ -23,6 +25,7 @@ export function ImpersonationBanner() {
   const queryClient = useQueryClient();
   const { update } = useSession();
   const { setTokens } = useAuthStore();
+  const [isPendingRoute, startTransition] = useTransition();
 
   // Check impersonation status
   const {
@@ -76,8 +79,11 @@ export function ImpersonationBanner() {
       // Invalidate all queries to refresh data
       queryClient.invalidateQueries();
 
-      // Refresh the page to update UI
-      router.refresh();
+      startTransition(() => {
+        router.push("/admin/customers" as Route);
+        // Refresh the page to update UI
+        router.refresh();
+      });
     },
     onError: (error: Error) => {
       toast.error(`Failed to stop impersonation: ${error.message}`);
@@ -130,11 +136,11 @@ export function ImpersonationBanner() {
           variant="outline"
           size="sm"
           onClick={handleStopImpersonation}
-          disabled={stopImpersonationMutation.isPending}
+          disabled={stopImpersonationMutation.isPending || isPendingRoute}
           className="border-yellow-600 bg-yellow-100 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
         >
           <LogOut className="h-4 w-4 mr-2" />
-          {stopImpersonationMutation.isPending
+          {stopImpersonationMutation.isPending || isPendingRoute
             ? "Stopping..."
             : "Stop Impersonation"}
         </Button>

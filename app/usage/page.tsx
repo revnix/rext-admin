@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 const USAGE_READ = "usage.read";
 
@@ -60,8 +61,6 @@ export default function UsagePage() {
     }
   };
 
-  const breadcrumbs = [{ label: "Dashboard", href: "/" }, { label: "Usage" }];
-
   return (
     <PermissionGuard
       permission={USAGE_READ}
@@ -69,7 +68,6 @@ export default function UsagePage() {
         <PageLayout
           title="Access Denied"
           description="You don't have permission to view usage statistics"
-          breadcrumbs={breadcrumbs}
         >
           <Card className="border-destructive">
             <CardHeader>
@@ -91,7 +89,10 @@ export default function UsagePage() {
                   <span className="font-semibold">usage.read</span>
                 </p>
               </div>
-              <Button onClick={() => router.push("/")} variant="outline">
+              <Button
+                onClick={() => router.push("/" as Route)}
+                variant="outline"
+              >
                 Return to Dashboard
               </Button>
             </CardContent>
@@ -102,7 +103,6 @@ export default function UsagePage() {
       <PageLayout
         title="Usage Dashboard"
         description="Monitor your usage and plan limits"
-        breadcrumbs={breadcrumbs}
         actions={
           <Button
             onClick={handleRefresh}

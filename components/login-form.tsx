@@ -17,6 +17,7 @@ import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
+import type { Route } from "next";
 
 export function LoginForm({
   className,
@@ -42,6 +43,8 @@ export function LoginForm({
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
     const urlError = searchParams.get("error");
+    const errorCode = searchParams.get("code");
+
     if (urlError) {
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
@@ -57,7 +60,15 @@ export function LoginForm({
           "Sign in failed. Check the details you provided are correct.",
         Default: "An error occurred during authentication.",
       };
-      const message = errorMessages[urlError] || errorMessages.Default;
+
+      // Use errorCode if it's a descriptive message (not generic)
+      const message =
+        urlError === "CredentialsSignin" &&
+        errorCode &&
+        errorCode !== "credentials"
+          ? errorCode
+          : errorMessages[urlError] || errorMessages.Default;
+
       toast.error(message);
     }
   }, [searchParams, toast]);
@@ -65,6 +76,11 @@ export function LoginForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Clear any previous session invalidity flag
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("session_invalid");
+    }
 
     try {
       // Backend validated successfully, now use NextAuth for session creation
@@ -91,7 +107,7 @@ export function LoginForm({
       resetAuthRedirectState();
 
       if (hasValidInvitation && invitationToken) {
-        router.push(`/accept-invitation?token=${invitationToken}`);
+        router.push(`/accept-invitation?token=${invitationToken}` as Route);
       } else {
         await getAuthHeaders(true);
 
@@ -100,15 +116,15 @@ export function LoginForm({
           const workspaces = response.workspaces || [];
 
           if (workspaces.length === 0) {
-            router.push("/w/create");
+            router.push("/w/create" as Route);
           } else {
             const firstWorkspace = workspaces[0];
-            router.push(`/w/${firstWorkspace.slug}/generate_content`);
+            router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
           }
         } catch (error) {
           log.error("[Auth] Failed to fetch workspaces:", error);
           const redirect = searchParams.get("redirect") || "/";
-          router.push(redirect);
+          router.push(redirect as Route);
         }
       }
     } catch (error) {
@@ -242,7 +258,7 @@ export function LoginForm({
                 href={
                   invitationToken
                     ? `/signup?token=${invitationToken}`
-                    : "/signup"
+                    : ("/signup" as Route)
                 }
                 className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
               >

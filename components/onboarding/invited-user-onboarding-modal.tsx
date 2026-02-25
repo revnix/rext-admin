@@ -1,8 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { apiClient } from "@/lib/api-client";
 import type { Workspace } from "@/types/workspace";
 import { InvitedUserFirstTasks } from "./steps/invited-user-first-tasks";
 import {
@@ -60,6 +63,7 @@ export function InvitedUserOnboardingModal({
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleNext = () => {
     setDirection("forward");
@@ -76,10 +80,22 @@ export function InvitedUserOnboardingModal({
   const handleComplete = async () => {
     setIsLoading(true);
     try {
-      // Mark onboarding as completed
-      // This will be handled by the parent component
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await apiClient.onboarding.complete();
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["onboarding", "status"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["onboarding", "should-show"],
+        }),
+      ]);
+
       onClose();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to complete onboarding";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

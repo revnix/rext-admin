@@ -1,8 +1,6 @@
 import type { OperationNotification } from "@/types/sse";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { NotificationApiService } from "@/services/notification-api";
-import { log } from "@/lib/logger";
 
 const MAX_NOTIFICATIONS = 50;
 
@@ -12,8 +10,9 @@ interface NotificationStore {
   isDrawerOpen: boolean;
 
   addNotification: (notification: OperationNotification) => void;
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  mergeNotifications: (incoming: OperationNotification[]) => void;
+  setNotificationRead: (id: string, read: boolean) => void;
+  setAllNotificationsRead: (unreadIds?: string[]) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
   setDrawerOpen: (open: boolean) => void;
@@ -54,7 +53,7 @@ const revertAllRead = (
 
 export const useNotificationStore = create<NotificationStore>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       notifications: [],
       unreadCount: 0,
       isDrawerOpen: false,
@@ -73,40 +72,45 @@ export const useNotificationStore = create<NotificationStore>()(
           return updateState(next);
         }),
 
-      markAsRead: async (id: string) => {
-        // Optimistic update
-        set((state) => updateState(markOneRead(state.notifications, id)));
+      mergeNotifications: (incoming) =>
+        set((state) => {
+          const map = new Map(state.notifications.map((n) => [n.id, n]));
 
-        try {
-          await NotificationApiService.markNotificationsAsRead([id]);
-        } catch (error) {
-          log.error("Failed to mark notification as read", error);
-          // Revert
-          set((state) => updateState(revertOneRead(state.notifications, id)));
-        }
-      },
+          for (const item of incoming) {
+            map.set(item.id, item);
+          }
 
-      markAllAsRead: async () => {
-        const current = get().notifications;
-        const unreadIds = current.filter((n) => !n.read).map((n) => n.id);
-        if (unreadIds.length === 0) return;
+          const merged = Array.from(map.values())
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            )
+            .slice(0, MAX_NOTIFICATIONS);
 
-        // Optimistic update
-        set((state) => ({
-          notifications: markAllRead(state.notifications),
-          unreadCount: 0,
-        }));
+          return updateState(merged);
+        }),
 
-        try {
-          await NotificationApiService.markAllNotificationsAsRead();
-        } catch (error) {
-          log.error("Failed to mark all notifications as read", error);
-          // Revert
-          set((state) =>
-            updateState(revertAllRead(state.notifications, unreadIds)),
-          );
-        }
-      },
+      setNotificationRead: (id, read) =>
+        set((state) => {
+          const next = read
+            ? markOneRead(state.notifications, id)
+            : revertOneRead(state.notifications, id);
+          return updateState(next);
+        }),
+
+      setAllNotificationsRead: (revertUnreadIds) =>
+        set((state) => {
+          if (revertUnreadIds) {
+            return updateState(
+              revertAllRead(state.notifications, revertUnreadIds),
+            );
+          }
+          return {
+            notifications: markAllRead(state.notifications),
+            unreadCount: 0,
+          };
+        }),
 
       removeNotification: (id: string) =>
         set((state) => {
@@ -119,7 +123,7 @@ export const useNotificationStore = create<NotificationStore>()(
     }),
     {
       name: "notification-store",
-      enabled: process.env.NODE_ENV === "development", // good hygiene
+      enabled: process.env.NODE_ENV === "development",
     },
   ),
 );

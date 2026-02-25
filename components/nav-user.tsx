@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
   BadgeCheck,
   Bell,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { UserProfile } from "@/types/profile";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -41,20 +43,7 @@ import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { log } from "@/lib/logger";
-
-export type ApiUser = {
-  id: string;
-  email: string;
-  full_name: string;
-  email_verified: boolean;
-  status: string;
-  avatar_url?: string;
-  bio?: string;
-  language?: string;
-  timezone?: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { Route } from "next";
 
 export function NavUser() {
   const router = useRouter();
@@ -62,7 +51,7 @@ export function NavUser() {
 
   const { user, isAuthenticated, isLoading, logout } = useAuthSession();
 
-  const [profileUser, setProfileUser] = useState<ApiUser | null>(null);
+  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   // ----------------------------------
@@ -149,7 +138,10 @@ export function NavUser() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="lg" onClick={() => router.push("/login")}>
+          <SidebarMenuButton
+            size="lg"
+            onClick={() => router.push("/login" as Route)}
+          >
             <Avatar className="h-8 w-8 rounded-lg">
               <AvatarFallback className="rounded-lg">?</AvatarFallback>
             </Avatar>
@@ -171,10 +163,7 @@ export function NavUser() {
   const effectiveRoleKey = fetchedWorkspaceRole || user.role;
   const userRole = getRoleDisplayName(effectiveRoleKey);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   // Helper to get full avatar URL
   const getAvatarUrl = (avatarUrl?: string) => {
@@ -291,7 +280,7 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/subscription")}
+                onClick={() => router.push("/settings/subscription" as Route)}
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -301,18 +290,20 @@ export function NavUser() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/settings" as Route)}
+              >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/billing")}
+                onClick={() => router.push("/settings/billing" as Route)}
               >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/security")}
+                onClick={() => router.push("/settings/security" as Route)}
               >
                 <Bell />
                 Security

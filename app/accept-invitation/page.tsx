@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import type { Route } from "next";
 
 /**
  * Invitation Acceptance Page
@@ -68,11 +70,9 @@ export default function AcceptInvitationPage() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await safeParseErrorBody(response);
         throw new Error(
-          errorData.message ||
-            errorData.detail ||
-            "Failed to accept invitation",
+          extractApiError(errorData, "Failed to accept invitation"),
         );
       }
 
@@ -82,9 +82,9 @@ export default function AcceptInvitationPage() {
       // Redirect to workspace after short delay
       setTimeout(() => {
         if (data.data?.workspace?.slug) {
-          router.push(`/w/${data.data.workspace.slug}`);
+          router.push(`/w/${data.data.workspace.slug}` as Route);
         } else {
-          router.push("/");
+          router.push("/" as Route);
         }
       }, 2000);
     } catch (err) {
@@ -120,7 +120,9 @@ export default function AcceptInvitationPage() {
 
   // Redirect to login if not authenticated
   if (sessionStatus === "unauthenticated") {
-    router.push(`/login${invitationToken ? `?token=${invitationToken}` : ""}`);
+    router.push(
+      `/login${invitationToken ? `?token=${invitationToken}` : ""}` as Route,
+    );
     return null;
   }
 
@@ -160,10 +162,12 @@ export default function AcceptInvitationPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Button onClick={() => router.push("/")}>Go to Dashboard</Button>
+              <Button onClick={() => router.push("/" as Route)}>
+                Go to Dashboard
+              </Button>
               <Button
                 variant="outline"
-                onClick={() => router.push("/workspaces")}
+                onClick={() => router.push("/workspaces" as Route)}
               >
                 View My Workspaces
               </Button>

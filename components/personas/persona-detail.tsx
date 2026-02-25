@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { User, Target, AlertCircle, TrendingUp, Activity } from "lucide-react";
 import type { Persona } from "@/types/workspace";
+import type { Route } from "next";
 
 interface PersonaDetailProps {
   persona: Persona;
@@ -54,7 +55,7 @@ export function PersonaDetail({ persona }: PersonaDetailProps) {
                     LinkedIn
                   </p>
                   <a
-                    href={persona.linkedin_url}
+                    href={persona.linkedin_url as Route}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary hover:underline break-all"

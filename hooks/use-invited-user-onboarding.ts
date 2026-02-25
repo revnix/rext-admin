@@ -54,10 +54,12 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
   });
 
   // Check if regular onboarding is already completed
+  // Only needed when an invitation context exists — avoids unnecessary requests
+  // for users with no active invitation flow
   const { data: onboardingStatus, isLoading: isLoadingOnboarding } = useQuery({
     queryKey: ["onboarding", "status"],
     queryFn: () => apiClient.onboarding.getStatus(),
-    enabled: status === "authenticated",
+    enabled: !!invitationToken && status === "authenticated",
     staleTime: 1000 * 60 * 5,
   });
 

@@ -20,6 +20,7 @@ import type {
   ValidationResult,
 } from "@/types/topic-builder";
 import { useTopicGenerationMutation } from "./useTopicGenerationMutation";
+import type { Route } from "next";
 
 const STORAGE_KEY = "topic-builder-draft";
 
@@ -472,7 +473,7 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
             }
 
             router.push(
-              `/w/${workspaceSlug}/topics/create/results/${sessionId}`,
+              `/w/${workspaceSlug}/topics/create/results/${sessionId}` as Route,
             );
           } catch (sessionError) {
             log.error("Failed to save session:", sessionError);
@@ -595,7 +596,9 @@ export const useTopicBuilder = (): UseTopicBuilderReturn => {
         return;
       }
 
-      router.push(`/w/${workspaceSlug}/topics/create/results/${sessionId}`);
+      router.push(
+        `/w/${workspaceSlug}/topics/create/results/${sessionId}` as Route,
+      );
     },
     [router, currentWorkspace],
   );

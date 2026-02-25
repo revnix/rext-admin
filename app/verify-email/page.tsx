@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import type { Route } from "next";
 
 function VerifyEmailContent() {
   const [isVerifying, setIsVerifying] = useState(true);
@@ -46,8 +48,10 @@ function VerifyEmailContent() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to resend verification");
+        const errorData = await safeParseErrorBody(response);
+        throw new Error(
+          extractApiError(errorData, "Failed to resend verification"),
+        );
       }
 
       setResendSuccess(true);
@@ -80,14 +84,16 @@ function VerifyEmailContent() {
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Email verification failed");
+          const errorData = await safeParseErrorBody(response);
+          throw new Error(
+            extractApiError(errorData, "Email verification failed"),
+          );
         }
 
         setSuccess(true);
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          router.push("/login");
+          router.push("/login" as Route);
         }, 3000);
       } catch (err) {
         setError(

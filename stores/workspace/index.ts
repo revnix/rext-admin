@@ -34,11 +34,7 @@ export {
 // WORKSPACE CRUD STORE
 // ============================================================================
 
-export {
-  useCurrentOperation,
-  useWorkspaceCrudStore,
-  useWorkspaceLoadingStates,
-} from "./use-workspace-crud-store";
+export { useWorkspaceCrudStore } from "./use-workspace-crud-store";
 
 // ============================================================================
 // WORKSPACE FORM STORE

@@ -1,12 +1,11 @@
 import { Client } from "@langchain/langgraph-sdk";
 import { withApiMiddleware, createSuccessResponse } from "@/lib/api-middleware";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
+
 const getClient = () =>
   new Client({
-    apiUrl:
-      process.env.LANGGRAPH_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://localhost:2024",
+    apiUrl: resolveApiBaseUrl(process.env.LANGGRAPH_API_URL),
   });
 
 export const POST = withApiMiddleware(

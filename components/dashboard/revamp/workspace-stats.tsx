@@ -11,6 +11,7 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 
 interface WorkspaceStatsProps {
   workspace: Workspace | null;
@@ -42,7 +43,7 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
               <ExternalLink className="h-3.5 w-3.5" />
               <a
-                href={website}
+                href={website as Route}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors"
@@ -86,8 +87,8 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
           <Link
             href={
               workspace?.slug
-                ? workspaceRoutes.settings.root(workspace.slug)
-                : "/settings"
+                ? (workspaceRoutes.settings.root(workspace.slug) as Route)
+                : ("/settings" as Route)
             }
           >
             <Button

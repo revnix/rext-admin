@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
   ArrowLeftRight,
   BadgeCheck,
@@ -39,7 +40,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 
@@ -58,42 +58,23 @@ import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
-interface BreadcrumbItemData {
-  label: string;
-  href?: string;
-}
-
 interface PageLayoutProps {
   title: string;
   hideTitle?: boolean;
   description?: string;
-  breadcrumbs?: BreadcrumbItemData[];
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
   fullWidth?: boolean;
 }
 
-// Redefine ApiUser locally to ensure safety if not exported
-type ApiUser = {
-  id: string;
-  email: string;
-  full_name: string;
-  email_verified: boolean;
-  status: string;
-  avatar_url?: string;
-  bio?: string;
-  language?: string;
-  timezone?: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { UserProfile } from "@/types/profile";
+import type { Route } from "next";
 
 export function PageLayout({
   title,
   hideTitle = false,
   description,
-  breadcrumbs: _breadcrumbs = [],
   actions,
   children,
   className = "",
@@ -111,14 +92,14 @@ export function PageLayout({
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();
-  const [profileUser, setProfileUser] = useState<ApiUser | null>(null);
+  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-  const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
-    currentWorkspace?.id,
-  );
+  // const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
+  //   currentWorkspace?.id,
+  // );
 
   const hasWorkspaces = workspaceList.length > 0;
 
@@ -156,38 +137,33 @@ export function PageLayout({
       .toUpperCase()
       .slice(0, 2) ?? "?";
 
-  const getRoleDisplayName = (role?: string) => {
-    const map: Record<string, string> = {
-      super_admin: "Super Admin",
-      workspace_owner: "Workspace Owner",
-      workspace_admin: "Workspace Admin",
-      admin: "Admin",
-      manager: "Manager",
-      developer: "Developer",
-      editor: "Editor",
-      viewer: "Viewer",
-      user: "User",
-      guest: "Guest",
-      owner: "Owner",
-    };
-    if (!role) return "";
-    return (
-      map[role] ??
-      role.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    );
-  };
+  // const getRoleDisplayName = (role?: string) => {
+  //   const map: Record<string, string> = {
+  //     super_admin: "Super Admin",
+  //     workspace_owner: "Workspace Owner",
+  //     workspace_admin: "Workspace Admin",
+  //     admin: "Admin",
+  //     manager: "Manager",
+  //     developer: "Developer",
+  //     editor: "Editor",
+  //     viewer: "Viewer",
+  //     user: "User",
+  //     guest: "Guest",
+  //     owner: "Owner",
+  //   };
+  //   if (!role) return "";
+  //   return (
+  //     map[role] ??
+  //     role.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  //   );
+  // };
 
   // User data
   const userName = profileUser?.full_name || user?.full_name || "User";
   const userEmail = profileUser?.email || user?.email || "";
   const userInitials = getInitials(userName);
-  const effectiveRoleKey = fetchedWorkspaceRole || user?.role;
-  const _userRole = getRoleDisplayName(effectiveRoleKey);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   const getAvatarUrl = (avatarUrl?: string) => {
     if (!avatarUrl) return null;
@@ -281,7 +257,7 @@ export function PageLayout({
                           router.push(
                             workspaceRoutes.settings.root(
                               currentWorkspace.slug,
-                            ),
+                            ) as Route,
                           )
                         }
                       >
@@ -293,7 +269,9 @@ export function PageLayout({
                         className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                         onClick={() =>
                           router.push(
-                            workspaceRoutes.members(currentWorkspace.slug),
+                            workspaceRoutes.members(
+                              currentWorkspace.slug,
+                            ) as Route,
                           )
                         }
                       >
@@ -306,7 +284,7 @@ export function PageLayout({
                   {hasWorkspaces ? (
                     <DropdownMenuItem
                       className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
-                      onClick={() => router.push("/")}
+                      onClick={() => router.push("/" as Route)}
                     >
                       <ArrowLeftRight className="mr-2 h-4 w-4" />
                       <span>Switch Workspace</span>
@@ -314,7 +292,7 @@ export function PageLayout({
                   ) : (
                     <DropdownMenuItem
                       className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
-                      onClick={() => router.push("/w/create")}
+                      onClick={() => router.push("/w/create" as Route)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       <span>Create Workspace</span>
@@ -465,7 +443,9 @@ export function PageLayout({
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings/subscription")}
+                    onClick={() =>
+                      router.push("/settings/subscription" as Route)
+                    }
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <div className="flex items-center justify-center h-5 w-5 rounded-md bg-violet-50 mr-2">
@@ -477,21 +457,21 @@ export function PageLayout({
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings")}
+                    onClick={() => router.push("/settings" as Route)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <BadgeCheck className="mr-2 h-4 w-4" />
                     <span>Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings/billing")}
+                    onClick={() => router.push("/settings/billing" as Route)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
                     <span>Billing</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings/security")}
+                    onClick={() => router.push("/settings/security" as Route)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <Bell className="mr-2 h-4 w-4" />

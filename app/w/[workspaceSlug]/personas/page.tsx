@@ -11,30 +11,21 @@ import type { Persona } from "@/types/workspace";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { usePersonas } from "@/hooks/use-personas";
+import type { Route } from "next";
 
 export default function PersonaForgePage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const { data: personasData, isLoading } = usePersonas(workspace?.id || null);
   const personas = personasData?.personas || [];
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Personas" },
-  ];
-
   return (
     <PageLayout
       title="Personas"
       description={`${personas.length} personas created`}
-      breadcrumbs={breadcrumbs}
       fullWidth
       actions={
         <div className="flex gap-2">
-          <Link href={workspaceRoutes.persona_create(workspaceSlug)}>
+          <Link href={workspaceRoutes.persona_create(workspaceSlug) as Route}>
             <Button>
               <Plus size={16} className="mr-2" />
               Create Persona
@@ -75,7 +66,7 @@ export default function PersonaForgePage() {
 
           {/* Create New Placeholder */}
           <Link
-            href={workspaceRoutes.persona_create(workspaceSlug)}
+            href={workspaceRoutes.persona_create(workspaceSlug) as Route}
             className="contents"
           >
             <Card className="border border-dashed border-border shadow-none hover:border-primary/50 hover:bg-accent/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-2xl">

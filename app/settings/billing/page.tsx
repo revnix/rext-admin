@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import type { Route } from "next";
 
 interface UsageMetric {
   used: number;
@@ -82,8 +84,7 @@ function BillingDashboardContent() {
     }
 
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+      const apiUrl = resolveApiBaseUrl();
       const response = await fetch(`${apiUrl}/api/v1/subscriptions/status`, {
         headers: {
           Authorization: `Bearer ${session.user.accessToken}`,
@@ -140,8 +141,7 @@ function BillingDashboardContent() {
 
     setCancelLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+      const apiUrl = resolveApiBaseUrl();
       const response = await fetch(
         `${apiUrl}/api/v1/subscriptions/cancel?at_period_end=true`,
         {
@@ -181,8 +181,7 @@ function BillingDashboardContent() {
 
     setPortalLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://127.0.0.1:2024";
+      const apiUrl = resolveApiBaseUrl();
       const response = await fetch(`${apiUrl}/api/v1/subscriptions/portal`, {
         headers: {
           Authorization: `Bearer ${session.user.accessToken}`,
@@ -364,7 +363,7 @@ function BillingDashboardContent() {
                 <Button
                   variant="link"
                   className="px-1"
-                  onClick={() => router.push("/pricing")}
+                  onClick={() => router.push("/pricing" as Route)}
                 >
                   Upgrade to unlock more
                 </Button>
@@ -401,7 +400,7 @@ function BillingDashboardContent() {
             </>
           ) : (
             <>
-              <Button onClick={() => router.push("/pricing")}>
+              <Button onClick={() => router.push("/pricing" as Route)}>
                 View Plans
               </Button>
               <Button
@@ -536,7 +535,7 @@ function BillingDashboardContent() {
                     <Button
                       variant="link"
                       className="px-1"
-                      onClick={() => router.push("/pricing")}
+                      onClick={() => router.push("/pricing" as Route)}
                     >
                       View plans
                     </Button>
@@ -640,7 +639,7 @@ function BillingDashboardContent() {
                 <CardFooter>
                   <Button
                     className="w-full"
-                    onClick={() => router.push("/pricing")}
+                    onClick={() => router.push("/pricing" as Route)}
                   >
                     Upgrade to Pro
                   </Button>
@@ -685,7 +684,7 @@ function BillingDashboardContent() {
                   <Button
                     className="w-full"
                     variant="outline"
-                    onClick={() => router.push("/pricing")}
+                    onClick={() => router.push("/pricing" as Route)}
                   >
                     Contact Sales
                   </Button>

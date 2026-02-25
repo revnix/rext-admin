@@ -17,6 +17,7 @@ import { logger } from "@/lib/logger";
 import { useCurrentWorkspace } from "@/stores/workspace";
 import type { SidebarConfig } from "@/types/detail-page";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import type { Route } from "next";
 
 interface TopicDetailClientProps {
   topic: GeneratedTopic;
@@ -74,7 +75,7 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
     // Navigate to content creation with topic prefilled
     if (currentWorkspace?.slug && generatedTopic?.id) {
       router.push(
-        `/w/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}`,
+        `/w/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}` as Route,
       );
     } else {
       detailLogger.error("Cannot navigate: Missing workspace slug or topic ID");
@@ -88,9 +89,9 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
       await deleteMutation.mutateAsync([generatedTopic.id]);
       // Navigate to workspace-scoped topics page
       if (currentWorkspace?.slug) {
-        router.push(`/w/${currentWorkspace.slug}/topics`);
+        router.push(`/w/${currentWorkspace.slug}/topics` as Route);
       } else {
-        router.push("/");
+        router.push("/" as Route);
       }
     } catch (error) {
       detailLogger.error("Failed to delete topic", {
@@ -103,11 +104,6 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
   };
 
   // Build breadcrumbs
-  const breadcrumbs = [
-    { label: "Library", href: "#" },
-    { label: "Topics", href: "/topics" },
-    { label: generatedTopic?.title || "Topic Detail" },
-  ];
 
   // Build header actions for page header using component
   const headerActions = (
@@ -146,7 +142,6 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
   return (
     <DetailPageWrapper
       title={generatedTopic?.title || "Topic Detail"}
-      breadcrumbs={breadcrumbs}
       status={generatedTopic?.approved ? "Approved" : "Pending Approval"}
       statusVariant={generatedTopic?.approved ? "default" : "outline"}
       metadata={[]}

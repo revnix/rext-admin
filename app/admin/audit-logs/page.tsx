@@ -28,14 +28,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 import { buildUrl } from "@/lib/url-utils";
-import { useSession } from "next-auth/react";
+import { authenticatedFetch } from "@/lib/auth-utils";
 
 export default function AuditLogsPage() {
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Audit Logs" },
-  ];
-
   const [page, setPage] = useState(0);
   const [perPage] = useState(50);
   const [search, setSearch] = useState("");
@@ -43,7 +38,6 @@ export default function AuditLogsPage() {
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string | null>(
     null,
   );
-  const { data: session } = useSession();
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch audit logs
@@ -81,11 +75,8 @@ export default function AuditLogsPage() {
         resource_type: resourceTypeFilter || undefined,
       });
 
-      const response = await fetch(endpoint, {
+      const response = await authenticatedFetch(endpoint, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${session?.user?.accessToken}`,
-        },
       });
 
       if (!response.ok) throw new Error("Export failed");
@@ -111,7 +102,6 @@ export default function AuditLogsPage() {
     <PageLayout
       title="Audit Logs"
       description="View and export all admin actions and system events"
-      breadcrumbs={breadcrumbs}
       actions={
         <CanAccess permission={ADMIN_PERMISSIONS.AUDIT_READ}>
           <Button variant="outline" onClick={() => handleExport("csv")}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LemonSqueezyBadge } from "@/components/ui/security-badge";
+import type { Route } from "next";
 
 /**
  * Footer Component with Policy Links
@@ -94,7 +95,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
               <Link
-                href="/help"
+                href={`/help` as Route}
                 className="hover:text-foreground transition-colors"
               >
                 Help Center
@@ -102,7 +103,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
             </li>
             <li>
               <Link
-                href="/contact"
+                href={`/contact` as Route}
                 className="hover:text-foreground transition-colors"
               >
                 Contact Support
@@ -110,7 +111,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
             </li>
             <li>
               <Link
-                href="/settings/subscription"
+                href={`/settings/subscription` as Route}
                 className="hover:text-foreground transition-colors"
               >
                 Manage Subscription
@@ -125,7 +126,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
               <Link
-                href="/docs"
+                href={`/docs` as Route}
                 className="hover:text-foreground transition-colors"
               >
                 Documentation
@@ -133,7 +134,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
             </li>
             <li>
               <Link
-                href="/api"
+                href={`/api` as Route}
                 className="hover:text-foreground transition-colors"
               >
                 API Reference
@@ -141,7 +142,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
             </li>
             <li>
               <Link
-                href="/changelog"
+                href={`/changelog` as Route}
                 className="hover:text-foreground transition-colors"
               >
                 Changelog
@@ -190,20 +191,23 @@ export function SubscriptionAgreement({
     <p className={`text-xs text-muted-foreground text-center ${className}`}>
       By subscribing, you agree to our{" "}
       <Link
-        href="/legal/subscription-terms"
+        href={`/legal/subscription-terms` as Route}
         className="text-primary hover:underline"
       >
         Subscription Terms
       </Link>{" "}
       and{" "}
       <Link
-        href="/legal/refund-policy"
+        href={`/legal/refund-policy` as Route}
         className="text-primary hover:underline"
       >
         Refund Policy
       </Link>
       . See our{" "}
-      <Link href="/legal/privacy" className="text-primary hover:underline">
+      <Link
+        href={`/legal/privacy` as Route}
+        className="text-primary hover:underline"
+      >
         Privacy Policy
       </Link>{" "}
       for how we handle your data.

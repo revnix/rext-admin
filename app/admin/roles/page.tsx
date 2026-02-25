@@ -65,11 +65,6 @@ interface PermissionTableData extends Record<string, unknown> {
 }
 
 export default function AdminRolesPage() {
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Roles & Permissions" },
-  ];
-
   // Dialogs state
   const [createRoleOpen, setCreateRoleOpen] = useState(false);
   const [editRoleOpen, setEditRoleOpen] = useState(false);
@@ -327,7 +322,6 @@ export default function AdminRolesPage() {
     <PageLayout
       title="Roles & Permissions"
       description="Configure system roles and assign permissions"
-      breadcrumbs={breadcrumbs}
     >
       <CanAccess
         anyPermission={[

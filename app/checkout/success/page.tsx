@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
@@ -93,11 +94,11 @@ export default function CheckoutSuccessPage() {
   }, [fetchSubscription]);
 
   const handleGoToDashboard = () => {
-    router.push("/");
+    router.push("/" as Route);
   };
 
   const handleViewBilling = () => {
-    router.push("/settings/subscription");
+    router.push("/settings/subscription" as Route);
   };
 
   return (

@@ -37,6 +37,7 @@ import {
   type SubscriptionPlan,
   SubscriptionStatus,
 } from "@/types/subscription";
+import type { Route } from "next";
 
 /**
  * Subscription Management Dashboard Page
@@ -89,17 +90,11 @@ export default function SubscriptionDashboardPage() {
     loadData();
   }, [fetchSubscription, fetchUsage, loadPlans]);
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Subscription" },
-  ];
-
   if (loading) {
     return (
       <PageLayout
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
-        breadcrumbs={breadcrumbs}
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -116,7 +111,6 @@ export default function SubscriptionDashboardPage() {
       <PageLayout
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
-        breadcrumbs={breadcrumbs}
       >
         <Card>
           <CardHeader>
@@ -129,7 +123,7 @@ export default function SubscriptionDashboardPage() {
             <p className="text-muted-foreground mb-4">
               Choose a plan to get started with all the features of REXT.
             </p>
-            <Button onClick={() => router.push("/pricing")}>
+            <Button onClick={() => router.push("/pricing" as Route)}>
               View Pricing Plans
             </Button>
           </CardContent>
@@ -152,7 +146,6 @@ export default function SubscriptionDashboardPage() {
     <PageLayout
       title="Subscription Management"
       description="Manage your subscription, view usage, and access billing"
-      breadcrumbs={breadcrumbs}
     >
       {/* Trial Banner */}
       {isTrial && <TrialStatusBanner showGlobally={false} />}
@@ -212,7 +205,7 @@ export default function SubscriptionDashboardPage() {
                 </CustomerPortalButton>
 
                 <Button
-                  onClick={() => router.push("/dashboard/billing")}
+                  onClick={() => router.push("/dashboard/billing" as Route)}
                   className="w-full justify-start"
                   variant="outline"
                 >
@@ -276,7 +269,7 @@ export default function SubscriptionDashboardPage() {
                 higher tier for more resources and advanced features.
               </p>
               <div className="flex gap-3">
-                <Button onClick={() => router.push("/pricing")}>
+                <Button onClick={() => router.push("/pricing" as Route)}>
                   View All Plans
                 </Button>
                 {canChangePlan && (
@@ -336,7 +329,9 @@ export default function SubscriptionDashboardPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your invoice history is available in the dedicated billing page.
               </p>
-              <Button onClick={() => router.push("/dashboard/billing")}>
+              <Button
+                onClick={() => router.push("/dashboard/billing" as Route)}
+              >
                 <FileText className="mr-2 h-4 w-4" />
                 View All Invoices
               </Button>

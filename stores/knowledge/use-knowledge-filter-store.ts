@@ -11,7 +11,7 @@ import {
   type KnowledgeFilterState,
   type KnowledgeFilterStore,
 } from "@/types/knowledge";
-import { getStorage } from "@/types/workspace";
+import { getStorage } from "@/lib/storage";
 
 const createDefaultFilterState = (): KnowledgeFilterState => ({
   ...defaultKnowledgeFilterState,

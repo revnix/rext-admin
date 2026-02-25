@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { SubscriptionStatus } from "@/types/subscription";
+import type { Route } from "next";
 
 export interface TrialConversionCTAProps {
   /** Additional CSS classes */
@@ -161,7 +162,7 @@ export function TrialConversionCTA({
           </Button>
           {daysRemaining !== null && daysRemaining > 0 && (
             <Button asChild variant="outline" className="flex-1" size="lg">
-              <Link href="/dashboard/subscription">View Trial Status</Link>
+              <Link href={`/dashboard/subscription` as Route}>View Trial Status</Link>
             </Button>
           )}
         </div>

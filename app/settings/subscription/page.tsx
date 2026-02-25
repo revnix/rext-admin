@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Subscription Settings Page
@@ -96,7 +97,7 @@ export default function SubscriptionSettingsPage() {
           <CardContent className="space-y-3">
             {/* Full Subscription Dashboard */}
             <Button
-              onClick={() => router.push("/dashboard/subscription")}
+              onClick={() => router.push("/dashboard/subscription" as Route)}
               className="w-full justify-start"
               variant="outline"
             >
@@ -126,7 +127,7 @@ export default function SubscriptionSettingsPage() {
 
             {/* Invoices */}
             <Button
-              onClick={() => router.push("/dashboard/billing")}
+              onClick={() => router.push("/dashboard/billing" as Route)}
               className="w-full justify-start"
               variant="outline"
             >
@@ -136,7 +137,7 @@ export default function SubscriptionSettingsPage() {
 
             {/* Pricing */}
             <Button
-              onClick={() => router.push("/pricing")}
+              onClick={() => router.push("/pricing" as Route)}
               className="w-full justify-start"
               variant="outline"
             >

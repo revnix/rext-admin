@@ -15,8 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
-import { WorkspaceBrandVoiceForm } from "@/components/workspace/workspace-brand-voice-form";
-import { WorkspaceProgressTimeline } from "@/components/workspace/workspace-progress-timeline";
+import {
+  WorkspaceBrandVoiceForm,
+  WorkspaceProgressTimeline,
+} from "@/components/workspace";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
@@ -28,6 +30,7 @@ import {
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { BrandVoice, Persona } from "@/types/workspace";
+import type { Route } from "next";
 
 /**
  * Workspace Creation Wizard
@@ -268,7 +271,7 @@ export function WorkspaceCreateWizard() {
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
-        router.push(`/w/${workspaceSlug}/generate_content`);
+        router.push(`/w/${workspaceSlug}/generate_content` as Route);
       }
 
       toast.success("Workspace setup complete!");
@@ -287,7 +290,7 @@ export function WorkspaceCreateWizard() {
 
     // Redirect directly to workspace generate content page
     if (workspaceSlug) {
-      router.push(`/w/${workspaceSlug}/generate_content`);
+      router.push(`/w/${workspaceSlug}/generate_content` as Route);
     }
 
     toast.success("Workspace created!");

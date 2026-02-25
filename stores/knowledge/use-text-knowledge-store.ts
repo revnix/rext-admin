@@ -7,7 +7,7 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { TextKnowledgeState } from "@/types/knowledge";
-import { getStorage } from "@/types/workspace";
+import { getStorage } from "@/lib/storage";
 
 export const useTextKnowledgeStore = create<TextKnowledgeState>()(
   devtools(

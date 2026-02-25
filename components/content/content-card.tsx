@@ -25,6 +25,7 @@ import type {
 import { workspaceRoutes } from "@/lib/routes";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { numberFormat } from "@/lib/formatters/number-formatters";
+import type { Route } from "next";
 
 interface ContentCardProps {
   item: ContentItem;
@@ -92,7 +93,7 @@ export function ContentCard({
   const router = useRouter();
 
   const handleSelect = () => {
-    router.push(workspaceRoutes.contentDetail(workspaceSlug, item.id));
+    router.push(workspaceRoutes.contentDetail(workspaceSlug, item.id) as Route);
   };
 
   const config: KnowledgeCardConfig<ContentItem> = {
@@ -110,7 +111,9 @@ export function ContentCard({
         label: "View",
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          router.push(workspaceRoutes.contentDetail(workspaceSlug, item.id));
+          router.push(
+            workspaceRoutes.contentDetail(workspaceSlug, item.id) as Route,
+          );
         },
       },
       {

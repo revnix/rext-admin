@@ -41,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmailTemplateEditor } from "@/components/workspace/email-template-editor";
+import { EmailTemplateEditor } from "@/components/workspace";
 import { apiClient, type EmailTemplate } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
 
@@ -64,11 +64,6 @@ const templateTypeLabels: Record<string, string> = {
  * Security: Only super admins can access this page.
  */
 export default function AdminEmailTemplatesPage() {
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Email Templates" },
-  ];
-
   const queryClient = useQueryClient();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -172,7 +167,6 @@ export default function AdminEmailTemplatesPage() {
     <PageLayout
       title="System Email Templates"
       description="Manage system-wide email templates used across all workspaces"
-      breadcrumbs={breadcrumbs}
       actions={
         <CanAccess permission={ADMIN_PERMISSIONS.AUDIT_READ}>
           <Button onClick={() => setIsCreateDialogOpen(true)}>

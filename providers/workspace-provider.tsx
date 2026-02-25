@@ -9,12 +9,12 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { ApiError } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 /**
  * Workspace Context Type
@@ -75,24 +75,6 @@ export function WorkspaceProvider({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       workspaceId,
     );
-
-  // Load workspace permissions (Phase 1 integration)
-  // This loads workspace-scoped permissions dynamically for the current workspace
-  const {
-    permissions: _permissions,
-    role: _role,
-    error: permissionsError,
-  } = useWorkspacePermissions(workspaceId);
-
-  // Log permission errors
-  useEffect(() => {
-    if (permissionsError) {
-      log.error("[WorkspaceProvider] Failed to load permissions:", {
-        workspaceId,
-        error: permissionsError,
-      });
-    }
-  }, [permissionsError, workspaceId]);
 
   // Query workspace data using centralized query factory
   const {
@@ -169,7 +151,7 @@ export function WorkspaceProvider({
           "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
           error,
         );
-        router.push("/w");
+        router.push("/w" as Route);
       } else {
         // For other errors (network, temporary issues), just log but don't redirect
         // This prevents unwanted redirects during form interactions
