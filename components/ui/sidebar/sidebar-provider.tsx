@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { log } from "@/lib/logger";
+import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -58,12 +60,15 @@ export function SidebarProvider({
     defaultOpen = true,
     open: openProp,
     onOpenChange: setOpenProp,
+    className,
+    style,
     children,
-}: React.PropsWithChildren<{
+    ...props
+}: React.ComponentProps<"div"> & {
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-}>) {
+}) {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
     const [_open, _setOpen] = React.useState(defaultOpen);
@@ -116,5 +121,26 @@ export function SidebarProvider({
         [state, open, setOpen, openMobile, setOpenMobile, isMobile, toggleSidebar],
     );
 
-    return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;
+    return (
+        <SidebarContext.Provider value={value}>
+            <TooltipProvider delayDuration={0}>
+                <div
+                    style={
+                        {
+                            "--sidebar-width": SIDEBAR_WIDTH,
+                            "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+                            ...style,
+                        } as React.CSSProperties
+                    }
+                    className={cn(
+                        "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+                        className
+                    )}
+                    {...props}
+                >
+                    {children}
+                </div>
+            </TooltipProvider>
+        </SidebarContext.Provider>
+    );
 }
