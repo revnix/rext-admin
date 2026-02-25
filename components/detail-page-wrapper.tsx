@@ -42,6 +42,7 @@ import type {
   StatsCardConfig,
   WideDetailWrapperProps,
 } from "@/types/detail-page";
+import type { Route } from "next";
 
 export function DetailPageWrapper({
   title,
@@ -327,7 +328,7 @@ export function DetailPageWrapper({
               </p>
               {backUrl && (
                 <Button asChild variant="outline">
-                  <Link href={backUrl}>
+                  <Link href={backUrl as Route}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     {backLabel}
                   </Link>
@@ -368,7 +369,7 @@ export function DetailPageWrapper({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button asChild variant="outline" size="sm">
-                    <Link href={prevItem.href}>
+                    <Link href={prevItem.href as Route}>
                       <ChevronLeft className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -381,7 +382,7 @@ export function DetailPageWrapper({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button asChild variant="outline" size="sm">
-                    <Link href={nextItem.href}>
+                    <Link href={nextItem.href as Route}>
                       <ChevronRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -398,7 +399,7 @@ export function DetailPageWrapper({
       {/* Back button */}
       {backUrl && (
         <Button asChild variant="outline" size="sm">
-          <Link href={backUrl}>
+          <Link href={backUrl as Route}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {backLabel}
           </Link>

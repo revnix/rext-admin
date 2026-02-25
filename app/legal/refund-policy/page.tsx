@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -227,7 +227,7 @@ export default function RefundPolicyPage() {
             </li>
             <li>
               Support Portal:{" "}
-              <Link href="/help" className="text-primary underline">
+              <Link href={`/help` as Route} className="text-primary underline">
                 wrext.com/help
               </Link>
             </li>
@@ -249,7 +249,10 @@ export default function RefundPolicyPage() {
               >
                 Subscription Terms
               </Link>
-              <Link href="/contact" className="text-primary hover:underline">
+              <Link
+                href={`/contact` as Route}
+                className="text-primary hover:underline"
+              >
                 Contact Support
               </Link>
             </div>

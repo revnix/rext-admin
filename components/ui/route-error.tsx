@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { log } from "@/lib/logger";
+import type { Route } from "next";
 
 /**
  * Reusable Route Error Boundary Component
@@ -117,7 +118,7 @@ export function RouteError({
 
     return (
       <Button asChild variant="outline" className="flex-1">
-        <Link href={navigationLink}>
+        <Link href={navigationLink as Route}>
           <Home className="h-4 w-4 mr-2" />
           {navigationLabel}
         </Link>

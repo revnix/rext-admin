@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { Route } from "next";
 
 interface FirstTask {
   icon: React.ReactNode;
@@ -68,7 +69,7 @@ export function InvitedUserFirstTasks({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
-            <Link href={task.href}>
+            <Link href={task.href as Route}>
               <Card
                 className={`group hover:shadow-lg transition-all cursor-pointer ${
                   task.priority === "high"

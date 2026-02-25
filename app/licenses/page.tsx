@@ -31,6 +31,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import type { License, LicenseActivation } from "@/types/license";
 import { LicenseStatus } from "@/types/license";
+import type { Route } from "next";
 
 const LICENSE_VIEW = "license.read";
 
@@ -173,7 +174,7 @@ export default function LicensesPage() {
               <span className="font-semibold">license.read</span>
             </p>
           </div>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => router.push("/" as Route)} variant="outline">
             Return to Dashboard
           </Button>
         </CardContent>

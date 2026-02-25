@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import type { Route } from "next";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ export function AuthGuard({
 
       // If auth is required but user is not authenticated, redirect
       if (requireAuth && !isAuthenticated) {
-        router.push(redirectTo);
+        router.push(redirectTo as Route);
       }
     }
   }, [isLoading, isAuthenticated, requireAuth, redirectTo, router]);
@@ -109,7 +110,7 @@ export function GuestGuard({
       }
 
       if (isAuthenticated) {
-        router.push(redirectTo);
+        router.push(redirectTo as Route);
       }
     }
   }, [isLoading, isAuthenticated, redirectTo, router, searchParams]);

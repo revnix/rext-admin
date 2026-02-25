@@ -25,6 +25,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 /**
  * Knowledge Base Detail Page
@@ -127,7 +128,7 @@ export default function KnowledgeBaseDetailPage() {
   };
 
   const handleBack = () => {
-    router.push(`/w/${workspace?.slug}/knowledge`);
+    router.push(`/w/${workspace?.slug}/knowledge` as Route);
   };
 
   const handleAdded = () => {

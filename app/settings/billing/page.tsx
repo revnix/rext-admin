@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import type { Route } from "next";
 
 interface UsageMetric {
   used: number;
@@ -362,7 +363,7 @@ function BillingDashboardContent() {
                 <Button
                   variant="link"
                   className="px-1"
-                  onClick={() => router.push("/pricing")}
+                  onClick={() => router.push("/pricing" as Route)}
                 >
                   Upgrade to unlock more
                 </Button>
@@ -399,7 +400,7 @@ function BillingDashboardContent() {
             </>
           ) : (
             <>
-              <Button onClick={() => router.push("/pricing")}>
+              <Button onClick={() => router.push("/pricing" as Route)}>
                 View Plans
               </Button>
               <Button
@@ -534,7 +535,7 @@ function BillingDashboardContent() {
                     <Button
                       variant="link"
                       className="px-1"
-                      onClick={() => router.push("/pricing")}
+                      onClick={() => router.push("/pricing" as Route)}
                     >
                       View plans
                     </Button>
@@ -638,7 +639,7 @@ function BillingDashboardContent() {
                 <CardFooter>
                   <Button
                     className="w-full"
-                    onClick={() => router.push("/pricing")}
+                    onClick={() => router.push("/pricing" as Route)}
                   >
                     Upgrade to Pro
                   </Button>
@@ -683,7 +684,7 @@ function BillingDashboardContent() {
                   <Button
                     className="w-full"
                     variant="outline"
-                    onClick={() => router.push("/pricing")}
+                    onClick={() => router.push("/pricing" as Route)}
                   >
                     Contact Sales
                   </Button>

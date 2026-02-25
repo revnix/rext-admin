@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -218,7 +218,7 @@ export default function SubscriptionTermsPage() {
             </li>
             <li>
               Support Portal:{" "}
-              <Link href="/help" className="text-primary underline">
+              <Link href={`/help` as Route} className="text-primary underline">
                 wrext.com/help
               </Link>
             </li>

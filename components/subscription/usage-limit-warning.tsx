@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Usage Limit Warning Component
@@ -133,7 +134,7 @@ export function UsageLimitWarning({
   }, [usage, subscription, resource]);
 
   const handleUpgrade = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   const handleDismiss = () => {
@@ -284,7 +285,9 @@ export function UsageLimitWarning({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => router.push("/dashboard/subscription")}
+                  onClick={() =>
+                    router.push("/dashboard/subscription" as Route)
+                  }
                 >
                   View Usage
                 </Button>

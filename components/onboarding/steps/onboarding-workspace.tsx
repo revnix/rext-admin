@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
+import type { Route } from "next";
 
 interface OnboardingWorkspaceProps {
   onNext: () => void;
@@ -76,7 +77,7 @@ export function OnboardingWorkspace({
       toast.success("Workspace created successfully!");
 
       // Navigate to the new workspace
-      router.push(`/w/${response.workspace.slug}/overview`);
+      router.push(`/w/${response.workspace.slug}/overview` as Route);
 
       // Complete this step
       await onNext();

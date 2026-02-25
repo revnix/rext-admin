@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 interface QuickActionsCardProps {
   workspace: Workspace | null;
@@ -79,7 +80,7 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
               className="w-full justify-start"
               disabled={!action.enabled}
             >
-              <Link href={action.href}>
+              <Link href={action.href as Route}>
                 <action.icon className={`h-4 w-4 mr-2 ${action.color}`} />
                 {action.label}
               </Link>
@@ -96,7 +97,9 @@ export function QuickActionsCard({ workspace }: QuickActionsCardProps) {
             >
               <Link
                 href={
-                  workspaceSlug ? `/w/${workspaceSlug}/settings` : "/w/create"
+                  workspaceSlug
+                    ? `/w/${workspaceSlug}/settings`
+                    : ("/w/create" as Route)
                 }
               >
                 <Settings className="h-4 w-4 mr-2 text-gray-600" />

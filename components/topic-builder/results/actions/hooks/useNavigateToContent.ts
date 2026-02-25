@@ -9,6 +9,7 @@ import { log } from "@/lib/logger";
 import { workspaceRoutes } from "@/lib/routes";
 import { useCurrentWorkspace } from "@/stores/workspace";
 import type { ActionResult } from "../types";
+import type { Route } from "next";
 
 export function useNavigateToContent() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export function useNavigateToContent() {
       }
 
       router.push(
-        `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topicId}`,
+        `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topicId}` as Route,
       );
 
       return {

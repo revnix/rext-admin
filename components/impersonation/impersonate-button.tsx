@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
+import type { Route } from "next";
 
 interface ImpersonateButtonProps {
   userId: string;
@@ -55,7 +56,7 @@ export function ImpersonateButton({
 
       // Redirect to main dashboard
       startTransition(() => {
-        router.push("/");
+        router.push("/" as Route);
         // Refresh page to update UI with new user context
         router.refresh();
       });

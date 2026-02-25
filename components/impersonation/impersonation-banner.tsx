@@ -12,6 +12,7 @@ import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { Route } from "next";
 
 /**
  * Impersonation Banner Component
@@ -79,7 +80,7 @@ export function ImpersonationBanner() {
       queryClient.invalidateQueries();
 
       startTransition(() => {
-        router.push("/admin/customers");
+        router.push("/admin/customers" as Route);
         // Refresh the page to update UI
         router.refresh();
       });

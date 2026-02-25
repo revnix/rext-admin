@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
 import type { MediaUploadParams } from "@/lib/api-client/media";
+import { formatFileSize } from "@/lib/formatters/number-formatters";
 
 interface MediaUploadDialogProps {
   workspaceId: string;
@@ -124,15 +125,7 @@ export function MediaUploadDialog({
     setTags("");
     onOpenChange(false);
   };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
-  };
-
+  // local `formatFileSize` declaration is removed.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">

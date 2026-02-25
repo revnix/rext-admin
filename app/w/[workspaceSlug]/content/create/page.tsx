@@ -19,6 +19,7 @@ import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentCreationFormData } from "@/types/content-creation";
+import type { Route } from "next";
 
 export default function WorkspaceContentCreatePage({
   params,
@@ -116,7 +117,9 @@ export default function WorkspaceContentCreatePage({
       );
 
       // Navigate to content detail page to watch progress
-      router.push(workspaceRoutes.contentDetail(workspaceSlug, contentId));
+      router.push(
+        workspaceRoutes.contentDetail(workspaceSlug, contentId) as Route,
+      );
     } catch (error) {
       log.error("Failed to submit content creation", error);
       toast.error("Failed to start content generation. Please try again.");
@@ -125,7 +128,7 @@ export default function WorkspaceContentCreatePage({
   };
 
   const handleCancel = () => {
-    router.push(workspaceRoutes.content(workspaceSlug));
+    router.push(workspaceRoutes.content(workspaceSlug) as Route);
   };
 
   return (

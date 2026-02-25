@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/security-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Billing History Page
@@ -183,7 +184,7 @@ export default function BillingHistoryPage() {
                     </p>
                     <Button
                       variant="outline"
-                      onClick={() => router.push("/pricing")}
+                      onClick={() => router.push("/pricing" as Route)}
                     >
                       View Pricing Plans
                     </Button>

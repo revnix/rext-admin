@@ -21,6 +21,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import type { NavGroup } from "@/types/navigation";
+import type { Route } from "next";
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
@@ -125,7 +126,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                             if (el) itemRefs.current[currentItemIndex] = el;
                           }}
                         >
-                          <Link href={item.url} tabIndex={0}>
+                          <Link href={item.url as Route} tabIndex={0}>
                             {item.icon && (
                               <item.icon
                                 aria-hidden="true"
@@ -173,7 +174,10 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                                     if (el) itemRefs.current[subItemIndex] = el;
                                   }}
                                 >
-                                  <Link href={subItem.url} tabIndex={0}>
+                                  <Link
+                                    href={subItem.url as Route}
+                                    tabIndex={0}
+                                  >
                                     <span>{subItem.title}</span>
                                   </Link>
                                 </SidebarMenuSubButton>
@@ -198,7 +202,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                         if (el) itemRefs.current[currentItemIndex] = el;
                       }}
                     >
-                      <Link href={item.url} tabIndex={0}>
+                      <Link href={item.url as Route} tabIndex={0}>
                         {item.icon && <item.icon aria-hidden="true" />}
                         <span>{item.title}</span>
                       </Link>

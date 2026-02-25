@@ -12,6 +12,7 @@ import {
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export function QuickAddDropdown() {
   const workspaceContext = useWorkspaceOptional();
@@ -37,7 +38,7 @@ export function QuickAddDropdown() {
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
           <Link
-            href={topicCreateHref}
+            href={topicCreateHref as Route}
             className="flex items-center gap-2 cursor-pointer"
           >
             <Lightbulb className="h-4 w-4" />

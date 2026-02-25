@@ -26,6 +26,7 @@ import {
   getScoreColorClass,
 } from "@/lib/topic-display-utils";
 import type { TopicData } from "@/types/data-table";
+import type { Route } from "next";
 
 /**
  * Status Badge Cell Formatter
@@ -299,7 +300,7 @@ export function TitleDisplay({
     if (href) {
       return (
         <Link
-          href={href}
+          href={href as Route}
           className="font-medium text-foreground leading-tight hover:text-primary transition-colors"
         >
           {children}

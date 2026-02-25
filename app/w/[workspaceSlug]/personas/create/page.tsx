@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCreatePersona } from "@/hooks/use-personas";
+import type { Route } from "next";
 
 export default function CreatePersonaPage() {
   const { workspace, workspaceSlug } = useWorkspace();
@@ -64,7 +65,7 @@ export default function CreatePersonaPage() {
       });
 
       // Success toast is handled by the hook
-      router.push(workspaceRoutes.personas(workspaceSlug));
+      router.push(workspaceRoutes.personas(workspaceSlug) as Route);
     } catch {
       // Error toast is handled by the hook
     } finally {

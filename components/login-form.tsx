@@ -17,6 +17,7 @@ import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
+import type { Route } from "next";
 
 export function LoginForm({
   className,
@@ -106,7 +107,7 @@ export function LoginForm({
       resetAuthRedirectState();
 
       if (hasValidInvitation && invitationToken) {
-        router.push(`/accept-invitation?token=${invitationToken}`);
+        router.push(`/accept-invitation?token=${invitationToken}` as Route);
       } else {
         await getAuthHeaders(true);
 
@@ -115,15 +116,15 @@ export function LoginForm({
           const workspaces = response.workspaces || [];
 
           if (workspaces.length === 0) {
-            router.push("/w/create");
+            router.push("/w/create" as Route);
           } else {
             const firstWorkspace = workspaces[0];
-            router.push(`/w/${firstWorkspace.slug}/generate_content`);
+            router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
           }
         } catch (error) {
           log.error("[Auth] Failed to fetch workspaces:", error);
           const redirect = searchParams.get("redirect") || "/";
-          router.push(redirect);
+          router.push(redirect as Route);
         }
       }
     } catch (error) {
@@ -257,7 +258,7 @@ export function LoginForm({
                 href={
                   invitationToken
                     ? `/signup?token=${invitationToken}`
-                    : "/signup"
+                    : ("/signup" as Route)
                 }
                 className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
               >

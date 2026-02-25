@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Clock, LogIn, Mail, Shield } from "lucide-react";
+import { Clock, LogIn, Mail, Shield, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
@@ -50,6 +50,28 @@ export function SecuritySettings() {
         ? "Your email address has been verified"
         : "Please verify your email address",
       status: profile.email_verified ? "success" : "warning",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Two-Factor Authentication",
+      value:
+        profile.two_factor_enabled === true
+          ? "Enabled"
+          : profile.two_factor_enabled === false
+            ? "Not enabled"
+            : "Unavailable",
+      description:
+        profile.two_factor_enabled === true
+          ? "Your account requires an additional verification step"
+          : profile.two_factor_enabled === false
+            ? "Enable 2FA to improve account security"
+            : "2FA status is not available from the current profile API",
+      status:
+        profile.two_factor_enabled === true
+          ? "success"
+          : profile.two_factor_enabled === false
+            ? "warning"
+            : "info",
     },
     {
       icon: Clock,

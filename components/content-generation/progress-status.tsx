@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ContentGenerationProgress } from "@/types/content-generation-progress";
+import type { Route } from "next";
 
 interface ProgressStatusProps {
   progress: ContentGenerationProgress;
@@ -212,7 +213,9 @@ export function ProgressStatus({
 
           {progress.status === "completed" && (
             <Button asChild size="sm">
-              <a href={`/content/${progress.id}`}>View Generated Content</a>
+              <a href={`/content/${progress.id}` as Route}>
+                View Generated Content
+              </a>
             </Button>
           )}
         </div>

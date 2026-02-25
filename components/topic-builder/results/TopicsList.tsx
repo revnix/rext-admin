@@ -19,6 +19,7 @@ import type { GeneratedTopic } from "@/types/topic-builder";
 import { EmptyStates } from "./EmptyStates";
 import { TopicsHeader } from "./TopicsHeader";
 import { TopicsTable } from "./TopicsTable";
+import type { Route } from "next";
 
 // Lazy load TopicDetailDrawer for better performance
 const TopicDetailDrawer = lazy(() =>
@@ -143,7 +144,7 @@ export const TopicsList = memo(function TopicsList({
           throw new Error("No workspace selected");
         }
         router.push(
-          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topicId}`,
+          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topicId}` as Route,
         );
         toast.success("Navigating to content creation...");
       } catch (error) {

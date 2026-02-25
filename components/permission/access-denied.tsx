@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { Route } from "next";
 
 interface AccessDeniedProps {
   /**
@@ -202,7 +203,7 @@ export function AccessDenied({
             Go Back
           </Button>
           <Button asChild className="flex-1">
-            <Link href={backUrl}>Go to Dashboard</Link>
+            <Link href={backUrl as Route}>Go to Dashboard</Link>
           </Button>
         </div>
 

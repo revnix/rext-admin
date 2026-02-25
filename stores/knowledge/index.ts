@@ -1,8 +1,7 @@
 /**
  * Knowledge Stores - Unified Export
  *
- * Exports all knowledge stores and their utilities from both
- * the factory pattern implementation and individual store files.
+ * Exports all knowledge stores and their utilities.
  */
 
 // ============================================================================
@@ -16,43 +15,10 @@ export type {
   TextKnowledge,
   WebKnowledge,
 } from "@/types/workspace";
-// Factory pattern types
-export type {
-  BaseActions,
-  BaseKnowledge,
-  BaseState,
-  KnowledgeStore,
-  StoreConfig,
-} from "./create-knowledge-store";
-// ============================================================================
-// FACTORY PATTERN STORES (Original)
-// ============================================================================
-export { createKnowledgeStore } from "./create-knowledge-store";
-// Original factory-based stores
-export {
-  useFileKnowledgeItems as useFileKnowledgeItemsFactory,
-  useFileKnowledgeSelected as useFileKnowledgeSelectedFactory,
-  useFileKnowledgeStore as useFileKnowledgeStoreFactory,
-  useFileKnowledgeUploading as useFileKnowledgeUploadingFactory,
-  useFileUploadProgress as useFileUploadProgressFactory,
-} from "./file-knowledge-store";
-export {
-  useTextKnowledgeEditing as useTextKnowledgeEditingFactory,
-  useTextKnowledgeItems as useTextKnowledgeItemsFactory,
-  useTextKnowledgeSelected as useTextKnowledgeSelectedFactory,
-  useTextKnowledgeStore as useTextKnowledgeStoreFactory,
-} from "./text-knowledge-store";
-
-export {
-  useWebKnowledgeAdding as useWebKnowledgeAddingFactory,
-  useWebKnowledgeItems as useWebKnowledgeItemsFactory,
-  useWebKnowledgeLoading as useWebKnowledgeLoadingFactory,
-  useWebKnowledgeSelected as useWebKnowledgeSelectedFactory,
-  useWebKnowledgeStore as useWebKnowledgeStoreFactory,
-} from "./web-knowledge-store";
+export { getStorage } from "@/lib/storage";
 
 // ============================================================================
-// INDIVIDUAL STORES (Refactored - Recommended)
+// STORES
 // ============================================================================
 
 // File Knowledge Store

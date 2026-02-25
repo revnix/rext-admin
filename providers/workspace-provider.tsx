@@ -14,6 +14,7 @@ import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 /**
  * Workspace Context Type
@@ -150,7 +151,7 @@ export function WorkspaceProvider({
           "[WorkspaceProvider] Failed to load workspace (auth/not found error), redirecting:",
           error,
         );
-        router.push("/w");
+        router.push("/w" as Route);
       } else {
         // For other errors (network, temporary issues), just log but don't redirect
         // This prevents unwanted redirects during form interactions

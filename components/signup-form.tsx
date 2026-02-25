@@ -28,6 +28,7 @@ import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
 import { checkPasswordBreach } from "@/lib/password-utils";
+import type { Route } from "next";
 
 export function SignupForm({
   className,
@@ -126,11 +127,11 @@ export function SignupForm({
 
           if (workspaces.length === 0) {
             // No workspace exists, redirect to create workspace
-            router.push("/w/create");
+            router.push("/w/create" as Route);
           } else {
             // Workspace exists, redirect to generate content page
             const firstWorkspace = workspaces[0];
-            router.push(`/w/${firstWorkspace.slug}/generate_content`);
+            router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
           }
         } catch (fetchError) {
           log.error(
@@ -138,12 +139,12 @@ export function SignupForm({
             fetchError,
           );
           // Fallback to dashboard on error
-          router.push("/");
+          router.push("/" as Route);
         }
       } else {
         // If auto-login fails, redirect to login page
         setTimeout(() => {
-          router.push("/login");
+          router.push("/login" as Route);
         }, 2000);
       }
     } catch (err) {

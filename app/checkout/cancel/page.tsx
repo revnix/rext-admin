@@ -21,12 +21,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { Route } from "next";
 
 export default function CheckoutCancelPage() {
   const router = useRouter();
 
   const handleTryAgain = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   const handleGoBack = () => {

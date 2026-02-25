@@ -29,6 +29,7 @@ import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
 import { useState } from "react";
+import type { Route } from "next";
 
 interface TopicsClientWrapperProps {
   data: TopicData[];
@@ -110,7 +111,7 @@ export function TopicsClientWrapper({
           href={
             workspaceSlug
               ? `/w/${workspaceSlug}/topics/${row.id}`
-              : `/topics/${row.id}`
+              : (`/topics/${row.id}` as Route)
           }
         />
       ),
@@ -207,7 +208,9 @@ export function TopicsClientWrapper({
 
         // Navigate to content creation with topic prefilled
         if (workspaceSlug && row.id) {
-          router.push(`/w/${workspaceSlug}/content/create?topicId=${row.id}`);
+          router.push(
+            `/w/${workspaceSlug}/content/create?topicId=${row.id}` as Route,
+          );
         } else {
           topicsLogger.error(
             "Cannot navigate: Missing workspace slug or topic ID",

@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_ROLES } from "@/types/admin-invitation";
+import type { Route } from "next";
 
 export default function AcceptAdminInvitationPage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function AcceptAdminInvitationPage() {
       );
       // Redirect to admin dashboard after 2 seconds
       setTimeout(() => {
-        router.push("/admin");
+        router.push("/admin" as Route);
       }, 2000);
     },
     onError: (error: Error) => {
@@ -77,7 +78,7 @@ export default function AcceptAdminInvitationPage() {
     if (!session) {
       // Redirect to login with return URL
       router.push(
-        `/login?callbackUrl=${encodeURIComponent(window.location.href)}`,
+        `/login?callbackUrl=${encodeURIComponent(window.location.href as Route)}`,
       );
       return;
     }
@@ -93,7 +94,7 @@ export default function AcceptAdminInvitationPage() {
   const handleDecline = () => {
     // TODO: Implement decline functionality
     toast.info("You have declined this admin invitation.");
-    router.push("/");
+    router.push("/" as Route);
   };
 
   // Loading state
@@ -132,7 +133,7 @@ export default function AcceptAdminInvitationPage() {
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex justify-center">
-            <Button variant="outline" onClick={() => router.push("/")}>
+            <Button variant="outline" onClick={() => router.push("/" as Route)}>
               Return Home
             </Button>
           </CardFooter>

@@ -31,6 +31,7 @@ import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspaceStore } from "@/stores/workspace";
 import * as React from "react";
+import type { Route } from "next";
 
 const generalInfoSchema = z.object({
   name: z.string().min(1, "Workspace name is required").max(100),
@@ -119,7 +120,7 @@ export function GeneralInfoSection() {
 
       // If slug changed, redirect to new URL (note: backend doesn't allow slug changes yet)
       if (data.slug !== workspaceSlug) {
-        router.push(workspaceRoutes.settings.root(data.slug));
+        router.push(workspaceRoutes.settings.root(data.slug) as Route);
       } else {
         // Hard reload to ensure all components update
         // window.location.reload();

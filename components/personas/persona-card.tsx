@@ -12,6 +12,7 @@ import type { Persona } from "@/types/workspace";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 interface PersonaCardProps {
   persona: Persona & { id: string };
@@ -42,7 +43,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
 
   return (
     <Link
-      href={`/w/${workspaceSlug}/personas/${persona.id}`}
+      href={`/w/${workspaceSlug}/personas/${persona.id}` as Route}
       className="block h-full"
     >
       <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border bg-card flex flex-col">
