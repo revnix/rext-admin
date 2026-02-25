@@ -243,12 +243,12 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 export interface ToasterProps {
   theme?: "light" | "dark" | "system";
   position?:
-    | "top-left"
-    | "top-center"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-center"
-    | "bottom-right";
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
   hotkey?: string[];
   richColors?: boolean;
   expand?: boolean;
@@ -311,27 +311,7 @@ export interface TextAreaInputProps {
   className?: string;
 }
 
-export interface ChipInputProps {
-  value: string[];
-  onChange: (value: string[]) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  maxItems?: number;
-  allowDuplicates?: boolean;
-  className?: string;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  suggestions?: string[];
-  createChipOnBlur?: boolean;
-  validateChip?: (value: string) => boolean;
-  formatChip?: (value: string) => string;
-}
-
-export interface ControlledChipInputProps
-  extends Omit<ChipInputProps, "value" | "onChange"> {
-  name: string;
-  control: unknown;
-  rules?: unknown;
-}
+export type { ChipInputProps, ControlledChipInputProps } from "@/components/ui/typeform/chip-input";
 
 export interface MultiSelectCardProps {
   options: Array<{

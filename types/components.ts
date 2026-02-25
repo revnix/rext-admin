@@ -302,10 +302,10 @@ export interface TopicSortProps {
     label: string;
     value: string;
     field:
-      | keyof GeneratedTopic
-      | "scores.relevance"
-      | "scores.trend_level"
-      | "scores.uniqueness";
+    | keyof GeneratedTopic
+    | "scores.relevance"
+    | "scores.trend_level"
+    | "scores.uniqueness";
     direction?: "asc" | "desc";
   }>;
   /** Current sort configuration */
@@ -375,12 +375,12 @@ export interface ButtonProps
   size?: "default" | "sm" | "lg" | "icon";
   /** Button visual variant */
   variant?:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
+  | "default"
+  | "destructive"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "link";
 }
 
 /**
@@ -472,53 +472,7 @@ export interface MultiSelectProps<T = string>
 /**
  * Enhanced props for chip input components with dual enter behavior and accessibility
  */
-export interface ChipInputProps {
-  /** Current value array */
-  value: string[];
-  /** Change handler */
-  onChange: (values: string[]) => void;
-  /** Placeholder text */
-  placeholder?: string;
-  /** Whether input is disabled */
-  disabled?: boolean;
-  /** Error message */
-  error?: string;
-  /** Maximum number of chips */
-  maxItems?: number;
-  /** Icon to display */
-  icon?: React.ReactNode;
-  /** Auto focus */
-  autoFocus?: boolean;
-  /** Custom class name */
-  className?: string;
-  /** Callback for wizard step advancement (dual enter behavior) */
-  onStepAdvance?: () => void;
-  /** Whether to enable dual enter behavior (default: false) */
-  enableDualEnter?: boolean;
-  /** Accessibility label for the input */
-  ariaLabel?: string;
-  /** Accessibility description for the input */
-  ariaDescription?: string;
-  /** Whether to enable fallback to plain text input */
-  enableFallback?: boolean;
-  /** Callback when fallback is triggered */
-  onFallbackTriggered?: (error: Error) => void;
-}
-
-/**
- * Props for Controller-compatible chip input wrapper
- */
-export interface ControlledChipInputProps
-  extends Omit<ChipInputProps, "value" | "onChange"> {
-  /** React Hook Form field props */
-  field: {
-    value: string[];
-    onChange: (values: string[]) => void;
-    onBlur: () => void;
-    name: string;
-    ref: React.Ref<HTMLInputElement>;
-  };
-}
+export type { ChipInputProps, ControlledChipInputProps } from "@/components/ui/typeform/chip-input";
 
 /**
  * Props for components that support step advancement (wizard navigation)
