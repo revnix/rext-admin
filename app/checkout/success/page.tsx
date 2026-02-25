@@ -30,7 +30,36 @@ export default function CheckoutSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRefreshing, setIsRefreshing] = useState(true);
+  const [syncTimedOut, setSyncTimedOut] = useState(false);
   const { subscription, fetchSubscription } = useSubscriptionStore();
+
+  // Polling configuration
+  const POLL_INTERVAL_MS = 1500;
+  const POLL_TIMEOUT_MS = 20_000;
+  const READY_STATUSES = new Set(["active", "trial", "cancelled"]);
+
+  const waitForSubscriptionSync = async (
+    signal: AbortSignal,
+  ): Promise<boolean> => {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+      if (signal.aborted) return false;
+
+      await fetchSubscription();
+      const latest = useSubscriptionStore.getState().subscription;
+
+      if (latest && READY_STATUSES.has(latest.status)) {
+        return true;
+      }
+
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, POLL_INTERVAL_MS),
+      );
+    }
+
+    return false;
+  };
 
   // Get query parameters from LemonSqueezy redirect
   const checkoutId = searchParams.get("checkout_id");
@@ -76,21 +105,29 @@ export default function CheckoutSuccessPage() {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Fetch updated subscription after checkout
+  // Fetch updated subscription after checkout using bounded polling
   useEffect(() => {
+    const controller = new AbortController();
+
     const refreshSubscription = async () => {
       try {
         setIsRefreshing(true);
-        // Wait a bit for webhook to process
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        await fetchSubscription();
-      } catch (_error) {
+        setSyncTimedOut(false);
+        const synced = await waitForSubscriptionSync(controller.signal);
+        if (!synced && !controller.signal.aborted) {
+          setSyncTimedOut(true);
+        }
+      } catch {
+        // Keep page usable even if polling fails
       } finally {
-        setIsRefreshing(false);
+        if (!controller.signal.aborted) {
+          setIsRefreshing(false);
+        }
       }
     };
 
     refreshSubscription();
+    return () => controller.abort();
   }, [fetchSubscription]);
 
   const handleGoToDashboard = () => {
@@ -102,7 +139,7 @@ export default function CheckoutSuccessPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 via-background to-blue-50 dark:from-green-950/20 dark:via-background dark:to-blue-950/20">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-green-50 via-background to-blue-50 dark:from-green-950/20 dark:via-background dark:to-blue-950/20">
       <Card className="max-w-2xl w-full">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-4 relative">
@@ -176,9 +213,17 @@ export default function CheckoutSuccessPage() {
           ) : (
             <div className="text-center py-4 text-muted-foreground">
               <p>Your subscription is being activated...</p>
-              <p className="text-sm mt-2">
-                This may take a few moments. Please check your billing settings.
-              </p>
+              {syncTimedOut ? (
+                <p className="text-sm mt-2">
+                  Activation is taking longer than expected. You can continue
+                  and check your billing page in a moment.
+                </p>
+              ) : (
+                <p className="text-sm mt-2">
+                  This may take a few moments. Please check your billing
+                  settings.
+                </p>
+              )}
             </div>
           )}
 
