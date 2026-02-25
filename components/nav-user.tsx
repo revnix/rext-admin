@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { UserProfile } from "@/types/profile";
+import { settingsRoutes } from "@/lib/routes";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -280,7 +281,7 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/subscription" as Route)}
+                onClick={() => router.push(settingsRoutes.subscription)}
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -290,20 +291,18 @@ export function NavUser() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => router.push("/settings" as Route)}
-              >
+              <DropdownMenuItem onClick={() => router.push(settingsRoutes.root)}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/billing" as Route)}
+                onClick={() => router.push(settingsRoutes.billing)}
               >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/security" as Route)}
+                onClick={() => router.push(settingsRoutes.security)}
               >
                 <Bell />
                 Security
