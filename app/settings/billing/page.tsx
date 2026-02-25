@@ -346,8 +346,8 @@ function BillingDashboardContent() {
                     Your subscription will end on{" "}
                     {subscription.current_period_end
                       ? new Date(
-                          subscription.current_period_end,
-                        ).toLocaleDateString()
+                        subscription.current_period_end,
+                      ).toLocaleDateString()
                       : "N/A"}
                     . You can reactivate it anytime before this date.
                   </AlertDescription>
@@ -435,14 +435,14 @@ function BillingDashboardContent() {
                   <span className="font-medium">Workspaces</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {usage.workspaces.used} /{" "}
+                  {usage.workspaces?.used ?? 0} /{" "}
                   {formatLimit(
-                    usage.workspaces.limit,
-                    usage.workspaces.unlimited,
+                    usage.workspaces?.limit,
+                    usage.workspaces?.unlimited ?? false,
                   )}
                 </span>
               </div>
-              <Progress value={usage.workspaces.percentage} />
+              <Progress value={usage.workspaces?.percentage ?? 0} />
             </div>
 
             {/* Members */}
@@ -453,11 +453,11 @@ function BillingDashboardContent() {
                   <span className="font-medium">Team Members</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {usage.members.used} /{" "}
-                  {formatLimit(usage.members.limit, usage.members.unlimited)}
+                  {usage.members?.used ?? 0} /{" "}
+                  {formatLimit(usage.members?.limit, usage.members?.unlimited ?? false)}
                 </span>
               </div>
-              <Progress value={usage.members.percentage} />
+              <Progress value={usage.members?.percentage ?? 0} />
             </div>
 
             {/* Topics */}
@@ -468,11 +468,11 @@ function BillingDashboardContent() {
                   <span className="font-medium">Topics</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {usage.topics.used} /{" "}
-                  {formatLimit(usage.topics.limit, usage.topics.unlimited)}
+                  {usage.topics?.used ?? 0} /{" "}
+                  {formatLimit(usage.topics?.limit, usage.topics?.unlimited ?? false)}
                 </span>
               </div>
-              <Progress value={usage.topics.percentage} />
+              <Progress value={usage.topics?.percentage ?? 0} />
             </div>
 
             {/* Knowledge Items */}
@@ -483,14 +483,14 @@ function BillingDashboardContent() {
                   <span className="font-medium">Knowledge Items</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {usage.knowledge_items.used} /{" "}
+                  {usage.knowledge_items?.used ?? 0} /{" "}
                   {formatLimit(
-                    usage.knowledge_items.limit,
-                    usage.knowledge_items.unlimited,
+                    usage.knowledge_items?.limit,
+                    usage.knowledge_items?.unlimited ?? false,
                   )}
                 </span>
               </div>
-              <Progress value={usage.knowledge_items.percentage} />
+              <Progress value={usage.knowledge_items?.percentage ?? 0} />
             </div>
 
             {/* API Calls */}
@@ -502,13 +502,13 @@ function BillingDashboardContent() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">
-                    {usage.api_calls.used} /{" "}
+                    {usage.api_calls?.used ?? 0} /{" "}
                     {formatLimit(
-                      usage.api_calls.limit,
-                      usage.api_calls.unlimited,
+                      usage.api_calls?.limit,
+                      usage.api_calls?.unlimited ?? false,
                     )}
                   </p>
-                  {usage.api_calls.reset_date && (
+                  {usage.api_calls?.reset_date && (
                     <p className="text-xs text-muted-foreground">
                       Resets{" "}
                       {new Date(
@@ -518,13 +518,13 @@ function BillingDashboardContent() {
                   )}
                 </div>
               </div>
-              <Progress value={usage.api_calls.percentage} />
+              <Progress value={usage.api_calls?.percentage ?? 0} />
             </div>
 
             {/* Upgrade Prompt */}
-            {(usage.workspaces.percentage > 80 ||
-              usage.api_calls.percentage > 80 ||
-              usage.members.percentage > 80) &&
+            {((usage.workspaces?.percentage ?? 0) > 80 ||
+              (usage.api_calls?.percentage ?? 0) > 80 ||
+              (usage.members?.percentage ?? 0) > 80) &&
               !subscription && (
                 <Alert>
                   <TrendingUp className="h-4 w-4" />
