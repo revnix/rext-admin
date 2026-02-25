@@ -18,7 +18,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WorkspaceChangeRoleDialog, WorkspaceInviteMembersDialog, WorkspaceRemoveMemberDialog } from "@/components/workspace";
+import {
+  WorkspaceChangeRoleDialog,
+  WorkspaceInviteMembersDialog,
+  WorkspaceRemoveMemberDialog,
+} from "@/components/workspace";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";

@@ -47,7 +47,6 @@ import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
@@ -57,7 +56,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * Features upload, browse, search, filter, and organize media.
  */
 export default function WorkspaceMediaPage() {
-  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const queryClient = useQueryClient();
 
   // Permissions (with loading)
@@ -192,15 +191,6 @@ export default function WorkspaceMediaPage() {
     setSelectedIds(new Set());
   };
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Media Library" },
-  ];
-
   // Header actions
   const headerActions = selectionMode ? (
     <>
@@ -292,7 +282,6 @@ export default function WorkspaceMediaPage() {
     <PageLayout
       title="Media Library"
       description="Upload and manage your workspace media files."
-      breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
       <CanAccess

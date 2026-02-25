@@ -26,7 +26,10 @@ export { WorkspaceEditKnowledgeBaseDialog } from "./workspace-edit-knowledge-bas
 export { WorkspaceEditKnowledgeDialog } from "./workspace-edit-knowledge-dialog";
 export { WorkspaceKnowledgeBasesTable } from "./workspace-knowledge-bases-table";
 export { WorkspaceKnowledgeSummaryCard } from "./workspace-knowledge-summary-card";
-export { WorkspaceKnowledgeTable, convertToKnowledgeItems } from "./workspace-knowledge-table";
+export {
+  WorkspaceKnowledgeTable,
+  convertToKnowledgeItems,
+} from "./workspace-knowledge-table";
 export type { KnowledgeItem } from "./workspace-knowledge-table";
 
 // Members & Invitations
@@ -46,4 +49,8 @@ export { WorkspaceDeleteDialog } from "./workspace-delete-dialog";
 export { WorkspaceEmptyState } from "./workspace-empty-state";
 export { WorkspaceOverviewForm } from "./workspace-overview-form";
 export { WorkspaceProgressTimeline } from "./workspace-progress-timeline";
-export { WorkspaceWelcomeModal, markWelcomeModalShown, shouldShowWelcomeModal } from "./workspace-welcome-modal";
+export {
+  WorkspaceWelcomeModal,
+  markWelcomeModalShown,
+  shouldShowWelcomeModal,
+} from "./workspace-welcome-modal";

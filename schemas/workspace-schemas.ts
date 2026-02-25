@@ -35,7 +35,7 @@ const timezoneSchema = z
     "Please select a valid timezone",
   );
 
-  // Form validation constants
+// Form validation constants
 export const WORKSPACE_CONSTRAINTS = {
   TITLE_MIN_LENGTH: 1,
   TITLE_MAX_LENGTH: 200,
@@ -45,14 +45,13 @@ export const WORKSPACE_CONSTRAINTS = {
   URL_PATTERN: /^https?:\/\/.+/,
 } as const;
 
-
 export const workspaceFormSchema = z.object({
-  title: z
+  name: z
     .string()
-    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Title is required")
+    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Name is required")
     .max(
       WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH,
-      `Title must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
+      `Name must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
     )
     .trim(),
 
@@ -62,16 +61,28 @@ export const workspaceFormSchema = z.object({
 });
 
 export const createWorkspaceRequestSchema = z.object({
-  title: z
+  name: z
     .string()
     .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
     .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
     .trim(),
+  title: z
+    .string()
+    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
+    .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
+    .trim()
+    .optional(),
   url: urlSchema,
   timezone: timezoneSchema,
 });
 
 export const updateWorkspaceRequestSchema = z.object({
+  name: z
+    .string()
+    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
+    .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
+    .trim()
+    .optional(),
   title: z
     .string()
     .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
@@ -115,7 +126,6 @@ export type UpdateWorkspaceRequest = z.infer<
   typeof updateWorkspaceRequestSchema
 >;
 
-
 /**
  * Workspace analytics schema (nested under 'analytics' key)
  */
@@ -152,21 +162,25 @@ export const brandVoiceSchema = z.object({
   brand_voice: z.array(z.string()).optional(),
   competitors: z.array(z.string()).optional(),
   content_pillar: z.array(z.string()).optional(),
-  personas: z.array(z.object({
-    id: z.string().optional(),
-    name: z.string(),
-    description: z.string(),
-    full_name: z.string().nullable().optional(),
-    professional_title: z.string().nullable().optional(),
-    areas_of_expertise: z.string().optional(),
-    tone_of_voice: z.string().optional(),
-    bio: z.string().optional(),
-    linkedin_url: z.string().nullable().optional(),
-    demographics: z.string().optional(),
-    pain_points: z.string().optional(),
-    goals: z.string().optional(),
-    behaviors: z.string().optional(),
-  })).optional(),
+  personas: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        description: z.string(),
+        full_name: z.string().nullable().optional(),
+        professional_title: z.string().nullable().optional(),
+        areas_of_expertise: z.string().optional(),
+        tone_of_voice: z.string().optional(),
+        bio: z.string().optional(),
+        linkedin_url: z.string().nullable().optional(),
+        demographics: z.string().optional(),
+        pain_points: z.string().optional(),
+        goals: z.string().optional(),
+        behaviors: z.string().optional(),
+      }),
+    )
+    .optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });
@@ -229,8 +243,68 @@ export const refreshBrandVoiceResponseSchema = z.object({
   operation_id: z.string(),
 });
 
+export const availableRolesResponseSchema = z.object({
+  roles: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      display_name: z.string(),
+      description: z.string().nullable(),
+      is_system_role: z.boolean(),
+      hierarchy_level: z.number(),
+      created_at: z.string(),
+      updated_at: z.string(),
+    }),
+  ),
+  total_count: z.number(),
+});
+
+export const workspaceStatsSchema = z.object({
+  workspace_exists: z.boolean(),
+  topics_count: z.number(),
+  content_count: z.number(),
+  knowledge_items_count: z.number(),
+  members_count: z.number(),
+  has_topic_builder: z.boolean(),
+  has_content_builder: z.boolean(),
+});
+
+export const memberPermissionsResponseSchema = z.object({
+  user_id: z.string(),
+  workspace_id: z.string(),
+  roles: z.array(
+    z.object({
+      name: z.string(),
+      display_name: z.string(),
+      workspace_scoped: z.boolean(),
+      workspace_id: z.string().nullable(),
+    }),
+  ),
+  permissions: z.array(z.string()),
+});
+
+export const updateBrandVoiceResponseSchema = z.object({
+  brand_voice: brandVoiceSchema,
+});
+
 // Type inference for responses
 export type WorkspaceSchemaType = z.infer<typeof workspaceSchema>;
-export type WorkspaceResponseSchemaType = z.infer<typeof workspaceResponseSchema>;
-export type WorkspaceListResponseSchemaType = z.infer<typeof workspaceListResponseSchema>;
-export type CreateWorkspaceResponseSchemaType = z.infer<typeof createWorkspaceResponseSchema>;
+export type WorkspaceResponseSchemaType = z.infer<
+  typeof workspaceResponseSchema
+>;
+export type WorkspaceListResponseSchemaType = z.infer<
+  typeof workspaceListResponseSchema
+>;
+export type CreateWorkspaceResponseSchemaType = z.infer<
+  typeof createWorkspaceResponseSchema
+>;
+export type AvailableRolesResponseSchemaType = z.infer<
+  typeof availableRolesResponseSchema
+>;
+export type WorkspaceStatsSchemaType = z.infer<typeof workspaceStatsSchema>;
+export type MemberPermissionsResponseSchemaType = z.infer<
+  typeof memberPermissionsResponseSchema
+>;
+export type UpdateBrandVoiceResponseSchemaType = z.infer<
+  typeof updateBrandVoiceResponseSchema
+>;

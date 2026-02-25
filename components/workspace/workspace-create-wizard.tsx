@@ -15,7 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/typeform/progress-bar";
 import { QuestionCard } from "@/components/ui/typeform/question-card";
-import { WorkspaceBrandVoiceForm, WorkspaceProgressTimeline } from "@/components/workspace";
+import {
+  WorkspaceBrandVoiceForm,
+  WorkspaceProgressTimeline,
+} from "@/components/workspace";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";

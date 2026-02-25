@@ -62,7 +62,9 @@ export function LoginForm({
 
       // Use errorCode if it's a descriptive message (not generic)
       const message =
-        urlError === "CredentialsSignin" && errorCode && errorCode !== "credentials"
+        urlError === "CredentialsSignin" &&
+        errorCode &&
+        errorCode !== "credentials"
           ? errorCode
           : errorMessages[urlError] || errorMessages.Default;
 
@@ -73,6 +75,11 @@ export function LoginForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Clear any previous session invalidity flag
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("session_invalid");
+    }
 
     try {
       // Backend validated successfully, now use NextAuth for session creation

@@ -34,9 +34,7 @@ export {
 // WORKSPACE CRUD STORE
 // ============================================================================
 
-export {
-  useWorkspaceCrudStore,
-} from "./use-workspace-crud-store";
+export { useWorkspaceCrudStore } from "./use-workspace-crud-store";
 
 // ============================================================================
 // WORKSPACE FORM STORE

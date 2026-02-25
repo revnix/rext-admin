@@ -30,10 +30,6 @@ import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspaceStore } from "@/stores/workspace";
-import {
-  workspaceSettingsSchema,
-  type WorkspaceSettingsFormData,
-} from "@/schemas/workspace-schemas";
 import * as React from "react";
 
 const generalInfoSchema = z.object({

@@ -428,14 +428,14 @@ interface BackendErrorResponse {
   };
   message?: string;
   detail?:
-  | Array<{
-    type: string;
-    loc: (string | number)[];
-    msg: string;
-    input?: unknown;
-    ctx?: unknown;
-  }>
-  | string;
+    | Array<{
+        type: string;
+        loc: (string | number)[];
+        msg: string;
+        input?: unknown;
+        ctx?: unknown;
+      }>
+    | string;
 }
 
 /**
@@ -493,9 +493,7 @@ export function extractApiError(data: unknown, fallback?: string): string {
  * @param response The fetch Response object
  * @returns The parsed JSON object or an empty object
  */
-export async function safeParseErrorBody(
-  response: Response,
-): Promise<unknown> {
+export async function safeParseErrorBody(response: Response): Promise<unknown> {
   try {
     const errorText = await response.text();
     // Re-use safeJsonParse from utils for consistent parsing logic
@@ -505,4 +503,3 @@ export async function safeParseErrorBody(
     return {};
   }
 }
-

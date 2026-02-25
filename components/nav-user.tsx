@@ -44,8 +44,6 @@ import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { log } from "@/lib/logger";
 
-
-
 export function NavUser() {
   const router = useRouter();
   const { isMobile } = useSidebar();

@@ -5,7 +5,6 @@ import type {
   ReadabilityMeta,
   ReadabilityMetrics,
   SEORESULT,
-  EEATData,
   Issue,
   TrustScore,
 } from "@/types/generate-content";
@@ -410,10 +409,7 @@ function ContentEditorInner({
                         )}
                       </div>
                       <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
-                        <LexicalEditor
-                          initialValue={body}
-                          readOnly={true}
-                        />
+                        <LexicalEditor initialValue={body} readOnly={true} />
                       </div>
                     </>
                   ) : (

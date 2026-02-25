@@ -375,17 +375,11 @@ export default function WebhookMonitoringPage() {
 
   const filteredEvents = getFilteredEvents();
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Webhooks" },
-  ];
-
   return (
     <AdminGuard superAdminOnly={true}>
       <PageLayout
         title="Webhook Monitoring"
         description="Monitor and manage webhook events from LemonSqueezy"
-        breadcrumbs={breadcrumbs}
         actions={
           <Button
             onClick={() => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
@@ -92,17 +92,27 @@ export function GuestGuard({
 }) {
   const { isAuthenticated, isLoading } = useAuthSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
       setIsChecking(false);
 
+      // CRITICAL: Prevent redirect loop if we are on the login page with an error
+      const hasError =
+        searchParams.get("error") ||
+        searchParams.get("session") ||
+        searchParams.get("reason");
+      if (hasError) {
+        return;
+      }
+
       if (isAuthenticated) {
         router.push(redirectTo);
       }
     }
-  }, [isLoading, isAuthenticated, redirectTo, router]);
+  }, [isLoading, isAuthenticated, redirectTo, router, searchParams]);
 
   // Show loading state
   if (isLoading || isChecking) {

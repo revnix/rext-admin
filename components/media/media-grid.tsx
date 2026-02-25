@@ -4,7 +4,6 @@ import { FileText, Image as ImageIcon, Video } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { getMediaKind } from "@/lib/media-type";
 import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import type { Media } from "@/lib/api-client/media";
@@ -99,15 +98,15 @@ function MediaCard({
   };
 
   // Convert relative URLs to absolute URLs pointing to backend
-  const getAbsoluteUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url; // Already absolute
-    }
-    // Relative URL - prepend backend URL
-    const backendUrl = resolveApiBaseUrl();
-    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
-  };
+  // const getAbsoluteUrl = (url: string | null): string | null => {
+  //   if (!url) return null;
+  //   if (url.startsWith("http://") || url.startsWith("https://")) {
+  //     return url; // Already absolute
+  //   }
+  //   // Relative URL - prepend backend URL
+  //   const backendUrl = resolveApiBaseUrl();
+  //   return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  // };
 
   const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
   const publicUrl = toAbsoluteMediaUrl(media.public_url);

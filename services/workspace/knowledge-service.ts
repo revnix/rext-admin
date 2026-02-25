@@ -11,7 +11,6 @@
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
-import { logger } from "@/lib/logger";
 import { InputSanitizer } from "@/lib/sanitization";
 import type {
   AddFileKnowledgeRequest,
@@ -24,7 +23,10 @@ import type {
   WorkspaceApiConfig,
   WorkspaceApiContext,
 } from "@/types/workspace";
-import { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-service";
+import {
+  BaseWorkspaceService,
+  WorkspaceApiError,
+} from "./base-workspace-service";
 
 // ============================================================================
 // MAIN SERVICE CLASS
@@ -33,7 +35,6 @@ import { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-servic
 export { WorkspaceApiError as KnowledgeServiceError };
 
 export class KnowledgeService extends BaseWorkspaceService {
-
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
     super("KnowledgeService", config);
   }
@@ -534,10 +535,7 @@ export class KnowledgeService extends BaseWorkspaceService {
   protected validateFileKnowledgeData(data: AddFileKnowledgeRequest): void {
     this.validateUuid(data.workspace_id, "workspace_id");
     if (!data.file || !(data.file instanceof File)) {
-      throw new WorkspaceApiError(
-        "INVALID_REQUEST",
-        "Valid file is required",
-      );
+      throw new WorkspaceApiError("INVALID_REQUEST", "Valid file is required");
     }
 
     if (data.file.size > 10 * 1024 * 1024) {

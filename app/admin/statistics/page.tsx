@@ -11,16 +11,10 @@ import {
 } from "@/components/ui/card";
 
 export default function AdminStatisticsPage() {
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "System Statistics" },
-  ];
-
   return (
     <PageLayout
       title="System Statistics"
       description="View system metrics and analytics"
-      breadcrumbs={breadcrumbs}
     >
       <AdminGuard>
         <div className="space-y-6">

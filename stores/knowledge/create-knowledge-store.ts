@@ -15,7 +15,6 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { getStorage } from "@/lib/storage";
 
-
 // ============================================================================
 // BASE TYPES
 // ============================================================================

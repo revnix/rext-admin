@@ -7,13 +7,10 @@ export default function SettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const breadcrumbs = [{ label: "Settings" }];
-
   return (
     <PageLayout
       title="Settings"
       description="Manage your account settings and preferences"
-      breadcrumbs={breadcrumbs}
     >
       <div className="space-y-6">
         {/* Top Navigation */}
