@@ -4,7 +4,6 @@ import { Building2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
-import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/providers/workspace-provider";
 
@@ -21,23 +20,13 @@ export default function WorkspaceSettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspace();
   const pathname = usePathname();
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Settings" },
-  ];
 
   return (
     <PageLayout
       title="Workspace Settings"
       description="Manage workspace configuration and preferences"
-      breadcrumbs={breadcrumbs}
     >
       <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
         {/* Sidebar Navigation */}

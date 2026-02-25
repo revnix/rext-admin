@@ -53,18 +53,12 @@ export default function CreateWorkspacePage() {
     return undefined;
   }, [canCreateWorkspace, router]);
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Create Workspace" },
-  ];
-
   // Show permission denied message if no access
   if (!canCreateWorkspace) {
     return (
       <PageLayout
         title="Permission Required"
         description="You need permission to create workspaces"
-        breadcrumbs={breadcrumbs}
       >
         <div className="max-w-2xl mx-auto py-12">
           <Card className="p-8">
@@ -99,7 +93,6 @@ export default function CreateWorkspacePage() {
     <PageLayout
       title="Create Workspace"
       description="Set up a new workspace with guided configuration"
-      breadcrumbs={breadcrumbs}
     >
       <div className="w-full mx-auto space-y-6">
         {/* Back Navigation */}

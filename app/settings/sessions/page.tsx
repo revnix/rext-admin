@@ -38,12 +38,16 @@ import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
 import type { UserSession } from "@/types/user-session";
 
 export default function SessionsPage() {
-  const [sessionToRevoke, setSessionToRevoke] = useState<UserSession | null>(null);
+  const [sessionToRevoke, setSessionToRevoke] = useState<UserSession | null>(
+    null,
+  );
   const [showRevokeAllDialog, setShowRevokeAllDialog] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch sessions
-  const { data, isLoading, error, refetch } = useQuery(userSessionsQueryOptions());
+  const { data, isLoading, error, refetch } = useQuery(
+    userSessionsQueryOptions(),
+  );
 
   // Revoke single session
   const revokeMutation = useMutation({
@@ -290,8 +294,8 @@ export default function SessionsPage() {
             <AlertDialogTitle>Logout from this device?</AlertDialogTitle>
             <AlertDialogDescription>
               This will terminate the session on{" "}
-              <strong>{String(sessionToRevoke?.device_name)}</strong>. You'll need to
-              login again on that device.
+              <strong>{String(sessionToRevoke?.device_name)}</strong>. You'll
+              need to login again on that device.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

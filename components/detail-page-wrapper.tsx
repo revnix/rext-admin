@@ -45,7 +45,6 @@ import type {
 
 export function DetailPageWrapper({
   title,
-  breadcrumbs = [],
   backUrl,
   backLabel = "Back",
   prevItem,
@@ -318,11 +317,7 @@ export function DetailPageWrapper({
   if (error) {
     const errorMessage = typeof error === "string" ? error : error.message;
     return (
-      <PageLayout
-        title="Error"
-        description="Failed to load details"
-        breadcrumbs={breadcrumbs}
-      >
+      <PageLayout title="Error" description="Failed to load details">
         <DetailCard variant="warning" className="text-center">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
@@ -351,7 +346,6 @@ export function DetailPageWrapper({
       <PageLayout
         title={loadingMessage}
         description="Please wait while we load the details..."
-        breadcrumbs={breadcrumbs}
       >
         <DetailPageSkeleton
           showSidebar={layout !== "no-sidebar"}
@@ -519,7 +513,7 @@ export function DetailPageWrapper({
 
   return (
     <TooltipProvider>
-      <PageLayout title="" breadcrumbs={breadcrumbs} className={className}>
+      <PageLayout title="" className={className}>
         {/* Custom header with enhanced title and metadata */}
         <div className="space-y-6">
           {/* Enhanced title section */}

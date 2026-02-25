@@ -18,7 +18,12 @@ import {
   workspaceResponseSchema,
   workspaceListResponseSchema,
   createWorkspaceResponseSchema,
-  refreshBrandVoiceResponseSchema
+  refreshBrandVoiceResponseSchema,
+  availableRolesResponseSchema,
+  workspacePermissionsResponseSchema,
+  workspaceStatsSchema,
+  memberPermissionsResponseSchema,
+  updateBrandVoiceResponseSchema,
 } from "@/schemas/workspace-schemas";
 import { validateResponse } from "@/lib/api-response-validator";
 
@@ -48,11 +53,13 @@ function toCreatePayload(data: {
 
 function toUpdatePayload(data: {
   title?: string;
+  name?: string;
   timezone?: string;
   url?: string;
 }): WorkspaceUpdatePayload {
   const payload: WorkspaceUpdatePayload = {};
   if (data.title !== undefined) payload.name = data.title;
+  if (data.name !== undefined) payload.name = data.name;
   if (data.timezone !== undefined) payload.timezone = data.timezone;
   if (data.url !== undefined) payload.url = data.url;
   return payload;
@@ -103,8 +110,13 @@ export function createWorkspacesNamespace(client: ApiClient) {
         ENDPOINTS.WORKSPACES.BASE_ALL,
         {
           method: "GET",
-        });
-      return validateResponse(workspaceListResponseSchema, data, "workspaces.list");
+        },
+      );
+      return validateResponse(
+        workspaceListResponseSchema,
+        data,
+        "workspaces.list",
+      );
     },
 
     // In the get method:
@@ -116,8 +128,6 @@ export function createWorkspacesNamespace(client: ApiClient) {
       return validateResponse(workspaceResponseSchema, data, "workspaces.get");
     },
 
-
-
     /**
      * Get workspace by slug
      */
@@ -128,7 +138,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
           method: "GET",
         },
       );
-      return validateResponse(workspaceResponseSchema, data, "workspaces.getBySlug");
+      return validateResponse(
+        workspaceResponseSchema,
+        data,
+        "workspaces.getBySlug",
+      );
     },
 
     /**
@@ -148,16 +162,21 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toCreatePayload(payload)),
         },
       );
-      return validateResponse(createWorkspaceResponseSchema, response, "workspaces.create");
+      return validateResponse(
+        createWorkspaceResponseSchema,
+        response,
+        "workspaces.create",
+      );
     },
 
-    // Update the update method to sanitize input:
     update: async (
       workspaceId: string,
-      data: { name?: string; timezone?: string; url?: string },
+      data: { title?: string; name?: string; timezone?: string; url?: string },
     ) => {
       const payload: Record<string, unknown> = {};
-      if (data.name !== undefined) payload.name = InputSanitizer.sanitizeText(data.name.trim());
+      if (data.title !== undefined) payload.title = data.title;
+      if (data.name !== undefined)
+        payload.name = InputSanitizer.sanitizeText(data.name.trim());
       if (data.timezone !== undefined) payload.timezone = data.timezone;
       if (data.url !== undefined) payload.url = data.url.trim();
       const response = await client.request<WorkspaceResponse>(
@@ -168,17 +187,28 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toUpdatePayload(payload)),
         },
       );
-      return validateResponse(workspaceResponseSchema, response, "workspaces.update");
+      return validateResponse(
+        workspaceResponseSchema,
+        response,
+        "workspaces.update",
+      );
     },
 
     /**
      * Delete workspace
      */
     delete: async (workspaceId: string) => {
-      const response = await client.request<void>(ENDPOINTS.WORKSPACES.byId(workspaceId), {
-        method: "DELETE",
-      });
-      return validateResponse(workspaceResponseSchema, response, "workspaces.delete");
+      const response = await client.request<void>(
+        ENDPOINTS.WORKSPACES.byId(workspaceId),
+        {
+          method: "DELETE",
+        },
+      );
+      return validateResponse(
+        workspaceResponseSchema,
+        response,
+        "workspaces.delete",
+      );
     },
 
     /**
@@ -195,7 +225,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
       return validateResponse(
         refreshBrandVoiceResponseSchema,
         response,
-        "workspaces.refreshBrandVoice"
+        "workspaces.refreshBrandVoice",
       );
     },
 
@@ -233,7 +263,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(toBrandVoicePayload(payload)),
       });
-      return validateResponse(workspaceResponseSchema, response, "workspaces.updateBrandVoice");
+      return validateResponse(
+        updateBrandVoiceResponseSchema,
+        response,
+        "workspaces.updateBrandVoice",
+      );
     },
 
     /**
@@ -251,7 +285,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
       }>(ENDPOINTS.WORKSPACES.permissions.me(workspaceId), {
         method: "GET",
       });
-      return validateResponse(workspaceResponseSchema, response, "workspaces.getPermissions");
+      return validateResponse(
+        workspacePermissionsResponseSchema,
+        response,
+        "workspaces.getPermissions",
+      );
     },
 
     /**
@@ -268,7 +306,8 @@ export function createWorkspacesNamespace(client: ApiClient) {
           method: "GET",
         },
       );
-      return validateResponse(workspaceResponseSchema, response, "workspaces.checkPermission");
+      return response; // checkPermission doesn't have a matching schema yet, returning as is for now or we should define one.
+      // Actually let's just return response and not validate with the wrong schema.
     },
 
     /**
@@ -286,7 +325,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
         method: "POST",
       });
 
-      return validateResponse(workspaceResponseSchema, response, "workspaces.refreshPermissions");
+      return validateResponse(
+        workspacePermissionsResponseSchema,
+        response,
+        "workspaces.refreshPermissions",
+      );
     },
 
     /**
@@ -307,7 +350,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
         method: "GET",
       });
 
-      return validateResponse(workspaceResponseSchema, response, "workspaces.getMemberPermissions");
+      return validateResponse(
+        memberPermissionsResponseSchema,
+        response,
+        "workspaces.getMemberPermissions",
+      );
     },
 
     /**
@@ -323,7 +370,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
           method: "GET",
         },
       );
-      return validateResponse(workspaceResponseSchema, response, "workspaces.getStats");
+      return validateResponse(
+        workspaceStatsSchema,
+        response,
+        "workspaces.getStats",
+      );
     },
 
     /**
@@ -349,7 +400,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
         method: "GET",
       });
 
-      return validateResponse(workspaceResponseSchema, response, "workspaces.getAvailableRoles");
+      return validateResponse(
+        availableRolesResponseSchema,
+        response,
+        "workspaces.getAvailableRoles",
+      );
     },
   };
 }

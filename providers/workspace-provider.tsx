@@ -75,7 +75,6 @@ export function WorkspaceProvider({
       workspaceId,
     );
 
-
   // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,

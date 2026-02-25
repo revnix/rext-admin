@@ -85,21 +85,25 @@ export function createUsersNamespace(client: ApiClient) {
 
       return {
         ...response,
-        sessions: response.sessions.map(
-          (s): UserSession => {
-            const session = s as any;
-            return {
-              ...s,
-              device_name: session.device_name ?? session.device ?? "Unknown Device",
-              device_type: session.device_type ?? null,
-              ip_address: session.ip_address ?? null,
-              user_agent: session.user_agent ?? session.browser ?? null,
-              created_at: session.created_at ?? null,
-              last_activity_at: session.last_activity_at ?? session.last_active ?? null,
-              is_current: Boolean(session.is_current),
-            };
-          },
-        ),
+        sessions: response.sessions.map((s): UserSession => {
+          const session = s as UserSession & {
+            device?: string;
+            browser?: string;
+            last_active?: string;
+          };
+          return {
+            ...s,
+            device_name:
+              session.device_name ?? session.device ?? "Unknown Device",
+            device_type: session.device_type ?? null,
+            ip_address: session.ip_address ?? null,
+            user_agent: session.user_agent ?? session.browser ?? null,
+            created_at: session.created_at ?? null,
+            last_activity_at:
+              session.last_activity_at ?? session.last_active ?? null,
+            is_current: Boolean(session.is_current),
+          };
+        }),
       };
     },
 

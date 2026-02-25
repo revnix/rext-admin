@@ -103,11 +103,6 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
   };
 
   // Build breadcrumbs
-  const breadcrumbs = [
-    { label: "Library", href: "#" },
-    { label: "Topics", href: "/topics" },
-    { label: generatedTopic?.title || "Topic Detail" },
-  ];
 
   // Build header actions for page header using component
   const headerActions = (
@@ -146,7 +141,6 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
   return (
     <DetailPageWrapper
       title={generatedTopic?.title || "Topic Detail"}
-      breadcrumbs={breadcrumbs}
       status={generatedTopic?.approved ? "Approved" : "Pending Approval"}
       statusVariant={generatedTopic?.approved ? "default" : "outline"}
       metadata={[]}

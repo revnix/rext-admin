@@ -59,11 +59,6 @@ export default function BillingHistoryPage() {
     loadData();
   }, [fetchInvoices]);
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Billing & Invoices" },
-  ];
-
   // NOTE: This page is protected by middleware (see middleware.ts)
   // No need for PermissionGuard wrapper as middleware already validates billing.read permission
 
@@ -72,7 +67,6 @@ export default function BillingHistoryPage() {
       <PageLayout
         title="Billing & Invoices"
         description="Manage your billing information and view invoice history"
-        breadcrumbs={breadcrumbs}
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -90,7 +84,6 @@ export default function BillingHistoryPage() {
     <PageLayout
       title="Billing & Invoices"
       description="Manage your billing information and view invoice history"
-      breadcrumbs={breadcrumbs}
       actions={<CustomerPortalButton>Billing Portal</CustomerPortalButton>}
     >
       <div className="space-y-8">

@@ -12,11 +12,11 @@ export function getCSPHeader(_nonce: string): string {
   const isDev = process.env.NODE_ENV !== "production";
 
   // Get base URL for backend (trims trailing slash)
-  let apiBaseUrl;
+  let apiBaseUrl: string;
   try {
     apiBaseUrl = resolveApiBaseUrl();
   } catch (_e) {
-    // If we can't resolve (e.g. no window in some server context), 
+    // If we can't resolve (e.g. no window in some server context),
     // fallback to production default for CSP
     apiBaseUrl = "https://api.rext.ai";
   }

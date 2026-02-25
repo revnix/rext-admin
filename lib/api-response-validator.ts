@@ -1,4 +1,3 @@
-
 import { log } from "@/lib/logger";
 import type { z } from "zod";
 
@@ -20,13 +19,16 @@ export function validateResponse<T extends z.ZodType>(
   const result = schema.safeParse(data);
 
   if (!result.success) {
-    log.warn(`[API Response Validation] ${context}: Response does not match expected schema`, {
-      context,
-      issues: result.error.issues.map((issue) => ({
-        path: issue.path.join("."),
-        message: issue.message,
-      })),
-    });
+    log.warn(
+      `[API Response Validation] ${context}: Response does not match expected schema`,
+      {
+        context,
+        issues: result.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      },
+    );
   }
 
   // Return the original data regardless of validation result

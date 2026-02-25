@@ -72,24 +72,10 @@ export default function CreatePersonaPage() {
     }
   };
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    {
-      label: "Personas",
-      href: workspaceRoutes.personas(workspaceSlug),
-    },
-    { label: "Create New" },
-  ];
-
   return (
     <PageLayout
       title="Create New Persona"
       description="Define a new author persona to enhance your content's EEAT signals"
-      breadcrumbs={breadcrumbs}
       fullWidth
     >
       <div className="max-w-3xl space-y-8 pb-12">

@@ -27,8 +27,6 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const user = usePermissionUser();
 
-  const breadcrumbs = [{ label: "Admin" }];
-
   const adminCards = [
     {
       title: "User Management",
@@ -79,11 +77,7 @@ export default function AdminDashboardPage() {
       permission={["audit.read", "user.read", "role.read", "system.manage"]}
       requireAll={false}
       fallback={
-        <PageLayout
-          title="Access Denied"
-          description="Admin access required"
-          breadcrumbs={breadcrumbs}
-        >
+        <PageLayout title="Access Denied" description="Admin access required">
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive flex items-center gap-2">
@@ -114,7 +108,6 @@ export default function AdminDashboardPage() {
       <PageLayout
         title="Administration"
         description="Manage users, roles, and system settings"
-        breadcrumbs={breadcrumbs}
       >
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -1,6 +1,9 @@
 import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
 import { useWorkspaceCrudStore } from "@/stores/workspace/use-workspace-crud-store";
-import type { CreateWorkspaceRequest, UpdateWorkspaceRequest } from "@/types/workspace";
+import type {
+  CreateWorkspaceRequest,
+  UpdateWorkspaceRequest,
+} from "@/types/workspace";
 
 /**
  * Hook that orchestrates workspace CRUD operations across stores.
@@ -9,10 +12,18 @@ import type { CreateWorkspaceRequest, UpdateWorkspaceRequest } from "@/types/wor
  */
 export function useWorkspaceActions() {
   const crudStore = useWorkspaceCrudStore();
-  const addWorkspaceToList = useWorkspaceContextStore((s) => s.addWorkspaceToList);
-  const setCurrentWorkspace = useWorkspaceContextStore((s) => s.setCurrentWorkspace);
-  const updateWorkspaceInList = useWorkspaceContextStore((s) => s.updateWorkspaceInList);
-  const removeWorkspaceFromList = useWorkspaceContextStore((s) => s.removeWorkspaceFromList);
+  const addWorkspaceToList = useWorkspaceContextStore(
+    (s) => s.addWorkspaceToList,
+  );
+  const setCurrentWorkspace = useWorkspaceContextStore(
+    (s) => s.setCurrentWorkspace,
+  );
+  const updateWorkspaceInList = useWorkspaceContextStore(
+    (s) => s.updateWorkspaceInList,
+  );
+  const removeWorkspaceFromList = useWorkspaceContextStore(
+    (s) => s.removeWorkspaceFromList,
+  );
   const setWorkspaceList = useWorkspaceContextStore((s) => s.setWorkspaceList);
 
   const createWorkspace = async (data: CreateWorkspaceRequest) => {
@@ -22,7 +33,10 @@ export function useWorkspaceActions() {
     return workspace;
   };
 
-  const updateWorkspace = async (workspaceId: string, data: UpdateWorkspaceRequest) => {
+  const updateWorkspace = async (
+    workspaceId: string,
+    data: UpdateWorkspaceRequest,
+  ) => {
     const workspace = await crudStore.updateWorkspace(workspaceId, data);
     updateWorkspaceInList(workspace);
     return workspace;
@@ -41,9 +55,9 @@ export function useWorkspaceActions() {
 
   const fetchWorkspace = async (workspaceId: string) => {
     const workspace = await crudStore.fetchWorkspace(workspaceId);
-    const existingIndex = useWorkspaceContextStore.getState().workspaceList.findIndex(
-      (w) => w.id === workspaceId,
-    );
+    const existingIndex = useWorkspaceContextStore
+      .getState()
+      .workspaceList.findIndex((w) => w.id === workspaceId);
     if (existingIndex >= 0) {
       updateWorkspaceInList(workspace);
     } else {

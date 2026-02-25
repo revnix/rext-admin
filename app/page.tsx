@@ -16,8 +16,6 @@ import { apiClient } from "@/lib/api-client";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function DashboardPage() {
-  const breadcrumbs = [{ label: "Dashboard" }];
-
   // Auto-select workspace on load
   const {
     workspace: currentWorkspace,
@@ -88,7 +86,6 @@ export default function DashboardPage() {
         <PageLayout
           title={currentWorkspace?.title || "Dashboard"}
           description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
-          breadcrumbs={breadcrumbs}
         >
           <div className="flex flex-col gap-8">
             {/* Top Row: Metrics Cards (5 Cards) */}

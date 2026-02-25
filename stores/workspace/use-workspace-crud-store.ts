@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
@@ -37,11 +36,13 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         }));
 
         try {
-          const { workspace, operation_id } = await apiClient.workspaces.create({
-            name: data.name,
-            timezone: data.timezone,
-            url: data.url,
-          });
+          const { workspace, operation_id } = await apiClient.workspaces.create(
+            {
+              name: data.name,
+              timezone: data.timezone,
+              url: data.url,
+            },
+          );
 
           // Only update CRUD store's own state
           set((state) => ({

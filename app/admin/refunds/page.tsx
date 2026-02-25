@@ -403,17 +403,11 @@ export default function RefundManagementPage() {
     fetchRefunds();
   }, [fetchRefunds]);
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Refunds" },
-  ];
-
   return (
     <AdminGuard superAdminOnly={true}>
       <PageLayout
         title="Refund Management"
         description="View refund history and process new refunds"
-        breadcrumbs={breadcrumbs}
         actions={
           <>
             <Button

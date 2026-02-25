@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PageLayout } from "@/components/page-layout";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import {
   Card,
@@ -26,7 +25,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
 export default function IntegrationsPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace } = useWorkspace();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,15 +49,6 @@ export default function IntegrationsPage() {
   useEffect(() => {
     fetchIntegrations();
   }, [fetchIntegrations]);
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Integrations" },
-  ];
 
   const handleIntegrationClick = async (integration: Integration) => {
     if (!workspace?.id) return;
@@ -143,7 +133,6 @@ export default function IntegrationsPage() {
     <PageLayout
       title="Integrations"
       description="Connect your workspace with third-party platforms."
-      breadcrumbs={breadcrumbs}
       actions={
         <Button onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />

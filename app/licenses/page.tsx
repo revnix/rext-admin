@@ -148,16 +148,10 @@ export default function LicensesPage() {
     });
   };
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Licenses" },
-  ];
-
   const AccessDeniedFallback = (
     <PageLayout
       title="Access Denied"
       description="You don't have permission to view licenses"
-      breadcrumbs={breadcrumbs}
     >
       <Card className="border-destructive">
         <CardHeader>
@@ -196,7 +190,6 @@ export default function LicensesPage() {
         <PageLayout
           title="License Management"
           description="Manage your license keys and device activations"
-          breadcrumbs={breadcrumbs}
         >
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -214,7 +207,6 @@ export default function LicensesPage() {
       <PageLayout
         title="License Management"
         description="Manage your license keys and device activations"
-        breadcrumbs={breadcrumbs}
       >
         {/* Licenses List */}
         {licenses.length === 0 ? (

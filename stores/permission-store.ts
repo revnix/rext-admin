@@ -21,7 +21,6 @@ export interface WorkspacePermissions {
   permissions: string[];
 }
 
-
 /**
  * Permission store state
  */
@@ -62,95 +61,89 @@ interface PermissionStore {
  * Note: Only user data is persisted, not workspace permissions.
  * Workspace permissions are fetched fresh on each workspace load.
  */
-export const usePermissionStore = create<PermissionStore>()(
-  (set, get) => ({
-    user: null,
-    workspacePermissions: new Map(),
-    isLoading: false,
-    error: null,
-    workspaceLoadingStates: new Map(),
+export const usePermissionStore = create<PermissionStore>()((set, get) => ({
+  user: null,
+  workspacePermissions: new Map(),
+  isLoading: false,
+  error: null,
+  workspaceLoadingStates: new Map(),
 
-    setUser: (user) => set({ user, error: null }),
+  setUser: (user) => set({ user, error: null }),
 
-    setWorkspacePermissions: (workspaceId, permissions) =>
-      set((state) => {
-        const newMap = new Map(state.workspacePermissions);
-        newMap.set(workspaceId, permissions);
+  setWorkspacePermissions: (workspaceId, permissions) =>
+    set((state) => {
+      const newMap = new Map(state.workspacePermissions);
+      newMap.set(workspaceId, permissions);
 
-        const newLoadingStates = new Map(state.workspaceLoadingStates);
-        newLoadingStates.set(workspaceId, false);
+      const newLoadingStates = new Map(state.workspaceLoadingStates);
+      newLoadingStates.set(workspaceId, false);
 
-        return {
-          workspacePermissions: newMap,
-          workspaceLoadingStates: newLoadingStates,
-        };
-      }),
+      return {
+        workspacePermissions: newMap,
+        workspaceLoadingStates: newLoadingStates,
+      };
+    }),
 
-    clearPermissions: () =>
-      set({
-        user: null,
-        workspacePermissions: new Map(),
-        workspaceLoadingStates: new Map(),
-        error: null,
-      }),
+  clearPermissions: () =>
+    set({
+      user: null,
+      workspacePermissions: new Map(),
+      workspaceLoadingStates: new Map(),
+      error: null,
+    }),
 
-    setLoading: (isLoading) => set({ isLoading }),
+  setLoading: (isLoading) => set({ isLoading }),
 
-    setError: (error) => set({ error }),
+  setError: (error) => set({ error }),
 
-    setWorkspaceLoading: (workspaceId, isLoading) =>
-      set((state) => {
-        const newLoadingStates = new Map(state.workspaceLoadingStates);
-        newLoadingStates.set(workspaceId, isLoading);
-        return { workspaceLoadingStates: newLoadingStates };
-      }),
+  setWorkspaceLoading: (workspaceId, isLoading) =>
+    set((state) => {
+      const newLoadingStates = new Map(state.workspaceLoadingStates);
+      newLoadingStates.set(workspaceId, isLoading);
+      return { workspaceLoadingStates: newLoadingStates };
+    }),
 
-    isWorkspaceLoading: (workspaceId) => {
-      const state = get();
-      return state.workspaceLoadingStates.get(workspaceId) || false;
-    },
+  isWorkspaceLoading: (workspaceId) => {
+    const state = get();
+    return state.workspaceLoadingStates.get(workspaceId) || false;
+  },
 
-    hasPermission: (permission, workspaceId) => {
-      const state = get();
-      if (!state.user) return false;
+  hasPermission: (permission, workspaceId) => {
+    const state = get();
+    if (!state.user) return false;
 
-      if (state.user.role === "super_admin") return true;
+    if (state.user.role === "super_admin") return true;
 
-      if (workspaceId) {
-        const wsPerms = state.workspacePermissions.get(workspaceId);
-        if (wsPerms?.permissions.includes(permission)) return true;
-      }
+    if (workspaceId) {
+      const wsPerms = state.workspacePermissions.get(workspaceId);
+      if (wsPerms?.permissions.includes(permission)) return true;
+    }
 
-      return state.user.permissions.includes(permission);
-    },
+    return state.user.permissions.includes(permission);
+  },
 
-    hasAnyPermission: (permissions, workspaceId) => {
-      return permissions.some((perm) =>
-        get().hasPermission(perm, workspaceId),
-      );
-    },
+  hasAnyPermission: (permissions, workspaceId) => {
+    return permissions.some((perm) => get().hasPermission(perm, workspaceId));
+  },
 
-    hasAllPermissions: (permissions, workspaceId) => {
-      return permissions.every((perm) =>
-        get().hasPermission(perm, workspaceId),
-      );
-    },
+  hasAllPermissions: (permissions, workspaceId) => {
+    return permissions.every((perm) => get().hasPermission(perm, workspaceId));
+  },
 
-    hasRole: (role) => {
-      const state = get();
-      return state.user?.role === role;
-    },
+  hasRole: (role) => {
+    const state = get();
+    return state.user?.role === role;
+  },
 
-    isAdmin: () => {
-      const state = get();
-      return ["admin", "super_admin"].includes(state.user?.role || "");
-    },
+  isAdmin: () => {
+    const state = get();
+    return ["admin", "super_admin"].includes(state.user?.role || "");
+  },
 
-    isSuperAdmin: () => {
-      return get().user?.role === "super_admin";
-    },
-  }),
-);
+  isSuperAdmin: () => {
+    return get().user?.role === "super_admin";
+  },
+}));
 
 // Register with global store registry for logout cleanup
 const initialPermissionState = usePermissionStore.getInitialState();

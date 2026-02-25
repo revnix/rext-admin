@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { performLogout } from "@/lib/logout-utils";
 import { useEffect, useState } from "react";
+import { log } from "@/lib/logger";
 
 /**
  * Backward-compatible auth hook using AuthJS
@@ -49,13 +50,36 @@ export function useAuthSession() {
     };
   }, [status]);
 
+  // Proactively handle session refresh errors to break redirect loops
+  useEffect(() => {
+    if (
+      status === "authenticated" &&
+      session?.error === "RefreshAccessTokenError"
+    ) {
+      log.error(
+        "[Auth] RefreshAccessTokenError detected in hook, triggering logout...",
+      );
+      performLogout("/login?error=SessionExpired");
+    }
+  }, [session?.error, status]);
+
   const logout = async () => {
     await performLogout("/login");
   };
 
+  // User is only truly authenticated if status is "authenticated" AND there's no refresh error
+  // AND the session hasn't been explicitly marked as invalid by a logout process
+  const isAuthenticated =
+    status === "authenticated" &&
+    !session?.error &&
+    !(
+      typeof window !== "undefined" &&
+      sessionStorage.getItem("session_invalid") === "true"
+    );
+
   return {
     user,
-    isAuthenticated: status === "authenticated",
+    isAuthenticated,
     isLoading: status === "loading",
     logout,
     session,

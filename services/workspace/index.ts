@@ -9,7 +9,10 @@ export * from "./knowledge-service";
 export * from "./members-service";
 export * from "./workspace-service";
 // Re-export instances for convenience
-export { BaseWorkspaceService, WorkspaceApiError } from "./base-workspace-service";
+export {
+  BaseWorkspaceService,
+  WorkspaceApiError,
+} from "./base-workspace-service";
 export { WorkspaceService, workspaceService } from "./workspace-service";
 export { KnowledgeService, knowledgeService } from "./knowledge-service";
 export { MembersService, membersService } from "./members-service";

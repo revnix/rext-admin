@@ -42,19 +42,11 @@ export default function InvitationAnalyticsPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    { label: "Admin", href: "/admin" },
-    { label: "Analytics", href: "/admin/analytics" },
-    { label: "Invitations" },
-  ];
-
   if (isLoading) {
     return (
       <PageLayout
         title="Invitation Analytics"
         description="Track and analyze invitation metrics"
-        breadcrumbs={breadcrumbs}
       >
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -74,7 +66,6 @@ export default function InvitationAnalyticsPage() {
       <PageLayout
         title="Invitation Analytics"
         description="Track and analyze invitation metrics"
-        breadcrumbs={breadcrumbs}
       >
         <Card>
           <CardContent className="pt-6">
@@ -94,7 +85,6 @@ export default function InvitationAnalyticsPage() {
       <PageLayout
         title="Invitation Analytics"
         description="Track and analyze invitation metrics across the platform"
-        breadcrumbs={breadcrumbs}
       >
         <div className="space-y-6">
           {/* Period Selector */}

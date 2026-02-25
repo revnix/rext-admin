@@ -47,7 +47,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import type { Media } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
 
@@ -94,7 +93,7 @@ export function MediaDetailSheet({
     setEditFolder(media.folder ?? "");
     setEditTags(media.tags.join(", "));
     setIsEditing(false);
-  }, [media?.id, media?.updated_at, open]);
+  }, [media]);
 
   const { mutate: deleteMedia, isPending: isDeleting } = useMutation({
     mutationFn: () => {
