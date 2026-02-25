@@ -148,18 +148,21 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
 
         try {
           // Fetch the source workspace to get its data
-          const sourceResponse = await apiClient.workspaces.get(sourceWorkspaceId);
+          const sourceResponse =
+            await apiClient.workspaces.get(sourceWorkspaceId);
           const sourceWorkspace = sourceResponse.workspace;
 
           // Generate a duplicate name
           const duplicateName = `${sourceWorkspace.name} (Copy)`;
 
           // Create the duplicate workspace using the same data
-          const { workspace, operation_id } = await apiClient.workspaces.create({
-            name: duplicateName,
-            timezone: sourceWorkspace.timezone,
-            url: sourceWorkspace.url,
-          });
+          const { workspace, operation_id } = await apiClient.workspaces.create(
+            {
+              name: duplicateName,
+              timezone: sourceWorkspace.timezone,
+              url: sourceWorkspace.url,
+            },
+          );
 
           // Add to context store (same pattern as createWorkspace)
           useWorkspaceContextStore.getState().addWorkspaceToList(workspace);
