@@ -291,7 +291,9 @@ export function NavUser() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push(settingsRoutes.root)}>
+              <DropdownMenuItem
+                onClick={() => router.push(settingsRoutes.root)}
+              >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>

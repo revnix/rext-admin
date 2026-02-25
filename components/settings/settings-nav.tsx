@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { settingsRoutes, type SettingsRoute } from "@/lib/routes";
+import type { Route } from "next";
 
 type SettingsNavItem = {
   label: string;

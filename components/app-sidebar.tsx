@@ -249,8 +249,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-      (group) => group.groupLabel !== "Workspace",
-    );
+        (group) => group.groupLabel !== "Workspace",
+      );
 
   return (
     <Sidebar
@@ -392,10 +392,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </div>
                           <ChevronDown
                             size={16}
-                            className={`transition-transform duration-200 ${expandedAccordion === item.title
+                            className={`transition-transform duration-200 ${
+                              expandedAccordion === item.title
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         </SidebarMenuButton>
 
