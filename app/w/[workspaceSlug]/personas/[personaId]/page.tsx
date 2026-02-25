@@ -9,6 +9,7 @@ import { usePersona } from "@/hooks/use-personas";
 import { PersonaDetail } from "@/components/personas/persona-detail";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import type { Route } from "next";
 // import { DeletePersonaDialog } from "@/components/personas/delete-persona-dialog"; // Assume checking if this exists or needing to import
 
 export default function PersonaDetailPage() {
@@ -50,7 +51,7 @@ export default function PersonaDetailPage() {
             permission to view it.
           </p>
 
-          <Link href={`/w/${workspaceSlug}/personas`}>
+          <Link href={`/w/${workspaceSlug}/personas` as Route}>
             <Button
               variant="outline"
               className="h-10 px-4 rounded-xl border-slate-200"
@@ -71,7 +72,7 @@ export default function PersonaDetailPage() {
       fullWidth
       actions={
         <div className="flex gap-2">
-          <Link href={`/w/${workspaceSlug}/personas`}>
+          <Link href={`/w/${workspaceSlug}/personas` as Route}>
             <Button variant="default" size="sm">
               <ArrowLeft size={16} className="mr-2" />
               Back to Personas

@@ -14,6 +14,7 @@ import { PageLoader } from "@/components/ui/loading-states";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import type { Route } from "next";
 
 export default function DashboardPage() {
   // Auto-select workspace on load
@@ -28,7 +29,7 @@ export default function DashboardPage() {
   // Redirect to workspace creation if no workspaces exist
   useEffect(() => {
     if (!isLoadingWorkspaces && !hasWorkspaces) {
-      router.push("/w/create");
+      router.push("/w/create" as Route);
     }
   }, [isLoadingWorkspaces, hasWorkspaces, router]);
 

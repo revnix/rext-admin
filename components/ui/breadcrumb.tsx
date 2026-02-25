@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import type { Route } from "next";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
@@ -45,7 +46,7 @@ const BreadcrumbLink = React.forwardRef<
   if (href) {
     return (
       <Link
-        href={href}
+        href={href as Route}
         className={cn(
           "hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5",
           className,
@@ -155,7 +156,7 @@ export function Breadcrumbs({
           <span key={`${item.label}-${index}`} className="contents">
             <BreadcrumbItem>
               {item.href ? (
-                <BreadcrumbLink href={item.href}>
+                <BreadcrumbLink href={item.href as Route}>
                   {item.icon}
                   {item.label}
                 </BreadcrumbLink>

@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 const USAGE_READ = "usage.read";
 
@@ -88,7 +89,10 @@ export default function UsagePage() {
                   <span className="font-semibold">usage.read</span>
                 </p>
               </div>
-              <Button onClick={() => router.push("/")} variant="outline">
+              <Button
+                onClick={() => router.push("/" as Route)}
+                variant="outline"
+              >
                 Return to Dashboard
               </Button>
             </CardContent>

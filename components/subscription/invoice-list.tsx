@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 export interface InvoiceListProps {
   /** Additional CSS classes */
@@ -183,7 +184,7 @@ export function InvoiceList({
                       className="hidden sm:inline-flex"
                     >
                       <a
-                        href={invoice.invoice_url}
+                        href={invoice.invoice_url as Route}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -194,7 +195,7 @@ export function InvoiceList({
 
                     <Button variant="ghost" size="sm" asChild>
                       <a
-                        href={invoice.invoice_url}
+                        href={invoice.invoice_url as Route}
                         target="_blank"
                         rel="noopener noreferrer"
                         download

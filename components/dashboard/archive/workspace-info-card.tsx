@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 interface WorkspaceInfoCardProps {
   workspace: Workspace | null;
@@ -102,7 +103,7 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
             <div className="flex items-start gap-2">
               <Globe className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
               <a
-                href={workspace.url}
+                href={workspace.url as Route}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors truncate flex items-center gap-1"
@@ -126,7 +127,7 @@ export function WorkspaceInfoCard({ workspace }: WorkspaceInfoCardProps) {
         <div className="space-y-2">
           {!isPermLoading && canUpdateWorkspace && (
             <Button asChild variant="outline" size="sm" className="w-full">
-              <Link href={`/w/${workspace.slug}/settings`}>
+              <Link href={`/w/${workspace.slug}/settings` as Route}>
                 <Settings className="h-4 w-4 mr-2" />
                 Workspace Settings
               </Link>

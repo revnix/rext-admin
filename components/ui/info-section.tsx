@@ -13,6 +13,7 @@ import {
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type { InfoItem, InfoSectionProps } from "@/types/detail-page";
+import type { Route } from "next";
 
 const infoSectionVariants = cva("space-y-4", {
   variants: {
@@ -101,7 +102,7 @@ const InfoSection = React.forwardRef<HTMLDivElement, InfoSectionComponentProps>(
               <div className="text-sm font-semibold text-foreground text-right min-w-0 flex-1">
                 {isLink ? (
                   <a
-                    href={item.href}
+                    href={item.href as Route}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2 decoration-1"

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useIsAdmin } from "@/hooks/use-permission";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import type { Route } from "next";
 
 /**
  * Admin layout with role-based access control
@@ -25,13 +26,13 @@ export default function AdminLayout({
 
     // Redirect if not authenticated
     if (status === "unauthenticated") {
-      router.push("/login");
+      router.push("/login" as Route);
       return;
     }
 
     // Redirect if not admin
     if (status === "authenticated" && !isAdmin) {
-      router.push("/");
+      router.push("/" as Route);
     }
   }, [status, isAdmin, router]);
 

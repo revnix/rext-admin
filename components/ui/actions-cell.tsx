@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { RowAction } from "@/types/data-table";
+import type { Route } from "next";
 
 interface ActionsCellProps<
   T extends Record<string, unknown> = Record<string, unknown>,
@@ -143,7 +144,7 @@ export function ActionsCell<
             asChild
             className={getButtonClassName()}
           >
-            <Link href={href}>{buttonContent}</Link>
+            <Link href={href as Route}>{buttonContent}</Link>
           </Button>
         ) : (
           <Button

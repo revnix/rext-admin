@@ -21,6 +21,7 @@ import { useWorkspacePermission } from "@/hooks/use-permission";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 /**
  * ✅ Improved version:
@@ -90,7 +91,7 @@ export default function WorkspaceContentPage() {
   const headerActions = canCreateContent ? (
     <div className="flex items-center gap-2">
       <Button asChild>
-        <Link href={workspaceRoutes.generate_content(workspaceSlug)}>
+        <Link href={workspaceRoutes.generate_content(workspaceSlug) as Route}>
           <Plus className="h-4 w-4 mr-2" />
           Generate Content
         </Link>
@@ -185,7 +186,9 @@ export default function WorkspaceContentPage() {
                 {canCreateContent && (
                   <Button asChild className="mt-6">
                     <Link
-                      href={workspaceRoutes.generate_content(workspaceSlug)}
+                      href={
+                        workspaceRoutes.generate_content(workspaceSlug) as Route
+                      }
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Generate Content

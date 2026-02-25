@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { usePermission } from "@/hooks/use-permission";
+import type { Route } from "next";
 
 /**
  * Create Workspace Page
@@ -46,7 +47,7 @@ export default function CreateWorkspacePage() {
     if (!canCreateWorkspace) {
       // Don't redirect immediately to avoid flash
       const timer = setTimeout(() => {
-        router.push("/");
+        router.push("/" as Route);
       }, 100);
       return () => clearTimeout(timer);
     }

@@ -20,6 +20,7 @@ import {
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 interface WorkspaceEmptyStateProps {
   workspace: Workspace;
@@ -178,7 +179,7 @@ function ActionCard({
 
   return (
     <Card className="group hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer">
-      <Link href={action.href} onClick={handleClick}>
+      <Link href={action.href as Route} onClick={handleClick}>
         <CardContent className="p-6 space-y-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
             {action.icon}

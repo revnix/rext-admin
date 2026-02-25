@@ -53,6 +53,7 @@ import type { BackendError } from "@/types/backend";
 import { type TopicEditFormData, topicEditFormSchema } from "@/types/forms";
 import type { GeneratedTopic } from "@/types/topic-builder";
 import { SuccessConfirmationDialog } from "./SuccessConfirmationDialog";
+import type { Route } from "next";
 
 interface TopicActionsProps {
   topic: GeneratedTopic;
@@ -330,7 +331,7 @@ export function TopicActions({
           throw new Error("No workspace selected");
         }
         router.push(
-          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topic.id}`,
+          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topic.id}` as Route,
         );
         setSuccess("navigatingToContent", "Navigating to content creation...");
       } catch (error) {

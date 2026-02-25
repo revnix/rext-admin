@@ -69,6 +69,7 @@ interface PageLayoutProps {
 }
 
 import type { UserProfile } from "@/types/profile";
+import type { Route } from "next";
 
 export function PageLayout({
   title,
@@ -256,7 +257,7 @@ export function PageLayout({
                           router.push(
                             workspaceRoutes.settings.root(
                               currentWorkspace.slug,
-                            ),
+                            ) as Route,
                           )
                         }
                       >
@@ -268,7 +269,9 @@ export function PageLayout({
                         className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                         onClick={() =>
                           router.push(
-                            workspaceRoutes.members(currentWorkspace.slug),
+                            workspaceRoutes.members(
+                              currentWorkspace.slug,
+                            ) as Route,
                           )
                         }
                       >
@@ -281,7 +284,7 @@ export function PageLayout({
                   {hasWorkspaces ? (
                     <DropdownMenuItem
                       className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
-                      onClick={() => router.push("/")}
+                      onClick={() => router.push("/" as Route)}
                     >
                       <ArrowLeftRight className="mr-2 h-4 w-4" />
                       <span>Switch Workspace</span>
@@ -289,7 +292,7 @@ export function PageLayout({
                   ) : (
                     <DropdownMenuItem
                       className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
-                      onClick={() => router.push("/w/create")}
+                      onClick={() => router.push("/w/create" as Route)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       <span>Create Workspace</span>
@@ -440,7 +443,9 @@ export function PageLayout({
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings/subscription")}
+                    onClick={() =>
+                      router.push("/settings/subscription" as Route)
+                    }
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <div className="flex items-center justify-center h-5 w-5 rounded-md bg-violet-50 mr-2">
@@ -452,21 +457,21 @@ export function PageLayout({
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings")}
+                    onClick={() => router.push("/settings" as Route)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <BadgeCheck className="mr-2 h-4 w-4" />
                     <span>Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings/billing")}
+                    onClick={() => router.push("/settings/billing" as Route)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
                     <span>Billing</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push("/settings/security")}
+                    onClick={() => router.push("/settings/security" as Route)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <Bell className="mr-2 h-4 w-4" />
