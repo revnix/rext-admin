@@ -20,6 +20,7 @@ const profileEnvelopeSchema = z.object({
     timezone: z.string(),
     status: z.string(),
     email_verified: z.boolean(),
+    two_factor_enabled: z.boolean().nullable().optional(),
     avatar_url: z.string().nullable().optional(),
     created_at: z.string().nullable(),
     updated_at: z.string().nullable(),

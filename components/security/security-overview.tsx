@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Clock, Mail, Shield } from "lucide-react";
+import { Clock, Mail, Shield, ShieldCheck } from "lucide-react";
 import { OAuthAccounts } from "@/components/account-settings/oauth-accounts";
 import { PasswordChange } from "@/components/account-settings/password-change";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -68,6 +68,28 @@ export function SecurityOverview() {
         : "Unknown",
       description: "Current status of your account",
       status: profile.status === "active" ? "success" : "warning",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Two-Factor Authentication",
+      value:
+        profile.two_factor_enabled === true
+          ? "Enabled"
+          : profile.two_factor_enabled === false
+            ? "Not enabled"
+            : "Unavailable",
+      description:
+        profile.two_factor_enabled === true
+          ? "Your account requires a second authentication factor"
+          : profile.two_factor_enabled === false
+            ? "Enable 2FA to add stronger account protection"
+            : "2FA status is not available from the current profile API",
+      status:
+        profile.two_factor_enabled === true
+          ? "success"
+          : profile.two_factor_enabled === false
+            ? "warning"
+            : "info",
     },
     {
       icon: Clock,
