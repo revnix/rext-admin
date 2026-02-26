@@ -31,6 +31,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { profileQueries } from "@/lib/query-keys";
+import {
+  PROFILE_LANGUAGE_OPTIONS,
+  PROFILE_TIMEZONE_OPTIONS,
+} from "@/lib/constants/localization";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -404,10 +408,11 @@ export function ProfileEdit() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
+                        {PROFILE_LANGUAGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -434,22 +439,11 @@ export function ProfileEdit() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="America/New_York">
-                          Eastern Time
-                        </SelectItem>
-                        <SelectItem value="America/Chicago">
-                          Central Time
-                        </SelectItem>
-                        <SelectItem value="America/Denver">
-                          Mountain Time
-                        </SelectItem>
-                        <SelectItem value="America/Los_Angeles">
-                          Pacific Time
-                        </SelectItem>
-                        <SelectItem value="Europe/London">London</SelectItem>
-                        <SelectItem value="Europe/Paris">Paris</SelectItem>
-                        <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                        {PROFILE_TIMEZONE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
