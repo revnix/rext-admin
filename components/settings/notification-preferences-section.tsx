@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
+import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 
 /**
  * NotificationPreferencesSection Component
@@ -19,14 +20,7 @@ import { apiClient } from "@/lib/api-client";
  * in-app notifications, digest settings, and category-specific toggles.
  */
 export function NotificationPreferencesSection() {
-  const {
-    data: preferences,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["notification-preferences"],
-    queryFn: () => apiClient.notifications.getPreferences(),
-  });
+  const { data: preferences, isLoading, error } = useNotificationPreferences();
 
   if (isLoading) {
     return (

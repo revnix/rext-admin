@@ -28,9 +28,16 @@ interface NotificationPreferencesFormProps {
   initialPreferences: NotificationPreferencesApiResponse;
 }
 
+// The API returns digest fields flat at the root of data, alongside the nested
+// category objects. We extend the type locally to cover those root-level fields.
+type ApiResponseWithDigest = NotificationPreferencesApiResponse & {
+  digest_enabled?: boolean;
+  digest_frequency?: "daily" | "weekly" | "monthly";
+};
+
 // Transform API response to form structure
 export function transformApiToFormData(
-  apiData: NotificationPreferencesApiResponse,
+  apiData: ApiResponseWithDigest,
 ): NotificationPreferences {
   return {
     // Workspace notifications
@@ -64,9 +71,9 @@ export function transformApiToFormData(
       apiData.knowledge_base?.processing_completed ?? false,
     kb_processing_failed: apiData.knowledge_base?.processing_failed ?? false,
 
-    // Email digest
-    digest_enabled: apiData.email_digest?.enabled ?? false,
-    digest_frequency: apiData.email_digest?.frequency ?? "daily",
+    // Email digest — API returns these flat at root level, not inside email_digest
+    digest_enabled: apiData.digest_enabled ?? apiData.email_digest?.enabled ?? false,
+    digest_frequency: apiData.digest_frequency ?? apiData.email_digest?.frequency ?? "daily",
 
     // Marketing
     marketing_updates: apiData.marketing?.marketing_updates ?? false,
@@ -76,6 +83,8 @@ export function transformApiToFormData(
 export function NotificationPreferencesForm({
   initialPreferences,
 }: NotificationPreferencesFormProps) {
+  // Cast so transformApiToFormData can read root-level digest fields
+  const typedPreferences = initialPreferences as ApiResponseWithDigest;
   const [isLoading, setIsLoading] = useState(false);
   const {
     handleSubmit,
@@ -84,7 +93,7 @@ export function NotificationPreferencesForm({
     formState: { isDirty },
   } = useForm<NotificationPreferences>({
     resolver: zodResolver(notificationPreferencesSchema),
-    defaultValues: transformApiToFormData(initialPreferences),
+    defaultValues: transformApiToFormData(typedPreferences),
   });
 
   const digestEnabled = watch("digest_enabled");
