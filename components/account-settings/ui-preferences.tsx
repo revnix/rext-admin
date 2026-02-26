@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/providers/theme-provider";
 import { useTooltips } from "@/providers/tooltip-provider";
 import { useAccessibilityPreferences } from "@/hooks/use-accessibility-preferences";
+import { ThemeSelector } from "@/components/settings/theme-selector";
 
 const ACCESSIBILITY_STORAGE_KEY = "wrext-accessibility";
 
@@ -50,101 +51,7 @@ export function UIPreferences() {
   return (
     <div className="space-y-6">
       {/* Theme Preferences */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Palette className="h-5 w-5 text-primary" />
-          <div>
-            <h3 className="text-lg font-semibold">Appearance</h3>
-            <p className="text-sm text-muted-foreground">
-              Customize how REXT looks and feels for you
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Label htmlFor="theme">Theme</Label>
-          <RadioGroup
-            options={[
-              {
-                value: "light",
-                label: "Light",
-                description: "Use light theme",
-                icon: Sun,
-              },
-              {
-                value: "dark",
-                label: "Dark",
-                description: "Use dark theme",
-                icon: Moon,
-              },
-              {
-                value: "system",
-                label: "System",
-                description: "Follow system preference",
-                icon: Monitor,
-              },
-            ]}
-            value={theme}
-            onValueChange={(value) =>
-              setTheme(value as "light" | "dark" | "system")
-            }
-            columns={3}
-          />
-          <p className="text-sm text-muted-foreground">
-            Choose between light, dark, or system preference
-          </p>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Accessibility Preferences */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Accessibility className="h-5 w-5 text-primary" />
-          <div>
-            <h3 className="text-lg font-semibold">Accessibility</h3>
-            <p className="text-sm text-muted-foreground">
-              Configure accessibility options to make REXT more comfortable to
-              use
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="reduce-motion">Reduce motion</Label>
-              <p className="text-sm text-muted-foreground">
-                Minimize animations and transitions
-              </p>
-            </div>
-            <Switch
-              id="reduce-motion"
-              checked={accessibility.reduceMotion}
-              onCheckedChange={(checked) =>
-                updateAccessibility("reduceMotion", checked)
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="high-contrast">High contrast</Label>
-              <p className="text-sm text-muted-foreground">
-                Increase color contrast for better readability
-              </p>
-            </div>
-            <Switch
-              id="high-contrast"
-              checked={accessibility.highContrast}
-              onCheckedChange={(checked) =>
-                updateAccessibility("highContrast", checked)
-              }
-            />
-          </div>
-        </div>
-      </div>
+     <ThemeSelector showHeader={false} />
 
       <Separator />
 
