@@ -8,6 +8,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { detectRoleCategory } from "@/lib/role-categories";
 import Link from "next/link";
 import { useEffect } from "react";
 import {
@@ -143,7 +144,7 @@ export function WorkspaceEmptyState({
                       <p className="text-blue-700 dark:text-blue-200">
                         Don't worry! Feel free to explore and try things out.
                         Your teammates are here to help if you have questions.
-                        {userRole?.toLowerCase().includes("viewer") &&
+                        {detectRoleCategory(userRole || "") === "viewer" &&
                           " As a viewer, you can browse everything without making changes."}
                       </p>
                     </div>
@@ -206,94 +207,94 @@ function getSuggestedActions(
   userRole: string,
   isInvitedUser: boolean,
 ): SuggestedAction[] {
-  const normalizedRole = userRole.toLowerCase();
+  const category = detectRoleCategory(userRole);
 
-  // Owner/Admin actions
-  if (normalizedRole.includes("owner") || normalizedRole.includes("admin")) {
-    return [
-      {
-        icon: <Users className="h-6 w-6" />,
-        title: "Invite Team Members",
-        description: "Build your team by inviting colleagues to collaborate",
-        href: `/w/${workspaceSlug}/settings/members`,
-        variant: "default",
-        show: true,
-      },
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Create Content",
-        description: "Start creating your first piece of content",
-        href: `/w/${workspaceSlug}/content/create`,
-        variant: "default",
-        show: true,
-      },
-      {
-        icon: <BookOpen className="h-6 w-6" />,
-        title: "Add Knowledge",
-        description:
-          "Build your knowledge base with resources and documentation",
-        href: `/w/${workspaceSlug}/knowledge`,
-        variant: "outline",
-        show: true,
-      },
-    ];
+  switch (category) {
+    case "owner":
+    case "admin":
+      return [
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "Invite Team Members",
+          description: "Build your team by inviting colleagues to collaborate",
+          href: `/w/${workspaceSlug}/settings/members`,
+          variant: "default",
+          show: true,
+        },
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Create Content",
+          description: "Start creating your first piece of content",
+          href: `/w/${workspaceSlug}/content/create`,
+          variant: "default",
+          show: true,
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Add Knowledge",
+          description:
+            "Build your knowledge base with resources and documentation",
+          href: `/w/${workspaceSlug}/knowledge`,
+          variant: "outline",
+          show: true,
+        },
+      ];
+
+    case "editor":
+      return [
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Create Your First Content",
+          description: "Start contributing by creating a piece of content",
+          href: `/w/${workspaceSlug}/content/create`,
+          variant: "default",
+          show: true,
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Explore Knowledge Base",
+          description: "Browse existing resources and documentation",
+          href: `/w/${workspaceSlug}/knowledge`,
+          variant: "outline",
+          show: true,
+        },
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "Meet Your Team",
+          description: "See who else is in the workspace",
+          href: `/w/${workspaceSlug}/settings/members`,
+          variant: "outline",
+          show: isInvitedUser,
+        },
+      ];
+
+    case "viewer":
+    default:
+      return [
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Browse Content",
+          description: "Explore content created by your team",
+          href: `/w/${workspaceSlug}/content`,
+          variant: "default",
+          show: true,
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "View Knowledge Base",
+          description: "Access workspace resources and documentation",
+          href: `/w/${workspaceSlug}/knowledge`,
+          variant: "outline",
+          show: true,
+        },
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "See Team Members",
+          description: "View who's in your workspace",
+          href: `/w/${workspaceSlug}/settings/members`,
+          variant: "outline",
+          show: isInvitedUser,
+        },
+      ];
   }
-
-  // Editor/Manager actions
-  if (normalizedRole.includes("editor") || normalizedRole.includes("manager")) {
-    return [
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Create Your First Content",
-        description: "Start contributing by creating a piece of content",
-        href: `/w/${workspaceSlug}/content/create`,
-        variant: "default",
-        show: true,
-      },
-      {
-        icon: <BookOpen className="h-6 w-6" />,
-        title: "Explore Knowledge Base",
-        description: "Browse existing resources and documentation",
-        href: `/w/${workspaceSlug}/knowledge`,
-        variant: "outline",
-        show: true,
-      },
-      {
-        icon: <Users className="h-6 w-6" />,
-        title: "Meet Your Team",
-        description: "See who else is in the workspace",
-        href: `/w/${workspaceSlug}/settings/members`,
-        variant: "outline",
-        show: isInvitedUser,
-      },
-    ];
-  }
-
-  // Viewer/Member actions (read-only)
-  return [
-    {
-      icon: <FileText className="h-6 w-6" />,
-      title: "Browse Content",
-      description: "Explore content created by your team",
-      href: `/w/${workspaceSlug}/content`,
-      variant: "default",
-      show: true,
-    },
-    {
-      icon: <BookOpen className="h-6 w-6" />,
-      title: "View Knowledge Base",
-      description: "Access workspace resources and documentation",
-      href: `/w/${workspaceSlug}/knowledge`,
-      variant: "outline",
-      show: true,
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      title: "See Team Members",
-      description: "View who's in your workspace",
-      href: `/w/${workspaceSlug}/settings/members`,
-      variant: "outline",
-      show: isInvitedUser,
-    },
-  ];
 }

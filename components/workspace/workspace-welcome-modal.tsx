@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Building2, Check, Sparkles, User, X } from "lucide-react";
+import { detectRoleCategory } from "@/lib/role-categories";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -299,42 +300,39 @@ function ConfettiEffect() {
  * Get default permissions display based on role name
  */
 function getDefaultPermissions(roleName: string): string[] {
-  const normalizedRole = roleName.toLowerCase();
+  const category = detectRoleCategory(roleName);
 
-  if (normalizedRole.includes("owner")) {
-    return [
-      "Manage all workspace content and settings",
-      "Invite and manage team members",
-      "Configure workspace billing and subscription",
-      "Full administrative access to everything",
-    ];
+  switch (category) {
+    case "owner":
+      return [
+        "Manage all workspace content and settings",
+        "Invite and manage team members",
+        "Configure workspace billing and subscription",
+        "Full administrative control",
+      ];
+    case "admin":
+      return [
+        "Create, edit, and delete all content",
+        "Manage team members and roles",
+        "Configure workspace settings",
+        "No billing access (owner only)",
+      ];
+    case "editor":
+      return [
+        "Create and edit content",
+        "Manage topics and knowledge base",
+        "Collaborate with team members",
+        "No team management access",
+      ];
+    case "viewer":
+    default:
+      return [
+        "View all workspace content",
+        "Browse knowledge base",
+        "See team member profiles",
+        "Read-only access",
+      ];
   }
-
-  if (normalizedRole.includes("admin")) {
-    return [
-      "Create, edit, and delete all content",
-      "Manage team members and roles",
-      "Configure workspace settings",
-      "Access all workspace features",
-    ];
-  }
-
-  if (normalizedRole.includes("editor") || normalizedRole.includes("manager")) {
-    return [
-      "Create and edit content",
-      "Manage topics and knowledge base",
-      "Collaborate with team members",
-      "Access most workspace features",
-    ];
-  }
-
-  // Viewer/Member
-  return [
-    "Browse and read all content",
-    "Access the knowledge base",
-    "View team members and activity",
-    "Search and discover resources",
-  ];
 }
 
 /**
