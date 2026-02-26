@@ -8,40 +8,22 @@ import {
   Palette,
   Sun,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/providers/theme-provider";
 import { useTooltips } from "@/providers/tooltip-provider";
-import { safeJsonParse } from "@/lib/utils";
-
-interface AccessibilityPreferences {
-  reduceMotion: boolean;
-  highContrast: boolean;
-}
+import { useAccessibilityPreferences } from "@/hooks/use-accessibility-preferences";
 
 const ACCESSIBILITY_STORAGE_KEY = "wrext-accessibility";
 
 export function UIPreferences() {
   const { enabled, toggleTooltips } = useTooltips();
   const { theme, setTheme } = useTheme();
-  const [accessibility, setAccessibility] = useState<AccessibilityPreferences>({
-    reduceMotion: false,
-    highContrast: false,
-  });
 
-  // Load accessibility preferences from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(ACCESSIBILITY_STORAGE_KEY);
-    if (saved) {
-      const data = safeJsonParse<AccessibilityPreferences>(saved);
-      if (data) {
-        setAccessibility(data);
-      }
-    }
-  }, []);
+  const { accessibility, updateAccessibility } = useAccessibilityPreferences();
 
   // Apply accessibility preferences to document
   useEffect(() => {
@@ -64,13 +46,6 @@ export function UIPreferences() {
       JSON.stringify(accessibility),
     );
   }, [accessibility]);
-
-  const updateAccessibility = (
-    key: keyof AccessibilityPreferences,
-    value: boolean,
-  ) => {
-    setAccessibility((prev) => ({ ...prev, [key]: value }));
-  };
 
   return (
     <div className="space-y-6">
