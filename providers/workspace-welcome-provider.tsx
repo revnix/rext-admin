@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { WorkspaceWelcomeModal } from "@/components/workspace";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { safeJsonParse } from "@/lib/utils";
 
@@ -100,15 +101,23 @@ export function WorkspaceWelcomeProvider({
   return (
     <>
       {children}
-      <WorkspaceWelcomeModal
-        open={isOpen}
-        onClose={handleClose}
-        workspace={welcomeData.workspace}
-        inviterName={welcomeData.inviterName}
-        roleName={welcomeData.roleName}
-        rolePermissions={welcomeData.rolePermissions}
-        onStartTour={handleStartTour}
-      />
+      <ErrorBoundary
+        resetKeys={[
+          isOpen ? "open" : "closed",
+          welcomeData.workspace.id,
+          welcomeData.roleName,
+        ]}
+      >
+        <WorkspaceWelcomeModal
+          open={isOpen}
+          onClose={handleClose}
+          workspace={welcomeData.workspace}
+          inviterName={welcomeData.inviterName}
+          roleName={welcomeData.roleName}
+          rolePermissions={welcomeData.rolePermissions}
+          onStartTour={handleStartTour}
+        />
+      </ErrorBoundary>
     </>
   );
 }

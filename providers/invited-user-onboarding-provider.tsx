@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { InvitedUserOnboardingModal } from "@/components/onboarding/invited-user-onboarding-modal";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useInvitedUserOnboarding } from "@/hooks/use-invited-user-onboarding";
 
 interface InvitedUserOnboardingProviderProps {
@@ -84,14 +85,22 @@ export function InvitedUserOnboardingProvider({
     <>
       {children}
       {!isLoading && (
-        <InvitedUserOnboardingModal
-          open={isOpen}
-          onClose={handleClose}
-          workspace={invitationContext.workspace}
-          inviterName={invitationContext.inviterName}
-          roleName={invitationContext.roleName}
-          roleDescription={invitationContext.roleDescription}
-        />
+        <ErrorBoundary
+          resetKeys={[
+            isOpen ? "open" : "closed",
+            invitationContext.workspace.id,
+            invitationContext.roleName,
+          ]}
+        >
+          <InvitedUserOnboardingModal
+            open={isOpen}
+            onClose={handleClose}
+            workspace={invitationContext.workspace}
+            inviterName={invitationContext.inviterName}
+            roleName={invitationContext.roleName}
+            roleDescription={invitationContext.roleDescription}
+          />
+        </ErrorBoundary>
       )}
     </>
   );
