@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { UserProfile } from "@/types/profile";
+import { settingsRoutes } from "@/lib/routes";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -30,11 +31,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -209,19 +206,22 @@ export function NavUser() {
                 <span className="truncate text-xs">{userEmail}</span>
 
                 {userRole && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <TruncatedTooltipText
+                    trigger={
                       <span className="truncate text-[10px] text-muted-foreground cursor-help">
                         {userRole}
                       </span>
-                    </TooltipTrigger>
-
-                    <TooltipContent side="right">
-                      This is your current role
-                      {currentWorkspace?.name && ` in ${currentWorkspace.name}`}
-                      .
-                    </TooltipContent>
-                  </Tooltip>
+                    }
+                    content={
+                      <>
+                        This is your current role
+                        {currentWorkspace?.name &&
+                          ` in ${currentWorkspace.name}`}
+                        .
+                      </>
+                    }
+                    side="right"
+                  />
                 )}
               </div>
 
@@ -258,19 +258,22 @@ export function NavUser() {
                   <span className="truncate text-xs">{userEmail}</span>
 
                   {userRole && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                    <TruncatedTooltipText
+                      trigger={
                         <span className="truncate text-[10px] text-muted-foreground cursor-help">
                           {userRole}
                         </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        This is your current role
-                        {currentWorkspace?.name &&
-                          ` in ${currentWorkspace.name}`}
-                        . It determines what you can do here.
-                      </TooltipContent>
-                    </Tooltip>
+                      }
+                      content={
+                        <>
+                          This is your current role
+                          {currentWorkspace?.name &&
+                            ` in ${currentWorkspace.name}`}
+                          . It determines what you can do here.
+                        </>
+                      }
+                      side="right"
+                    />
                   )}
                 </div>
               </div>
@@ -280,7 +283,7 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/subscription" as Route)}
+                onClick={() => router.push(settingsRoutes.subscription)}
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -291,19 +294,19 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/settings" as Route)}
+                onClick={() => router.push(settingsRoutes.root)}
               >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/billing" as Route)}
+                onClick={() => router.push(settingsRoutes.billing)}
               >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/security" as Route)}
+                onClick={() => router.push(settingsRoutes.security)}
               >
                 <Bell />
                 Security

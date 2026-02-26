@@ -176,7 +176,8 @@ export function FreshGenerationView({
         dispatch({ type: "ADD_COMPLETED_NODE", payload: finishedNode });
       }
 
-      // Add a small delay to allow the user to see the final step completion
+      // Intentional UX hold: lets the user see the final completed loading step
+      // before the loading UI dismisses. NOT waiting on external async state.
       await new Promise((resolve) => setTimeout(resolve, 1500));
       dispatch({ type: "SET_MANUAL_LOADING", payload: false });
       dispatch({ type: "SET_LOADING_STATUS", payload: "" });

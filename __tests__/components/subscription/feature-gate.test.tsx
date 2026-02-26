@@ -145,6 +145,7 @@ describe("FeatureGate", () => {
     it("should grant access when user is on required plan", () => {
       const subscription = createMockUserSubscription({
         plan_name: "pro",
+        plan_features: { test_feature: true },
       });
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
@@ -164,6 +165,7 @@ describe("FeatureGate", () => {
     it("should deny access when user is on wrong plan", () => {
       const subscription = createMockUserSubscription({
         plan_name: "free",
+        plan_features: { test_feature: true },
       });
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
@@ -184,6 +186,7 @@ describe("FeatureGate", () => {
     it("should grant access when user is on one of multiple required plans", () => {
       const subscription = createMockUserSubscription({
         plan_name: "enterprise",
+        plan_features: { test_feature: true },
       });
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
@@ -422,7 +425,7 @@ describe("FeatureGate", () => {
   });
 
   describe("Default Access Behavior", () => {
-    it("should grant access when feature is not found in plan features", () => {
+    it("should deny access when feature is not found in plan features", () => {
       const subscription = createMockUserSubscription({
         plan_features: {},
       });
@@ -438,7 +441,8 @@ describe("FeatureGate", () => {
         </FeatureGate>,
       );
 
-      expect(screen.getByText("Content")).toBeInTheDocument();
+      expect(screen.queryByText("Content")).not.toBeInTheDocument();
+      expect(screen.getByText(/upgrade required/i)).toBeInTheDocument();
     });
   });
 });
@@ -506,6 +510,20 @@ describe("useFeatureAccess Hook", () => {
     });
 
     render(<TestComponent feature="test_feature" />);
+    expect(screen.getByText("Access Denied")).toBeInTheDocument();
+  });
+
+  it("should return false when feature is not found in plan features", () => {
+    const subscription = createMockUserSubscription({
+      plan_features: {},
+    });
+
+    (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      ...mockStore,
+      subscription,
+    });
+
+    render(<TestComponent feature="nonexistent_feature" />);
     expect(screen.getByText("Access Denied")).toBeInTheDocument();
   });
 

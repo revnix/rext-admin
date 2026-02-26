@@ -7,6 +7,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  typedRoutes: true,
   // ============================================================================
   // 1. PACKAGE IMPORT OPTIMIZATION
   // ============================================================================

@@ -37,7 +37,7 @@ import {
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
+import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
@@ -177,7 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Personal",
       items: [
-        { title: "Account", url: "/settings", icon: User },
+        { title: "Account", url: settingsRoutes.root, icon: User },
         {
           title: "Subscription",
           url: "/subscription",

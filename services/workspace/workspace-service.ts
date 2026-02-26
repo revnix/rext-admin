@@ -33,8 +33,8 @@ import {
   BaseWorkspaceService,
   WorkspaceApiError,
 } from "./base-workspace-service";
-import { WORKSPACE_CONSTRAINTS } from "@/schemas/workspace-schemas";
 import { WorkspaceServiceError } from ".";
+import { VALIDATION_MESSAGES } from "./validation-messages";
 
 // ============================================================================
 // ERROR HANDLING
@@ -87,9 +87,9 @@ export class WorkspaceService extends BaseWorkspaceService {
    */
   async getWorkspaceBySlug(workspaceSlug: string): Promise<WorkspaceResponse> {
     if (!/^[a-z0-9-]+$/.test(workspaceSlug)) {
-      throw new WorkspaceApiError(
+      throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        "Invalid workspace slug format",
+        VALIDATION_MESSAGES.INVALID_SLUG_FORMAT,
         { slug: workspaceSlug },
       );
     }
@@ -333,45 +333,57 @@ export class WorkspaceService extends BaseWorkspaceService {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!id || !uuidRegex.test(id)) {
-      throw new WorkspaceApiError(
+      throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        `Invalid ${fieldName}: must be a valid UUID`,
+        VALIDATION_MESSAGES.INVALID_UUID(fieldName),
       );
     }
   }
 
   protected validateWorkspaceData(data: CreateWorkspaceRequest): void {
     if (!data.name || data.name.trim().length === 0) {
-      throw new WorkspaceServiceError("INVALID_REQUEST", "Title is required");
-    }
-
-    if (data.name.length > WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        `Title must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
+        VALIDATION_MESSAGES.TITLE_REQUIRED,
+      );
+    }
+
+    if (data.name.length > 200) {
+      throw new WorkspaceServiceError(
+        "INVALID_REQUEST",
+        VALIDATION_MESSAGES.TITLE_MAX_LENGTH(200),
       );
     }
 
     if (!data.url || !this.isValidUrl(data.url)) {
-      throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceServiceError(
+        "INVALID_URL",
+        VALIDATION_MESSAGES.URL_REQUIRED,
+      );
     }
   }
 
   protected validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
     if (data.name !== undefined) {
       if (!data.name || data.name.trim().length === 0) {
-        throw new WorkspaceApiError("INVALID_REQUEST", "Name cannot be empty");
+        throw new WorkspaceServiceError(
+          "INVALID_REQUEST",
+          VALIDATION_MESSAGES.TITLE_REQUIRED, // Now consistent with create
+        );
       }
       if (data.name.length > 200) {
-        throw new WorkspaceApiError(
+        throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          "Name must be 200 characters or less",
+          VALIDATION_MESSAGES.TITLE_MAX_LENGTH(200),
         );
       }
     }
 
     if (data.url !== undefined && !this.isValidUrl(data.url)) {
-      throw new WorkspaceApiError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceServiceError(
+        "INVALID_URL",
+        VALIDATION_MESSAGES.URL_REQUIRED,
+      );
     }
   }
 
