@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Users,
 } from "lucide-react";
+import { detectRoleCategory } from "@/lib/role-categories";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -157,7 +158,7 @@ export function InvitedUserQuickTour({
  * Generate role-specific tour items
  */
 function getRoleTourItems(roleName: string): TourItem[] {
-  const normalizedRole = roleName.toLowerCase();
+  const category = detectRoleCategory(roleName);
 
   // Base items everyone sees
   const baseItems: TourItem[] = [
@@ -176,74 +177,73 @@ function getRoleTourItems(roleName: string): TourItem[] {
     },
   ];
 
-  // Role-specific items
-  if (normalizedRole.includes("owner") || normalizedRole.includes("admin")) {
-    return [
-      ...baseItems,
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Content Management",
-        description:
-          "Create, edit, and organize all workspace content and topics",
-        highlight: true,
-      },
-      {
-        icon: <Users className="h-6 w-6" />,
-        title: "Team Management",
-        description:
-          "Invite new members, manage roles, and configure permissions",
-        highlight: false,
-      },
-      {
-        icon: <BookOpen className="h-6 w-6" />,
-        title: "Knowledge Base",
-        description: "Build and maintain your workspace's knowledge repository",
-        highlight: false,
-      },
-    ];
+  switch (category) {
+    case "owner":
+    case "admin":
+      return [
+        ...baseItems,
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Content Management",
+          description:
+            "Create, edit, and organize all workspace content and topics",
+          highlight: true,
+        },
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "Team Management",
+          description:
+            "Invite new members, manage roles, and configure permissions",
+          highlight: false,
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Knowledge Base",
+          description: "Build and maintain your workspace's knowledge repository",
+          highlight: false,
+        },
+      ];
+    case "editor":
+      return [
+        ...baseItems,
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Content Creation",
+          description:
+            "Create and edit content, organize topics, and collaborate with your team",
+          highlight: true,
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Knowledge Base",
+          description:
+            "Access and contribute to the workspace knowledge repository",
+          highlight: false,
+        },
+        {
+          icon: <MessageSquare className="h-6 w-6" />,
+          title: "Collaboration",
+          description: "Share ideas and get feedback from team members",
+          highlight: false,
+        },
+      ];
+    case "viewer":
+    default:
+      return [
+        ...baseItems,
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Browse Content",
+          description:
+            "Explore all workspace content and stay up-to-date with the team",
+          highlight: true,
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Knowledge Base",
+          description: "Access the workspace knowledge base and documentation",
+          highlight: false,
+        },
+      ];
   }
-
-  if (normalizedRole.includes("editor") || normalizedRole.includes("manager")) {
-    return [
-      ...baseItems,
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Content Creation",
-        description:
-          "Create and edit content, organize topics, and collaborate with your team",
-        highlight: true,
-      },
-      {
-        icon: <BookOpen className="h-6 w-6" />,
-        title: "Knowledge Base",
-        description:
-          "Access and contribute to the workspace knowledge repository",
-        highlight: false,
-      },
-      {
-        icon: <MessageSquare className="h-6 w-6" />,
-        title: "Collaboration",
-        description: "Share ideas and get feedback from team members",
-        highlight: false,
-      },
-    ];
-  }
-
-  // Viewer/Member (default)
-  return [
-    ...baseItems,
-    {
-      icon: <FileText className="h-6 w-6" />,
-      title: "Browse Content",
-      description:
-        "Explore all workspace content and stay up-to-date with the team",
-      highlight: true,
-    },
-    {
-      icon: <BookOpen className="h-6 w-6" />,
-      title: "Knowledge Base",
-      description: "Access the workspace knowledge base and documentation",
-      highlight: false,
-    },
-  ];
 }

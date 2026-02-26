@@ -65,20 +65,18 @@ export function InvitedUserPermissions({
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
             <Card
-              className={`h-full transition-colors ${
-                permission.allowed
+              className={`h-full transition-colors ${permission.allowed
                   ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20"
                   : "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20"
-              }`}
+                }`}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                      permission.allowed
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${permission.allowed
                         ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
                         : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                    }`}
+                      }`}
                   >
                     {permission.icon}
                   </div>
@@ -142,127 +140,137 @@ export function InvitedUserPermissions({
 }
 
 /**
+ * Helper function to detect the category of a role based on its name.
+ */
+function detectRoleCategory(roleName: string): "owner" | "admin" | "editor" | "viewer" {
+  const normalizedRole = roleName.toLowerCase();
+  if (normalizedRole.includes("owner")) {
+    return "owner";
+  }
+  if (normalizedRole.includes("admin")) {
+    return "admin";
+  }
+  if (normalizedRole.includes("editor") || normalizedRole.includes("manager")) {
+    return "editor";
+  }
+  return "viewer"; // Default to viewer
+}
+
+/**
  * Helper function to generate role-based permissions
  * Maps common role types to permission sets
  */
 export function getRolePermissions(roleName: string): Permission[] {
-  const normalizedRole = roleName.toLowerCase();
+  const category = detectRoleCategory(roleName);
 
-  // Owner permissions
-  if (normalizedRole.includes("owner")) {
-    return [
-      {
-        name: "Manage Content",
-        description: "Create, edit, and delete all content",
-        allowed: true,
-        icon: <FileText className="h-5 w-5" />,
-      },
-      {
-        name: "Manage Team",
-        description: "Invite and manage team members",
-        allowed: true,
-        icon: <Users className="h-5 w-5" />,
-      },
-      {
-        name: "Workspace Settings",
-        description: "Configure workspace and billing",
-        allowed: true,
-        icon: <Settings className="h-5 w-5" />,
-      },
-      {
-        name: "Full Access",
-        description: "Complete control over the workspace",
-        allowed: true,
-        icon: <Shield className="h-5 w-5" />,
-      },
-    ];
+  switch (category) {
+    case "owner":
+      return [
+        {
+          name: "Manage Content",
+          description: "Create, edit, and delete all content",
+          allowed: true,
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          name: "Manage Team",
+          description: "Invite and manage team members",
+          allowed: true,
+          icon: <Users className="h-5 w-5" />,
+        },
+        {
+          name: "Workspace Settings",
+          description: "Configure workspace and billing",
+          allowed: true,
+          icon: <Settings className="h-5 w-5" />,
+        },
+        {
+          name: "Full Access",
+          description: "Complete control over the workspace",
+          allowed: true,
+          icon: <Shield className="h-5 w-5" />,
+        },
+      ];
+    case "admin":
+      return [
+        {
+          name: "Manage Content",
+          description: "Create, edit, and delete all content",
+          allowed: true,
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          name: "Manage Team",
+          description: "Invite and manage team members",
+          allowed: true,
+          icon: <Users className="h-5 w-5" />,
+        },
+        {
+          name: "Workspace Settings",
+          description: "Configure workspace settings",
+          allowed: true,
+          icon: <Settings className="h-5 w-5" />,
+        },
+        {
+          name: "No Billing Access",
+          description: "Billing is managed by workspace owner",
+          allowed: false,
+          icon: <Shield className="h-5 w-5" />,
+        },
+      ];
+    case "editor":
+      return [
+        {
+          name: "Create Content",
+          description: "Create and edit your own content",
+          allowed: true,
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          name: "Manage Topics",
+          description: "Create and organize content topics",
+          allowed: true,
+          icon: <Settings className="h-5 w-5" />,
+        },
+        {
+          name: "View Team",
+          description: "See team members and their roles",
+          allowed: true,
+          icon: <Users className="h-5 w-5" />,
+        },
+        {
+          name: "No Team Management",
+          description: "Cannot invite or manage team members",
+          allowed: false,
+          icon: <Shield className="h-5 w-5" />,
+        },
+      ];
+    case "viewer":
+      return [
+        {
+          name: "View Content",
+          description: "Browse and read all content",
+          allowed: true,
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          name: "View Team",
+          description: "See team members and their roles",
+          allowed: true,
+          icon: <Users className="h-5 w-5" />,
+        },
+        {
+          name: "No Content Creation",
+          description: "Cannot create or edit content",
+          allowed: false,
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          name: "No Settings Access",
+          description: "Cannot modify workspace settings",
+          allowed: false,
+          icon: <Settings className="h-5 w-5" />,
+        },
+      ];
   }
-
-  // Admin permissions
-  if (normalizedRole.includes("admin")) {
-    return [
-      {
-        name: "Manage Content",
-        description: "Create, edit, and delete all content",
-        allowed: true,
-        icon: <FileText className="h-5 w-5" />,
-      },
-      {
-        name: "Manage Team",
-        description: "Invite and manage team members",
-        allowed: true,
-        icon: <Users className="h-5 w-5" />,
-      },
-      {
-        name: "Workspace Settings",
-        description: "Configure workspace settings",
-        allowed: true,
-        icon: <Settings className="h-5 w-5" />,
-      },
-      {
-        name: "Billing Access",
-        description: "Manage subscription and payments",
-        allowed: false,
-        icon: <Shield className="h-5 w-5" />,
-      },
-    ];
-  }
-
-  // Editor/Manager permissions
-  if (normalizedRole.includes("editor") || normalizedRole.includes("manager")) {
-    return [
-      {
-        name: "Create Content",
-        description: "Create and edit your own content",
-        allowed: true,
-        icon: <FileText className="h-5 w-5" />,
-      },
-      {
-        name: "Manage Topics",
-        description: "Organize and manage content topics",
-        allowed: true,
-        icon: <Settings className="h-5 w-5" />,
-      },
-      {
-        name: "View Team",
-        description: "See workspace members and activity",
-        allowed: true,
-        icon: <Users className="h-5 w-5" />,
-      },
-      {
-        name: "Manage Team",
-        description: "Invite or remove team members",
-        allowed: false,
-        icon: <Shield className="h-5 w-5" />,
-      },
-    ];
-  }
-
-  // Viewer/Member permissions (default)
-  return [
-    {
-      name: "View Content",
-      description: "Browse and read all content",
-      allowed: true,
-      icon: <FileText className="h-5 w-5" />,
-    },
-    {
-      name: "View Team",
-      description: "See workspace members",
-      allowed: true,
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      name: "Create Content",
-      description: "Create or edit content",
-      allowed: false,
-      icon: <FileText className="h-5 w-5" />,
-    },
-    {
-      name: "Manage Settings",
-      description: "Configure workspace settings",
-      allowed: false,
-      icon: <Settings className="h-5 w-5" />,
-    },
-  ];
 }

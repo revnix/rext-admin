@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Building2, Crown, Shield, UserCheck } from "lucide-react";
+import { detectRoleCategory } from "@/lib/role-categories";
+import type { RoleCategory } from "@/lib/role-categories";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Workspace } from "@/types/workspace";
@@ -29,18 +31,11 @@ export function InvitedUserWelcome({
   onSkip,
   isLoading = false,
 }: InvitedUserWelcomeProps) {
-  const getRoleIcon = (role: string) => {
-    const normalizedRole = role.toLowerCase();
-    if (normalizedRole.includes("owner") || normalizedRole.includes("admin")) {
-      return <Crown className="h-8 w-8 text-yellow-500" />;
-    }
-    if (
-      normalizedRole.includes("editor") ||
-      normalizedRole.includes("manager")
-    ) {
-      return <UserCheck className="h-8 w-8 text-blue-500" />;
-    }
-    return <Shield className="h-8 w-8 text-green-500" />;
+  const ROLE_ICONS: Record<RoleCategory, React.ReactNode> = {
+    owner: <Crown className="h-8 w-8 text-yellow-500" />,
+    admin: <Crown className="h-8 w-8 text-yellow-500" />,
+    editor: <UserCheck className="h-8 w-8 text-blue-500" />,
+    viewer: <Shield className="h-8 w-8 text-green-500" />,
   };
 
   return (
@@ -106,7 +101,7 @@ export function InvitedUserWelcome({
                   Your role
                 </p>
                 <div className="flex items-center gap-4">
-                  {getRoleIcon(roleName)}
+                  {ROLE_ICONS[detectRoleCategory(roleName)]}
                   <div className="flex-1">
                     <p className="text-lg font-semibold">{roleName}</p>
                     {roleDescription && (
