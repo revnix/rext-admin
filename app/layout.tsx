@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
 import { InvitedUserOnboardingProvider } from "@/providers/invited-user-onboarding-provider";
-import { OnboardingProvider } from "@/providers/onboarding-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -110,10 +109,10 @@ export default function RootLayout({
               <UserNotificationsListener />
               <QueryProvider>
                 <TooltipProvider>
-                  {/* Welcome modal shows first, then invited user onboarding, then regular onboarding */}
+                  {/* Welcome modal shows first, then invited user onboarding */}
                   <WorkspaceWelcomeProvider>
                     <InvitedUserOnboardingProvider>
-                      <OnboardingProvider>{children}</OnboardingProvider>
+                      {children}
                     </InvitedUserOnboardingProvider>
                   </WorkspaceWelcomeProvider>
                 </TooltipProvider>

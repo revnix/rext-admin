@@ -22,12 +22,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { usePermissionUser } from "@/hooks/use-permission";
+import type { Route } from "next";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const user = usePermissionUser();
-
-  const breadcrumbs = [{ label: "Admin" }];
 
   const adminCards = [
     {
@@ -79,11 +78,7 @@ export default function AdminDashboardPage() {
       permission={["audit.read", "user.read", "role.read", "system.manage"]}
       requireAll={false}
       fallback={
-        <PageLayout
-          title="Access Denied"
-          description="Admin access required"
-          breadcrumbs={breadcrumbs}
-        >
+        <PageLayout title="Access Denied" description="Admin access required">
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive flex items-center gap-2">
@@ -103,7 +98,10 @@ export default function AdminDashboardPage() {
                   Required: Admin or Super Admin role
                 </p>
               </div>
-              <Button onClick={() => router.push("/")} variant="outline">
+              <Button
+                onClick={() => router.push("/" as Route)}
+                variant="outline"
+              >
                 Return to Dashboard
               </Button>
             </CardContent>
@@ -114,14 +112,13 @@ export default function AdminDashboardPage() {
       <PageLayout
         title="Administration"
         description="Manage users, roles, and system settings"
-        breadcrumbs={breadcrumbs}
       >
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {adminCards.map((card) => {
               const Icon = card.icon;
               return (
-                <Link key={card.href} href={card.href}>
+                <Link key={card.href} href={card.href as Route}>
                   <Card className="hover:border-primary transition-colors cursor-pointer h-full">
                     <CardHeader>
                       <div className="flex items-center gap-3">

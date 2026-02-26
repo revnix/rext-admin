@@ -13,15 +13,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WorkspaceInvitationsPanel } from "@/components/workspace/workspace-invitations-panel";
-import { WorkspaceMembersPanel } from "@/components/workspace/workspace-members-panel";
+import {
+  WorkspaceInvitationsPanel,
+  WorkspaceMembersPanel,
+} from "@/components/workspace";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 
 export default function WorkspaceUsersPage() {
-  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "members";
 
@@ -30,15 +31,6 @@ export default function WorkspaceUsersPage() {
     WORKSPACE_PERMISSIONS.MANAGE_MEMBERS,
     workspaceId,
   );
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Members" },
-  ];
 
   // ✅ Show loader while permissions or workspace data are loading
   if (!workspace?.id || isPermissionLoading) {
@@ -56,7 +48,6 @@ export default function WorkspaceUsersPage() {
     <PageLayout
       title="Members"
       description={`Manage members and invitations for ${workspace?.name || "this workspace"}.`}
-      breadcrumbs={breadcrumbs}
     >
       <CanAccess
         permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}

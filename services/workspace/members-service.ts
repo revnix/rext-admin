@@ -7,51 +7,22 @@
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
-import { logger } from "@/lib/logger";
 import type {
   WorkspaceApiConfig,
   WorkspaceApiContext,
-  WorkspaceErrorCode,
 } from "@/types/workspace";
+import {
+  BaseWorkspaceService,
+  WorkspaceApiError,
+} from "./base-workspace-service";
+import { MembersServiceError } from ".";
+import { VALIDATION_MESSAGES } from "./validation-messages";
 
-export class MembersServiceError extends Error {
-  constructor(
-    public readonly code: WorkspaceErrorCode,
-    public readonly message: string,
-    public readonly details?: Record<string, unknown>,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "MembersServiceError";
-  }
+export { WorkspaceApiError as MembersServiceError };
 
-  static fromResponse(
-    response: unknown,
-    statusCode: number,
-  ): MembersServiceError {
-    const responseObj = response as Record<string, unknown>;
-    const code =
-      (responseObj.error_code as WorkspaceErrorCode) || "INVALID_REQUEST";
-    const message =
-      (responseObj.error as string) || "An unknown error occurred";
-    const details = (responseObj.details as Record<string, unknown>) || {};
-
-    return new MembersServiceError(code, message, details, statusCode);
-  }
-}
-
-export class MembersService {
-  private readonly config: WorkspaceApiConfig;
-  private readonly log = logger.forComponent("MembersService");
-  private readonly activeRequests = new Map<string, AbortController>();
-
+export class MembersService extends BaseWorkspaceService {
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
-    this.config = {
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024",
-      timeout: 30000,
-      enableRequestDeduplication: true,
-      ...config,
-    };
+    super("MembersService", config);
   }
 
   // ============================================================================
@@ -96,7 +67,7 @@ export class MembersService {
     if (!email || !this.isValidEmail(email)) {
       throw new MembersServiceError(
         "INVALID_REQUEST",
-        "Valid email is required",
+        VALIDATION_MESSAGES.EMAIL_REQUIRED,
       );
     }
 
@@ -169,7 +140,7 @@ export class MembersService {
     if (!data.email || !this.isValidEmail(data.email)) {
       throw new MembersServiceError(
         "INVALID_REQUEST",
-        "Valid email is required",
+        VALIDATION_MESSAGES.EMAIL_REQUIRED,
       );
     }
 
@@ -196,7 +167,7 @@ export class MembersService {
     if (!token || token.trim().length === 0) {
       throw new MembersServiceError(
         "INVALID_REQUEST",
-        "Invitation token is required",
+        VALIDATION_MESSAGES.INVITATION_TOKEN_REQUIRED,
       );
     }
 
@@ -281,20 +252,20 @@ export class MembersService {
     this.validateUuid(data.workspace_id, "workspace_id");
     this.validateUuid(data.role_id, "role_id");
 
+    // Update bulkInvite validations (around line 284):
     if (!data.emails || data.emails.length === 0) {
       throw new MembersServiceError(
         "INVALID_REQUEST",
-        "At least one email is required",
+        VALIDATION_MESSAGES.EMAILS_MIN_REQUIRED,
       );
     }
 
     if (data.emails.length > 50) {
       throw new MembersServiceError(
         "INVALID_REQUEST",
-        "Maximum 50 emails allowed per request",
+        VALIDATION_MESSAGES.EMAILS_MAX_EXCEEDED(50),
       );
     }
-
     return this.makeRequest(
       "POST",
       `/api/v1/workspaces/${data.workspace_id}/invitations/bulk`,
@@ -310,7 +281,7 @@ export class MembersService {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
-  private async makeRequest<T>(
+  protected async makeRequest<T>(
     method: string,
     endpoint: string,
     body?: unknown,
@@ -333,7 +304,7 @@ export class MembersService {
     }
   }
 
-  private async executeRequest<T>(
+  protected async executeRequest<T>(
     method: string,
     endpoint: string,
     body: unknown,
@@ -389,7 +360,7 @@ export class MembersService {
     }
   }
 
-  private async handleErrorResponse(
+  protected async handleErrorResponse(
     response: Response,
     context: WorkspaceApiContext,
     duration: number,
@@ -404,10 +375,10 @@ export class MembersService {
       errorData: sanitizeErrorForLogging(errorData),
     });
 
-    throw MembersServiceError.fromResponse(errorData, response.status);
+    throw WorkspaceApiError.fromResponse(errorData, response.status);
   }
 
-  private async handleRequestError(
+  protected async handleRequestError(
     error: unknown,
     context: WorkspaceApiContext,
     duration: number,
@@ -426,7 +397,7 @@ export class MembersService {
     throw error;
   }
 
-  private createRequestContext(requestId: string): WorkspaceApiContext {
+  protected createRequestContext(requestId: string): WorkspaceApiContext {
     return {
       requestId,
       timestamp: new Date().toISOString(),
@@ -434,13 +405,13 @@ export class MembersService {
     };
   }
 
-  private validateUuid(id: string, fieldName: string): void {
+  protected validateUuid(id: string, fieldName: string): void {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!id || !uuidRegex.test(id)) {
       throw new MembersServiceError(
         "INVALID_REQUEST",
-        `Invalid ${fieldName}: must be a valid UUID`,
+        VALIDATION_MESSAGES.INVALID_UUID(fieldName),
       );
     }
   }

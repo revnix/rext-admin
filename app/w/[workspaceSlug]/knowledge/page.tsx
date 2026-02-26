@@ -14,19 +14,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { WorkspaceCreateKnowledgeBaseDialog } from "@/components/workspace/workspace-create-knowledge-base-dialog";
-import { WorkspaceDeleteKnowledgeBaseDialog } from "@/components/workspace/workspace-delete-knowledge-base-dialog";
-import { WorkspaceEditKnowledgeBaseDialog } from "@/components/workspace/workspace-edit-knowledge-base-dialog";
-import { WorkspaceKnowledgeBasesTable } from "@/components/workspace/workspace-knowledge-bases-table";
+import {
+  WorkspaceCreateKnowledgeBaseDialog,
+  WorkspaceDeleteKnowledgeBaseDialog,
+  WorkspaceEditKnowledgeBaseDialog,
+  WorkspaceKnowledgeBasesTable,
+} from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export default function WorkspaceKnowledgePage() {
-  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -61,7 +63,7 @@ export default function WorkspaceKnowledgePage() {
   const handleView = (kb: KnowledgeBase) => {
     // Navigate to knowledge base items page
     // For now, just show a toast - you can implement a detail page later
-    router.push(`/w/${workspace?.slug}/knowledge/${kb.id}`);
+    router.push(`/w/${workspace?.slug}/knowledge/${kb.id}` as Route);
   };
 
   // Calculate stats
@@ -72,15 +74,6 @@ export default function WorkspaceKnowledgePage() {
   const customBasesCount = knowledgeBases.filter(
     (kb) => kb.type === "custom",
   ).length;
-
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Knowledge" },
-  ];
 
   const headerActions = (
     <>
@@ -107,7 +100,6 @@ export default function WorkspaceKnowledgePage() {
     <PageLayout
       title="Knowledge"
       description="Organize and manage your workspace knowledge bases"
-      breadcrumbs={breadcrumbs}
       actions={headerActions}
     >
       {/* Loading state inside layout */}

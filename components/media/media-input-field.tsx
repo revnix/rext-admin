@@ -6,6 +6,7 @@ import { useState } from "react";
 import { MediaPickerDialog } from "@/components/media/media-picker-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { isMediaKind } from "@/lib/media-type";
 import type { Media } from "@/lib/api-client/media";
 
 interface MediaInputFieldProps {
@@ -57,7 +58,7 @@ export function MediaInputField({
     onChange(null);
   };
 
-  const isImage = value?.file_type.startsWith("image/");
+  const isImage = isMediaKind(value?.file_type, "image");
 
   return (
     <div className="space-y-2">

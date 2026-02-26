@@ -1,4 +1,12 @@
 /**
+ * @deprecated Use `apiClient.workspaces` from `@/lib/api-client` instead.
+ * This service uses legacy `/api/v1/workspace/*` endpoints that may be removed.
+ * The API Client uses the canonical RESTful `/api/v1/workspaces/*` endpoints.
+ *
+ * Migration: Replace `workspaceService.listWorkspaces()` with `apiClient.workspaces.list()`, etc.
+ */
+
+/**
  * Workspace Service - Core CRUD Operations
  *
  * Handles core workspace management operations including:
@@ -10,7 +18,6 @@
 import { apiErrorHandler } from "@/lib/api-error-middleware";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
-import { logger } from "@/lib/logger";
 import { InputSanitizer } from "@/lib/sanitization";
 import type {
   CreateWorkspaceRequest,
@@ -19,57 +26,28 @@ import type {
   UpdateWorkspaceRequest,
   WorkspaceApiConfig,
   WorkspaceApiContext,
-  WorkspaceErrorCode,
   WorkspaceListResponse,
   WorkspaceResponse,
 } from "@/types/workspace";
+import {
+  BaseWorkspaceService,
+  WorkspaceApiError,
+} from "./base-workspace-service";
+import { WorkspaceServiceError } from ".";
+import { VALIDATION_MESSAGES } from "./validation-messages";
 
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================
 
-export class WorkspaceServiceError extends Error {
-  constructor(
-    public readonly code: WorkspaceErrorCode,
-    public readonly message: string,
-    public readonly details?: Record<string, unknown>,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "WorkspaceServiceError";
-  }
-
-  static fromResponse(
-    response: unknown,
-    statusCode: number,
-  ): WorkspaceServiceError {
-    const responseObj = response as Record<string, unknown>;
-    const code =
-      (responseObj.error_code as WorkspaceErrorCode) || "INVALID_REQUEST";
-    const message =
-      (responseObj.error as string) || "An unknown error occurred";
-    const details = (responseObj.details as Record<string, unknown>) || {};
-
-    return new WorkspaceServiceError(code, message, details, statusCode);
-  }
-}
+export { WorkspaceApiError as WorkspaceServiceError };
 
 // ============================================================================
 // MAIN SERVICE CLASS
 // ============================================================================
-
-export class WorkspaceService {
-  private readonly config: WorkspaceApiConfig;
-  private readonly log = logger.forComponent("WorkspaceService");
-  private readonly activeRequests = new Map<string, AbortController>();
-
+export class WorkspaceService extends BaseWorkspaceService {
   constructor(config: Partial<WorkspaceApiConfig> = {}) {
-    this.config = {
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024",
-      timeout: 30000,
-      enableRequestDeduplication: true,
-      ...config,
-    };
+    super("WorkspaceService", config);
   }
 
   // ============================================================================
@@ -111,7 +89,7 @@ export class WorkspaceService {
     if (!/^[a-z0-9-]+$/.test(workspaceSlug)) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        "Invalid workspace slug format",
+        VALIDATION_MESSAGES.INVALID_SLUG_FORMAT,
         { slug: workspaceSlug },
       );
     }
@@ -207,7 +185,7 @@ export class WorkspaceService {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
-  private generateDuplicateName(originalName: string): string {
+  protected generateDuplicateName(originalName: string): string {
     const copyPattern = / \(Copy( \d+)?\)$/;
     const match = originalName.match(copyPattern);
 
@@ -219,7 +197,7 @@ export class WorkspaceService {
     }
   }
 
-  private async makeRequest<T>(
+  protected async makeRequest<T>(
     method: string,
     endpoint: string,
     body?: unknown,
@@ -242,7 +220,7 @@ export class WorkspaceService {
     }
   }
 
-  private async executeRequest<T>(
+  protected async executeRequest<T>(
     method: string,
     endpoint: string,
     body: unknown,
@@ -302,7 +280,7 @@ export class WorkspaceService {
     }
   }
 
-  private async handleErrorResponse(
+  protected async handleErrorResponse(
     response: Response,
     context: WorkspaceApiContext,
     duration: number,
@@ -317,10 +295,10 @@ export class WorkspaceService {
       errorData: sanitizeErrorForLogging(errorData),
     });
 
-    throw WorkspaceServiceError.fromResponse(errorData, response.status);
+    throw WorkspaceApiError.fromResponse(errorData, response.status);
   }
 
-  private async handleRequestError(
+  protected async handleRequestError(
     error: unknown,
     context: WorkspaceApiContext,
     duration: number,
@@ -339,7 +317,7 @@ export class WorkspaceService {
     throw error;
   }
 
-  private createRequestContext(requestId: string): WorkspaceApiContext {
+  protected createRequestContext(requestId: string): WorkspaceApiContext {
     return {
       requestId,
       timestamp: new Date().toISOString(),
@@ -351,56 +329,65 @@ export class WorkspaceService {
   // VALIDATION METHODS
   // ============================================================================
 
-  private validateUuid(id: string, fieldName: string): void {
+  protected validateUuid(id: string, fieldName: string): void {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!id || !uuidRegex.test(id)) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        `Invalid ${fieldName}: must be a valid UUID`,
+        VALIDATION_MESSAGES.INVALID_UUID(fieldName),
       );
     }
   }
 
-  private validateWorkspaceData(data: CreateWorkspaceRequest): void {
+  protected validateWorkspaceData(data: CreateWorkspaceRequest): void {
     if (!data.name || data.name.trim().length === 0) {
-      throw new WorkspaceServiceError("INVALID_REQUEST", "Name is required");
+      throw new WorkspaceServiceError(
+        "INVALID_REQUEST",
+        VALIDATION_MESSAGES.TITLE_REQUIRED,
+      );
     }
 
     if (data.name.length > 200) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
-        "Name must be 200 characters or less",
+        VALIDATION_MESSAGES.TITLE_MAX_LENGTH(200),
       );
     }
 
     if (!data.url || !this.isValidUrl(data.url)) {
-      throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceServiceError(
+        "INVALID_URL",
+        VALIDATION_MESSAGES.URL_REQUIRED,
+      );
     }
   }
 
-  private validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
+  protected validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
     if (data.name !== undefined) {
       if (!data.name || data.name.trim().length === 0) {
         throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          "Name cannot be empty",
+          VALIDATION_MESSAGES.TITLE_REQUIRED, // Now consistent with create
         );
       }
       if (data.name.length > 200) {
         throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          "Name must be 200 characters or less",
+          VALIDATION_MESSAGES.TITLE_MAX_LENGTH(200),
         );
       }
     }
 
     if (data.url !== undefined && !this.isValidUrl(data.url)) {
-      throw new WorkspaceServiceError("INVALID_URL", "Valid URL is required");
+      throw new WorkspaceServiceError(
+        "INVALID_URL",
+        VALIDATION_MESSAGES.URL_REQUIRED,
+      );
     }
   }
 
-  private isValidUrl(url: string): boolean {
+  protected isValidUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
       return parsed.protocol === "http:" || parsed.protocol === "https:";

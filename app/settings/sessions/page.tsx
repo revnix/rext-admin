@@ -33,28 +33,21 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
 
-interface Session {
-  id: string;
-  device_name: string;
-  device_type: "desktop" | "mobile" | "tablet";
-  ip_address: string | null;
-  user_agent: string;
-  created_at: string;
-  last_activity_at: string | null;
-  is_current: boolean;
-}
+import type { UserSession } from "@/types/user-session";
 
 export default function SessionsPage() {
-  const [sessionToRevoke, setSessionToRevoke] = useState<Session | null>(null);
+  const [sessionToRevoke, setSessionToRevoke] = useState<UserSession | null>(
+    null,
+  );
   const [showRevokeAllDialog, setShowRevokeAllDialog] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch sessions
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["user-sessions"],
-    queryFn: () => apiClient.users.getSessions(),
-  });
+  const { data, isLoading, error, refetch } = useQuery(
+    userSessionsQueryOptions(),
+  );
 
   // Revoke single session
   const revokeMutation = useMutation({
@@ -84,7 +77,7 @@ export default function SessionsPage() {
     },
   });
 
-  const getDeviceIcon = (deviceType: string) => {
+  const getDeviceIcon = (deviceType: string | null) => {
     switch (deviceType) {
       case "mobile":
         return <Smartphone className="h-5 w-5" />;
@@ -114,8 +107,8 @@ export default function SessionsPage() {
   }
 
   const sessions = data?.sessions || [];
-  const currentSession = sessions.find((s: Session) => s.is_current);
-  const otherSessions = sessions.filter((s: Session) => !s.is_current);
+  const currentSession = sessions.find((s) => s.is_current);
+  const otherSessions = sessions.filter((s) => !s.is_current);
 
   return (
     <div className="space-y-6">
@@ -253,7 +246,7 @@ export default function SessionsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {otherSessions.map((session: Session) => (
+              {otherSessions.map((session: UserSession) => (
                 <div
                   key={session.id}
                   className="flex items-start gap-4 p-4 rounded-lg border"
@@ -301,8 +294,8 @@ export default function SessionsPage() {
             <AlertDialogTitle>Logout from this device?</AlertDialogTitle>
             <AlertDialogDescription>
               This will terminate the session on{" "}
-              <strong>{sessionToRevoke?.device_name}</strong>. You'll need to
-              login again on that device.
+              <strong>{String(sessionToRevoke?.device_name)}</strong>. You'll
+              need to login again on that device.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -19,13 +19,14 @@ import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog";
+import { WorkspaceDeleteDialog } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
 import type { Workspace, WorkspaceListResponse } from "@/types/workspace";
+import type { Route } from "next";
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -71,8 +72,6 @@ export default function WorkspacePage() {
     status: "active", // Default status since it's not in Workspace type
   }));
 
-  const breadcrumbs = [{ label: "Workspaces" }];
-
   // Define columns for the DataTable
   const columns: Column<WorkspaceData>[] = [
     {
@@ -91,7 +90,7 @@ export default function WorkspacePage() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Link
-                href={`/w/${row.slug}`}
+                href={`/w/${row.slug}/settings` as Route}
                 className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
                 onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
               >
@@ -208,7 +207,7 @@ export default function WorkspacePage() {
         <Settings className="h-4 w-4 mr-2" />
         Refresh
       </Button>
-      <Button onClick={() => router.push("/w/create")}>
+      <Button onClick={() => router.push("/w/create" as Route)}>
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>
@@ -234,7 +233,7 @@ export default function WorkspacePage() {
       icon: <Eye className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.slug}`);
+        router.push(`/w/${row.slug}/settings` as Route);
       },
       tooltip: "View workspace details",
     },
@@ -253,7 +252,6 @@ export default function WorkspacePage() {
     <PageLayout
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
-      breadcrumbs={breadcrumbs}
     >
       <DataTable<WorkspaceData>
         columns={columns}

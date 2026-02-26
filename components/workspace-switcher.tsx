@@ -26,6 +26,7 @@ import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
@@ -75,7 +76,7 @@ export function WorkspaceSwitcher() {
     if (currentPageSegment) {
       // Build new path with same page in new workspace
       const newPath = buildWorkspacePath(workspace.slug, currentPageSegment);
-      router.push(newPath);
+      router.push(newPath as Route);
     } else {
       // Go to dashboard (workspace-scoped at /)
       router.push("/");

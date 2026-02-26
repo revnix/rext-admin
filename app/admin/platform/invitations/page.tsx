@@ -114,12 +114,6 @@ export default function AdminInvitationsPage() {
     invitation?: AdminInvitation;
   }>({ open: false });
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Platform", href: "/admin/platform" },
-    { label: "Admin Invitations" },
-  ];
-
   // Fetch invitations
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-invitations", selectedStatus],
@@ -204,7 +198,6 @@ export default function AdminInvitationsPage() {
       <PageLayout
         title="Platform Admin Invitations"
         description="Manage invitations for platform-level administrators"
-        breadcrumbs={breadcrumbs}
         actions={
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />

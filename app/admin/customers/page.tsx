@@ -23,11 +23,6 @@ export default function CustomersPage() {
     null,
   );
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Customer Management" },
-  ];
-
   interface CustomerResponse {
     user_id: string;
     name: string;
@@ -120,7 +115,6 @@ export default function CustomersPage() {
     <PageLayout
       title="Customer Management"
       description="Manage users, subscriptions, and customer support"
-      breadcrumbs={breadcrumbs}
       actions={
         <Button variant="outline" onClick={handleExport}>
           <Download className="h-4 w-4 mr-2" />

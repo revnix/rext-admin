@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export function DangerZoneSection() {
   const { workspace } = useWorkspace();
@@ -68,7 +69,7 @@ export function DangerZoneSection() {
 
       setDeleteDialogOpen(false);
       setPasswordConfirmation("");
-      router.push("/");
+      router.push("/" as Route);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete workspace";

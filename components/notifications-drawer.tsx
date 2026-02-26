@@ -22,6 +22,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/stores/notification-store";
+import { NotificationApiService } from "@/services/notification-api";
+import { log } from "@/lib/logger";
 import type { OperationNotification } from "@/types/sse";
 
 interface NotificationsDrawerProps {
@@ -73,8 +75,41 @@ export function NotificationsDrawer({
 }: NotificationsDrawerProps) {
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
-  const markAsRead = useNotificationStore((state) => state.markAsRead);
-  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
+  const setNotificationRead = useNotificationStore(
+    (state) => state.setNotificationRead,
+  );
+  const setAllNotificationsRead = useNotificationStore(
+    (state) => state.setAllNotificationsRead,
+  );
+
+  const handleMarkAsRead = async (id: string) => {
+    // Optimistic update
+    setNotificationRead(id, true);
+
+    try {
+      await NotificationApiService.markNotificationsAsRead([id]);
+    } catch (error) {
+      log.error("Failed to mark notification as read", error);
+      // Revert
+      setNotificationRead(id, false);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
+    if (unreadIds.length === 0) return;
+
+    // Optimistic update
+    setAllNotificationsRead();
+
+    try {
+      await NotificationApiService.markAllNotificationsAsRead();
+    } catch (error) {
+      log.error("Failed to mark all notifications as read", error);
+      // Revert
+      setAllNotificationsRead(unreadIds);
+    }
+  };
 
   const getRelativeTime = (timestamp: string) => {
     try {
@@ -177,7 +212,7 @@ export function NotificationsDrawer({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={() => handleMarkAsRead(notification.id)}
                               className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
                             >
                               <Check className="h-3 w-3 mr-1" />
@@ -203,7 +238,7 @@ export function NotificationsDrawer({
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => markAllAsRead()}
+            onClick={() => handleMarkAllAsRead()}
             disabled={unreadCount === 0}
           >
             Mark All as Read ({unreadCount})

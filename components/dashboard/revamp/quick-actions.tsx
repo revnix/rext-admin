@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { workspaceRoutes } from "@/lib/routes";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 interface QuickActionsProps {
   workspace: Workspace | null;
@@ -62,7 +63,7 @@ export function QuickActions({ workspace }: QuickActionsProps) {
           {actions.map((action) => (
             <Link
               key={action.href}
-              href={action.href}
+              href={action.href as Route}
               className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
             >
               <div className="flex items-center gap-4">

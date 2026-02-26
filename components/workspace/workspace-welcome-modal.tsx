@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Workspace } from "@/types/workspace";
+import type { Route } from "next";
 
 interface WorkspaceWelcomeModalProps {
   open: boolean;
@@ -81,7 +82,7 @@ export function WorkspaceWelcomeModal({
 
   const handleStartExploring = () => {
     handleClose();
-    router.push(`/w/${workspace.slug}`);
+    router.push(`/w/${workspace.slug}` as Route);
   };
 
   const handleTakeTour = () => {
@@ -90,7 +91,7 @@ export function WorkspaceWelcomeModal({
       onStartTour();
     } else {
       // Fallback: trigger invited user onboarding if available
-      router.push(`/w/${workspace.slug}?tour=true`);
+      router.push(`/w/${workspace.slug}?tour=true` as Route);
     }
   };
 

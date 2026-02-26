@@ -9,6 +9,9 @@ import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import { getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+
+const BACKEND_TOKEN_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
  * Refresh the access token using the refresh token
@@ -74,7 +77,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       ...token,
       accessToken: refreshedTokens.access_token,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-      accessTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
+      accessTokenExpires: Date.now() + BACKEND_TOKEN_EXPIRY_MS,
     };
   } catch (error) {
     log.error("[Auth] Error refreshing access token:", error);
@@ -122,12 +125,12 @@ export default {
           );
 
           if (!response.ok) {
-            // Extract detailed error message from backend
-            const errorData = await response.json().catch(() => ({}));
-            const errorMessage =
-              errorData?.error?.message ||
-              errorData?.message ||
-              "Invalid email or password";
+            // Extract detailed error message from backend using shared utility
+            const errorData = await safeParseErrorBody(response);
+            const errorMessage = extractApiError(
+              errorData,
+              "Invalid email or password",
+            );
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
 
             // Throw CredentialsSignin with the message as the code
@@ -167,6 +170,10 @@ export default {
             rememberMe,
           };
         } catch (error) {
+          // Re-throw CredentialsSignin to propagate the specific error message to the client
+          if (error instanceof CredentialsSignin) {
+            throw error;
+          }
           log.error("[AuthJS] Authorization error:", error);
           return null;
         }
@@ -210,11 +217,8 @@ export default {
           token.role = user.role;
           token.permissions = user.permissions;
           token.rememberMe = user.rememberMe;
-          // Set expiry: 30 days if remember me, 24 hours otherwise
-          const expiryDuration = user.rememberMe
-            ? 30 * 24 * 60 * 60 * 1000 // 30 days
-            : 24 * 60 * 60 * 1000; // 24 hours
-          token.accessTokenExpires = Date.now() + expiryDuration;
+          // Set access token expiry to 10 minutes to match backend
+          token.accessTokenExpires = Date.now() + BACKEND_TOKEN_EXPIRY_MS;
         } else {
           // For OAuth providers, use dedicated OAuth login endpoint
           try {
@@ -244,23 +248,11 @@ export default {
             );
 
             if (!oauthResponse.ok) {
-              const errorText = await oauthResponse.text();
-              log.error("[AuthJS] OAuth response error text:", errorText);
-
-              const errorData = safeJsonParse<Record<string, unknown>>(
-                errorText,
-                { rawError: errorText },
-                "[AuthJS] OAuth response error",
+              const errorData = await safeParseErrorBody(oauthResponse);
+              const errorMessage = extractApiError(
+                errorData,
+                "OAuth login failed",
               );
-              log.error("[AuthJS] OAuth response error data:", errorData);
-
-              const err = errorData as Record<string, unknown> | null;
-              const nested = err?.error as Record<string, unknown> | undefined;
-              const errorMessage =
-                nested?.message ||
-                err?.message ||
-                err?.rawError ||
-                "OAuth login failed";
               log.error(
                 "[AuthJS] OAuth login failed with message:",
                 errorMessage,
@@ -302,8 +294,8 @@ export default {
             token.refreshToken = oauthData.refresh_token;
             token.role = getPrimaryRole(oauthData.user);
             token.permissions = oauthData.user.permissions || [];
-            // Set token expiry for OAuth logins (24 hours)
-            token.accessTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+            // Set access token expiry for OAuth logins (10 minutes)
+            token.accessTokenExpires = Date.now() + BACKEND_TOKEN_EXPIRY_MS;
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
@@ -341,10 +333,6 @@ export default {
         return token;
       }
 
-      // Handle session extension (no session data — refresh request from timeout warning)
-      const SESSION_DURATION_REMEMBER_ME = 30 * 24 * 60 * 60 * 1000; // 30 days
-      const SESSION_DURATION_DEFAULT = 24 * 60 * 60 * 1000; // 24 hours
-
       if (trigger === "update") {
         log.info("[Auth] Session update triggered manually");
         if (token.refreshToken) {
@@ -354,12 +342,9 @@ export default {
 
         if (token.accessTokenExpires) {
           log.info("[Auth] Extending session expiry manually...");
-          const expiryDuration = token.rememberMe
-            ? SESSION_DURATION_REMEMBER_ME
-            : SESSION_DURATION_DEFAULT;
           return {
             ...token,
-            accessTokenExpires: Date.now() + expiryDuration,
+            accessTokenExpires: Date.now() + BACKEND_TOKEN_EXPIRY_MS,
           };
         }
 
@@ -398,6 +383,9 @@ export default {
         session.user.refreshToken = token.refreshToken as string;
         session.user.role = token.role as string | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
+        session.accessTokenExpires = token.accessTokenExpires as
+          | number
+          | undefined;
         session.error = token.error as string | undefined;
       }
       return session;
@@ -407,14 +395,22 @@ export default {
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
       const isOnAuthPage = isAuthPage(nextUrl.pathname);
 
-      // If refresh error, force redirect to login
-      if (hasRefreshError && !isOnAuthPage) {
+      // CRITICAL: If there is a refresh error, the session is essentially invalid.
+      // We must force the user to the login page and NOT allow them to be redirected
+      // back to the dashboard even if NextAuth technically still considers them "logged in".
+      if (hasRefreshError) {
+        if (isOnAuthPage) {
+          // Allow them to stay on the auth page to log in again
+          return true;
+        }
+        // Redirect to login from any protected page
         return Response.redirect(
           new URL("/login?error=SessionExpired", nextUrl),
         );
       }
 
       // Redirect authenticated users away from auth pages
+      // Only do this if they DON'T have a refresh error
       if (isLoggedIn && isOnAuthPage) {
         return Response.redirect(new URL("/", nextUrl));
       }

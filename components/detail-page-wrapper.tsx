@@ -42,10 +42,10 @@ import type {
   StatsCardConfig,
   WideDetailWrapperProps,
 } from "@/types/detail-page";
+import type { Route } from "next";
 
 export function DetailPageWrapper({
   title,
-  breadcrumbs = [],
   backUrl,
   backLabel = "Back",
   prevItem,
@@ -318,11 +318,7 @@ export function DetailPageWrapper({
   if (error) {
     const errorMessage = typeof error === "string" ? error : error.message;
     return (
-      <PageLayout
-        title="Error"
-        description="Failed to load details"
-        breadcrumbs={breadcrumbs}
-      >
+      <PageLayout title="Error" description="Failed to load details">
         <DetailCard variant="warning" className="text-center">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
@@ -332,7 +328,7 @@ export function DetailPageWrapper({
               </p>
               {backUrl && (
                 <Button asChild variant="outline">
-                  <Link href={backUrl}>
+                  <Link href={backUrl as Route}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     {backLabel}
                   </Link>
@@ -351,7 +347,6 @@ export function DetailPageWrapper({
       <PageLayout
         title={loadingMessage}
         description="Please wait while we load the details..."
-        breadcrumbs={breadcrumbs}
       >
         <DetailPageSkeleton
           showSidebar={layout !== "no-sidebar"}
@@ -374,7 +369,7 @@ export function DetailPageWrapper({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button asChild variant="outline" size="sm">
-                    <Link href={prevItem.href}>
+                    <Link href={prevItem.href as Route}>
                       <ChevronLeft className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -387,7 +382,7 @@ export function DetailPageWrapper({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button asChild variant="outline" size="sm">
-                    <Link href={nextItem.href}>
+                    <Link href={nextItem.href as Route}>
                       <ChevronRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -404,7 +399,7 @@ export function DetailPageWrapper({
       {/* Back button */}
       {backUrl && (
         <Button asChild variant="outline" size="sm">
-          <Link href={backUrl}>
+          <Link href={backUrl as Route}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {backLabel}
           </Link>
@@ -519,7 +514,7 @@ export function DetailPageWrapper({
 
   return (
     <TooltipProvider>
-      <PageLayout title="" breadcrumbs={breadcrumbs} className={className}>
+      <PageLayout title="" className={className}>
         {/* Custom header with enhanced title and metadata */}
         <div className="space-y-6">
           {/* Enhanced title section */}

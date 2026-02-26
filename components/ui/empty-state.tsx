@@ -4,6 +4,7 @@ import { AlertTriangle, FileQuestion, Inbox, Search } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import type { Route } from "next";
 
 type IllustrationType = "no-data" | "search" | "error" | "custom";
 
@@ -93,7 +94,7 @@ export function EmptyState({
           asChild={!!action.href}
         >
           {action.href ? (
-            <Link href={action.href}>{action.label}</Link>
+            <Link href={action.href as Route}>{action.label}</Link>
           ) : (
             <span>{action.label}</span>
           )}

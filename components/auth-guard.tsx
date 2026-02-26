@@ -1,9 +1,10 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import type { Route } from "next";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ export function AuthGuard({
 
       // If auth is required but user is not authenticated, redirect
       if (requireAuth && !isAuthenticated) {
-        router.push(redirectTo);
+        router.push(redirectTo as Route);
       }
     }
   }, [isLoading, isAuthenticated, requireAuth, redirectTo, router]);
@@ -92,17 +93,27 @@ export function GuestGuard({
 }) {
   const { isAuthenticated, isLoading } = useAuthSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
       setIsChecking(false);
 
+      // CRITICAL: Prevent redirect loop if we are on the login page with an error
+      const hasError =
+        searchParams.get("error") ||
+        searchParams.get("session") ||
+        searchParams.get("reason");
+      if (hasError) {
+        return;
+      }
+
       if (isAuthenticated) {
-        router.push(redirectTo);
+        router.push(redirectTo as Route);
       }
     }
-  }, [isLoading, isAuthenticated, redirectTo, router]);
+  }, [isLoading, isAuthenticated, redirectTo, router, searchParams]);
 
   // Show loading state
   if (isLoading || isChecking) {

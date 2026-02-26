@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGlobalKnowledgeSearchStore } from "@/stores/knowledge";
 import type { KnowledgeType } from "@/types/workspace";
+import type { Route } from "next";
 
 interface GlobalKnowledgeSearchProps {
   workspaceId: string;
@@ -436,7 +437,7 @@ export function GlobalKnowledgeSearch({
                         {result.type === "web" && result.url && (
                           <div className="mb-2">
                             <a
-                              href={result.url}
+                              href={result.url as Route}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-sm text-blue-600 hover:underline line-clamp-1"

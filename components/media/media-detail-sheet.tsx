@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { isMediaKind } from "@/lib/media-type";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import { CanAccess } from "@/components/permissions/can-access";
 import {
   AlertDialog,
@@ -47,6 +49,7 @@ import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
 import type { Media } from "@/lib/api-client/media";
 import { MEDIA_PERMISSIONS } from "@/lib/permissions";
+import type { Route } from "next";
 
 interface MediaDetailSheetProps {
   workspaceId: string;
@@ -74,15 +77,24 @@ export function MediaDetailSheet({
   const [editTags, setEditTags] = useState("");
 
   // Initialize edit fields when media changes
-  useState(() => {
-    if (media) {
-      setEditTitle(media.title || "");
-      setEditDescription(media.description || "");
-      setEditAltText(media.alt_text || "");
-      setEditFolder(media.folder || "");
-      setEditTags(media.tags.join(", "));
+  useEffect(() => {
+    if (!media) {
+      setEditTitle("");
+      setEditDescription("");
+      setEditAltText("");
+      setEditFolder("");
+      setEditTags("");
+      setIsEditing(false);
+      return;
     }
-  });
+
+    setEditTitle(media.title ?? "");
+    setEditDescription(media.description ?? "");
+    setEditAltText(media.alt_text ?? "");
+    setEditFolder(media.folder ?? "");
+    setEditTags(media.tags.join(", "));
+    setIsEditing(false);
+  }, [media]);
 
   const { mutate: deleteMedia, isPending: isDeleting } = useMutation({
     mutationFn: () => {
@@ -132,12 +144,19 @@ export function MediaDetailSheet({
   const handleCancelEdit = () => {
     // Reset to original values
     if (media) {
-      setEditTitle(media.title || "");
-      setEditDescription(media.description || "");
-      setEditAltText(media.alt_text || "");
-      setEditFolder(media.folder || "");
+      setEditTitle(media.title ?? "");
+      setEditDescription(media.description ?? "");
+      setEditAltText(media.alt_text ?? "");
+      setEditFolder(media.folder ?? "");
       setEditTags(media.tags.join(", "));
+    } else {
+      setEditTitle("");
+      setEditDescription("");
+      setEditAltText("");
+      setEditFolder("");
+      setEditTags("");
     }
+
     setIsEditing(false);
   };
 
@@ -151,23 +170,9 @@ export function MediaDetailSheet({
 
   if (!media) return null;
 
-  const isImage = media.file_type.startsWith("image/");
+  const isImage = isMediaKind(media.file_type, "image");
 
-  // Convert relative URLs to absolute URLs pointing to backend
-  const getAbsoluteUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url; // Already absolute
-    }
-    // Relative URL - prepend backend URL
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://127.0.0.1:2024";
-    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
-  };
-
-  const publicUrl = getAbsoluteUrl(media.public_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -535,7 +540,9 @@ export function MediaDetailSheet({
                       {usage.featured_in.map((content) => (
                         <Link
                           key={content.id}
-                          href={`/w/${workspaceId}/content/${content.id}`}
+                          href={
+                            `/w/${workspaceId}/content/${content.id}` as Route
+                          }
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
                         >
                           <div className="flex-1 min-w-0">
@@ -562,7 +569,9 @@ export function MediaDetailSheet({
                       {usage.used_in_content.map((content) => (
                         <Link
                           key={`${content.id}-${content.position || 0}`}
-                          href={`/w/${workspaceId}/content/${content.id}`}
+                          href={
+                            `/w/${workspaceId}/content/${content.id}` as Route
+                          }
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors group"
                         >
                           <div className="flex-1 min-w-0">

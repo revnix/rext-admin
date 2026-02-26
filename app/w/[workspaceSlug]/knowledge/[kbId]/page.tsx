@@ -14,18 +14,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { WorkspaceAddKnowledgeDialog } from "@/components/workspace/workspace-add-knowledge-dialog";
-import { WorkspaceDeleteKnowledgeDialog } from "@/components/workspace/workspace-delete-knowledge-dialog";
-import { WorkspaceEditKnowledgeDialog } from "@/components/workspace/workspace-edit-knowledge-dialog";
 import {
+  WorkspaceAddKnowledgeDialog,
+  WorkspaceDeleteKnowledgeDialog,
+  WorkspaceEditKnowledgeDialog,
   convertToKnowledgeItems,
   type KnowledgeItem,
   WorkspaceKnowledgeTable,
-} from "@/components/workspace/workspace-knowledge-table";
+} from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
 import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 /**
  * Knowledge Base Detail Page
@@ -40,7 +40,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
  * - Back navigation to KB list
  */
 export default function KnowledgeBaseDetailPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace } = useWorkspace();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -128,7 +128,7 @@ export default function KnowledgeBaseDetailPage() {
   };
 
   const handleBack = () => {
-    router.push(`/w/${workspace?.slug}/knowledge`);
+    router.push(`/w/${workspace?.slug}/knowledge` as Route);
   };
 
   const handleAdded = () => {
@@ -143,25 +143,11 @@ export default function KnowledgeBaseDetailPage() {
     handleRefresh();
   };
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    {
-      label: "Knowledge",
-      href: workspaceRoutes.knowledge(workspaceSlug),
-    },
-    { label: kb?.name || "Loading..." },
-  ];
-
   if (kbError) {
     return (
       <PageLayout
         title="Knowledge Base Not Found"
         description="The requested knowledge base could not be loaded"
-        breadcrumbs={breadcrumbs}
       >
         <Card>
           <CardContent className="pt-6">
@@ -191,7 +177,6 @@ export default function KnowledgeBaseDetailPage() {
         kb?.description ||
         "View and manage knowledge items in this knowledge base"
       }
-      breadcrumbs={breadcrumbs}
       actions={
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleBack}>

@@ -33,6 +33,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import type { Media, MediaListParams } from "@/lib/api-client/media";
+import { getMediaKind } from "@/lib/media-type";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 
 interface MediaPickerDialogProps {
   workspaceId: string;
@@ -94,16 +96,7 @@ export function MediaPickerDialog({
 
     // Type filter
     const matchesType = allowedTypes
-      ? allowedTypes.some((type) => {
-          if (type === "image") return m.file_type.startsWith("image/");
-          if (type === "document")
-            return (
-              m.file_type.startsWith("application/") ||
-              m.file_type.startsWith("text/")
-            );
-          if (type === "video") return m.file_type.startsWith("video/");
-          return false;
-        })
+      ? allowedTypes.some((type) => getMediaKind(m.file_type) === type)
       : true;
 
     return matchesSearch && matchesType;
@@ -260,11 +253,13 @@ interface MediaPickerCardProps {
 }
 
 function MediaPickerCard({ media, selected, onSelect }: MediaPickerCardProps) {
-  const isImage = media.file_type.startsWith("image/");
-  const isVideo = media.file_type.startsWith("video/");
-  const isDocument =
-    media.file_type.startsWith("application/") ||
-    media.file_type.startsWith("text/");
+  const mediaKind = getMediaKind(media.file_type);
+  const isImage = mediaKind === "image";
+  const isVideo = mediaKind === "video";
+  const isDocument = mediaKind === "document";
+
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   return (
     <button
@@ -277,17 +272,17 @@ function MediaPickerCard({ media, selected, onSelect }: MediaPickerCardProps) {
       }`}
     >
       {/* Preview */}
-      {isImage && media.thumbnail_url ? (
+      {isImage && thumbnailUrl ? (
         <Image
-          src={media.thumbnail_url}
+          src={thumbnailUrl}
           alt={media.alt_text || media.title || media.filename}
           fill
           className="object-cover"
           sizes="200px"
         />
-      ) : isImage && media.public_url ? (
+      ) : isImage && publicUrl ? (
         <Image
-          src={media.public_url}
+          src={publicUrl}
           alt={media.alt_text || media.title || media.filename}
           fill
           className="object-cover"

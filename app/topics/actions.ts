@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { BackendService } from "@/services/backend";
 import type { GeneratedTopic } from "@/types/topic-builder";
+import type { Route } from "next";
 
 /**
  * Delete a single topic using BackendService
@@ -361,7 +362,7 @@ export async function saveTopic(formData: FormData) {
     revalidatePath("/topics");
 
     // Redirect to topics list after successful save
-    redirect("/topics");
+    redirect("/topics" as Route);
   } catch (error) {
     // Don't redirect on error, let the client handle it
     logger.error("Server action save topics failed", {

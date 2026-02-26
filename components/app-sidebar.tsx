@@ -2,7 +2,6 @@
 
 import {
   CreditCard,
-  FileText,
   Plug,
   LayoutDashboard,
   Mail,
@@ -12,8 +11,12 @@ import {
   User,
   UserCog,
   Users,
-  VenetianMask,
   ChevronDown,
+  Settings2,
+  FolderOpen,
+  Sparkles,
+  Library,
+  Palette,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -34,7 +37,7 @@ import {
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
-import { workspaceRoutes } from "@/lib/routes";
+import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
@@ -48,6 +51,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
+import type { Route } from "next";
 
 function ThreeDotsSeparator() {
   return (
@@ -84,7 +88,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const mainNavigationGroups: NavGroup[] = [
     {
       groupLabel: "",
-      items: [{ title: "Dashboard", url: "/", icon: LayoutDashboard }],
+      items: [
+        {
+          title: "Dashboard",
+          url: "/",
+          icon: LayoutDashboard,
+        },
+        {
+          title: "All Workspaces",
+          url: "/w",
+          icon: FolderOpen,
+        },
+      ],
     },
     {
       groupLabel: "Workspace",
@@ -94,7 +109,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.generate_content(currentWorkspace.slug)
             : "/",
-          icon: FileText, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
+          icon: Sparkles, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
           permission: "content.read",
         },
         {
@@ -102,7 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.content(currentWorkspace.slug)
             : "/",
-          icon: FileText,
+          icon: Library,
           permission: "content.read",
         },
         {
@@ -110,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
-          icon: VenetianMask,
+          icon: User,
           permission: "content.read",
         },
         {
@@ -118,7 +133,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.brand_voice(currentWorkspace.slug)
             : "/",
-          icon: VenetianMask,
+          icon: Palette,
           permission: "content.read",
         },
         {
@@ -135,6 +150,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.integrations(currentWorkspace.slug)
             : "/",
           icon: Plug,
+          permission: "workspace.update",
+        },
+        {
+          title: "Settings",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.settings.root(currentWorkspace.slug)
+            : "/",
+          icon: Settings2,
           permission: "workspace.update",
         },
       ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
@@ -154,7 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Personal",
       items: [
-        { title: "Account", url: "/settings", icon: User },
+        { title: "Account", url: settingsRoutes.root, icon: User },
         {
           title: "Subscription",
           url: "/subscription",
@@ -259,7 +282,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         asChild
                         className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                       >
-                        <Link href={item.url}>
+                        <Link href={item.url as Route}>
                           {Icon && <Icon />}
                           <span>{item.title}</span>
                         </Link>
@@ -331,7 +354,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     isActive={pathname === subItem.url}
                                     className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                                   >
-                                    <Link href={subItem.url}>
+                                    <Link href={subItem.url as Route}>
                                       <span>{subItem.title}</span>
                                     </Link>
                                   </SidebarMenuButton>
@@ -386,7 +409,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   isActive={pathname === subItem.url}
                                   className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)] pl-9 transition-colors"
                                 >
-                                  <Link href={subItem.url}>
+                                  <Link href={subItem.url as Route}>
                                     {subItem.title}
                                   </Link>
                                 </SidebarMenuButton>
@@ -408,7 +431,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                       >
                         <Link
-                          href={item.url}
+                          href={item.url as Route}
                           className="flex items-center gap-2"
                         >
                           {Icon && <Icon />}
@@ -448,7 +471,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         isActive={isActive}
                         className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                       >
-                        <Link href={item.url}>
+                        <Link href={item.url as Route}>
                           {Icon && <Icon />}
                           <span>{item.title}</span>
                         </Link>

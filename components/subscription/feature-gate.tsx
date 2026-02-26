@@ -12,7 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { resolvePlanFeatureAccess } from "@/lib/subscription/feature-access";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Feature Gate Component
@@ -125,46 +127,25 @@ export function FeatureGate({
     }
 
     // Check feature flags in plan
-    if (subscription.plan_features) {
-      const featureValue = subscription.plan_features[feature];
-
-      // Handle boolean features
-      if (typeof featureValue === "boolean") {
-        setHasAccess(featureValue);
-        return;
-      }
-
-      // Handle numeric features (assume > 0 means enabled)
-      if (typeof featureValue === "number") {
-        setHasAccess(featureValue > 0);
-        return;
-      }
-
-      // Handle string features (assume non-empty means enabled)
-      if (typeof featureValue === "string") {
-        setHasAccess(featureValue.length > 0);
-        return;
-      }
-    }
-
-    // Default to allowing access if feature not found in plan
-    setHasAccess(true);
+    // Check feature flags in plan using centralized evaluator
+    setHasAccess(resolvePlanFeatureAccess(subscription.plan_features, feature));
   }, [subscription, feature, requiredPlan]);
 
   const handleUpgrade = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   const handleManageSubscription = () => {
-    router.push("/dashboard/subscription");
+    const route = "/dashboard/subscription";
+    router.push(route as unknown as never);
   };
 
   // Loading state
   if (hasAccess === null) {
     return (
-      <div className="flex items-center justify-center p-4">
+      <output className="flex items-center justify-center p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      </output>
     );
   }
 
@@ -314,26 +295,8 @@ export function useFeatureAccess(
     }
 
     // Check feature flags
-    if (subscription.plan_features) {
-      const featureValue = subscription.plan_features[feature];
-
-      if (typeof featureValue === "boolean") {
-        setHasAccess(featureValue);
-        return;
-      }
-
-      if (typeof featureValue === "number") {
-        setHasAccess(featureValue > 0);
-        return;
-      }
-
-      if (typeof featureValue === "string") {
-        setHasAccess(featureValue.length > 0);
-        return;
-      }
-    }
-
-    setHasAccess(true);
+    // Check feature flags using centralized evaluator
+    setHasAccess(resolvePlanFeatureAccess(subscription.plan_features, feature));
   }, [subscription, feature, requiredPlan]);
 
   return hasAccess;

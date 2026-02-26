@@ -420,16 +420,6 @@ export interface KnowledgeManagementState {
 // ============================================================================
 // VALIDATION SCHEMAS (for use with Zod)
 // ============================================================================
-
-/**
- * Workspace validation constraints
- */
-export const WORKSPACE_CONSTRAINTS = {
-  TITLE_MIN_LENGTH: 1,
-  TITLE_MAX_LENGTH: 200,
-  URL_PATTERN: /^https?:\/\/.+/,
-} as const;
-
 /**
  * File upload constraints
  */
@@ -504,21 +494,6 @@ export interface GlobalSearchResult {
   contentPreview: string;
 }
 
-/**
- * SSR-safe storage implementation for Zustand persist middleware
- * Returns a dummy storage object during SSR, real localStorage in browser
- */
-export const getStorage = () => {
-  if (typeof window === "undefined") {
-    return {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    };
-  }
-  return localStorage;
-};
-
 // ============================================================================
 // WORKSPACE STORE STATE INTERFACES
 // ============================================================================
@@ -574,12 +549,12 @@ export interface WorkspaceCrudState {
   } | null;
 
   // Actions
-  createWorkspace: (data: WorkspaceFormData) => Promise<Workspace>;
+  createWorkspace: (data: CreateWorkspaceRequest) => Promise<Workspace>;
   updateWorkspace: (
     workspaceId: string,
-    data: WorkspaceFormData,
+    data: UpdateWorkspaceRequest,
   ) => Promise<Workspace>;
-  deleteWorkspace: (workspaceId: string) => Promise<void>;
+  deleteWorkspace: (workspaceId: string) => Promise<string>;
   duplicateWorkspace: (sourceWorkspaceId: string) => Promise<Workspace>;
   fetchWorkspaces: () => Promise<Workspace[]>;
   fetchWorkspace: (workspaceId: string) => Promise<Workspace>;

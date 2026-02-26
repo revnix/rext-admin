@@ -9,7 +9,6 @@ export default function LegalLayout({
     <PageLayout
       title="Legal"
       description="Terms, policies, and legal information"
-      breadcrumbs={[{ label: "Legal" }]}
     >
       <div className="max-w-4xl mx-auto">{children}</div>
     </PageLayout>

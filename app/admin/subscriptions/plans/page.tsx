@@ -42,12 +42,6 @@ export default function SubscriptionPlansPage() {
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const breadcrumbs = [
-    { label: "Admin", href: "/admin" },
-    { label: "Subscription Analytics", href: "/admin/subscriptions" },
-    { label: "Plans" },
-  ];
-
   // Fetch plans
   const { data: plansResponse, isLoading } = useQuery({
     queryKey: ["admin", "subscription-plans"],
@@ -166,7 +160,6 @@ export default function SubscriptionPlansPage() {
     <PageLayout
       title="Subscription Plans"
       description="Manage subscription plans and pricing"
-      breadcrumbs={breadcrumbs}
       actions={
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />

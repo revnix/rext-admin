@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { TableActionGroup as TableActionGroupType } from "@/types/data-table";
 import { TableActionButton } from "./table-action-button";
+import type { Route } from "next";
 
 interface TableActionGroupProps extends Omit<TableActionGroupType, "id"> {
   className?: string;
@@ -42,7 +43,7 @@ export function TableActionGroup({
           size={action.size || size}
           disabled={action.disabled || disabled}
           tooltip={action.tooltip}
-          href={action.href}
+          href={action.href as Route}
           shortcut={action.shortcut}
         />
         {showSeparator && <div className="mx-2 h-4 w-px bg-border" />}
@@ -71,7 +72,7 @@ export function TableActionGroup({
               {action.href ? (
                 <DropdownMenuItem asChild>
                   <a
-                    href={action.href}
+                    href={action.href as Route}
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={(e) => {
                       if (action.onClick) {

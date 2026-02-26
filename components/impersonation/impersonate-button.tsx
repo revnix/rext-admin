@@ -3,8 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, UserCog } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
+import type { Route } from "next";
 
 interface ImpersonateButtonProps {
   userId: string;
@@ -25,6 +25,12 @@ interface ImpersonateButtonProps {
   userEmail: string;
 }
 
+/**
+ * Impersonate Button Component
+ *
+ * Allows admins to impersonate another user. Uses the secure centralized token
+ * flow through useAuthStore().setTokens() and React Query invalidation.
+ */
 export function ImpersonateButton({
   userId,
   userName,
@@ -32,45 +38,31 @@ export function ImpersonateButton({
 }: ImpersonateButtonProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { update } = useSession();
+  const { setTokens } = useAuthStore();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isPendingRoute, startTransition] = useTransition();
 
   const impersonateMutation = useMutation({
-    mutationFn: async () => {
-      return await apiClient.impersonation.start(userId);
-    },
-    onSuccess: async (data) => {
-      // Store impersonation tokens in memory only (not localStorage)
-      const { setTokens } = useAuthStore.getState();
-      if (data.access_token && data.refresh_token) {
-        setTokens(data.access_token, data.refresh_token);
+    mutationFn: () => apiClient.impersonation.start(userId),
+    onSuccess: (data) => {
+      // Update tokens through centralized auth store
+      setTokens(data.access_token, data.refresh_token);
 
-        // Persist to NextAuth session so tokens survive page reload
-        await update({
-          accessToken: data.access_token,
-          refreshToken: data.refresh_token,
-        });
-      }
-
-      // Clear all queries to force refresh with new user context
-      queryClient.clear();
+      // Invalidate all queries to refresh data with new user context
+      queryClient.invalidateQueries();
 
       toast.success(`Now impersonating ${userName}`);
       setConfirmOpen(false);
 
       // Redirect to main dashboard
-      router.push("/");
-
-      // Force page reload to update user context
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      startTransition(() => {
+        router.push("/" as Route);
+        // Refresh page to update UI with new user context
+        router.refresh();
+      });
     },
-    onError: (error: unknown) => {
-      const errorMessage =
-        (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail || "Failed to start impersonation";
-      toast.error(errorMessage);
+    onError: (error: Error) => {
+      toast.error(`Failed to start impersonation: ${error.message}`);
     },
   });
 
@@ -124,15 +116,15 @@ export function ImpersonateButton({
             <Button
               variant="outline"
               onClick={() => setConfirmOpen(false)}
-              disabled={impersonateMutation.isPending}
+              disabled={impersonateMutation.isPending || isPendingRoute}
             >
               Cancel
             </Button>
             <Button
               onClick={() => impersonateMutation.mutate()}
-              disabled={impersonateMutation.isPending}
+              disabled={impersonateMutation.isPending || isPendingRoute}
             >
-              {impersonateMutation.isPending
+              {impersonateMutation.isPending || isPendingRoute
                 ? "Starting..."
                 : "Start Impersonation"}
             </Button>

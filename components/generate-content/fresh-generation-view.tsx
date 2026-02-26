@@ -77,7 +77,6 @@ export function FreshGenerationView({
     readabilityScore,
     seoScore,
     trustScore,
-    eeatData,
     allContent,
     currentLoadingSteps,
     keywordDifficulty,
@@ -126,12 +125,6 @@ export function FreshGenerationView({
             type: "SET_TRUST_SCORE",
             payload: updates.calculate_eeat_trust.content.review.trust_score,
           });
-          if (updates.calculate_eeat_trust.content.review.eeat_data) {
-            dispatch({
-              type: "SET_EEAT_DATA",
-              payload: updates.calculate_eeat_trust.content.review.eeat_data,
-            });
-          }
         }
 
         if (
@@ -183,7 +176,8 @@ export function FreshGenerationView({
         dispatch({ type: "ADD_COMPLETED_NODE", payload: finishedNode });
       }
 
-      // Add a small delay to allow the user to see the final step completion
+      // Intentional UX hold: lets the user see the final completed loading step
+      // before the loading UI dismisses. NOT waiting on external async state.
       await new Promise((resolve) => setTimeout(resolve, 1500));
       dispatch({ type: "SET_MANUAL_LOADING", payload: false });
       dispatch({ type: "SET_LOADING_STATUS", payload: "" });
@@ -426,7 +420,6 @@ export function FreshGenerationView({
           readabilityScore={readabilityScore}
           seoScore={seoScore}
           trustScore={trustScore}
-          eeatData={eeatData}
           generatedContent={generatedContent}
           isEditing={isEditing}
           userKeyword={userKeyword}

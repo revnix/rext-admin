@@ -36,6 +36,7 @@ import {
   type KnowledgeCardConfig,
   type StatusConfig,
 } from "./shared";
+import type { Route } from "next";
 
 interface WebKnowledgeCardProps {
   item: WebKnowledge;
@@ -128,7 +129,7 @@ export function WebKnowledgeCard({
     getTitle: (item) => item.title || "Untitled",
     getDescription: (item) => (
       <a
-        href={item.url}
+        href={item.url as Route}
         target="_blank"
         rel="noopener noreferrer"
         className="hover:underline inline-flex items-center gap-1 text-xs line-clamp-1"
@@ -324,7 +325,7 @@ export function WebKnowledgeListItem({
       getTitle: (item: WebKnowledge) => item.title || "Untitled",
       getDescription: (item: WebKnowledge) => (
         <a
-          href={item.url}
+          href={item.url as Route}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:underline inline-flex items-center gap-1 truncate max-w-[300px]"
@@ -367,7 +368,7 @@ export function WebKnowledgeListItem({
     getCompactMetadata: (item: WebKnowledge) => (
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <a
-          href={item.url}
+          href={item.url as Route}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:underline inline-flex items-center gap-1 truncate max-w-[300px]"

@@ -4,7 +4,10 @@ import { FileText, Image as ImageIcon, Video } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getMediaKind } from "@/lib/media-type";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
 import type { Media } from "@/lib/api-client/media";
+import { formatFileSize } from "@/lib/formatters/number-formatters";
 
 interface MediaGridProps {
   media: Media[];
@@ -82,36 +85,27 @@ function MediaCard({
   onSelectionChange,
   selectionMode = false,
 }: MediaCardProps) {
-  const isImage = media.file_type.startsWith("image/");
-  const isVideo = media.file_type.startsWith("video/");
-  const isDocument =
-    media.file_type.startsWith("application/") ||
-    media.file_type.startsWith("text/");
+  const mediaKind = getMediaKind(media.file_type);
+  const isImage = mediaKind === "image";
+  const isVideo = mediaKind === "video";
+  const isDocument = mediaKind === "document";
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
-  };
+  // local `formatFileSize` declaration is removed.
+  // Existing render calls are kept and now use the shared import
 
   // Convert relative URLs to absolute URLs pointing to backend
-  const getAbsoluteUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url; // Already absolute
-    }
-    // Relative URL - prepend backend URL
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://127.0.0.1:2024";
-    return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
-  };
+  // const getAbsoluteUrl = (url: string | null): string | null => {
+  //   if (!url) return null;
+  //   if (url.startsWith("http://") || url.startsWith("https://")) {
+  //     return url; // Already absolute
+  //   }
+  //   // Relative URL - prepend backend URL
+  //   const backendUrl = resolveApiBaseUrl();
+  //   return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  // };
 
-  const thumbnailUrl = getAbsoluteUrl(media.thumbnail_url);
-  const publicUrl = getAbsoluteUrl(media.public_url);
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url);
 
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {

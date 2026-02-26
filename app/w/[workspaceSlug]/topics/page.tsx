@@ -22,6 +22,7 @@ import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { Route } from "next";
 
 export default function WorkspaceTopicsPage() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
@@ -63,15 +64,6 @@ export default function WorkspaceTopicsPage() {
     queryClient.invalidateQueries();
   };
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
-    {
-      label: workspace?.name || "...",
-      href: workspaceRoutes.root(workspaceSlug),
-    },
-    { label: "Topics" },
-  ];
-
   // 🧩 Wait for all permission states before showing layout
   if (!workspace?.id || isCreatePermissionLoading || isReadPermissionLoading) {
     return (
@@ -99,7 +91,7 @@ export default function WorkspaceTopicsPage() {
 
   const tableActions = canCreateTopic ? (
     <Button asChild>
-      <Link href={workspaceRoutes.topicCreate(workspaceSlug)}>
+      <Link href={workspaceRoutes.topicCreate(workspaceSlug) as Route}>
         <Plus className="h-4 w-4 mr-2" />
         Generate Topics
       </Link>
@@ -112,7 +104,6 @@ export default function WorkspaceTopicsPage() {
       description={`Browse AI-generated topics for ${
         workspace?.name || "this workspace"
       }. Generate new topics or explore your saved collection.`}
-      breadcrumbs={breadcrumbs}
     >
       <CanAccess
         permission={TOPIC_PERMISSIONS.READ}

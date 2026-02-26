@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useResourceLimit } from "./usage-limit-warning";
+import type { Route } from "next";
 
 /**
  * Limit Check Wrapper Component
@@ -72,7 +73,7 @@ export function LimitCheckWrapper({
   const { isLimitReached, usagePercentage } = useResourceLimit(resource);
 
   const handleUpgrade = () => {
-    router.push("/pricing");
+    router.push("/pricing" as Route);
   };
 
   // Block actions if limit is reached
@@ -95,7 +96,7 @@ export function LimitCheckWrapper({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => router.push("/dashboard/subscription")}
+                onClick={() => router.push("/dashboard/subscription" as Route)}
               >
                 View Usage
               </Button>
@@ -158,7 +159,7 @@ export function useCheckLimit(
         description: `You've reached your plan's limit. Upgrade to ${actionName}.`,
         action: {
           label: "Upgrade",
-          onClick: () => router.push("/pricing"),
+          onClick: () => router.push("/pricing" as Route),
         },
       });
       return false;
@@ -172,7 +173,7 @@ export function useCheckLimit(
         description: `You're using ${usagePercentage.toFixed(0)}% of your ${resource.replace(/_/g, " ")} limit.`,
         action: {
           label: "Upgrade",
-          onClick: () => router.push("/pricing"),
+          onClick: () => router.push("/pricing" as Route),
         },
       });
       return true;

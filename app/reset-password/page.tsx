@@ -20,6 +20,8 @@ import {
   resetPasswordSchema,
 } from "@/schemas/auth-schemas";
 import { checkPasswordBreach } from "@/lib/password-utils";
+import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import type { Route } from "next";
 
 function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,14 +71,14 @@ function ResetPasswordForm() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Password reset failed");
+        const errorData = await safeParseErrorBody(response);
+        throw new Error(extractApiError(errorData, "Password reset failed"));
       }
 
       setSuccess(true);
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        router.push("/login");
+        router.push("/login" as Route);
       }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Password reset failed");

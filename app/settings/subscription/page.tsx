@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { Route } from "next";
 
 /**
  * Subscription Settings Page
@@ -44,11 +45,19 @@ export default function SubscriptionSettingsPage() {
   const { usage, fetchSubscription, fetchUsage, getPortalUrl } =
     useSubscriptionStore();
   const [portalLoading, setPortalLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     // Load subscription and usage data
     const loadData = async () => {
-      await Promise.all([fetchSubscription(), fetchUsage()]);
+      try {
+        setDataLoading(true);
+        await Promise.all([fetchSubscription(), fetchUsage()]);
+      } catch (_error) {
+        toast.error("Failed to load subscription data");
+      } finally {
+        setDataLoading(false);
+      }
     };
     loadData();
   }, [fetchSubscription, fetchUsage]);
@@ -66,6 +75,17 @@ export default function SubscriptionSettingsPage() {
       setPortalLoading(false);
     }
   };
+
+  if (dataLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading subscription...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -96,7 +116,7 @@ export default function SubscriptionSettingsPage() {
           <CardContent className="space-y-3">
             {/* Full Subscription Dashboard */}
             <Button
-              onClick={() => router.push("/dashboard/subscription")}
+              onClick={() => router.push("/dashboard/subscription" as Route)}
               className="w-full justify-start"
               variant="outline"
             >
@@ -126,7 +146,7 @@ export default function SubscriptionSettingsPage() {
 
             {/* Invoices */}
             <Button
-              onClick={() => router.push("/dashboard/billing")}
+              onClick={() => router.push("/dashboard/billing" as Route)}
               className="w-full justify-start"
               variant="outline"
             >
@@ -136,7 +156,7 @@ export default function SubscriptionSettingsPage() {
 
             {/* Pricing */}
             <Button
-              onClick={() => router.push("/pricing")}
+              onClick={() => router.push("/pricing" as Route)}
               className="w-full justify-start"
               variant="outline"
             >

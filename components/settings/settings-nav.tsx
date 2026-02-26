@@ -1,24 +1,32 @@
 "use client";
 
-import { CreditCard, Shield, User } from "lucide-react";
+import { CreditCard, Shield, User, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { settingsRoutes, type SettingsRoute } from "@/lib/routes";
+import type { Route } from "next";
 
-const settingsRoutes = [
+type SettingsNavItem = {
+  label: string;
+  href: SettingsRoute;
+  icon: LucideIcon;
+};
+
+const settingsNavItems: SettingsNavItem[] = [
   {
     label: "Account & Preferences",
-    href: "/settings",
+    href: settingsRoutes.root,
     icon: User,
   },
   {
     label: "Security",
-    href: "/settings/security",
+    href: settingsRoutes.security,
     icon: Shield,
   },
   {
     label: "Billing",
-    href: "/settings/billing",
+    href: settingsRoutes.billing,
     icon: CreditCard,
   },
 ];
@@ -31,14 +39,14 @@ export function SettingsNav() {
       className="flex h-auto items-center justify-start rounded-none border-b bg-transparent p-0 w-full overflow-x-auto"
       aria-label="Settings navigation"
     >
-      {settingsRoutes.map((route, index) => {
+      {settingsNavItems.map((route, index) => {
         const Icon = route.icon;
         const isActive = pathname === route.href;
 
         return (
           <Link
             key={route.href}
-            href={route.href}
+            href={route.href as Route}
             className={cn(
               "inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-all border-b-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
               index > 0 ? "ml-4" : "ml-0",

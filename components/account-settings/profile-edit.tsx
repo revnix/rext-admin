@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { profileQueries } from "@/lib/query-keys";
 
 // Helper to convert relative avatar URLs to absolute URLs
@@ -36,10 +37,7 @@ const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
   if (!avatarUrl) return null;
   if (avatarUrl.startsWith("http")) return avatarUrl;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://127.0.0.1:2024";
+  const baseUrl = resolveApiBaseUrl();
 
   return `${baseUrl}${avatarUrl}`;
 };
@@ -94,9 +92,9 @@ export function ProfileEdit() {
   // Update profile mutation
   const updateMutation = useMutation({
     mutationFn: (data: {
-      full_name: string;
+      full_name: string | null;
       display_name?: string | null;
-      bio?: string;
+      bio?: string | null;
       language?: string;
       timezone?: string;
     }) => apiClient.profile.update(data),
@@ -155,7 +153,7 @@ export function ProfileEdit() {
     const payload = {
       full_name: data.full_name,
       display_name: data.display_name?.trim() || null,
-      bio: data.bio,
+      bio: data.bio?.trim() || null,
       language: data.language,
       timezone: data.timezone,
     };
