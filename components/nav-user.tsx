@@ -215,7 +215,8 @@ export function NavUser() {
                     content={
                       <>
                         This is your current role
-                        {currentWorkspace?.name && ` in ${currentWorkspace.name}`}
+                        {currentWorkspace?.name &&
+                          ` in ${currentWorkspace.name}`}
                         .
                       </>
                     }
