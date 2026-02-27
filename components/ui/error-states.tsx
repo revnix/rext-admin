@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Route } from "next";
 
 /**
  * Inline error alert for form/API errors
@@ -81,7 +82,7 @@ export function ErrorPage({
               </Button>
             )}
             <Button asChild variant="secondary" className="flex-1">
-              <Link href={dashboardLink}>
+              <Link href={dashboardLink as Route}>
                 <Home className="h-4 w-4 mr-2" />
                 {dashboardLabel}
               </Link>
