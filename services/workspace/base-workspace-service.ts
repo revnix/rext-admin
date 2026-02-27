@@ -7,6 +7,7 @@ import type {
   WorkspaceApiContext,
   WorkspaceErrorCode,
 } from "@/types/workspace";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
 
 // ============================================================================
 // SHARED ERROR CLASS
@@ -50,7 +51,7 @@ export abstract class BaseWorkspaceService {
   constructor(componentName: string, config: Partial<WorkspaceApiConfig> = {}) {
     this.log = logger.forComponent(componentName);
     this.config = {
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:2024",
+      baseUrl: resolveApiBaseUrl({ allowWindowOriginFallback: true }),
       timeout: 30000,
       enableRequestDeduplication: true,
       ...config,

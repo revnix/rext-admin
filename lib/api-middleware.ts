@@ -481,7 +481,9 @@ export async function proxyToBackend(
   } = {},
 ): Promise<Response> {
   const {
-    apiUrl = resolveApiBaseUrl(process.env.BACKEND_API_URL),
+    apiUrl = resolveApiBaseUrl({
+      explicitBaseUrl: process.env.BACKEND_API_URL,
+    }),
     apiKey = process.env.NEXT_PUBLIC_CONTENT_API_KEY,
     timeout = 30000,
   } = options;
