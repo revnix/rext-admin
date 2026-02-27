@@ -76,9 +76,10 @@ export function useSessionTimeout() {
       }
 
       const remainingSeconds = Math.floor(remaining / 1000);
-      const usedSeconds = issuedAt !== null
-        ? Math.max(0, Math.floor((now - issuedAt) / 1000))
-        : Math.max(0, totalSecs - remainingSeconds);
+      const usedSeconds =
+        issuedAt !== null
+          ? Math.max(0, Math.floor((now - issuedAt) / 1000))
+          : Math.max(0, totalSecs - remainingSeconds);
 
       setTimeRemaining(remainingSeconds);
       setTimeUsed(usedSeconds);

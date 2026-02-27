@@ -68,7 +68,11 @@ export const workspaceQueries = {
     }),
   brandVoice: (workspaceId: string) =>
     queryOptions({
-      queryKey: [...workspaceQueries.all(), "brand-voice", workspaceId] as const,
+      queryKey: [
+        ...workspaceQueries.all(),
+        "brand-voice",
+        workspaceId,
+      ] as const,
       queryFn: () => apiClient.workspaces.getBrandVoice(workspaceId),
       enabled: !!workspaceId,
       staleTime: 5 * 60 * 1000, // 5 minutes

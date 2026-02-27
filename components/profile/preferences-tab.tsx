@@ -1,18 +1,6 @@
 "use client";
 
-import { Accessibility, Monitor, Moon, Palette, Sun } from "lucide-react";
 import { useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/providers/theme-provider";
 import { useAccessibilityPreferences } from "@/hooks/use-accessibility-preferences";
 import { ThemeSelector } from "@/components/settings/theme-selector";
@@ -20,8 +8,7 @@ import { ThemeSelector } from "@/components/settings/theme-selector";
 const ACCESSIBILITY_STORAGE_KEY = "wrext-accessibility";
 
 export function PreferencesTab() {
-  const { theme, setTheme } = useTheme();
-  const { accessibility, updateAccessibility } = useAccessibilityPreferences();
+  const { accessibility,  } = useAccessibilityPreferences();
 
   // Apply accessibility preferences to document
   useEffect(() => {

@@ -35,7 +35,9 @@ export function MonthlyVolumeCard({ volume = "0" }) {
   return (
     <>
       <div className="flex flex-col">
-        <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{formattedVolume}</h3>
+        <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+          {formattedVolume}
+        </h3>
         <p className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
           Avg. searches per month
         </p>
