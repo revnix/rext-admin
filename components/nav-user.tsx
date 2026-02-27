@@ -300,7 +300,7 @@ export function NavUser() {
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push(settingsRoutes.billing)}
+                onClick={() => router.push(settingsRoutes.subscription)}
               >
                 <CreditCard />
                 Billing
