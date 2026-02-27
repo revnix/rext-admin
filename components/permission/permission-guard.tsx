@@ -2,14 +2,7 @@
 
 import type React from "react";
 import { Suspense } from "react";
-import {
-  useAllPermissions,
-  useAllWorkspacePermissions,
-  useAnyPermission,
-  useAnyWorkspacePermission,
-  usePermission,
-  useWorkspacePermission,
-} from "@/hooks/use-permission";
+import { usePermissionDecision } from "@/hooks/use-permission";
 import { useCurrentWorkspaceId } from "@/providers/workspace-permission-provider";
 import { LockedFeatureTooltip } from "./locked-feature-tooltip";
 import { PermissionLoading } from "./permission-loading";
@@ -131,54 +124,12 @@ export function PermissionGuard({
   const contextWorkspaceId = useCurrentWorkspaceId();
   const effectiveWorkspaceId = propWorkspaceId || contextWorkspaceId;
 
-  // Choose workspace or global permission hooks based on workspace presence
-  const useWorkspaceHooks = !!effectiveWorkspaceId;
-
-  // Check permissions based on workspace context and requireAll flag
-  const hasSingleGlobalPermission = usePermission(permissions[0]);
-  const hasAnyGlobalPermission = useAnyPermission(permissions);
-  const hasAllGlobalPermissions = useAllPermissions(permissions);
-
-  // Phase 2: Workspace permission hooks now return {hasPermission, isLoading}
-  const singleWorkspaceResult = useWorkspacePermission(
-    permissions[0],
-    effectiveWorkspaceId,
-  );
-  const anyWorkspaceResult = useAnyWorkspacePermission(
-    permissions,
-    effectiveWorkspaceId,
-  );
-  const allWorkspaceResult = useAllWorkspacePermissions(
-    permissions,
-    effectiveWorkspaceId,
-  );
-
   // Determine if user has required permissions and if still loading
-  let hasAccess = false;
-  let isLoading = false;
-
-  if (useWorkspaceHooks) {
-    // Use workspace-scoped permission checks (with loading state)
-    if (permissions.length === 1) {
-      hasAccess = singleWorkspaceResult.hasPermission;
-      isLoading = singleWorkspaceResult.isLoading;
-    } else if (requireAll) {
-      hasAccess = allWorkspaceResult.hasPermission;
-      isLoading = allWorkspaceResult.isLoading;
-    } else {
-      hasAccess = anyWorkspaceResult.hasPermission;
-      isLoading = anyWorkspaceResult.isLoading;
-    }
-  } else {
-    // Use global permission checks (no loading state needed)
-    if (permissions.length === 1) {
-      hasAccess = hasSingleGlobalPermission;
-    } else if (requireAll) {
-      hasAccess = hasAllGlobalPermissions;
-    } else {
-      hasAccess = hasAnyGlobalPermission;
-    }
-  }
+  const { hasAccess, isLoading } = usePermissionDecision({
+    mode: permissions.length === 1 ? "single" : requireAll ? "all" : "any",
+    permissions,
+    workspaceId: effectiveWorkspaceId,
+  });
 
   // Show loading state while permissions are being fetched (prevents flash!)
   if (isLoading && showLoading) {

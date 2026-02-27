@@ -3,14 +3,9 @@
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import {
-  useAllPermissions,
-  useAllWorkspacePermissions,
-  useAnyPermission,
   useAnyRole,
-  useAnyWorkspacePermission,
-  usePermission,
+  usePermissionDecision,
   useRole,
-  useWorkspacePermission,
 } from "@/hooks/use-permission";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 
@@ -63,20 +58,17 @@ export function CanAccess({
     workspaceContext?.workspaceId || workspaceContext?.workspaceSlug;
   const isWorkspaceContext = Boolean(workspaceId);
 
-  // === 1️⃣ Determine workspace and global permission states ===
-  const singleWorkspace = useWorkspacePermission(permission || "", workspaceId);
-  const anyWorkspace = useAnyWorkspacePermission(
-    anyPermission || [],
-    workspaceId,
-  );
-  const allWorkspace = useAllWorkspacePermissions(
-    allPermissions || [],
-    workspaceId,
-  );
+  const decisionInput = permission
+    ? { mode: "single" as const, permissions: [permission] }
+    : anyPermission?.length
+      ? { mode: "any" as const, permissions: anyPermission }
+      : { mode: "all" as const, permissions: allPermissions || [] };
 
-  const singleGlobal = usePermission(permission || "");
-  const anyGlobal = useAnyPermission(anyPermission || []);
-  const allGlobal = useAllPermissions(allPermissions || []);
+  const { hasAccess: permissionAccess, isLoading: permissionLoading } =
+    usePermissionDecision({
+      ...decisionInput,
+      workspaceId: isWorkspaceContext ? workspaceId : undefined,
+    });
 
   const roleCheck = useRole(role || "");
   const anyRoleCheck = useAnyRole(anyRole || []);
@@ -94,17 +86,9 @@ export function CanAccess({
   let hasAccess = false;
   let isLoading = false;
 
-  if (permission) {
-    hasAccess = isWorkspaceContext
-      ? singleWorkspace.hasPermission
-      : singleGlobal;
-    isLoading = isWorkspaceContext ? singleWorkspace.isLoading : false;
-  } else if (anyPermission?.length) {
-    hasAccess = isWorkspaceContext ? anyWorkspace.hasPermission : anyGlobal;
-    isLoading = isWorkspaceContext ? anyWorkspace.isLoading : false;
-  } else if (allPermissions?.length) {
-    hasAccess = isWorkspaceContext ? allWorkspace.hasPermission : allGlobal;
-    isLoading = isWorkspaceContext ? allWorkspace.isLoading : false;
+  if (permission || anyPermission?.length || allPermissions?.length) {
+    hasAccess = permissionAccess;
+    isLoading = permissionLoading;
   } else if (role) {
     hasAccess = roleCheck;
   } else if (anyRole?.length) {

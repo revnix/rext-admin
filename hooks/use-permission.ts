@@ -13,6 +13,80 @@ import {
 import { usePermissionStore } from "@/stores/permission-store";
 import type { Session } from "next-auth";
 import type { UserWithPermissions } from "@/types/role";
+import { useMemo } from "react";
+
+export type PermissionDecisionInput = {
+  mode: "single" | "any" | "all";
+  permissions: string[];
+  workspaceId?: string;
+};
+
+export function usePermissionDecision({
+  mode,
+  permissions,
+  workspaceId,
+}: PermissionDecisionInput): { hasAccess: boolean; isLoading: boolean } {
+  const { data: session, status } = useSession();
+  const user = sessionUserToPermissionUser(session?.user);
+
+  const workspacePermissions = usePermissionStore(
+    (state) => state.workspacePermissions,
+  );
+  const isWorkspaceLoading = usePermissionStore(
+    (state) => state.isWorkspaceLoading,
+  );
+
+  return useMemo(() => {
+    const isSessionLoading = status === "loading";
+
+    if (!workspaceId) {
+      if (mode === "single") {
+        return { hasAccess: checkPermission(user, permissions[0] || ""), isLoading: isSessionLoading };
+      }
+      if (mode === "all") {
+        return { hasAccess: checkAllPermissions(user, permissions), isLoading: isSessionLoading };
+      }
+      return { hasAccess: checkAnyPermission(user, permissions), isLoading: isSessionLoading };
+    }
+
+    if (isSuperAdmin(user)) {
+      return { hasAccess: true, isLoading: false };
+    }
+
+    const loading = isWorkspaceLoading(workspaceId);
+    const wsPerms = workspacePermissions.get(workspaceId);
+    if (!wsPerms && loading) {
+      return { hasAccess: false, isLoading: true };
+    }
+
+    const wsList = wsPerms?.permissions || [];
+
+    if (mode === "single") {
+      const target = permissions[0] || "";
+      return {
+        hasAccess: wsList.includes(target) || checkPermission(user, target),
+        isLoading: false,
+      };
+    }
+
+    if (mode === "all") {
+      return {
+        hasAccess:
+          permissions.every((perm) => wsList.includes(perm)) ||
+          checkAllPermissions(user, permissions),
+        isLoading: false,
+      };
+    }
+
+    return {
+      hasAccess:
+        permissions.some((perm) => wsList.includes(perm)) ||
+        checkAnyPermission(user, permissions),
+      isLoading: false,
+    };
+  }, [mode, permissions, workspaceId, status, user, workspacePermissions, isWorkspaceLoading]);
+}
+
 
 function sessionUserToPermissionUser(
   sessionUser: Session["user"] | undefined,
