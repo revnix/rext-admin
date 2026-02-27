@@ -78,6 +78,7 @@ function createApiClient() {
   return {
     // Core request method (for custom requests if needed)
     request: client.request.bind(client),
+    requestRaw: client.requestRaw.bind(client),
 
     // Feature namespaces
     topics: createTopicsNamespace(client),
