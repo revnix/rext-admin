@@ -1,6 +1,6 @@
 "use client";
 
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -28,7 +28,7 @@ export function WorkspacePreferencesSection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <CanAccess
+        <PermissionGuard
           permission={WORKSPACE_PERMISSIONS.UPDATE}
           fallback={
             <p className="text-sm text-muted-foreground">
@@ -93,7 +93,7 @@ export function WorkspacePreferencesSection() {
               </div>
             </div>
           </div>
-        </CanAccess>
+        </PermissionGuard>
       </CardContent>
     </Card>
   );

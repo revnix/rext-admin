@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -36,7 +36,7 @@ export function BrandVoiceSection() {
         </p>
       </div>
 
-      <CanAccess
+      <PermissionGuard
         permission={WORKSPACE_PERMISSIONS.UPDATE}
         fallback={
           <Card>
@@ -66,7 +66,7 @@ export function BrandVoiceSection() {
             }}
           />
         )}
-      </CanAccess>
+      </PermissionGuard>
     </div>
   );
 }

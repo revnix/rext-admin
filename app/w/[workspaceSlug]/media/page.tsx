@@ -23,7 +23,7 @@ import { MediaGrid } from "@/components/media/media-grid";
 import { MediaList } from "@/components/media/media-list";
 import { MediaUploadDialog } from "@/components/media/media-upload-dialog";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -280,7 +280,7 @@ export default function WorkspaceMediaPage() {
       description="Upload and manage your workspace media files."
       actions={headerActions}
     >
-      <CanAccess
+      <PermissionGuard
         permission={MEDIA_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -422,7 +422,7 @@ export default function WorkspaceMediaPage() {
             onDeleted={handleDeleted}
           />
         </div>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { CustomerDetailDrawer } from "@/components/admin/customers/customer-detail-drawer";
 import { CustomerListTable } from "@/components/admin/customers/customer-list-table";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -122,7 +122,7 @@ export default function CustomersPage() {
         </Button>
       }
     >
-      <CanAccess
+      <PermissionGuard
         permission={USER_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -156,7 +156,7 @@ export default function CustomersPage() {
             onClose={handleCloseDrawer}
           />
         )}
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

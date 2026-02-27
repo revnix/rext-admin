@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -103,7 +103,7 @@ export default function AuditLogsPage() {
       title="Audit Logs"
       description="View and export all admin actions and system events"
       actions={
-        <CanAccess permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+        <PermissionGuard permission={ADMIN_PERMISSIONS.AUDIT_READ}>
           <Button variant="outline" onClick={() => handleExport("csv")}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -112,7 +112,7 @@ export default function AuditLogsPage() {
             <FileText className="h-4 w-4 mr-2" />
             Export JSON
           </Button>
-        </CanAccess>
+        </PermissionGuard>
       }
     >
       <AdminGuard>

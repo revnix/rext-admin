@@ -28,7 +28,7 @@ import { RoleBadge } from "@/components/admin/roles/role-badge";
 import { RolePermissionAuditLog } from "@/components/admin/roles/role-permission-audit-log";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -323,7 +323,7 @@ export default function AdminRolesPage() {
       title="Roles & Permissions"
       description="Configure system roles and assign permissions"
     >
-      <CanAccess
+      <PermissionGuard
         anyPermission={[
           ADMIN_PERMISSIONS.ROLE_READ,
           ADMIN_PERMISSIONS.PERMISSION_READ,
@@ -450,7 +450,7 @@ export default function AdminRolesPage() {
                         <History className="h-4 w-4 mr-2" />
                         Audit Log
                       </Button>
-                      <CanAccess permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
+                      <PermissionGuard permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
                         <Button
                           variant="outline"
                           onClick={() => setBulkAssignOpen(true)}
@@ -458,13 +458,13 @@ export default function AdminRolesPage() {
                           <Users className="h-4 w-4 mr-2" />
                           Bulk Assign
                         </Button>
-                      </CanAccess>
-                      <CanAccess permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
+                      </PermissionGuard>
+                      <PermissionGuard permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
                         <Button onClick={() => setCreateRoleOpen(true)}>
                           <Plus className="h-4 w-4 mr-2" />
                           Create Role
                         </Button>
-                      </CanAccess>
+                      </PermissionGuard>
                     </div>
                   </div>
                 </CardHeader>
@@ -497,12 +497,12 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
-                    <CanAccess permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}>
+                    <PermissionGuard permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}>
                       <Button onClick={() => setCreatePermissionOpen(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         Create Permission
                       </Button>
-                    </CanAccess>
+                    </PermissionGuard>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -577,7 +577,7 @@ export default function AdminRolesPage() {
           open={auditLogOpen}
           onOpenChange={setAuditLogOpen}
         />
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

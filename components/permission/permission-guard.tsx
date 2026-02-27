@@ -1,9 +1,12 @@
-"use client";
-
 import type React from "react";
-import { Suspense } from "react";
-import { usePermissionDecision } from "@/hooks/use-permission";
+import { Suspense, useMemo } from "react";
+import {
+  useAnyRole,
+  usePermissionDecision,
+  useRole,
+} from "@/hooks/use-permission";
 import { useCurrentWorkspaceId } from "@/providers/workspace-permission-provider";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import { LockedFeatureTooltip } from "./locked-feature-tooltip";
 import { PermissionLoading } from "./permission-loading";
 
@@ -11,27 +14,22 @@ import { PermissionLoading } from "./permission-loading";
  * Permission guard component props
  */
 interface PermissionGuardProps {
-  /** Single permission or array of permissions to check */
-  permission: string | string[];
-  /** If true, requires ALL permissions. If false, requires ANY permission (default: false) */
+  permission?: string | string[];
+  anyPermission?: string[];
+  allPermissions?: string[];
+  role?: string;
+  anyRole?: string[];
   requireAll?: boolean;
-  /** Workspace ID for workspace-scoped permission checks */
   workspaceId?: string;
-  /** Fallback content to show when permission is denied */
   fallback?: React.ReactNode;
-  /** Children to render when permission is granted */
   children: React.ReactNode;
-  /** Show loading state while checking permissions */
+  invert?: boolean;
   showLoading?: boolean;
-  /** Loading variant */
   loadingVariant?: "skeleton" | "spinner" | "minimal";
   /** Custom loading message */
   loadingMessage?: string;
-  /** Show tooltip on fallback explaining permission requirement (default: false) */
   showTooltip?: boolean;
-  /** Custom tooltip message (if showTooltip is true) */
   tooltipMessage?: string;
-  /** Required role hint for tooltip (e.g., "Workspace Owner") */
   requiredRole?: string;
 }
 
@@ -107,31 +105,82 @@ interface PermissionGuardProps {
  */
 export function PermissionGuard({
   permission,
+  anyPermission,
+  allPermissions,
+  role,
+  anyRole,
   requireAll = false,
   workspaceId: propWorkspaceId,
   fallback = null,
   children,
-  showLoading = true, // Changed default to true for better UX
+  invert = false,
+  showLoading = true,
   loadingVariant = "skeleton",
   loadingMessage,
   showTooltip = false,
   tooltipMessage,
   requiredRole,
 }: PermissionGuardProps) {
-  const permissions = Array.isArray(permission) ? permission : [permission];
+  // 1. Determine Workspace ID (Try providers, then props)
+  const permissionWsId = useCurrentWorkspaceId();
+  const workspaceContext = useWorkspaceOptional();
+  const contextWorkspaceId =
+    permissionWsId ||
+    workspaceContext?.workspaceId ||
+    workspaceContext?.workspaceSlug;
 
-  // Get workspace ID from context (if in workspace route) or props
-  const contextWorkspaceId = useCurrentWorkspaceId();
   const effectiveWorkspaceId = propWorkspaceId || contextWorkspaceId;
 
-  // Determine if user has required permissions and if still loading
-  const { hasAccess, isLoading } = usePermissionDecision({
-    mode: permissions.length === 1 ? "single" : requireAll ? "all" : "any",
+  // 2. Normalize Permissions
+  const permissions = useMemo(() => {
+    if (permission) {
+      return Array.isArray(permission) ? permission : [permission];
+    }
+    if (anyPermission?.length) return anyPermission;
+    if (allPermissions?.length) return allPermissions;
+    return [];
+  }, [permission, anyPermission, allPermissions]);
+
+  const mode = useMemo(() => {
+    if (permission) {
+      return Array.isArray(permission)
+        ? requireAll
+          ? ("all" as const)
+          : ("any" as const)
+        : ("single" as const);
+    }
+    if (anyPermission?.length) return "any" as const;
+    if (allPermissions?.length) return "all" as const;
+    return "any" as const;
+  }, [permission, anyPermission, allPermissions, requireAll]);
+
+  // 3. Hook calls (Must be top-level)
+  const { hasAccess: permissionAccess, isLoading } = usePermissionDecision({
+    mode,
     permissions,
     workspaceId: effectiveWorkspaceId,
   });
 
-  // Show loading state while permissions are being fetched (prevents flash!)
+  const roleCheck = useRole(role || "");
+  const anyRoleCheck = useAnyRole(anyRole || []);
+
+  // 4. Access Logic
+  let hasAccess = false;
+
+  if (permission || anyPermission?.length || allPermissions?.length) {
+    hasAccess = permissionAccess;
+  } else if (role) {
+    hasAccess = roleCheck;
+  } else if (anyRole?.length) {
+    hasAccess = anyRoleCheck;
+  } else {
+    // If no permission/role specified, default to granted
+    hasAccess = true;
+  }
+
+  if (invert) hasAccess = !hasAccess;
+
+  // Show loading state while permissions are being fetched
   if (isLoading && showLoading) {
     return (
       <PermissionLoading variant={loadingVariant} message={loadingMessage} />
@@ -140,21 +189,16 @@ export function PermissionGuard({
 
   // Permission check failed - show fallback
   if (!hasAccess) {
-    // If showTooltip is true and fallback is a React element, wrap it in LockedFeatureTooltip
-    if (
-      showTooltip &&
-      fallback &&
-      typeof fallback === "object" &&
-      "type" in fallback
-    ) {
-      const firstPermission = permissions[0]; // Use first permission for tooltip
+    // If showTooltip is true and fallback is a React element (or it's a locked feature), wrap it in LockedFeatureTooltip
+    if (showTooltip && children && typeof children === "object") {
+      const firstPermission = permissions[0] || (role ? `role:${role}` : "");
       return (
         <LockedFeatureTooltip
           permission={firstPermission}
           requiredRole={requiredRole}
           message={tooltipMessage}
         >
-          {fallback as React.ReactElement}
+          {children as React.ReactElement}
         </LockedFeatureTooltip>
       );
     }
@@ -163,8 +207,7 @@ export function PermissionGuard({
   }
 
   // Permission granted - show children
-  // Optionally wrap in Suspense for component-level loading
-  if (showLoading) {
+  if (showLoading && (permission || anyPermission || allPermissions)) {
     return (
       <Suspense
         fallback={

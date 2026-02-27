@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,7 +87,7 @@ export function DangerZoneSection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <CanAccess
+        <PermissionGuard
           permission={WORKSPACE_PERMISSIONS.DELETE}
           fallback={
             <p className="text-sm text-muted-foreground">
@@ -188,7 +188,7 @@ export function DangerZoneSection() {
               </AlertDialog>
             </div>
           </div>
-        </CanAccess>
+        </PermissionGuard>
       </CardContent>
     </Card>
   );
