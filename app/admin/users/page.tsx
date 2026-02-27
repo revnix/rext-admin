@@ -46,7 +46,6 @@ export default function AdminUsersPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => apiClient.users.list(),
-    throwOnError: true,
   });
 
   const handleImpersonate = (userId: string) => {

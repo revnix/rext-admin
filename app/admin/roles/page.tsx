@@ -38,6 +38,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ErrorPage } from "@/components/ui/error-states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
@@ -84,18 +85,39 @@ export default function AdminRolesPage() {
     useState<PermissionWithRoles | null>(null);
 
   // Fetch roles with permissions
-  const { data: rolesData, isLoading: rolesLoading } = useQuery({
+  const {
+    data: rolesData,
+    isLoading: rolesLoading,
+    error: rolesError,
+    refetch: refetchRoles,
+  } = useQuery({
     queryKey: ["roles"],
     queryFn: () => apiClient.roles.list(true),
-    throwOnError: true,
   });
 
   // Fetch permissions with roles
-  const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
+  const {
+    data: permissionsData,
+    isLoading: permissionsLoading,
+    error: permissionsError,
+    refetch: refetchPermissions,
+  } = useQuery({
     queryKey: ["permissions"],
     queryFn: () => apiClient.roles.listPermissions(undefined, true),
-    throwOnError: true,
   });
+
+  if (rolesError || permissionsError) {
+    return (
+      <ErrorPage
+        title="Failed to load roles and permissions"
+        message="We could not load role and permission data. Please retry."
+        retry={() => {
+          void refetchRoles();
+          void refetchPermissions();
+        }}
+      />
+    );
+  }
 
   // Transform roles data for DataTable
   const rolesTableData: RoleTableData[] = (rolesData?.roles || []).map(
