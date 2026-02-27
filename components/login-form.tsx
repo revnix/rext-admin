@@ -107,7 +107,7 @@ export function LoginForm({
       resetAuthRedirectState();
 
       if (hasValidInvitation && invitationToken) {
-        router.push(`/accept-invitation?token=${invitationToken}` as Route);
+        router.push(`/invitations/accept?token=${invitationToken}` as Route);
       } else {
         await getAuthHeaders(true);
 

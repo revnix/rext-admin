@@ -90,6 +90,20 @@ export default auth((request) => {
   const { nextUrl } = request as NextRequest;
   const session = (request as AuthenticatedRequest).auth;
 
+  // Handle legacy invitation route redirect
+  if (nextUrl.pathname === "/accept-invitation") {
+    const redirectedUrl = new URL("/invitations/accept", nextUrl.origin);
+    const token =
+      nextUrl.searchParams.get("token") ||
+      nextUrl.searchParams.get("invitation_token");
+
+    if (token) {
+      redirectedUrl.searchParams.set("token", token);
+    }
+
+    return NextResponse.redirect(redirectedUrl);
+  }
+
   // Public routes that don't require authentication
   const publicRoutes = [
     ...AUTH_PAGE_PATHS,
