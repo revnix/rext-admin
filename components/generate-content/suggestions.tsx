@@ -13,24 +13,18 @@ export function SuggestionsSection({
   suggestedKeywords,
   onSelect,
   seoResult,
-  keywordDifficulty,
 }: {
   instruction: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   onSelect: (kw: string) => void;
   seoResult: SEORESULT | null;
-  keywordDifficulty?: number | null;
 }) {
   const difficultyScore = useMemo(() => {
-    if (keywordDifficulty !== null && keywordDifficulty !== undefined) {
-      return Math.round(keywordDifficulty);
-    }
     const value = seoResult?.keyword_difficulty;
     const numberValue = typeof value === "number" ? value : Number(value);
-
     return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
-  }, [seoResult?.keyword_difficulty, keywordDifficulty]);
+  }, [seoResult?.keyword_difficulty]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

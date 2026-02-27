@@ -24,6 +24,8 @@ declare module "next-auth" {
     image: string | null;
     accessToken: string;
     refreshToken: string;
+    expiresIn?: number; // Token lifetime in seconds (from backend)
+    expiresAt?: string | number; // Token expiry as ISO string or epoch (from backend)
     role?: string; // User's primary role
     permissions?: string[]; // User's permissions array
     rememberMe?: boolean;
