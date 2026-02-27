@@ -26,7 +26,7 @@ const settingsNavItems: SettingsNavItem[] = [
   },
   {
     label: "Billing",
-    href: settingsRoutes.billing,
+    href: settingsRoutes.subscription,
     icon: CreditCard,
   },
 ];

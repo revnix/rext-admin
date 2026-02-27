@@ -40,13 +40,15 @@ export function createPersonasNamespace(client: ApiClient) {
      * Create a new persona
      */
     create: async (workspaceId: string, data: Omit<Persona, "id">) => {
-      return client.request<{
-        persona: Persona;
-      }>(ENDPOINTS.PERSONAS.create(workspaceId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const response = await client.request<Persona>(
+        ENDPOINTS.PERSONAS.create(workspaceId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+      return { persona: response };
     },
 
     /**
@@ -57,13 +59,15 @@ export function createPersonasNamespace(client: ApiClient) {
       personaId: string,
       data: Partial<Persona>,
     ) => {
-      return client.request<{
-        persona: Persona;
-      }>(ENDPOINTS.PERSONAS.update(workspaceId, personaId), {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const response = await client.request<Persona>(
+        ENDPOINTS.PERSONAS.update(workspaceId, personaId),
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+      return { persona: response };
     },
 
     /**

@@ -10,6 +10,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
+import { retryTransient } from "@/lib/retry/transient-retry";
 import type {
   BillingPeriod,
   CheckoutSessionResponse,
@@ -259,11 +260,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedSubscription =
-            await apiClient.subscriptions.upgradeSubscription(
-              planId,
-              billingPeriod,
-            );
+          const updatedSubscription = await retryTransient(
+            () =>
+              apiClient.subscriptions.upgradeSubscription(
+                planId,
+                billingPeriod,
+              ),
+            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
+          );
 
           set({
             subscription: updatedSubscription,
@@ -295,11 +299,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedSubscription =
-            await apiClient.subscriptions.downgradeSubscription(
-              planId,
-              billingPeriod,
-            );
+          const updatedSubscription = await retryTransient(
+            () =>
+              apiClient.subscriptions.downgradeSubscription(
+                planId,
+                billingPeriod,
+              ),
+            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
+          );
 
           set({
             subscription: updatedSubscription,
@@ -331,9 +338,13 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          await apiClient.subscriptions.cancelSubscription(
-            reason,
-            cancelImmediately,
+          await retryTransient(
+            () =>
+              apiClient.subscriptions.cancelSubscription(
+                reason,
+                cancelImmediately,
+              ),
+            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
           );
 
           // Refresh subscription to get updated cancellation status
@@ -401,13 +412,17 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         });
 
         try {
-          const checkoutSession = await apiClient.subscriptions.createCheckout(
-            plan.id,
-            billingPeriod,
-            undefined,
-            undefined,
-            discountCode,
-            affiliateCode,
+          const checkoutSession = await retryTransient(
+            () =>
+              apiClient.subscriptions.createCheckout(
+                plan.id,
+                billingPeriod,
+                undefined,
+                undefined,
+                discountCode,
+                affiliateCode,
+              ),
+            { maxAttempts: 2, baseDelayMs: 500, maxDelayMs: 3000 },
           );
 
           set({

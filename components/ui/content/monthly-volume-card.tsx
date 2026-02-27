@@ -10,8 +10,19 @@ const chartConfig = {
 };
 
 export function MonthlyVolumeCard({ volume = "0" }) {
+  const numericVolume = React.useMemo(() => {
+    return parseFloat(String(volume).replace(/[^0-9.]/g, "")) || 0;
+  }, [volume]);
+
+  const formattedVolume = React.useMemo(() => {
+    return new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1,
+    }).format(numericVolume);
+  }, [numericVolume]);
+
   const sparkData = React.useMemo(() => {
-    const numericVolume = parseFloat(volume.replace(/[^0-9.]/g, "")) || 0;
     const base = numericVolume > 0 ? numericVolume : 1.2;
 
     // Generate a semi-random but deterministic trend
@@ -19,12 +30,12 @@ export function MonthlyVolumeCard({ volume = "0" }) {
       date: i,
       volume: base * (0.85 + Math.sin(i * 1.5) * 0.1 + (i / 10) * 0.1),
     }));
-  }, [volume]);
+  }, [numericVolume]);
 
   return (
     <>
       <div className="flex flex-col">
-        <h3 className="text-3xl font-bold text-gray-900">{volume}</h3>
+        <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{formattedVolume}</h3>
         <p className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
           Avg. searches per month
         </p>

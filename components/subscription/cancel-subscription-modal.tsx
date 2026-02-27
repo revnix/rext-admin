@@ -112,6 +112,12 @@ export function CancelSubscriptionModal({
       setError(errorMessage);
       toast.error("Failed to cancel subscription", {
         description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            void handleCancel();
+          },
+        },
       });
     } finally {
       setIsLoading(false);

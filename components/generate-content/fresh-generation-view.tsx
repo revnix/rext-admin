@@ -93,17 +93,7 @@ export function FreshGenerationView({
 
       for await (const chunk of stream) {
         const updates = chunk.data as StreamUpdates;
-
-        if (
-          updates?.compute_keyword_difficulty?.seo_result?.keyword_difficulty
-        ) {
-          dispatch({
-            type: "SET_KEYWORD_DIFFICULTY",
-            payload:
-              updates.compute_keyword_difficulty.seo_result.keyword_difficulty
-                .kd,
-          });
-        }
+        console.log("updates", updates);
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
@@ -232,13 +222,16 @@ export function FreshGenerationView({
     await processStream(stream);
   };
 
-  const handleWorkflow = (step: WorkflowStep, value?: string) => {
+  const handleWorkflow = (step: WorkflowStep, value: string) => {
     switch (step) {
       case "KEYWORD_SELECT":
         dispatch({
           type: "SET_LOADING_STEPS",
           payload: KEYWORD_SELECTION_STEPS,
         });
+        dispatch({ type: "SET_USER_KEYWORD", payload: value });
+        dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
+        
         return resumeWorkflow({
           payload: { "Primary Keyword": value },
           status: "Keyword Recommendation...",
@@ -326,11 +319,10 @@ export function FreshGenerationView({
     "keyword Selection": (
       <SuggestionsSection
         instruction={instruction}
-        primaryKeyword={primaryKeyword || userKeyword}
+        primaryKeyword={primaryKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
         seoResult={seoResult}
-        keywordDifficulty={keywordDifficulty}
       />
     ),
 
@@ -339,7 +331,7 @@ export function FreshGenerationView({
         instruction={instruction}
         topics={topics}
         onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
-        keyword={primaryKeyword || userKeyword}
+        keyword={primaryKeyword}
       />
     ),
 
@@ -357,8 +349,8 @@ export function FreshGenerationView({
       <OutlineDisplay
         outline={outline}
         isLoading={false}
-        onApprove={() => handleWorkflow("OUTLINE_APPROVE")}
-        onReject={() => handleWorkflow("OUTLINE_REJECT")}
+        onApprove={() => handleWorkflow("OUTLINE_APPROVE", "")}
+        onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
         onUpdate={(updatedOutline) => {
           dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
         }}

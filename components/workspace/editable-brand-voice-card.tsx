@@ -75,6 +75,9 @@ export function EditableBrandVoiceCard({
       queryClient.invalidateQueries({
         queryKey: ["workspace", workspace.slug],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["workspaces", "brand-voice", workspace.id],
+      });
       toast.success("Brand voice updated successfully");
       setIsEditing(false);
     },

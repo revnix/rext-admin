@@ -8,19 +8,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import type { Persona } from "@/types/workspace";
 import { toast } from "sonner";
+import { personaQueries } from "@/lib/query-keys";
 
 /**
  * Hook to fetch all personas for a workspace
  */
 export function usePersonas(workspaceId: string | null) {
   return useQuery({
-    queryKey: ["personas", workspaceId],
-    queryFn: async () => {
-      if (!workspaceId) throw new Error("Workspace ID is required");
-      return apiClient.personas.list(workspaceId);
-    },
+    ...personaQueries.list(workspaceId || ""),
     enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -32,12 +28,7 @@ export function usePersona(
   personaId: string | null,
 ) {
   return useQuery({
-    queryKey: ["persona", workspaceId, personaId],
-    queryFn: async () => {
-      if (!workspaceId || !personaId)
-        throw new Error("Workspace ID and Persona ID are required");
-      return apiClient.personas.get(workspaceId, personaId);
-    },
+    ...personaQueries.detail(workspaceId || "", personaId || ""),
     enabled: !!workspaceId && !!personaId,
   });
 }
@@ -53,7 +44,9 @@ export function useCreatePersona(workspaceId: string) {
       return apiClient.personas.create(workspaceId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["personas", workspaceId] });
+      queryClient.invalidateQueries({
+        queryKey: personaQueries.all(workspaceId),
+      });
       toast.success("Persona created successfully");
     },
     onError: (error: Error) => {
@@ -79,10 +72,17 @@ export function useUpdatePersona(workspaceId: string) {
       return apiClient.personas.update(workspaceId, personaId, data);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["personas", workspaceId] });
+      // Invalidate the specific persona's details cache to force a fresh fetch from GET
       queryClient.invalidateQueries({
-        queryKey: ["persona", workspaceId, variables.personaId],
+        queryKey: personaQueries.detail(workspaceId, variables.personaId)
+          .queryKey,
       });
+
+      // Invalidate the list as well to ensure it's up to date
+      queryClient.invalidateQueries({
+        queryKey: personaQueries.lists(workspaceId),
+      });
+
       toast.success("Persona updated successfully");
     },
     onError: (error: Error) => {
@@ -102,7 +102,9 @@ export function useDeletePersona(workspaceId: string) {
       return apiClient.personas.delete(workspaceId, personaId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["personas", workspaceId] });
+      queryClient.invalidateQueries({
+        queryKey: personaQueries.all(workspaceId),
+      });
       toast.success("Persona deleted successfully");
     },
     onError: (error: Error) => {

@@ -518,6 +518,7 @@ export type PageAction =
   | { type: "SET_STEP"; payload: AppStep }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
   | { type: "SET_USER_KEYWORD"; payload: string }
+  | { type: "SET_PRIMARY_KEYWORD"; payload: string }
   | { type: "SET_COUNTRY"; payload: string }
   | { type: "SET_THREAD_ID"; payload: string | null }
   | { type: "SET_REJECTED_REASON"; payload: string }
