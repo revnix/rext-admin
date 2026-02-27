@@ -65,18 +65,20 @@ export function InvitedUserPermissions({
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
             <Card
-              className={`h-full transition-colors ${permission.allowed
+              className={`h-full transition-colors ${
+                permission.allowed
                   ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20"
                   : "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20"
-                }`}
+              }`}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${permission.allowed
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                      permission.allowed
                         ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
                         : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                      }`}
+                    }`}
                   >
                     {permission.icon}
                   </div>
@@ -142,7 +144,9 @@ export function InvitedUserPermissions({
 /**
  * Helper function to detect the category of a role based on its name.
  */
-function detectRoleCategory(roleName: string): "owner" | "admin" | "editor" | "viewer" {
+function detectRoleCategory(
+  roleName: string,
+): "owner" | "admin" | "editor" | "viewer" {
   const normalizedRole = roleName.toLowerCase();
   if (normalizedRole.includes("owner")) {
     return "owner";

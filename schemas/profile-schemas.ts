@@ -4,6 +4,40 @@ import { z } from "zod";
  * Profile update schema
  * Matches backend UpdateProfileRequest
  */
+
+export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+export const AVATAR_ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+] as const;
+
+export const AVATAR_ACCEPT_ATTRIBUTE = AVATAR_ALLOWED_MIME_TYPES.join(",");
+
+export const avatarFileSchema = z
+  .file()
+  .max(AVATAR_MAX_BYTES, "Image must be 5MB or smaller")
+  .mime(
+    [...AVATAR_ALLOWED_MIME_TYPES],
+    "Please upload a JPEG, PNG, GIF, or WebP image",
+  );
+
+export function validateAvatarFile(
+  file: File,
+): { valid: true } | { valid: false; message: string } {
+  const result = avatarFileSchema.safeParse(file);
+
+  if (result.success) {
+    return { valid: true };
+  }
+
+  return {
+    valid: false,
+    message: result.error.issues[0]?.message ?? "Invalid avatar file",
+  };
+}
+
 export const profileSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
   displayName: z

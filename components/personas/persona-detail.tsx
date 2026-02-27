@@ -161,7 +161,6 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 </>
               )}
 
-
               <div className="space-y-2">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Full Name

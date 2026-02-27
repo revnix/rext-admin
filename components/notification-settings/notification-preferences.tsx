@@ -72,8 +72,10 @@ export function transformApiToFormData(
     kb_processing_failed: apiData.knowledge_base?.processing_failed ?? false,
 
     // Email digest — API returns these flat at root level, not inside email_digest
-    digest_enabled: apiData.digest_enabled ?? apiData.email_digest?.enabled ?? false,
-    digest_frequency: apiData.digest_frequency ?? apiData.email_digest?.frequency ?? "daily",
+    digest_enabled:
+      apiData.digest_enabled ?? apiData.email_digest?.enabled ?? false,
+    digest_frequency:
+      apiData.digest_frequency ?? apiData.email_digest?.frequency ?? "daily",
 
     // Marketing
     marketing_updates: apiData.marketing?.marketing_updates ?? false,

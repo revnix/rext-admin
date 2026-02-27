@@ -11,7 +11,6 @@ import { getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
-
 /**
  * Refresh the access token using the refresh token
  */
@@ -310,8 +309,8 @@ export default {
             token.permissions = oauthData.user.permissions || [];
             // Derive expiry from backend OAuth response: prefer `expires_in` (seconds), fall back to `expires_at`
             token.accessTokenExpires = oauthData.expires_at
-                ? new Date(oauthData.expires_at).getTime()
-                : undefined;
+              ? new Date(oauthData.expires_at).getTime()
+              : undefined;
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
@@ -359,7 +358,9 @@ export default {
         if (token.accessTokenExpires) {
           // No refresh token available — cannot obtain a fresh expiry from the backend.
           // Return the token as-is; the existing expiry will drive the next refresh check.
-          log.warn("[Auth] No refresh token for manual update — keeping existing token expiry.");
+          log.warn(
+            "[Auth] No refresh token for manual update — keeping existing token expiry.",
+          );
           return token;
         }
 
