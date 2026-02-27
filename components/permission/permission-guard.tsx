@@ -31,6 +31,8 @@ interface PermissionGuardProps {
   showTooltip?: boolean;
   tooltipMessage?: string;
   requiredRole?: string;
+  showLockedTooltip?: boolean;
+  showLockIcon?: boolean;
 }
 
 /**
@@ -117,9 +119,11 @@ export function PermissionGuard({
   showLoading = true,
   loadingVariant = "skeleton",
   loadingMessage,
+  showLockedTooltip = false,
   showTooltip = false,
   tooltipMessage,
   requiredRole,
+  showLockIcon = false,
 }: PermissionGuardProps) {
   // 1. Determine Workspace ID (Try providers, then props)
   const permissionWsId = useCurrentWorkspaceId();
@@ -189,14 +193,16 @@ export function PermissionGuard({
 
   // Permission check failed - show fallback
   if (!hasAccess) {
-    // If showTooltip is true and fallback is a React element (or it's a locked feature), wrap it in LockedFeatureTooltip
-    if (showTooltip && children && typeof children === "object") {
+    // If showLockedTooltip/showTooltip is true and fallback is a React element, wrap it in LockedFeatureTooltip
+    const shouldShowTooltip = showLockedTooltip || showTooltip;
+    if (shouldShowTooltip && children && typeof children === "object") {
       const firstPermission = permissions[0] || (role ? `role:${role}` : "");
       return (
         <LockedFeatureTooltip
           permission={firstPermission}
           requiredRole={requiredRole}
           message={tooltipMessage}
+          showIcon={showLockIcon}
         >
           {children as React.ReactElement}
         </LockedFeatureTooltip>

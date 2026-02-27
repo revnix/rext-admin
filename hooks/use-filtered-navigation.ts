@@ -7,8 +7,8 @@ import {
   checkAnyRole,
   checkPermission,
   checkRole,
-  type UserWithPermissions,
 } from "@/lib/permissions";
+import type { UserWithPermissions } from "@/types/role";
 import { usePermissionStore } from "@/stores/permission-store";
 import type { NavGroup, NavItem, NavSubItem } from "@/types/navigation";
 import { usePermissionUser } from "./use-permission";
