@@ -58,7 +58,7 @@ export function SearchIntentCard({
         <Icon className="w-5 h-5 text-white" />
       </div>
       <div className="min-w-0">
-        <h3 className="text-lg font-bold text-gray-900 truncate uppercase">
+        <h3 className="text-lg font-bold text-gray-900 truncate uppercase dark:text-white">
           {intent}
         </h3>
         <p className={`text-[10px] leading-tight ${config.textColor}`}>
