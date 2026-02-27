@@ -228,7 +228,6 @@ function getRoleTourItems(roleName: string): TourItem[] {
           highlight: false,
         },
       ];
-    case "viewer":
     default:
       return [
         ...baseItems,

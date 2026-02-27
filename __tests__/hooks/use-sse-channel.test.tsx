@@ -326,7 +326,9 @@ describe("useSSEChannel", () => {
       });
 
       // onError should be called for actionable errors
-      expect(onError).toHaveBeenCalledWith("SSE connection failed with status 500");
+      expect(onError).toHaveBeenCalledWith(
+        "SSE connection failed with status 500",
+      );
     });
 
     it("forwards rate limit errors as actionable", async () => {

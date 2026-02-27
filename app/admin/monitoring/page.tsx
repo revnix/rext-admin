@@ -155,16 +155,6 @@ export default function MonitoringPage() {
     refetchInterval: 60000, // Refresh every 60 seconds
   });
 
-  if (healthError) {
-    return (
-      <ErrorPage
-        title="Failed to load system health"
-        message="System monitoring data is currently unavailable."
-        retry={() => void refetchHealth()}
-      />
-    );
-  }
-
   // Fetch error logs
   const {
     data: errorLogsData,
@@ -215,6 +205,16 @@ export default function MonitoringPage() {
         .then((res) => res.data);
     },
   });
+
+  if (healthError) {
+    return (
+      <ErrorPage
+        title="Failed to load system health"
+        message="System monitoring data is currently unavailable."
+        retry={() => void refetchHealth()}
+      />
+    );
+  }
 
   const health = healthData;
   const errorLogs = (errorLogsData as ErrorLogData | undefined)?.logs || [];

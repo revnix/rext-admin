@@ -115,7 +115,11 @@ export function CustomerDetailDrawer({
           <div className="py-8">
             <ErrorAlert
               title="Failed to load customer details"
-              message={error instanceof Error ? error.message : "An unexpected error occurred"}
+              message={
+                error instanceof Error
+                  ? error.message
+                  : "An unexpected error occurred"
+              }
               retry={() => void refetch()}
             />
           </div>
@@ -415,12 +419,13 @@ export function CustomerDetailDrawer({
                           </div>
                           <div className="h-2 bg-secondary rounded-full overflow-hidden">
                             <div
-                              className={`h-full transition-all ${percentage > 90
+                              className={`h-full transition-all ${
+                                percentage > 90
                                   ? "bg-red-600"
                                   : percentage > 75
                                     ? "bg-orange-500"
                                     : "bg-green-600"
-                                }`}
+                              }`}
                               style={{ width: `${Math.min(percentage, 100)}%` }}
                             />
                           </div>

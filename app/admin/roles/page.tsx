@@ -472,7 +472,9 @@ export default function AdminRolesPage() {
                         <History className="h-4 w-4 mr-2" />
                         Audit Log
                       </Button>
-                      <PermissionGuard permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
+                      <PermissionGuard
+                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
+                      >
                         <Button
                           variant="outline"
                           onClick={() => setBulkAssignOpen(true)}
@@ -481,7 +483,9 @@ export default function AdminRolesPage() {
                           Bulk Assign
                         </Button>
                       </PermissionGuard>
-                      <PermissionGuard permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
+                      <PermissionGuard
+                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
+                      >
                         <Button onClick={() => setCreateRoleOpen(true)}>
                           <Plus className="h-4 w-4 mr-2" />
                           Create Role
@@ -519,7 +523,9 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
-                    <PermissionGuard permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}>
+                    <PermissionGuard
+                      permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}
+                    >
                       <Button onClick={() => setCreatePermissionOpen(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         Create Permission

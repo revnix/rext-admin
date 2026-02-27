@@ -240,7 +240,6 @@ function getRoleFirstTasks(
           priority: "low",
         },
       ];
-    case "viewer":
     default:
       return [
         {

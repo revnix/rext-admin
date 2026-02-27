@@ -3,7 +3,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface NotificationPreferencesLoadErrorProps {
-    message: string;
+  message: string;
 }
 
 /**
@@ -13,11 +13,11 @@ interface NotificationPreferencesLoadErrorProps {
  * by using a unified Alert component with destructive styling.
  */
 export function NotificationPreferencesLoadError({
-    message,
+  message,
 }: NotificationPreferencesLoadErrorProps) {
-    return (
-        <Alert variant="destructive">
-            <AlertDescription>{message}</AlertDescription>
-        </Alert>
-    );
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
+  );
 }

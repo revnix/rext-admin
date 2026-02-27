@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useTheme } from "@/providers/theme-provider";
 import { useAccessibilityPreferences } from "@/hooks/use-accessibility-preferences";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 
 const ACCESSIBILITY_STORAGE_KEY = "wrext-accessibility";
 
 export function PreferencesTab() {
-  const { accessibility,  } = useAccessibilityPreferences();
+  const { accessibility } = useAccessibilityPreferences();
 
   // Apply accessibility preferences to document
   useEffect(() => {

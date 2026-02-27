@@ -166,7 +166,7 @@ export function WorkspaceMembersPanel({
               <Image
                 src={
                   row.avatar.startsWith("http://") ||
-                    row.avatar.startsWith("https://")
+                  row.avatar.startsWith("https://")
                     ? row.avatar
                     : `${baseUrl}${row.avatar}`
                 }
@@ -310,12 +310,12 @@ export function WorkspaceMembersPanel({
           emptyActions={
             canInviteMember
               ? [
-                {
-                  label: "Invite Members",
-                  icon: <UserPlus className="h-4 w-4" />,
-                  onClick: () => setShowInviteDialog(true),
-                },
-              ]
+                  {
+                    label: "Invite Members",
+                    icon: <UserPlus className="h-4 w-4" />,
+                    onClick: () => setShowInviteDialog(true),
+                  },
+                ]
               : []
           }
           searchPlaceholder="Search by name or email..."

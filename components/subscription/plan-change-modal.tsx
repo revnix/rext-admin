@@ -193,10 +193,11 @@ export function PlanChangeModal({
               return (
                 <div
                   key={plan.id}
-                  className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${isSelected
+                  className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${
+                    isSelected
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
-                    } ${isCurrent ? "opacity-50" : ""}`}
+                  } ${isCurrent ? "opacity-50" : ""}`}
                 >
                   <RadioGroupPrimitive.Item
                     value={plan.id}

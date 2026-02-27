@@ -1,13 +1,10 @@
 "use client";
 
-import {
-  Lightbulb,
-} from "lucide-react";
+import { Lightbulb } from "lucide-react";
 import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useTheme } from "@/providers/theme-provider";
 import { useTooltips } from "@/providers/tooltip-provider";
 import { useAccessibilityPreferences } from "@/hooks/use-accessibility-preferences";
 import { ThemeSelector } from "@/components/settings/theme-selector";
@@ -17,7 +14,7 @@ const ACCESSIBILITY_STORAGE_KEY = "wrext-accessibility";
 export function UIPreferences() {
   const { enabled, toggleTooltips } = useTooltips();
 
-  const { accessibility,  } = useAccessibilityPreferences();
+  const { accessibility } = useAccessibilityPreferences();
 
   // Apply accessibility preferences to document
   useEffect(() => {

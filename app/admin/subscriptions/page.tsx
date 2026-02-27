@@ -148,16 +148,6 @@ export default function SubscriptionAnalyticsPage() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  if (overviewError) {
-    return (
-      <ErrorPage
-        title="Failed to load subscription analytics"
-        message="Overview data could not be loaded. Please try again."
-        retry={() => void refetchOverview()}
-      />
-    );
-  }
-
   // Fetch revenue history
   const { data: revenueHistory, isLoading: historyLoading } = useQuery({
     queryKey: [
@@ -199,6 +189,16 @@ export default function SubscriptionAnalyticsPage() {
         .then((res) => res.data);
     },
   });
+
+  if (overviewError) {
+    return (
+      <ErrorPage
+        title="Failed to load subscription analytics"
+        message="Overview data could not be loaded. Please try again."
+        retry={() => void refetchOverview()}
+      />
+    );
+  }
 
   if (overviewLoading) {
     return (

@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { Route } from "next";
 
 /**
  * Inline error alert for form/API errors
@@ -49,14 +50,12 @@ export function ErrorPage({
   title = "Something went wrong",
   message = "An unexpected error occurred. Please try again.",
   retry,
-  goBack,
   dashboardLink = "/admin",
   dashboardLabel = "Dashboard",
 }: {
   title?: string;
   message?: string;
   retry?: () => void;
-  goBack?: () => void;
   dashboardLink?: string;
   dashboardLabel?: string;
 }) {
@@ -75,13 +74,16 @@ export function ErrorPage({
         <CardContent className="space-y-4">
           <div className="flex gap-3">
             {retry && (
-              <Button onClick={retry} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={retry}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
               </Button>
             )}
             <Button asChild variant="secondary" className="flex-1">
-              <Link href={dashboardLink}>
+              <Link href={dashboardLink as Route}>
                 <Home className="h-4 w-4 mr-2" />
                 {dashboardLabel}
               </Link>

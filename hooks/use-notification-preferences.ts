@@ -3,13 +3,10 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import {
-    transformToApiResponse,
-    type NotificationPreferencesApiResponse,
-} from "@/schemas/notification-schemas";
+import type { NotificationPreferencesApiResponse } from "@/schemas/notification-schemas";
 
 const notificationPreferencesLogger = log.forComponent(
-    "useNotificationPreferences"
+  "useNotificationPreferences",
 );
 
 /**
@@ -19,21 +16,21 @@ const notificationPreferencesLogger = log.forComponent(
  * with consistent caching, error handling, and fallback behavior.
  */
 export const notificationPreferencesQueryOptions = queryOptions({
-    queryKey: ["notification-preferences"],
-    queryFn: async (): Promise<NotificationPreferencesApiResponse> => {
-        try {
-            return await apiClient.notifications.getPreferences();
-        } catch (error) {
-            notificationPreferencesLogger.error(
-                "Failed to load notification preferences",
-                error
-            );
-            // Re-throw error so React Query sets error state for UI display
-            throw error;
-        }
-    },
-    staleTime: 60_000, // 60 seconds
-    retry: 1,
+  queryKey: ["notification-preferences"],
+  queryFn: async (): Promise<NotificationPreferencesApiResponse> => {
+    try {
+      return await apiClient.notifications.getPreferences();
+    } catch (error) {
+      notificationPreferencesLogger.error(
+        "Failed to load notification preferences",
+        error,
+      );
+      // Re-throw error so React Query sets error state for UI display
+      throw error;
+    }
+  },
+  staleTime: 60_000, // 60 seconds
+  retry: 1,
 });
 
 /**
@@ -46,5 +43,5 @@ export const notificationPreferencesQueryOptions = queryOptions({
  * @returns Query result including data, isLoading, and error state
  */
 export function useNotificationPreferences() {
-    return useQuery(notificationPreferencesQueryOptions);
+  return useQuery(notificationPreferencesQueryOptions);
 }

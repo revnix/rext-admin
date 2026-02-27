@@ -5,12 +5,6 @@ import type { StrictUserWithPermissions } from "@/types/role";
 const MAX_WORKSPACE_PERMISSION_CACHE = 25;
 const MAX_WORKSPACE_LOADING_CACHE = 50;
 
-interface PermissionStore {
-  user: StrictUserWithPermissions | null;
-  // ...rest unchanged
-  setUser: (user: StrictUserWithPermissions) => void;
-}
-
 /**
  * User interface with permissions
  */
@@ -35,14 +29,14 @@ export interface WorkspacePermissions {
  * Permission store state
  */
 interface PermissionStore {
-  user: User | null;
+  user: StrictUserWithPermissions | null;
   workspacePermissions: Map<string, WorkspacePermissions>;
   isLoading: boolean;
   error: string | null;
   workspaceLoadingStates: Map<string, boolean>;
 
   // Actions
-  setUser: (user: User) => void;
+  setUser: (user: StrictUserWithPermissions) => void;
   setWorkspacePermissions: (
     workspaceId: string,
     permissions: WorkspacePermissions,

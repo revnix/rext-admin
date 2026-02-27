@@ -69,13 +69,14 @@ const activeSubscriptions = new Map<
 >();
 
 export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
-  const resolvedBaseUrl = useMemo(() => resolveApiBaseUrl({
-    explicitBaseUrl: baseUrl,
-    allowWindowOriginFallback: true,
-  }),
+  const resolvedBaseUrl = useMemo(
+    () =>
+      resolveApiBaseUrl({
+        explicitBaseUrl: baseUrl,
+        allowWindowOriginFallback: true,
+      }),
     [baseUrl],
   );
-
 
   const subscribe = useCallback<SSEContextType["subscribe"]>(
     (operationId, onEvent, onStatus) => {
@@ -225,7 +226,9 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   return;
                 }
                 if (!response.ok) {
-                  throw new Error(`SSE connection failed with status ${response.status}`);
+                  throw new Error(
+                    `SSE connection failed with status ${response.status}`,
+                  );
                 }
 
                 retryCount = 0;
@@ -234,7 +237,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   retryCount: 0,
                   code: SSE_ERROR_CODES.CONNECTION_ESTABLISHED,
                 });
-                return;
 
                 const status = response.status;
                 const errorMessage = `SSE connection failed with status ${status}`;
