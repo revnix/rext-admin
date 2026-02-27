@@ -19,6 +19,13 @@ import {
 } from "@/types/sse";
 import { SSEEventSchema } from "@/schemas/sse-schemas";
 
+function hasAuthorizationHeader(headers: Record<string, string>): boolean {
+  return Object.entries(headers).some(
+    ([key, value]) =>
+      key.toLowerCase() === "authorization" && value.trim().length > 0,
+  );
+}
+
 interface SSEContextType {
   subscribe: (
     operationId: string,
@@ -184,28 +191,50 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
           try {
             const authHeaders = await getAuthHeaders();
+
+            if (!hasAuthorizationHeader(authHeaders)) {
+              sseLogger.warn("Skipping SSE connection: missing auth token", {
+                operationId,
+              });
+
+              stop({
+                connected: false,
+                retryCount,
+                error: "Authentication required for live updates",
+              });
+              return;
+            }
+
             const headers: HeadersInit = {
               Accept: "text/event-stream",
               ...authHeaders,
             };
 
-            const url = buildUrl();
-
-            await fetchEventSource(url, {
+            await fetchEventSource(buildUrl(), {
               signal: controller.signal,
               headers,
               openWhenHidden: true,
-              credentials: "include", // Include cookies for session
+              credentials: "include",
               onopen: async (response) => {
-                if (response.ok) {
-                  retryCount = 0;
-                  notifyStatus({
-                    connected: true,
-                    retryCount: 0,
-                    code: SSE_ERROR_CODES.CONNECTION_ESTABLISHED,
+                if (response.status === 401 || response.status === 403) {
+                  stop({
+                    connected: false,
+                    retryCount,
+                    error: "Authentication required for live updates",
                   });
                   return;
                 }
+                if (!response.ok) {
+                  throw new Error(`SSE connection failed with status ${response.status}`);
+                }
+
+                retryCount = 0;
+                notifyStatus({
+                  connected: true,
+                  retryCount: 0,
+                  code: SSE_ERROR_CODES.CONNECTION_ESTABLISHED,
+                });
+                return;
 
                 const status = response.status;
                 const errorMessage = `SSE connection failed with status ${status}`;
