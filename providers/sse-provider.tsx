@@ -62,7 +62,13 @@ const activeSubscriptions = new Map<
 >();
 
 export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
-  const resolvedBaseUrl = useMemo(() => resolveApiBaseUrl(baseUrl), [baseUrl]);
+  const resolvedBaseUrl = useMemo(() => resolveApiBaseUrl({
+    explicitBaseUrl: baseUrl,
+    allowWindowOriginFallback: true,
+  }),
+    [baseUrl],
+  );
+
 
   const subscribe = useCallback<SSEContextType["subscribe"]>(
     (operationId, onEvent, onStatus) => {

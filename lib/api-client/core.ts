@@ -70,7 +70,7 @@ export class ApiClient {
   private readonly activeRequests = new Map<string, AbortController>();
 
   constructor() {
-    this.baseUrl = resolveApiBaseUrl();
+    this.baseUrl = resolveApiBaseUrl({ allowWindowOriginFallback: true });
   }
 
   /**
