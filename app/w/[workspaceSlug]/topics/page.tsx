@@ -5,7 +5,7 @@ import { AlertCircle, Loader2, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { TopicsClientWrapper } from "@/app/topics/topics-client-wrapper";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -81,12 +81,12 @@ export default function WorkspaceTopicsPage() {
   // Actions
   const emptyActions = canCreateTopic
     ? [
-        {
-          label: "Generate Topics",
-          icon: <Plus className="h-4 w-4" />,
-          href: workspaceRoutes.topicCreate(workspaceSlug),
-        },
-      ]
+      {
+        label: "Generate Topics",
+        icon: <Plus className="h-4 w-4" />,
+        href: workspaceRoutes.topicCreate(workspaceSlug),
+      },
+    ]
     : [];
 
   const tableActions = canCreateTopic ? (
@@ -101,11 +101,10 @@ export default function WorkspaceTopicsPage() {
   return (
     <PageLayout
       title="Topic Library"
-      description={`Browse AI-generated topics for ${
-        workspace?.name || "this workspace"
-      }. Generate new topics or explore your saved collection.`}
+      description={`Browse AI-generated topics for ${workspace?.name || "this workspace"
+        }. Generate new topics or explore your saved collection.`}
     >
-      <CanAccess
+      <PermissionGuard
         permission={TOPIC_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -153,7 +152,7 @@ export default function WorkspaceTopicsPage() {
             tableActions={tableActions}
           />
         )}
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

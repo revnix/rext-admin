@@ -9,7 +9,7 @@ import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-reten
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -212,7 +212,7 @@ export default function SubscriptionAnalyticsPage() {
         </Link>
       }
     >
-      <CanAccess
+      <PermissionGuard
         permission={SUBSCRIPTION_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -337,7 +337,7 @@ export default function SubscriptionAnalyticsPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

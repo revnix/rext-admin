@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { use } from "react";
 import { TopicDetailClient } from "@/app/topics/topic-detail-client";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -48,7 +48,7 @@ export default function WorkspaceTopicDetailPage({
 
   // Workspace context is available via useWorkspace hook in child components
   return (
-    <CanAccess
+    <PermissionGuard
       permission={TOPIC_PERMISSIONS.READ}
       fallback={
         <Card className="border-destructive">
@@ -68,6 +68,6 @@ export default function WorkspaceTopicDetailPage({
       }
     >
       <TopicDetailClient topic={topic} />
-    </CanAccess>
+    </PermissionGuard>
   );
 }

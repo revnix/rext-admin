@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -96,7 +96,7 @@ export function GeneralInfoSection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <CanAccess
+        <PermissionGuard
           permission={WORKSPACE_PERMISSIONS.UPDATE}
           fallback={
             <p className="text-sm text-muted-foreground">
@@ -171,7 +171,7 @@ export function GeneralInfoSection() {
               </Button>
             </form>
           </Form>
-        </CanAccess>
+        </PermissionGuard>
       </CardContent>
     </Card>
   );

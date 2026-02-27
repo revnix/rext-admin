@@ -5,7 +5,7 @@ import { ArrowLeft, BookOpen, Plus, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -200,7 +200,7 @@ export default function KnowledgeBaseDetailPage() {
         </div>
       }
     >
-      <CanAccess
+      <PermissionGuard
         permission={KNOWLEDGE_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -317,7 +317,7 @@ export default function KnowledgeBaseDetailPage() {
             onDeleted={handleDeleted}
           />
         </div>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

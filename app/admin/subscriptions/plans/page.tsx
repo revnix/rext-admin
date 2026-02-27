@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subscription-plan-form";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -106,7 +106,7 @@ export default function SubscriptionPlansPage() {
               {Math.round(
                 ((row.price_monthly * 12 - row.price_yearly) /
                   (row.price_monthly * 12)) *
-                  100,
+                100,
               )}
               %
             </div>
@@ -138,11 +138,10 @@ export default function SubscriptionPlansPage() {
       cell: (_value: unknown, row: SubscriptionPlan) => (
         <div className="flex flex-col gap-1">
           <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-              row.is_active
-                ? "bg-green-50 text-green-700"
-                : "bg-gray-50 text-gray-600"
-            }`}
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${row.is_active
+              ? "bg-green-50 text-green-700"
+              : "bg-gray-50 text-gray-600"
+              }`}
           >
             {row.is_active ? "Active" : "Inactive"}
           </span>
@@ -167,7 +166,7 @@ export default function SubscriptionPlansPage() {
         </Button>
       }
     >
-      <CanAccess
+      <PermissionGuard
         permission={SUBSCRIPTION_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
@@ -286,7 +285,7 @@ export default function SubscriptionPlansPage() {
             )}
           </DialogContent>
         </Dialog>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

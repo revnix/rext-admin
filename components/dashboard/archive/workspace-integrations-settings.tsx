@@ -10,7 +10,7 @@ import {
   Webhook,
 } from "lucide-react";
 import Link from "next/link";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
  */
 export default function WorkspaceIntegrationsSettings() {
   return (
-    <CanAccess
+    <PermissionGuard
       permission={WORKSPACE_PERMISSIONS.UPDATE}
       fallback={
         <Card className="border-destructive">
@@ -373,6 +373,6 @@ export default function WorkspaceIntegrationsSettings() {
           </CardContent>
         </Card>
       </div>
-    </CanAccess>
+    </PermissionGuard>
   );
 }

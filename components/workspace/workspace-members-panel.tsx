@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { DataTable } from "@/components/data-table";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -166,7 +166,7 @@ export function WorkspaceMembersPanel({
               <Image
                 src={
                   row.avatar.startsWith("http://") ||
-                  row.avatar.startsWith("https://")
+                    row.avatar.startsWith("https://")
                     ? row.avatar
                     : `${baseUrl}${row.avatar}`
                 }
@@ -270,7 +270,7 @@ export function WorkspaceMembersPanel({
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <CanAccess
+      <PermissionGuard
         permission={MEMBER_PERMISSIONS.INVITE}
         showLockedTooltip
         tooltipMessage="Only workspace admins can invite members"
@@ -284,7 +284,7 @@ export function WorkspaceMembersPanel({
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Members
         </Button>
-      </CanAccess>
+      </PermissionGuard>
     </>
   );
 
@@ -310,12 +310,12 @@ export function WorkspaceMembersPanel({
           emptyActions={
             canInviteMember
               ? [
-                  {
-                    label: "Invite Members",
-                    icon: <UserPlus className="h-4 w-4" />,
-                    onClick: () => setShowInviteDialog(true),
-                  },
-                ]
+                {
+                  label: "Invite Members",
+                  icon: <UserPlus className="h-4 w-4" />,
+                  onClick: () => setShowInviteDialog(true),
+                },
+              ]
               : []
           }
           searchPlaceholder="Search by name or email..."

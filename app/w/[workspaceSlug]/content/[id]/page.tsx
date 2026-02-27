@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -138,20 +138,20 @@ export default function WorkspaceContentDetailPage({
         seo_score: content?.seo_data?.content_seo_score || 0,
         trust_score: content?.seo_data?.trust_score
           ? {
-              score: content?.seo_data.trust_score,
-              trust_score: content?.seo_data.trust_score,
-              author_credibility: 0,
-              expertise: 0,
-              authority: 0,
-              trustworthiness: 0,
-              citations_references: 0,
-              content_accuracy: 0,
-              freshness: 0,
-              transparency: 0,
-              spam_signals: 0,
-              technical_trust: 0,
-              reasoning: "",
-            }
+            score: content?.seo_data.trust_score,
+            trust_score: content?.seo_data.trust_score,
+            author_credibility: 0,
+            expertise: 0,
+            authority: 0,
+            trustworthiness: 0,
+            citations_references: 0,
+            content_accuracy: 0,
+            freshness: 0,
+            transparency: 0,
+            spam_signals: 0,
+            technical_trust: 0,
+            reasoning: "",
+          }
           : undefined,
         readability_metrics: {
           flesch_reading_ease: content?.seo_data?.readability_score || 0,
@@ -246,7 +246,7 @@ export default function WorkspaceContentDetailPage({
   }
 
   return (
-    <CanAccess
+    <PermissionGuard
       permission={CONTENT_PERMISSIONS.READ}
       fallback={
         <PageLayout title="Access Denied">
@@ -294,6 +294,6 @@ export default function WorkspaceContentDetailPage({
           />
         )}
       </PageLayout>
-    </CanAccess>
+    </PermissionGuard>
   );
 }
