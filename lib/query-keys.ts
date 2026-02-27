@@ -297,3 +297,30 @@ export const adminQueries = {
       }),
   },
 };
+
+// ============================================================================
+// PERSONA QUERIES
+// ============================================================================
+
+export const personaQueries = {
+  all: (workspaceId: string) =>
+    [...workspaceQueries.all(), workspaceId, "personas"] as const,
+  lists: (workspaceId: string) =>
+    [...personaQueries.all(workspaceId), "list"] as const,
+  list: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...personaQueries.lists(workspaceId)],
+      queryFn: () => apiClient.personas.list(workspaceId),
+      enabled: !!workspaceId,
+      staleTime: 5 * 60 * 1000,
+    }),
+  details: (workspaceId: string) =>
+    [...personaQueries.all(workspaceId), "detail"] as const,
+  detail: (workspaceId: string, personaId: string) =>
+    queryOptions({
+      queryKey: [...personaQueries.details(workspaceId), personaId] as const,
+      queryFn: () => apiClient.personas.get(workspaceId, personaId),
+      enabled: !!workspaceId && !!personaId,
+      staleTime: 5 * 60 * 1000,
+    }),
+};
