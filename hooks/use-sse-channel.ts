@@ -203,6 +203,11 @@ export function useSSEChannel(
       });
       setStatus(newStatus);
 
+      if (newStatus.error === "Authentication required for live updates") {
+        onErrorRef.current?.("Please sign in again to continue receiving updates.");
+        return;
+      }
+
       if (newStatus.error || newStatus.code) {
         handleError(newStatus.error, newStatus.code);
       }
