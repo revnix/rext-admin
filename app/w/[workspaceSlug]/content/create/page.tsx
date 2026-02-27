@@ -5,7 +5,7 @@ import { use } from "react";
 import { toast } from "sonner";
 import { ContentCreationWizard } from "@/components/content-creation/content-creation-wizard";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -136,7 +136,7 @@ export default function WorkspaceContentCreatePage({
       title="Create Content"
       description={`Create new content for ${workspace?.name || "workspace"}`}
     >
-      <CanAccess
+      <PermissionGuard
         permission={CONTENT_PERMISSIONS.CREATE}
         fallback={
           <Card className="border-destructive">
@@ -162,7 +162,7 @@ export default function WorkspaceContentCreatePage({
           onSubmit={handleSubmit}
           onCancel={handleCancel}
         />
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

@@ -9,7 +9,7 @@ import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-reten
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorPage } from "@/components/ui/error-states";
 
 // Lazy load chart components (use recharts - heavy library ~400KB)
 const RevenueChart = dynamic(
@@ -130,7 +131,12 @@ export default function SubscriptionAnalyticsPage() {
   >("12_months");
 
   // Fetch analytics overview
-  const { data: overview, isLoading: overviewLoading } = useQuery({
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    error: overviewError,
+    refetch: refetchOverview,
+  } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
     queryFn: async () => {
       return apiClient
@@ -141,6 +147,16 @@ export default function SubscriptionAnalyticsPage() {
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  if (overviewError) {
+    return (
+      <ErrorPage
+        title="Failed to load subscription analytics"
+        message="Overview data could not be loaded. Please try again."
+        retry={() => void refetchOverview()}
+      />
+    );
+  }
 
   // Fetch revenue history
   const { data: revenueHistory, isLoading: historyLoading } = useQuery({
@@ -212,7 +228,7 @@ export default function SubscriptionAnalyticsPage() {
         </Link>
       }
     >
-      <CanAccess
+      <PermissionGuard
         permission={SUBSCRIPTION_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -337,7 +353,7 @@ export default function SubscriptionAnalyticsPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

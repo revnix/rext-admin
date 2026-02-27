@@ -74,6 +74,21 @@ export default function AcceptAdminInvitationPage() {
     },
   });
 
+  // Decline invitation mutation
+  const declineMutation = useMutation({
+    mutationFn: () => {
+      if (!token) throw new Error("No token provided");
+      return apiClient.adminInvitations.decline(token, "Declined by invitee");
+    },
+    onSuccess: () => {
+      toast.success("Invitation declined successfully");
+      router.push("/" as Route);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to decline invitation: ${error.message}`);
+    },
+  });
+
   const handleAccept = async () => {
     if (!session) {
       // Redirect to login with return URL
@@ -91,10 +106,12 @@ export default function AcceptAdminInvitationPage() {
     }
   };
 
-  const handleDecline = () => {
-    // TODO: Implement decline functionality
-    toast.info("You have declined this admin invitation.");
-    router.push("/" as Route);
+  const handleDecline = async () => {
+    try {
+      await declineMutation.mutateAsync();
+    } catch {
+      // Error toast handled in onError
+    }
   };
 
   // Loading state
@@ -310,10 +327,18 @@ export default function AcceptAdminInvitationPage() {
         <CardFooter className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
-            onClick={handleDecline}
+            onClick={() => void handleDecline()}
+            disabled={declineMutation.isPending || isAccepting}
             className="w-full sm:w-auto"
           >
-            Decline
+            {declineMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Declining...
+              </>
+            ) : (
+              "Decline"
+            )}
           </Button>
           <Button
             onClick={handleAccept}

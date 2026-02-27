@@ -1,7 +1,7 @@
 "use client";
 
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { LimitCheckWrapper } from "@/components/subscription/limit-check-wrapper";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
 import {
@@ -31,7 +31,7 @@ export default function WorkspaceTopicCreatePage() {
       title="Generate Topics"
       description="Create AI-generated topic clusters for your workspace"
     >
-      <CanAccess
+      <PermissionGuard
         permission={TOPIC_PERMISSIONS.CREATE}
         fallback={
           <Card className="border-destructive">
@@ -55,7 +55,7 @@ export default function WorkspaceTopicCreatePage() {
         <LimitCheckWrapper resource="topics" actionName="create topics">
           <TopicBuilderWizard />
         </LimitCheckWrapper>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

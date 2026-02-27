@@ -88,6 +88,12 @@ export function CheckoutButton({
 
       toast.error("Checkout failed", {
         description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            void handleCheckout();
+          },
+        },
       });
 
       onCheckoutError?.(

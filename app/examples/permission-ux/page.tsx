@@ -13,7 +13,7 @@ import {
   LockedFeatureTooltip,
   PermissionLoading,
 } from "@/components/permission";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -97,7 +97,7 @@ export default function PermissionUXExamplesPage() {
               </h3>
               <div className="flex flex-wrap gap-3">
                 {/* These will be disabled with tooltips if user lacks permission */}
-                <CanAccess
+                <PermissionGuard
                   permission={CONTENT_PERMISSIONS.UPDATE}
                   showLockedTooltip
                 >
@@ -105,9 +105,9 @@ export default function PermissionUXExamplesPage() {
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Content
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
 
-                <CanAccess
+                <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
                   showLockedTooltip
                   showLockIcon
@@ -116,9 +116,9 @@ export default function PermissionUXExamplesPage() {
                     <Users className="h-4 w-4 mr-2" />
                     Manage Members
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
 
-                <CanAccess
+                <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.UPDATE}
                   showLockedTooltip
                   tooltipMessage="Contact your workspace admin for access"
@@ -128,7 +128,7 @@ export default function PermissionUXExamplesPage() {
                     <Settings className="h-4 w-4 mr-2" />
                     Workspace Settings
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
               </div>
             </div>
           </CardContent>
@@ -183,13 +183,13 @@ export default function PermissionUXExamplesPage() {
             <div>
               <h3 className="text-sm font-semibold mb-3">Content Actions</h3>
               <div className="flex gap-2">
-                <CanAccess permission={CONTENT_PERMISSIONS.READ}>
+                <PermissionGuard permission={CONTENT_PERMISSIONS.READ}>
                   <Button variant="outline" size="sm">
                     View
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
 
-                <CanAccess
+                <PermissionGuard
                   permission={CONTENT_PERMISSIONS.UPDATE}
                   showLockedTooltip
                 >
@@ -197,9 +197,9 @@ export default function PermissionUXExamplesPage() {
                     <Edit className="h-3 w-3 mr-2" />
                     Edit
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
 
-                <CanAccess
+                <PermissionGuard
                   permission={CONTENT_PERMISSIONS.DELETE}
                   showLockedTooltip
                   showLockIcon
@@ -208,7 +208,7 @@ export default function PermissionUXExamplesPage() {
                     <Trash2 className="h-3 w-3 mr-2" />
                     Delete
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
               </div>
             </div>
 
@@ -218,7 +218,7 @@ export default function PermissionUXExamplesPage() {
             <div>
               <h3 className="text-sm font-semibold mb-3">Workspace Actions</h3>
               <div className="flex gap-2">
-                <CanAccess
+                <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.UPDATE}
                   showLockedTooltip
                 >
@@ -226,9 +226,9 @@ export default function PermissionUXExamplesPage() {
                     <Settings className="h-3 w-3 mr-2" />
                     Settings
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
 
-                <CanAccess
+                <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
                   showLockedTooltip
                   showLockIcon
@@ -237,9 +237,9 @@ export default function PermissionUXExamplesPage() {
                     <Users className="h-3 w-3 mr-2" />
                     Members
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
 
-                <CanAccess
+                <PermissionGuard
                   permission={SUBSCRIPTION_PERMISSIONS.READ}
                   showLockedTooltip
                   tooltipMessage="Only workspace owners can view subscription"
@@ -249,7 +249,7 @@ export default function PermissionUXExamplesPage() {
                     <CreditCard className="h-3 w-3 mr-2" />
                     Subscription
                   </Button>
-                </CanAccess>
+                </PermissionGuard>
               </div>
             </div>
           </CardContent>
@@ -278,9 +278,9 @@ export default function PermissionUXExamplesPage() {
             <div>
               <p className="font-semibold mb-1">2. CanAccess with Tooltips</p>
               <code className="block bg-muted p-2 rounded text-xs">
-                {`<CanAccess permission="content.update" showLockedTooltip>
+                {`<PermissionGuard permission="content.update" showLockedTooltip>
   <Button>Edit</Button>
-</CanAccess>`}
+</PermissionGuard>`}
               </code>
             </div>
 

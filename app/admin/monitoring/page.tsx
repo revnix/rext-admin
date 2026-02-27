@@ -9,6 +9,7 @@ import { SystemHealthCards } from "@/components/admin/monitoring/system-health-c
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorPage } from "@/components/ui/error-states";
 
 // Lazy load UsageCharts component (uses recharts - heavy library ~400KB)
 const UsageCharts = dynamic(
@@ -137,7 +138,12 @@ export default function MonitoringPage() {
   >("24_hours");
 
   // Fetch system health
-  const { data: healthData, isLoading: healthLoading } = useQuery({
+  const {
+    data: healthData,
+    isLoading: healthLoading,
+    error: healthError,
+    refetch: refetchHealth,
+  } = useQuery({
     queryKey: ["admin", "monitoring", "system-health"],
     queryFn: async () => {
       return apiClient
@@ -148,6 +154,16 @@ export default function MonitoringPage() {
     },
     refetchInterval: 60000, // Refresh every 60 seconds
   });
+
+  if (healthError) {
+    return (
+      <ErrorPage
+        title="Failed to load system health"
+        message="System monitoring data is currently unavailable."
+        retry={() => void refetchHealth()}
+      />
+    );
+  }
 
   // Fetch error logs
   const {

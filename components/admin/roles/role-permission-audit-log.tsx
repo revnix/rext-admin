@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorAlert } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 
 interface RolePermissionAuditLogProps {
@@ -96,7 +97,12 @@ export function RolePermissionAuditLog({
   resourceId,
 }: RolePermissionAuditLogProps) {
   // Fetch audit logs
-  const { data: auditData, isLoading } = useQuery({
+  const {
+    data: auditData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["audit-logs", resourceType, resourceId],
     queryFn: async () => {
       // This would be your actual audit log API endpoint
@@ -189,6 +195,12 @@ export function RolePermissionAuditLog({
                   </CardContent>
                 </Card>
               ))
+            ) : error ? (
+              <ErrorAlert
+                title="Failed to load audit logs"
+                message={error instanceof Error ? error.message : "Request failed"}
+                retry={() => void refetch()}
+              />
             ) : auditData?.logs && auditData.logs.length > 0 ? (
               auditData.logs.map((log) => {
                 const Icon = getActionIcon(log.action);

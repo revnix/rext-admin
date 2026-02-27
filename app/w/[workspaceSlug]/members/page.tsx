@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -49,7 +49,7 @@ export default function WorkspaceUsersPage() {
       title="Members"
       description={`Manage members and invitations for ${workspace?.name || "this workspace"}.`}
     >
-      <CanAccess
+      <PermissionGuard
         permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
         fallback={
           <Card className="border-destructive">
@@ -98,7 +98,7 @@ export default function WorkspaceUsersPage() {
             )}
           </TabsContent>
         </Tabs>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }
