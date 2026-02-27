@@ -11,7 +11,6 @@ import { getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
-
 /**
  * Refresh the access token using the refresh token
  */
@@ -310,8 +309,8 @@ export default {
             token.permissions = oauthData.user.permissions || [];
             // Derive expiry from backend OAuth response: prefer `expires_in` (seconds), fall back to `expires_at`
             token.accessTokenExpires = oauthData.expires_at
-                ? new Date(oauthData.expires_at).getTime()
-                : undefined;
+              ? new Date(oauthData.expires_at).getTime()
+              : undefined;
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
@@ -359,7 +358,9 @@ export default {
         if (token.accessTokenExpires) {
           // No refresh token available — cannot obtain a fresh expiry from the backend.
           // Return the token as-is; the existing expiry will drive the next refresh check.
-          log.warn("[Auth] No refresh token for manual update — keeping existing token expiry.");
+          log.warn(
+            "[Auth] No refresh token for manual update — keeping existing token expiry.",
+          );
           return token;
         }
 
@@ -408,14 +409,19 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const isOnAuthPage = isAuthPage(nextUrl.pathname);
+      const pathname = nextUrl.pathname;
+      const isOnAuthPage = isAuthPage(pathname);
+      const isInvitationPage =
+        pathname.startsWith("/invitations/accept") ||
+        pathname.startsWith("/accept-invitation") ||
+        pathname.startsWith("/accept-admin-invitation");
 
       // CRITICAL: If there is a refresh error, the session is essentially invalid.
       // We must force the user to the login page and NOT allow them to be redirected
       // back to the dashboard even if NextAuth technically still considers them "logged in".
       if (hasRefreshError) {
-        if (isOnAuthPage) {
-          // Allow them to stay on the auth page to log in again
+        if (isOnAuthPage || isInvitationPage) {
+          // Allow them to stay on the auth/invitation page to log in again
           return true;
         }
         // Redirect to login from any protected page
@@ -424,14 +430,15 @@ export default {
         );
       }
 
-      // Redirect authenticated users away from auth pages
-      // Only do this if they DON'T have a refresh error
-      if (isLoggedIn && isOnAuthPage) {
+      // Redirect authenticated users away from auth pages (login, signup, etc.)
+      // but NOT from invitation routes which support auto-acceptance
+      if (isLoggedIn && isOnAuthPage && !isInvitationPage) {
         return Response.redirect(new URL("/", nextUrl));
       }
 
       // Require authentication for protected pages
-      if (!isLoggedIn && !isOnAuthPage) {
+      // Public paths are auth pages or invitation pages
+      if (!isLoggedIn && !isOnAuthPage && !isInvitationPage) {
         return false; // Will redirect to /login
       }
 

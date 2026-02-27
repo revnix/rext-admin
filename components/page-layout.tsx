@@ -462,7 +462,7 @@ export function PageLayout({
                     <span>Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push(settingsRoutes.billing)}
+                    onClick={() => router.push(settingsRoutes.subscription)}
                     className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   >
                     <CreditCard className="mr-2 h-4 w-4" />

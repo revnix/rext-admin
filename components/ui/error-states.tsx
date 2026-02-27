@@ -1,24 +1,21 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
 import { Component, type ReactNode } from "react";
+import { AlertCircle, Home, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { Route } from "next";
 
 /**
  * Inline error alert for form/API errors
- *
- * @example
- * ```tsx
- * {error && (
- *   <ErrorAlert
- *     title="Failed to save"
- *     message={error.message}
- *     retry={handleRetry}
- *   />
- * )}
- * ```
  */
 export function ErrorAlert({
   title = "Error",
@@ -31,12 +28,13 @@ export function ErrorAlert({
 }) {
   return (
     <Alert variant="destructive">
-      <AlertTriangle className="h-4 w-4" />
+      <AlertCircle className="h-4 w-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="space-y-2">
         <p>{message}</p>
         {retry && (
           <Button variant="outline" size="sm" onClick={retry} className="mt-2">
+            <RefreshCw className="h-3 w-3 mr-2" />
             Try Again
           </Button>
         )}
@@ -47,53 +45,49 @@ export function ErrorAlert({
 
 /**
  * Full page error state
- *
- * @example
- * ```tsx
- * if (error) {
- *   return (
- *     <ErrorPage
- *       title="Failed to load data"
- *       message={error.message}
- *       retry={refetch}
- *     />
- *   );
- * }
- * ```
  */
 export function ErrorPage({
   title = "Something went wrong",
   message = "An unexpected error occurred. Please try again.",
   retry,
-  goBack,
+  dashboardLink = "/admin",
+  dashboardLabel = "Dashboard",
 }: {
   title?: string;
   message?: string;
   retry?: () => void;
-  goBack?: () => void;
+  dashboardLink?: string;
+  dashboardLabel?: string;
 }) {
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <Card className="max-w-md w-full border-destructive">
+    <div className="flex items-center justify-center min-h-[400px] p-6">
+      <Card className="max-w-md w-full border-destructive shadow-lg transition-all">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <CardTitle className="text-destructive">{title}</CardTitle>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <CardTitle className="text-xl font-semibold">{title}</CardTitle>
           </div>
+          <CardDescription className="text-sm font-medium">
+            {message}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{message}</p>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {retry && (
-              <Button onClick={retry} size="sm">
+              <Button
+                onClick={retry}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
               </Button>
             )}
-            {goBack && (
-              <Button onClick={goBack} variant="outline" size="sm">
-                Go Back
-              </Button>
-            )}
+            <Button asChild variant="secondary" className="flex-1">
+              <Link href={dashboardLink as Route}>
+                <Home className="h-4 w-4 mr-2" />
+                {dashboardLabel}
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -130,6 +130,12 @@ export function PlanChangeModal({
       setError(errorMessage);
       toast.error("Failed to change plan", {
         description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            void handlePlanChange();
+          },
+        },
       });
     } finally {
       setIsLoading(false);

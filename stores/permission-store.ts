@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import { registerStoreReset } from "@/lib/store-registry";
+import type { StrictUserWithPermissions } from "@/types/role";
+
+const MAX_WORKSPACE_PERMISSION_CACHE = 25;
+const MAX_WORKSPACE_LOADING_CACHE = 50;
 
 /**
  * User interface with permissions
@@ -25,14 +29,14 @@ export interface WorkspacePermissions {
  * Permission store state
  */
 interface PermissionStore {
-  user: User | null;
+  user: StrictUserWithPermissions | null;
   workspacePermissions: Map<string, WorkspacePermissions>;
   isLoading: boolean;
   error: string | null;
   workspaceLoadingStates: Map<string, boolean>;
 
   // Actions
-  setUser: (user: User) => void;
+  setUser: (user: StrictUserWithPermissions) => void;
   setWorkspacePermissions: (
     workspaceId: string,
     permissions: WorkspacePermissions,
@@ -50,6 +54,19 @@ interface PermissionStore {
   hasRole: (role: string) => boolean;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
+}
+
+function pruneOldestEntries<K, V>(map: Map<K, V>, maxSize: number): Map<K, V> {
+  if (map.size <= maxSize) return map;
+
+  const pruned = new Map(map);
+  while (pruned.size > maxSize) {
+    const oldestKey = pruned.keys().next().value;
+    if (oldestKey === undefined) break;
+    pruned.delete(oldestKey);
+  }
+
+  return pruned;
 }
 
 /**
@@ -72,15 +89,35 @@ export const usePermissionStore = create<PermissionStore>()((set, get) => ({
 
   setWorkspacePermissions: (workspaceId, permissions) =>
     set((state) => {
-      const newMap = new Map(state.workspacePermissions);
-      newMap.set(workspaceId, permissions);
+      const nextPermissions = new Map(state.workspacePermissions);
 
-      const newLoadingStates = new Map(state.workspaceLoadingStates);
-      newLoadingStates.set(workspaceId, false);
+      // Promote recently written workspace to newest position.
+      if (nextPermissions.has(workspaceId)) {
+        nextPermissions.delete(workspaceId);
+      }
+      nextPermissions.set(workspaceId, permissions);
+
+      const boundedPermissions = pruneOldestEntries(
+        nextPermissions,
+        MAX_WORKSPACE_PERMISSION_CACHE,
+      );
+
+      const nextLoadingStates = new Map(state.workspaceLoadingStates);
+      nextLoadingStates.set(workspaceId, false);
+
+      // Keep loading-state map aligned with retained permission keys.
+      for (const key of nextLoadingStates.keys()) {
+        if (!boundedPermissions.has(key)) {
+          nextLoadingStates.delete(key);
+        }
+      }
 
       return {
-        workspacePermissions: newMap,
-        workspaceLoadingStates: newLoadingStates,
+        workspacePermissions: boundedPermissions,
+        workspaceLoadingStates: pruneOldestEntries(
+          nextLoadingStates,
+          MAX_WORKSPACE_LOADING_CACHE,
+        ),
       };
     }),
 
@@ -98,9 +135,19 @@ export const usePermissionStore = create<PermissionStore>()((set, get) => ({
 
   setWorkspaceLoading: (workspaceId, isLoading) =>
     set((state) => {
-      const newLoadingStates = new Map(state.workspaceLoadingStates);
-      newLoadingStates.set(workspaceId, isLoading);
-      return { workspaceLoadingStates: newLoadingStates };
+      const nextLoadingStates = new Map(state.workspaceLoadingStates);
+
+      if (nextLoadingStates.has(workspaceId)) {
+        nextLoadingStates.delete(workspaceId);
+      }
+      nextLoadingStates.set(workspaceId, isLoading);
+
+      return {
+        workspaceLoadingStates: pruneOldestEntries(
+          nextLoadingStates,
+          MAX_WORKSPACE_LOADING_CACHE,
+        ),
+      };
     }),
 
   isWorkspaceLoading: (workspaceId) => {

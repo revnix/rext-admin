@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePersona } from "@/hooks/use-personas";
 import { PersonaDetail } from "@/components/personas/persona-detail";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Route } from "next";
 // import { DeletePersonaDialog } from "@/components/personas/delete-persona-dialog"; // Assume checking if this exists or needing to import
 
@@ -66,10 +66,7 @@ export default function PersonaDetailPage() {
   }
 
   return (
-    <PageLayout
-      title={persona.name}
-      description={persona.description}
-    >
+    <PageLayout title={persona.name} description={persona.description}>
       <PersonaDetail persona={persona} />
     </PageLayout>
   );

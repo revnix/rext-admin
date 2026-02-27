@@ -30,12 +30,29 @@ export function ThemeSelector({ showHeader = true }: ThemeSelectorProps) {
         <Label htmlFor="theme">Theme</Label>
         <RadioGroup
           options={[
-            { value: "light", label: "Light", description: "Use light theme", icon: Sun },
-            { value: "dark", label: "Dark", description: "Use dark theme", icon: Moon },
-            { value: "system", label: "System", description: "Follow system preference", icon: Monitor },
+            {
+              value: "light",
+              label: "Light",
+              description: "Use light theme",
+              icon: Sun,
+            },
+            {
+              value: "dark",
+              label: "Dark",
+              description: "Use dark theme",
+              icon: Moon,
+            },
+            {
+              value: "system",
+              label: "System",
+              description: "Follow system preference",
+              icon: Monitor,
+            },
           ]}
           value={theme}
-          onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}
+          onValueChange={(value) =>
+            setTheme(value as "light" | "dark" | "system")
+          }
           columns={3}
         />
       </div>

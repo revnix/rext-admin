@@ -324,7 +324,6 @@ function getDefaultPermissions(roleName: string): string[] {
         "Collaborate with team members",
         "No team management access",
       ];
-    case "viewer":
     default:
       return [
         "View all workspace content",

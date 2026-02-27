@@ -13,6 +13,49 @@ import { useNotificationStore } from "@/stores/notification-store";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
+/**
+ * Classification for SSE status/error messages
+ */
+type SSEErrorKind = "non_actionable" | "retrying" | "actionable";
+
+/**
+ * Classifies SSE error codes and messages to determine handling behavior.
+ * Uses explicit code and exact message matching to prevent false negatives.
+ *
+ * @param errorCode - The SSE error code from the status object
+ * @param errorMessage - The error message text
+ * @returns Classification indicating how to handle the error
+ */
+function classifySSEError(
+  errorCode?: string,
+  errorMessage?: string,
+): SSEErrorKind {
+  // Non-actionable: Operation completed normally
+  if (errorCode === SSE_ERROR_CODES.OPERATION_COMPLETED) {
+    return "non_actionable";
+  }
+  if (errorMessage === "Operation already completed") {
+    return "non_actionable";
+  }
+
+  // Retrying: Connection transient issues that don't require user action
+  if (errorCode === SSE_ERROR_CODES.CONNECTION_LOST) {
+    return "retrying";
+  }
+  if (errorCode === SSE_ERROR_CODES.RETRYING) {
+    return "retrying";
+  }
+  if (
+    errorMessage === "Connection lost, retrying..." ||
+    errorMessage?.startsWith("Retrying connection")
+  ) {
+    return "retrying";
+  }
+
+  // All other codes and messages are actionable errors
+  return "actionable";
+}
+
 export interface UseSSEChannelOptions {
   onEvent?: (event: SSEEvent) => void;
   onComplete?: (payload?: unknown) => void;
@@ -89,71 +132,58 @@ export function useSSEChannel(
       });
   }, []);
 
-  const handleError = useCallback(
-    (errorMessage?: string, code?: string) => {
-      if (!errorMessage && !code) {
-        return;
-      }
+  const handleError = useCallback((errorMessage?: string, code?: string) => {
+    if (!errorMessage && !code) {
+      return;
+    }
 
-      // Don't show error for "Operation already completed" messages
-      if (
-        code === SSE_ERROR_CODES.OPERATION_COMPLETED ||
-        errorMessage?.includes("already completed")
-      ) {
-        sseChannelLogger.info("Operation already completed", {
-          operationId: operationIdRef.current,
-        });
-        return;
-      }
+    const kind = classifySSEError(code, errorMessage);
 
-      // Skip connection retry notifications
-      if (
-        code === SSE_ERROR_CODES.CONNECTION_LOST ||
-        errorMessage?.includes("Connection lost, retrying")
-      ) {
-        sseChannelLogger.debug("Skipping connection retry notification", {
-          operationId: operationIdRef.current,
-          errorMessage,
-        });
-        return;
-      }
-
-      // Skip "Retrying..." notifications
-      if (
-        code === SSE_ERROR_CODES.RETRYING ||
-        errorMessage?.includes("Retrying...")
-      ) {
-        sseChannelLogger.debug("Skipping retry notification", {
-          operationId: operationIdRef.current,
-          errorMessage,
-        });
-        return;
-      }
-
-      // Skip "SSE connection established" notifications
-      if (
-        code === SSE_ERROR_CODES.CONNECTION_ESTABLISHED ||
-        errorMessage?.includes("SSE connection established")
-      ) {
-        sseChannelLogger.debug("Skipping connection established notification", {
-          operationId: operationIdRef.current,
-          errorMessage,
-        });
-        return;
-      }
-
-      refreshNotificationsSafely();
-      sseChannelLogger.error("SSE channel error", {
-        errorMessage,
+    // Non-actionable statuses are logged and suppressed
+    if (kind === "non_actionable") {
+      sseChannelLogger.info("Ignoring non-actionable SSE status", {
         operationId: operationIdRef.current,
         code,
+        errorMessage,
       });
-      if (errorMessage) {
-        onErrorRef.current?.(errorMessage);
-      }
-    },
-    [refreshNotificationsSafely],
-  );
+      return;
+    }
+
+    // Retry statuses are suppressed but logged as debug
+    if (kind === "retrying") {
+      sseChannelLogger.debug("Suppressing retry-status message", {
+        operationId: operationIdRef.current,
+        code,
+        errorMessage,
+      });
+      return;
+    }
+
+    // Actionable errors trigger notification refresh and callback
+    void fetchNotifications()
+      .then((incoming) => {
+        useNotificationStore.getState().mergeNotifications(incoming);
+      })
+      .catch((error) => {
+        sseChannelLogger.error(
+          "Failed to refresh notifications after SSE error",
+          {
+            operationId: operationIdRef.current,
+            error,
+          },
+        );
+      });
+
+    sseChannelLogger.error("SSE channel error", {
+      operationId: operationIdRef.current,
+      code,
+      errorMessage,
+    });
+
+    if (errorMessage) {
+      onErrorRef.current?.(errorMessage);
+    }
+  }, []);
 
   const handleEvent = useCallback(
     (event: SSEEvent) => {
@@ -203,8 +233,19 @@ export function useSSEChannel(
       });
       setStatus(newStatus);
 
-      if (newStatus.error || newStatus.code) {
+      // Only route actual errors/non-actionable status through error handler.
+      // Success states (CONNECTION_ESTABLISHED) are not routed to error handler.
+      if (
+        newStatus.error ||
+        (newStatus.code &&
+          newStatus.code !== SSE_ERROR_CODES.CONNECTION_ESTABLISHED)
+      ) {
         handleError(newStatus.error, newStatus.code);
+      } else if (newStatus.code === SSE_ERROR_CODES.CONNECTION_ESTABLISHED) {
+        // Log successful connection without treating it as an error
+        sseChannelLogger.debug("SSE connection established", {
+          operationId: operationIdRef.current,
+        });
       }
     },
     [handleError],

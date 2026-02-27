@@ -35,6 +35,10 @@ import {
   PROFILE_LANGUAGE_OPTIONS,
   PROFILE_TIMEZONE_OPTIONS,
 } from "@/lib/constants/localization";
+import {
+  AVATAR_ACCEPT_ATTRIBUTE,
+  validateAvatarFile,
+} from "@/schemas/profile-schemas";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -168,18 +172,11 @@ export function ProfileEdit() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    const validation = validateAvatarFile(file);
+    if (!validation.valid) {
+      toast.error(validation.message);
       return;
     }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be smaller than 5MB");
-      return;
-    }
-
     setAvatarFile(file);
 
     // Create preview
@@ -264,7 +261,7 @@ export function ProfileEdit() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept={AVATAR_ACCEPT_ATTRIBUTE}
               onChange={handleFileChange}
               className="hidden"
             />

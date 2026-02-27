@@ -11,7 +11,7 @@ import { useState } from "react";
 import { DataTable } from "@/components/data-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -46,7 +46,6 @@ export default function AdminUsersPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => apiClient.users.list(),
-    throwOnError: true,
   });
 
   const handleImpersonate = (userId: string) => {
@@ -195,7 +194,7 @@ export default function AdminUsersPage() {
       title="User Management"
       description="Manage system users and impersonation"
     >
-      <CanAccess
+      <PermissionGuard
         permission={USER_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -339,7 +338,7 @@ export default function AdminUsersPage() {
             }}
           />
         </div>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }
