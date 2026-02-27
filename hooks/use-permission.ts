@@ -9,23 +9,13 @@ import {
   checkRole,
   isAdmin,
   isSuperAdmin,
-  type UserWithPermissions,
 } from "@/lib/permissions";
 import { usePermissionStore } from "@/stores/permission-store";
+import type { Session } from "next-auth";
+import type { UserWithPermissions } from "@/types/role";
 
-/**
- * Convert AuthJS session user to UserWithPermissions format
- */
 function sessionUserToPermissionUser(
-  sessionUser:
-    | {
-        id?: string;
-        email?: string | null;
-        name?: string | null;
-        role?: string;
-        permissions?: string[];
-      }
-    | undefined,
+  sessionUser: Session["user"] | undefined,
 ): UserWithPermissions | null {
   if (!sessionUser) return null;
 

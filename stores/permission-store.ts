@@ -1,5 +1,12 @@
 import { create } from "zustand";
 import { registerStoreReset } from "@/lib/store-registry";
+import type { StrictUserWithPermissions } from "@/types/role";
+
+interface PermissionStore {
+  user: StrictUserWithPermissions | null;
+  // ...rest unchanged
+  setUser: (user: StrictUserWithPermissions) => void;
+}
 
 /**
  * User interface with permissions

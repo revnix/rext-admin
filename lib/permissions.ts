@@ -1,14 +1,4 @@
-/**
- * Permission and role checking utilities
- */
-
-export interface UserWithPermissions {
-  id: string;
-  email: string;
-  name: string;
-  role?: string;
-  permissions?: string[];
-}
+import type { UserWithPermissions } from "@/types/role";
 
 /**
  * Check if user has a specific permission

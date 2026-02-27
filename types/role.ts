@@ -3,6 +3,19 @@
  * Aligned with backend models
  */
 
+export interface UserWithPermissions {
+  id: string;
+  email: string;
+  name: string;
+  role?: string;
+  permissions?: string[];
+}
+
+export interface StrictUserWithPermissions extends UserWithPermissions {
+  role: string;
+  permissions: string[];
+}
+
 export interface Permission {
   id: string;
   name: string;
