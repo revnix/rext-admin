@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorPage } from "@/components/ui/error-states";
 
 // Lazy load EmailVolumeChart component (uses recharts - heavy library ~400KB)
 const EmailVolumeChart = dynamic(
@@ -113,7 +114,12 @@ export default function EmailAnalyticsPage() {
   });
 
   // Fetch overview stats
-  const { data: overviewData, isLoading: overviewLoading } = useQuery({
+  const {
+    data: overviewData,
+    isLoading: overviewLoading,
+    error: overviewError,
+    refetch: refetchOverview,
+  } = useQuery({
     queryKey: ["email-analytics", "overview", dateRange, workspaceId],
     queryFn: async () => {
       const params = buildQueryParams({ date_range: dateRange });
@@ -124,6 +130,16 @@ export default function EmailAnalyticsPage() {
       return response;
     },
   });
+
+  if (overviewError) {
+    return (
+      <ErrorPage
+        title="Failed to load email analytics"
+        message="Overview data could not be loaded. Please try again."
+        retry={() => void refetchOverview()}
+      />
+    );
+  }
 
   // Fetch template performance
   const { data: templateData, isLoading: templateLoading } = useQuery({

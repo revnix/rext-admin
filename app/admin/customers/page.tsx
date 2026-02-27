@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ErrorPage } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
 import { USER_PERMISSIONS } from "@/lib/permissions";
 
@@ -39,7 +40,7 @@ export default function CustomersPage() {
   }
 
   // Fetch all customers (filtering/pagination handled by DataTable)
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "customers"],
     queryFn: async () => {
       return apiClient.request<{
@@ -47,6 +48,16 @@ export default function CustomersPage() {
       }>(`/api/v1/admin/customers`);
     },
   });
+
+  if (error) {
+    return (
+      <ErrorPage
+        title="Failed to load customers"
+        message="Customer data is currently unavailable. Please try again later."
+        retry={() => void refetch()}
+      />
+    );
+  }
 
   const customers = data?.data || [];
 

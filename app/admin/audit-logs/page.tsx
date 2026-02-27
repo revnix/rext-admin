@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ErrorPage } from "@/components/ui/error-states";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
@@ -41,7 +42,7 @@ export default function AuditLogsPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch audit logs
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [
       "admin",
       "audit-logs",
@@ -61,6 +62,16 @@ export default function AuditLogsPage() {
       });
     },
   });
+
+  if (error) {
+    return (
+      <ErrorPage
+        title="Failed to load audit logs"
+        message="Audit log data could not be loaded. Please check your connection and try again."
+        retry={() => void refetch()}
+      />
+    );
+  }
 
   const logs = data?.logs || [];
   const total = data?.total || 0;
