@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsAdmin } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
+import { formatSecurityDate } from "@/lib/formatters/security-date";
 
 export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
@@ -106,7 +107,7 @@ export default function SecuritySettingsPage() {
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins} minutes ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
-    return date.toLocaleDateString();
+    return formatSecurityDate(date);
   };
 
   if (sessionsLoading) {

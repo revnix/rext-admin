@@ -25,8 +25,12 @@ import {
   type DataExportFormValues,
 } from "@/schemas/account-schemas";
 
+import { getPrivacyExportErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { logger } from "@/lib/logger";
 
 export function PrivacySettings() {
+  const log = logger.forComponent("PrivacySettings");
+
   const form = useForm<DataExportFormValues>({
     resolver: zodResolver(dataExportSchema),
     defaultValues: defaultDataExportValues,
@@ -40,10 +44,9 @@ export function PrivacySettings() {
         data.message || "Your data export will be sent to your email shortly.",
       );
     },
-    onError: (error: Error) => {
-      toast.error(
-        error.message || "Failed to request data export. Please try again.",
-      );
+    onError: (error: unknown) => {
+      log.error("Data export request failed", error);
+      toast.error(getPrivacyExportErrorMessage(error));
     },
   });
 
