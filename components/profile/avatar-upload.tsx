@@ -40,11 +40,10 @@ export function AvatarUpload({
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setPreviewUrl(null);
     },
-   onError: (error: unknown) => {
-  log.error("Avatar upload failed", error);
-  toast.error(getAvatarErrorMessage(error, "upload"));
-},
-
+    onError: (error: unknown) => {
+      log.error("Avatar upload failed", error);
+      toast.error(getAvatarErrorMessage(error, "upload"));
+    },
   });
 
   // Delete mutation
@@ -56,9 +55,9 @@ export function AvatarUpload({
       setPreviewUrl(null);
     },
     onError: (error: unknown) => {
-  log.error("Avatar delete failed", error);
-  toast.error(getAvatarErrorMessage(error, "delete"));
-},
+      log.error("Avatar delete failed", error);
+      toast.error(getAvatarErrorMessage(error, "delete"));
+    },
   });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

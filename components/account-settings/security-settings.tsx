@@ -140,8 +140,7 @@ export function SecuritySettings() {
 
       <div className="pt-4 border-t">
         <p className="text-sm text-muted-foreground">
-          Account created on{" "}
-          {formatSecurityDate(profile.created_at)}
+          Account created on {formatSecurityDate(profile.created_at)}
         </p>
       </div>
     </div>

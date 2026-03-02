@@ -67,7 +67,7 @@ export function ProfileEdit() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-const log = logger.forComponent("ProfileEdit");
+  const log = logger.forComponent("ProfileEdit");
 
   // Fetch profile
   const {
@@ -133,10 +133,10 @@ const log = logger.forComponent("ProfileEdit");
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-      onError: (error: unknown) => {
-  log.error("ProfileEdit avatar upload failed", error);
-  toast.error(getAvatarErrorMessage(error, "upload"));
-},
+    onError: (error: unknown) => {
+      log.error("ProfileEdit avatar upload failed", error);
+      toast.error(getAvatarErrorMessage(error, "upload"));
+    },
   });
 
   // Delete avatar mutation
@@ -150,10 +150,10 @@ const log = logger.forComponent("ProfileEdit");
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-   onError: (error: unknown) => {
-  log.error("ProfileEdit avatar delete failed", error);
-  toast.error(getAvatarErrorMessage(error, "delete"));
-},
+    onError: (error: unknown) => {
+      log.error("ProfileEdit avatar delete failed", error);
+      toast.error(getAvatarErrorMessage(error, "delete"));
+    },
   });
 
   const onSubmit = (data: ProfileFormValues) => {
