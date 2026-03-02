@@ -9,71 +9,63 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
-import type { DataExportRequest } from "@/types/account";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  dataExportSchema,
+  defaultDataExportValues,
+  type DataExportFormValues,
+} from "@/schemas/account-schemas";
+
+import { getPrivacyExportErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { logger } from "@/lib/logger";
 
 export function PrivacySettings() {
-  const [exportOptions, setExportOptions] = useState<DataExportRequest>({
-    include_profile: true,
-    include_roles: true,
-    include_workspaces: true,
-    include_activity: true,
-    include_billing: true,
-    include_usage: true,
+  const log = logger.forComponent("PrivacySettings");
+
+  const form = useForm<DataExportFormValues>({
+    resolver: zodResolver(dataExportSchema),
+    defaultValues: defaultDataExportValues,
   });
 
   const exportMutation = useMutation({
-    mutationFn: (data: DataExportRequest) =>
+    mutationFn: (data: DataExportFormValues) =>
       apiClient.account.requestDataExport(data),
     onSuccess: (data) => {
       toast.success(
         data.message || "Your data export will be sent to your email shortly.",
       );
     },
-    onError: (error: Error) => {
-      toast.error(
-        error.message || "Failed to request data export. Please try again.",
-      );
+    onError: (error: unknown) => {
+      log.error("Data export request failed", error);
+      toast.error(getPrivacyExportErrorMessage(error));
     },
   });
 
-  const handleExport = () => {
-    exportMutation.mutate(exportOptions);
-  };
+  const exportItems: Array<{
+    id: keyof DataExportFormValues;
+    label: string;
+    description: string;
+  }> = [
+      { id: "include_profile", label: "Profile Information", description: "Basic account details, email, username, and settings" },
+      { id: "include_roles", label: "Role Assignments", description: "All roles assigned to your account across workspaces" },
+      { id: "include_workspaces", label: "Workspace Memberships", description: "Workspaces you're a member of and your role in each" },
+      { id: "include_activity", label: "Activity Logs", description: "Your account activity and action history" },
+      { id: "include_billing", label: "Subscription & Billing Data", description: "Subscription plans, billing history, and payment information" },
+      { id: "include_usage", label: "Usage Metrics", description: "Content creation stats, workspace usage, and activity metrics" },
+    ];
 
-  const exportItems = [
-    {
-      id: "include_profile",
-      label: "Profile Information",
-      description: "Basic account details, email, name, and settings",
-    },
-    {
-      id: "include_roles",
-      label: "Role Assignments",
-      description: "All roles assigned to your account across workspaces",
-    },
-    {
-      id: "include_workspaces",
-      label: "Workspace Memberships",
-      description: "Workspaces you're a member of and your role in each",
-    },
-    {
-      id: "include_activity",
-      label: "Activity Logs",
-      description: "Your account activity and action history",
-    },
-    {
-      id: "include_billing",
-      label: "Subscription & Billing Data",
-      description:
-        "Subscription plans, billing history, and payment information",
-    },
-    {
-      id: "include_usage",
-      label: "Usage Metrics",
-      description:
-        "Content creation stats, workspace usage, and activity metrics",
-    },
-  ];
+  const onSubmit = (values: DataExportFormValues) => {
+    exportMutation.mutate(values);
+  };
 
   return (
     <div className="space-y-6">
@@ -86,36 +78,50 @@ export function PrivacySettings() {
           </p>
         </div>
 
-        <div className="space-y-3">
-          {exportItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-start space-x-3 p-3 border rounded-lg"
-            >
-              <Checkbox
-                id={item.id}
-                checked={
-                  exportOptions[item.id as keyof DataExportRequest] as boolean
-                }
-                onCheckedChange={(checked) =>
-                  setExportOptions((prev) => ({
-                    ...prev,
-                    [item.id]: checked,
-                  }))
-                }
-                disabled={exportMutation.isPending}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {exportItems.map((item) => (
+              <FormField
+                key={item.id}
+                control={form.control}
+                name={item.id}
+                render={({ field }) => (
+                  <FormItem className="flex items-start space-x-3 p-3 border rounded-lg">
+                    <FormControl>
+                      <Checkbox
+                        id={item.id}
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(checked === true)}
+                        disabled={exportMutation.isPending}
+                      />
+                    </FormControl>
+                    <div className="flex-1 space-y-1">
+                      <FormLabel htmlFor={item.id} className="cursor-pointer font-medium">
+                        {item.label}
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
               />
-              <div className="flex-1 space-y-1">
-                <Label htmlFor={item.id} className="cursor-pointer font-medium">
-                  {item.label}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {item.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+
+            <Button type="submit" disabled={exportMutation.isPending} className="w-full sm:w-auto">
+              {exportMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Preparing Export...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Request Data Export
+                </>
+              )}
+            </Button>
+          </form>
+        </Form>
 
         {exportMutation.isSuccess && (
           <Alert>
@@ -127,28 +133,6 @@ export function PrivacySettings() {
           </Alert>
         )}
 
-        <Button
-          onClick={handleExport}
-          disabled={exportMutation.isPending}
-          className="w-full sm:w-auto"
-        >
-          {exportMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Preparing Export...
-            </>
-          ) : (
-            <>
-              <Download className="mr-2 h-4 w-4" />
-              Request Data Export
-            </>
-          )}
-        </Button>
-
-        <p className="text-xs text-muted-foreground">
-          The export will be sent to your email address as a JSON file
-          containing all selected data. Processing may take a few minutes.
-        </p>
       </div>
     </div>
   );
