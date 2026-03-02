@@ -28,9 +28,12 @@ export function createOAuthNamespace(client: ApiClient) {
     },
 
     unlinkAccount: async (provider: string): Promise<OAuthUnlinkResponse> => {
-      return client.request<OAuthUnlinkResponse>(`/api/v1/user/oauth/${provider}`, {
-        method: "DELETE",
-      });
+      return client.request<OAuthUnlinkResponse>(
+        `/api/v1/user/oauth/${provider}`,
+        {
+          method: "DELETE",
+        },
+      );
     },
   };
 }

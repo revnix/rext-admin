@@ -21,7 +21,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 import type { OAuthAccount } from "@/lib/api-client/oauth";
 
-
 const providerDisplayNames: Record<string, string> = {
   google: "Google",
   github: "GitHub",
@@ -42,27 +41,27 @@ export function OAuthAccounts() {
     null,
   );
 
-const {
-  data: accounts,
-  isLoading,
-  error,
-} = useQuery<OAuthAccount[]>({
-  queryKey: ["oauth-accounts"],
-  queryFn: () => apiClient.oauth.listAccounts(),
-});
+  const {
+    data: accounts,
+    isLoading,
+    error,
+  } = useQuery<OAuthAccount[]>({
+    queryKey: ["oauth-accounts"],
+    queryFn: () => apiClient.oauth.listAccounts(),
+  });
 
   // Unlink mutation
- const unlinkMutation = useMutation({
-  mutationFn: (provider: string) => apiClient.oauth.unlinkAccount(provider),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["oauth-accounts"] });
-    toast.success("Account unlinked successfully");
-    setAccountToUnlink(null);
-  },
-  onError: (error: Error) => {
-    toast.error("Failed to unlink account", { description: error.message });
-  },
-});
+  const unlinkMutation = useMutation({
+    mutationFn: (provider: string) => apiClient.oauth.unlinkAccount(provider),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["oauth-accounts"] });
+      toast.success("Account unlinked successfully");
+      setAccountToUnlink(null);
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to unlink account", { description: error.message });
+    },
+  });
 
   const handleUnlink = (account: OAuthAccount) => {
     setAccountToUnlink(account);

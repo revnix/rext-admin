@@ -114,7 +114,6 @@ function createApiClient() {
     preferences: createPreferencesNamespace(client),
     oauth: createOAuthNamespace(client),
 
-
     // Utility methods
     cancelAllRequests: () => client.cancelAllRequests(),
     getActiveRequestsCount: () => client.getActiveRequestsCount(),
