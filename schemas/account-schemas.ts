@@ -1,6 +1,30 @@
 import { z } from "zod";
-
 export const DEACTIVATION_CONFIRM_TEXT = "DEACTIVATE" as const;
+
+export const dataExportSchema = z
+  .object({
+    include_profile: z.boolean(),
+    include_roles: z.boolean(),
+    include_workspaces: z.boolean(),
+    include_activity: z.boolean(),
+    include_billing: z.boolean(),
+    include_usage: z.boolean(),
+  })
+  .refine((value) => Object.values(value).some(Boolean), {
+    message: "Select at least one category to export",
+    path: ["include_profile"],
+  });
+
+export type DataExportFormValues = z.infer<typeof dataExportSchema>;
+
+export const defaultDataExportValues: DataExportFormValues = {
+  include_profile: true,
+  include_roles: true,
+  include_workspaces: true,
+  include_activity: true,
+  include_billing: true,
+  include_usage: true,
+};
 
 export interface DeactivateAccountFormValues {
     reason: string;
