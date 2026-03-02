@@ -18,6 +18,16 @@ export function SecuritySettings() {
     queryFn: () => apiClient.profile.get(),
   });
 
+  const { data: loginHistory } = useQuery({
+    queryKey: ["security", "login-history", "summary"],
+    queryFn: () => apiClient.security.getLoginHistory({ limit: 1, offset: 0 }),
+  });
+
+  const { data: activeSessions } = useQuery({
+    queryKey: ["security", "active-sessions-count"],
+    queryFn: () => apiClient.security.getActiveSessionsCount(),
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -42,6 +52,9 @@ export function SecuritySettings() {
     return null;
   }
 
+  const lastLoginAt = loginHistory?.history?.[0]?.created_at ?? null;
+  const loginCount = loginHistory?.total_count;
+
   const securityItems = [
     {
       icon: Mail,
@@ -52,49 +65,38 @@ export function SecuritySettings() {
         : "Please verify your email address",
       status: profile.email_verified ? "success" : "warning",
     },
-    {
-      icon: ShieldCheck,
-      label: "Two-Factor Authentication",
-      value:
-        profile.two_factor_enabled === true
-          ? "Enabled"
-          : profile.two_factor_enabled === false
-            ? "Not enabled"
-            : "Unavailable",
-      description:
-        profile.two_factor_enabled === true
-          ? "Your account requires an additional verification step"
-          : profile.two_factor_enabled === false
-            ? "Enable 2FA to improve account security"
-            : "2FA status is not available from the current profile API",
-      status:
-        profile.two_factor_enabled === true
-          ? "success"
-          : profile.two_factor_enabled === false
-            ? "warning"
-            : "info",
-    },
-    {
-      icon: Clock,
-      label: "Last Login",
-      value: "Information not available",
-      description: "Last time you logged into your account",
-      status: "info",
-    },
-    {
-      icon: LogIn,
-      label: "Login Count",
-      value: "Information not available",
-      description: "Total number of successful logins",
-      status: "info",
-    },
+    ...(lastLoginAt
+      ? [
+        {
+          icon: Clock,
+          label: "Last Login",
+          value: format(new Date(lastLoginAt), "MMM d, yyyy h:mm a"),
+          description: "Most recent recorded login event",
+          status: "info",
+        },
+      ]
+      : []),
+    ...(typeof loginCount === "number"
+      ? [
+        {
+          icon: LogIn,
+          label: "Login Count",
+          value: loginCount.toLocaleString(),
+          description: "Total successful login events recorded",
+          status: "info",
+        },
+      ]
+      : []),
     {
       icon: Shield,
       label: "Account Status",
       value: profile.status
         ? profile.status.charAt(0).toUpperCase() + profile.status.slice(1)
         : "Unknown",
-      description: "Current status of your account",
+      description:
+        activeSessions?.active_sessions_count !== undefined
+          ? `Current status of your account • ${activeSessions.active_sessions_count} active session(s)`
+          : "Current status of your account",
       status: profile.status === "active" ? "success" : "warning",
     },
   ];

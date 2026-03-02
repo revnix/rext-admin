@@ -9,11 +9,9 @@
  * Request to deactivate user account
  */
 export interface DeactivateAccountRequest {
-  /** Optional reason for deactivation */
+  password: string;
   reason?: string;
-  /** User must confirm deactivation (must be true) */
   confirm: boolean;
-  /** Automatically cancel active subscriptions during deactivation */
   cancel_subscriptions?: boolean;
 }
 
