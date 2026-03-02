@@ -6,6 +6,7 @@ import { Clock, LogIn, Mail, Shield, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
+import { formatSecurityDate } from "@/lib/formatters/security-date";
 
 export function SecuritySettings() {
   const {
@@ -140,9 +141,7 @@ export function SecuritySettings() {
       <div className="pt-4 border-t">
         <p className="text-sm text-muted-foreground">
           Account created on{" "}
-          {profile.created_at
-            ? format(new Date(profile.created_at), "MMMM d, yyyy")
-            : "Unknown"}
+          {formatSecurityDate(profile.created_at)}
         </p>
       </div>
     </div>

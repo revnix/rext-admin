@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsAdmin } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
+import { formatSecurityDate } from "@/lib/formatters/security-date";
 
 export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
@@ -106,7 +107,7 @@ export default function SecuritySettingsPage() {
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins} minutes ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
-    return date.toLocaleDateString();
+    return formatSecurityDate(date);
   };
 
   if (sessionsLoading) {
@@ -260,55 +261,55 @@ export default function SecuritySettingsPage() {
               {/* Top Offenders */}
               {(securityStats.top_failed_login_ips.length > 0 ||
                 securityStats.top_failed_login_users.length > 0) && (
-                <>
-                  <Separator className="my-4" />
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {/* Top IPs */}
-                    {securityStats.top_failed_login_ips.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
-                          Top Failed Login IPs
-                        </p>
-                        <div className="space-y-1">
-                          {securityStats.top_failed_login_ips.map((item) => (
-                            <div
-                              key={item.ip}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="font-mono">{item.ip}</span>
-                              <Badge variant="destructive" className="text-xs">
-                                {item.count} attempts
-                              </Badge>
-                            </div>
-                          ))}
+                  <>
+                    <Separator className="my-4" />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Top IPs */}
+                      {securityStats.top_failed_login_ips.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">
+                            Top Failed Login IPs
+                          </p>
+                          <div className="space-y-1">
+                            {securityStats.top_failed_login_ips.map((item) => (
+                              <div
+                                key={item.ip}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="font-mono">{item.ip}</span>
+                                <Badge variant="destructive" className="text-xs">
+                                  {item.count} attempts
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Top Users */}
-                    {securityStats.top_failed_login_users.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
-                          Top Failed Login Users
-                        </p>
-                        <div className="space-y-1">
-                          {securityStats.top_failed_login_users.map((item) => (
-                            <div
-                              key={item.email}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="truncate">{item.email}</span>
-                              <Badge variant="destructive" className="text-xs">
-                                {item.count} attempts
-                              </Badge>
-                            </div>
-                          ))}
+                      {/* Top Users */}
+                      {securityStats.top_failed_login_users.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">
+                            Top Failed Login Users
+                          </p>
+                          <div className="space-y-1">
+                            {securityStats.top_failed_login_users.map((item) => (
+                              <div
+                                key={item.email}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="truncate">{item.email}</span>
+                                <Badge variant="destructive" className="text-xs">
+                                  {item.count} attempts
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+                      )}
+                    </div>
+                  </>
+                )}
             </CardContent>
           </Card>
         ) : null)}
