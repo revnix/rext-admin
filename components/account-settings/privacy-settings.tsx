@@ -10,8 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
 import type { DataExportRequest } from "@/types/account";
+import { getPrivacyExportErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { logger } from "@/lib/logger";
 
 export function PrivacySettings() {
+  const log = logger.forComponent("PrivacySettings");
+
   const [exportOptions, setExportOptions] = useState<DataExportRequest>({
     include_profile: true,
     include_roles: true,
@@ -29,10 +33,9 @@ export function PrivacySettings() {
         data.message || "Your data export will be sent to your email shortly.",
       );
     },
-    onError: (error: Error) => {
-      toast.error(
-        error.message || "Failed to request data export. Please try again.",
-      );
+    onError: (error: unknown) => {
+      log.error("Data export request failed", error);
+      toast.error(getPrivacyExportErrorMessage(error));
     },
   });
 

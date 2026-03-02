@@ -26,3 +26,21 @@ export function getAvatarErrorMessage(
 
   return `Failed to ${operation} avatar. Please try again.`;
 }
+
+export function getPrivacyExportErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.statusCode === 429) {
+      return "Too many export requests. Please wait a few minutes and try again.";
+    }
+
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return "Your session has expired or you do not have permission to export data.";
+    }
+
+    if (error.statusCode >= 500) {
+      return "Data export is temporarily unavailable. Please try again later.";
+    }
+  }
+
+  return "Failed to request data export. Please try again.";
+}
