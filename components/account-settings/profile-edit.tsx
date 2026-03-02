@@ -39,6 +39,8 @@ import {
   AVATAR_ACCEPT_ATTRIBUTE,
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
+import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { logger } from "@/lib/logger";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -65,6 +67,7 @@ export function ProfileEdit() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+const log = logger.forComponent("ProfileEdit");
 
   // Fetch profile
   const {
@@ -130,11 +133,10 @@ export function ProfileEdit() {
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-    onError: (error: Error) => {
-      toast.error("Failed to upload avatar", {
-        description: error.message,
-      });
-    },
+      onError: (error: unknown) => {
+  log.error("ProfileEdit avatar upload failed", error);
+  toast.error(getAvatarErrorMessage(error, "upload"));
+},
   });
 
   // Delete avatar mutation
@@ -148,11 +150,10 @@ export function ProfileEdit() {
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-    onError: (error: Error) => {
-      toast.error("Failed to remove avatar", {
-        description: error.message,
-      });
-    },
+   onError: (error: unknown) => {
+  log.error("ProfileEdit avatar delete failed", error);
+  toast.error(getAvatarErrorMessage(error, "delete"));
+},
   });
 
   const onSubmit = (data: ProfileFormValues) => {
