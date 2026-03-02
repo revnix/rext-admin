@@ -37,6 +37,7 @@ import {
 } from "@/lib/constants/localization";
 import {
   AVATAR_ACCEPT_ATTRIBUTE,
+  ProfileFormData,
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
 
@@ -88,24 +89,25 @@ export function ProfileEdit() {
     },
     values: profile
       ? {
-          full_name: profile.full_name || "",
-          display_name: profile.display_name || "",
-          bio: profile.bio || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
+        full_name: profile.full_name || "",
+        display_name: profile.display_name || "",
+        bio: profile.bio || "",
+        language: profile.language || "en",
+        timezone: profile.timezone || "UTC",
+      }
       : undefined,
   });
 
   // Update profile mutation
   const updateMutation = useMutation({
-    mutationFn: (data: {
-      full_name: string | null;
-      display_name?: string | null;
-      bio?: string | null;
-      language?: string;
-      timezone?: string;
-    }) => apiClient.profile.update(data),
+    mutationFn: (data: ProfileFormData) =>
+      apiClient.profile.update({
+        full_name: data.full_name,
+        display_name: data.display_name,
+        bio: data.bio,
+        language: data.language,
+        timezone: data.timezone,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: profileQueries.detail().queryKey,
@@ -155,17 +157,8 @@ export function ProfileEdit() {
     },
   });
 
-  const onSubmit = (data: ProfileFormValues) => {
-    // Send null for empty display_name instead of undefined
-    // Backend requires the field to be present in the payload
-    const payload = {
-      full_name: data.full_name,
-      display_name: data.display_name?.trim() || null,
-      bio: data.bio?.trim() || null,
-      language: data.language,
-      timezone: data.timezone,
-    };
-    updateMutation.mutate(payload);
+  const onSubmit = (data: ProfileFormData) => {
+    updateMutation.mutate(data);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
