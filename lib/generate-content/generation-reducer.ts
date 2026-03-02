@@ -2,6 +2,7 @@ import type {
   ContentOutline,
   PageAction,
   PageState,
+  SEORESULT,
   StreamUpdates,
 } from "@/types/generate-content";
 
@@ -36,6 +37,10 @@ export const initialState: PageState = {
   allContent: null,
   currentLoadingSteps: [],
   keywordDifficulty: null,
+  activeNode: null,
+  streamingPlan: "",
+  isEEATProcessed: false,
+  isHumanized: false,
 };
 
 export function generationReducer(
@@ -99,13 +104,23 @@ export function generationReducer(
     case "SET_MANUAL_LOADING":
       return { ...state, isManualLoading: action.payload };
     case "CLEAR_COMPLETED_NODES":
-      return { ...state, completedNodes: [] };
+      return { ...state, completedNodes: [], activeNode: null };
+    case "SET_ACTIVE_NODE":
+      return handleActiveNode(state, action.payload);
     case "ADD_COMPLETED_NODE":
       if (state.completedNodes.includes(action.payload)) return state;
       return {
         ...state,
         completedNodes: [...state.completedNodes, action.payload],
       };
+    case "SET_STREAMING_CONTENT":
+      return { ...state, generatedContent: action.payload };
+    case "SET_STREAMING_PLAN":
+      return { ...state, streamingPlan: action.payload };
+    case "SET_EEAT_PROCESSED":
+      return { ...state, isEEATProcessed: action.payload };
+    case "SET_HUMANIZED":
+      return { ...state, isHumanized: action.payload };
     case "UPDATE_FROM_STREAM":
       return handleStreamUpdate(state, action.payload);
     default:
@@ -113,19 +128,25 @@ export function generationReducer(
   }
 }
 
-function handleLoadingStatus(state: PageState, nextStatus: string): PageState {
-  const prevStatus = state.loadingStatus;
+function handleActiveNode(state: PageState, nodeId: string): PageState {
   const nextCompleted = [...state.completedNodes];
-  if (prevStatus?.endsWith("...") && prevStatus !== nextStatus) {
-    const finishedNode = prevStatus.slice(0, -3);
-    if (!nextCompleted.includes(finishedNode)) {
-      nextCompleted.push(finishedNode);
+  if (state.activeNode && state.activeNode !== nodeId) {
+    if (!nextCompleted.includes(state.activeNode)) {
+      nextCompleted.push(state.activeNode);
     }
   }
   return {
     ...state,
-    loadingStatus: nextStatus,
+    activeNode: nodeId,
     completedNodes: nextCompleted,
+    streamingPlan: "",
+  };
+}
+
+function handleLoadingStatus(state: PageState, nextStatus: string): PageState {
+  return {
+    ...state,
+    loadingStatus: nextStatus,
   };
 }
 
@@ -133,81 +154,138 @@ function handleStreamUpdate(
   state: PageState,
   updates: StreamUpdates,
 ): PageState {
+  if (!updates) return state;
   let changed = false;
   const newState = { ...state };
 
-  const interrupt = updates.__interrupt__;
+  /**
+   * Helper to extract SEO data into normalized structure
+   */
+  const mapSEO = (d: any): SEORESULT | null => {
+    if (!d) return null;
+    const rawDifficulty = d.keyword_difficulty ?? d.kd;
+    const rawVolume = d.search_volume || d.volume;
+    const rawIntent = d.main_intent || d.intent;
 
-  if (interrupt && interrupt.length > 0) {
-    const interruptValue = interrupt[0].value;
-    const newInstruction = (interruptValue.instruction ||
-      interruptValue.instructions) as string | undefined;
-    const newInstructionType = (interruptValue.instruction_type ||
-      interruptValue.type) as string | undefined;
-
-    if (newInstruction !== undefined && state.instruction !== newInstruction) {
-      newState.instruction = newInstruction;
-      changed = true;
-    }
-    if (
-      newInstructionType !== undefined &&
-      state.instructionType !== newInstructionType
-    ) {
-      newState.instructionType = newInstructionType;
-      changed = true;
+    // Check if this is a placeholder (all zeros)
+    if (rawDifficulty === 0 && (rawVolume === 0 || rawVolume === "0") && state.seoResult) {
+      // If we already have data, don't overwrite with placeholders
+      if ((state.seoResult.keyword_difficulty ?? 0) !== 0 || state.seoResult.volume !== "0") {
+        return null;
+      }
     }
 
-    if (interruptValue.Recommendations) {
-      const keywords = interruptValue.Recommendations as string[];
-      const primaryKeyword = interruptValue["Primary Keyword"] as
-        | string
-        | undefined;
-      if (keywords && keywords.length > 0) {
-        if (
-          JSON.stringify(state.suggestedKeywords) !== JSON.stringify(keywords)
-        ) {
-          newState.primaryKeyword = primaryKeyword || "";
-          newState.suggestedKeywords = keywords;
-          if (interruptValue.seo_state) {
-            newState.seoResult = interruptValue.seo_state;
-          }
+    return {
+      ...state.seoResult,
+      keyword_difficulty: typeof rawDifficulty === "number" ? rawDifficulty : (state.seoResult?.keyword_difficulty ?? 0),
+      volume: rawVolume?.toString() || (state.seoResult?.volume ?? "0"),
+      intent: String(rawIntent || state.seoResult?.intent || "informational").toLowerCase(),
+      seo_health_score: state.seoResult?.seo_health_score || 0,
+      issue_summary: state.seoResult?.issue_summary || { critical: 0, errors: 0, warnings: 0 },
+      issues: state.seoResult?.issues || [],
+    };
+  };
+
+  /**
+   * Recursively scan for data and interrupts
+   */
+  const processObject = (obj: any) => {
+    if (!obj || typeof obj !== "object") return;
+
+    // 1. Direct SEO Detection
+    const seoData = obj.serp_backlinks || obj.seo_state || obj.seo_result?.serp_backlinks || obj.seo_result?.seo_state;
+    if (seoData) {
+      const mapped = mapSEO(seoData);
+      if (mapped && JSON.stringify(state.seoResult) !== JSON.stringify(mapped)) {
+        newState.seoResult = mapped;
+        newState.keywordDifficulty = typeof mapped.keyword_difficulty === "number" ? mapped.keyword_difficulty : null;
+        changed = true;
+      }
+    }
+
+    // 2. Recommendations Detection
+    const kwData = obj.Recommendations || obj.recommendations || obj.keyword_recommendations?.recommendations;
+    if (kwData && Array.isArray(kwData) && kwData.length > 0) {
+      if (JSON.stringify(state.suggestedKeywords) !== JSON.stringify(kwData)) {
+        newState.suggestedKeywords = kwData;
+        newState.primaryKeyword = obj["Primary Keyword"] || obj.keyword || obj.primary_keyword || state.primaryKeyword;
+        changed = true;
+      }
+    }
+
+    // 3. Interrupt Detection
+    if (obj.__interrupt__ && Array.isArray(obj.__interrupt__)) {
+      newState.interrupt = obj.__interrupt__;
+      changed = true;
+
+      const val = obj.__interrupt__[0].value;
+      if (val) {
+        if (val.instruction && state.instruction !== val.instruction) {
+          newState.instruction = val.instruction;
           changed = true;
         }
-        if (state.step === "keyword") {
-          newState.step = "suggestions";
+
+        const type = val.type || val.instruction_type;
+
+        // Phase protection: Don't allow reverting from content to earlier steps
+        const PHASE_ORDER: Record<string, number> = {
+          "keyword": 0,
+          "keyword Selection": 1,
+          "topic": 2,
+          "content_type": 3,
+          "outline_review": 4,
+          "content": 5
+        };
+
+        const currentPhase = PHASE_ORDER[state.instructionType] || 0;
+        const newPhase = PHASE_ORDER[type] || 0;
+
+        if (type && newPhase >= currentPhase && state.instructionType !== type) {
+          newState.instructionType = type;
           changed = true;
         }
+
+        // Deeply process the interrupt value itself for state updates
+        processObject(val);
       }
-    } else if (interruptValue.topics) {
-      const newTopics = interruptValue.topics as string[];
-      if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
-        newState.topics = newTopics;
+    }
+
+    // 4. Content State detection
+    if (obj.topics && Array.isArray(obj.topics)) {
+      if (JSON.stringify(state.topics) !== JSON.stringify(obj.topics)) {
+        newState.topics = obj.topics;
         changed = true;
       }
-    } else if (interruptValue.content_types) {
-      const newContentTypes = interruptValue.content_types as string[];
-      if (
-        JSON.stringify(state.contentTypes) !== JSON.stringify(newContentTypes)
-      ) {
-        newState.contentTypes = newContentTypes;
+    }
+
+    if (obj.content_types && Array.isArray(obj.content_types)) {
+      if (JSON.stringify(state.contentTypes) !== JSON.stringify(obj.content_types)) {
+        newState.contentTypes = obj.content_types;
         changed = true;
       }
-    } else if (interruptValue.type === "outline_review") {
-      const newOutline = interruptValue.data as ContentOutline;
-      if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
-        newState.outline = newOutline;
+    }
+
+    if (obj.type === "outline_review" || obj.outline) {
+      const outlineData = obj.data || obj.outline;
+      if (outlineData && JSON.stringify(state.outline) !== JSON.stringify(outlineData)) {
+        newState.outline = outlineData as ContentOutline;
         changed = true;
       }
-      if (
-        state.step !== "outline" &&
-        state.step !== "outline-reject" &&
-        state.step !== "content"
-      ) {
+      if (!["outline", "outline-reject", "content"].includes(state.step)) {
         newState.step = "outline";
         changed = true;
       }
     }
-  }
+
+    // Recursion (skip messages to avoid noise)
+    for (const key in obj) {
+      if (key !== "messages" && typeof obj[key] === "object") {
+        processObject(obj[key]);
+      }
+    }
+  };
+
+  processObject(updates);
 
   return changed ? newState : state;
 }

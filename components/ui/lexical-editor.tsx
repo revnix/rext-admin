@@ -571,6 +571,13 @@ export default function LexicalEditor({
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
 
+  useEffect(() => {
+    if (initialValue !== undefined && initialValue !== markdownOutput) {
+      setMarkdownOutput(initialValue);
+      setShouldUpdateEditor(true);
+    }
+  }, [initialValue]);
+
   // We use useMemo to ensure the initialConfig is stable.
   // biome-ignore lint/correctness/useExhaustiveDependencies: initialValue excluded to prevent re-creating editor state
   const initialConfig = useMemo(
@@ -583,15 +590,13 @@ export default function LexicalEditor({
         // biome-ignore lint/suspicious/noConsole: Lexical editor error handler
         console.error(error);
       },
-      editorState: (editor: unknown) => {
+      editorState: () => {
         // Convert initial markdown to editor state
-        (editor as { update: (fn: () => void) => void }).update(() => {
-          if (initialValue) {
-            try {
-              $convertFromMarkdownString(initialValue, TRANSFORMERS);
-            } catch (_e) {}
-          }
-        });
+        if (initialValue) {
+          try {
+            $convertFromMarkdownString(initialValue, TRANSFORMERS);
+          } catch (_e) { }
+        }
       },
     }),
     [readOnly],
