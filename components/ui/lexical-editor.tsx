@@ -571,6 +571,7 @@ export default function LexicalEditor({
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: markdownOutput excluded to avoid resetting user input when typing
   useEffect(() => {
     if (initialValue !== undefined && initialValue !== markdownOutput) {
       setMarkdownOutput(initialValue);
@@ -595,7 +596,7 @@ export default function LexicalEditor({
         if (initialValue) {
           try {
             $convertFromMarkdownString(initialValue, TRANSFORMERS);
-          } catch (_e) { }
+          } catch (_e) {}
         }
       },
     }),

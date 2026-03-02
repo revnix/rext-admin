@@ -161,6 +161,7 @@ function handleStreamUpdate(
   /**
    * Helper to extract SEO data into normalized structure
    */
+  // biome-ignore lint/suspicious/noExplicitAny: complex recursive stream updates
   const mapSEO = (d: any): SEORESULT | null => {
     if (!d) return null;
     const rawDifficulty = d.keyword_difficulty ?? d.kd;
@@ -168,20 +169,36 @@ function handleStreamUpdate(
     const rawIntent = d.main_intent || d.intent;
 
     // Check if this is a placeholder (all zeros)
-    if (rawDifficulty === 0 && (rawVolume === 0 || rawVolume === "0") && state.seoResult) {
+    if (
+      rawDifficulty === 0 &&
+      (rawVolume === 0 || rawVolume === "0") &&
+      state.seoResult
+    ) {
       // If we already have data, don't overwrite with placeholders
-      if ((state.seoResult.keyword_difficulty ?? 0) !== 0 || state.seoResult.volume !== "0") {
+      if (
+        (state.seoResult.keyword_difficulty ?? 0) !== 0 ||
+        state.seoResult.volume !== "0"
+      ) {
         return null;
       }
     }
 
     return {
       ...state.seoResult,
-      keyword_difficulty: typeof rawDifficulty === "number" ? rawDifficulty : (state.seoResult?.keyword_difficulty ?? 0),
+      keyword_difficulty:
+        typeof rawDifficulty === "number"
+          ? rawDifficulty
+          : (state.seoResult?.keyword_difficulty ?? 0),
       volume: rawVolume?.toString() || (state.seoResult?.volume ?? "0"),
-      intent: String(rawIntent || state.seoResult?.intent || "informational").toLowerCase(),
+      intent: String(
+        rawIntent || state.seoResult?.intent || "informational",
+      ).toLowerCase(),
       seo_health_score: state.seoResult?.seo_health_score || 0,
-      issue_summary: state.seoResult?.issue_summary || { critical: 0, errors: 0, warnings: 0 },
+      issue_summary: state.seoResult?.issue_summary || {
+        critical: 0,
+        errors: 0,
+        warnings: 0,
+      },
       issues: state.seoResult?.issues || [],
     };
   };
@@ -189,26 +206,44 @@ function handleStreamUpdate(
   /**
    * Recursively scan for data and interrupts
    */
+  // biome-ignore lint/suspicious/noExplicitAny: complex recursive stream updates
   const processObject = (obj: any) => {
     if (!obj || typeof obj !== "object") return;
 
     // 1. Direct SEO Detection
-    const seoData = obj.serp_backlinks || obj.seo_state || obj.seo_result?.serp_backlinks || obj.seo_result?.seo_state;
+    const seoData =
+      obj.serp_backlinks ||
+      obj.seo_state ||
+      obj.seo_result?.serp_backlinks ||
+      obj.seo_result?.seo_state;
     if (seoData) {
       const mapped = mapSEO(seoData);
-      if (mapped && JSON.stringify(state.seoResult) !== JSON.stringify(mapped)) {
+      if (
+        mapped &&
+        JSON.stringify(state.seoResult) !== JSON.stringify(mapped)
+      ) {
         newState.seoResult = mapped;
-        newState.keywordDifficulty = typeof mapped.keyword_difficulty === "number" ? mapped.keyword_difficulty : null;
+        newState.keywordDifficulty =
+          typeof mapped.keyword_difficulty === "number"
+            ? mapped.keyword_difficulty
+            : null;
         changed = true;
       }
     }
 
     // 2. Recommendations Detection
-    const kwData = obj.Recommendations || obj.recommendations || obj.keyword_recommendations?.recommendations;
+    const kwData =
+      obj.Recommendations ||
+      obj.recommendations ||
+      obj.keyword_recommendations?.recommendations;
     if (kwData && Array.isArray(kwData) && kwData.length > 0) {
       if (JSON.stringify(state.suggestedKeywords) !== JSON.stringify(kwData)) {
         newState.suggestedKeywords = kwData;
-        newState.primaryKeyword = obj["Primary Keyword"] || obj.keyword || obj.primary_keyword || state.primaryKeyword;
+        newState.primaryKeyword =
+          obj["Primary Keyword"] ||
+          obj.keyword ||
+          obj.primary_keyword ||
+          state.primaryKeyword;
         changed = true;
       }
     }
@@ -229,18 +264,22 @@ function handleStreamUpdate(
 
         // Phase protection: Don't allow reverting from content to earlier steps
         const PHASE_ORDER: Record<string, number> = {
-          "keyword": 0,
+          keyword: 0,
           "keyword Selection": 1,
-          "topic": 2,
-          "content_type": 3,
-          "outline_review": 4,
-          "content": 5
+          topic: 2,
+          content_type: 3,
+          outline_review: 4,
+          content: 5,
         };
 
         const currentPhase = PHASE_ORDER[state.instructionType] || 0;
         const newPhase = PHASE_ORDER[type] || 0;
 
-        if (type && newPhase >= currentPhase && state.instructionType !== type) {
+        if (
+          type &&
+          newPhase >= currentPhase &&
+          state.instructionType !== type
+        ) {
           newState.instructionType = type;
           changed = true;
         }
@@ -259,7 +298,9 @@ function handleStreamUpdate(
     }
 
     if (obj.content_types && Array.isArray(obj.content_types)) {
-      if (JSON.stringify(state.contentTypes) !== JSON.stringify(obj.content_types)) {
+      if (
+        JSON.stringify(state.contentTypes) !== JSON.stringify(obj.content_types)
+      ) {
         newState.contentTypes = obj.content_types;
         changed = true;
       }
@@ -267,7 +308,10 @@ function handleStreamUpdate(
 
     if (obj.type === "outline_review" || obj.outline) {
       const outlineData = obj.data || obj.outline;
-      if (outlineData && JSON.stringify(state.outline) !== JSON.stringify(outlineData)) {
+      if (
+        outlineData &&
+        JSON.stringify(state.outline) !== JSON.stringify(outlineData)
+      ) {
         newState.outline = outlineData as ContentOutline;
         changed = true;
       }
