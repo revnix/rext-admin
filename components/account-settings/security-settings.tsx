@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Clock, LogIn, Mail, Shield, ShieldCheck } from "lucide-react";
+import { Clock, LogIn, Mail, Shield } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
@@ -67,25 +67,25 @@ export function SecuritySettings() {
     },
     ...(lastLoginAt
       ? [
-        {
-          icon: Clock,
-          label: "Last Login",
-          value: format(new Date(lastLoginAt), "MMM d, yyyy h:mm a"),
-          description: "Most recent recorded login event",
-          status: "info",
-        },
-      ]
+          {
+            icon: Clock,
+            label: "Last Login",
+            value: format(new Date(lastLoginAt), "MMM d, yyyy h:mm a"),
+            description: "Most recent recorded login event",
+            status: "info",
+          },
+        ]
       : []),
     ...(typeof loginCount === "number"
       ? [
-        {
-          icon: LogIn,
-          label: "Login Count",
-          value: loginCount.toLocaleString(),
-          description: "Total successful login events recorded",
-          status: "info",
-        },
-      ]
+          {
+            icon: LogIn,
+            label: "Login Count",
+            value: loginCount.toLocaleString(),
+            description: "Total successful login events recorded",
+            status: "info",
+          },
+        ]
       : []),
     {
       icon: Shield,
