@@ -19,14 +19,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
+import type { OAuthAccount } from "@/lib/api-client/oauth";
 
-interface OAuthAccount {
-  id: string;
-  provider: string;
-  provider_account_id: string;
-  provider_email: string | null;
-  created_at: string;
-}
 
 const providerDisplayNames: Record<string, string> = {
   google: "Google",
@@ -48,40 +42,27 @@ export function OAuthAccounts() {
     null,
   );
 
-  // Fetch OAuth accounts
-  const {
-    data: accounts,
-    isLoading,
-    error,
-  } = useQuery<OAuthAccount[]>({
-    queryKey: ["oauth-accounts"],
-    queryFn: async () => {
-      const response = await apiClient.request<{
-        accounts: OAuthAccount[];
-      }>("/api/v1/user/oauth/accounts", {
-        method: "GET",
-      });
-      return response.accounts;
-    },
-  });
+const {
+  data: accounts,
+  isLoading,
+  error,
+} = useQuery<OAuthAccount[]>({
+  queryKey: ["oauth-accounts"],
+  queryFn: () => apiClient.oauth.listAccounts(),
+});
 
   // Unlink mutation
-  const unlinkMutation = useMutation({
-    mutationFn: (provider: string) =>
-      apiClient.request(`/api/v1/user/oauth/${provider}`, {
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["oauth-accounts"] });
-      toast.success("Account unlinked successfully");
-      setAccountToUnlink(null);
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to unlink account", {
-        description: error.message,
-      });
-    },
-  });
+ const unlinkMutation = useMutation({
+  mutationFn: (provider: string) => apiClient.oauth.unlinkAccount(provider),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["oauth-accounts"] });
+    toast.success("Account unlinked successfully");
+    setAccountToUnlink(null);
+  },
+  onError: (error: Error) => {
+    toast.error("Failed to unlink account", { description: error.message });
+  },
+});
 
   const handleUnlink = (account: OAuthAccount) => {
     setAccountToUnlink(account);
