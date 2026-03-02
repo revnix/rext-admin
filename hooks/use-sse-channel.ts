@@ -206,7 +206,9 @@ export function useSSEChannel(
       onEventRef.current?.(event);
 
       if (COMPLETION_STEPS.has(event.step)) {
-        refreshNotificationsSafely();
+        // Temporarily disabled to prevent excessive API calls.
+        // Will revisit after implementing proper throttling/debouncing.
+        // refreshNotificationsSafely();
         onCompleteRef.current?.(event.payload);
       }
 
@@ -222,7 +224,7 @@ export function useSSEChannel(
         handleError(message);
       }
     },
-    [handleError, refreshNotificationsSafely],
+    [handleError],
   );
 
   const handleStatus = useCallback(
