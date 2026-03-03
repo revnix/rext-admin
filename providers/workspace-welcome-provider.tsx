@@ -7,7 +7,7 @@ import { WorkspaceWelcomeModal } from "@/components/workspace";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { safeJsonParse } from "@/lib/utils";
-
+import { MODAL_DELAYS } from "@/lib/constants/motion";
 interface WorkspaceWelcomeProviderProps {
   children: React.ReactNode;
 }
@@ -69,7 +69,7 @@ export function WorkspaceWelcomeProvider({
         // Small delay to let the page load
         const timer = setTimeout(() => {
           setIsOpen(true);
-        }, 800);
+        }, MODAL_DELAYS.INVITED_USER);
 
         // Clear from sessionStorage so it only shows once
         sessionStorage.removeItem(welcomeKey);
