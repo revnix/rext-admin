@@ -174,7 +174,7 @@ export function UsageMetrics({
     usage.api_calls_usage_percent,
   );
 
-  if(!usage) {
+  if (!usage) {
     return (
       <Card className={className}>
         <CardHeader>

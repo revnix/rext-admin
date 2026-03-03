@@ -37,7 +37,6 @@ export interface PricingTableProps {
   hideBillingToggle?: boolean;
 }
 
-
 /**
  * Professional pricing table with plan features and checkout
  */
@@ -52,7 +51,6 @@ export function PricingTable({
   const { plans, subscription, fetchPlans, isLoading } = useSubscriptionStore();
 
   const visiblePlans = plans.filter((plan) => plan.is_public && plan.is_active);
-
 
   // Fetch plans on mount
   useEffect(() => {
@@ -75,7 +73,7 @@ export function PricingTable({
 
     return { savings, savingsPercent };
   };
-  
+
   const maxYearlySavingsPercent = visiblePlans.reduce((max, plan) => {
     const { savingsPercent } = getYearlySavings(plan);
     return savingsPercent > max ? savingsPercent : max;
@@ -161,131 +159,129 @@ export function PricingTable({
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {visiblePlans.map((plan) => {
-            const features = parseFeatures(plan);
-            const price = getPrice(plan);
-            const { savingsPercent } = getYearlySavings(plan);
-            const isPopular = plan.id === popularPlanId;
-            const isCurrent = isCurrentPlan(plan.id);
+          const features = parseFeatures(plan);
+          const price = getPrice(plan);
+          const { savingsPercent } = getYearlySavings(plan);
+          const isPopular = plan.id === popularPlanId;
+          const isCurrent = isCurrentPlan(plan.id);
 
-            return (
-              <Card
-                key={plan.id}
-                className={cn(
-                  "relative flex flex-col",
-                  isPopular && "border-primary shadow-lg scale-105",
-                  isCurrent && "border-green-500 dark:border-green-600",
+          return (
+            <Card
+              key={plan.id}
+              className={cn(
+                "relative flex flex-col",
+                isPopular && "border-primary shadow-lg scale-105",
+                isCurrent && "border-green-500 dark:border-green-600",
+              )}
+            >
+              {/* Popular Badge */}
+              {isPopular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Popular
+                  </Badge>
+                </div>
+              )}
+
+              {/* Current Plan Badge */}
+              {isCurrent && (
+                <div className="absolute -top-3 right-4">
+                  <Badge
+                    variant="outline"
+                    className="border-green-500 text-green-700 dark:text-green-400"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Current Plan
+                  </Badge>
+                </div>
+              )}
+
+              <CardHeader>
+                <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
+                {plan.description && (
+                  <CardDescription>{plan.description}</CardDescription>
                 )}
-              >
-                {/* Popular Badge */}
-                {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Popular
-                    </Badge>
+
+                {/* Pricing */}
+                <div className="mt-4">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">
+                      ${price.toFixed(2)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      /{billingPeriod === BillingPeriod.MONTHLY ? "mo" : "yr"}
+                    </span>
                   </div>
+                  {billingPeriod === BillingPeriod.YEARLY &&
+                    savingsPercent > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-500 mt-1">
+                        Save {savingsPercent}% with yearly billing
+                      </p>
+                    )}
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex-grow">
+                {/* Features List */}
+                <ul className="space-y-3">
+                  {features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
+
+                  {/* Limits */}
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      {plan.max_workspaces === -1
+                        ? "Unlimited"
+                        : plan.max_workspaces}{" "}
+                      workspace{plan.max_workspaces !== 1 ? "s" : ""}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      {plan.max_topics === -1
+                        ? "Unlimited"
+                        : plan.max_topics.toLocaleString()}{" "}
+                      topic{plan.max_topics !== 1 ? "s" : ""}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      {plan.max_api_calls_per_month === -1
+                        ? "Unlimited"
+                        : plan.max_api_calls_per_month.toLocaleString()}{" "}
+                      API calls/month
+                    </span>
+                  </li>
+                </ul>
+              </CardContent>
+
+              <CardFooter>
+                {isCurrent ? (
+                  <Button variant="outline" className="w-full" disabled>
+                    <Check className="mr-2 h-4 w-4" />
+                    Current Plan
+                  </Button>
+                ) : (
+                  <CheckoutWithDiscount
+                    plan={plan}
+                    billingPeriod={billingPeriod}
+                    variant={isPopular ? "default" : "outline"}
+                    buttonText={`Subscribe to ${plan.display_name}`}
+                    showDiscountByDefault={false}
+                  />
                 )}
-
-                {/* Current Plan Badge */}
-                {isCurrent && (
-                  <div className="absolute -top-3 right-4">
-                    <Badge
-                      variant="outline"
-                      className="border-green-500 text-green-700 dark:text-green-400"
-                    >
-                      <Check className="h-3 w-3 mr-1" />
-                      Current Plan
-                    </Badge>
-                  </div>
-                )}
-
-                <CardHeader>
-                  <CardTitle className="text-2xl">
-                    {plan.display_name}
-                  </CardTitle>
-                  {plan.description && (
-                    <CardDescription>{plan.description}</CardDescription>
-                  )}
-
-                  {/* Pricing */}
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">
-                        ${price.toFixed(2)}
-                      </span>
-                      <span className="text-muted-foreground">
-                        /{billingPeriod === BillingPeriod.MONTHLY ? "mo" : "yr"}
-                      </span>
-                    </div>
-                    {billingPeriod === BillingPeriod.YEARLY &&
-                      savingsPercent > 0 && (
-                        <p className="text-sm text-green-600 dark:text-green-500 mt-1">
-                          Save {savingsPercent}% with yearly billing
-                        </p>
-                      )}
-                  </div>
-                </CardHeader>
-
-                <CardContent className="flex-grow">
-                  {/* Features List */}
-                  <ul className="space-y-3">
-                    {features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-
-                    {/* Limits */}
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-sm">
-                        {plan.max_workspaces === -1
-                          ? "Unlimited"
-                          : plan.max_workspaces}{" "}
-                        workspace{plan.max_workspaces !== 1 ? "s" : ""}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-sm">
-                        {plan.max_topics === -1
-                          ? "Unlimited"
-                          : plan.max_topics.toLocaleString()}{" "}
-                        topic{plan.max_topics !== 1 ? "s" : ""}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-sm">
-                        {plan.max_api_calls_per_month === -1
-                          ? "Unlimited"
-                          : plan.max_api_calls_per_month.toLocaleString()}{" "}
-                        API calls/month
-                      </span>
-                    </li>
-                  </ul>
-                </CardContent>
-
-                <CardFooter>
-                  {isCurrent ? (
-                    <Button variant="outline" className="w-full" disabled>
-                      <Check className="mr-2 h-4 w-4" />
-                      Current Plan
-                    </Button>
-                  ) : (
-                    <CheckoutWithDiscount
-                      plan={plan}
-                      billingPeriod={billingPeriod}
-                      variant={isPopular ? "default" : "outline"}
-                      buttonText={`Subscribe to ${plan.display_name}`}
-                      showDiscountByDefault={false}
-                    />
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
 
       {/* No Plans Message */}

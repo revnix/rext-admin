@@ -27,11 +27,11 @@ interface UsageLimitWarningProps {
    * Resource type to monitor
    */
   resource:
-  | "workspaces"
-  | "topics"
-  | "knowledge_items"
-  | "ai_requests"
-  | "storage";
+    | "workspaces"
+    | "topics"
+    | "knowledge_items"
+    | "ai_requests"
+    | "storage";
 
   /**
    * Show warning when usage reaches this percentage (0-100)
@@ -171,20 +171,20 @@ export function UsageLimitWarning({
     router.push("/pricing" as Route);
   };
 
- const handleDismiss = () => {
-  setIsDismissed(true);
+  const handleDismiss = () => {
+    setIsDismissed(true);
 
-  const now = Date.now();
-  const payload: UsageWarningDismissal = {
-    dismissedAt: now,
-    expiresAt: now + WARNING_DISMISS_TTL_MS,
+    const now = Date.now();
+    const payload: UsageWarningDismissal = {
+      dismissedAt: now,
+      expiresAt: now + WARNING_DISMISS_TTL_MS,
+    };
+
+    localStorage.setItem(
+      getUsageWarningDismissalKey(resource),
+      JSON.stringify(payload),
+    );
   };
-
-  localStorage.setItem(
-    getUsageWarningDismissalKey(resource),
-    JSON.stringify(payload),
-  );
-};
 
   // Don't show if dismissed
   if (isDismissed) {
@@ -290,10 +290,11 @@ export function UsageLimitWarning({
                 {showProgress && (
                   <Progress
                     value={Math.min(usagePercentage, 100)}
-                    className={`h-2 ${isCritical
+                    className={`h-2 ${
+                      isCritical
                         ? "[&>div]:bg-destructive"
                         : "[&>div]:bg-yellow-500"
-                      }`}
+                    }`}
                   />
                 )}
               </div>

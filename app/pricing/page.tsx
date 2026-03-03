@@ -132,7 +132,8 @@ export default function PricingPage() {
                 Can I change plans anytime?
               </h3>
               <p className="text-sm text-muted-foreground">
-                Yes. Plan changes are applied immediately, and prorations are handled by our billing provider.
+                Yes. Plan changes are applied immediately, and prorations are
+                handled by our billing provider.
               </p>
             </div>
             <div>

@@ -42,8 +42,7 @@ import type { Route } from "next";
 
 export default function SubscriptionSettingsPage() {
   const router = useRouter();
-  const { usage, fetchSubscription, getPortalUrl } =
-    useSubscriptionStore();
+  const { usage, fetchSubscription, getPortalUrl } = useSubscriptionStore();
   const [portalLoading, setPortalLoading] = useState(false);
   const [dataLoading, _setDataLoading] = useState(true);
 

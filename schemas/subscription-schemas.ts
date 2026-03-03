@@ -9,10 +9,7 @@
  */
 
 import { z } from "zod";
-import {
-  BillingPeriod,
-  SubscriptionStatus,
-} from "@/types/subscription";
+import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 
 const InvoiceStatusSchema = z
   .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])

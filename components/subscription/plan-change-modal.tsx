@@ -78,7 +78,6 @@ interface PlanChangeModalProps {
 }
 type PlanChangePhase = "idle" | "submitting" | "syncing";
 
-
 export function PlanChangeModal({
   open,
   onOpenChange,
@@ -91,7 +90,7 @@ export function PlanChangeModal({
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlanId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<PlanChangePhase>("idle");
+  const [phase, _setPhase] = useState<PlanChangePhase>("idle");
   const isBusy = phase !== "idle";
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false);
 
@@ -175,7 +174,10 @@ export function PlanChangeModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[600px] overflow-auto h-screen scrollbar-hide" aria-busy={isBusy}>
+        <DialogContent
+          className="sm:max-w-[600px] overflow-auto h-screen scrollbar-hide"
+          aria-busy={isBusy}
+        >
           <DialogHeader>
             <DialogTitle>Change Subscription Plan</DialogTitle>
             <DialogDescription>
@@ -216,10 +218,11 @@ export function PlanChangeModal({
                 return (
                   <div
                     key={plan.id}
-                    className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                      } ${isCurrent ? "opacity-50" : ""}`}
+                    className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    } ${isCurrent ? "opacity-50" : ""}`}
                   >
                     <RadioGroupPrimitive.Item
                       value={plan.id}
@@ -250,7 +253,9 @@ export function PlanChangeModal({
                             <ArrowDownCircle className="inline ml-2 h-4 w-4 text-orange-600" />
                           )}
                         </Label>
-                        <span className="font-semibold">{formatPrice(plan)}</span>
+                        <span className="font-semibold">
+                          {formatPrice(plan)}
+                        </span>
                       </div>
                       {plan.description && (
                         <p className="text-sm text-muted-foreground mt-1">
@@ -299,7 +304,10 @@ export function PlanChangeModal({
             <RadioGroupPrimitive.Root
               value={selectedPlanId}
               onValueChange={setSelectedPlanId}
-              className={cn("space-y-3", isBusy && "pointer-events-none opacity-70")}
+              className={cn(
+                "space-y-3",
+                isBusy && "pointer-events-none opacity-70",
+              )}
             ></RadioGroupPrimitive.Root>
 
             {/* Change Type Info */}
@@ -307,8 +315,9 @@ export function PlanChangeModal({
               <Alert>
                 <ArrowUpCircle className="h-4 w-4 text-green-600" />
                 <AlertDescription>
-                  Your account will be upgraded immediately and you'll be charged
-                  a prorated amount for the remainder of your billing period.
+                  Your account will be upgraded immediately and you'll be
+                  charged a prorated amount for the remainder of your billing
+                  period.
                 </AlertDescription>
               </Alert>
             )}
@@ -317,7 +326,8 @@ export function PlanChangeModal({
               <Alert>
                 <ArrowDownCircle className="h-4 w-4 text-orange-600" />
                 <AlertDescription>
-                  Downgrades are applied immediately. Review limit changes before you confirm.
+                  Downgrades are applied immediately. Review limit changes
+                  before you confirm.
                 </AlertDescription>
               </Alert>
             )}
@@ -341,7 +351,9 @@ export function PlanChangeModal({
             </Button>
             <Button
               onClick={handlePlanChange}
-              disabled={isBusy || selectedPlanId === currentPlanId || !selectedPlan}
+              disabled={
+                isBusy || selectedPlanId === currentPlanId || !selectedPlan
+              }
             >
               {isBusy ? (
                 <>
@@ -361,7 +373,10 @@ export function PlanChangeModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <AlertDialog open={showDowngradeConfirm} onOpenChange={setShowDowngradeConfirm}>
+      <AlertDialog
+        open={showDowngradeConfirm}
+        onOpenChange={setShowDowngradeConfirm}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Immediate Downgrade</AlertDialogTitle>
@@ -373,20 +388,26 @@ export function PlanChangeModal({
                 </p>
                 <ul className="list-disc pl-5 text-sm space-y-1">
                   <li>
-                    Workspaces: {currentPlan?.max_workspaces ?? "-"} &gt; {selectedPlan?.max_workspaces ?? "-"}
+                    Workspaces: {currentPlan?.max_workspaces ?? "-"} &gt;{" "}
+                    {selectedPlan?.max_workspaces ?? "-"}
                   </li>
                   <li>
-                    Topics: {currentPlan?.max_topics ?? "-"} &gt; {selectedPlan?.max_topics ?? "-"}
+                    Topics: {currentPlan?.max_topics ?? "-"} &gt;{" "}
+                    {selectedPlan?.max_topics ?? "-"}
                   </li>
                   <li>
-                    API calls/month: {currentPlan?.max_api_calls_per_month ?? "-"} &gt; {selectedPlan?.max_api_calls_per_month ?? "-"}
+                    API calls/month:{" "}
+                    {currentPlan?.max_api_calls_per_month ?? "-"} &gt;{" "}
+                    {selectedPlan?.max_api_calls_per_month ?? "-"}
                   </li>
                 </ul>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Keep Current Plan</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>
+              Keep Current Plan
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={async (event) => {
                 event.preventDefault();

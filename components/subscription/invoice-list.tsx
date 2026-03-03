@@ -54,7 +54,11 @@ export function InvoiceList({
   const getStatusBadge = (status: InvoiceStatus) => {
     switch (status) {
       case "paid":
-        return <Badge variant="default" className="bg-green-500">Paid</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Paid
+          </Badge>
+        );
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
       case "void":

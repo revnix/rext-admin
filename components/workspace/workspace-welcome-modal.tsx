@@ -281,13 +281,16 @@ function ConfettiEffect() {
     "bg-pink-500",
   ];
 
-  const confettiPieces = Array.from({ length: CONFETTI_PIECE_COUNT }, (_, i) => ({
-    id: i,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    left: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 3}s`,
-    animationDuration: `${3 + Math.random() * 2}s`,
-  }));
+  const confettiPieces = Array.from(
+    { length: CONFETTI_PIECE_COUNT },
+    (_, i) => ({
+      id: i,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      left: `${Math.random() * 100}%`,
+      animationDelay: `${Math.random() * 3}s`,
+      animationDuration: `${3 + Math.random() * 2}s`,
+    }),
+  );
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">

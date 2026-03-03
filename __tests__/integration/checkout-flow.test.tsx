@@ -77,7 +77,7 @@ const CheckoutFlowComponent = () => {
           </button>
         </div>
       ))}
-      <button type="button" onClick={fetchSubscription}>
+      <button type="button" onClick={() => void fetchSubscription()}>
         Refresh Subscription
       </button>
     </div>
