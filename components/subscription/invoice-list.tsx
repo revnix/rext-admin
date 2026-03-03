@@ -63,7 +63,6 @@ export function InvoiceList({
         return <Badge variant="outline">Refunded</Badge>;
       case "partial_refunded":
         return <Badge variant="outline">Partially Refunded</Badge>;
-      case "unknown":
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
