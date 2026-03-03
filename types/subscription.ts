@@ -87,8 +87,9 @@ export interface SubscriptionPlanCreate {
   max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
-  stripe_price_id_monthly?: string;
-  stripe_price_id_yearly?: string;
+  lemonsqueezy_product_id?: string;
+  lemonsqueezy_variant_id_monthly?: string;
+  lemonsqueezy_variant_id_yearly?: string;
 }
 
 export interface SubscriptionPlanUpdate {
@@ -104,8 +105,9 @@ export interface SubscriptionPlanUpdate {
   max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
-  stripe_price_id_monthly?: string;
-  stripe_price_id_yearly?: string;
+  lemonsqueezy_product_id?: string;
+  lemonsqueezy_variant_id_monthly?: string;
+  lemonsqueezy_variant_id_yearly?: string;
 }
 
 // ============================================================================
