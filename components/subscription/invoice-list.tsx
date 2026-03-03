@@ -1,4 +1,5 @@
 "use client";
+import type { InvoiceStatus } from "@/types/subscription";
 
 /**
  * Invoice List Component
@@ -50,20 +51,24 @@ export function InvoiceList({
   }, [fetchInvoices, invoices.length]);
 
   // Get status badge variant
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusBadge = (status: InvoiceStatus) => {
+    switch (status) {
       case "paid":
         return (
           <Badge variant="default" className="bg-green-500">
             Paid
           </Badge>
         );
-      case "unpaid":
-        return <Badge variant="destructive">Unpaid</Badge>;
+      case "pending":
+        return <Badge variant="secondary">Pending</Badge>;
+      case "void":
+        return <Badge variant="outline">Void</Badge>;
       case "refunded":
         return <Badge variant="outline">Refunded</Badge>;
+      case "partial_refunded":
+        return <Badge variant="outline">Partially Refunded</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 

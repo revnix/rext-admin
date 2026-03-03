@@ -52,6 +52,7 @@ import type {
   WebhookEvent,
   WebhookStats,
 } from "@/lib/api-client/admin-webhooks";
+import { log } from "@/lib/logger";
 
 // ============================================================================
 // TYPES
@@ -317,7 +318,14 @@ export default function WebhookMonitoringPage() {
     try {
       const statsData = await apiClient.adminWebhooks.getStats();
       setStats(statsData);
-    } catch (_error) {}
+    } catch (error) {
+      log.error("Failed to load webhook stats", error, {
+        component: "AdminWebhooksPage",
+        action: "fetchStats",
+      });
+
+      toast.error("Webhook summary is temporarily unavailable.");
+    }
   }, []);
 
   // Retry webhook

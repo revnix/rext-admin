@@ -69,6 +69,35 @@ interface UsageLimitWarningProps {
   showProgress?: boolean;
 }
 
+const WARNING_DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
+
+type UsageWarningDismissal = {
+  dismissedAt: number;
+  expiresAt: number;
+};
+
+function getUsageWarningDismissalKey(resource: string): string {
+  return `usage-warning-${resource}`;
+}
+
+function readUsageWarningDismissal(resource: string): boolean {
+  const key = getUsageWarningDismissalKey(resource);
+  const raw = localStorage.getItem(key);
+  if (!raw) return false;
+
+  try {
+    const parsed = JSON.parse(raw) as UsageWarningDismissal;
+    if (parsed.expiresAt > Date.now()) {
+      return true;
+    }
+    localStorage.removeItem(key);
+    return false;
+  } catch {
+    localStorage.removeItem(key);
+    return false;
+  }
+}
+
 export function UsageLimitWarning({
   resource,
   warningThreshold = 75,
@@ -91,6 +120,11 @@ export function UsageLimitWarning({
       fetchUsage();
     }
   }, [usage, fetchUsage]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !dismissible) return;
+    setIsDismissed(readUsageWarningDismissal(resource));
+  }, [resource, dismissible]);
 
   useEffect(() => {
     if (!usage || !subscription) return;
@@ -139,8 +173,17 @@ export function UsageLimitWarning({
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    // Store dismissal in localStorage (optional - could be session-based)
-    localStorage.setItem(`usage-warning-${resource}`, Date.now().toString());
+
+    const now = Date.now();
+    const payload: UsageWarningDismissal = {
+      dismissedAt: now,
+      expiresAt: now + WARNING_DISMISS_TTL_MS,
+    };
+
+    localStorage.setItem(
+      getUsageWarningDismissalKey(resource),
+      JSON.stringify(payload),
+    );
   };
 
   // Don't show if dismissed

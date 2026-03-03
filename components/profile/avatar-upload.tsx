@@ -11,6 +11,8 @@ import {
   AVATAR_ACCEPT_ATTRIBUTE,
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
+import { logger } from "@/lib/logger";
+import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -24,6 +26,7 @@ export function AvatarUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const log = logger.forComponent("AvatarUpload");
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -37,8 +40,9 @@ export function AvatarUpload({
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setPreviewUrl(null);
     },
-    onError: (error: Error) => {
-      toast.error(`Upload failed: ${error.message}`);
+    onError: (error: unknown) => {
+      log.error("Avatar upload failed", error);
+      toast.error(getAvatarErrorMessage(error, "upload"));
     },
   });
 
@@ -50,8 +54,9 @@ export function AvatarUpload({
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setPreviewUrl(null);
     },
-    onError: (error: Error) => {
-      toast.error(`Delete failed: ${error.message}`);
+    onError: (error: unknown) => {
+      log.error("Avatar delete failed", error);
+      toast.error(getAvatarErrorMessage(error, "delete"));
     },
   });
 

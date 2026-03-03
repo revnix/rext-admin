@@ -40,10 +40,15 @@ export function validateAvatarFile(
 
 export const profileSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
-  displayName: z
+  display_name: z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? undefined : trimmed;
+  }, z
     .string()
     .min(2, "Display name must be at least 2 characters")
-    .optional(),
+    .optional()),
+  bio: z.string().max(500).optional(),
   language: z.string().optional(),
   timezone: z.string().optional(),
 });

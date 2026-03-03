@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import { getCSPHeader } from "@/lib/csp";
+import { ROLES } from "@/lib/permissions";
+
 
 /**
  * Generate a cryptographically secure random nonce using Web Crypto API
@@ -22,23 +24,19 @@ interface AuthenticatedRequest extends NextRequest {
 
 /**
  * Protected routes configuration
- * Maps route patterns to required permissions or roles
  *
- * NOTE: These are GLOBAL (user-level) permissions, NOT workspace-scoped.
- * Workspace-scoped permissions are checked at the page/component level
- * after workspace context is loaded.
+ * NOTE:
+ * - These are GLOBAL (user-level) permissions, NOT workspace-scoped.
+ * - Workspace-scoped permissions are checked at the page/component level
+ *   after workspace context is loaded (via workspace permission store).
+ *
+ * Subscription/Billing/Usage access is now derived from workspace-scoped
+ * permissions (e.g. "billing.read" in ANY workspace) on the client side,
+ * so they are no longer enforced here to avoid mismatches with the new
+ * `/permissions/me` API.
  */
 const PROTECTED_ROUTES: Record<string, string | string[]> = {
-  // Owner-only pages (subscription management)
-  // These are user-level permissions (workspace_scoped=False in backend)
-  "/subscription": "subscription.read",
-  "/billing": "billing.read",
-
-  // Usage monitoring (owner + admin have this permission)
-  "/usage": "usage.read",
-
-  // Admin-only pages (platform administration)
-  "/admin": ["super_admin", "admin"], // Role-based check
+  "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   "/admin/users": "user.read",
   "/admin/monitoring": "audit.read",
   "/admin/reports": "audit.read",
@@ -74,15 +72,12 @@ function checkAccess(
 
   const user = session.user;
 
-  // Super admin bypasses all permission checks
-  if (user.role === "super_admin") return true;
+  if (user.role === ROLES.SUPER_ADMIN) return true;
 
-  // Role-based check (array of allowed roles)
   if (Array.isArray(requirement)) {
     return requirement.includes(user.role || "");
   }
 
-  // Permission-based check (single permission string)
   return user.permissions?.includes(requirement) || false;
 }
 

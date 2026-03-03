@@ -20,17 +20,23 @@ import type {
   UsageStats,
   UserSubscription,
 } from "@/types/subscription";
+import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
+
+const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
+let inFlightSubscriptionFetch: Promise<void> | null = null;
 
 // ============================================================================
 // STORE INTERFACE
 // ============================================================================
 
 interface SubscriptionStore {
+  subscription: UserSubscription | null;
+  usage: UsageStats | null;
+  subscriptionFetchedAt: number | null;
+
   // ========================================
   // SUBSCRIPTION STATE
   // ========================================
-  subscription: UserSubscription | null;
-  usage: UsageStats | null;
   plans: SubscriptionPlan[];
   isLoading: boolean;
   error: string | null;
@@ -57,7 +63,7 @@ interface SubscriptionStore {
   /**
    * Fetch current subscription and usage stats
    */
-  fetchSubscription: () => Promise<void>;
+  fetchSubscription: (options?: { force?: boolean }) => Promise<void>;
 
   /**
    * Fetch usage stats only
@@ -151,9 +157,11 @@ interface SubscriptionStore {
 // ============================================================================
 
 const initialState = {
-  // Subscription state
   subscription: null,
   usage: null,
+  subscriptionFetchedAt: null,
+
+  // Subscription state
   plans: [],
   isLoading: false,
   error: null,
@@ -183,35 +191,54 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       // SUBSCRIPTION ACTIONS
       // ========================================
 
-      fetchSubscription: async () => {
-        set({ isLoading: true, error: null });
+      fetchSubscription: async (options) => {
+        const force = options?.force ?? false;
+        const { subscription, subscriptionFetchedAt } = get();
+        const now = Date.now();
 
-        try {
-          // Fetch subscription and usage in parallel
-          const [subscription, usage] = await Promise.all([
-            apiClient.subscriptions.getCurrentPlan(),
-            apiClient.subscriptions.getUsageStats(),
-          ]);
-
-          set({
-            subscription,
-            usage,
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch subscription";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
+        if (
+          !force &&
+          subscription &&
+          subscriptionFetchedAt &&
+          now - subscriptionFetchedAt < SUBSCRIPTION_CACHE_TTL_MS
+        ) {
+          return;
         }
+
+        if (inFlightSubscriptionFetch) {
+          return inFlightSubscriptionFetch;
+        }
+
+        inFlightSubscriptionFetch = (async () => {
+          set({ isLoading: true, error: null });
+
+          try {
+            const [nextSubscription, nextUsage] = await Promise.all([
+              apiClient.subscriptions.getCurrentPlan(),
+              apiClient.subscriptions.getUsageStats(),
+            ]);
+
+            set({
+              subscription: nextSubscription,
+              usage: nextUsage,
+              subscriptionFetchedAt: Date.now(),
+              isLoading: false,
+              error: null,
+            });
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch subscription";
+
+            set({ isLoading: false, error: errorMessage });
+            throw error;
+          } finally {
+            inFlightSubscriptionFetch = null;
+          }
+        })();
+
+        return inFlightSubscriptionFetch;
       },
 
       fetchUsage: async () => {
@@ -475,9 +502,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getInvoices();
+          const parsed = InvoiceListResponseSchema.parse(response);
 
           set({
-            invoices: response.invoices,
+            invoices: parsed.invoices,
             invoicesLoading: false,
             invoicesError: null,
           });

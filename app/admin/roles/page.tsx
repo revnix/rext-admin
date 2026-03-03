@@ -65,24 +65,26 @@ interface PermissionTableData extends Record<string, unknown> {
   description?: string;
 }
 
-export default function AdminRolesPage() {
-  // Dialogs state
-  const [createRoleOpen, setCreateRoleOpen] = useState(false);
-  const [editRoleOpen, setEditRoleOpen] = useState(false);
-  const [deleteRoleOpen, setDeleteRoleOpen] = useState(false);
-  const [managePermissionsOpen, setManagePermissionsOpen] = useState(false);
-  const [createPermissionOpen, setCreatePermissionOpen] = useState(false);
-  const [editPermissionOpen, setEditPermissionOpen] = useState(false);
-  const [deletePermissionOpen, setDeletePermissionOpen] = useState(false);
-  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
-  const [dependencyViewOpen, setDependencyViewOpen] = useState(false);
-  const [auditLogOpen, setAuditLogOpen] = useState(false);
+type RolesDialogState =
+  | { type: "closed" }
+  | { type: "createRole" }
+  | { type: "editRole"; role: RoleWithPermissions }
+  | { type: "deleteRole"; role: RoleWithPermissions }
+  | { type: "manageRolePermissions"; role: RoleWithPermissions }
+  | { type: "createPermission" }
+  | { type: "editPermission"; permission: PermissionWithRoles }
+  | { type: "deletePermission"; permission: PermissionWithRoles }
+  | { type: "bulkAssign" }
+  | { type: "dependencyView"; permission: PermissionWithRoles }
+  | { type: "auditLog" };
 
-  const [selectedRole, setSelectedRole] = useState<RoleWithPermissions | null>(
-    null,
-  );
-  const [selectedPermission, setSelectedPermission] =
-    useState<PermissionWithRoles | null>(null);
+export default function AdminRolesPage() {
+  // Unified Dialog state
+  const [dialogState, setDialogState] = useState<RolesDialogState>({
+    type: "closed",
+  });
+
+  const closeDialog = () => setDialogState({ type: "closed" });
 
   // Fetch roles with permissions
   const {
@@ -209,8 +211,7 @@ export default function AdminRolesPage() {
       onClick: (row) => {
         const role = rolesData?.roles.find((r) => r.id === row.id);
         if (role) {
-          setSelectedRole(role);
-          setManagePermissionsOpen(true);
+          setDialogState({ type: "manageRolePermissions", role });
         }
       },
       primary: true,
@@ -221,8 +222,7 @@ export default function AdminRolesPage() {
       onClick: (row) => {
         const role = rolesData?.roles.find((r) => r.id === row.id);
         if (role) {
-          setSelectedRole(role);
-          setEditRoleOpen(true);
+          setDialogState({ type: "editRole", role });
         }
       },
     },
@@ -232,8 +232,7 @@ export default function AdminRolesPage() {
       onClick: (row) => {
         const role = rolesData?.roles.find((r) => r.id === row.id);
         if (role && !role.is_system_role) {
-          setSelectedRole(role);
-          setDeleteRoleOpen(true);
+          setDialogState({ type: "deleteRole", role });
         }
       },
       variant: "destructive",
@@ -301,8 +300,7 @@ export default function AdminRolesPage() {
           (p) => p.id === row.id,
         );
         if (permission) {
-          setSelectedPermission(permission);
-          setDependencyViewOpen(true);
+          setDialogState({ type: "dependencyView", permission });
         }
       },
       primary: true,
@@ -315,8 +313,7 @@ export default function AdminRolesPage() {
           (p) => p.id === row.id,
         );
         if (permission) {
-          setSelectedPermission(permission);
-          setEditPermissionOpen(true);
+          setDialogState({ type: "editPermission", permission });
         }
       },
     },
@@ -328,8 +325,7 @@ export default function AdminRolesPage() {
           (p) => p.id === row.id,
         );
         if (permission) {
-          setSelectedPermission(permission);
-          setDeletePermissionOpen(true);
+          setDialogState({ type: "deletePermission", permission });
         }
       },
       variant: "destructive",
@@ -467,7 +463,7 @@ export default function AdminRolesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setAuditLogOpen(true)}
+                        onClick={() => setDialogState({ type: "auditLog" })}
                       >
                         <History className="h-4 w-4 mr-2" />
                         Audit Log
@@ -477,7 +473,7 @@ export default function AdminRolesPage() {
                       >
                         <Button
                           variant="outline"
-                          onClick={() => setBulkAssignOpen(true)}
+                          onClick={() => setDialogState({ type: "bulkAssign" })}
                         >
                           <Users className="h-4 w-4 mr-2" />
                           Bulk Assign
@@ -486,7 +482,9 @@ export default function AdminRolesPage() {
                       <PermissionGuard
                         permission={ADMIN_PERMISSIONS.ROLE_CREATE}
                       >
-                        <Button onClick={() => setCreateRoleOpen(true)}>
+                        <Button
+                          onClick={() => setDialogState({ type: "createRole" })}
+                        >
                           <Plus className="h-4 w-4 mr-2" />
                           Create Role
                         </Button>
@@ -526,7 +524,11 @@ export default function AdminRolesPage() {
                     <PermissionGuard
                       permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}
                     >
-                      <Button onClick={() => setCreatePermissionOpen(true)}>
+                      <Button
+                        onClick={() =>
+                          setDialogState({ type: "createPermission" })
+                        }
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Create Permission
                       </Button>
@@ -555,55 +557,71 @@ export default function AdminRolesPage() {
 
         {/* Dialogs */}
         <CreateRoleDialog
-          open={createRoleOpen}
-          onOpenChange={setCreateRoleOpen}
+          open={dialogState.type === "createRole"}
+          onOpenChange={closeDialog}
           permissions={permissionsData?.permissions || []}
         />
         <EditRoleDialog
-          open={editRoleOpen}
-          onOpenChange={setEditRoleOpen}
-          role={selectedRole}
+          open={dialogState.type === "editRole"}
+          onOpenChange={closeDialog}
+          role={dialogState.type === "editRole" ? dialogState.role : null}
         />
         <DeleteRoleDialog
-          open={deleteRoleOpen}
-          onOpenChange={setDeleteRoleOpen}
-          role={selectedRole}
+          open={dialogState.type === "deleteRole"}
+          onOpenChange={closeDialog}
+          role={dialogState.type === "deleteRole" ? dialogState.role : null}
         />
         <ManageRolePermissionsDialog
-          open={managePermissionsOpen}
-          onOpenChange={setManagePermissionsOpen}
-          role={selectedRole}
+          open={dialogState.type === "manageRolePermissions"}
+          onOpenChange={closeDialog}
+          role={
+            dialogState.type === "manageRolePermissions"
+              ? dialogState.role
+              : null
+          }
           allPermissions={permissionsData?.permissions || []}
         />
         <CreatePermissionDialog
-          open={createPermissionOpen}
-          onOpenChange={setCreatePermissionOpen}
+          open={dialogState.type === "createPermission"}
+          onOpenChange={closeDialog}
         />
         <EditPermissionDialog
-          open={editPermissionOpen}
-          onOpenChange={setEditPermissionOpen}
-          permission={selectedPermission}
+          open={dialogState.type === "editPermission"}
+          onOpenChange={closeDialog}
+          permission={
+            dialogState.type === "editPermission"
+              ? dialogState.permission
+              : null
+          }
         />
         <DeletePermissionDialog
-          open={deletePermissionOpen}
-          onOpenChange={setDeletePermissionOpen}
-          permission={selectedPermission}
+          open={dialogState.type === "deletePermission"}
+          onOpenChange={closeDialog}
+          permission={
+            dialogState.type === "deletePermission"
+              ? dialogState.permission
+              : null
+          }
         />
         <BulkAssignPermissionsDialog
-          open={bulkAssignOpen}
-          onOpenChange={setBulkAssignOpen}
+          open={dialogState.type === "bulkAssign"}
+          onOpenChange={closeDialog}
           roles={rolesData?.roles || []}
           allPermissions={permissionsData?.permissions || []}
         />
         <PermissionDependencyView
-          open={dependencyViewOpen}
-          onOpenChange={setDependencyViewOpen}
-          permission={selectedPermission}
+          open={dialogState.type === "dependencyView"}
+          onOpenChange={closeDialog}
+          permission={
+            dialogState.type === "dependencyView"
+              ? dialogState.permission
+              : null
+          }
           allPermissions={permissionsData?.permissions || []}
         />
         <RolePermissionAuditLog
-          open={auditLogOpen}
-          onOpenChange={setAuditLogOpen}
+          open={dialogState.type === "auditLog"}
+          onOpenChange={closeDialog}
         />
       </PermissionGuard>
     </PageLayout>

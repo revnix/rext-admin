@@ -9,6 +9,7 @@ import { useCurrentWorkspaceId } from "@/providers/workspace-permission-provider
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import { LockedFeatureTooltip } from "./locked-feature-tooltip";
 import { PermissionLoading } from "./permission-loading";
+import { isValidElement } from "react";
 
 /**
  * Permission guard component props
@@ -193,18 +194,15 @@ export function PermissionGuard({
 
   // Permission check failed - show fallback
   if (!hasAccess) {
-    // If showLockedTooltip/showTooltip is true and fallback is a React element, wrap it in LockedFeatureTooltip
-    const shouldShowTooltip = showLockedTooltip || showTooltip;
-    if (shouldShowTooltip && children && typeof children === "object") {
-      const firstPermission = permissions[0] || (role ? `role:${role}` : "");
+    if (showTooltip && isValidElement(fallback)) {
+      const firstPermission = permissions[0];
       return (
         <LockedFeatureTooltip
           permission={firstPermission}
           requiredRole={requiredRole}
           message={tooltipMessage}
-          showIcon={showLockIcon}
         >
-          {children as React.ReactElement}
+          {fallback}
         </LockedFeatureTooltip>
       );
     }
