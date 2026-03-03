@@ -60,7 +60,10 @@ export function WorkspaceWelcomeProvider({
 
     // Check for welcome modal data in sessionStorage
     const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(currentWorkspace.id);
-    const data = session.getJSON<WelcomeData>(welcomeKey, null as unknown as WelcomeData);
+    const data = session.getJSON<WelcomeData>(
+      welcomeKey,
+      null as unknown as WelcomeData,
+    );
 
     if (data) {
       setWelcomeData(data);

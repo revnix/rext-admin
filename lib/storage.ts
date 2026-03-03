@@ -140,9 +140,9 @@ export const getStorage = (): Storage => {
   if (!isBrowser()) {
     return {
       getItem: () => null,
-      setItem: () => { },
-      removeItem: () => { },
-      clear: () => { },
+      setItem: () => {},
+      removeItem: () => {},
+      clear: () => {},
       key: () => null,
       length: 0,
     };

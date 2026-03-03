@@ -78,7 +78,10 @@ export function WorkspaceWelcomeModal({
   const handleClose = () => {
     if (dontShowAgain) {
       // Store preference to not show again for this workspace
-      local.setBoolean(ONBOARDING_STORAGE_KEYS.welcomeShown(workspace.id), true);
+      local.setBoolean(
+        ONBOARDING_STORAGE_KEYS.welcomeShown(workspace.id),
+        true,
+      );
     }
     onClose();
   };

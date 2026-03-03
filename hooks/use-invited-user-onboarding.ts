@@ -37,7 +37,9 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
   // Check if user was invited (via localStorage flag set during invitation acceptance)
-  const invitationToken = local.getString(ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance);
+  const invitationToken = local.getString(
+    ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance,
+  );
 
   // Fetch workspace invitations to get context
   const { data: invitationData, isLoading: isLoadingInvitation } = useQuery({
@@ -108,5 +110,7 @@ export function storeInvitationContext(context: InvitationContext): void {
  * Can be used to determine onboarding flow
  */
 export function hasRecentInvitationAcceptance(): boolean {
-  return local.getString(ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance) !== null;
+  return (
+    local.getString(ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance) !== null
+  );
 }

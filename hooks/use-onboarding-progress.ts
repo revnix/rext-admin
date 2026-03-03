@@ -219,14 +219,14 @@ export function useOnboardingProgress(
   const dismissOnboarding = useCallback(() => {
     local.setBoolean(dismissedKey, true);
 
-      // Track dismissal
-      analytics.track("onboarding_dismissed", {
-        workspace_id: workspaceId,
-        user_id: user?.id,
-        progress_at_dismiss: progress,
-        milestones_completed: milestones.filter((m) => m.completed).length,
-        total_milestones: milestones.length,
-      });
+    // Track dismissal
+    analytics.track("onboarding_dismissed", {
+      workspace_id: workspaceId,
+      user_id: user?.id,
+      progress_at_dismiss: progress,
+      milestones_completed: milestones.filter((m) => m.completed).length,
+      total_milestones: milestones.length,
+    });
 
     // Force re-render by refetching (only if we have a workspace)
     if (workspaceId) {
@@ -253,15 +253,15 @@ export function useOnboardingProgress(
         const updated = [...currentSkipped, milestoneId];
         local.setJSON(skippedKey, updated);
 
-          // Track skipping
-          const milestone = milestones.find((m) => m.id === milestoneId);
-          analytics.track("onboarding_milestone_skipped", {
-            milestone_id: milestoneId,
-            milestone_label: milestone?.label,
-            workspace_id: workspaceId,
-            user_id: user?.id,
-            progress_percentage: progress,
-          });
+        // Track skipping
+        const milestone = milestones.find((m) => m.id === milestoneId);
+        analytics.track("onboarding_milestone_skipped", {
+          milestone_id: milestoneId,
+          milestone_label: milestone?.label,
+          workspace_id: workspaceId,
+          user_id: user?.id,
+          progress_percentage: progress,
+        });
 
         // Force re-render
         if (workspaceId) {
@@ -287,11 +287,11 @@ export function useOnboardingProgress(
     local.remove(dismissedKey);
     local.remove(skippedKey);
 
-      // Track reset
-      analytics.track("onboarding_reset", {
-        workspace_id: workspaceId,
-        user_id: user?.id,
-      });
+    // Track reset
+    analytics.track("onboarding_reset", {
+      workspace_id: workspaceId,
+      user_id: user?.id,
+    });
 
     // Force re-render
     if (workspaceId) {

@@ -6,26 +6,25 @@
  */
 
 export const ONBOARDING_STORAGE_KEYS = {
-    /** Whether the user dismissed the onboarding progress bar. Scoped per workspace. */
-    dismissed: (workspaceId?: string) =>
-        workspaceId
-            ? `onboarding-dismissed-${workspaceId}`
-            : "onboarding-dismissed-global",
+  /** Whether the user dismissed the onboarding progress bar. Scoped per workspace. */
+  dismissed: (workspaceId?: string) =>
+    workspaceId
+      ? `onboarding-dismissed-${workspaceId}`
+      : "onboarding-dismissed-global",
 
-    /** Array of skipped milestone IDs. Scoped per workspace. */
-    skipped: (workspaceId?: string) =>
-        workspaceId
-            ? `onboarding-skipped-${workspaceId}`
-            : "onboarding-skipped-global",
+  /** Array of skipped milestone IDs. Scoped per workspace. */
+  skipped: (workspaceId?: string) =>
+    workspaceId
+      ? `onboarding-skipped-${workspaceId}`
+      : "onboarding-skipped-global",
 
-    /** Serialized InvitationContext stored after invitation acceptance. */
-    recentInvitationAcceptance: "recent_invitation_acceptance",
+  /** Serialized InvitationContext stored after invitation acceptance. */
+  recentInvitationAcceptance: "recent_invitation_acceptance",
 
-    /** Whether the workspace welcome modal was shown. Scoped per workspace. */
-    welcomeShown: (workspaceId: string) =>
-        `workspace_welcome_shown_${workspaceId}`,
+  /** Whether the workspace welcome modal was shown. Scoped per workspace. */
+  welcomeShown: (workspaceId: string) =>
+    `workspace_welcome_shown_${workspaceId}`,
 
-    /** Serialized WelcomeData in sessionStorage. Scoped per workspace. */
-    welcomeData: (workspaceId: string) =>
-        `workspace_welcome_${workspaceId}`,
+  /** Serialized WelcomeData in sessionStorage. Scoped per workspace. */
+  welcomeData: (workspaceId: string) => `workspace_welcome_${workspaceId}`,
 } as const;
