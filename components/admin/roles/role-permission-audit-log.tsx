@@ -198,7 +198,9 @@ export function RolePermissionAuditLog({
             ) : error ? (
               <ErrorAlert
                 title="Failed to load audit logs"
-                message={error instanceof Error ? error.message : "Request failed"}
+                message={
+                  error instanceof Error ? error.message : "Request failed"
+                }
                 retry={() => void refetch()}
               />
             ) : auditData?.logs && auditData.logs.length > 0 ? (

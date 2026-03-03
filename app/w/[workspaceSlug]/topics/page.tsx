@@ -81,12 +81,12 @@ export default function WorkspaceTopicsPage() {
   // Actions
   const emptyActions = canCreateTopic
     ? [
-      {
-        label: "Generate Topics",
-        icon: <Plus className="h-4 w-4" />,
-        href: workspaceRoutes.topicCreate(workspaceSlug),
-      },
-    ]
+        {
+          label: "Generate Topics",
+          icon: <Plus className="h-4 w-4" />,
+          href: workspaceRoutes.topicCreate(workspaceSlug),
+        },
+      ]
     : [];
 
   const tableActions = canCreateTopic ? (
@@ -101,8 +101,9 @@ export default function WorkspaceTopicsPage() {
   return (
     <PageLayout
       title="Topic Library"
-      description={`Browse AI-generated topics for ${workspace?.name || "this workspace"
-        }. Generate new topics or explore your saved collection.`}
+      description={`Browse AI-generated topics for ${
+        workspace?.name || "this workspace"
+      }. Generate new topics or explore your saved collection.`}
     >
       <PermissionGuard
         permission={TOPIC_PERMISSIONS.READ}

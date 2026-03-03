@@ -7,6 +7,12 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
+import {
+  AVATAR_ACCEPT_ATTRIBUTE,
+  validateAvatarFile,
+} from "@/schemas/profile-schemas";
+import { logger } from "@/lib/logger";
+import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -20,6 +26,7 @@ export function AvatarUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const log = logger.forComponent("AvatarUpload");
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -33,8 +40,9 @@ export function AvatarUpload({
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setPreviewUrl(null);
     },
-    onError: (error: Error) => {
-      toast.error(`Upload failed: ${error.message}`);
+    onError: (error: unknown) => {
+      log.error("Avatar upload failed", error);
+      toast.error(getAvatarErrorMessage(error, "upload"));
     },
   });
 
@@ -46,8 +54,9 @@ export function AvatarUpload({
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setPreviewUrl(null);
     },
-    onError: (error: Error) => {
-      toast.error(`Delete failed: ${error.message}`);
+    onError: (error: unknown) => {
+      log.error("Avatar delete failed", error);
+      toast.error(getAvatarErrorMessage(error, "delete"));
     },
   });
 
@@ -55,21 +64,9 @@ export function AvatarUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error(
-        "Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image",
-      );
-      return;
-    }
-
-    // Validate file size (5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error(
-        `File too large. Max 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
-      );
+    const validation = validateAvatarFile(file);
+    if (!validation.valid) {
+      toast.error(validation.message);
       return;
     }
 
@@ -115,7 +112,7 @@ export function AvatarUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
+          accept={AVATAR_ACCEPT_ATTRIBUTE}
           onChange={handleFileSelect}
           className="hidden"
         />

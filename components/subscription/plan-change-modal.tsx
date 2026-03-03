@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
+import { cn } from "@/lib/utils";
 
 /**
  * Plan Change Modal Component
@@ -65,6 +66,8 @@ interface PlanChangeModalProps {
    */
   currentBillingPeriod: BillingPeriod;
 }
+type PlanChangePhase = "idle" | "submitting" | "syncing";
+
 
 export function PlanChangeModal({
   open,
@@ -78,6 +81,8 @@ export function PlanChangeModal({
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlanId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<PlanChangePhase>("idle");
+  const isBusy = phase !== "idle";
 
   // Get current and selected plans
   const currentPlan = plans.find((p) => p.id === currentPlanId);
@@ -98,12 +103,16 @@ export function PlanChangeModal({
       ? selectedPlan.price_monthly < currentPlan.price_monthly
       : selectedPlan.price_yearly < currentPlan.price_yearly);
 
-  const handlePlanChange = async () => {
-    if (!selectedPlan || selectedPlanId === currentPlanId) {
-      return;
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!isBusy) {
+      onOpenChange(nextOpen);
     }
+  };
 
-    setIsLoading(true);
+  const handlePlanChange = async () => {
+    if (!selectedPlan || selectedPlanId === currentPlanId) return;
+
+    setPhase("submitting");
     setError(null);
 
     try {
@@ -114,15 +123,13 @@ export function PlanChangeModal({
         });
       } else if (isDowngrade) {
         await downgradeSubscription(selectedPlanId);
-        toast.success("Plan downgrade scheduled", {
-          description: `You will be moved to the ${selectedPlan.name} plan at the end of your current billing period.`,
+        toast.success("Plan updated", {
+          description: `Your subscription has been changed to ${selectedPlan.name}.`,
         });
       }
 
-      // Refresh subscription data
+      setPhase("syncing");
       await fetchSubscription();
-
-      // Close modal
       onOpenChange(false);
     } catch (err) {
       const errorMessage =
@@ -130,15 +137,9 @@ export function PlanChangeModal({
       setError(errorMessage);
       toast.error("Failed to change plan", {
         description: errorMessage,
-        action: {
-          label: "Retry",
-          onClick: () => {
-            void handlePlanChange();
-          },
-        },
       });
     } finally {
-      setIsLoading(false);
+      setPhase("idle");
     }
   };
 
@@ -151,8 +152,8 @@ export function PlanChangeModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[600px] overflow-auto h-screen scrollbar-hide" aria-busy={isBusy}>
         <DialogHeader>
           <DialogTitle>Change Subscription Plan</DialogTitle>
           <DialogDescription>
@@ -194,8 +195,8 @@ export function PlanChangeModal({
                 <div
                   key={plan.id}
                   className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
                     } ${isCurrent ? "opacity-50" : ""}`}
                 >
                   <RadioGroupPrimitive.Item
@@ -212,7 +213,7 @@ export function PlanChangeModal({
                     <div className="flex items-center justify-between">
                       <Label
                         htmlFor={plan.id}
-                        className={`font-semibold ${isCurrent ? "cursor-not-allowed" : "cursor-pointer"}`}
+                        className={`font-semibold capitalize ${isCurrent ? "cursor-not-allowed" : "cursor-pointer"}`}
                       >
                         {plan.name}
                         {isCurrent && (
@@ -262,6 +263,23 @@ export function PlanChangeModal({
             })}
           </RadioGroupPrimitive.Root>
 
+          {isBusy && (
+            <Alert>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <AlertDescription>
+                {phase === "submitting"
+                  ? "Submitting plan change..."
+                  : "Refreshing subscription details..."}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <RadioGroupPrimitive.Root
+            value={selectedPlanId}
+            onValueChange={setSelectedPlanId}
+            className={cn("space-y-3", isBusy && "pointer-events-none opacity-70")}
+          ></RadioGroupPrimitive.Root>
+
           {/* Change Type Info */}
           {isUpgrade && (
             <Alert>
@@ -303,19 +321,19 @@ export function PlanChangeModal({
           </Button>
           <Button
             onClick={handlePlanChange}
-            disabled={
-              isLoading || selectedPlanId === currentPlanId || !selectedPlan
-            }
+            disabled={isBusy || selectedPlanId === currentPlanId || !selectedPlan}
           >
-            {isLoading ? (
+            {isBusy ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                {phase === "submitting"
+                  ? "Submitting..."
+                  : "Refreshing subscription..."}
               </>
             ) : isUpgrade ? (
               "Upgrade Now"
             ) : isDowngrade ? (
-              "Schedule Downgrade"
+              "Change to Lower Plan"
             ) : (
               "Change Plan"
             )}

@@ -199,7 +199,8 @@ function getRoleTourItems(roleName: string): TourItem[] {
         {
           icon: <BookOpen className="h-6 w-6" />,
           title: "Knowledge Base",
-          description: "Build and maintain your workspace's knowledge repository",
+          description:
+            "Build and maintain your workspace's knowledge repository",
           highlight: false,
         },
       ];
@@ -227,7 +228,6 @@ function getRoleTourItems(roleName: string): TourItem[] {
           highlight: false,
         },
       ];
-    case "viewer":
     default:
       return [
         ...baseItems,

@@ -67,9 +67,12 @@ function mapStatusToType(status: string): OperationNotification["type"] {
 export async function markNotificationsAsRead(
   notificationIds: string[],
 ): Promise<{ success: boolean; message: string }> {
-  const url = buildUrl(`${getNotificationApiBaseUrl()}/api/v1/notifications/mark-as-read`, {
-    notification_ids: notificationIds,
-  });
+  const url = buildUrl(
+    `${getNotificationApiBaseUrl()}/api/v1/notifications/mark-as-read`,
+    {
+      notification_ids: notificationIds,
+    },
+  );
 
   const response = await authenticatedFetch(url, {
     method: "POST",
@@ -93,9 +96,12 @@ export async function markAllNotificationsAsRead(): Promise<{
   success: boolean;
   message: string;
 }> {
-  const url = buildUrl(`${getNotificationApiBaseUrl()}/api/v1/notifications/mark-as-read`, {
-    mark_all: true,
-  });
+  const url = buildUrl(
+    `${getNotificationApiBaseUrl()}/api/v1/notifications/mark-as-read`,
+    {
+      mark_all: true,
+    },
+  );
 
   const response = await authenticatedFetch(url, {
     method: "POST",

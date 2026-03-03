@@ -72,18 +72,20 @@ export function InvitedUserFirstTasks({
           >
             <Link href={task.href as Route}>
               <Card
-                className={`group hover:shadow-lg transition-all cursor-pointer ${task.priority === "high"
-                  ? "border-primary/50 bg-gradient-to-r from-primary/5 to-transparent"
-                  : ""
-                  }`}
+                className={`group hover:shadow-lg transition-all cursor-pointer ${
+                  task.priority === "high"
+                    ? "border-primary/50 bg-gradient-to-r from-primary/5 to-transparent"
+                    : ""
+                }`}
               >
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
                     <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${task.priority === "high"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                        }`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${
+                        task.priority === "high"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
                     >
                       {task.icon}
                     </div>
@@ -238,7 +240,6 @@ function getRoleFirstTasks(
           priority: "low",
         },
       ];
-    case "viewer":
     default:
       return [
         {
@@ -262,7 +263,8 @@ function getRoleFirstTasks(
         {
           icon: <Users className="h-6 w-6" />,
           title: "Meet the Team",
-          description: "See who's in your workspace and learn about their roles.",
+          description:
+            "See who's in your workspace and learn about their roles.",
           action: "View team",
           href: `/w/${workspaceSlug}/settings/members`,
           priority: "medium",

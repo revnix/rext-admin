@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { UpdateProfileRequest, UserProfile } from "@/types/profile";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+import type { DataExportFormValues } from "@/schemas/account-schemas";
 
 const profileEnvelopeSchema = z.object({
   profile: z.object({
@@ -118,14 +119,7 @@ export function createAccountNamespace(client: ApiClient) {
     /**
      * Request data export
      */
-    requestDataExport: async (data: {
-      include_profile?: boolean;
-      include_roles?: boolean;
-      include_workspaces?: boolean;
-      include_activity?: boolean;
-      include_billing?: boolean;
-      include_usage?: boolean;
-    }) => {
+    requestDataExport: async (data: DataExportFormValues) => {
       return client.request<{
         success: boolean;
         message: string;

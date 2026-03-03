@@ -41,12 +41,21 @@ export function usePermissionDecision({
 
     if (!workspaceId) {
       if (mode === "single") {
-        return { hasAccess: checkPermission(user, permissions[0] || ""), isLoading: isSessionLoading };
+        return {
+          hasAccess: checkPermission(user, permissions[0] || ""),
+          isLoading: isSessionLoading,
+        };
       }
       if (mode === "all") {
-        return { hasAccess: checkAllPermissions(user, permissions), isLoading: isSessionLoading };
+        return {
+          hasAccess: checkAllPermissions(user, permissions),
+          isLoading: isSessionLoading,
+        };
       }
-      return { hasAccess: checkAnyPermission(user, permissions), isLoading: isSessionLoading };
+      return {
+        hasAccess: checkAnyPermission(user, permissions),
+        isLoading: isSessionLoading,
+      };
     }
 
     if (isSuperAdmin(user)) {
@@ -84,9 +93,16 @@ export function usePermissionDecision({
         checkAnyPermission(user, permissions),
       isLoading: false,
     };
-  }, [mode, permissions, workspaceId, status, user, workspacePermissions, isWorkspaceLoading]);
+  }, [
+    mode,
+    permissions,
+    workspaceId,
+    status,
+    user,
+    workspacePermissions,
+    isWorkspaceLoading,
+  ]);
 }
-
 
 function sessionUserToPermissionUser(
   sessionUser: Session["user"] | undefined,

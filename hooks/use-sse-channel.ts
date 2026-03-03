@@ -28,7 +28,7 @@ type SSEErrorKind = "non_actionable" | "retrying" | "actionable";
  */
 function classifySSEError(
   errorCode?: string,
-  errorMessage?: string
+  errorMessage?: string,
 ): SSEErrorKind {
   // Non-actionable: Operation completed normally
   if (errorCode === SSE_ERROR_CODES.OPERATION_COMPLETED) {
@@ -115,75 +115,75 @@ export function useSSEChannel(
     }
   }, []);
 
-  const refreshNotificationsSafely = useCallback(() => {
-    // Fetch notifications from API
+  // const refreshNotificationsSafely = useCallback(() => {
+  //   // Fetch notifications from API
+  //   void fetchNotifications()
+  //     .then((incoming) => {
+  //       useNotificationStore.getState().mergeNotifications(incoming);
+  //     })
+  //     .catch((error) => {
+  //       // The original snippet had `userNotificationsLogger` and `userId` which are not defined in this context.
+  //       // Reverting to `sseChannelLogger` and `operationIdRef.current` for correctness within `useSSEChannel`.
+  //       sseChannelLogger.error("Failed to refresh notifications", {
+  //         operationId: operationIdRef.current,
+  //         error,
+  //       });
+  //       onErrorRef.current?.("Failed to refresh notifications");
+  //     });
+  // }, []);
+
+  const handleError = useCallback((errorMessage?: string, code?: string) => {
+    if (!errorMessage && !code) {
+      return;
+    }
+
+    const kind = classifySSEError(code, errorMessage);
+
+    // Non-actionable statuses are logged and suppressed
+    if (kind === "non_actionable") {
+      sseChannelLogger.info("Ignoring non-actionable SSE status", {
+        operationId: operationIdRef.current,
+        code,
+        errorMessage,
+      });
+      return;
+    }
+
+    // Retry statuses are suppressed but logged as debug
+    if (kind === "retrying") {
+      sseChannelLogger.debug("Suppressing retry-status message", {
+        operationId: operationIdRef.current,
+        code,
+        errorMessage,
+      });
+      return;
+    }
+
+    // Actionable errors trigger notification refresh and callback
     void fetchNotifications()
       .then((incoming) => {
         useNotificationStore.getState().mergeNotifications(incoming);
       })
       .catch((error) => {
-        // The original snippet had `userNotificationsLogger` and `userId` which are not defined in this context.
-        // Reverting to `sseChannelLogger` and `operationIdRef.current` for correctness within `useSSEChannel`.
-        sseChannelLogger.error("Failed to refresh notifications", {
-          operationId: operationIdRef.current,
-          error,
-        });
-        onErrorRef.current?.("Failed to refresh notifications");
-      });
-  }, []);
-
-  const handleError = useCallback(
-    (errorMessage?: string, code?: string) => {
-      if (!errorMessage && !code) {
-        return;
-      }
-
-      const kind = classifySSEError(code, errorMessage);
-
-      // Non-actionable statuses are logged and suppressed
-      if (kind === "non_actionable") {
-        sseChannelLogger.info("Ignoring non-actionable SSE status", {
-          operationId: operationIdRef.current,
-          code,
-          errorMessage,
-        });
-        return;
-      }
-
-      // Retry statuses are suppressed but logged as debug
-      if (kind === "retrying") {
-        sseChannelLogger.debug("Suppressing retry-status message", {
-          operationId: operationIdRef.current,
-          code,
-          errorMessage,
-        });
-        return;
-      }
-
-      // Actionable errors trigger notification refresh and callback
-      void fetchNotifications()
-        .then((incoming) => {
-          useNotificationStore.getState().mergeNotifications(incoming);
-        })
-        .catch((error) => {
-          sseChannelLogger.error("Failed to refresh notifications after SSE error", {
+        sseChannelLogger.error(
+          "Failed to refresh notifications after SSE error",
+          {
             operationId: operationIdRef.current,
             error,
-          });
-        });
-
-      sseChannelLogger.error("SSE channel error", {
-        operationId: operationIdRef.current,
-        code,
-        errorMessage,
+          },
+        );
       });
 
-      if (errorMessage) {
-        onErrorRef.current?.(errorMessage);
-      }
-    },
-    [],
-  );
+    sseChannelLogger.error("SSE channel error", {
+      operationId: operationIdRef.current,
+      code,
+      errorMessage,
+    });
+
+    if (errorMessage) {
+      onErrorRef.current?.(errorMessage);
+    }
+  }, []);
 
   const handleEvent = useCallback(
     (event: SSEEvent) => {
@@ -206,7 +206,9 @@ export function useSSEChannel(
       onEventRef.current?.(event);
 
       if (COMPLETION_STEPS.has(event.step)) {
-        refreshNotificationsSafely();
+        // Temporarily disabled to prevent excessive API calls.
+        // Will revisit after implementing proper throttling/debouncing.
+        // refreshNotificationsSafely();
         onCompleteRef.current?.(event.payload);
       }
 
@@ -222,7 +224,7 @@ export function useSSEChannel(
         handleError(message);
       }
     },
-    [handleError, refreshNotificationsSafely],
+    [handleError],
   );
 
   const handleStatus = useCallback(
@@ -235,7 +237,11 @@ export function useSSEChannel(
 
       // Only route actual errors/non-actionable status through error handler.
       // Success states (CONNECTION_ESTABLISHED) are not routed to error handler.
-      if (newStatus.error || (newStatus.code && newStatus.code !== SSE_ERROR_CODES.CONNECTION_ESTABLISHED)) {
+      if (
+        newStatus.error ||
+        (newStatus.code &&
+          newStatus.code !== SSE_ERROR_CODES.CONNECTION_ESTABLISHED)
+      ) {
         handleError(newStatus.error, newStatus.code);
       } else if (newStatus.code === SSE_ERROR_CODES.CONNECTION_ESTABLISHED) {
         // Log successful connection without treating it as an error

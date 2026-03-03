@@ -17,33 +17,33 @@ const transientLogger = log.forComponent("TransientRetry");
  * Configuration for retry behavior
  */
 export interface RetryOptions {
-    /**
-     * Maximum number of retry attempts (default: 3)
-     */
-    maxAttempts?: number;
+  /**
+   * Maximum number of retry attempts (default: 3)
+   */
+  maxAttempts?: number;
 
-    /**
-     * Base delay in milliseconds for exponential backoff (default: 500)
-     */
-    baseDelayMs?: number;
+  /**
+   * Base delay in milliseconds for exponential backoff (default: 500)
+   */
+  baseDelayMs?: number;
 
-    /**
-     * Maximum delay in milliseconds to cap exponential growth (default: 4000)
-     */
-    maxDelayMs?: number;
+  /**
+   * Maximum delay in milliseconds to cap exponential growth (default: 4000)
+   */
+  maxDelayMs?: number;
 }
 
 /**
  * HTTP status codes that indicate transient failures and should be retried
  */
 const TRANSIENT_STATUS_CODES = new Set([
-    408, // Request Timeout
-    425, // Too Early
-    429, // Too Many Requests
-    500, // Internal Server Error
-    502, // Bad Gateway
-    503, // Service Unavailable
-    504, // Gateway Timeout
+  408, // Request Timeout
+  425, // Too Early
+  429, // Too Many Requests
+  500, // Internal Server Error
+  502, // Bad Gateway
+  503, // Service Unavailable
+  504, // Gateway Timeout
 ]);
 
 /**
@@ -62,23 +62,23 @@ const TRANSIENT_STATUS_CODES = new Set([
  * @returns True if the error is transient and should be retried
  */
 export function isTransientError(error: unknown): boolean {
-    // ApiError with transient status code
-    if (error instanceof ApiError) {
-        return TRANSIENT_STATUS_CODES.has(error.statusCode);
-    }
+  // ApiError with transient status code
+  if (error instanceof ApiError) {
+    return TRANSIENT_STATUS_CODES.has(error.statusCode);
+  }
 
-    // Native fetch/network errors
-    if (error instanceof Error) {
-        const isNetworkError =
-            error.name === "AbortError" ||
-            error.name === "TimeoutError" ||
-            error.message.toLowerCase().includes("network") ||
-            error.message.toLowerCase().includes("failed to fetch");
+  // Native fetch/network errors
+  if (error instanceof Error) {
+    const isNetworkError =
+      error.name === "AbortError" ||
+      error.name === "TimeoutError" ||
+      error.message.toLowerCase().includes("network") ||
+      error.message.toLowerCase().includes("failed to fetch");
 
-        return isNetworkError;
-    }
+    return isNetworkError;
+  }
 
-    return false;
+  return false;
 }
 
 /**
@@ -91,21 +91,18 @@ export function isTransientError(error: unknown): boolean {
  * @returns Delay in milliseconds with jitter applied
  */
 export function getExponentialBackoffDelay(
-    attempt: number,
-    baseDelayMs: number,
-    maxDelayMs: number,
+  attempt: number,
+  baseDelayMs: number,
+  maxDelayMs: number,
 ): number {
-    // Exponential: baseDelayMs * 2^(attempt-1), capped at maxDelayMs
-    const exponential = Math.min(
-        baseDelayMs * Math.pow(2, attempt - 1),
-        maxDelayMs,
-    );
+  // Exponential: baseDelayMs * 2^(attempt-1), capped at maxDelayMs
+  const exponential = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
 
-    // Add ±20% jitter to prevent thundering herd
-    const jitterFraction = 0.2 * (Math.random() - 0.5) * 2; // Random between -20% and +20%
-    const jitter = exponential * jitterFraction;
+  // Add ±20% jitter to prevent thundering herd
+  const jitterFraction = 0.2 * (Math.random() - 0.5) * 2; // Random between -20% and +20%
+  const jitter = exponential * jitterFraction;
 
-    return Math.round(exponential + jitter);
+  return Math.round(exponential + jitter);
 }
 
 /**
@@ -126,60 +123,58 @@ export function getExponentialBackoffDelay(
  * );
  */
 export async function retryTransient<T>(
-    operation: () => Promise<T>,
-    {
-        maxAttempts = 3,
-        baseDelayMs = 500,
-        maxDelayMs = 4000,
-    }: RetryOptions = {},
+  operation: () => Promise<T>,
+  { maxAttempts = 3, baseDelayMs = 500, maxDelayMs = 4000 }: RetryOptions = {},
 ): Promise<T> {
-    let lastError: unknown;
-    let attempt = 0;
+  let lastError: unknown;
+  let attempt = 0;
 
-    while (attempt < maxAttempts) {
-        attempt += 1;
+  while (attempt < maxAttempts) {
+    attempt += 1;
 
-        try {
-            return await operation();
-        } catch (error) {
-            lastError = error;
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
 
-            // Non-transient errors should fail immediately without retry
-            if (!isTransientError(error)) {
-                transientLogger.debug("Non-transient error, failing immediately", {
-                    error,
-                    errorType: error instanceof Error ? error.name : typeof error,
-                });
-                throw error;
-            }
+      // Non-transient errors should fail immediately without retry
+      if (!isTransientError(error)) {
+        transientLogger.debug("Non-transient error, failing immediately", {
+          error,
+          errorType: error instanceof Error ? error.name : typeof error,
+        });
+        throw error;
+      }
 
-            // If this is the last attempt, throw the error
-            if (attempt >= maxAttempts) {
-                transientLogger.warn("Retry exhausted", {
-                    maxAttempts,
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                });
-                throw error;
-            }
+      // If this is the last attempt, throw the error
+      if (attempt >= maxAttempts) {
+        transientLogger.warn("Retry exhausted", {
+          maxAttempts,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
 
-            // Wait before retrying
-            const delayMs = getExponentialBackoffDelay(attempt, baseDelayMs, maxDelayMs);
-            transientLogger.debug("Retrying after transient error", {
-                attempt,
-                maxAttempts,
-                delayMs,
-                error:
-                    error instanceof Error ? error.message : String(error),
-            });
+      // Wait before retrying
+      const delayMs = getExponentialBackoffDelay(
+        attempt,
+        baseDelayMs,
+        maxDelayMs,
+      );
+      transientLogger.debug("Retrying after transient error", {
+        attempt,
+        maxAttempts,
+        delayMs,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
+  }
 
-    // Should never reach here, but fail if we do
-    throw (
-        lastError ??
-        new Error("Retry loop exhausted unexpectedly with no error captured")
-    );
+  // Should never reach here, but fail if we do
+  throw (
+    lastError ??
+    new Error("Retry loop exhausted unexpectedly with no error captured")
+  );
 }

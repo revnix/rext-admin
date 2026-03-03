@@ -268,7 +268,6 @@ function getSuggestedActions(
         },
       ];
 
-    case "viewer":
     default:
       return [
         {

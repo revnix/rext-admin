@@ -1,19 +1,10 @@
 "use client";
 
-import {
-  Accessibility,
-  Lightbulb,
-  Monitor,
-  Moon,
-  Palette,
-  Sun,
-} from "lucide-react";
+import { Lightbulb } from "lucide-react";
 import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { RadioGroup } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useTheme } from "@/providers/theme-provider";
 import { useTooltips } from "@/providers/tooltip-provider";
 import { useAccessibilityPreferences } from "@/hooks/use-accessibility-preferences";
 import { ThemeSelector } from "@/components/settings/theme-selector";
@@ -22,9 +13,8 @@ const ACCESSIBILITY_STORAGE_KEY = "wrext-accessibility";
 
 export function UIPreferences() {
   const { enabled, toggleTooltips } = useTooltips();
-  const { theme, setTheme } = useTheme();
 
-  const { accessibility, updateAccessibility } = useAccessibilityPreferences();
+  const { accessibility } = useAccessibilityPreferences();
 
   // Apply accessibility preferences to document
   useEffect(() => {
@@ -51,7 +41,7 @@ export function UIPreferences() {
   return (
     <div className="space-y-6">
       {/* Theme Preferences */}
-     <ThemeSelector showHeader={false} />
+      <ThemeSelector showHeader={false} />
 
       <Separator />
 

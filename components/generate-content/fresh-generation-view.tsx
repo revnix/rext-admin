@@ -93,7 +93,7 @@ export function FreshGenerationView({
 
       for await (const chunk of stream) {
         const updates = chunk.data as StreamUpdates;
-        console.log("updates", updates);
+        // console.log("updates", updates);
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({
@@ -231,7 +231,7 @@ export function FreshGenerationView({
         });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
-        
+
         return resumeWorkflow({
           payload: { "Primary Keyword": value },
           status: "Keyword Recommendation...",

@@ -13,12 +13,42 @@ export enum SubscriptionStatus {
   EXPIRED = "expired",
   TRIAL = "trial",
   SUSPENDED = "suspended",
+  PAST_DUE = "past_due",
+  PAUSED = "paused",
 }
 
 export enum BillingPeriod {
   MONTHLY = "monthly",
   YEARLY = "yearly",
   LIFETIME = "lifetime",
+}
+
+export const INVOICE_STATUSES = [
+  "pending",
+  "paid",
+  "void",
+  "refunded",
+  "partial_refunded",
+  "unknown",
+] as const;
+
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+export interface Invoice {
+  invoice_id: string;
+  invoice_number: string | null;
+  status: InvoiceStatus;
+  amount: number;
+  currency: string;
+  tax: number | null;
+  subtotal: number | null;
+  invoice_url: string | null;
+  invoice_date: string;
+  due_date: string | null;
+  paid_at: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  items: InvoiceItem[];
 }
 
 // ============================================================================
@@ -232,26 +262,6 @@ export interface InvoiceItem {
   quantity: number;
   unit_price: number;
   total: number;
-}
-
-/**
- * Invoice details
- */
-export interface Invoice {
-  invoice_id: string;
-  invoice_number: string | null;
-  status: string; // paid, unpaid, refunded, etc.
-  amount: number;
-  currency: string;
-  tax: number | null;
-  subtotal: number | null;
-  invoice_url: string | null;
-  invoice_date: string; // ISO format
-  due_date: string | null; // ISO format
-  paid_at: string | null; // ISO format
-  customer_email: string | null;
-  customer_name: string | null;
-  items: InvoiceItem[];
 }
 
 /**

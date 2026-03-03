@@ -1,17 +1,14 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { performLogout } from "@/lib/logout-utils";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -19,19 +16,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
-import type { UserSubscription } from "@/types/subscription";
 import { SubscriptionStatus } from "@/types/subscription";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  DEACTIVATION_CONFIRM_TEXT,
+  type DeactivateAccountFormValues,
+  createDeactivateAccountSchema,
+} from "@/schemas/account-schemas";
 
 export function AccountDeactivation() {
-  const [reason, setReason] = useState("");
-  const [confirmText, setConfirmText] = useState("");
-  const [password, setPassword] = useState("");
-  const [understood, setUnderstood] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [cancelSubscriptions, setCancelSubscriptions] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -53,6 +59,22 @@ export function AccountDeactivation() {
 
   // Convert single subscription to array format for easier rendering
   const subscriptions = hasActiveSubscriptions ? [subscription] : [];
+
+  const deactivationSchema = useMemo(
+    () => createDeactivateAccountSchema(Boolean(hasActiveSubscriptions)),
+    [hasActiveSubscriptions],
+  );
+
+  const form = useForm<DeactivateAccountFormValues>({
+    resolver: zodResolver(deactivationSchema),
+    defaultValues: {
+      reason: "",
+      confirm_text: "",
+      password: "",
+      understood: false,
+      cancel_subscriptions: false,
+    },
+  });
 
   const deactivateMutation = useMutation({
     mutationFn: (data: {
@@ -81,257 +103,252 @@ export function AccountDeactivation() {
     },
   });
 
-  const handleDeactivate = () => {
-    if (!understood || confirmText !== "DEACTIVATE") {
-      toast.error(
-        "Please confirm you understand the consequences and type DEACTIVATE to proceed.",
-      );
-      return;
-    }
-
-    if (hasActiveSubscriptions && !cancelSubscriptions) {
-      toast.error(
-        "Please confirm automatic cancellation of your active subscriptions to proceed.",
-      );
-      return;
-    }
-
+  const handleDeactivate = (values: DeactivateAccountFormValues) => {
     deactivateMutation.mutate({
-      reason: reason || undefined,
+      reason: values.reason?.trim() || undefined,
       confirm: true,
-      password: password,
+      password: values.password,
       cancel_subscriptions: hasActiveSubscriptions
-        ? cancelSubscriptions
+        ? values.cancel_subscriptions
         : false,
     });
   };
 
-  const isConfirmValid =
-    confirmText === "DEACTIVATE" &&
-    understood &&
-    (!hasActiveSubscriptions || cancelSubscriptions);
+  // const formValues = form.watch();
+
+  // const isConfirmValid =
+  //   formValues.confirm_text === "DEACTIVATE" &&
+  //   formValues.understood &&
+  //   (!hasActiveSubscriptions || formValues.cancel_subscriptions);
 
   return (
-    <div className="space-y-6">
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Warning:</strong> Deactivating your account is a serious
-          action. Your account will be scheduled for permanent deletion in 14
-          days.
-        </AlertDescription>
-      </Alert>
-
-      {hasActiveSubscriptions && (
-        <Alert>
+    <Form {...form}>
+      <div className="space-y-6">
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Active Subscriptions Detected</strong>
-            <p className="mt-2">
-              You have {subscriptions.length} active subscription
-              {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to cancel{" "}
-              {subscriptions.length > 1 ? "them" : "it"} before deactivating
-              your account, or choose to automatically cancel during
-              deactivation.
-            </p>
+            <strong>Warning:</strong> Deactivating your account is a serious
+            action. Your account will be scheduled for permanent deletion in 14
+            days.
           </AlertDescription>
         </Alert>
-      )}
 
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-medium text-destructive">
-            Deactivate Account
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Once you deactivate your account:
-          </p>
-        </div>
+        {hasActiveSubscriptions && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Active Subscriptions Detected</strong>
+              <p className="mt-2">
+                You have {subscriptions.length} active subscription
+                {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to
+                cancel {subscriptions.length > 1 ? "them" : "it"} before
+                deactivating your account, or choose to automatically cancel
+                during deactivation.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <ul className="space-y-2 text-sm text-muted-foreground ml-4">
-          <li className="flex items-start gap-2">
-            <span className="text-destructive">•</span>
-            <span>Your account will be immediately disabled</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-destructive">•</span>
-            <span>You will be logged out of all devices</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-destructive">•</span>
-            <span>All your data will be permanently deleted after 14 days</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-destructive">•</span>
-            <span>This action cannot be undone after the 14-day period</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-destructive">•</span>
-            <span>You can reactivate within 14 days by contacting support</span>
-          </li>
-        </ul>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium text-destructive">
+              Deactivate Account
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Once you deactivate your account:
+            </p>
+          </div>
 
-        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full sm:w-auto">
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Deactivate My Account
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="max-w-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-destructive">
-                Deactivate Account
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                This will deactivate your account ({profile?.email}) and
-                schedule it for permanent deletion in 14 days.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+          <ul className="space-y-2 text-sm text-muted-foreground ml-4">
+            <li className="flex items-start gap-2">
+              <span className="text-destructive">•</span>
+              <span>Your account will be immediately disabled</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-destructive">•</span>
+              <span>You will be logged out of all devices</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-destructive">•</span>
+              <span>
+                All your data will be permanently deleted after 14 days
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-destructive">•</span>
+              <span>This action cannot be undone after the 14-day period</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-destructive">•</span>
+              <span>
+                You can reactivate within 14 days by contacting support
+              </span>
+            </li>
+          </ul>
 
-            <div className="space-y-4 py-4">
-              {hasActiveSubscriptions && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong className="block mb-2">
-                      Active Subscriptions Found
-                    </strong>
-                    <div className="space-y-2 text-sm">
-                      {subscriptions.map((sub: UserSubscription) => (
-                        <div
-                          key={sub.id}
-                          className="flex items-center justify-between p-2 bg-muted/50 rounded"
-                        >
-                          <div>
-                            <div className="font-medium">{sub.plan_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Status: {sub.status}
-                              {sub.current_period_end &&
-                                ` • Renews ${new Date(sub.current_period_end).toLocaleDateString()}`}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="reason">
-                  Reason for deactivation (optional)
-                </Label>
-                <Textarea
-                  id="reason"
-                  placeholder="Help us improve by letting us know why you're leaving..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={3}
-                  disabled={deactivateMutation.isPending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirm-text">
-                  Type <strong>DEACTIVATE</strong> to confirm
-                </Label>
-                <Input
-                  id="confirm-text"
-                  type="text"
-                  placeholder="DEACTIVATE"
-                  value={confirmText}
-                  onChange={(e) => setConfirmText(e.target.value)}
-                  disabled={deactivateMutation.isPending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password-text">Type password to proceed</Label>
-                <Input
-                  id="password-text"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={deactivateMutation.isPending}
-                />
-              </div>
-
-              <div className="flex items-start space-x-3 p-4 border rounded-lg bg-muted/50">
-                <Checkbox
-                  id="understood"
-                  checked={understood}
-                  onCheckedChange={(checked) =>
-                    setUnderstood(checked as boolean)
-                  }
-                  disabled={deactivateMutation.isPending}
-                />
-                <div className="flex-1 space-y-1">
-                  <Label
-                    htmlFor="understood"
-                    className="cursor-pointer font-medium"
-                  >
-                    I understand that my account will be permanently deleted
-                    after 14 days
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    You can contact support within 14 days to reactivate your
-                    account
-                  </p>
-                </div>
-              </div>
-
-              {hasActiveSubscriptions && (
-                <div className="flex items-start space-x-3 p-4 border rounded-lg bg-destructive/10 border-destructive/20">
-                  <Checkbox
-                    id="cancel-subscriptions"
-                    checked={cancelSubscriptions}
-                    onCheckedChange={(checked) =>
-                      setCancelSubscriptions(checked as boolean)
-                    }
-                    disabled={deactivateMutation.isPending}
-                  />
-                  <div className="flex-1 space-y-1">
-                    <Label
-                      htmlFor="cancel-subscriptions"
-                      className="cursor-pointer font-medium"
-                    >
-                      Automatically cancel my {subscriptions.length} active
-                      subscription{subscriptions.length > 1 ? "s" : ""}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      All active subscriptions will be canceled immediately.
-                      You&apos;ll retain access until the end of your current
-                      billing period.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deactivateMutation.isPending}>
-                Cancel
-              </AlertDialogCancel>
-              <Button
-                variant="destructive"
-                onClick={handleDeactivate}
-                disabled={!isConfirmValid || deactivateMutation.isPending}
-              >
-                {deactivateMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deactivating...
-                  </>
-                ) : (
-                  "Deactivate Account"
-                )}
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full sm:w-auto">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Deactivate My Account
               </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-destructive">
+                  Deactivate Account
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will deactivate your account ({profile?.email}) and
+                  schedule it for permanent deletion in 14 days.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <form
+                onSubmit={form.handleSubmit(handleDeactivate)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="reason">
+                        Reason for deactivation (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          id="reason"
+                          rows={3}
+                          disabled={deactivateMutation.isPending}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirm_text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="confirm-text">
+                        Type <strong>{DEACTIVATION_CONFIRM_TEXT}</strong> to
+                        confirm
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          id="confirm-text"
+                          disabled={deactivateMutation.isPending}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="password-text">
+                        Type password to proceed
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          id="password-text"
+                          type="password"
+                          disabled={deactivateMutation.isPending}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="understood"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg bg-muted/50">
+                      <FormControl>
+                        <Checkbox
+                          id="understood"
+                          checked={field.value}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                          disabled={deactivateMutation.isPending}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel
+                          htmlFor="understood"
+                          className="cursor-pointer font-medium"
+                        >
+                          I understand that my account will be permanently
+                          deleted after 14 days
+                        </FormLabel>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {hasActiveSubscriptions && (
+                  <FormField
+                    control={form.control}
+                    name="cancel_subscriptions"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg bg-destructive/10 border-destructive/20">
+                        <FormControl>
+                          <Checkbox
+                            id="cancel-subscriptions-inline"
+                            checked={field.value}
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked === true)
+                            }
+                            disabled={deactivateMutation.isPending}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel
+                            htmlFor="cancel-subscriptions-inline"
+                            className="cursor-pointer font-medium"
+                          >
+                            Automatically cancel my {subscriptions.length}{" "}
+                            active subscription
+                            {subscriptions.length > 1 ? "s" : ""}
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            All active subscriptions will be canceled
+                            immediately. You&apos;ll retain access until the end
+                            of your current billing period.
+                          </p>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={deactivateMutation.isPending}
+                >
+                  Deactivate Account
+                </Button>
+              </form>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
-    </div>
+    </Form>
   );
 }

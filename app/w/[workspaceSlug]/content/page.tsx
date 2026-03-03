@@ -51,7 +51,8 @@ export default function WorkspaceContentPage() {
   // Update page title and description
   usePageTitle(
     `Content Library - ${workspace?.name || "Workspace"}`,
-    `Manage published and scheduled content for ${workspace?.name || "this workspace"
+    `Manage published and scheduled content for ${
+      workspace?.name || "this workspace"
     }.`,
   );
 
@@ -101,8 +102,9 @@ export default function WorkspaceContentPage() {
   return (
     <PageLayout
       title="Generated Content"
-      description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"
-        }.`}
+      description={`View, edit, and manage AI-generated content for ${
+        workspace?.name || "this workspace"
+      }.`}
       actions={headerActions}
     >
       {/* Inline loader inside PageLayout */}
