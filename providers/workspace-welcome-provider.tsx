@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { WorkspaceWelcomeModal } from "@/components/workspace";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { safeJsonParse } from "@/lib/utils";
 import { MODAL_DELAYS } from "@/lib/constants/motion";
 import { session } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
@@ -62,29 +61,20 @@ export function WorkspaceWelcomeProvider({
 
     // Check for welcome modal data in sessionStorage
     const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(currentWorkspace.id);
-    const data = session.getJSON<WelcomeData>(
-      welcomeKey,
-      null as unknown as WelcomeData,
-    );
+    const data = session.getJSON<WelcomeData | null>(welcomeKey, null);
 
-    if (storedData) {
-      const data = safeJsonParse<WelcomeData>(storedData);
-      if (data) {
-        setWelcomeData(data);
+    if (data) {
+      setWelcomeData(data);
 
-        // Small delay to let the page load
-        const timer = setTimeout(() => {
-          setIsOpen(true);
-        }, MODAL_DELAYS.INVITED_USER);
+      // Small delay to let the page load
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+      }, MODAL_DELAYS.INVITED_USER);
 
-        // Clear from sessionStorage so it only shows once
-        sessionStorage.removeItem(welcomeKey);
+      // Clear from sessionStorage so it only shows once
+      session.remove(welcomeKey);
 
-        return () => clearTimeout(timer);
-      } else {
-        // Invalid data, ignore
-        sessionStorage.removeItem(welcomeKey);
-      }
+      return () => clearTimeout(timer);
     }
 
     return undefined;
