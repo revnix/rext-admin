@@ -228,13 +228,12 @@ export function useOnboardingProgress(
         total_milestones: milestones.length,
       });
 
-      // Force re-render by refetching (only if we have a workspace)
-      if (workspaceId) {
-        refetchStats();
-      } else {
-        // Force re-render without workspace
-        triggerUpdate();
-      }
+    // Force re-render by refetching (only if we have a workspace)
+    if (workspaceId) {
+      refetchStats();
+    } else {
+      // Force re-render without workspace
+      triggerUpdate();
     }
   }, [
     dismissedKey,
@@ -264,12 +263,11 @@ export function useOnboardingProgress(
             progress_percentage: progress,
           });
 
-          // Force re-render
-          if (workspaceId) {
-            refetchStats();
-          } else {
-            triggerUpdate();
-          }
+        // Force re-render
+        if (workspaceId) {
+          refetchStats();
+        } else {
+          triggerUpdate();
         }
       }
     },
@@ -295,12 +293,11 @@ export function useOnboardingProgress(
         user_id: user?.id,
       });
 
-      // Force re-render
-      if (workspaceId) {
-        refetchStats();
-      } else {
-        triggerUpdate();
-      }
+    // Force re-render
+    if (workspaceId) {
+      refetchStats();
+    } else {
+      triggerUpdate();
     }
   }, [
     dismissedKey,

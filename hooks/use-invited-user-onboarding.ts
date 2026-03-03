@@ -8,6 +8,7 @@ import { local } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+import { safeJsonParse } from "@/lib/utils";
 
 interface InvitationContext {
   workspace: Workspace;
