@@ -5,6 +5,7 @@ import { ArrowRight, Building2, Check, Sparkles, User, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import { local } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
+import { useReducedMotion } from "@/lib/animations";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,9 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
+
+/** Number of CSS confetti particles to render. Set to 0 for reduced-motion users. */
+const CONFETTI_PIECE_COUNT = 50;
 
 interface WorkspaceWelcomeModalProps {
   open: boolean;
@@ -54,6 +58,7 @@ export function WorkspaceWelcomeModal({
   const router = useRouter();
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isAnimating, setIsAnimating] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
 
   // Default permissions based on role if not provided
   const permissions =
@@ -63,9 +68,8 @@ export function WorkspaceWelcomeModal({
 
   // Trigger confetti animation on mount
   useEffect(() => {
-    if (open) {
+    if (open && !prefersReducedMotion) {
       setIsAnimating(true);
-      // Create confetti effect using CSS animations
       const timer = setTimeout(() => {
         setIsAnimating(false);
       }, 3000);
@@ -73,7 +77,7 @@ export function WorkspaceWelcomeModal({
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [open]);
+  }, [open, prefersReducedMotion]);
 
   const handleClose = () => {
     if (dontShowAgain) {
@@ -264,8 +268,15 @@ export function WorkspaceWelcomeModal({
 /**
  * Confetti effect using CSS animations
  * Creates floating particles across the screen
+ * Renders nothing if the user prefers reduced motion
  */
 function ConfettiEffect() {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return null;
+  }
+
   const colors = [
     "bg-red-500",
     "bg-blue-500",
@@ -275,7 +286,7 @@ function ConfettiEffect() {
     "bg-pink-500",
   ];
 
-  const confettiPieces = Array.from({ length: 50 }, (_, i) => ({
+  const confettiPieces = Array.from({ length: CONFETTI_PIECE_COUNT }, (_, i) => ({
     id: i,
     color: colors[Math.floor(Math.random() * colors.length)],
     left: `${Math.random() * 100}%`,
@@ -329,6 +340,7 @@ function getDefaultPermissions(roleName: string): string[] {
         "Collaborate with team members",
         "No team management access",
       ];
+
     default:
       return [
         "View all workspace content",

@@ -38,6 +38,7 @@ import {
   SubscriptionStatus,
 } from "@/types/subscription";
 import type { Route } from "next";
+import { log } from "@/lib/logger";
 
 /**
  * Subscription Management Dashboard Page
@@ -57,7 +58,7 @@ import type { Route } from "next";
 
 export default function SubscriptionDashboardPage() {
   const router = useRouter();
-  const { subscription, usage, fetchSubscription, fetchUsage } =
+  const { subscription, usage, fetchSubscription } =
     useSubscriptionStore();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,11 +68,29 @@ export default function SubscriptionDashboardPage() {
   const loadPlans = useCallback(async () => {
     try {
       const response = await apiClient.subscriptions.getPlans();
+      if (!response?.plans) {
+        log.warn("Plans response missing expected payload", {
+          component: "SubscriptionDashboardPage",
+          action: "loadPlans",
+          response,
+        });
+        setPlans([]);
+        return;
+      }
       if (response.plans) {
         const activePlans = response.plans.filter((plan) => plan.is_active);
         setPlans(activePlans);
       }
-    } catch (_error) {}
+    } catch (error) {
+      log.error("Failed to load subscription plans", error, {
+        component: "SubscriptionDashboardPage",
+        action: "loadPlans",
+      });
+
+      toast.error("Failed to load available plans", {
+        description: "You can still view your current subscription details.",
+      });
+    }
   }, []);
 
   useEffect(() => {

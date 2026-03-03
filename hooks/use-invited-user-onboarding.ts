@@ -41,7 +41,14 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
     ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance,
   );
 
-  // Fetch workspace invitations to get context
+  // Parse invitation context from localStorage.
+  // staleTime: Infinity — this data is set once during invitation acceptance and
+  // does not change server-side. It should never trigger a background refetch.
+  // gcTime: Infinity — prevent garbage collection if the user navigates away
+  // from onboarding components temporarily. The data should remain cached for
+  // the entire session since it's only cleared on explicit completion.
+  // Note: This is a localStorage parse, not a network request. The queryFn
+  // returns null if the token is missing or unparseable.
   const { data: invitationData, isLoading: isLoadingInvitation } = useQuery({
     queryKey: ["invitation-context", invitationToken],
     queryFn: async () => {
@@ -51,7 +58,8 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
       return safeJsonParse<InvitationContext>(invitationToken);
     },
     enabled: !!invitationToken && status === "authenticated",
-    staleTime: Infinity, // Context doesn't change
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 
   // Check if regular onboarding is already completed
