@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Building2, Check, Sparkles, User, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
+import { local } from "@/lib/storage";
+import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -76,7 +78,7 @@ export function WorkspaceWelcomeModal({
   const handleClose = () => {
     if (dontShowAgain) {
       // Store preference to not show again for this workspace
-      localStorage.setItem(`workspace_welcome_shown_${workspace.id}`, "true");
+      local.setBoolean(ONBOARDING_STORAGE_KEYS.welcomeShown(workspace.id), true);
     }
     onClose();
   };
@@ -338,15 +340,12 @@ function getDefaultPermissions(roleName: string): string[] {
  * Check if welcome modal should be shown for this workspace
  */
 export function shouldShowWelcomeModal(workspaceId: string): boolean {
-  if (typeof window === "undefined") return false;
-  return !localStorage.getItem(`workspace_welcome_shown_${workspaceId}`);
+  return !local.getBoolean(ONBOARDING_STORAGE_KEYS.welcomeShown(workspaceId));
 }
 
 /**
  * Mark welcome modal as shown for a workspace
  */
 export function markWelcomeModalShown(workspaceId: string): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(`workspace_welcome_shown_${workspaceId}`, "true");
-  }
+  local.setBoolean(ONBOARDING_STORAGE_KEYS.welcomeShown(workspaceId), true);
 }

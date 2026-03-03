@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { WorkspaceWelcomeModal } from "@/components/workspace";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { safeJsonParse } from "@/lib/utils";
+import { session } from "@/lib/storage";
+import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface WorkspaceWelcomeProviderProps {
   children: React.ReactNode;
@@ -58,28 +59,18 @@ export function WorkspaceWelcomeProvider({
     }
 
     // Check for welcome modal data in sessionStorage
-    const welcomeKey = `workspace_welcome_${currentWorkspace.id}`;
-    const storedData = sessionStorage.getItem(welcomeKey);
+    const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(currentWorkspace.id);
+    const data = session.getJSON<WelcomeData>(welcomeKey, null as unknown as WelcomeData);
 
-    if (storedData) {
-      const data = safeJsonParse<WelcomeData>(storedData);
-      if (data) {
-        setWelcomeData(data);
-
-        // Small delay to let the page load
-        const timer = setTimeout(() => {
-          setIsOpen(true);
-        }, 800);
-
-        // Clear from sessionStorage so it only shows once
-        sessionStorage.removeItem(welcomeKey);
-
-        return () => clearTimeout(timer);
-      } else {
-        // Invalid data, ignore
-        sessionStorage.removeItem(welcomeKey);
-      }
+    if (data) {
+      setWelcomeData(data);
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+      }, 800);
+      session.remove(welcomeKey);
+      return () => clearTimeout(timer);
     }
+
     return undefined;
   }, [status, pathname, currentWorkspace]);
 
@@ -137,8 +128,6 @@ export function storeWelcomeData(data: {
   roleName: string;
   rolePermissions?: string[];
 }): void {
-  if (typeof window !== "undefined") {
-    const welcomeKey = `workspace_welcome_${data.workspace.id}`;
-    sessionStorage.setItem(welcomeKey, JSON.stringify(data));
-  }
+  const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(data.workspace.id);
+  session.setJSON(welcomeKey, data);
 }

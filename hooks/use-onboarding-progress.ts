@@ -6,7 +6,8 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { safeJsonParse } from "@/lib/utils";
+import { local } from "@/lib/storage";
+import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 
 /**
  * Onboarding Progress Hook (Hybrid Approach)
@@ -87,23 +88,12 @@ export function useOnboardingProgress(
   });
 
   // Get localStorage keys for this workspace
-  const dismissedKey = workspaceId
-    ? `onboarding-dismissed-${workspaceId}`
-    : "onboarding-dismissed-global";
-  const skippedKey = workspaceId
-    ? `onboarding-skipped-${workspaceId}`
-    : "onboarding-skipped-global";
+  const dismissedKey = ONBOARDING_STORAGE_KEYS.dismissed(workspaceId);
+  const skippedKey = ONBOARDING_STORAGE_KEYS.skipped(workspaceId);
 
   // Get UI preferences from localStorage
-  const isDismissed =
-    typeof window !== "undefined"
-      ? localStorage.getItem(dismissedKey) === "true"
-      : false;
-
-  const skippedSteps: string[] =
-    typeof window !== "undefined"
-      ? (safeJsonParse<string[]>(localStorage.getItem(skippedKey), []) ?? [])
-      : [];
+  const isDismissed = local.getBoolean(dismissedKey);
+  const skippedSteps: string[] = local.getJSON<string[]>(skippedKey, []);
 
   // Calculate milestone completion based on real-time stats
   const milestones = useMemo<OnboardingMilestone[]>(() => {
@@ -227,8 +217,7 @@ export function useOnboardingProgress(
 
   // Helper: Dismiss onboarding
   const dismissOnboarding = useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(dismissedKey, "true");
+    local.setBoolean(dismissedKey, true);
 
       // Track dismissal
       analytics.track("onboarding_dismissed", {
@@ -260,12 +249,10 @@ export function useOnboardingProgress(
   // Helper: Skip a milestone
   const skipMilestone = useCallback(
     (milestoneId: string) => {
-      if (typeof window !== "undefined") {
-        const currentSkipped =
-          safeJsonParse<string[]>(localStorage.getItem(skippedKey), []) ?? [];
-        if (!currentSkipped.includes(milestoneId)) {
-          const updated = [...currentSkipped, milestoneId];
-          localStorage.setItem(skippedKey, JSON.stringify(updated));
+      const currentSkipped = local.getJSON<string[]>(skippedKey, []);
+      if (!currentSkipped.includes(milestoneId)) {
+        const updated = [...currentSkipped, milestoneId];
+        local.setJSON(skippedKey, updated);
 
           // Track skipping
           const milestone = milestones.find((m) => m.id === milestoneId);
@@ -299,9 +286,8 @@ export function useOnboardingProgress(
 
   // Helper: Reset onboarding (for testing/debugging)
   const resetOnboarding = useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(dismissedKey);
-      localStorage.removeItem(skippedKey);
+    local.remove(dismissedKey);
+    local.remove(skippedKey);
 
       // Track reset
       analytics.track("onboarding_reset", {
