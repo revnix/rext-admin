@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { registerStoreReset } from "@/lib/store-registry";
 import type { StrictUserWithPermissions } from "@/types/role";
+import { ROLES } from "@/lib/permissions";
 
 const MAX_WORKSPACE_PERMISSION_CACHE = 25;
 const MAX_WORKSPACE_LOADING_CACHE = 50;
@@ -159,7 +160,8 @@ export const usePermissionStore = create<PermissionStore>()((set, get) => ({
     const state = get();
     if (!state.user) return false;
 
-    if (state.user.role === "super_admin") return true;
+    // Super admin has all permissions
+    if (state.user.role === ROLES.SUPER_ADMIN) return true;
 
     if (workspaceId) {
       const wsPerms = state.workspacePermissions.get(workspaceId);
@@ -184,11 +186,11 @@ export const usePermissionStore = create<PermissionStore>()((set, get) => ({
 
   isAdmin: () => {
     const state = get();
-    return ["admin", "super_admin"].includes(state.user?.role || "");
+    return ([ROLES.ADMIN, ROLES.SUPER_ADMIN] as string[]).includes(state.user?.role || "");
   },
 
   isSuperAdmin: () => {
-    return get().user?.role === "super_admin";
+    return get().user?.role === ROLES.SUPER_ADMIN;
   },
 }));
 
