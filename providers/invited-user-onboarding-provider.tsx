@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { InvitedUserOnboardingModal } from "@/components/onboarding/invited-user-onboarding-modal";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useInvitedUserOnboarding } from "@/hooks/use-invited-user-onboarding";
-
+import { MODAL_DELAYS } from "@/lib/constants/motion";
 interface InvitedUserOnboardingProviderProps {
   children: React.ReactNode;
 }
@@ -62,7 +62,7 @@ export function InvitedUserOnboardingProvider({
       // Add a small delay to avoid jarring experience on page load
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 1000); // Slightly longer delay for invited users to see the workspace first
+      }, MODAL_DELAYS.INVITED_USER); // Slightly longer delay for invited users to see the workspace first
 
       return () => clearTimeout(timer);
     }
