@@ -159,6 +159,8 @@ export const ENDPOINTS = {
   USERS: {
     list: "/api/v1/user/users", // Inconsistent: /user/users
     byId: (id: string) => `/api/v1/user/${id}` as const,
+    register: "/api/v1/user/register",
+    registerWithInvitation: "/api/v1/user/register-with-invitation",
 
     // Sessions
     sessions: {

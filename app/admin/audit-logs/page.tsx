@@ -79,20 +79,12 @@ export default function AuditLogsPage() {
 
   const handleExport = async (format: "csv" | "json") => {
     try {
-      const endpoint = buildUrl(`/api/v1/audit/logs/export/download`, {
+      const blob = await apiClient.auditLogs.downloadLogs({
         format,
         user_email: debouncedSearch || undefined,
         action: actionFilter || undefined,
         resource_type: resourceTypeFilter || undefined,
       });
-
-      const response = await authenticatedFetch(endpoint, {
-        method: "GET",
-      });
-
-      if (!response.ok) throw new Error("Export failed");
-
-      const blob = await response.blob();
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -102,6 +94,7 @@ export default function AuditLogsPage() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
       toast.success(`Audit logs exported as ${format.toUpperCase()}`);
     } catch (_error) {

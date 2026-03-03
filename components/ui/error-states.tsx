@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Route } from "next";
+import { Route } from "next";
 
 /**
  * Inline error alert for form/API errors

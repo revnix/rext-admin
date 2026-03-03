@@ -73,14 +73,11 @@ export function SignupForm({
         setIsLoading(false);
         return;
       }
-      // Determine which endpoint to use
-      const isInvitationSignup = hasValidInvitation && invitationToken;
-      const endpoint = isInvitationSignup
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register-with-invitation`
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`;
+      // Determine which endpoint/method to use
+      const isInvitationSignup = hasValidInvitation && !!invitationToken;
 
       // Build request payload
-      const payload: Record<string, string> = {
+      const payload: Record<string, any> = {
         full_name: data.full_name,
         email: data.email,
         password: data.password,
@@ -91,20 +88,12 @@ export function SignupForm({
         payload.invitation_token = invitationToken;
       }
 
-      // Register user with backend
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await safeParseErrorBody(response);
-        const errorMessage = extractApiError(errorData, "Registration failed");
-        throw new Error(errorMessage);
+      // Register user with backend via apiClient
+      if (isInvitationSignup) {
+        await apiClient.users.registerWithInvitation(payload);
+      } else {
+        await apiClient.users.register(payload);
       }
-
-      const _responseData = await response.json();
 
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
@@ -244,7 +233,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                            "bg-muted cursor-not-allowed opacity-75",
+                          "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />

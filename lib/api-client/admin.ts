@@ -201,6 +201,29 @@ export function createAuditLogsNamespace(client: ApiClient) {
         method: "GET",
       });
     },
+
+    /**
+     * Download audit logs as CSV or JSON (admin)
+     */
+    downloadLogs: async (filters: {
+      format: "csv" | "json";
+      user_email?: string;
+      action?: string;
+      resource_type?: string;
+    }) => {
+      const endpoint = buildUrl(`/api/v1/audit/logs/export/download`, {
+        format: filters.format,
+        user_email: filters.user_email,
+        action: filters.action,
+        resource_type: filters.resource_type,
+      });
+
+      const response = await client.requestRaw(endpoint, {
+        method: "GET",
+      });
+
+      return response.blob();
+    },
   };
 }
 
