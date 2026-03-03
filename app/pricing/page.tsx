@@ -132,9 +132,8 @@ export default function PricingPage() {
                 Can I change plans anytime?
               </h3>
               <p className="text-sm text-muted-foreground">
-                Yes! You can upgrade or downgrade your plan at any time from
-                your subscription dashboard. Upgrades take effect immediately,
-                while downgrades apply at the end of your billing period.
+                Yes. Plan changes are applied immediately, and prorations are
+                handled by our billing provider.
               </p>
             </div>
             <div>

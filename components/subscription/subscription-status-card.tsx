@@ -73,26 +73,30 @@ export function SubscriptionStatusCard({
   };
 
   // Get status badge variant
-const getStatusBadge = (status: SubscriptionStatus) => {
-  switch (status) {
-    case SubscriptionStatus.ACTIVE:
-      return <Badge variant="default" className="bg-green-500">Active</Badge>;
-    case SubscriptionStatus.TRIAL:
-      return <Badge variant="secondary">Trial</Badge>;
-    case SubscriptionStatus.PAST_DUE:
-      return <Badge variant="destructive">Past Due</Badge>;
-    case SubscriptionStatus.PAUSED:
-      return <Badge variant="outline">Paused</Badge>;
-    case SubscriptionStatus.CANCELLED:
-      return <Badge variant="destructive">Cancelled</Badge>;
-    case SubscriptionStatus.EXPIRED:
-      return <Badge variant="outline">Expired</Badge>;
-    case SubscriptionStatus.SUSPENDED:
-      return <Badge variant="outline">Suspended</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-};
+  const getStatusBadge = (status: SubscriptionStatus) => {
+    switch (status) {
+      case SubscriptionStatus.ACTIVE:
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Active
+          </Badge>
+        );
+      case SubscriptionStatus.TRIAL:
+        return <Badge variant="secondary">Trial</Badge>;
+      case SubscriptionStatus.PAST_DUE:
+        return <Badge variant="destructive">Past Due</Badge>;
+      case SubscriptionStatus.PAUSED:
+        return <Badge variant="outline">Paused</Badge>;
+      case SubscriptionStatus.CANCELLED:
+        return <Badge variant="destructive">Cancelled</Badge>;
+      case SubscriptionStatus.EXPIRED:
+        return <Badge variant="outline">Expired</Badge>;
+      case SubscriptionStatus.SUSPENDED:
+        return <Badge variant="outline">Suspended</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   // Format date
   const formatDate = (dateString: string) => {

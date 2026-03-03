@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Building2, Check, Sparkles, User, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
+import { local } from "@/lib/storage";
+import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 import { useReducedMotion } from "@/lib/animations";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -80,7 +82,10 @@ export function WorkspaceWelcomeModal({
   const handleClose = () => {
     if (dontShowAgain) {
       // Store preference to not show again for this workspace
-      localStorage.setItem(`workspace_welcome_shown_${workspace.id}`, "true");
+      local.setBoolean(
+        ONBOARDING_STORAGE_KEYS.welcomeShown(workspace.id),
+        true,
+      );
     }
     onClose();
   };
@@ -281,13 +286,16 @@ function ConfettiEffect() {
     "bg-pink-500",
   ];
 
-  const confettiPieces = Array.from({ length: CONFETTI_PIECE_COUNT }, (_, i) => ({
-    id: i,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    left: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 3}s`,
-    animationDuration: `${3 + Math.random() * 2}s`,
-  }));
+  const confettiPieces = Array.from(
+    { length: CONFETTI_PIECE_COUNT },
+    (_, i) => ({
+      id: i,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      left: `${Math.random() * 100}%`,
+      animationDelay: `${Math.random() * 3}s`,
+      animationDuration: `${3 + Math.random() * 2}s`,
+    }),
+  );
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -335,6 +343,7 @@ function getDefaultPermissions(roleName: string): string[] {
         "Collaborate with team members",
         "No team management access",
       ];
+
     default:
       return [
         "View all workspace content",
@@ -349,15 +358,12 @@ function getDefaultPermissions(roleName: string): string[] {
  * Check if welcome modal should be shown for this workspace
  */
 export function shouldShowWelcomeModal(workspaceId: string): boolean {
-  if (typeof window === "undefined") return false;
-  return !localStorage.getItem(`workspace_welcome_shown_${workspaceId}`);
+  return !local.getBoolean(ONBOARDING_STORAGE_KEYS.welcomeShown(workspaceId));
 }
 
 /**
  * Mark welcome modal as shown for a workspace
  */
 export function markWelcomeModalShown(workspaceId: string): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(`workspace_welcome_shown_${workspaceId}`, "true");
-  }
+  local.setBoolean(ONBOARDING_STORAGE_KEYS.welcomeShown(workspaceId), true);
 }
