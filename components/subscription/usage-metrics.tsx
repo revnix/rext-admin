@@ -174,6 +174,19 @@ export function UsageMetrics({
     usage.api_calls_usage_percent,
   );
 
+  if(!usage) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle>Usage Statistics</CardTitle>
+          <CardDescription>
+            No usage data available. Subscribe to a plan to track your usage.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className={className}>
       <CardHeader>

@@ -14,6 +14,10 @@ import {
   SubscriptionStatus,
 } from "@/types/subscription";
 
+const InvoiceStatusSchema = z
+  .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])
+  .catch("unknown");
+
 export const SubscriptionStatusSchema = z.enum(SubscriptionStatus);
 export const BillingPeriodSchema = z.enum(BillingPeriod);
 // ============================================================================
@@ -182,13 +186,13 @@ export const InvoiceItemSchema = z.object({
 export const InvoiceSchema = z.object({
   invoice_id: z.string().min(1, "Invoice ID is required"),
   invoice_number: z.string().nullable(),
-  status: z.string(), // paid, unpaid, refunded, etc.
+  status: InvoiceStatusSchema,
   amount: z.number().nonnegative(),
   currency: z.string().default("USD"),
   tax: z.number().nullable(),
   subtotal: z.number().nullable(),
   invoice_url: z.string().url().nullable(),
-  invoice_date: z.string(), // ISO format
+  invoice_date: z.string(),
   due_date: z.string().nullable(),
   paid_at: z.string().nullable(),
   customer_email: z.string().email().nullable(),

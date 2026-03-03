@@ -37,6 +37,7 @@ export interface PricingTableProps {
   hideBillingToggle?: boolean;
 }
 
+
 /**
  * Professional pricing table with plan features and checkout
  */
@@ -50,6 +51,9 @@ export function PricingTable({
     useState<BillingPeriod>(defaultBillingPeriod);
   const { plans, subscription, fetchPlans, isLoading } = useSubscriptionStore();
 
+  const visiblePlans = plans.filter((plan) => plan.is_public && plan.is_active);
+
+
   // Fetch plans on mount
   useEffect(() => {
     if (plans.length === 0) {
@@ -61,10 +65,21 @@ export function PricingTable({
   const getYearlySavings = (plan: SubscriptionPlan) => {
     const monthlyTotal = plan.price_monthly * 12;
     const yearlyTotal = plan.price_yearly;
+
+    if (monthlyTotal <= 0 || yearlyTotal <= 0 || yearlyTotal >= monthlyTotal) {
+      return { savings: 0, savingsPercent: 0 };
+    }
+
     const savings = monthlyTotal - yearlyTotal;
     const savingsPercent = Math.round((savings / monthlyTotal) * 100);
+
     return { savings, savingsPercent };
   };
+  
+  const maxYearlySavingsPercent = visiblePlans.reduce((max, plan) => {
+    const { savingsPercent } = getYearlySavings(plan);
+    return savingsPercent > max ? savingsPercent : max;
+  }, 0);
 
   // Get price based on billing period
   const getPrice = (plan: SubscriptionPlan) => {
@@ -133,9 +148,11 @@ export function PricingTable({
               className="relative"
             >
               Yearly
-              <Badge variant="secondary" className="ml-2 text-xs">
-                Save up to 20%
-              </Badge>
+              {maxYearlySavingsPercent > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  Save up to {maxYearlySavingsPercent}%
+                </Badge>
+              )}
             </Button>
           </div>
         </div>
@@ -143,9 +160,7 @@ export function PricingTable({
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {plans
-          .filter((plan) => plan.is_public && plan.is_active)
-          .map((plan) => {
+        {visiblePlans.map((plan) => {
             const features = parseFeatures(plan);
             const price = getPrice(plan);
             const { savingsPercent } = getYearlySavings(plan);

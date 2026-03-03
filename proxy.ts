@@ -22,21 +22,18 @@ interface AuthenticatedRequest extends NextRequest {
 
 /**
  * Protected routes configuration
- * Maps route patterns to required permissions or roles
  *
- * NOTE: These are GLOBAL (user-level) permissions, NOT workspace-scoped.
- * Workspace-scoped permissions are checked at the page/component level
- * after workspace context is loaded.
+ * NOTE:
+ * - These are GLOBAL (user-level) permissions, NOT workspace-scoped.
+ * - Workspace-scoped permissions are checked at the page/component level
+ *   after workspace context is loaded (via workspace permission store).
+ *
+ * Subscription/Billing/Usage access is now derived from workspace-scoped
+ * permissions (e.g. "billing.read" in ANY workspace) on the client side,
+ * so they are no longer enforced here to avoid mismatches with the new
+ * `/permissions/me` API.
  */
 const PROTECTED_ROUTES: Record<string, string | string[]> = {
-  // Owner-only pages (subscription management)
-  // These are user-level permissions (workspace_scoped=False in backend)
-  "/subscription": "subscription.read",
-  "/billing": "billing.read",
-
-  // Usage monitoring (owner + admin have this permission)
-  "/usage": "usage.read",
-
   // Admin-only pages (platform administration)
   "/admin": ["super_admin", "admin"], // Role-based check
   "/admin/users": "user.read",
