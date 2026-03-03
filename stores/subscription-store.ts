@@ -20,6 +20,7 @@ import type {
   UsageStats,
   UserSubscription,
 } from "@/types/subscription";
+import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
 
 // ============================================================================
 // STORE INTERFACE
@@ -473,9 +474,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getInvoices();
+          const parsed = InvoiceListResponseSchema.parse(response);
 
           set({
-            invoices: response.invoices,
+            invoices: parsed.invoices,
             invoicesLoading: false,
             invoicesError: null,
           });
