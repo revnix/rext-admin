@@ -1544,7 +1544,8 @@
   .animate-ping,
   .animate-pulse,
   .animate-bounce,
-  .motion-safe-animate {
+  .motion-safe-animate,
+  .animate-confetti-fall {
     animation: none;
   }
 }
