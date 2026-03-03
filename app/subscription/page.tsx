@@ -58,8 +58,7 @@ import { log } from "@/lib/logger";
 
 export default function SubscriptionDashboardPage() {
   const router = useRouter();
-  const { subscription, usage, fetchSubscription } =
-    useSubscriptionStore();
+  const { subscription, usage, fetchSubscription } = useSubscriptionStore();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [planChangeModalOpen, setPlanChangeModalOpen] = useState(false);

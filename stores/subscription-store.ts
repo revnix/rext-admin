@@ -22,16 +22,21 @@ import type {
 } from "@/types/subscription";
 import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
 
+const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
+let inFlightSubscriptionFetch: Promise<void> | null = null;
+
 // ============================================================================
 // STORE INTERFACE
 // ============================================================================
 
 interface SubscriptionStore {
+  subscription: UserSubscription | null;
+  usage: UsageStats | null;
+  subscriptionFetchedAt: number | null;
+
   // ========================================
   // SUBSCRIPTION STATE
   // ========================================
-  subscription: UserSubscription | null;
-  usage: UsageStats | null;
   plans: SubscriptionPlan[];
   isLoading: boolean;
   error: string | null;
@@ -58,7 +63,7 @@ interface SubscriptionStore {
   /**
    * Fetch current subscription and usage stats
    */
-  fetchSubscription: () => Promise<void>;
+  fetchSubscription: (options?: { force?: boolean }) => Promise<void>;
 
   /**
    * Fetch usage stats only
@@ -152,9 +157,11 @@ interface SubscriptionStore {
 // ============================================================================
 
 const initialState = {
-  // Subscription state
   subscription: null,
   usage: null,
+  subscriptionFetchedAt: null,
+
+  // Subscription state
   plans: [],
   isLoading: false,
   error: null,
@@ -184,33 +191,54 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       // SUBSCRIPTION ACTIONS
       // ========================================
 
-      fetchSubscription: async () => {
-        set({ isLoading: true, error: null });
+      fetchSubscription: async (options) => {
+        const force = options?.force ?? false;
+        const { subscription, subscriptionFetchedAt } = get();
+        const now = Date.now();
 
-        const [subscriptionResult, usageResult] = await Promise.allSettled([
-          apiClient.subscriptions.getCurrentPlan(),
-          apiClient.subscriptions.getUsageStats(),
-        ]);
-
-        if (subscriptionResult.status === "rejected") {
-          const errorMessage =
-            subscriptionResult.reason instanceof Error
-              ? subscriptionResult.reason.message
-              : "Failed to fetch subscription";
-
-          set({ isLoading: false, error: errorMessage });
-          throw subscriptionResult.reason;
+        if (
+          !force &&
+          subscription &&
+          subscriptionFetchedAt &&
+          now - subscriptionFetchedAt < SUBSCRIPTION_CACHE_TTL_MS
+        ) {
+          return;
         }
 
-        set({
-          subscription: subscriptionResult.value,
-          usage: usageResult.status === "fulfilled" ? usageResult.value : null,
-          isLoading: false,
-          error:
-            usageResult.status === "rejected"
-              ? "Subscription loaded but usage metrics are temporarily unavailable"
-              : null,
-        });
+        if (inFlightSubscriptionFetch) {
+          return inFlightSubscriptionFetch;
+        }
+
+        inFlightSubscriptionFetch = (async () => {
+          set({ isLoading: true, error: null });
+
+          try {
+            const [nextSubscription, nextUsage] = await Promise.all([
+              apiClient.subscriptions.getCurrentPlan(),
+              apiClient.subscriptions.getUsageStats(),
+            ]);
+
+            set({
+              subscription: nextSubscription,
+              usage: nextUsage,
+              subscriptionFetchedAt: Date.now(),
+              isLoading: false,
+              error: null,
+            });
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch subscription";
+
+            set({ isLoading: false, error: errorMessage });
+            throw error;
+          } finally {
+            inFlightSubscriptionFetch = null;
+          }
+        })();
+
+        return inFlightSubscriptionFetch;
       },
 
       fetchUsage: async () => {

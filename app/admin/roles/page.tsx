@@ -479,7 +479,9 @@ export default function AdminRolesPage() {
                           Bulk Assign
                         </Button>
                       </PermissionGuard>
-                      <PermissionGuard permission={ADMIN_PERMISSIONS.ROLE_CREATE}>
+                      <PermissionGuard
+                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
+                      >
                         <Button
                           onClick={() => setDialogState({ type: "createRole" })}
                         >
@@ -519,7 +521,9 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
-                    <PermissionGuard permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}>
+                    <PermissionGuard
+                      permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}
+                    >
                       <Button
                         onClick={() =>
                           setDialogState({ type: "createPermission" })
@@ -571,7 +575,9 @@ export default function AdminRolesPage() {
           open={dialogState.type === "manageRolePermissions"}
           onOpenChange={closeDialog}
           role={
-            dialogState.type === "manageRolePermissions" ? dialogState.role : null
+            dialogState.type === "manageRolePermissions"
+              ? dialogState.role
+              : null
           }
           allPermissions={permissionsData?.permissions || []}
         />
@@ -583,14 +589,18 @@ export default function AdminRolesPage() {
           open={dialogState.type === "editPermission"}
           onOpenChange={closeDialog}
           permission={
-            dialogState.type === "editPermission" ? dialogState.permission : null
+            dialogState.type === "editPermission"
+              ? dialogState.permission
+              : null
           }
         />
         <DeletePermissionDialog
           open={dialogState.type === "deletePermission"}
           onOpenChange={closeDialog}
           permission={
-            dialogState.type === "deletePermission" ? dialogState.permission : null
+            dialogState.type === "deletePermission"
+              ? dialogState.permission
+              : null
           }
         />
         <BulkAssignPermissionsDialog
@@ -603,7 +613,9 @@ export default function AdminRolesPage() {
           open={dialogState.type === "dependencyView"}
           onOpenChange={closeDialog}
           permission={
-            dialogState.type === "dependencyView" ? dialogState.permission : null
+            dialogState.type === "dependencyView"
+              ? dialogState.permission
+              : null
           }
           allPermissions={permissionsData?.permissions || []}
         />

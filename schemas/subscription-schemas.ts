@@ -9,10 +9,7 @@
  */
 
 import { z } from "zod";
-import {
-  BillingPeriod,
-  SubscriptionStatus,
-} from "@/types/subscription";
+import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 
 const InvoiceStatusSchema = z
   .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])
@@ -266,6 +263,29 @@ export const SubscriptionUpgradeRequestSchema = z.object({
 export const SubscriptionCancelRequestSchema = z.object({
   reason: z.string().max(500).optional(),
   cancel_immediately: z.boolean().optional(),
+});
+
+export const SubscriptionPlanCreateSchema = z.object({
+  name: z.string().min(1),
+  display_name: z.string().min(1),
+  description: z.string().optional(),
+  price_monthly: z.number().nonnegative(),
+  price_yearly: z.number().nonnegative(),
+  features: z.record(z.string(), z.unknown()).optional(),
+  max_workspaces: z.number().int().optional(),
+  max_members_per_workspace: z.number().int().optional(),
+  max_topics: z.number().int().optional(),
+  max_knowledge_items: z.number().int().optional(),
+  max_api_calls_per_month: z.number().int().optional(),
+  is_active: z.boolean().optional(),
+  is_public: z.boolean().optional(),
+  lemonsqueezy_product_id: z.string().max(255).optional(),
+  lemonsqueezy_variant_id_monthly: z.string().max(255).optional(),
+  lemonsqueezy_variant_id_yearly: z.string().max(255).optional(),
+});
+
+export const SubscriptionPlanUpdateSchema = SubscriptionPlanCreateSchema.partial().omit({
+  name: true,
 });
 
 // ============================================================================

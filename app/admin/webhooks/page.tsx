@@ -114,8 +114,8 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
         <TableCell className="text-sm">
           {event.processed_at
             ? formatDistanceToNow(new Date(event.processed_at), {
-              addSuffix: true,
-            })
+                addSuffix: true,
+              })
             : "-"}
         </TableCell>
         <TableCell>
