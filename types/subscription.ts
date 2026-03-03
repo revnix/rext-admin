@@ -13,6 +13,8 @@ export enum SubscriptionStatus {
   EXPIRED = "expired",
   TRIAL = "trial",
   SUSPENDED = "suspended",
+  PAST_DUE = "past_due",
+  PAUSED = "paused",
 }
 
 export enum BillingPeriod {

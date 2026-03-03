@@ -9,20 +9,16 @@
  */
 
 import { z } from "zod";
+import {
+  BillingPeriod,
+  SubscriptionStatus,
+} from "@/types/subscription";
 
+export const SubscriptionStatusSchema = z.enum(SubscriptionStatus);
+export const BillingPeriodSchema = z.enum(BillingPeriod);
 // ============================================================================
 // ENUMS
 // ============================================================================
-
-export const SubscriptionStatusSchema = z.enum([
-  "active",
-  "cancelled",
-  "expired",
-  "trial",
-  "suspended",
-]);
-
-export const BillingPeriodSchema = z.enum(["monthly", "yearly", "lifetime"]);
 
 // ============================================================================
 // CHECKOUT SCHEMAS

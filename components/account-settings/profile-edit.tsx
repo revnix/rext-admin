@@ -37,7 +37,7 @@ import {
 } from "@/lib/constants/localization";
 import {
   AVATAR_ACCEPT_ATTRIBUTE,
-  ProfileFormData,
+  type ProfileFormData,
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
 import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
@@ -92,12 +92,12 @@ export function ProfileEdit() {
     },
     values: profile
       ? {
-        full_name: profile.full_name || "",
-        display_name: profile.display_name || "",
-        bio: profile.bio || "",
-        language: profile.language || "en",
-        timezone: profile.timezone || "UTC",
-      }
+          full_name: profile.full_name || "",
+          display_name: profile.display_name || "",
+          bio: profile.bio || "",
+          language: profile.language || "en",
+          timezone: profile.timezone || "UTC",
+        }
       : undefined,
   });
 

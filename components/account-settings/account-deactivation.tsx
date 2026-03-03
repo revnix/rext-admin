@@ -1,16 +1,14 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { performLogout } from "@/lib/logout-utils";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -18,10 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
-import type { UserSubscription } from "@/types/subscription";
 import { SubscriptionStatus } from "@/types/subscription";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo, useState } from "react";
@@ -80,7 +76,6 @@ export function AccountDeactivation() {
     },
   });
 
-
   const deactivateMutation = useMutation({
     mutationFn: (data: {
       reason?: string;
@@ -91,7 +86,7 @@ export function AccountDeactivation() {
     onSuccess: async (data) => {
       toast.success(
         data.message ||
-        "Your account has been deactivated and will be deleted in 14 days.",
+          "Your account has been deactivated and will be deleted in 14 days.",
       );
 
       // Intentional UX delay: allow the success toast to be visible before
@@ -119,12 +114,12 @@ export function AccountDeactivation() {
     });
   };
 
-  const formValues = form.watch();
+  // const formValues = form.watch();
 
-  const isConfirmValid =
-    formValues.confirm_text === "DEACTIVATE" &&
-    formValues.understood &&
-    (!hasActiveSubscriptions || formValues.cancel_subscriptions);
+  // const isConfirmValid =
+  //   formValues.confirm_text === "DEACTIVATE" &&
+  //   formValues.understood &&
+  //   (!hasActiveSubscriptions || formValues.cancel_subscriptions);
 
   return (
     <Form {...form}>
@@ -145,10 +140,10 @@ export function AccountDeactivation() {
               <strong>Active Subscriptions Detected</strong>
               <p className="mt-2">
                 You have {subscriptions.length} active subscription
-                {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to cancel{" "}
-                {subscriptions.length > 1 ? "them" : "it"} before deactivating
-                your account, or choose to automatically cancel during
-                deactivation.
+                {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to
+                cancel {subscriptions.length > 1 ? "them" : "it"} before
+                deactivating your account, or choose to automatically cancel
+                during deactivation.
               </p>
             </AlertDescription>
           </Alert>
@@ -175,7 +170,9 @@ export function AccountDeactivation() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-destructive">•</span>
-              <span>All your data will be permanently deleted after 14 days</span>
+              <span>
+                All your data will be permanently deleted after 14 days
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-destructive">•</span>
@@ -183,7 +180,9 @@ export function AccountDeactivation() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-destructive">•</span>
-              <span>You can reactivate within 14 days by contacting support</span>
+              <span>
+                You can reactivate within 14 days by contacting support
+              </span>
             </li>
           </ul>
 
@@ -205,15 +204,25 @@ export function AccountDeactivation() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
-              <form onSubmit={form.handleSubmit(handleDeactivate)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(handleDeactivate)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="reason"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="reason">Reason for deactivation (optional)</FormLabel>
+                      <FormLabel htmlFor="reason">
+                        Reason for deactivation (optional)
+                      </FormLabel>
                       <FormControl>
-                        <Textarea id="reason" rows={3} disabled={deactivateMutation.isPending} {...field} />
+                        <Textarea
+                          id="reason"
+                          rows={3}
+                          disabled={deactivateMutation.isPending}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -226,10 +235,15 @@ export function AccountDeactivation() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="confirm-text">
-                        Type <strong>{DEACTIVATION_CONFIRM_TEXT}</strong> to confirm
+                        Type <strong>{DEACTIVATION_CONFIRM_TEXT}</strong> to
+                        confirm
                       </FormLabel>
                       <FormControl>
-                        <Input id="confirm-text" disabled={deactivateMutation.isPending} {...field} />
+                        <Input
+                          id="confirm-text"
+                          disabled={deactivateMutation.isPending}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -241,9 +255,16 @@ export function AccountDeactivation() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="password-text">Type password to proceed</FormLabel>
+                      <FormLabel htmlFor="password-text">
+                        Type password to proceed
+                      </FormLabel>
                       <FormControl>
-                        <Input id="password-text" type="password" disabled={deactivateMutation.isPending} {...field} />
+                        <Input
+                          id="password-text"
+                          type="password"
+                          disabled={deactivateMutation.isPending}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -259,13 +280,19 @@ export function AccountDeactivation() {
                         <Checkbox
                           id="understood"
                           checked={field.value}
-                          onCheckedChange={(checked) => field.onChange(checked === true)}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
                           disabled={deactivateMutation.isPending}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel htmlFor="understood" className="cursor-pointer font-medium">
-                          I understand that my account will be permanently deleted after 14 days
+                        <FormLabel
+                          htmlFor="understood"
+                          className="cursor-pointer font-medium"
+                        >
+                          I understand that my account will be permanently
+                          deleted after 14 days
                         </FormLabel>
                       </div>
                       <FormMessage />
@@ -283,19 +310,25 @@ export function AccountDeactivation() {
                           <Checkbox
                             id="cancel-subscriptions-inline"
                             checked={field.value}
-                            onCheckedChange={(checked) => field.onChange(checked === true)}
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked === true)
+                            }
                             disabled={deactivateMutation.isPending}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel htmlFor="cancel-subscriptions-inline" className="cursor-pointer font-medium">
-                            Automatically cancel my {subscriptions.length} active
-                            subscription{subscriptions.length > 1 ? "s" : ""}
+                          <FormLabel
+                            htmlFor="cancel-subscriptions-inline"
+                            className="cursor-pointer font-medium"
+                          >
+                            Automatically cancel my {subscriptions.length}{" "}
+                            active subscription
+                            {subscriptions.length > 1 ? "s" : ""}
                           </FormLabel>
                           <p className="text-xs text-muted-foreground">
-                            All active subscriptions will be canceled immediately.
-                            You&apos;ll retain access until the end of your current
-                            billing period.
+                            All active subscriptions will be canceled
+                            immediately. You&apos;ll retain access until the end
+                            of your current billing period.
                           </p>
                         </div>
                         <FormMessage />
@@ -304,7 +337,11 @@ export function AccountDeactivation() {
                   />
                 )}
 
-                <Button type="submit" variant="destructive" disabled={deactivateMutation.isPending}>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={deactivateMutation.isPending}
+                >
                   Deactivate Account
                 </Button>
               </form>

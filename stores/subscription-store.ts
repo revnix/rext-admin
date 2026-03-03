@@ -186,32 +186,30 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       fetchSubscription: async () => {
         set({ isLoading: true, error: null });
 
-        try {
-          // Fetch subscription and usage in parallel
-          const [subscription, usage] = await Promise.all([
-            apiClient.subscriptions.getCurrentPlan(),
-            apiClient.subscriptions.getUsageStats(),
-          ]);
+        const [subscriptionResult, usageResult] = await Promise.allSettled([
+          apiClient.subscriptions.getCurrentPlan(),
+          apiClient.subscriptions.getUsageStats(),
+        ]);
 
-          set({
-            subscription,
-            usage,
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
+        if (subscriptionResult.status === "rejected") {
           const errorMessage =
-            error instanceof Error
-              ? error.message
+            subscriptionResult.reason instanceof Error
+              ? subscriptionResult.reason.message
               : "Failed to fetch subscription";
 
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
+          set({ isLoading: false, error: errorMessage });
+          throw subscriptionResult.reason;
         }
+
+        set({
+          subscription: subscriptionResult.value,
+          usage: usageResult.status === "fulfilled" ? usageResult.value : null,
+          isLoading: false,
+          error:
+            usageResult.status === "rejected"
+              ? "Subscription loaded but usage metrics are temporarily unavailable"
+              : null,
+        });
       },
 
       fetchUsage: async () => {

@@ -115,22 +115,22 @@ export function useSSEChannel(
     }
   }, []);
 
-  const refreshNotificationsSafely = useCallback(() => {
-    // Fetch notifications from API
-    void fetchNotifications()
-      .then((incoming) => {
-        useNotificationStore.getState().mergeNotifications(incoming);
-      })
-      .catch((error) => {
-        // The original snippet had `userNotificationsLogger` and `userId` which are not defined in this context.
-        // Reverting to `sseChannelLogger` and `operationIdRef.current` for correctness within `useSSEChannel`.
-        sseChannelLogger.error("Failed to refresh notifications", {
-          operationId: operationIdRef.current,
-          error,
-        });
-        onErrorRef.current?.("Failed to refresh notifications");
-      });
-  }, []);
+  // const refreshNotificationsSafely = useCallback(() => {
+  //   // Fetch notifications from API
+  //   void fetchNotifications()
+  //     .then((incoming) => {
+  //       useNotificationStore.getState().mergeNotifications(incoming);
+  //     })
+  //     .catch((error) => {
+  //       // The original snippet had `userNotificationsLogger` and `userId` which are not defined in this context.
+  //       // Reverting to `sseChannelLogger` and `operationIdRef.current` for correctness within `useSSEChannel`.
+  //       sseChannelLogger.error("Failed to refresh notifications", {
+  //         operationId: operationIdRef.current,
+  //         error,
+  //       });
+  //       onErrorRef.current?.("Failed to refresh notifications");
+  //     });
+  // }, []);
 
   const handleError = useCallback((errorMessage?: string, code?: string) => {
     if (!errorMessage && !code) {

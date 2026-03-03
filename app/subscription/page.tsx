@@ -76,19 +76,29 @@ export default function SubscriptionDashboardPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      try {
-        setLoading(true);
-        // Load subscription, usage, and available plans in parallel
-        await Promise.all([fetchSubscription(), fetchUsage(), loadPlans()]);
-      } catch (_error) {
+      setLoading(true);
+
+      const [subscriptionResult, plansResult] = await Promise.allSettled([
+        fetchSubscription(), // already fetches usage in store
+        loadPlans(),
+      ]);
+
+      const subscriptionFailed = subscriptionResult.status === "rejected";
+      const plansFailed = plansResult.status === "rejected";
+
+      if (subscriptionFailed && plansFailed) {
         toast.error("Failed to load subscription data");
-      } finally {
-        setLoading(false);
+      } else if (subscriptionFailed) {
+        toast.error("Subscription details could not be loaded");
+      } else if (plansFailed) {
+        toast.error("Available plans are temporarily unavailable");
       }
+
+      setLoading(false);
     };
 
     loadData();
-  }, [fetchSubscription, fetchUsage, loadPlans]);
+  }, [fetchSubscription, loadPlans]);
 
   if (loading) {
     return (
