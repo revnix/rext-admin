@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import { getCSPHeader } from "@/lib/csp";
+import { ROLES } from "@/lib/permissions";
+
 
 /**
  * Generate a cryptographically secure random nonce using Web Crypto API
@@ -34,8 +36,7 @@ interface AuthenticatedRequest extends NextRequest {
  * `/permissions/me` API.
  */
 const PROTECTED_ROUTES: Record<string, string | string[]> = {
-  // Admin-only pages (platform administration)
-  "/admin": ["super_admin", "admin"], // Role-based check
+  "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   "/admin/users": "user.read",
   "/admin/monitoring": "audit.read",
   "/admin/reports": "audit.read",
@@ -71,15 +72,12 @@ function checkAccess(
 
   const user = session.user;
 
-  // Super admin bypasses all permission checks
-  if (user.role === "super_admin") return true;
+  if (user.role === ROLES.SUPER_ADMIN) return true;
 
-  // Role-based check (array of allowed roles)
   if (Array.isArray(requirement)) {
     return requirement.includes(user.role || "");
   }
 
-  // Permission-based check (single permission string)
   return user.permissions?.includes(requirement) || false;
 }
 
