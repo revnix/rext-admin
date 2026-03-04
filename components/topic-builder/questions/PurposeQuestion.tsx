@@ -138,7 +138,6 @@ export function PurposeQuestion({
               key={`purpose-${option.value}-${index}`}
               label={option.label}
               description={getDescription(option.value)}
-              value={option.value}
               selected={isSelected}
               onToggle={() => handleToggle(option.value as PurposeType)}
               icon={getIcon(option.value)}
