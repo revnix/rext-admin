@@ -183,7 +183,8 @@ export function AccessDenied({
               Need Access?
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
-              Contact your workspace administrator to request access or upgrade your role.
+              Contact your workspace administrator to request access or upgrade
+              your role.
             </p>
             <Button size="sm" variant="outline" asChild className="w-full">
               <Link href="/w" aria-label="View My Workspaces">

@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
+  parseNotificationPreferencesApi,
   type NotificationPreferences,
   type NotificationPreferencesApiResponse,
   notificationPreferencesSchema,
@@ -28,65 +29,39 @@ interface NotificationPreferencesFormProps {
   initialPreferences: NotificationPreferencesApiResponse;
 }
 
-// The API returns digest fields flat at the root of data, alongside the nested
-// category objects. We extend the type locally to cover those root-level fields.
-type ApiResponseWithDigest = NotificationPreferencesApiResponse & {
-  digest_enabled?: boolean;
-  digest_frequency?: "daily" | "weekly" | "monthly";
-};
-
 // Transform API response to form structure
 export function transformApiToFormData(
-  apiData: ApiResponseWithDigest,
+  apiData: ReturnType<typeof parseNotificationPreferencesApi>,
 ): NotificationPreferences {
   return {
-    // Workspace notifications
-    ws_invite_received:
-      apiData.workspace_notifications?.invite_received ?? false,
-    ws_invite_accepted:
-      apiData.workspace_notifications?.invite_accepted ?? false,
-    ws_role_changed: apiData.workspace_notifications?.role_changed ?? false,
-    ws_member_removed: apiData.workspace_notifications?.member_removed ?? false,
-
-    // Content generation
-    gen_completed: apiData.content_generation?.generation_completed ?? false,
-    gen_started: apiData.content_generation?.generation_started ?? false,
-    gen_failed: apiData.content_generation?.generation_failed ?? false,
-    gen_published: apiData.content_generation?.content_published ?? false,
-
-    // Billing
-    billing_payment_success: apiData.billing?.payment_success ?? false,
-    billing_payment_failed: apiData.billing?.payment_failed ?? false,
-    billing_subscription_cancelled:
-      apiData.billing?.subscription_cancelled ?? false,
-    billing_subscription_expiring:
-      apiData.billing?.subscription_expiring ?? false,
-    billing_trial_ending: apiData.billing?.trial_ending ?? false,
-    billing_usage_limit_warning: apiData.billing?.usage_limit_warning ?? false,
-    billing_usage_limit_exceeded:
-      apiData.billing?.usage_limit_exceeded ?? false,
-
-    // Knowledge base
-    kb_processing_completed:
-      apiData.knowledge_base?.processing_completed ?? false,
-    kb_processing_failed: apiData.knowledge_base?.processing_failed ?? false,
-
-    // Email digest — API returns these flat at root level, not inside email_digest
-    digest_enabled:
-      apiData.digest_enabled ?? apiData.email_digest?.enabled ?? false,
-    digest_frequency:
-      apiData.digest_frequency ?? apiData.email_digest?.frequency ?? "daily",
-
-    // Marketing
-    marketing_updates: apiData.marketing?.marketing_updates ?? false,
+    ws_invite_received: apiData.workspace_notifications.invite_received,
+    ws_invite_accepted: apiData.workspace_notifications.invite_accepted,
+    ws_role_changed: apiData.workspace_notifications.role_changed,
+    ws_member_removed: apiData.workspace_notifications.member_removed,
+    gen_completed: apiData.content_generation.generation_completed,
+    gen_started: apiData.content_generation.generation_started,
+    gen_failed: apiData.content_generation.generation_failed,
+    gen_published: apiData.content_generation.content_published,
+    billing_payment_success: apiData.billing.payment_success,
+    billing_payment_failed: apiData.billing.payment_failed,
+    billing_subscription_cancelled: apiData.billing.subscription_cancelled,
+    billing_subscription_expiring: apiData.billing.subscription_expiring,
+    billing_trial_ending: apiData.billing.trial_ending,
+    billing_usage_limit_warning: apiData.billing.usage_limit_warning,
+    billing_usage_limit_exceeded: apiData.billing.usage_limit_exceeded,
+    kb_processing_completed: apiData.knowledge_base.processing_completed,
+    kb_processing_failed: apiData.knowledge_base.processing_failed,
+    digest_enabled: apiData.email_digest.enabled,
+    digest_frequency: apiData.email_digest.frequency,
+    marketing_updates: apiData.marketing.marketing_updates,
   };
 }
 
 export function NotificationPreferencesForm({
   initialPreferences,
 }: NotificationPreferencesFormProps) {
-  // Cast so transformApiToFormData can read root-level digest fields
-  const typedPreferences = initialPreferences as ApiResponseWithDigest;
+  // Normalize the raw (partially-optional) API response into the strict shape
+  const typedPreferences = parseNotificationPreferencesApi(initialPreferences);
   const [isLoading, setIsLoading] = useState(false);
   const {
     handleSubmit,
