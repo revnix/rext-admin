@@ -127,11 +127,11 @@ export function FreshGenerationView({
           });
         }
 
-        if (updates?.generate_content?.content?.final_content) {
+        if (updates?.content_engine?.content?.final_content) {
           dispatch({
             type: "SET_GENERATED_CONTENT",
             payload:
-              updates.generate_content.content.final_content.body_markdown,
+              updates.content_engine.content.final_content.body_markdown,
           });
           dispatch({
             type: "SET_INSTRUCTION_TYPE",
