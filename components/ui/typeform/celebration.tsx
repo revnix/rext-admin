@@ -19,6 +19,242 @@ import { announceToScreenReader, triggerConfetti } from "@/lib/typeform-utils";
 import { cn } from "@/lib/utils";
 import type { CelebrationProps } from "@/types/typeform";
 
+const COLOR_CLASS_MAP = {
+  blue: {
+    particle: "bg-blue-500",
+    icon: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+    bar: "bg-blue-500",
+  },
+  purple: {
+    particle: "bg-purple-500",
+    icon: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+    bar: "bg-purple-500",
+  },
+  indigo: {
+    particle: "bg-indigo-500",
+    icon: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+    bar: "bg-indigo-500",
+  },
+  green: {
+    particle: "bg-green-500",
+    icon: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+    bar: "bg-green-500",
+  },
+  emerald: {
+    particle: "bg-emerald-500",
+    icon: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
+    bar: "bg-emerald-500",
+  },
+  teal: {
+    particle: "bg-teal-500",
+    icon: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
+    bar: "bg-teal-500",
+  },
+  pink: {
+    particle: "bg-pink-500",
+    icon: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
+    bar: "bg-pink-500",
+  },
+  rose: {
+    particle: "bg-rose-500",
+    icon: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+    bar: "bg-rose-500",
+  },
+  red: {
+    particle: "bg-red-500",
+    icon: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+    bar: "bg-red-500",
+  },
+  yellow: {
+    particle: "bg-yellow-500",
+    icon: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
+    bar: "bg-yellow-500",
+  },
+  orange: {
+    particle: "bg-orange-500",
+    icon: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+    bar: "bg-orange-500",
+  },
+  amber: {
+    particle: "bg-amber-500",
+    icon: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+    bar: "bg-amber-500",
+  },
+} as const;
+
+type CelebrationColor = keyof typeof COLOR_CLASS_MAP;
+
+const GRADIENT_CLASS_MAP: Record<CelebrationColor, Record<CelebrationColor, string>> = {
+  blue: {
+    blue: "bg-gradient-to-br from-blue-500 to-blue-500",
+    purple: "bg-gradient-to-br from-blue-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-blue-500 to-indigo-500",
+    green: "bg-gradient-to-br from-blue-500 to-green-500",
+    emerald: "bg-gradient-to-br from-blue-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-blue-500 to-teal-500",
+    pink: "bg-gradient-to-br from-blue-500 to-pink-500",
+    rose: "bg-gradient-to-br from-blue-500 to-rose-500",
+    red: "bg-gradient-to-br from-blue-500 to-red-500",
+    yellow: "bg-gradient-to-br from-blue-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-blue-500 to-orange-500",
+    amber: "bg-gradient-to-br from-blue-500 to-amber-500",
+  },
+  purple: {
+    blue: "bg-gradient-to-br from-purple-500 to-blue-500",
+    purple: "bg-gradient-to-br from-purple-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-purple-500 to-indigo-500",
+    green: "bg-gradient-to-br from-purple-500 to-green-500",
+    emerald: "bg-gradient-to-br from-purple-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-purple-500 to-teal-500",
+    pink: "bg-gradient-to-br from-purple-500 to-pink-500",
+    rose: "bg-gradient-to-br from-purple-500 to-rose-500",
+    red: "bg-gradient-to-br from-purple-500 to-red-500",
+    yellow: "bg-gradient-to-br from-purple-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-purple-500 to-orange-500",
+    amber: "bg-gradient-to-br from-purple-500 to-amber-500",
+  },
+  indigo: {
+    blue: "bg-gradient-to-br from-indigo-500 to-blue-500",
+    purple: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-indigo-500 to-indigo-500",
+    green: "bg-gradient-to-br from-indigo-500 to-green-500",
+    emerald: "bg-gradient-to-br from-indigo-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-indigo-500 to-teal-500",
+    pink: "bg-gradient-to-br from-indigo-500 to-pink-500",
+    rose: "bg-gradient-to-br from-indigo-500 to-rose-500",
+    red: "bg-gradient-to-br from-indigo-500 to-red-500",
+    yellow: "bg-gradient-to-br from-indigo-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-indigo-500 to-orange-500",
+    amber: "bg-gradient-to-br from-indigo-500 to-amber-500",
+  },
+  green: {
+    blue: "bg-gradient-to-br from-green-500 to-blue-500",
+    purple: "bg-gradient-to-br from-green-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-green-500 to-indigo-500",
+    green: "bg-gradient-to-br from-green-500 to-green-500",
+    emerald: "bg-gradient-to-br from-green-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-green-500 to-teal-500",
+    pink: "bg-gradient-to-br from-green-500 to-pink-500",
+    rose: "bg-gradient-to-br from-green-500 to-rose-500",
+    red: "bg-gradient-to-br from-green-500 to-red-500",
+    yellow: "bg-gradient-to-br from-green-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-green-500 to-orange-500",
+    amber: "bg-gradient-to-br from-green-500 to-amber-500",
+  },
+  emerald: {
+    blue: "bg-gradient-to-br from-emerald-500 to-blue-500",
+    purple: "bg-gradient-to-br from-emerald-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-emerald-500 to-indigo-500",
+    green: "bg-gradient-to-br from-emerald-500 to-green-500",
+    emerald: "bg-gradient-to-br from-emerald-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-emerald-500 to-teal-500",
+    pink: "bg-gradient-to-br from-emerald-500 to-pink-500",
+    rose: "bg-gradient-to-br from-emerald-500 to-rose-500",
+    red: "bg-gradient-to-br from-emerald-500 to-red-500",
+    yellow: "bg-gradient-to-br from-emerald-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-emerald-500 to-orange-500",
+    amber: "bg-gradient-to-br from-emerald-500 to-amber-500",
+  },
+  teal: {
+    blue: "bg-gradient-to-br from-teal-500 to-blue-500",
+    purple: "bg-gradient-to-br from-teal-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-teal-500 to-indigo-500",
+    green: "bg-gradient-to-br from-teal-500 to-green-500",
+    emerald: "bg-gradient-to-br from-teal-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-teal-500 to-teal-500",
+    pink: "bg-gradient-to-br from-teal-500 to-pink-500",
+    rose: "bg-gradient-to-br from-teal-500 to-rose-500",
+    red: "bg-gradient-to-br from-teal-500 to-red-500",
+    yellow: "bg-gradient-to-br from-teal-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-teal-500 to-orange-500",
+    amber: "bg-gradient-to-br from-teal-500 to-amber-500",
+  },
+  pink: {
+    blue: "bg-gradient-to-br from-pink-500 to-blue-500",
+    purple: "bg-gradient-to-br from-pink-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-pink-500 to-indigo-500",
+    green: "bg-gradient-to-br from-pink-500 to-green-500",
+    emerald: "bg-gradient-to-br from-pink-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-pink-500 to-teal-500",
+    pink: "bg-gradient-to-br from-pink-500 to-pink-500",
+    rose: "bg-gradient-to-br from-pink-500 to-rose-500",
+    red: "bg-gradient-to-br from-pink-500 to-red-500",
+    yellow: "bg-gradient-to-br from-pink-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-pink-500 to-orange-500",
+    amber: "bg-gradient-to-br from-pink-500 to-amber-500",
+  },
+  rose: {
+    blue: "bg-gradient-to-br from-rose-500 to-blue-500",
+    purple: "bg-gradient-to-br from-rose-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-rose-500 to-indigo-500",
+    green: "bg-gradient-to-br from-rose-500 to-green-500",
+    emerald: "bg-gradient-to-br from-rose-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-rose-500 to-teal-500",
+    pink: "bg-gradient-to-br from-rose-500 to-pink-500",
+    rose: "bg-gradient-to-br from-rose-500 to-rose-500",
+    red: "bg-gradient-to-br from-rose-500 to-red-500",
+    yellow: "bg-gradient-to-br from-rose-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-rose-500 to-orange-500",
+    amber: "bg-gradient-to-br from-rose-500 to-amber-500",
+  },
+  red: {
+    blue: "bg-gradient-to-br from-red-500 to-blue-500",
+    purple: "bg-gradient-to-br from-red-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-red-500 to-indigo-500",
+    green: "bg-gradient-to-br from-red-500 to-green-500",
+    emerald: "bg-gradient-to-br from-red-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-red-500 to-teal-500",
+    pink: "bg-gradient-to-br from-red-500 to-pink-500",
+    rose: "bg-gradient-to-br from-red-500 to-rose-500",
+    red: "bg-gradient-to-br from-red-500 to-red-500",
+    yellow: "bg-gradient-to-br from-red-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-red-500 to-orange-500",
+    amber: "bg-gradient-to-br from-red-500 to-amber-500",
+  },
+  yellow: {
+    blue: "bg-gradient-to-br from-yellow-500 to-blue-500",
+    purple: "bg-gradient-to-br from-yellow-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-yellow-500 to-indigo-500",
+    green: "bg-gradient-to-br from-yellow-500 to-green-500",
+    emerald: "bg-gradient-to-br from-yellow-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-yellow-500 to-teal-500",
+    pink: "bg-gradient-to-br from-yellow-500 to-pink-500",
+    rose: "bg-gradient-to-br from-yellow-500 to-rose-500",
+    red: "bg-gradient-to-br from-yellow-500 to-red-500",
+    yellow: "bg-gradient-to-br from-yellow-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-yellow-500 to-orange-500",
+    amber: "bg-gradient-to-br from-yellow-500 to-amber-500",
+  },
+  orange: {
+    blue: "bg-gradient-to-br from-orange-500 to-blue-500",
+    purple: "bg-gradient-to-br from-orange-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-orange-500 to-indigo-500",
+    green: "bg-gradient-to-br from-orange-500 to-green-500",
+    emerald: "bg-gradient-to-br from-orange-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-orange-500 to-teal-500",
+    pink: "bg-gradient-to-br from-orange-500 to-pink-500",
+    rose: "bg-gradient-to-br from-orange-500 to-rose-500",
+    red: "bg-gradient-to-br from-orange-500 to-red-500",
+    yellow: "bg-gradient-to-br from-orange-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-orange-500 to-orange-500",
+    amber: "bg-gradient-to-br from-orange-500 to-amber-500",
+  },
+  amber: {
+    blue: "bg-gradient-to-br from-amber-500 to-blue-500",
+    purple: "bg-gradient-to-br from-amber-500 to-purple-500",
+    indigo: "bg-gradient-to-br from-amber-500 to-indigo-500",
+    green: "bg-gradient-to-br from-amber-500 to-green-500",
+    emerald: "bg-gradient-to-br from-amber-500 to-emerald-500",
+    teal: "bg-gradient-to-br from-amber-500 to-teal-500",
+    pink: "bg-gradient-to-br from-amber-500 to-pink-500",
+    rose: "bg-gradient-to-br from-amber-500 to-rose-500",
+    red: "bg-gradient-to-br from-amber-500 to-red-500",
+    yellow: "bg-gradient-to-br from-amber-500 to-yellow-500",
+    orange: "bg-gradient-to-br from-amber-500 to-orange-500",
+    amber: "bg-gradient-to-br from-amber-500 to-amber-500",
+  },
+};
+
 // Confetti particle component
 const ConfettiParticle: React.FC<{
   delay: number;
@@ -35,7 +271,7 @@ const ConfettiParticle: React.FC<{
     <motion.div
       className={cn(
         "absolute w-2 h-2 rounded-full opacity-80",
-        `bg-${color}-500`,
+        COLOR_CLASS_MAP[color as CelebrationColor]?.particle ?? "bg-blue-500",
       )}
       style={{
         left: `${x}%`,
@@ -204,6 +440,13 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
       }));
     }, [type, colors, prefersReducedMotion]);
 
+    const safeColors = colors as CelebrationColor[];
+    const primaryColor = safeColors[0] ?? "blue";
+    const secondaryColor = safeColors[1] ?? primaryColor;
+
+    const iconClass = COLOR_CLASS_MAP[primaryColor].icon;
+    const progressBarClass = COLOR_CLASS_MAP[primaryColor].bar;
+    const gradientClass = GRADIENT_CLASS_MAP[primaryColor][secondaryColor];
     return (
       <AnimatePresence>
         {active && (
@@ -246,7 +489,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
               <div
                 className={cn(
                   "absolute inset-0 opacity-10 rounded-lg",
-                  `bg-gradient-to-br from-${colors[0]}-500 to-${colors[1]}-500`,
+                  gradientClass,
                 )}
                 aria-hidden="true"
               />
@@ -255,8 +498,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
               <motion.div
                 className={cn(
                   "relative z-10 p-3 rounded-full",
-                  `bg-${colors[0]}-100 text-${colors[0]}-600`,
-                  `dark:bg-${colors[0]}-900/30 dark:text-${colors[0]}-400`,
+                  iconClass,
                 )}
                 animate={
                   type === "completion"
@@ -303,7 +545,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                     <motion.div
                       className={cn(
                         "h-full rounded-full",
-                        `bg-${colors[0]}-500`,
+                        progressBarClass,
                       )}
                       initial={{ width: "0%" }}
                       animate={{ width: `${Math.round(progress)}%` }}
@@ -342,7 +584,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                   key={id}
                   className={cn(
                     "absolute w-1 h-1 rounded-full opacity-60",
-                    `bg-${colors[i % colors.length]}-500`,
+                    COLOR_CLASS_MAP[colors[i % colors.length] as CelebrationColor]?.particle ?? "bg-blue-500",
                   )}
                   style={{
                     left: `${20 + Math.random() * 60}%`,
