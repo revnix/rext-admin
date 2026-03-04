@@ -93,14 +93,14 @@ export class ApiClient {
           error?: { message?: string; code?: string };
           message?: string;
           detail?:
-          | Array<{
-            type: string;
-            loc: string[];
-            msg: string;
-            input?: unknown;
-            ctx?: unknown;
-          }>
-          | string;
+            | Array<{
+                type: string;
+                loc: string[];
+                msg: string;
+                input?: unknown;
+                ctx?: unknown;
+              }>
+            | string;
         };
 
         // Use shared utility to extract error message

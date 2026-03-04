@@ -5,10 +5,14 @@ import type React from "react";
 import { useEffect } from "react";
 import {
   useAllPermissions,
+  useAllWorkspacePermissions,
   useAnyPermission,
+  useAnyWorkspacePermission,
   useIsAdmin,
   usePermission,
+  useWorkspacePermission,
 } from "@/hooks/use-permission";
+import { PermissionLoading } from "./permission-loading";
 import type { Route } from "next";
 
 /**
@@ -78,6 +82,7 @@ export function ProtectedRoute({
   permission,
   requireAll = false,
   requireAdmin = false,
+  workspaceId,
   redirectTo = "/unauthorized",
   fallback,
   children,
@@ -85,45 +90,64 @@ export function ProtectedRoute({
   const router = useRouter();
   const isAdmin = useIsAdmin();
 
-  // Always call hooks at the top level
   const permissions = permission
     ? Array.isArray(permission)
       ? permission
       : [permission]
     : [];
-  const hasSinglePermission = usePermission(permissions[0] || "");
-  const hasAnyPermission = useAnyPermission(permissions);
-  const hasAllPermissions = useAllPermissions(permissions);
+  const useWorkspaceChecks = Boolean(workspaceId);
 
-  // Determine access based on requirements
+  const hasSingleGlobalPermission = usePermission(permissions[0] || "");
+  const hasAnyGlobalPermission = useAnyPermission(permissions);
+  const hasAllGlobalPermissions = useAllPermissions(permissions);
+
+  const singleWorkspaceResult = useWorkspacePermission(
+    permissions[0] || "",
+    workspaceId,
+  );
+  const anyWorkspaceResult = useAnyWorkspacePermission(permissions, workspaceId);
+  const allWorkspaceResult = useAllWorkspacePermissions(permissions, workspaceId);
+
   let hasAccess = true;
+  let isLoading = false;
 
-  // Check admin requirement
   if (requireAdmin && !isAdmin) {
     hasAccess = false;
   }
 
-  // Check permission requirement
   if (hasAccess && permission && permissions.length > 0) {
-    if (permissions.length === 1) {
-      hasAccess = hasSinglePermission;
+    if (useWorkspaceChecks) {
+      if (permissions.length === 1) {
+        hasAccess = singleWorkspaceResult.hasPermission;
+        isLoading = singleWorkspaceResult.isLoading;
+      } else if (requireAll) {
+        hasAccess = allWorkspaceResult.hasPermission;
+        isLoading = allWorkspaceResult.isLoading;
+      } else {
+        hasAccess = anyWorkspaceResult.hasPermission;
+        isLoading = anyWorkspaceResult.isLoading;
+      }
+    } else if (permissions.length === 1) {
+      hasAccess = hasSingleGlobalPermission;
     } else if (requireAll) {
-      hasAccess = hasAllPermissions;
+      hasAccess = hasAllGlobalPermissions;
     } else {
-      hasAccess = hasAnyPermission;
+      hasAccess = hasAnyGlobalPermission;
     }
   }
 
-  // Handle redirect with useEffect (always at top level)
   useEffect(() => {
-    if (!hasAccess) {
-      router.push(redirectTo as Route);
+    if (!isLoading && !hasAccess) {
+      router.replace(redirectTo as Route);
     }
-  }, [hasAccess, router, redirectTo]);
+  }, [hasAccess, isLoading, redirectTo, router]);
 
-  // Show fallback or nothing if no access
-  if (!hasAccess) {
+  if (isLoading) {
     if (fallback) return <>{fallback}</>;
+    return <PermissionLoading variant="minimal" message="Checking access..." />;
+  }
+
+  if (!hasAccess) {
     return null;
   }
 
