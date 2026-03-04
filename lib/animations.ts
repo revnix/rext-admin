@@ -348,5 +348,5 @@ export const useReducedMotion = (): boolean => {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 };
 
-// Removed unused animationVariants aggregate, utilities (createStaggeredAnimation, createSpringAnimation), 
+// Removed unused animationVariants aggregate, utilities (createStaggeredAnimation, createSpringAnimation),
 // and default export per TASK-267.

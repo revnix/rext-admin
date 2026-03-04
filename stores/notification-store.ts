@@ -144,7 +144,9 @@ export const useNotificationStore = create<NotificationStore>()(
             await NotificationApiService.markAllNotificationsAsRead();
           } catch (error) {
             log.error("Failed to mark all notifications as read", error);
-            set((state) => updateState(revertAllRead(state.notifications, unreadIds)));
+            set((state) =>
+              updateState(revertAllRead(state.notifications, unreadIds)),
+            );
           }
         },
 

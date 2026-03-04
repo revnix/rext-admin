@@ -105,8 +105,14 @@ export function ProtectedRoute({
     permissions[0] || "",
     workspaceId,
   );
-  const anyWorkspaceResult = useAnyWorkspacePermission(permissions, workspaceId);
-  const allWorkspaceResult = useAllWorkspacePermissions(permissions, workspaceId);
+  const anyWorkspaceResult = useAnyWorkspacePermission(
+    permissions,
+    workspaceId,
+  );
+  const allWorkspaceResult = useAllWorkspacePermissions(
+    permissions,
+    workspaceId,
+  );
 
   let hasAccess = true;
   let isLoading = false;

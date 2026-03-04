@@ -164,10 +164,11 @@ export function NotificationsDrawer({
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${!notification.read
-                    ? "bg-blue-50 border-blue-200"
-                    : "bg-background border-border"
-                    }`}
+                  className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${
+                    !notification.read
+                      ? "bg-blue-50 border-blue-200"
+                      : "bg-background border-border"
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -176,10 +177,11 @@ export function NotificationsDrawer({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4
-                          className={`text-sm font-medium ${!notification.read
-                            ? "text-foreground"
-                            : "text-muted-foreground"
-                            }`}
+                          className={`text-sm font-medium ${
+                            !notification.read
+                              ? "text-foreground"
+                              : "text-muted-foreground"
+                          }`}
                         >
                           {notification.title}
                         </h4>
