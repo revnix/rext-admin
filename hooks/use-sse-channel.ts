@@ -10,6 +10,7 @@ import {
 } from "@/types/sse";
 import { fetchNotifications } from "@/services/notification-api";
 import { useNotificationStore } from "@/stores/notification-store";
+import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
@@ -358,7 +359,7 @@ export function useSSEChannel(
         );
         operationIdRef.current = operationId;
       }
-    }, 100); // Small delay to prevent race conditions
+    }, NOTIFICATION_CONSTANTS.SSE_SUBSCRIBE_DELAY_MS); // Small delay to prevent race conditions
 
     // Cleanup on unmount or when dependencies change
     return () => {

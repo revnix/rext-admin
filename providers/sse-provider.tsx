@@ -20,6 +20,7 @@ import {
   useMemo,
   useRef,
 } from "react";
+import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
 
 type ActiveSubscription = {
   abortController: AbortController;
@@ -97,6 +98,33 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         sseLogger.info("Operation already completed, notifying immediately", {
           operationId,
         });
+
+        // Immediately fire the completion event
+        // This mimics what would happen if we connected and received the completion event
+        const completionEvent: SSEEvent = {
+          id: `${operationId}_completed`,
+          operation_id: operationId,
+          scope: "workspace",
+          step: "pipeline.completed",
+          status: "completed",
+          message: "Operation already completed",
+          progress: 100,
+          timestamp: new Date().toISOString(),
+          payload: undefined, // We don't have the payload since we didn't reconnect
+        };
+
+        // Call onEvent with the completion event
+        setTimeout(() => {
+          onEvent?.(completionEvent);
+        }, 0);
+
+        // Notify status
+        onStatus?.({
+          connected: false,
+          retryCount: 0,
+          code: SSE_ERROR_CODES.OPERATION_COMPLETED,
+        });
+
         return () => undefined;
       }
 
@@ -105,13 +133,37 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       if (existingSubscription && existingSubscription.subscriberCount === 0) {
         existingSubscription.unsubscribe();
         activeSubscriptionsRef.current.delete(operationId);
+
+        sseLogger.info("Reusing existing SSE subscription", {
+          operationId,
+          subscriberCount: existingSubscription.subscriberCount,
+        });
+
+        // Increment subscriber count
+        existingSubscription.subscriberCount++;
+
+        // Return a function that decrements the count
+        return () => {
+          existingSubscription.subscriberCount--;
+          sseLogger.info("Decremented subscriber count", {
+            operationId,
+            remainingSubscribers: existingSubscription.subscriberCount,
+          });
+
+          // If this was the last subscriber, clean up
+          if (existingSubscription.subscriberCount === 0) {
+            sseLogger.info("Last subscriber disconnected, cleaning up", {
+              operationId,
+            });
+            existingSubscription.unsubscribe();
+            activeSubscriptions.delete(operationId);
+          }
+        };
       }
 
       let isActive = true;
       let retryCount = 0;
       let abortController = new AbortController();
-
-      completedOperationsRef.current.add(operationId);
 
       const baseEndpoint = resolvedBaseUrl || resolveApiBaseUrl();
 
@@ -383,7 +435,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               error: errorMessage,
             });
 
-            if (retryCount >= MAX_RETRIES) {
+            if (retryCount >= NOTIFICATION_CONSTANTS.SSE_MAX_RETRIES) {
               stop({
                 connected: false,
                 retryCount,
@@ -400,8 +452,8 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
             });
 
             const delay = Math.min(
-              RETRY_BASE_DELAY_MS * 2 ** (retryCount - 1),
-              RETRY_MAX_DELAY_MS,
+              NOTIFICATION_CONSTANTS.SSE_RETRY_BASE_DELAY_MS * 2 ** (retryCount - 1),
+              NOTIFICATION_CONSTANTS.SSE_RETRY_MAX_DELAY_MS,
             );
 
             await new Promise((resolve) => {
@@ -433,6 +485,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         unsubscribe,
       });
 
+
       return unsubscribe;
     },
     [resolvedBaseUrl],
@@ -450,6 +503,20 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
     }),
     [subscribe, clearCompletedOperation],
   );
+
+  useEffect(() => {
+    return () => {
+      for (const subscription of activeSubscriptionsRef.current.values()) {
+        if (!subscription.abortController.signal.aborted) {
+          subscription.abortController.abort();
+        }
+        subscription.unsubscribe();
+      }
+
+      activeSubscriptionsRef.current.clear();
+      completedOperationsRef.current.clear();
+    };
+  }, []);
 
   return (
     <SSEContext.Provider value={contextValue}>{children}</SSEContext.Provider>

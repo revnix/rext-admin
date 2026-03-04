@@ -3,8 +3,7 @@ import { NotificationApiService } from "@/services";
 import type { OperationNotification } from "@/types/sse";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
-
-const MAX_NOTIFICATIONS = 50;
+import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
 
 interface NotificationStore {
   notifications: OperationNotification[];
@@ -84,7 +83,7 @@ export const useNotificationStore = create<NotificationStore>()(
 
             const next = [notification, ...state.notifications].slice(
               0,
-              MAX_NOTIFICATIONS,
+              NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS,
             );
 
             return updateState(next);
@@ -102,7 +101,7 @@ export const useNotificationStore = create<NotificationStore>()(
                 (a, b) =>
                   new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
               )
-              .slice(0, MAX_NOTIFICATIONS);
+              .slice(0, NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS);
 
             return updateState(next);
           }),
@@ -176,7 +175,7 @@ export const useNotificationStore = create<NotificationStore>()(
         ),
 
         partialize: (state) => ({
-          notifications: state.notifications.slice(0, MAX_NOTIFICATIONS),
+          notifications: state.notifications.slice(0, NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS),
         }),
 
         merge: (persisted, current) => {
