@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, Shield } from "lucide-react";
-import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PermissionLoadingProps {
@@ -24,30 +23,8 @@ interface PermissionLoadingProps {
    * Custom className
    */
   className?: string;
-
-  /**
-   * Children to show skeleton for (optional)
-   */
-  children?: ReactNode;
 }
 
-/**
- * Permission Loading Component
- *
- * Shows loading state while permission checks are being performed.
- *
- * @example
- * // Simple spinner
- * <PermissionLoading variant="spinner" />
- *
- * @example
- * // Skeleton loader
- * <PermissionLoading variant="skeleton" size="lg" />
- *
- * @example
- * // Minimal loader with custom message
- * <PermissionLoading variant="minimal" message="Checking permissions..." />
- */
 export function PermissionLoading({
   variant = "skeleton",
   message,
@@ -90,7 +67,6 @@ export function PermissionLoading({
     );
   }
 
-  // Skeleton variant (default)
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Skeleton className={sizeClasses[size]} />
