@@ -13,6 +13,20 @@ import { useNotificationStore } from "@/stores/notification-store";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
+async function refreshNotificationsWithState(): Promise<void> {
+  const store = useNotificationStore.getState();
+  store.setFetchState({ isLoading: true, fetchError: null });
+
+  try {
+    const notifications = await fetchNotifications();
+    store.mergeNotifications(notifications);
+    store.setFetchState({ isLoading: false, fetchError: null });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    store.setFetchState({ isLoading: false, fetchError: message });
+  }
+}
+
 /**
  * Classification for SSE status/error messages
  */
@@ -131,6 +145,8 @@ export function useSSEChannel(
   //       onErrorRef.current?.("Failed to refresh notifications");
   //     });
   // }, []);
+
+  void refreshNotificationsWithState();
 
   const handleError = useCallback((errorMessage?: string, code?: string) => {
     if (!errorMessage && !code) {

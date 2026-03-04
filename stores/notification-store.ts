@@ -11,9 +11,14 @@ interface NotificationStore {
   unreadCount: number;
   isDrawerOpen: boolean;
   hasHydrated: boolean;
+
+  isLoading: boolean;
+  fetchError: string | null;
+
+  setFetchState: (state: { isLoading: boolean; fetchError: string | null }) => void;
   setHasHydrated: (value: boolean) => void;
   addNotification: (notification: OperationNotification) => void;
-  mergeNotifications: (incoming: OperationNotification[]) => void;
+  mergeNotifications: (notifications: OperationNotification[]) => void;
   setNotificationRead: (id: string, read: boolean) => void;
   setAllNotificationsRead: (unreadIds?: string[]) => void;
   markAsRead: (id: string) => Promise<void>;
@@ -64,6 +69,11 @@ export const useNotificationStore = create<NotificationStore>()(
         unreadCount: 0,
         isDrawerOpen: false,
         hasHydrated: false,
+        isLoading: false,
+        fetchError: null,
+
+        setFetchState: ({ isLoading, fetchError }) => set({ isLoading, fetchError }),
+
         setHasHydrated: (value) => set({ hasHydrated: value }),
 
         addNotification: (notification) =>
@@ -82,21 +92,19 @@ export const useNotificationStore = create<NotificationStore>()(
 
         mergeNotifications: (incoming) =>
           set((state) => {
-            const map = new Map(state.notifications.map((n) => [n.id, n]));
-
+            const merged = new Map(state.notifications.map((item) => [item.id, item]));
             for (const item of incoming) {
-              map.set(item.id, item);
+              merged.set(item.id, item);
             }
 
-            const merged = Array.from(map.values())
+            const next = Array.from(merged.values())
               .sort(
                 (a, b) =>
-                  new Date(b.createdAt).getTime() -
-                  new Date(a.createdAt).getTime(),
+                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
               )
               .slice(0, MAX_NOTIFICATIONS);
 
-            return updateState(merged);
+            return updateState(next);
           }),
 
         setNotificationRead: (id, read) =>
@@ -158,6 +166,8 @@ export const useNotificationStore = create<NotificationStore>()(
 
         clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
         setDrawerOpen: (open: boolean) => set({ isDrawerOpen: open }),
+
+
       }),
       {
         name: "notification-store",
