@@ -159,13 +159,19 @@ export const useNotificationStore = create<NotificationStore>()(
       }),
       {
         name: "notification-store",
-        storage: createJSONStorage(() => localStorage),
+        storage:
+          typeof window !== "undefined"
+            ? createJSONStorage(() => localStorage)
+            : undefined,
+
         partialize: (state) => ({
           notifications: state.notifications.slice(0, MAX_NOTIFICATIONS),
         }),
+
         merge: (persisted, current) => {
           const persistedState = persisted as Partial<NotificationStore>;
-          const notifications = persistedState.notifications ?? current.notifications;
+          const notifications =
+            persistedState.notifications ?? current.notifications;
 
           return {
             ...current,
@@ -174,6 +180,7 @@ export const useNotificationStore = create<NotificationStore>()(
             unreadCount: calculateUnread(notifications),
           };
         },
+
         onRehydrateStorage: () => (state) => {
           state?.setHasHydrated(true);
         },

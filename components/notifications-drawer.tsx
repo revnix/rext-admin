@@ -75,6 +75,7 @@ export function NotificationsDrawer({
 }: NotificationsDrawerProps) {
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const hasHydrated = useNotificationStore((state) => state.hasHydrated);
 
   const setNotificationRead = useNotificationStore(
     (state) => state.setNotificationRead,
@@ -120,6 +121,13 @@ export function NotificationsDrawer({
     }
   };
 
+  if (!hasHydrated) {
+    return (
+      <div className="flex h-full items-center justify-center py-8 text-sm text-muted-foreground">
+        Loading notifications...
+      </div>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
