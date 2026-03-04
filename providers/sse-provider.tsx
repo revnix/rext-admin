@@ -2,13 +2,6 @@
 
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
 import { ApiError } from "@/lib/api-client/core";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
@@ -18,6 +11,22 @@ import {
   SSE_ERROR_CODES,
 } from "@/types/sse";
 import { SSEEventSchema } from "@/schemas/sse-schemas";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+
+type ActiveSubscription = {
+  abortController: AbortController;
+  subscriberCount: number;
+  unsubscribe: () => void;
+};
+
 
 interface SSEContextType {
   subscribe: (
@@ -62,6 +71,12 @@ const activeSubscriptions = new Map<
 >();
 
 export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
+  const completedOperationsRef = useRef<Set<string>>(new Set());
+  const activeSubscriptionsRef = useRef<Map<string, ActiveSubscription>>(
+    new Map(),
+  );
+
+
   const resolvedBaseUrl = useMemo(
     () =>
       resolveApiBaseUrl({
@@ -78,74 +93,25 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         return () => undefined;
       }
 
-      // Check if operation was already completed
-      if (completedOperations.has(operationId)) {
+      if (completedOperationsRef.current.has(operationId)) {
         sseLogger.info("Operation already completed, notifying immediately", {
           operationId,
         });
-
-        // Immediately fire the completion event
-        // This mimics what would happen if we connected and received the completion event
-        const completionEvent: SSEEvent = {
-          id: `${operationId}_completed`,
-          operation_id: operationId,
-          scope: "workspace",
-          step: "pipeline.completed",
-          status: "completed",
-          message: "Operation already completed",
-          progress: 100,
-          timestamp: new Date().toISOString(),
-          payload: undefined, // We don't have the payload since we didn't reconnect
-        };
-
-        // Call onEvent with the completion event
-        setTimeout(() => {
-          onEvent?.(completionEvent);
-        }, 0);
-
-        // Notify status
-        onStatus?.({
-          connected: false,
-          retryCount: 0,
-          code: SSE_ERROR_CODES.OPERATION_COMPLETED,
-        });
-
         return () => undefined;
       }
 
-      // Check if there's already an active subscription for this operation
-      const existingSubscription = activeSubscriptions.get(operationId);
-      if (existingSubscription) {
-        sseLogger.info("Reusing existing SSE subscription", {
-          operationId,
-          subscriberCount: existingSubscription.subscriberCount,
-        });
+      const existingSubscription = activeSubscriptionsRef.current.get(operationId);
 
-        // Increment subscriber count
-        existingSubscription.subscriberCount++;
-
-        // Return a function that decrements the count
-        return () => {
-          existingSubscription.subscriberCount--;
-          sseLogger.info("Decremented subscriber count", {
-            operationId,
-            remainingSubscribers: existingSubscription.subscriberCount,
-          });
-
-          // If this was the last subscriber, clean up
-          if (existingSubscription.subscriberCount === 0) {
-            sseLogger.info("Last subscriber disconnected, cleaning up", {
-              operationId,
-            });
-            existingSubscription.unsubscribe();
-            activeSubscriptions.delete(operationId);
-          }
-        };
+      if (existingSubscription && existingSubscription.subscriberCount === 0) {
+        existingSubscription.unsubscribe();
+        activeSubscriptionsRef.current.delete(operationId);
       }
 
       let isActive = true;
       let retryCount = 0;
       let abortController = new AbortController();
+
+      completedOperationsRef.current.add(operationId);
 
       const baseEndpoint = resolvedBaseUrl || resolveApiBaseUrl();
 
@@ -461,8 +427,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         activeSubscriptions.delete(operationId);
       };
 
-      // Store this subscription in the active subscriptions map
-      activeSubscriptions.set(operationId, {
+      activeSubscriptionsRef.current.set(operationId, {
         abortController,
         subscriberCount: 1,
         unsubscribe,
