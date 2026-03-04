@@ -1,5 +1,129 @@
 import { z } from "zod";
 
+const digestFrequencySchema = z.enum(["daily", "weekly", "monthly"]);
+
+const normalizedNotificationPreferencesApiSchema = z
+  .object({
+    workspace_notifications: z.object({
+      invite_received: z.boolean(),
+      invite_accepted: z.boolean(),
+      role_changed: z.boolean(),
+      member_removed: z.boolean(),
+    }),
+    content_generation: z.object({
+      generation_started: z.boolean(),
+      generation_completed: z.boolean(),
+      generation_failed: z.boolean(),
+      content_published: z.boolean(),
+    }),
+    billing: z.object({
+      payment_success: z.boolean(),
+      payment_failed: z.boolean(),
+      subscription_cancelled: z.boolean(),
+      subscription_expiring: z.boolean(),
+      trial_ending: z.boolean(),
+      usage_limit_warning: z.boolean(),
+      usage_limit_exceeded: z.boolean(),
+    }),
+    knowledge_base: z.object({
+      processing_completed: z.boolean(),
+      processing_failed: z.boolean(),
+    }),
+    email_digest: z.object({
+      enabled: z.boolean(),
+      frequency: digestFrequencySchema,
+    }),
+    marketing: z.object({
+      marketing_updates: z.boolean(),
+    }),
+  })
+  .strict();
+
+export type NormalizedNotificationPreferencesApiResponse = z.infer<
+  typeof normalizedNotificationPreferencesApiSchema
+>;
+
+const wireNotificationPreferencesSchema = z
+  .object({
+    workspace_notifications: z
+      .object({
+        invite_received: z.boolean(),
+        invite_accepted: z.boolean(),
+        role_changed: z.boolean(),
+        member_removed: z.boolean(),
+      })
+      .optional(),
+    content_generation: z
+      .object({
+        generation_started: z.boolean(),
+        generation_completed: z.boolean(),
+        generation_failed: z.boolean(),
+        content_published: z.boolean(),
+      })
+      .optional(),
+    billing: z
+      .object({
+        payment_success: z.boolean(),
+        payment_failed: z.boolean(),
+        subscription_cancelled: z.boolean(),
+        subscription_expiring: z.boolean(),
+        trial_ending: z.boolean(),
+        usage_limit_warning: z.boolean(),
+        usage_limit_exceeded: z.boolean(),
+      })
+      .optional(),
+    knowledge_base: z
+      .object({
+        processing_completed: z.boolean(),
+        processing_failed: z.boolean(),
+      })
+      .optional(),
+    email_digest: z
+      .object({
+        enabled: z.boolean(),
+        frequency: digestFrequencySchema,
+      })
+      .optional(),
+    digest_enabled: z.boolean().optional(),
+    digest_frequency: digestFrequencySchema.optional(),
+    marketing: z
+      .object({
+        marketing_updates: z.boolean(),
+      })
+      .optional(),
+  })
+  .passthrough();
+
+export function parseNotificationPreferencesApi(
+  payload: unknown,
+): NormalizedNotificationPreferencesApiResponse {
+  const parsed = wireNotificationPreferencesSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    throw new Error(
+      `[NotificationPreferences] Invalid payload: ${parsed.error.issues
+        .map((issue) => issue.path.join(".") || "root")
+        .join(", ")}`,
+    );
+  }
+
+  const source = parsed.data;
+
+  const normalized = {
+    workspace_notifications: source.workspace_notifications,
+    content_generation: source.content_generation,
+    billing: source.billing,
+    knowledge_base: source.knowledge_base,
+    email_digest: source.email_digest ?? {
+      enabled: source.digest_enabled,
+      frequency: source.digest_frequency,
+    },
+    marketing: source.marketing,
+  };
+
+  return normalizedNotificationPreferencesApiSchema.parse(normalized);
+}
+
 export const notificationPreferencesSchema = z.object({
   // Workspace Notifications
   ws_invite_received: z.boolean(),
