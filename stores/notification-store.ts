@@ -161,10 +161,9 @@ export const useNotificationStore = create<NotificationStore>()(
       }),
       {
         name: "notification-store",
-        storage:
-          typeof window !== "undefined"
-            ? createJSONStorage(() => localStorage)
-            : undefined,
+        storage: createJSONStorage(() =>
+          typeof window !== "undefined" ? localStorage : sessionStorage,
+        ),
 
         partialize: (state) => ({
           notifications: state.notifications.slice(0, MAX_NOTIFICATIONS),

@@ -29,8 +29,6 @@ interface NotificationPreferencesFormProps {
   initialPreferences: NotificationPreferencesApiResponse;
 }
 
-
-
 // Transform API response to form structure
 export function transformApiToFormData(
   apiData: ReturnType<typeof parseNotificationPreferencesApi>,

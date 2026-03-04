@@ -25,6 +25,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 import { NotificationApiService } from "@/services/notification-api";
 import { log } from "@/lib/logger";
 import type { OperationNotification } from "@/types/sse";
+import { useEffect } from "react";
 
 interface NotificationsDrawerProps {
   open: boolean;
@@ -75,7 +76,6 @@ export function NotificationsDrawer({
 }: NotificationsDrawerProps) {
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
-  const hasHydrated = useNotificationStore((state) => state.hasHydrated);
 
   const setNotificationRead = useNotificationStore(
     (state) => state.setNotificationRead,
@@ -121,14 +121,6 @@ export function NotificationsDrawer({
     }
   };
 
-  if (!hasHydrated) {
-    return (
-      <div className="flex h-full items-center justify-center py-8 text-sm text-muted-foreground">
-        Loading notifications...
-      </div>
-    );
-  }
-
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-96 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-300">
@@ -164,7 +156,7 @@ export function NotificationsDrawer({
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${
+                  className={`p-3 rounded-lg border transition-all dark:bg-muted/50 ${
                     !notification.read
                       ? "bg-blue-50 border-blue-200"
                       : "bg-background border-border"
