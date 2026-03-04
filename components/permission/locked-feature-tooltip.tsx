@@ -161,7 +161,10 @@ export function LockedFeatureTooltip({
 
   // Clone the child element and apply disabled semantics safely
   const child = children as ReactElement<DisableableChildProps>;
-  const mergedClassName = [child.props.className, "cursor-not-allowed opacity-60"]
+  const mergedClassName = [
+    child.props.className,
+    "cursor-not-allowed opacity-60",
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -198,5 +201,3 @@ export function LockedFeatureTooltip({
     </Tooltip>
   );
 }
-
-

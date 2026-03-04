@@ -23,9 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
-import { adminQueries } from "@/lib/query-keys";
 import type { Permission, Role } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
+import { usePermissionStore } from "@/stores/permission-store";
 
 interface BulkAssignPermissionsDialogProps {
   open: boolean;
@@ -46,7 +46,9 @@ export function BulkAssignPermissionsDialog({
     [],
   );
   const [operation, setOperation] = useState<"add" | "remove">("add");
-
+  const invalidateWorkspacePermissions = usePermissionStore(
+    (state) => state.invalidateWorkspacePermissions,
+  );
   const bulkMutation = useMutation({
     mutationFn: async () => {
       const results = await Promise.allSettled(
@@ -71,17 +73,14 @@ export function BulkAssignPermissionsDialog({
 
       return { successful, failed, total: results.length };
     },
-    onSuccess: (data) => {
-      if (data.failed === 0) {
-        toast.success(
-          `Successfully ${operation === "add" ? "assigned" : "removed"} permissions ${operation === "add" ? "to" : "from"} ${data.successful} role(s)`,
-        );
-      } else {
-        toast.warning(
-          `Completed with mixed results: ${data.successful} succeeded, ${data.failed} failed`,
-        );
-      }
-      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
+    onSuccess: async () => {
+      toast.success("Role updated successfully");
+      invalidateWorkspacePermissions();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+      ]);
       handleClose();
     },
     onError: (error: Error) => {
