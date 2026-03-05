@@ -580,7 +580,7 @@ export default function LexicalEditor({
       nodes: NODES,
       readOnly: readOnly,
       onError: (error: Error) => {
-        console.error(error);
+        log.error(error);
       },
       editorState: (editor: unknown) => {
         // Convert initial markdown to editor state
@@ -588,7 +588,7 @@ export default function LexicalEditor({
           if (initialValue) {
             try {
               $convertFromMarkdownString(initialValue, TRANSFORMERS);
-            } catch (_e) { }
+            } catch (_e) {}
           }
         });
       },

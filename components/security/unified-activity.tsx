@@ -398,9 +398,9 @@ export function UnifiedActivity() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {loginHistory.history.map((event, idx) => (
+                      {loginHistory.history.map((event) => (
                         <div
-                          key={`${event.created_at}-${idx}`}
+                          key={event.created_at}
                           className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-3">

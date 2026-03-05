@@ -28,11 +28,11 @@ interface UsageLimitWarningProps {
    * Resource type to monitor
    */
   resource:
-  | "workspaces"
-  | "topics"
-  | "knowledge_items"
-  | "ai_requests"
-  | "storage";
+    | "workspaces"
+    | "topics"
+    | "knowledge_items"
+    | "ai_requests"
+    | "storage";
 
   /**
    * Show warning when usage reaches this percentage (0-100)
@@ -292,10 +292,11 @@ export function UsageLimitWarning({
                 {showProgress && (
                   <Progress
                     value={Math.min(usagePercentage, 100)}
-                    className={`h-2 ${isCritical
+                    className={`h-2 ${
+                      isCritical
                         ? "[&>div]:bg-destructive"
                         : "[&>div]:bg-yellow-500"
-                      }`}
+                    }`}
                   />
                 )}
               </div>
