@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import type { Route } from "next";
+import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
 /**
  * Usage Limit Warning Component
@@ -27,11 +28,11 @@ interface UsageLimitWarningProps {
    * Resource type to monitor
    */
   resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage";
+  | "workspaces"
+  | "topics"
+  | "knowledge_items"
+  | "ai_requests"
+  | "storage";
 
   /**
    * Show warning when usage reaches this percentage (0-100)
@@ -129,19 +130,19 @@ export function UsageLimitWarning({
     switch (resource) {
       case "workspaces":
         current = usage.current_workspaces;
-        max = subscription.plan_limits?.max_workspaces || -1;
+        max = subscription.plan_limits?.max_workspaces ?? -1;
         break;
       case "topics":
         current = usage.current_topics;
-        max = subscription.plan_limits?.max_topics || -1;
+        max = subscription.plan_limits?.max_topics ?? -1;
         break;
       case "knowledge_items":
         current = usage.current_knowledge_items;
-        max = subscription.plan_limits?.max_knowledge_items || -1;
+        max = subscription.plan_limits?.max_knowledge_items ?? -1;
         break;
       case "ai_requests":
         current = usage.current_api_calls;
-        max = subscription.plan_limits?.max_api_calls_per_month || -1;
+        max = subscription.plan_limits?.max_api_calls_per_month ?? -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented
@@ -249,8 +250,9 @@ export function UsageLimitWarning({
                 variant="ghost"
                 onClick={handleDismiss}
                 className="h-6 w-6 p-0"
+                aria-label={`Dismiss ${getResourceLabel().toLowerCase()} usage warning`}
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             )}
           </div>
@@ -283,11 +285,10 @@ export function UsageLimitWarning({
                 {showProgress && (
                   <Progress
                     value={Math.min(usagePercentage, 100)}
-                    className={`h-2 ${
-                      isCritical
+                    className={`h-2 ${isCritical
                         ? "[&>div]:bg-destructive"
                         : "[&>div]:bg-yellow-500"
-                    }`}
+                      }`}
                   />
                 )}
               </div>
@@ -314,13 +315,18 @@ export function UsageLimitWarning({
               </p>
 
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleUpgrade}>
+                <Button
+                  size="sm"
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+                  onClick={handleUpgrade}
+                >
                   <TrendingUp className="mr-2 h-4 w-4" />
                   Upgrade Plan
                 </Button>
+
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                   onClick={() =>
                     router.push("/dashboard/subscription" as Route)
                   }
@@ -334,9 +340,8 @@ export function UsageLimitWarning({
           {dismissible && (
             <Button
               size="sm"
-              variant="ghost"
+              variant={SUBSCRIPTION_ACTION_VARIANTS.dismissTertiary}
               onClick={handleDismiss}
-              className="ml-2"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -375,19 +380,19 @@ export function useResourceLimit(
     switch (resource) {
       case "workspaces":
         current = usage.current_workspaces;
-        max = subscription.plan_limits?.max_workspaces || -1;
+        max = subscription.plan_limits?.max_workspaces ?? -1;
         break;
       case "topics":
         current = usage.current_topics;
-        max = subscription.plan_limits?.max_topics || -1;
+        max = subscription.plan_limits?.max_topics ?? -1;
         break;
       case "knowledge_items":
         current = usage.current_knowledge_items;
-        max = subscription.plan_limits?.max_knowledge_items || -1;
+        max = subscription.plan_limits?.max_knowledge_items ?? -1;
         break;
       case "ai_requests":
         current = usage.current_api_calls;
-        max = subscription.plan_limits?.max_api_calls_per_month || -1;
+        max = subscription.plan_limits?.max_api_calls_per_month ?? -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented

@@ -239,13 +239,16 @@ export default function SubscriptionDashboardPage() {
                 higher tier for more resources and advanced features.
               </p>
               <div className="flex gap-3">
-                <Button onClick={() => router.push("/pricing" as Route)}>
+                <Button
+                  onClick={() => router.push("/pricing")}
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+                >
                   View All Plans
                 </Button>
                 {canChangePlan && (
                   <Button
                     onClick={() => setPlanChangeModalOpen(true)}
-                    variant="outline"
+                    variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                   >
                     Upgrade Now
                   </Button>

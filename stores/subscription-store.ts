@@ -155,11 +155,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       openCheckout: (checkoutUrl: string) => {
-        // Open LemonSqueezy checkout overlay
-        if (typeof window !== "undefined" && window.LemonSqueezy) {
-          window.LemonSqueezy.Url.Open(checkoutUrl);
-        } else {
-          // Fallback to opening in new window if LemonSqueezy script not loaded
+        const client = getLemonSqueezyClient();
+
+        if (client) {
+          client.Url.Open(checkoutUrl);
+          return;
+        }
+
+        if (typeof window !== "undefined") {
           window.open(checkoutUrl, "_blank");
         }
       },

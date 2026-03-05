@@ -91,28 +91,6 @@ export function PricingTable({
     return subscription?.plan_id === planId;
   };
 
-  // Parse features from JSON
-  const parseFeatures = (plan: SubscriptionPlan): string[] => {
-    if (typeof plan.features === "object" && plan.features !== null) {
-      // Check if features is an array
-      if (Array.isArray(plan.features)) {
-        return plan.features as string[];
-      }
-      // Check if features has a 'list' or 'items' property
-      if ("list" in plan.features && Array.isArray(plan.features.list)) {
-        return plan.features.list as string[];
-      }
-      if ("items" in plan.features && Array.isArray(plan.features.items)) {
-        return plan.features.items as string[];
-      }
-      // Convert object values to array
-      return Object.values(plan.features).filter(
-        (v): v is string => typeof v === "string",
-      );
-    }
-    return [];
-  };
-
   if (isLoading && plans.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -159,7 +137,7 @@ export function PricingTable({
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {visiblePlans.map((plan) => {
-          const features = parseFeatures(plan);
+          const features = plan.features.items;
           const price = getPrice(plan);
           const { savingsPercent } = getYearlySavings(plan);
           const isPopular = plan.id === popularPlanId;
