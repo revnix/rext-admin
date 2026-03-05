@@ -66,6 +66,11 @@ const activeSubscriptions = new Map<
   }
 >();
 
+/**
+ * Provides SSE subscription APIs for long-running operation updates.
+ *
+ * `baseUrl` optionally overrides environment-derived API resolution.
+ */
 export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
   const completedOperationsRef = useRef<Set<string>>(new Set());
   const activeSubscriptionsRef = useRef<Map<string, ActiveSubscription>>(
@@ -518,6 +523,11 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
   );
 }
 
+/**
+ * Access the active SSE context.
+ *
+ * @throws Error when used outside `SSEProvider`
+ */
 export function useSSE(): SSEContextType {
   const context = useContext(SSEContext);
 
