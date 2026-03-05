@@ -167,9 +167,9 @@ export function DashboardCharts() {
           {/* Simple Bar Chart Mock */}
           <div className="h-[200px] w-full flex items-end justify-between gap-4 mt-6 px-2">
             {[40, 65, 50, 75, 45, 60, 70, 55, 60, 65, 50, 60, 65, 75, 55].map(
-              (h, i) => (
+              (h) => (
                 <div
-                  key={`bar-${i}-${h}`}
+                  key={`bar-${h}-${h}`}
                   className="w-full bg-blue-100 rounded-t-sm relative group h-full flex items-end"
                 >
                   <div

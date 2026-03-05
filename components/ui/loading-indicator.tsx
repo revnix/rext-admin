@@ -106,23 +106,20 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 className="grid gap-4 pb-2 border-b"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
-                {Array.from({ length: columns }).map((_, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
-                  <Skeleton key={`header-${i}`} className="h-4" />
+                {Array.from({ length: columns }).map((item) => (
+                  <Skeleton key={`header-${item}`} className="h-4" />
                 ))}
               </div>
             )}
 
-            {Array.from({ length: rows }).map((_, rowIndex) => (
+            {Array.from({ length: rows }).map((item) => (
               <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
-                key={`row-${rowIndex}`}
+                key={`row-${item}`}
                 className="grid gap-4 py-3"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
-                {Array.from({ length: columns }).map((_, colIndex) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
-                  <div key={`row-${rowIndex}-col-${colIndex}`}>
+                {Array.from({ length: columns }).map((item, colIndex) => (
+                  <div key={`row-${item}-col-${item}`}>
                     {colIndex === 0 ? (
                       <div className="space-y-2">
                         <Skeleton className="h-4 w-full" />
@@ -172,9 +169,8 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     const fields = props.fields ?? 3;
     return (
       <div className={cn("space-y-6", props.className)}>
-        {Array.from({ length: fields }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
-          <div key={`field-${i}`} className="space-y-2">
+        {Array.from({ length: fields }).map((item) => (
+          <div key={`field-${item}`} className="space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>

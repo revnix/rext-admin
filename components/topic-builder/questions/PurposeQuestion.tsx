@@ -135,7 +135,7 @@ export function PurposeQuestion({
           );
           return (
             <MultiSelectCard
-              key={`purpose-${option.value}-${index}`}
+              key={`purpose-${option.value}`}
               label={option.label}
               description={getDescription(option.value)}
               selected={isSelected}
