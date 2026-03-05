@@ -24,8 +24,6 @@ export interface SingleSelectCardProps {
   /** Option description */
   description?: string;
 
-  /** Option value */
-  value: string;
 
   /** Whether this option is selected */
   selected: boolean;
@@ -49,7 +47,6 @@ export interface SingleSelectCardProps {
 export function SingleSelectCard({
   label,
   description,
-  value: _value,
   selected,
   onSelect,
   icon,

@@ -24,8 +24,6 @@ export interface MultiSelectCardProps {
   /** Option description */
   description?: string;
 
-  /** Option value */
-  value: string;
 
   /** Whether this option is selected */
   selected: boolean;
@@ -49,7 +47,6 @@ export interface MultiSelectCardProps {
 export function MultiSelectCard({
   label,
   description,
-  value: _value,
   selected,
   onToggle,
   icon,
