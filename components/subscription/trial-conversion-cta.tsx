@@ -20,7 +20,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import { SubscriptionStatus } from "@/types/subscription";
 import type { Route } from "next";
 
@@ -44,9 +44,10 @@ export function TrialConversionCTA({
   onDismiss,
   dismissible = true,
 }: TrialConversionCTAProps) {
-  const { subscription, fetchSubscription } = useSubscriptionStore();
+  const { subscription, refetchAll: fetchSubscription } = useSubscriptionData();
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
+  // We could just rely on standard fetch inside useSubscriptionData, but if we need a manual fetch
   useEffect(() => {
     if (!subscription) {
       fetchSubscription();

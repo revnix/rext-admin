@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 
 /**
  * Customer Portal Button Component
@@ -30,12 +30,12 @@ interface CustomerPortalButtonProps {
    * @default "outline"
    */
   variant?:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
+  | "default"
+  | "destructive"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "link";
 
   /**
    * Button size
@@ -81,7 +81,7 @@ export function CustomerPortalButton({
   onError,
 }: CustomerPortalButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { subscription } = useSubscriptionStore();
+  const { subscription } = useSubscriptionData();
 
   const handleOpenPortal = async () => {
     if (!subscription) {

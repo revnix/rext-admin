@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import type { Route } from "next";
@@ -40,8 +40,8 @@ const USAGE_READ = "usage.read";
 
 export default function UsagePage() {
   const router = useRouter();
-  const { subscription, usage, fetchUsage, fetchSubscription, isLoading } =
-    useSubscriptionStore();
+  const { subscription, usage, refetchAll, isLoading } =
+    useSubscriptionData();
   const [refreshing, setRefreshing] = useState(false);
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceId = currentWorkspace?.id;
@@ -52,14 +52,14 @@ export default function UsagePage() {
   useEffect(() => {
     // Fetch subscription and usage on mount
     if (!subscription || !usage) {
-      fetchSubscription();
+      refetchAll();
     }
-  }, [subscription, usage, fetchSubscription]);
+  }, [subscription, usage, refetchAll]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchUsage();
+      await refetchAll();
       toast.success("Usage statistics refreshed");
     } catch (_error) {
       toast.error("Failed to refresh usage statistics");

@@ -11,7 +11,6 @@ import {
   SecurityIndicators,
 } from "@/components/ui/security-badge";
 import { apiClient } from "@/lib/api-client";
-import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { SubscriptionPlan } from "@/types/subscription";
 
 /**
@@ -31,12 +30,6 @@ import type { SubscriptionPlan } from "@/types/subscription";
 export default function PricingPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const { fetchSubscription } = useSubscriptionStore();
-
-  useEffect(() => {
-    // Fetch subscription if user is logged in
-    fetchSubscription();
-  }, [fetchSubscription]);
 
   useEffect(() => {
     const loadPlans = async () => {

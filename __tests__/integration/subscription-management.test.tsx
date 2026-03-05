@@ -5,12 +5,12 @@
  */
 
 import { apiClient } from "@/lib/api-client";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { useSubscriptionMutations } from "@/hooks/use-subscription-mutations";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 import userEvent from "@testing-library/user-event";
 import {
   createMockApiClient,
-  createMockSubscriptionStore,
   createMockUsageStats,
   createMockUserSubscription,
   render,
@@ -20,7 +20,8 @@ import {
 
 // Mock dependencies
 jest.mock("@/lib/api-client");
-jest.mock("@/stores/subscription-store");
+jest.mock("@/hooks/use-subscription-data");
+jest.mock("@/hooks/use-subscription-mutations");
 
 // Mock next/navigation
 const mockPush = jest.fn();
@@ -32,14 +33,13 @@ jest.mock("next/navigation", () => ({
 
 // Simple test component for subscription management
 const SubscriptionManagementComponent = () => {
+  const { subscription, usage, isLoading } = useSubscriptionData();
   const {
-    subscription,
-    usage,
     upgradeSubscription,
     downgradeSubscription,
     cancelSubscription,
-    isLoading,
-  } = useSubscriptionStore();
+    isPending,
+  } = useSubscriptionMutations();
 
   if (!subscription) return <div>No subscription</div>;
 
@@ -66,22 +66,28 @@ const SubscriptionManagementComponent = () => {
       <div data-testid="actions">
         <button
           type="button"
-          onClick={() => upgradeSubscription("plan-enterprise")}
-          disabled={isLoading}
+          onClick={() =>
+            upgradeSubscription.mutateAsync({ planId: "plan-enterprise" })
+          }
+          disabled={isLoading || isPending}
         >
           Upgrade to Enterprise
         </button>
         <button
           type="button"
-          onClick={() => downgradeSubscription("plan-free")}
-          disabled={isLoading}
+          onClick={() =>
+            downgradeSubscription.mutateAsync({ planId: "plan-free" })
+          }
+          disabled={isLoading || isPending}
         >
           Downgrade to Free
         </button>
         <button
           type="button"
-          onClick={() => cancelSubscription("No longer needed")}
-          disabled={isLoading}
+          onClick={() =>
+            cancelSubscription.mutateAsync({ reason: "No longer needed" })
+          }
+          disabled={isLoading || isPending}
         >
           Cancel Subscription
         </button>
@@ -97,21 +103,38 @@ describe("Subscription Management Integration", () => {
     jest.clearAllMocks();
     mockPush.mockClear();
     Object.assign(apiClient, mockApiClientInstance);
+
+    // Default mock returns
+    (useSubscriptionData as jest.Mock).mockReturnValue({
+      subscription: createMockUserSubscription(),
+      usage: createMockUsageStats(),
+      isLoading: false,
+      refetchAll: jest.fn(),
+    });
+
+    (useSubscriptionMutations as jest.Mock).mockReturnValue({
+      upgradeSubscription: { mutateAsync: jest.fn() },
+      downgradeSubscription: { mutateAsync: jest.fn() },
+      cancelSubscription: { mutateAsync: jest.fn() },
+      isPending: false,
+    });
   });
 
   describe("Plan Upgrade Flow", () => {
     it("should upgrade subscription to higher tier", async () => {
       const user = userEvent.setup();
-      const upgradeSubscription = jest.fn().mockResolvedValue(
+      const mutateAsync = jest.fn().mockResolvedValue(
         createMockUserSubscription({
           plan_name: "enterprise",
           plan_display_name: "Enterprise Plan",
         }),
       );
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore(),
-        upgradeSubscription,
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync },
+        downgradeSubscription: { mutateAsync: jest.fn() },
+        cancelSubscription: { mutateAsync: jest.fn() },
+        isPending: false,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -122,23 +145,24 @@ describe("Subscription Management Integration", () => {
       await user.click(upgradeButton);
 
       await waitFor(() => {
-        expect(upgradeSubscription).toHaveBeenCalledWith("plan-enterprise");
+        expect(mutateAsync).toHaveBeenCalledWith({ planId: "plan-enterprise" });
       });
     });
 
     it("should show loading state during upgrade", async () => {
       const _user = userEvent.setup();
-      const upgradeSubscription = jest.fn(
+      const _upgradeSubscription = jest.fn(
         () =>
           new Promise((resolve) =>
             setTimeout(() => resolve(createMockUserSubscription()), 100),
           ),
       );
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore(),
-        upgradeSubscription,
-        isLoading: true,
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync: jest.fn() },
+        downgradeSubscription: { mutateAsync: jest.fn() },
+        cancelSubscription: { mutateAsync: jest.fn() },
+        isPending: true,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -151,18 +175,26 @@ describe("Subscription Management Integration", () => {
 
     it("should refresh subscription after upgrade", async () => {
       const user = userEvent.setup();
-      const fetchSubscription = jest.fn();
-      const upgradeSubscription = jest.fn().mockImplementation(async () => {
-        fetchSubscription();
+      const refetchAll = jest.fn();
+      const mutateAsync = jest.fn().mockImplementation(async () => {
+        refetchAll();
         return createMockUserSubscription({
           plan_name: "enterprise",
         });
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore(),
-        upgradeSubscription,
-        fetchSubscription,
+      (useSubscriptionData as jest.Mock).mockReturnValue({
+        subscription: createMockUserSubscription(),
+        usage: createMockUsageStats(),
+        isLoading: false,
+        refetchAll,
+      });
+
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync },
+        downgradeSubscription: { mutateAsync: jest.fn() },
+        cancelSubscription: { mutateAsync: jest.fn() },
+        isPending: false,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -173,7 +205,7 @@ describe("Subscription Management Integration", () => {
       await user.click(upgradeButton);
 
       await waitFor(() => {
-        expect(upgradeSubscription).toHaveBeenCalled();
+        expect(mutateAsync).toHaveBeenCalled();
       });
     });
   });
@@ -181,16 +213,18 @@ describe("Subscription Management Integration", () => {
   describe("Plan Downgrade Flow", () => {
     it("should downgrade subscription to lower tier", async () => {
       const user = userEvent.setup();
-      const downgradeSubscription = jest.fn().mockResolvedValue(
+      const mutateAsync = jest.fn().mockResolvedValue(
         createMockUserSubscription({
           plan_name: "free",
           plan_display_name: "Free Plan",
         }),
       );
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore(),
-        downgradeSubscription,
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync: jest.fn() },
+        downgradeSubscription: { mutateAsync },
+        cancelSubscription: { mutateAsync: jest.fn() },
+        isPending: false,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -201,7 +235,7 @@ describe("Subscription Management Integration", () => {
       await user.click(downgradeButton);
 
       await waitFor(() => {
-        expect(downgradeSubscription).toHaveBeenCalledWith("plan-free");
+        expect(mutateAsync).toHaveBeenCalledWith({ planId: "plan-free" });
       });
     });
 
@@ -212,13 +246,22 @@ describe("Subscription Management Integration", () => {
         max_workspaces: 10,
       });
 
-      const downgradeSubscription = jest
+      const mutateAsync = jest
         .fn()
         .mockResolvedValue(createMockUserSubscription());
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore({ usage }),
-        downgradeSubscription,
+      (useSubscriptionData as jest.Mock).mockReturnValue({
+        subscription: createMockUserSubscription(),
+        usage,
+        isLoading: false,
+        refetchAll: jest.fn(),
+      });
+
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync: jest.fn() },
+        downgradeSubscription: { mutateAsync },
+        cancelSubscription: { mutateAsync: jest.fn() },
+        isPending: false,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -230,11 +273,13 @@ describe("Subscription Management Integration", () => {
   describe("Subscription Cancellation Flow", () => {
     it("should cancel subscription with reason", async () => {
       const user = userEvent.setup();
-      const cancelSubscription = jest.fn().mockResolvedValue(undefined);
+      const mutateAsync = jest.fn().mockResolvedValue(undefined);
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore(),
-        cancelSubscription,
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync: jest.fn() },
+        downgradeSubscription: { mutateAsync: jest.fn() },
+        cancelSubscription: { mutateAsync },
+        isPending: false,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -245,7 +290,9 @@ describe("Subscription Management Integration", () => {
       await user.click(cancelButton);
 
       await waitFor(() => {
-        expect(cancelSubscription).toHaveBeenCalledWith("No longer needed");
+        expect(mutateAsync).toHaveBeenCalledWith({
+          reason: "No longer needed",
+        });
       });
     });
 
@@ -256,17 +303,20 @@ describe("Subscription Management Integration", () => {
         cancelled_at: "2025-01-18T00:00:00Z",
       });
 
-      const cancelSubscription = jest.fn().mockImplementation(async () => {
-        (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-          ...createMockSubscriptionStore(),
+      const mutateAsync = jest.fn().mockImplementation(async () => {
+        (useSubscriptionData as jest.Mock).mockReturnValue({
           subscription: cancelledSubscription,
-          cancelSubscription,
+          usage: createMockUsageStats(),
+          isLoading: false,
+          refetchAll: jest.fn(),
         });
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore(),
-        cancelSubscription,
+      (useSubscriptionMutations as jest.Mock).mockReturnValue({
+        upgradeSubscription: { mutateAsync: jest.fn() },
+        downgradeSubscription: { mutateAsync: jest.fn() },
+        cancelSubscription: { mutateAsync },
+        isPending: false,
       });
 
       render(<SubscriptionManagementComponent />);
@@ -277,7 +327,7 @@ describe("Subscription Management Integration", () => {
       await user.click(cancelButton);
 
       await waitFor(() => {
-        expect(cancelSubscription).toHaveBeenCalled();
+        expect(mutateAsync).toHaveBeenCalled();
       });
     });
   });
@@ -291,8 +341,11 @@ describe("Subscription Management Integration", () => {
         max_topics: 100,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore({ usage }),
+      (useSubscriptionData as jest.Mock).mockReturnValue({
+        subscription: createMockUserSubscription(),
+        usage,
+        isLoading: false,
+        refetchAll: jest.fn(),
       });
 
       render(<SubscriptionManagementComponent />);
@@ -308,8 +361,11 @@ describe("Subscription Management Integration", () => {
         workspaces_usage_percent: 80,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore({ usage }),
+      (useSubscriptionData as jest.Mock).mockReturnValue({
+        subscription: createMockUserSubscription(),
+        usage,
+        isLoading: false,
+        refetchAll: jest.fn(),
       });
 
       render(<SubscriptionManagementComponent />);
@@ -333,8 +389,11 @@ describe("Subscription Management Integration", () => {
         max_topics: -1,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore({ subscription, usage }),
+      (useSubscriptionData as jest.Mock).mockReturnValue({
+        subscription,
+        usage,
+        isLoading: false,
+        refetchAll: jest.fn(),
       });
 
       render(<SubscriptionManagementComponent />);
@@ -351,8 +410,11 @@ describe("Subscription Management Integration", () => {
         billing_period: BillingPeriod.MONTHLY,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-        ...createMockSubscriptionStore({ subscription }),
+      (useSubscriptionData as jest.Mock).mockReturnValue({
+        subscription,
+        usage: createMockUsageStats(),
+        isLoading: false,
+        refetchAll: jest.fn(),
       });
 
       render(<SubscriptionManagementComponent />);
@@ -373,8 +435,11 @@ describe("Subscription Management Integration", () => {
       statuses.forEach((status) => {
         const subscription = createMockUserSubscription({ status });
 
-        (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
-          ...createMockSubscriptionStore({ subscription }),
+        (useSubscriptionData as jest.Mock).mockReturnValue({
+          subscription,
+          usage: createMockUsageStats(),
+          isLoading: false,
+          refetchAll: jest.fn(),
         });
 
         render(<SubscriptionManagementComponent />);

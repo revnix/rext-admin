@@ -14,33 +14,14 @@ import { retryTransient } from "@/lib/retry/transient-retry";
 import type {
   BillingPeriod,
   CheckoutSessionResponse,
-  CustomerPortalResponse,
-  Invoice,
   SubscriptionPlan,
-  UsageStats,
-  UserSubscription,
 } from "@/types/subscription";
-import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
-
-const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
-let inFlightSubscriptionFetch: Promise<void> | null = null;
 
 // ============================================================================
 // STORE INTERFACE
 // ============================================================================
 
 interface SubscriptionStore {
-  subscription: UserSubscription | null;
-  usage: UsageStats | null;
-  subscriptionFetchedAt: number | null;
-
-  // ========================================
-  // SUBSCRIPTION STATE
-  // ========================================
-  plans: SubscriptionPlan[];
-  isLoading: boolean;
-  error: string | null;
-
   // ========================================
   // CHECKOUT STATE
   // ========================================
@@ -48,61 +29,7 @@ interface SubscriptionStore {
   selectedPlan: SubscriptionPlan | null;
   selectedPeriod: BillingPeriod | null;
   checkoutUrl: string | null;
-
-  // ========================================
-  // INVOICES STATE
-  // ========================================
-  invoices: Invoice[];
-  invoicesLoading: boolean;
-  invoicesError: string | null;
-
-  // ========================================
-  // SUBSCRIPTION ACTIONS
-  // ========================================
-
-  /**
-   * Fetch current subscription and usage stats
-   */
-  fetchSubscription: (options?: { force?: boolean }) => Promise<void>;
-
-  /**
-   * Fetch usage stats only
-   */
-  fetchUsage: () => Promise<void>;
-
-  /**
-   * Fetch available subscription plans
-   */
-  fetchPlans: () => Promise<void>;
-
-  /**
-   * Upgrade to a new subscription plan
-   */
-  upgradeSubscription: (
-    planId: string,
-    billingPeriod?: BillingPeriod,
-  ) => Promise<void>;
-
-  /**
-   * Downgrade to a new subscription plan
-   */
-  downgradeSubscription: (
-    planId: string,
-    billingPeriod?: BillingPeriod,
-  ) => Promise<void>;
-
-  /**
-   * Cancel current subscription
-   */
-  cancelSubscription: (
-    reason?: string,
-    cancelImmediately?: boolean,
-  ) => Promise<void>;
-
-  /**
-   * Get customer portal URL for managing subscription
-   */
-  getPortalUrl: () => Promise<CustomerPortalResponse>;
+  error: string | null;
 
   // ========================================
   // CHECKOUT ACTIONS
@@ -129,15 +56,6 @@ interface SubscriptionStore {
   openCheckout: (checkoutUrl: string) => void;
 
   // ========================================
-  // INVOICES ACTIONS
-  // ========================================
-
-  /**
-   * Fetch invoice history
-   */
-  fetchInvoices: () => Promise<void>;
-
-  // ========================================
   // UTILITY ACTIONS
   // ========================================
 
@@ -157,25 +75,12 @@ interface SubscriptionStore {
 // ============================================================================
 
 const initialState = {
-  subscription: null,
-  usage: null,
-  subscriptionFetchedAt: null,
-
-  // Subscription state
-  plans: [],
-  isLoading: false,
-  error: null,
-
   // Checkout state
   checkoutInProgress: false,
   selectedPlan: null,
   selectedPeriod: null,
   checkoutUrl: null,
-
-  // Invoices state
-  invoices: [],
-  invoicesLoading: false,
-  invoicesError: null,
+  error: null,
 };
 
 // ============================================================================
@@ -184,242 +89,8 @@ const initialState = {
 
 export const useSubscriptionStore = create<SubscriptionStore>()(
   devtools(
-    (set, get) => ({
+    (set, _get) => ({
       ...initialState,
-
-      // ========================================
-      // SUBSCRIPTION ACTIONS
-      // ========================================
-
-      fetchSubscription: async (options) => {
-        const force = options?.force ?? false;
-        const { subscription, subscriptionFetchedAt } = get();
-        const now = Date.now();
-
-        if (
-          !force &&
-          subscription &&
-          subscriptionFetchedAt &&
-          now - subscriptionFetchedAt < SUBSCRIPTION_CACHE_TTL_MS
-        ) {
-          return;
-        }
-
-        if (inFlightSubscriptionFetch) {
-          return inFlightSubscriptionFetch;
-        }
-
-        inFlightSubscriptionFetch = (async () => {
-          set({ isLoading: true, error: null });
-
-          try {
-            const [nextSubscription, nextUsage] = await Promise.all([
-              apiClient.subscriptions.getCurrentPlan(),
-              apiClient.subscriptions.getUsageStats(),
-            ]);
-
-            set({
-              subscription: nextSubscription,
-              usage: nextUsage,
-              subscriptionFetchedAt: Date.now(),
-              isLoading: false,
-              error: null,
-            });
-          } catch (error) {
-            const errorMessage =
-              error instanceof Error
-                ? error.message
-                : "Failed to fetch subscription";
-
-            set({ isLoading: false, error: errorMessage });
-            throw error;
-          } finally {
-            inFlightSubscriptionFetch = null;
-          }
-        })();
-
-        return inFlightSubscriptionFetch;
-      },
-
-      fetchUsage: async () => {
-        try {
-          const usage = await apiClient.subscriptions.getUsageStats();
-          set({ usage });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch usage stats";
-
-          set({ error: errorMessage });
-          throw error;
-        }
-      },
-
-      fetchPlans: async () => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await apiClient.subscriptions.getPlans();
-
-          set({
-            plans: response.plans,
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Failed to fetch plans";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
-        }
-      },
-
-      upgradeSubscription: async (
-        planId: string,
-        billingPeriod?: BillingPeriod,
-      ) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const updatedSubscription = await retryTransient(
-            () =>
-              apiClient.subscriptions.upgradeSubscription(
-                planId,
-                billingPeriod,
-              ),
-            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
-          );
-
-          set({
-            subscription: updatedSubscription,
-            isLoading: false,
-            error: null,
-          });
-
-          // Refresh usage stats after upgrade
-          await get().fetchSubscription();
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to upgrade subscription";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
-        }
-      },
-
-      downgradeSubscription: async (
-        planId: string,
-        billingPeriod?: BillingPeriod,
-      ) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const updatedSubscription = await retryTransient(
-            () =>
-              apiClient.subscriptions.downgradeSubscription(
-                planId,
-                billingPeriod,
-              ),
-            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
-          );
-
-          set({
-            subscription: updatedSubscription,
-            isLoading: false,
-            error: null,
-          });
-
-          // Refresh usage stats after downgrade
-          await get().fetchSubscription();
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to downgrade subscription";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
-        }
-      },
-
-      cancelSubscription: async (
-        reason?: string,
-        cancelImmediately = false,
-      ) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          await retryTransient(
-            () =>
-              apiClient.subscriptions.cancelSubscription(
-                reason,
-                cancelImmediately,
-              ),
-            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
-          );
-
-          // Refresh subscription to get updated cancellation status
-          await get().fetchSubscription();
-
-          set({
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to cancel subscription";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
-        }
-      },
-
-      getPortalUrl: async () => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await apiClient.subscriptions.getCustomerPortalUrl();
-
-          set({
-            isLoading: false,
-            error: null,
-          });
-
-          return response;
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Failed to get portal URL";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
-        }
-      },
 
       // ========================================
       // CHECKOUT ACTIONS
@@ -494,35 +165,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       // ========================================
-      // INVOICES ACTIONS
-      // ========================================
-
-      fetchInvoices: async () => {
-        set({ invoicesLoading: true, invoicesError: null });
-
-        try {
-          const response = await apiClient.subscriptions.getInvoices();
-          const parsed = InvoiceListResponseSchema.parse(response);
-
-          set({
-            invoices: parsed.invoices,
-            invoicesLoading: false,
-            invoicesError: null,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Failed to fetch invoices";
-
-          set({
-            invoicesLoading: false,
-            invoicesError: errorMessage,
-          });
-
-          throw error;
-        }
-      },
-
-      // ========================================
       // UTILITY ACTIONS
       // ========================================
 
@@ -531,7 +173,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       clearError: () => {
-        set({ error: null, invoicesError: null });
+        set({ error: null });
       },
     }),
     {

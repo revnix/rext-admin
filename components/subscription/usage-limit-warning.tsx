@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import type { Route } from "next";
 
 /**
@@ -108,18 +108,11 @@ export function UsageLimitWarning({
   showProgress = true,
 }: UsageLimitWarningProps) {
   const router = useRouter();
-  const { usage, subscription, fetchUsage } = useSubscriptionStore();
+  const { usage, subscription } = useSubscriptionData();
   const [isDismissed, setIsDismissed] = useState(false);
   const [usagePercentage, setUsagePercentage] = useState<number>(0);
   const [currentUsage, setCurrentUsage] = useState<number>(0);
   const [limit, setLimit] = useState<number>(0);
-
-  useEffect(() => {
-    // Fetch usage on mount
-    if (!usage) {
-      fetchUsage();
-    }
-  }, [usage, fetchUsage]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !dismissible) return;
@@ -366,7 +359,7 @@ export function useResourceLimit(
     | "ai_requests"
     | "storage",
 ) {
-  const { usage, subscription } = useSubscriptionStore();
+  const { usage, subscription } = useSubscriptionData();
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [usagePercentage, setUsagePercentage] = useState(0);
 

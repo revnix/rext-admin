@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { useSubscriptionMutations } from "@/hooks/use-subscription-mutations";
 
 /**
  * Cancel Subscription Modal Component
@@ -64,7 +65,8 @@ export function CancelSubscriptionModal({
   onOpenChange,
   currentPeriodEnd,
 }: CancelSubscriptionModalProps) {
-  const { cancelSubscription, fetchSubscription } = useSubscriptionStore();
+  const { cancelSubscription } = useSubscriptionMutations();
+  const { refetchAll } = useSubscriptionData();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -82,7 +84,9 @@ export function CancelSubscriptionModal({
 
     try {
       // Cancel the subscription
-      await cancelSubscription();
+      await cancelSubscription.mutateAsync({
+        reason: selectedReasons.join(", "),
+      });
 
       toast.success("Subscription cancelled", {
         description: currentPeriodEnd
@@ -97,7 +101,7 @@ export function CancelSubscriptionModal({
       }
 
       // Refresh subscription data
-      await fetchSubscription();
+      await refetchAll();
 
       // Close modal
       onOpenChange(false);
@@ -110,15 +114,6 @@ export function CancelSubscriptionModal({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to cancel subscription";
       setError(errorMessage);
-      toast.error("Failed to cancel subscription", {
-        description: errorMessage,
-        action: {
-          label: "Retry",
-          onClick: () => {
-            void handleCancel();
-          },
-        },
-      });
     } finally {
       setIsLoading(false);
     }

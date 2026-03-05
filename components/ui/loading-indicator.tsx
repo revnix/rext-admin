@@ -107,6 +107,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
                 {Array.from({ length: columns }).map((_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
                   <Skeleton key={`header-${i}`} className="h-4" />
                 ))}
               </div>
@@ -114,11 +115,13 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
 
             {Array.from({ length: rows }).map((_, rowIndex) => (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
                 key={`row-${rowIndex}`}
                 className="grid gap-4 py-3"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
                 {Array.from({ length: columns }).map((_, colIndex) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
                   <div key={`row-${rowIndex}-col-${colIndex}`}>
                     {colIndex === 0 ? (
                       <div className="space-y-2">
@@ -143,8 +146,8 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
             <div className="flex items-center justify-between px-4 py-3 border-t">
               <Skeleton className="h-4 w-[200px]" />
               <div className="flex space-x-2">
-                <Skeleton className="h-8 w-[80px]" />
-                <Skeleton className="h-8 w-[80px]" />
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
               </div>
             </div>
           )}
@@ -170,6 +173,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     return (
       <div className={cn("space-y-6", props.className)}>
         {Array.from({ length: fields }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton static layout
           <div key={`field-${i}`} className="space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-full" />

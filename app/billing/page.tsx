@@ -2,8 +2,6 @@
 
 import { AlertCircle, CreditCard, FileText, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Footer } from "@/components/layout/footer";
 import { PageLayout } from "@/components/page-layout";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
@@ -22,7 +20,7 @@ import {
   SecurityIndicators,
 } from "@/components/ui/security-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import type { Route } from "next";
 
 /**
@@ -42,23 +40,7 @@ import type { Route } from "next";
 
 export default function BillingHistoryPage() {
   const router = useRouter();
-  const { subscription, invoices, fetchInvoices } = useSubscriptionStore();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        await fetchInvoices();
-      } catch (_error) {
-        toast.error("Failed to load billing information");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [fetchInvoices]);
+  const { subscription, invoices, isLoading: loading } = useSubscriptionData();
 
   // NOTE: This page is protected by middleware (see middleware.ts)
   // No need for PermissionGuard wrapper as middleware already validates billing.read permission

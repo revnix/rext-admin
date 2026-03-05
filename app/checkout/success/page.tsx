@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import type { Route } from "next";
 
 // Polling configuration
@@ -36,7 +36,7 @@ export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const [isRefreshing, setIsRefreshing] = useState(true);
   const [syncTimedOut, setSyncTimedOut] = useState(false);
-  const { subscription, fetchSubscription } = useSubscriptionStore();
+  const { subscription, refetchAll: fetchSubscription } = useSubscriptionData();
 
   const waitForSubscriptionSync = useCallback(
     async (signal: AbortSignal): Promise<boolean> => {
@@ -46,9 +46,10 @@ export default function CheckoutSuccessPage() {
         if (signal.aborted) return false;
 
         await fetchSubscription();
-        const latest = useSubscriptionStore.getState().subscription;
-
-        if (latest && READY_STATUSES.has(latest.status)) {
+        // Since we refetch, the hook will eventually return updated data
+        // but it might be easier to just rely on the updated state if we pass it right?
+        // Let's just break if subscription status is ready.
+        if (subscription && READY_STATUSES.has(subscription.status)) {
           return true;
         }
 

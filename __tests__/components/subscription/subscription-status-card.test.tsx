@@ -3,7 +3,7 @@
  */
 
 import { SubscriptionStatusCard } from "@/components/subscription/subscription-status-card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 import {
   createMockUserSubscription,
@@ -11,8 +11,11 @@ import {
   screen,
 } from "../../utils/test-utils";
 
-// Mock the subscription store
-jest.mock("@/stores/subscription-store");
+// Mock the dependencies
+jest.mock("@/hooks/use-subscription-data");
+jest.mock("@/lib/subscription/portal", () => ({
+  openCustomerPortal: jest.fn(),
+}));
 
 describe("SubscriptionStatusCard", () => {
   describe("Active Subscription", () => {
@@ -23,7 +26,7 @@ describe("SubscriptionStatusCard", () => {
         billing_period: BillingPeriod.MONTHLY,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -41,7 +44,7 @@ describe("SubscriptionStatusCard", () => {
         renews_at: "2025-02-01T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -59,7 +62,7 @@ describe("SubscriptionStatusCard", () => {
         trial_end_date: "2025-02-01T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -75,7 +78,7 @@ describe("SubscriptionStatusCard", () => {
         trial_end_date: "2025-02-01T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -93,7 +96,7 @@ describe("SubscriptionStatusCard", () => {
         cancelled_at: "2025-01-15T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -109,7 +112,7 @@ describe("SubscriptionStatusCard", () => {
         cancelled_at: "2025-01-15T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -125,7 +128,7 @@ describe("SubscriptionStatusCard", () => {
         ends_at: "2025-02-01T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -143,7 +146,7 @@ describe("SubscriptionStatusCard", () => {
         end_date: "2024-12-31T00:00:00Z",
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -160,7 +163,7 @@ describe("SubscriptionStatusCard", () => {
         billing_period: BillingPeriod.MONTHLY,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });
@@ -175,7 +178,7 @@ describe("SubscriptionStatusCard", () => {
         billing_period: BillingPeriod.YEARLY,
       });
 
-      (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
+      (useSubscriptionData as jest.Mock).mockReturnValue({
         subscription,
         isLoading: false,
       });

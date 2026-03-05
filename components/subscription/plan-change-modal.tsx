@@ -22,7 +22,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { useSubscriptionMutations } from "@/hooks/use-subscription-mutations";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
 import { cn } from "@/lib/utils";
 import {
@@ -85,8 +86,9 @@ export function PlanChangeModal({
   currentPlanId,
   currentBillingPeriod,
 }: PlanChangeModalProps) {
-  const { upgradeSubscription, downgradeSubscription, fetchSubscription } =
-    useSubscriptionStore();
+  const { upgradeSubscription, downgradeSubscription } =
+    useSubscriptionMutations();
+  const { refetchAll } = useSubscriptionData();
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlanId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,26 +129,24 @@ export function PlanChangeModal({
 
     try {
       if (isUpgrade) {
-        await upgradeSubscription(selectedPlanId);
+        await upgradeSubscription.mutateAsync({ planId: selectedPlanId });
         toast.success("Plan upgraded successfully!", {
           description: `You are now on the ${selectedPlan.name} plan.`,
         });
       } else if (isDowngrade) {
-        await downgradeSubscription(selectedPlanId);
+        await downgradeSubscription.mutateAsync({ planId: selectedPlanId });
         toast.success("Plan downgraded", {
           description: `${selectedPlan.name} limits are now active.`,
         });
       }
 
-      await fetchSubscription();
+      await refetchAll();
       onOpenChange(false);
     } catch (err) {
+      // Error handling already done by mutations usually, but we catch to show local error
       const errorMessage =
         err instanceof Error ? err.message : "Failed to change plan";
       setError(errorMessage);
-      toast.error("Failed to change plan", {
-        description: errorMessage,
-      });
     } finally {
       setIsLoading(false);
     }

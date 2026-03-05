@@ -1,5 +1,5 @@
 "use client";
-import type { InvoiceStatus } from "@/types/subscription";
+import type { Invoice, InvoiceStatus } from "@/types/subscription";
 
 /**
  * Invoice List Component
@@ -10,7 +10,6 @@ import type { InvoiceStatus } from "@/types/subscription";
  */
 
 import { Download, ExternalLink, FileText, Loader2 } from "lucide-react";
-import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import type { Route } from "next";
 
 export interface InvoiceListProps {
@@ -41,14 +40,7 @@ export function InvoiceList({
   limit,
   compact = false,
 }: InvoiceListProps) {
-  const { invoices, invoicesLoading, fetchInvoices } = useSubscriptionStore();
-
-  // Fetch invoices on mount
-  useEffect(() => {
-    if (invoices.length === 0) {
-      fetchInvoices();
-    }
-  }, [fetchInvoices, invoices.length]);
+  const { invoices, isLoading } = useSubscriptionData();
 
   // Get status badge variant
   const getStatusBadge = (status: InvoiceStatus) => {
@@ -91,7 +83,7 @@ export function InvoiceList({
 
   const displayedInvoices = limit ? invoices.slice(0, limit) : invoices;
 
-  if (invoicesLoading && invoices.length === 0) {
+  if (isLoading && invoices.length === 0) {
     return (
       <Card className={className}>
         <CardContent className="flex items-center justify-center py-12">
@@ -101,7 +93,7 @@ export function InvoiceList({
     );
   }
 
-  if (invoices.length === 0 && !invoicesLoading) {
+  if (invoices.length === 0 && !isLoading) {
     return (
       <Card className={className}>
         <CardHeader>
@@ -130,7 +122,7 @@ export function InvoiceList({
 
       <CardContent>
         <div className="space-y-3">
-          {displayedInvoices.map((invoice) => (
+          {displayedInvoices.map((invoice: Invoice) => (
             <div
               key={invoice.invoice_id}
               className={cn(
@@ -167,12 +159,14 @@ export function InvoiceList({
 
                   {!compact && invoice.items && invoice.items.length > 0 && (
                     <div className="text-xs text-muted-foreground pt-1">
-                      {invoice.items.map((item, idx) => (
-                        <span key={`${invoice.invoice_id}-item-${idx}`}>
-                          {item.description}
-                          {idx < invoice.items.length - 1 && " • "}
-                        </span>
-                      ))}
+                      {invoice.items.map(
+                        (item: { description: string }, idx: number) => (
+                          <span key={`${invoice.invoice_id}-item-${idx}`}>
+                            {item.description}
+                            {idx < invoice.items.length - 1 && " • "}
+                          </span>
+                        ),
+                      )}
                     </div>
                   )}
                 </div>
@@ -232,7 +226,7 @@ export function InvoiceList({
         )}
 
         {/* Empty State */}
-        {displayedInvoices.length === 0 && !invoicesLoading && (
+        {displayedInvoices.length === 0 && !isLoading && (
           <div className="text-center py-8 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>No invoices to display</p>

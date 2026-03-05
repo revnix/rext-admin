@@ -27,7 +27,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { openCustomerPortal } from "@/lib/subscription/portal";
 import { SubscriptionStatus } from "@/types/subscription";
 
 export interface SubscriptionStatusCardProps {
@@ -45,28 +46,16 @@ export function SubscriptionStatusCard({
   showManageButton = true,
 }: SubscriptionStatusCardProps) {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
-  const { subscription, isLoading } = useSubscriptionStore();
+  const { subscription, isLoading } = useSubscriptionData();
 
   const handleManageBilling = async () => {
     try {
       setIsLoadingPortal(true);
-
-      const { getPortalUrl } = useSubscriptionStore.getState();
-      const response = await getPortalUrl();
-
-      // Open customer portal in new window
-      window.open(response.portal_url, "_blank");
-
+      await openCustomerPortal();
       toast.success("Opening billing portal...");
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to open billing portal";
-
-      toast.error("Failed to open billing portal", {
-        description: errorMessage,
-      });
+    } catch (_error) {
+      // Error already handled by toast in helper if it was a network error,
+      // but let's re-toast if needed or just catch to reset loading state.
     } finally {
       setIsLoadingPortal(false);
     }

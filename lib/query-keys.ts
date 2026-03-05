@@ -237,11 +237,25 @@ export const subscriptionQueries = {
     queryOptions({
       queryKey: [...subscriptionQueries.all(), "current"] as const,
       queryFn: () => apiClient.subscriptions.getCurrentPlan(),
+      staleTime: 60_000, // 1 minute
     }),
   plans: () =>
     queryOptions({
       queryKey: [...subscriptionQueries.all(), "plans"] as const,
       queryFn: () => apiClient.subscriptions.getPlans(),
+      staleTime: 5 * 60_000, // 5 minutes
+    }),
+  usage: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "usage"] as const,
+      queryFn: () => apiClient.subscriptions.getUsageStats(),
+      staleTime: 30_000, // 30 seconds
+    }),
+  invoices: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "invoices"] as const,
+      queryFn: () => apiClient.subscriptions.getInvoices(),
+      staleTime: 60_000, // 1 minute
     }),
 };
 

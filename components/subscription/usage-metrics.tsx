@@ -10,7 +10,6 @@
  */
 
 import { AlertCircle, Calendar, Loader2, TrendingUp } from "lucide-react";
-import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -26,8 +25,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import { cn } from "@/lib/utils";
-import { useSubscriptionStore } from "@/stores/subscription-store";
 
 export interface UsageMetricsProps {
   /** Additional CSS classes */
@@ -43,14 +42,7 @@ export function UsageMetrics({
   className,
   detailed = false,
 }: UsageMetricsProps) {
-  const { usage, fetchSubscription, isLoading } = useSubscriptionStore();
-
-  // Fetch usage on mount
-  useEffect(() => {
-    if (!usage) {
-      fetchSubscription();
-    }
-  }, [fetchSubscription, usage]);
+  const { usage, isLoading } = useSubscriptionData();
 
   // Get color based on usage percentage
   const getUsageColor = (percentage: number): string => {

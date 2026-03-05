@@ -8,8 +8,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
+
 import { Footer } from "@/components/layout/footer";
 import { PageLayout } from "@/components/page-layout";
 import { CancelSubscriptionModal } from "@/components/subscription/cancel-subscription-modal";
@@ -31,14 +31,9 @@ import {
   PaymentSecurityMessage,
 } from "@/components/ui/security-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { apiClient } from "@/lib/api-client";
-import { useSubscriptionStore } from "@/stores/subscription-store";
-import {
-  type SubscriptionPlan,
-  SubscriptionStatus,
-} from "@/types/subscription";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { SubscriptionStatus } from "@/types/subscription";
 import type { Route } from "next";
-import { log } from "@/lib/logger";
 
 /**
  * Subscription Management Dashboard Page
@@ -58,65 +53,12 @@ import { log } from "@/lib/logger";
 
 export default function SubscriptionDashboardPage() {
   const router = useRouter();
-  const { subscription, usage, fetchSubscription } = useSubscriptionStore();
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { subscription, usage, plans, isLoading } = useSubscriptionData();
   const [planChangeModalOpen, setPlanChangeModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
-  const loadPlans = useCallback(async () => {
-    try {
-      const response = await apiClient.subscriptions.getPlans();
-      if (!response?.plans) {
-        log.warn("Plans response missing expected payload", {
-          component: "SubscriptionDashboardPage",
-          action: "loadPlans",
-          response,
-        });
-        setPlans([]);
-        return;
-      }
-      if (response.plans) {
-        const activePlans = response.plans.filter((plan) => plan.is_active);
-        setPlans(activePlans);
-      }
-    } catch (error) {
-      log.error("Failed to load subscription plans", error, {
-        component: "SubscriptionDashboardPage",
-        action: "loadPlans",
-      });
-
-      toast.error("Failed to load available plans", {
-        description: "You can still view your current subscription details.",
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-
-      const [subscriptionResult, plansResult] = await Promise.allSettled([
-        fetchSubscription(), // already fetches usage in store
-        loadPlans(),
-      ]);
-
-      const subscriptionFailed = subscriptionResult.status === "rejected";
-      const plansFailed = plansResult.status === "rejected";
-
-      if (subscriptionFailed && plansFailed) {
-        toast.error("Failed to load subscription data");
-      } else if (subscriptionFailed) {
-        toast.error("Subscription details could not be loaded");
-      } else if (plansFailed) {
-        toast.error("Available plans are temporarily unavailable");
-      }
-
-      setLoading(false);
-    };
-
-    loadData();
-  }, [fetchSubscription, loadPlans]);
+  // Derive loading state from queries
+  const loading = isLoading && !subscription;
 
   if (loading) {
     return (

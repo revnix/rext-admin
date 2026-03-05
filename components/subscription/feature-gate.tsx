@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { resolvePlanFeatureAccess } from "@/lib/subscription/feature-access";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import type { Route } from "next";
 
 /**
@@ -95,18 +95,14 @@ export function FeatureGate({
 }: FeatureGateProps) {
   const router = useRouter();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const { subscription, fetchSubscription, isLoading } = useSubscriptionStore();
-
-  useEffect(() => {
-    if (!subscription && !isLoading) {
-      void fetchSubscription();
-    }
-  }, [subscription, isLoading, fetchSubscription]);
+  const { subscription, isLoading, refetchAll } = useSubscriptionData();
 
   useEffect(() => {
     // Check if user has access to this feature
     if (!subscription) {
-      setHasAccess(null); // Loading state
+      if (!isLoading) {
+        setHasAccess(null); // Loading state
+      }
       return;
     }
 
@@ -126,9 +122,8 @@ export function FeatureGate({
     }
 
     // Check feature flags in plan
-    // Check feature flags in plan using centralized evaluator
     setHasAccess(resolvePlanFeatureAccess(subscription.plan_features, feature));
-  }, [subscription, feature, requiredPlan]);
+  }, [subscription, feature, requiredPlan, isLoading]);
 
   const handleUpgrade = () => {
     router.push("/pricing" as Route);
@@ -251,7 +246,7 @@ export function FeatureGate({
           Already upgraded?{" "}
           <button
             type="button"
-            onClick={() => fetchSubscription()}
+            onClick={() => refetchAll()}
             className="text-primary hover:underline"
           >
             Refresh subscription
@@ -269,7 +264,7 @@ export function useFeatureAccess(
   feature: string,
   requiredPlan?: string | string[],
 ) {
-  const { subscription } = useSubscriptionStore();
+  const { subscription } = useSubscriptionData();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -294,7 +289,6 @@ export function useFeatureAccess(
     }
 
     // Check feature flags
-    // Check feature flags using centralized evaluator
     setHasAccess(resolvePlanFeatureAccess(subscription.plan_features, feature));
   }, [subscription, feature, requiredPlan]);
 

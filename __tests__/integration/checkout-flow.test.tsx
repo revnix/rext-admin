@@ -6,7 +6,8 @@
 
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
-import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { BillingPeriod, SubscriptionStatus, SubscriptionPlan } from "@/types/subscription";
 import userEvent from "@testing-library/user-event";
 import {
   createMockApiClient,
@@ -22,6 +23,7 @@ import {
 // Mock dependencies
 jest.mock("@/lib/api-client");
 jest.mock("@/stores/subscription-store");
+jest.mock("@/hooks/use-subscription-data");
 
 // Mock next/navigation
 const mockPush = jest.fn();
@@ -36,18 +38,17 @@ jest.mock("next/navigation", () => ({
 // Simple test component that simulates the checkout flow
 const CheckoutFlowComponent = () => {
   const {
-    plans,
     initiateCheckout,
     openCheckout,
     checkoutInProgress,
-    fetchSubscription,
   } = useSubscriptionStore();
+  const { plans, refetchAll: fetchSubscription } = useSubscriptionData();
 
   const handleCheckout = async (
     planId: string,
     billingPeriod: BillingPeriod,
   ) => {
-    const plan = plans.find((p) => p.id === planId);
+    const plan = plans.find((p: SubscriptionPlan) => p.id === planId);
     if (!plan) return;
 
     const session = await initiateCheckout(plan, billingPeriod);
@@ -57,7 +58,7 @@ const CheckoutFlowComponent = () => {
   return (
     <div>
       <h1>Select a Plan</h1>
-      {plans.map((plan) => (
+      {plans.map((plan: SubscriptionPlan) => (
         <div key={plan.id} data-testid={`plan-${plan.id}`}>
           <h2>{plan.display_name}</h2>
           <p>${plan.price_monthly}/month</p>
@@ -95,9 +96,8 @@ describe("Checkout Flow Integration", () => {
 
     // Mock API client
     Object.assign(apiClient, mockApiClientInstance);
-
-    // Setup initial store state
-    const mockStore = createMockSubscriptionStore({
+    
+    (useSubscriptionData as jest.Mock).mockReturnValue({
       plans: [
         createMockSubscriptionPlan({
           id: "plan-free",
@@ -115,7 +115,11 @@ describe("Checkout Flow Integration", () => {
           display_name: "Enterprise Plan",
         }),
       ],
-      subscription: null,
+      refetchAll: jest.fn(),
+    });
+
+    // Setup initial store state
+    const mockStore = createMockSubscriptionStore({
       checkoutInProgress: false,
     });
 
@@ -149,12 +153,7 @@ describe("Checkout Flow Integration", () => {
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
         ...createMockSubscriptionStore({
-          plans: [
-            createMockSubscriptionPlan({
-              id: "plan-pro",
-              display_name: "Pro Plan",
-            }),
-          ],
+          
         }),
         initiateCheckout,
       });
@@ -182,7 +181,7 @@ describe("Checkout Flow Integration", () => {
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
         ...createMockSubscriptionStore({
-          plans: [plan],
+          
         }),
         initiateCheckout,
       });
@@ -211,7 +210,7 @@ describe("Checkout Flow Integration", () => {
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
         ...createMockSubscriptionStore({
-          plans: [createMockSubscriptionPlan({ id: "plan-pro" })],
+          
         }),
         initiateCheckout,
         openCheckout,
@@ -251,7 +250,7 @@ describe("Checkout Flow Integration", () => {
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
         ...createMockSubscriptionStore({
-          plans: [createMockSubscriptionPlan({ id: "plan-pro" })],
+          
         }),
         initiateCheckout,
         checkoutInProgress: true,
@@ -277,7 +276,7 @@ describe("Checkout Flow Integration", () => {
 
       (useSubscriptionStore as unknown as jest.Mock).mockReturnValue({
         ...createMockSubscriptionStore({
-          plans: [createMockSubscriptionPlan({ id: "plan-pro" })],
+          
         }),
         initiateCheckout,
         fetchSubscription,

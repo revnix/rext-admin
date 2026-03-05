@@ -23,7 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
 
 export interface PricingTableProps {
@@ -48,7 +48,7 @@ export function PricingTable({
 }: PricingTableProps) {
   const [billingPeriod, setBillingPeriod] =
     useState<BillingPeriod>(defaultBillingPeriod);
-  const { plans, subscription, fetchPlans, isLoading } = useSubscriptionStore();
+  const { plans, subscription, refetchAll: fetchPlans, isLoading } = useSubscriptionData();
 
   const visiblePlans = plans.filter((plan) => plan.is_public && plan.is_active);
 
@@ -222,7 +222,7 @@ export function PricingTable({
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-grow">
+              <CardContent className="grow">
                 {/* Features List */}
                 <ul className="space-y-3">
                   {features.map((feature) => (

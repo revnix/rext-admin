@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
 import { SubscriptionStatus } from "@/types/subscription";
 import type { Route } from "next";
 
@@ -47,18 +47,11 @@ export function TrialStatusBanner({
   className = "",
 }: TrialStatusBannerProps) {
   const router = useRouter();
-  const { subscription, fetchSubscription } = useSubscriptionStore();
+  const { subscription } = useSubscriptionData();
   const [isDismissed, setIsDismissed] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
   const [hoursRemaining, setHoursRemaining] = useState<number | null>(null);
   const [minutesRemaining, setMinutesRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    // Fetch subscription on mount if not already loaded
-    if (!subscription) {
-      fetchSubscription();
-    }
-  }, [subscription, fetchSubscription]);
 
   useEffect(() => {
     // Calculate time remaining in trial with real-time updates

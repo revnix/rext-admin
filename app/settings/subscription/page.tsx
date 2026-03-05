@@ -9,8 +9,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { SubscriptionStatusCard } from "@/components/subscription/subscription-status-card";
 import { TrialStatusBanner } from "@/components/subscription/trial-status-banner";
 import { UsageMetrics } from "@/components/subscription/usage-metrics";
@@ -23,7 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useSubscriptionData } from "@/hooks/use-subscription-data";
+import { openCustomerPortal } from "@/lib/subscription/portal";
 import type { Route } from "next";
 
 /**
@@ -42,34 +42,21 @@ import type { Route } from "next";
 
 export default function SubscriptionSettingsPage() {
   const router = useRouter();
-  const { usage, fetchSubscription, getPortalUrl } = useSubscriptionStore();
+  const { usage, isLoading } = useSubscriptionData();
   const [portalLoading, setPortalLoading] = useState(false);
-  const [dataLoading, _setDataLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        await fetchSubscription();
-      } catch (_error) {
-        toast.error("Failed to load subscription settings");
-      }
-    };
-    loadData();
-  }, [fetchSubscription]);
 
   const handleOpenPortal = async () => {
     try {
       setPortalLoading(true);
-      const response = await getPortalUrl();
-      window.open(response.portal_url, "_blank");
+      await openCustomerPortal();
     } catch (_error) {
-      toast.error("Failed to open billing portal", {
-        description: "Please try again or contact support.",
-      });
+      // Error handling by portal helper
     } finally {
       setPortalLoading(false);
     }
   };
+
+  const dataLoading = isLoading && !usage;
 
   if (dataLoading) {
     return (
