@@ -28,7 +28,6 @@ type ActiveSubscription = {
   unsubscribe: () => void;
 };
 
-
 interface SSEContextType {
   subscribe: (
     operationId: string,
@@ -52,10 +51,6 @@ interface SSEProviderProps {
 
 const sseLogger = log.forComponent("SSEProvider");
 
-const MAX_RETRIES = 5;
-const RETRY_BASE_DELAY_MS = 1000;
-const RETRY_MAX_DELAY_MS = 10_000;
-
 const TERMINAL_STEPS = new Set(["pipeline.completed", "pipeline.failed"]);
 
 // Track completed operations to prevent reconnection attempts
@@ -76,7 +71,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
   const activeSubscriptionsRef = useRef<Map<string, ActiveSubscription>>(
     new Map(),
   );
-
 
   const resolvedBaseUrl = useMemo(
     () =>
@@ -128,7 +122,8 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         return () => undefined;
       }
 
-      const existingSubscription = activeSubscriptionsRef.current.get(operationId);
+      const existingSubscription =
+        activeSubscriptionsRef.current.get(operationId);
 
       if (existingSubscription && existingSubscription.subscriberCount === 0) {
         existingSubscription.unsubscribe();
@@ -452,7 +447,8 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
             });
 
             const delay = Math.min(
-              NOTIFICATION_CONSTANTS.SSE_RETRY_BASE_DELAY_MS * 2 ** (retryCount - 1),
+              NOTIFICATION_CONSTANTS.SSE_RETRY_BASE_DELAY_MS *
+                2 ** (retryCount - 1),
               NOTIFICATION_CONSTANTS.SSE_RETRY_MAX_DELAY_MS,
             );
 
@@ -484,7 +480,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         subscriberCount: 1,
         unsubscribe,
       });
-
 
       return unsubscribe;
     },

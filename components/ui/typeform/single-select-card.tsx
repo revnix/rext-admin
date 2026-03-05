@@ -24,7 +24,6 @@ export interface SingleSelectCardProps {
   /** Option description */
   description?: string;
 
-
   /** Whether this option is selected */
   selected: boolean;
 

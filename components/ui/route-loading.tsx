@@ -27,15 +27,15 @@ import { PageLayout } from "../page-layout";
 export interface RouteLoadingProps {
   /** The type of loading skeleton to display */
   variant:
-  | "spinner"
-  | "table"
-  | "dashboard"
-  | "workspace"
-  | "list"
-  | "grid"
-  | "form"
-  | "monitoring"
-  | "settings";
+    | "spinner"
+    | "table"
+    | "dashboard"
+    | "workspace"
+    | "list"
+    | "grid"
+    | "form"
+    | "monitoring"
+    | "settings";
   /** Number of rows (for table/list variants) */
   rows?: number;
   /** Number of columns (for table variant) */

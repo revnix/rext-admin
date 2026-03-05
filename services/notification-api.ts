@@ -155,12 +155,3 @@ export async function markAllNotificationsAsRead(): Promise<{
 
   return response.json();
 }
-
-/**
- * Notification API Service
- */
-export const NotificationApiService = {
-  fetchNotifications,
-  markNotificationsAsRead,
-  markAllNotificationsAsRead,
-};

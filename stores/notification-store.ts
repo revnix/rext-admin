@@ -1,9 +1,13 @@
-import { log } from "@/lib/logger";
-import { NotificationApiService } from "@/services";
+// Replace/Add at line 1:
 import type { OperationNotification } from "@/types/sse";
 import { create } from "zustand";
-import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import {
+  markAllNotificationsAsRead,
+  markNotificationsAsRead,
+} from "@/services/notification-api";
+import { log } from "@/lib/logger";
 import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 interface NotificationStore {
   notifications: OperationNotification[];
@@ -14,7 +18,10 @@ interface NotificationStore {
   isLoading: boolean;
   fetchError: string | null;
 
-  setFetchState: (state: { isLoading: boolean; fetchError: string | null }) => void;
+  setFetchState: (state: {
+    isLoading: boolean;
+    fetchError: string | null;
+  }) => void;
   setHasHydrated: (value: boolean) => void;
   addNotification: (notification: OperationNotification) => void;
   mergeNotifications: (notifications: OperationNotification[]) => void;
@@ -71,7 +78,8 @@ export const useNotificationStore = create<NotificationStore>()(
         isLoading: false,
         fetchError: null,
 
-        setFetchState: ({ isLoading, fetchError }) => set({ isLoading, fetchError }),
+        setFetchState: ({ isLoading, fetchError }) =>
+          set({ isLoading, fetchError }),
 
         setHasHydrated: (value) => set({ hasHydrated: value }),
 
@@ -91,7 +99,9 @@ export const useNotificationStore = create<NotificationStore>()(
 
         mergeNotifications: (incoming) =>
           set((state) => {
-            const merged = new Map(state.notifications.map((item) => [item.id, item]));
+            const merged = new Map(
+              state.notifications.map((item) => [item.id, item]),
+            );
             for (const item of incoming) {
               merged.set(item.id, item);
             }
@@ -99,7 +109,8 @@ export const useNotificationStore = create<NotificationStore>()(
             const next = Array.from(merged.values())
               .sort(
                 (a, b) =>
-                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime(),
               )
               .slice(0, NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS);
 
@@ -130,7 +141,7 @@ export const useNotificationStore = create<NotificationStore>()(
         markAsRead: async (id: string) => {
           set((state) => updateState(markOneRead(state.notifications, id)));
           try {
-            await NotificationApiService.markNotificationsAsRead([id]);
+            await markNotificationsAsRead([id]);
           } catch (error) {
             log.error("Failed to mark notification as read", error);
             set((state) => updateState(revertOneRead(state.notifications, id)));
@@ -148,7 +159,7 @@ export const useNotificationStore = create<NotificationStore>()(
           }));
 
           try {
-            await NotificationApiService.markAllNotificationsAsRead();
+            await markAllNotificationsAsRead();
           } catch (error) {
             log.error("Failed to mark all notifications as read", error);
             set((state) =>
@@ -165,8 +176,6 @@ export const useNotificationStore = create<NotificationStore>()(
 
         clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
         setDrawerOpen: (open: boolean) => set({ isDrawerOpen: open }),
-
-
       }),
       {
         name: "notification-store",
@@ -175,7 +184,10 @@ export const useNotificationStore = create<NotificationStore>()(
         ),
 
         partialize: (state) => ({
-          notifications: state.notifications.slice(0, NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS),
+          notifications: state.notifications.slice(
+            0,
+            NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS,
+          ),
         }),
 
         merge: (persisted, current) => {
