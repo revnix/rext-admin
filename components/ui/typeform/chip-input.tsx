@@ -108,6 +108,7 @@ export function ChipInput({
   const chipRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const fallbackInputRef = React.useRef<HTMLInputElement>(null);
   const liveRegionRef = React.useRef<HTMLOutputElement>(null);
+  const announcementTimeoutRef = React.useRef<number | null>(null);
 
   // Generate unique IDs for accessibility
   const inputId = React.useId();
@@ -118,8 +119,17 @@ export function ChipInput({
   // Announce to screen readers
   const announce = React.useCallback((message: string) => {
     setAnnouncementText(message);
+
+    // Clear any existing timeout before creating a new one
+    if (announcementTimeoutRef.current !== null) {
+      window.clearTimeout(announcementTimeoutRef.current);
+    }
+
     // Clear after a short delay to allow for multiple announcements
-    setTimeout(() => setAnnouncementText(""), 100);
+    announcementTimeoutRef.current = window.setTimeout(() => {
+      setAnnouncementText("");
+      announcementTimeoutRef.current = null;
+    }, 100);
   }, []);
 
   // Error boundary for fallback functionality
@@ -215,6 +225,16 @@ export function ChipInput({
       setInternalError(undefined);
     }
   }, [value.length, onChange]);
+
+  // Cleanup announcement timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (announcementTimeoutRef.current !== null) {
+        window.clearTimeout(announcementTimeoutRef.current);
+        announcementTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   //  Clear error when at least one chip exists
   useEffect(() => {
@@ -413,7 +433,7 @@ export function ChipInput({
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
                 "bg-primary text-primary-foreground hover:bg-primary/90",
                 focusedChipIndex === index &&
-                  "ring-2 ring-primary ring-offset-1",
+                "ring-2 ring-primary ring-offset-1",
               )}
             >
               <span>{chip}</span>

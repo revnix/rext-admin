@@ -88,6 +88,9 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
       celebrationVariants,
       prefersReducedMotion,
     );
+    // Completion timeout ref for cleanup
+    const completionTimeoutRef = React.useRef<number | null>(null);
+
     const floatIds = React.useMemo(
       () =>
         Array.from(
@@ -172,12 +175,23 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
         triggerConfetti(confettiConfig);
       }
 
+      // Clear any existing timeout before creating a new one
+      if (completionTimeoutRef.current !== null) {
+        window.clearTimeout(completionTimeoutRef.current);
+      }
+
       // Auto-complete after duration
-      const timer = setTimeout(() => {
+      completionTimeoutRef.current = window.setTimeout(() => {
         onComplete?.();
+        completionTimeoutRef.current = null;
       }, duration);
 
-      return () => clearTimeout(timer);
+      return () => {
+        if (completionTimeoutRef.current !== null) {
+          window.clearTimeout(completionTimeoutRef.current);
+          completionTimeoutRef.current = null;
+        }
+      };
     }, [
       active,
       duration,
