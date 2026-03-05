@@ -43,6 +43,9 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
     // Previous progress for milestone detection
     const previousProgress = React.useRef(progress);
 
+    // Milestone timeout ref for cleanup
+    const milestoneTimeoutRef = React.useRef<number | null>(null);
+
     // Milestone celebration state
     const [celebrateMilestone, setCelebrateMilestone] = React.useState(false);
 
@@ -63,13 +66,31 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
           onMilestone(milestone);
           setCelebrateMilestone(true);
 
+          // Clear any existing timeout before creating a new one
+          if (milestoneTimeoutRef.current !== null) {
+            window.clearTimeout(milestoneTimeoutRef.current);
+          }
+
           // Reset celebration after animation
-          setTimeout(() => setCelebrateMilestone(false), 1000);
+          milestoneTimeoutRef.current = window.setTimeout(() => {
+            setCelebrateMilestone(false);
+            milestoneTimeoutRef.current = null;
+          }, 1000);
         }
       });
 
       previousProgress.current = clampedProgress;
     }, [clampedProgress, animated, onMilestone]);
+
+    // Cleanup milestone timeout on unmount
+    React.useEffect(() => {
+      return () => {
+        if (milestoneTimeoutRef.current !== null) {
+          window.clearTimeout(milestoneTimeoutRef.current);
+          milestoneTimeoutRef.current = null;
+        }
+      };
+    }, []);
 
     // Format time estimate
     const formatTimeEstimate = React.useCallback((seconds: number): string => {
@@ -145,11 +166,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               transition={
                 animated && !prefersReducedMotion
                   ? {
-                      width: {
-                        duration: 0.4,
-                        ease: "easeOut",
-                      },
-                    }
+                    width: {
+                      duration: 0.4,
+                      ease: "easeOut",
+                    },
+                  }
                   : { duration: 0 }
               }
             />
