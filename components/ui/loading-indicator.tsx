@@ -91,9 +91,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     const showPagination = props.showPagination ?? false;
 
     return (
-      <div
-        className={cn("space-y-4", props.className)}
-      >
+      <div className={cn("space-y-4", props.className)}>
         {showFilters && (
           <div className="flex items-center justify-between">
             <Skeleton className="h-10 w-[300px]" />
@@ -170,9 +168,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
   if (props.variant === "form") {
     const fields = props.fields ?? 3;
     return (
-      <div
-        className={cn("space-y-6", props.className)}
-      >
+      <div className={cn("space-y-6", props.className)}>
         {Array.from({ length: fields }).map((_, i) => (
           <div key={`field-${i}`} className="space-y-2">
             <Skeleton className="h-4 w-24" />
