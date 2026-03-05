@@ -580,7 +580,8 @@ export default function LexicalEditor({
       nodes: NODES,
       readOnly: readOnly,
       onError: (error: Error) => {
-        log.error(error);
+        // biome-ignore lint/suspicious/noConsole: lexical editor error boundary requires console reporting
+        console.error(error);
       },
       editorState: (editor: unknown) => {
         // Convert initial markdown to editor state
