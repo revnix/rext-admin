@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Heart, PartyPopper, Sparkles, Trophy } from "lucide-react";
 import * as React from "react";
 import {
+  MOTION_DURATION,
   celebrationVariants,
   getMotionVariants,
   useReducedMotion,
@@ -211,7 +212,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
       return Array.from({ length: particleCount }, (_, i) => ({
         id: i,
         delay: Math.random() * 0.5,
-        duration: 1.5 + Math.random() * 0.5,
+        duration: MOTION_DURATION.shimmer + Math.random() * 0.5,
         x: 20 + Math.random() * 60,
         y: 30 + Math.random() * 40,
         color: colors[Math.floor(Math.random() * colors.length)],
@@ -278,7 +279,10 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                     : { scale: [1, 1.1, 1] }
                 }
                 transition={{
-                  duration: type === "completion" ? 0.6 : 0.3,
+                  duration:
+                    type === "completion"
+                      ? MOTION_DURATION.medium
+                      : MOTION_DURATION.veryFast,
                   delay: 0.1,
                 }}
               >
@@ -290,7 +294,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                 className="relative z-10 text-xl font-bold text-foreground"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ duration: MOTION_DURATION.veryFast, delay: 0.2 }}
               >
                 {title}
               </motion.h2>
@@ -300,7 +304,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                 className="relative z-10 flex items-center gap-1 text-muted-foreground"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ duration: MOTION_DURATION.veryFast, delay: 0.3 }}
               >
                 <span>{subtitle}</span>
                 {type === "completion" ? <PartyPopper className="h-4 w-4" aria-hidden="true" /> : null}
@@ -312,7 +316,10 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                   className="relative z-10 w-full max-w-xs"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{
+                    duration: MOTION_DURATION.veryFast,
+                    delay: 0.4,
+                  }}
                 >
                   <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                     <motion.div
@@ -323,7 +330,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                       initial={{ width: "0%" }}
                       animate={{ width: `${Math.round(progress)}%` }}
                       transition={{
-                        duration: 1,
+                        duration: MOTION_DURATION.long,
                         delay: 0.5,
                         ease: "easeOut",
                       }}
@@ -370,7 +377,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                     scale: [1, 1.5, 1],
                   }}
                   transition={{
-                    duration: 2 + Math.random(),
+                    duration: MOTION_DURATION.floating + Math.random(),
                     repeat: Infinity,
                     delay: Math.random() * 2,
                   }}
