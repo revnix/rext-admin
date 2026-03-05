@@ -8,7 +8,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import { Clock, PartyPopper } from "lucide-react";
 import * as React from "react";
 import {
   getMotionVariants,
@@ -145,11 +145,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               transition={
                 animated && !prefersReducedMotion
                   ? {
-                      width: {
-                        duration: 0.4,
-                        ease: "easeOut",
-                      },
-                    }
+                    width: {
+                      duration: 0.4,
+                      ease: "easeOut",
+                    },
+                  }
                   : { duration: 0 }
               }
             />
@@ -200,7 +200,10 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            Complete! 🎉
+            <span className="inline-flex items-center gap-1">
+              Complete!
+              <PartyPopper className="h-4 w-4" aria-hidden="true" />
+            </span>
           </motion.div>
         )}
       </div>

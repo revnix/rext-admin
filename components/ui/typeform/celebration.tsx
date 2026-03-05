@@ -8,7 +8,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Heart, Sparkles, Trophy } from "lucide-react";
+import { Check, Heart, PartyPopper, Sparkles, Trophy } from "lucide-react";
 import * as React from "react";
 import {
   celebrationVariants,
@@ -113,7 +113,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
           return {
             icon: Check,
             title: "Completed!",
-            subtitle: "Well done! 🎉",
+            subtitle: "Well done!",
             colors: ["green", "emerald", "teal"],
           };
         case "selection":
@@ -283,12 +283,13 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
 
               {/* Subtitle */}
               <motion.p
-                className="relative z-10 text-muted-foreground"
+                className="relative z-10 flex items-center gap-1 text-muted-foreground"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                {subtitle}
+                <span>{subtitle}</span>
+                {type === "completion" ? <PartyPopper className="h-4 w-4" aria-hidden="true" /> : null}
               </motion.p>
 
               {/* Progress Bar for Milestone */}
