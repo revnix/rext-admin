@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useResourceLimit } from "./usage-limit-warning";
 import type { Route } from "next";
+import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
 /**
  * Limit Check Wrapper Component
@@ -89,13 +90,18 @@ export function LimitCheckWrapper({
               allowed on your current plan.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleUpgrade}>
+              <Button
+                size="sm"
+                variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+                onClick={handleUpgrade}
+              >
                 <TrendingUp className="mr-2 h-4 w-4" />
                 Upgrade Plan
               </Button>
+
               <Button
                 size="sm"
-                variant="outline"
+                variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                 onClick={() => router.push("/dashboard/subscription" as Route)}
               >
                 View Usage

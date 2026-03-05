@@ -29,6 +29,7 @@ export const createMockSubscriptionPlan = (
   price_monthly: 29.0,
   price_yearly: 290.0,
   features: {
+    items: [],
     advanced_ai: true,
     priority_support: true,
     advanced_analytics: true,
