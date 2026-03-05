@@ -15,7 +15,6 @@ import type {
   ApiNotificationType,
 } from "@/types/notifications";
 
-
 function mapApiNotificationToUiType(
   status: ApiNotificationStatus,
   sourceType: ApiNotificationType,
@@ -108,7 +107,6 @@ export async function fetchNotifications(): Promise<OperationNotification[]> {
 //       return "info";
 //   }
 // }
-
 
 /**
  * Mark specific notifications as read.

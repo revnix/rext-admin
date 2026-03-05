@@ -130,8 +130,7 @@ export function FreshGenerationView({
         if (updates?.content_engine?.content?.final_content) {
           dispatch({
             type: "SET_GENERATED_CONTENT",
-            payload:
-              updates.content_engine.content.final_content.body_markdown,
+            payload: updates.content_engine.content.final_content.body_markdown,
           });
           dispatch({
             type: "SET_INSTRUCTION_TYPE",
