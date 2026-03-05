@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Upload, X } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { type FileRejection, useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,9 @@ import { apiClient } from "@/lib/api-client";
 import { mediaQueries } from "@/lib/query-keys";
 import type { MediaUploadParams } from "@/lib/api-client/media";
 import { formatFileSize } from "@/lib/formatters/number-formatters";
+
+const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
+const MAX_UPLOAD_SIZE_LABEL = "20MB";
 
 interface MediaUploadDialogProps {
   workspaceId: string;
@@ -84,9 +87,32 @@ export function MediaUploadDialog({
     [title],
   );
 
+  const handleRejectedFiles = useCallback((rejections: FileRejection[]) => {
+    if (!rejections.length) {
+      return;
+    }
+
+    const first = rejections[0];
+    const tooLarge = first.errors.some(
+      (error) => error.code === "file-too-large",
+    );
+
+    if (tooLarge) {
+      toast.error(
+        `File exceeds ${MAX_UPLOAD_SIZE_LABEL}. Please choose a smaller file.`,
+      );
+      return;
+    }
+
+    const reason = first.errors[0]?.message ?? "File is not supported.";
+    toast.error(reason);
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected: handleRejectedFiles,
     maxFiles: 1,
+    maxSize: MAX_UPLOAD_SIZE_BYTES,
     accept: {
       "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
       "application/pdf": [".pdf"],
@@ -100,6 +126,13 @@ export function MediaUploadDialog({
 
     if (!file) {
       toast.error("Please select a file to upload");
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      toast.error(
+        `File exceeds ${MAX_UPLOAD_SIZE_LABEL}. Please choose a smaller file.`,
+      );
       return;
     }
 
@@ -189,7 +222,7 @@ export function MediaUploadDialog({
                         TXT, MD)
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Max file size: 20MB
+                        Max file size: {MAX_UPLOAD_SIZE_LABEL}
                       </p>
                     </>
                   )}

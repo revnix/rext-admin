@@ -75,7 +75,7 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * Register a new user
      */
-    register: async (data: any) => {
+    register: async (data: Record<string, unknown>) => {
       return client.request<{
         user: User;
         message: string;
@@ -89,7 +89,7 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * Register a new user with an invitation token
      */
-    registerWithInvitation: async (data: any) => {
+    registerWithInvitation: async (data: Record<string, unknown>) => {
       return client.request<{
         user: User;
         message: string;

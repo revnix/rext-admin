@@ -1,7 +1,5 @@
 "use client";
 
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -77,7 +75,7 @@ export function SignupForm({
       const isInvitationSignup = hasValidInvitation && !!invitationToken;
 
       // Build request payload
-      const payload: Record<string, any> = {
+      const payload: Record<string, string> = {
         full_name: data.full_name,
         email: data.email,
         password: data.password,
@@ -233,7 +231,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                          "bg-muted cursor-not-allowed opacity-75",
+                            "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />

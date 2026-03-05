@@ -28,8 +28,6 @@ import { ErrorPage } from "@/components/ui/error-states";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
-import { buildUrl } from "@/lib/url-utils";
-import { authenticatedFetch } from "@/lib/auth-utils";
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(0);

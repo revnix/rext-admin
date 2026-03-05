@@ -19,18 +19,18 @@
  * @see https://m3.material.io/styles/motion/easing-and-duration/tokens-specs
  */
 export const MODAL_DELAYS = {
-    /** Standard delay before showing a modal after page load */
-    DEFAULT: 500,
+  /** Standard delay before showing a modal after page load */
+  DEFAULT: 500,
 
-    /**
-     * Delay before showing onboarding to invited users.
-     * Longer than DEFAULT to let them see the workspace first.
-     */
-    INVITED_USER: 800,
+  /**
+   * Delay before showing onboarding to invited users.
+   * Longer than DEFAULT to let them see the workspace first.
+   */
+  INVITED_USER: 800,
 
-    /**
-     * Delay before clearing modal state after close.
-     * Allows exit animation to complete before React unmounts the component.
-     */
-    ANIMATION_CLEANUP: 300,
+  /**
+   * Delay before clearing modal state after close.
+   * Allows exit animation to complete before React unmounts the component.
+   */
+  ANIMATION_CLEANUP: 300,
 } as const;

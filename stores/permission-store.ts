@@ -186,7 +186,9 @@ export const usePermissionStore = create<PermissionStore>()((set, get) => ({
 
   isAdmin: () => {
     const state = get();
-    return ([ROLES.ADMIN, ROLES.SUPER_ADMIN] as string[]).includes(state.user?.role || "");
+    return ([ROLES.ADMIN, ROLES.SUPER_ADMIN] as string[]).includes(
+      state.user?.role || "",
+    );
   },
 
   isSuperAdmin: () => {
