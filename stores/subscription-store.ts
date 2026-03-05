@@ -21,6 +21,7 @@ import type {
   UserSubscription,
 } from "@/types/subscription";
 import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
+import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
 
 const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
 let inFlightSubscriptionFetch: Promise<void> | null = null;
@@ -261,9 +262,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getPlans();
+          const parsed = SubscriptionListResponseSchema.parse(response);
 
           set({
-            plans: response.plans,
+            plans: parsed.plans,
             isLoading: false,
             error: null,
           });

@@ -55,19 +55,23 @@ export interface Invoice {
 // SUBSCRIPTION PLAN INTERFACES
 // ============================================================================
 
+export interface PlanFeatures {
+  items: string[];
+}
+
 export interface SubscriptionPlan extends Record<string, unknown> {
   id: string;
-  name: string; // Unique identifier (e.g., "pro", "enterprise")
-  display_name: string; // Human-readable name
+  name: string;
+  display_name: string;
   description: string | null;
   price_monthly: number;
   price_yearly: number;
-  features: Record<string, unknown>; // Flexible JSON features
-  max_workspaces: number; // -1 = unlimited
-  max_members_per_workspace: number; // -1 = unlimited
-  max_topics: number; // -1 = unlimited
-  max_knowledge_items: number; // -1 = unlimited
-  max_api_calls_per_month: number; // -1 = unlimited
+  features: PlanFeatures;
+  max_workspaces: number;
+  max_members_per_workspace: number;
+  max_topics: number;
+  max_knowledge_items: number;
+  max_api_calls_per_month: number;
   is_active: boolean;
   is_public: boolean;
   created_at: string;
