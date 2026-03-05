@@ -30,9 +30,6 @@ export const createMockSubscriptionPlan = (
   price_yearly: 290.0,
   features: {
     items: [],
-    advanced_ai: true,
-    priority_support: true,
-    advanced_analytics: true,
   },
   max_workspaces: 10,
   max_members_per_workspace: 5,

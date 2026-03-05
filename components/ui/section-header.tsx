@@ -139,9 +139,9 @@ const SectionHeader = React.forwardRef<
 
         {actions.length > 0 && (
           <div className="flex items-center gap-2 shrink-0">
-            {actions.map((action, index) => (
+            {actions.map((action) => (
               <Button
-                key={`${action.label}-${index}`}
+                key={action.label}
                 variant={action.variant || "outline"}
                 size="sm"
                 onClick={action.onClick}
