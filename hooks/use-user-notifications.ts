@@ -10,6 +10,21 @@ import { useNotificationStore } from "@/stores/notification-store";
 
 const userNotificationsLogger = log.forComponent("useUserNotifications");
 
+async function refreshNotificationsWithState(): Promise<void> {
+  const store = useNotificationStore.getState();
+  store.setFetchState({ isLoading: true, fetchError: null });
+
+  try {
+    const notifications = await fetchNotifications();
+    store.mergeNotifications(notifications);
+    store.setFetchState({ isLoading: false, fetchError: null });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    store.setFetchState({ isLoading: false, fetchError: message });
+    userNotificationsLogger.error("Failed to refresh notifications", { error });
+  }
+}
+
 /**
  * Hook that automatically subscribes to user-specific notifications
  * and general events when the user is logged in. Fetches notifications from API whenever an event occurs.
@@ -17,16 +32,30 @@ const userNotificationsLogger = log.forComponent("useUserNotifications");
 export function useUserNotifications() {
   const { data: session, status } = useSession();
   const { subscribe } = useSSE();
+  const hasHydrated = useNotificationStore((state) => state.hasHydrated);
   const unsubscribeUserNotificationsRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // Only subscribe if user is authenticated and we have a user ID
-    if (status !== "authenticated" || !session?.user?.id) {
+    // Only subscribe if user is authenticated and store has hydrated
+    if (status !== "authenticated" || !session?.user?.id || !hasHydrated) {
       return;
     }
 
     const userId = session.user.id;
     const userNotificationsChannelId = `user-notifications-${userId}`;
+    void refreshNotificationsWithState();
+
+    // ── Initial fetch on mount ──────────────────────────────────────────
+    fetchNotifications()
+      .then((incoming) => {
+        useNotificationStore.getState().mergeNotifications(incoming);
+      })
+      .catch((error) => {
+        userNotificationsLogger.error("Failed to load initial notifications", {
+          userId,
+          error,
+        });
+      });
 
     // Subscribe to user notification events
     unsubscribeUserNotificationsRef.current = subscribe(
@@ -42,7 +71,7 @@ export function useUserNotifications() {
         );
 
         // Fetch notifications from API
-        void fetchNotifications()
+        fetchNotifications()
           .then((incoming) => {
             useNotificationStore.getState().mergeNotifications(incoming);
           })
@@ -75,5 +104,5 @@ export function useUserNotifications() {
         unsubscribeUserNotificationsRef.current = null;
       }
     };
-  }, [session?.user?.id, status, subscribe]);
+  }, [session?.user?.id, status, subscribe, hasHydrated]);
 }

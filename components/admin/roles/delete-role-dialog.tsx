@@ -14,8 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
-import { adminQueries } from "@/lib/query-keys";
 import type { Role } from "@/types/role";
+import { usePermissionStore } from "@/stores/permission-store";
 
 interface DeleteRoleDialogProps {
   open: boolean;
@@ -29,15 +29,22 @@ export function DeleteRoleDialog({
   role,
 }: DeleteRoleDialogProps) {
   const queryClient = useQueryClient();
-
+  const invalidateWorkspacePermissions = usePermissionStore(
+    (state) => state.invalidateWorkspacePermissions,
+  );
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!role) throw new Error("No role selected");
       return await apiClient.roles.delete(role.id);
     },
-    onSuccess: () => {
-      toast.success("Role deleted successfully");
-      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
+    onSuccess: async () => {
+      toast.success("Role updated successfully");
+      invalidateWorkspacePermissions();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+      ]);
       onOpenChange(false);
     },
     onError: (error: Error) => {

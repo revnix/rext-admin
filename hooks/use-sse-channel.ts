@@ -10,8 +10,23 @@ import {
 } from "@/types/sse";
 import { fetchNotifications } from "@/services/notification-api";
 import { useNotificationStore } from "@/stores/notification-store";
+import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
+
+async function refreshNotificationsWithState(): Promise<void> {
+  const store = useNotificationStore.getState();
+  store.setFetchState({ isLoading: true, fetchError: null });
+
+  try {
+    const notifications = await fetchNotifications();
+    store.mergeNotifications(notifications);
+    store.setFetchState({ isLoading: false, fetchError: null });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    store.setFetchState({ isLoading: false, fetchError: message });
+  }
+}
 
 /**
  * Classification for SSE status/error messages
@@ -131,6 +146,8 @@ export function useSSEChannel(
   //       onErrorRef.current?.("Failed to refresh notifications");
   //     });
   // }, []);
+
+  void refreshNotificationsWithState();
 
   const handleError = useCallback((errorMessage?: string, code?: string) => {
     if (!errorMessage && !code) {
@@ -342,7 +359,7 @@ export function useSSEChannel(
         );
         operationIdRef.current = operationId;
       }
-    }, 100); // Small delay to prevent race conditions
+    }, NOTIFICATION_CONSTANTS.SSE_SUBSCRIBE_DELAY_MS); // Small delay to prevent race conditions
 
     // Cleanup on unmount or when dependencies change
     return () => {

@@ -2,13 +2,6 @@
 
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
 import { ApiError } from "@/lib/api-client/core";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
@@ -18,6 +11,22 @@ import {
   SSE_ERROR_CODES,
 } from "@/types/sse";
 import { SSEEventSchema } from "@/schemas/sse-schemas";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
+
+type ActiveSubscription = {
+  abortController: AbortController;
+  subscriberCount: number;
+  unsubscribe: () => void;
+};
 
 interface SSEContextType {
   subscribe: (
@@ -42,10 +51,6 @@ interface SSEProviderProps {
 
 const sseLogger = log.forComponent("SSEProvider");
 
-const MAX_RETRIES = 5;
-const RETRY_BASE_DELAY_MS = 1000;
-const RETRY_MAX_DELAY_MS = 10_000;
-
 const TERMINAL_STEPS = new Set(["pipeline.completed", "pipeline.failed"]);
 
 // Track completed operations to prevent reconnection attempts
@@ -61,7 +66,17 @@ const activeSubscriptions = new Map<
   }
 >();
 
+/**
+ * Provides SSE subscription APIs for long-running operation updates.
+ *
+ * `baseUrl` optionally overrides environment-derived API resolution.
+ */
 export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
+  const completedOperationsRef = useRef<Set<string>>(new Set());
+  const activeSubscriptionsRef = useRef<Map<string, ActiveSubscription>>(
+    new Map(),
+  );
+
   const resolvedBaseUrl = useMemo(
     () =>
       resolveApiBaseUrl({
@@ -78,8 +93,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         return () => undefined;
       }
 
-      // Check if operation was already completed
-      if (completedOperations.has(operationId)) {
+      if (completedOperationsRef.current.has(operationId)) {
         sseLogger.info("Operation already completed, notifying immediately", {
           operationId,
         });
@@ -113,9 +127,13 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         return () => undefined;
       }
 
-      // Check if there's already an active subscription for this operation
-      const existingSubscription = activeSubscriptions.get(operationId);
-      if (existingSubscription) {
+      const existingSubscription =
+        activeSubscriptionsRef.current.get(operationId);
+
+      if (existingSubscription && existingSubscription.subscriberCount === 0) {
+        existingSubscription.unsubscribe();
+        activeSubscriptionsRef.current.delete(operationId);
+
         sseLogger.info("Reusing existing SSE subscription", {
           operationId,
           subscriberCount: existingSubscription.subscriberCount,
@@ -417,7 +435,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               error: errorMessage,
             });
 
-            if (retryCount >= MAX_RETRIES) {
+            if (retryCount >= NOTIFICATION_CONSTANTS.SSE_MAX_RETRIES) {
               stop({
                 connected: false,
                 retryCount,
@@ -434,8 +452,9 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
             });
 
             const delay = Math.min(
-              RETRY_BASE_DELAY_MS * 2 ** (retryCount - 1),
-              RETRY_MAX_DELAY_MS,
+              NOTIFICATION_CONSTANTS.SSE_RETRY_BASE_DELAY_MS *
+                2 ** (retryCount - 1),
+              NOTIFICATION_CONSTANTS.SSE_RETRY_MAX_DELAY_MS,
             );
 
             await new Promise((resolve) => {
@@ -461,8 +480,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         activeSubscriptions.delete(operationId);
       };
 
-      // Store this subscription in the active subscriptions map
-      activeSubscriptions.set(operationId, {
+      activeSubscriptionsRef.current.set(operationId, {
         abortController,
         subscriberCount: 1,
         unsubscribe,
@@ -486,11 +504,30 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
     [subscribe, clearCompletedOperation],
   );
 
+  useEffect(() => {
+    return () => {
+      for (const subscription of activeSubscriptionsRef.current.values()) {
+        if (!subscription.abortController.signal.aborted) {
+          subscription.abortController.abort();
+        }
+        subscription.unsubscribe();
+      }
+
+      activeSubscriptionsRef.current.clear();
+      completedOperationsRef.current.clear();
+    };
+  }, []);
+
   return (
     <SSEContext.Provider value={contextValue}>{children}</SSEContext.Provider>
   );
 }
 
+/**
+ * Access the active SSE context.
+ *
+ * @throws Error when used outside `SSEProvider`
+ */
 export function useSSE(): SSEContextType {
   const context = useContext(SSEContext);
 

@@ -1,10 +1,8 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { registerStoreReset } from "@/lib/store-registry";
 import type { StrictUserWithPermissions } from "@/types/role";
 import { ROLES } from "@/lib/permissions";
-
-const MAX_WORKSPACE_PERMISSION_CACHE = 25;
-const MAX_WORKSPACE_LOADING_CACHE = 50;
 
 /**
  * User interface with permissions
@@ -31,12 +29,11 @@ export interface WorkspacePermissions {
  */
 interface PermissionStore {
   user: StrictUserWithPermissions | null;
-  workspacePermissions: Map<string, WorkspacePermissions>;
+  workspacePermissions: Record<string, WorkspacePermissions>;
   isLoading: boolean;
   error: string | null;
-  workspaceLoadingStates: Map<string, boolean>;
+  workspaceLoadingStates: Record<string, boolean>;
 
-  // Actions
   setUser: (user: StrictUserWithPermissions) => void;
   setWorkspacePermissions: (
     workspaceId: string,
@@ -47,27 +44,13 @@ interface PermissionStore {
   setError: (error: string | null) => void;
   setWorkspaceLoading: (workspaceId: string, isLoading: boolean) => void;
   isWorkspaceLoading: (workspaceId: string) => boolean;
-
-  // Permission checks
   hasPermission: (permission: string, workspaceId?: string) => boolean;
   hasAnyPermission: (permissions: string[], workspaceId?: string) => boolean;
   hasAllPermissions: (permissions: string[], workspaceId?: string) => boolean;
   hasRole: (role: string) => boolean;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
-}
-
-function pruneOldestEntries<K, V>(map: Map<K, V>, maxSize: number): Map<K, V> {
-  if (map.size <= maxSize) return map;
-
-  const pruned = new Map(map);
-  while (pruned.size > maxSize) {
-    const oldestKey = pruned.keys().next().value;
-    if (oldestKey === undefined) break;
-    pruned.delete(oldestKey);
-  }
-
-  return pruned;
+  invalidateWorkspacePermissions: (workspaceId?: string) => void;
 }
 
 /**
@@ -79,122 +62,106 @@ function pruneOldestEntries<K, V>(map: Map<K, V>, maxSize: number): Map<K, V> {
  * Note: Only user data is persisted, not workspace permissions.
  * Workspace permissions are fetched fresh on each workspace load.
  */
-export const usePermissionStore = create<PermissionStore>()((set, get) => ({
-  user: null,
-  workspacePermissions: new Map(),
-  isLoading: false,
-  error: null,
-  workspaceLoadingStates: new Map(),
-
-  setUser: (user) => set({ user, error: null }),
-
-  setWorkspacePermissions: (workspaceId, permissions) =>
-    set((state) => {
-      const nextPermissions = new Map(state.workspacePermissions);
-
-      // Promote recently written workspace to newest position.
-      if (nextPermissions.has(workspaceId)) {
-        nextPermissions.delete(workspaceId);
-      }
-      nextPermissions.set(workspaceId, permissions);
-
-      const boundedPermissions = pruneOldestEntries(
-        nextPermissions,
-        MAX_WORKSPACE_PERMISSION_CACHE,
-      );
-
-      const nextLoadingStates = new Map(state.workspaceLoadingStates);
-      nextLoadingStates.set(workspaceId, false);
-
-      // Keep loading-state map aligned with retained permission keys.
-      for (const key of nextLoadingStates.keys()) {
-        if (!boundedPermissions.has(key)) {
-          nextLoadingStates.delete(key);
-        }
-      }
-
-      return {
-        workspacePermissions: boundedPermissions,
-        workspaceLoadingStates: pruneOldestEntries(
-          nextLoadingStates,
-          MAX_WORKSPACE_LOADING_CACHE,
-        ),
-      };
-    }),
-
-  clearPermissions: () =>
-    set({
+export const usePermissionStore = create<PermissionStore>()(
+  persist(
+    (set, get) => ({
       user: null,
-      workspacePermissions: new Map(),
-      workspaceLoadingStates: new Map(),
+      workspacePermissions: {},
+      isLoading: false,
       error: null,
-    }),
+      workspaceLoadingStates: {},
 
-  setLoading: (isLoading) => set({ isLoading }),
+      setUser: (user) => set({ user, error: null }),
 
-  setError: (error) => set({ error }),
+      setWorkspacePermissions: (workspaceId, permissions) =>
+        set((state) => ({
+          workspacePermissions: {
+            ...state.workspacePermissions,
+            [workspaceId]: permissions,
+          },
+          workspaceLoadingStates: {
+            ...state.workspaceLoadingStates,
+            [workspaceId]: false,
+          },
+        })),
 
-  setWorkspaceLoading: (workspaceId, isLoading) =>
-    set((state) => {
-      const nextLoadingStates = new Map(state.workspaceLoadingStates);
+      clearPermissions: () =>
+        set({
+          user: null,
+          workspacePermissions: {},
+          workspaceLoadingStates: {},
+          error: null,
+        }),
 
-      if (nextLoadingStates.has(workspaceId)) {
-        nextLoadingStates.delete(workspaceId);
-      }
-      nextLoadingStates.set(workspaceId, isLoading);
+      setLoading: (isLoading) => set({ isLoading }),
 
-      return {
-        workspaceLoadingStates: pruneOldestEntries(
-          nextLoadingStates,
-          MAX_WORKSPACE_LOADING_CACHE,
+      setError: (error) => set({ error }),
+
+      setWorkspaceLoading: (workspaceId, isLoading) =>
+        set((state) => ({
+          workspaceLoadingStates: {
+            ...state.workspaceLoadingStates,
+            [workspaceId]: isLoading,
+          },
+        })),
+
+      isWorkspaceLoading: (workspaceId) =>
+        Boolean(get().workspaceLoadingStates[workspaceId]),
+
+      hasPermission: (permission, workspaceId) => {
+        const state = get();
+        if (!state.user) return false;
+        if (state.user.role === ROLES.SUPER_ADMIN) return true;
+
+        if (workspaceId) {
+          const wsPerms = state.workspacePermissions[workspaceId];
+          if (wsPerms?.permissions.includes(permission)) return true;
+        }
+
+        return state.user.permissions.includes(permission);
+      },
+
+      hasAnyPermission: (permissions, workspaceId) =>
+        permissions.some((perm) => get().hasPermission(perm, workspaceId)),
+
+      hasAllPermissions: (permissions, workspaceId) =>
+        permissions.every((perm) => get().hasPermission(perm, workspaceId)),
+
+      hasRole: (role) => get().user?.role === role,
+
+      isAdmin: () =>
+        ([ROLES.ADMIN, ROLES.SUPER_ADMIN] as string[]).includes(
+          get().user?.role ?? "",
         ),
-      };
+
+      isSuperAdmin: () => get().user?.role === ROLES.SUPER_ADMIN,
+
+      invalidateWorkspacePermissions: (workspaceId) =>
+        set((state) => {
+          if (!workspaceId) {
+            return {
+              workspacePermissions: {},
+              workspaceLoadingStates: {},
+            };
+          }
+
+          const { [workspaceId]: _removedPerm, ...nextPermissions } =
+            state.workspacePermissions;
+          const { [workspaceId]: _removedLoading, ...nextLoading } =
+            state.workspaceLoadingStates;
+
+          return {
+            workspacePermissions: nextPermissions,
+            workspaceLoadingStates: nextLoading,
+          };
+        }),
     }),
-
-  isWorkspaceLoading: (workspaceId) => {
-    const state = get();
-    return state.workspaceLoadingStates.get(workspaceId) || false;
-  },
-
-  hasPermission: (permission, workspaceId) => {
-    const state = get();
-    if (!state.user) return false;
-
-    // Super admin has all permissions
-    if (state.user.role === ROLES.SUPER_ADMIN) return true;
-
-    if (workspaceId) {
-      const wsPerms = state.workspacePermissions.get(workspaceId);
-      if (wsPerms?.permissions.includes(permission)) return true;
-    }
-
-    return state.user.permissions.includes(permission);
-  },
-
-  hasAnyPermission: (permissions, workspaceId) => {
-    return permissions.some((perm) => get().hasPermission(perm, workspaceId));
-  },
-
-  hasAllPermissions: (permissions, workspaceId) => {
-    return permissions.every((perm) => get().hasPermission(perm, workspaceId));
-  },
-
-  hasRole: (role) => {
-    const state = get();
-    return state.user?.role === role;
-  },
-
-  isAdmin: () => {
-    const state = get();
-    return ([ROLES.ADMIN, ROLES.SUPER_ADMIN] as string[]).includes(
-      state.user?.role || "",
-    );
-  },
-
-  isSuperAdmin: () => {
-    return get().user?.role === ROLES.SUPER_ADMIN;
-  },
-}));
+    {
+      name: "permission-storage",
+      partialize: (state) => ({ user: state.user }),
+    },
+  ),
+);
 
 // Register with global store registry for logout cleanup
 const initialPermissionState = usePermissionStore.getInitialState();

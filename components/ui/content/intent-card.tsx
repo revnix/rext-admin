@@ -6,33 +6,29 @@ const INTENT_CONFIG = {
     label: "Commercial",
     description: "Researching options and ready to buy.",
     icon: FileText,
-    color: "#E67E22", // Orange
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-600",
+    color: "var(--color-warning-600)",
+    textColor: "text-warning-600",
   },
   informational: {
     label: "Informational",
     description: "Seeking knowledge or answers.",
     icon: Lightbulb,
-    color: "#8E44AD", // Purple
-    bgColor: "bg-purple-50",
+    color: "var(--color-purple-600)",
     textColor: "text-purple-600",
   },
   transactional: {
     label: "Transactional",
     description: "Ready to buy something specific.",
     icon: ShoppingCart,
-    color: "#1ABC9C", // Teal
-    bgColor: "bg-teal-50",
-    textColor: "text-teal-600",
+    color: "var(--color-success-600)",
+    textColor: "text-success-600",
   },
   navigational: {
     label: "Navigational",
     description: "Finding a website or location.",
     icon: MapPin,
-    color: "#F1C40F", // Yellow
-    bgColor: "bg-yellow-50",
-    textColor: "text-yellow-600",
+    color: "var(--color-warning-500)",
+    textColor: "text-warning-600",
   },
 } as const;
 
@@ -58,7 +54,7 @@ export function SearchIntentCard({
         <Icon className="w-5 h-5 text-white" />
       </div>
       <div className="min-w-0">
-        <h3 className="text-lg font-bold text-gray-900 truncate uppercase dark:text-white">
+        <h3 className="text-lg font-bold text-foreground truncate uppercase">
           {intent}
         </h3>
         <p className={`text-[10px] leading-tight ${config.textColor}`}>
@@ -68,3 +64,5 @@ export function SearchIntentCard({
     </>
   );
 }
+
+SearchIntentCard.displayName = "SearchIntentCard";

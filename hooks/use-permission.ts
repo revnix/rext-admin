@@ -63,7 +63,7 @@ export function usePermissionDecision({
     }
 
     const loading = isWorkspaceLoading(workspaceId);
-    const wsPerms = workspacePermissions.get(workspaceId);
+    const wsPerms = workspacePermissions[workspaceId];
     if (!wsPerms && loading) {
       return { hasAccess: false, isLoading: true };
     }
@@ -300,7 +300,7 @@ export function useWorkspacePermission(
   }
 
   // Check workspace-specific permissions from store (reactive)
-  const wsPerms = workspacePermissions.get(workspaceId);
+  const wsPerms = workspacePermissions[workspaceId];
 
   // If permissions not loaded yet and still loading, indicate loading state
   if (!wsPerms && isLoadingPermissions) {
@@ -357,7 +357,7 @@ export function useAnyWorkspacePermission(
   }
 
   // Check workspace permissions from store (reactive)
-  const wsPerms = workspacePermissions.get(workspaceId);
+  const wsPerms = workspacePermissions[workspaceId];
 
   // If permissions not loaded yet and still loading, indicate loading state
   if (!wsPerms && isLoadingPermissions) {
@@ -415,7 +415,7 @@ export function useAllWorkspacePermissions(
   }
 
   // Check workspace permissions from store (reactive)
-  const wsPerms = workspacePermissions.get(workspaceId);
+  const wsPerms = workspacePermissions[workspaceId];
 
   // If permissions not loaded yet and still loading, indicate loading state
   if (!wsPerms && isLoadingPermissions) {

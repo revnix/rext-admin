@@ -23,19 +23,14 @@ import { usePermissionUser } from "./use-permission";
  */
 function hasPermissionInAnyWorkspace(
   permission: string,
-  workspacePermissions: Map<
+  workspacePermissions: Record<
     string,
     { workspaceId: string; role: string; permissions: string[] }
   >,
 ): boolean {
-  // Check if user has this permission in ANY workspace
-  for (const [, wsPerms] of workspacePermissions) {
-    if (wsPerms.permissions.includes(permission)) {
-      return true;
-    }
-  }
-
-  return false;
+  return Object.values(workspacePermissions).some((wsPerms) =>
+    wsPerms.permissions.includes(permission),
+  );
 }
 
 /**
@@ -44,7 +39,7 @@ function hasPermissionInAnyWorkspace(
 function hasAccessToItem(
   user: UserWithPermissions | null,
   item: NavItem | NavSubItem,
-  workspacePermissions: Map<
+  workspacePermissions: Record<
     string,
     { workspaceId: string; role: string; permissions: string[] }
   >,
@@ -117,7 +112,7 @@ function hasAccessToItem(
 function filterNavItems(
   user: UserWithPermissions | null,
   items: NavItem[],
-  workspacePermissions: Map<
+  workspacePermissions: Record<
     string,
     { workspaceId: string; role: string; permissions: string[] }
   >,

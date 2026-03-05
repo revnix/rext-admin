@@ -151,10 +151,12 @@ export function useRefreshWorkspacePermissions() {
  * @returns Permission check result
  *
  * @example
+ * import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+ *
  * function DeleteButton({ workspaceId }: Props) {
  *   const { hasPermission, isLoading } = useCheckWorkspacePermission(
  *     workspaceId,
- *     'content:delete'
+ *     CONTENT_PERMISSIONS.DELETE,
  *   );
  *
  *   if (isLoading) return <ButtonSkeleton />;

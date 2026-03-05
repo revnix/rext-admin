@@ -271,9 +271,8 @@ export function WorkspaceMembersPanel({
       </Button>
       <PermissionGuard
         permission={MEMBER_PERMISSIONS.INVITE}
-        showLockedTooltip
+        showTooltip
         tooltipMessage="Only workspace admins can invite members"
-        showLockIcon
       >
         <Button
           size="sm"

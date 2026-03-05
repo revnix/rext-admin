@@ -271,7 +271,7 @@ export function MediaDetailSheet({
                 <>
                   <PermissionGuard
                     permission={MEDIA_PERMISSIONS.UPDATE}
-                    showLockedTooltip
+                    showTooltip
                   >
                     <Button
                       variant="outline"
@@ -302,8 +302,7 @@ export function MediaDetailSheet({
                   </Button>
                   <PermissionGuard
                     permission={MEDIA_PERMISSIONS.DELETE}
-                    showLockedTooltip
-                    showLockIcon
+                    showTooltip
                   >
                     <Button
                       variant="destructive"
@@ -320,7 +319,7 @@ export function MediaDetailSheet({
                 <>
                   <PermissionGuard
                     permission={MEDIA_PERMISSIONS.UPDATE}
-                    showLockedTooltip
+                    showTooltip
                   >
                     <Button
                       variant="default"
@@ -637,7 +636,7 @@ export function MediaDetailSheet({
               <X className="h-6 w-6" />
             </button>
             {/* Image info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-linear-to-t from-black/80 to-transparent text-white">
               <p className="text-lg font-medium">
                 {media.title || media.filename}
               </p>

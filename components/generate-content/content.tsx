@@ -20,7 +20,7 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-import LexicalEditor from "../ui/lexical-editor";
+import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
@@ -377,7 +377,8 @@ function ContentEditorInner({
                     {displayTitle}
                   </h1>
                   <div className="min-h-[600px]">
-                    <LexicalEditor
+                    <SafeLexicalEditor
+                      key={`editor-${contentId ?? "new"}-${isEditing}`}
                       initialValue={body}
                       onChange={onContentChange}
                     />
@@ -409,7 +410,11 @@ function ContentEditorInner({
                         )}
                       </div>
                       <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
-                        <LexicalEditor initialValue={body} readOnly={true} />
+                        <SafeLexicalEditor
+                          key={`editor-preview-${contentId ?? "new"}`}
+                          initialValue={body}
+                          readOnly={true}
+                        />
                       </div>
                     </>
                   ) : (
