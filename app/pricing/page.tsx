@@ -151,7 +151,10 @@ export default function PricingPage() {
           <div className="flex items-center justify-center gap-4 flex-wrap">
             {PRICING_SUPPORT_LINKS.map((link, index) => (
               <div key={link.id} className="contents">
-                <a href={link.href} className="text-primary hover:underline font-medium">
+                <a
+                  href={link.href}
+                  className="text-primary hover:underline font-medium"
+                >
                   {link.label}
                 </a>
                 {index < PRICING_SUPPORT_LINKS.length - 1 && (

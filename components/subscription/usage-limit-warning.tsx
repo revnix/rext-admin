@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Route } from "next";
+import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
 /**
  * Usage Limit Warning Component
@@ -27,11 +28,11 @@ interface UsageLimitWarningProps {
    * Resource type to monitor
    */
   resource:
-  | "workspaces"
-  | "topics"
-  | "knowledge_items"
-  | "ai_requests"
-  | "storage";
+    | "workspaces"
+    | "topics"
+    | "knowledge_items"
+    | "ai_requests"
+    | "storage";
 
   /**
    * Show warning when usage reaches this percentage (0-100)
@@ -291,10 +292,11 @@ export function UsageLimitWarning({
                 {showProgress && (
                   <Progress
                     value={Math.min(usagePercentage, 100)}
-                    className={`h-2 ${isCritical
+                    className={`h-2 ${
+                      isCritical
                         ? "[&>div]:bg-destructive"
                         : "[&>div]:bg-yellow-500"
-                      }`}
+                    }`}
                   />
                 )}
               </div>
@@ -321,13 +323,18 @@ export function UsageLimitWarning({
               </p>
 
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleUpgrade}>
+                <Button
+                  size="sm"
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+                  onClick={handleUpgrade}
+                >
                   <TrendingUp className="mr-2 h-4 w-4" />
                   Upgrade Plan
                 </Button>
+
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                   onClick={() =>
                     router.push("/dashboard/subscription" as Route)
                   }
@@ -341,12 +348,10 @@ export function UsageLimitWarning({
           {dismissible && (
             <Button
               size="sm"
-              variant="ghost"
+              variant={SUBSCRIPTION_ACTION_VARIANTS.dismissTertiary}
               onClick={handleDismiss}
-              className="ml-2"
-              aria-label={`Dismiss ${getResourceLabel().toLowerCase()} usage warning`}
             >
-              <X className="h-4 w-4" aria-hidden="true" />
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>

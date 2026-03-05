@@ -112,7 +112,6 @@ export const PlanFeaturesSchema = z
     return { items: Object.values(raw as Record<string, string>) };
   });
 
-
 export const SubscriptionPlanSchema = z.object({
   id: z.string().uuid("Invalid plan ID"),
   name: z.string().min(1, "Plan name is required"),
@@ -298,12 +297,10 @@ export const SubscriptionPlanCreateSchema = z.object({
   lemonsqueezy_variant_id_yearly: z.string().max(255).optional(),
 });
 
-export const SubscriptionPlanUpdateSchema = SubscriptionPlanCreateSchema.partial().omit({
-  name: true,
-});
-
-
-
+export const SubscriptionPlanUpdateSchema =
+  SubscriptionPlanCreateSchema.partial().omit({
+    name: true,
+  });
 
 // ============================================================================
 // TYPE EXPORTS (inferred from schemas)

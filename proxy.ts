@@ -6,7 +6,6 @@ import { auth } from "@/auth";
 import { getCSPHeader } from "@/lib/csp";
 import { ROLES } from "@/lib/permissions";
 
-
 /**
  * Generate a cryptographically secure random nonce using Web Crypto API
  * (Edge Runtime compatible)

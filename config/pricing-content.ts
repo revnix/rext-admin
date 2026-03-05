@@ -50,7 +50,11 @@ export const PRICING_FAQ_ITEMS: PricingFaqItem[] = [
 ];
 
 export const PRICING_SUPPORT_LINKS: PricingSupportLink[] = [
-  { id: "dashboard", href: "/dashboard/subscription", label: "View Subscription Dashboard" },
+  {
+    id: "dashboard",
+    href: "/dashboard/subscription",
+    label: "View Subscription Dashboard",
+  },
   { id: "support", href: "mailto:support@wrext.com", label: "Contact Support" },
   { id: "docs", href: "/docs/pricing", label: "View Documentation" },
 ];
