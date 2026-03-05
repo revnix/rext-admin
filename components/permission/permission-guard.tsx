@@ -32,8 +32,6 @@ interface PermissionGuardProps {
   showTooltip?: boolean;
   tooltipMessage?: string;
   requiredRole?: string;
-  showLockedTooltip?: boolean;
-  showLockIcon?: boolean;
 }
 
 /**
