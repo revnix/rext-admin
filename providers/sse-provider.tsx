@@ -53,18 +53,7 @@ const sseLogger = log.forComponent("SSEProvider");
 
 const TERMINAL_STEPS = new Set(["pipeline.completed", "pipeline.failed"]);
 
-// Track completed operations to prevent reconnection attempts
-const completedOperations = new Set<string>();
-
-// Track active subscriptions to prevent multiple connections to same operation
-const activeSubscriptions = new Map<
-  string,
-  {
-    abortController: AbortController;
-    subscriberCount: number;
-    unsubscribe: () => void;
-  }
->();
+const MAX_COMPLETED_OPERATIONS = 1000;
 
 /**
  * Provides SSE subscription APIs for long-running operation updates.
@@ -85,6 +74,22 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       }),
     [baseUrl],
   );
+
+  function markOperationCompleted(operationId: string): void {
+  completedOperationsRef.current.add(operationId);
+
+  if (completedOperationsRef.current.size > MAX_COMPLETED_OPERATIONS) {
+    // Set preserves insertion order — iterator yields oldest first
+    const iterator = completedOperationsRef.current.values();
+    const excess = completedOperationsRef.current.size - MAX_COMPLETED_OPERATIONS;
+    for (let i = 0; i < excess; i++) {
+      const oldest = iterator.next().value;
+      if (oldest !== undefined) {
+        completedOperationsRef.current.delete(oldest);
+      }
+    }
+  }
+}
 
   const subscribe = useCallback<SSEContextType["subscribe"]>(
     (operationId, onEvent, onStatus) => {
@@ -156,7 +161,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               operationId,
             });
             existingSubscription.unsubscribe();
-            activeSubscriptions.delete(operationId);
+            activeSubscriptionsRef.current.delete(operationId);
           }
         };
       }
@@ -165,6 +170,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       let retryCount = 0;
       let abortController = new AbortController();
 
+      markOperationCompleted(operationId);
       const baseEndpoint = resolvedBaseUrl || resolveApiBaseUrl();
 
       const buildUrl = () =>
@@ -240,7 +246,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                       operationId,
                     });
                     // Mark as completed to prevent reconnection
-                    completedOperations.add(operationId);
+                    markOperationCompleted(operationId);
                     stop({
                       connected: false,
                       retryCount,
@@ -306,7 +312,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
                   if (terminalStep || event.status === "failed") {
                     // Mark operation as completed to prevent reconnection
-                    completedOperations.add(operationId);
+                    markOperationCompleted(operationId);
 
                     const errorMessage =
                       typeof event.payload?.error === "string"
@@ -375,7 +381,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               onclose: () => {
                 if (isActive && !controller.signal.aborted) {
                   // Check if the operation was completed before throwing an error
-                  if (completedOperations.has(operationId)) {
+                  if (completedOperationsRef.current.has(operationId)) {
                     sseLogger.info("SSE connection closed after completion", {
                       operationId,
                     });
@@ -477,7 +483,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
         sseLogger.info("Unsubscribing from SSE operation", { operationId });
         stop();
         // Remove from active subscriptions map
-        activeSubscriptions.delete(operationId);
+        activeSubscriptionsRef.current.delete(operationId);
       };
 
       activeSubscriptionsRef.current.set(operationId, {
@@ -492,7 +498,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
   );
 
   const clearCompletedOperation = useCallback((operationId: string) => {
-    completedOperations.delete(operationId);
+    completedOperationsRef.current.delete(operationId);
     sseLogger.info("Cleared completed operation", { operationId });
   }, []);
 
