@@ -75,21 +75,22 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
     [baseUrl],
   );
 
-  function markOperationCompleted(operationId: string): void {
-  completedOperationsRef.current.add(operationId);
+  const markOperationCompleted = useCallback((operationId: string): void => {
+    completedOperationsRef.current.add(operationId);
 
-  if (completedOperationsRef.current.size > MAX_COMPLETED_OPERATIONS) {
-    // Set preserves insertion order — iterator yields oldest first
-    const iterator = completedOperationsRef.current.values();
-    const excess = completedOperationsRef.current.size - MAX_COMPLETED_OPERATIONS;
-    for (let i = 0; i < excess; i++) {
-      const oldest = iterator.next().value;
-      if (oldest !== undefined) {
-        completedOperationsRef.current.delete(oldest);
+    if (completedOperationsRef.current.size > MAX_COMPLETED_OPERATIONS) {
+      // Set preserves insertion order — iterator yields oldest first
+      const iterator = completedOperationsRef.current.values();
+      const excess =
+        completedOperationsRef.current.size - MAX_COMPLETED_OPERATIONS;
+      for (let i = 0; i < excess; i++) {
+        const oldest = iterator.next().value;
+        if (oldest !== undefined) {
+          completedOperationsRef.current.delete(oldest);
+        }
       }
     }
-  }
-}
+  }, []);
 
   const subscribe = useCallback<SSEContextType["subscribe"]>(
     (operationId, onEvent, onStatus) => {
@@ -494,7 +495,7 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
 
       return unsubscribe;
     },
-    [resolvedBaseUrl],
+    [resolvedBaseUrl, markOperationCompleted],
   );
 
   const clearCompletedOperation = useCallback((operationId: string) => {

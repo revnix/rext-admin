@@ -153,7 +153,7 @@ export function Breadcrumbs({
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((item, index) => (
-          <span key={`${item.label}-${index}`} className="contents">
+          <span key={item.label} className="contents">
             <BreadcrumbItem>
               {item.href ? (
                 <BreadcrumbLink href={item.href as Route}>

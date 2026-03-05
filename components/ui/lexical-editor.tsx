@@ -580,6 +580,7 @@ export default function LexicalEditor({
       nodes: NODES,
       readOnly: readOnly,
       onError: (error: Error) => {
+        // biome-ignore lint/suspicious/noConsole: lexical editor error boundary requires console reporting
         console.error(error);
       },
       editorState: (editor: unknown) => {
@@ -588,7 +589,7 @@ export default function LexicalEditor({
           if (initialValue) {
             try {
               $convertFromMarkdownString(initialValue, TRANSFORMERS);
-            } catch (_e) { }
+            } catch (_e) {}
           }
         });
       },

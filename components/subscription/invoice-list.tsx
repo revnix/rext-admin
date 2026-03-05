@@ -170,7 +170,9 @@ export function InvoiceList({
                     {!compact && invoiceItems.length > 0 && (
                       <div className="text-xs text-muted-foreground pt-1">
                         {invoiceItems.map((item, idx) => (
-                          <span key={`${invoice.invoice_id}-item-${idx}`}>
+                          <span
+                            key={`${invoice.invoice_id}-item-${item.description}`}
+                          >
                             {item.description}
                             {idx < invoiceItems.length - 1 && " • "}
                           </span>
@@ -221,7 +223,7 @@ export function InvoiceList({
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
 

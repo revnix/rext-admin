@@ -28,9 +28,9 @@ export function ValidationDisplay({ validation }: ValidationDisplayProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {validation.errors.map((error, index) => (
+        {validation.errors.map((error) => (
           <div
-            key={`error-${error.field}-${index}`}
+            key={`error-${error.field}-${error.message}`}
             className="flex items-center gap-2 text-destructive"
           >
             <AlertTriangle className="h-4 w-4" />
@@ -39,9 +39,9 @@ export function ValidationDisplay({ validation }: ValidationDisplayProps) {
             </span>
           </div>
         ))}
-        {validation.warnings.map((warning, index) => (
+        {validation.warnings.map((warning) => (
           <div
-            key={`warning-${warning.field}-${index}`}
+            key={`warning-${warning.field}-${warning.message}`}
             className="flex items-center gap-2 text-amber-600"
           >
             <Info className="h-4 w-4" />
