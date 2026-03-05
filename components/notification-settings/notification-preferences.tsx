@@ -29,6 +29,10 @@ interface NotificationPreferencesFormProps {
   initialPreferences: NotificationPreferencesApiResponse;
 }
 
+/**
+ * Maps notification preference API payloads into form default values.
+ * Missing nested sections are defaulted to `false` or safe form defaults.
+ */
 // Transform API response to form structure
 export function transformApiToFormData(
   apiData: ReturnType<typeof parseNotificationPreferencesApi>,

@@ -117,7 +117,7 @@ export {
 } from "./audit-log-api";
 // Export notification API service
 export {
-  NotificationApiService,
+  fetchNotifications,
   markNotificationsAsRead,
   markAllNotificationsAsRead,
 } from "./notification-api";

@@ -98,10 +98,11 @@ export function WizardModeQuestion({
                   }}
                   icon={getIcon(option.value)}
                   disabled={isLoading}
-                  className={`transition-all duration-200 ${isRecommended
+                  className={`transition-all duration-200 ${
+                    isRecommended
                       ? "ring-2 ring-primary/20 bg-primary/5 border-primary/30"
                       : ""
-                    }`}
+                  }`}
                   delay={index * 0.1}
                 />
               );

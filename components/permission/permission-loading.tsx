@@ -57,7 +57,9 @@ export function PermissionLoading({
       <LoadingIndicator
         variant="form"
         fields={1}
-        className={size === "sm" ? "h-8 w-24" : size === "md" ? "h-10 w-32" : "h-12 w-40"}
+        className={
+          size === "sm" ? "h-8 w-24" : size === "md" ? "h-10 w-32" : "h-12 w-40"
+        }
       />
       {message && (
         <span className="text-xs text-muted-foreground animate-pulse">

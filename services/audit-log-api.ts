@@ -4,6 +4,9 @@
  * Handles fetching and filtering audit logs for activity tracking.
  */
 
+// Use this file's existing function-level JSDoc style as the local convention
+// for notifications/SSE function docs (params, returns, side effects, throws).
+
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { buildUrl } from "@/lib/url-utils";

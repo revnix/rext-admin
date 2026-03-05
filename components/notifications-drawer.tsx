@@ -22,10 +22,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/stores/notification-store";
-import { NotificationApiService } from "@/services/notification-api";
 import { log } from "@/lib/logger";
 import type { OperationNotification } from "@/types/sse";
-import { useEffect } from "react";
+import {
+  markAllNotificationsAsRead,
+  markNotificationsAsRead,
+} from "@/services/notification-api";
 
 interface NotificationsDrawerProps {
   open: boolean;
@@ -74,7 +76,6 @@ export function NotificationsDrawer({
   open,
   onClose,
 }: NotificationsDrawerProps) {
-
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const isLoading = useNotificationStore((state) => state.isLoading);
@@ -92,7 +93,7 @@ export function NotificationsDrawer({
     setNotificationRead(id, true);
 
     try {
-      await NotificationApiService.markNotificationsAsRead([id]);
+      await markNotificationsAsRead([id]);
     } catch (error) {
       log.error("Failed to mark notification as read", error);
       // Revert
@@ -108,7 +109,7 @@ export function NotificationsDrawer({
     setAllNotificationsRead();
 
     try {
-      await NotificationApiService.markAllNotificationsAsRead();
+      await markAllNotificationsAsRead();
     } catch (error) {
       log.error("Failed to mark all notifications as read", error);
       // Revert
@@ -157,8 +158,12 @@ export function NotificationsDrawer({
             <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center text-muted-foreground">
               <Bell className="h-10 w-10 text-muted-foreground/70" />
               <div>
-                <p className="font-medium text-foreground">You're all caught up</p>
-                <p className="text-sm">We'll let you know when new operations complete.</p>
+                <p className="font-medium text-foreground">
+                  You're all caught up
+                </p>
+                <p className="text-sm">
+                  We'll let you know when new operations complete.
+                </p>
               </div>
             </div>
           ) : (
@@ -166,10 +171,11 @@ export function NotificationsDrawer({
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${!notification.read
-                      ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800" 
+                  className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${
+                    !notification.read
+                      ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
                       : "bg-background border-border dark:bg-background dark:border-border"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -178,10 +184,11 @@ export function NotificationsDrawer({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4
-                          className={`text-sm font-medium ${!notification.read
+                          className={`text-sm font-medium ${
+                            !notification.read
                               ? "text-foreground"
                               : "text-muted-foreground"
-                            }`}
+                          }`}
                         >
                           {notification.title}
                         </h4>

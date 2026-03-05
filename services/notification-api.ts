@@ -15,6 +15,7 @@ import type {
   ApiNotificationType,
 } from "@/types/notifications";
 
+
 function mapApiNotificationToUiType(
   status: ApiNotificationStatus,
   sourceType: ApiNotificationType,
@@ -41,6 +42,16 @@ function mapApiNotificationToUiType(
 function getNotificationApiBaseUrl(): string {
   return resolveApiBaseUrl({ allowWindowOriginFallback: true });
 }
+
+/**
+ * Fetch notifications from the backend and merge them into the notification store.
+ *
+ * Side effects:
+ * - Reads auth context via `authenticatedFetch`
+ * - Writes notifications to `useNotificationStore`
+ * - Logs and swallows errors (does not throw)
+ */
+
 export async function fetchNotifications(): Promise<OperationNotification[]> {
   try {
     const res = await authenticatedFetch(
@@ -98,12 +109,12 @@ export async function fetchNotifications(): Promise<OperationNotification[]> {
 //   }
 // }
 
+
 /**
- * Mark specific notifications as read
- *
- * @param notificationIds - Array of notification IDs to mark as read
- * @returns Success response
+ * Mark specific notifications as read.
+ * Throws when the backend request fails.
  */
+
 export async function markNotificationsAsRead(
   notificationIds: string[],
 ): Promise<{ success: boolean; message: string }> {
@@ -155,12 +166,3 @@ export async function markAllNotificationsAsRead(): Promise<{
 
   return response.json();
 }
-
-/**
- * Notification API Service
- */
-export const NotificationApiService = {
-  fetchNotifications,
-  markNotificationsAsRead,
-  markAllNotificationsAsRead,
-};

@@ -40,7 +40,12 @@ export function TableSkeleton({
   columns?: number;
 }) {
   return (
-    <LoadingIndicator variant="table" rows={rows} columns={columns} showHeader={true} />
+    <LoadingIndicator
+      variant="table"
+      rows={rows}
+      columns={columns}
+      showHeader={true}
+    />
   );
 }
 
