@@ -77,7 +77,6 @@ export function CheckoutButton({
       openCheckout(checkoutSession.checkout_url);
 
       onCheckoutSuccess?.(checkoutSession.checkout_url);
-      
 
       toast.success("Opening checkout...", {
         description: `Subscribing to ${plan.display_name} (${billingPeriod})${discountCode ? ` with code ${discountCode}` : ""}`,

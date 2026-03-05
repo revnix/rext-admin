@@ -269,8 +269,8 @@ export function DetailPageWrapper({
               className="mb-4"
             />
             <div className="space-y-3">
-              {quickActions.map((action, index) => (
-                <Tooltip key={`${action.label}-${index}`}>
+              {quickActions.map((action) => (
+                <Tooltip key={`${action.label}-${action.label}`}>
                   <TooltipTrigger asChild>
                     <Button
                       variant={action.variant || "outline"}
