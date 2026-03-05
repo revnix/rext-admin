@@ -1,7 +1,5 @@
 "use client";
 
-import { Loader2, Check } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { LoadingStep } from "@/constants/loading-steps";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
