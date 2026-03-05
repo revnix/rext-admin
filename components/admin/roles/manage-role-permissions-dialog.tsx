@@ -14,9 +14,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
-import { adminQueries } from "@/lib/query-keys";
 import type { Permission, RoleWithPermissions } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
+import { usePermissionStore } from "@/stores/permission-store";
 
 interface ManageRolePermissionsDialogProps {
   open: boolean;
@@ -34,6 +34,10 @@ export function ManageRolePermissionsDialog({
   const queryClient = useQueryClient();
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
     [],
+  );
+
+  const invalidateWorkspacePermissions = usePermissionStore(
+    (state) => state.invalidateWorkspacePermissions,
   );
 
   useEffect(() => {
@@ -70,11 +74,19 @@ export function ManageRolePermissionsDialog({
 
       return { added: toAdd.length, removed: toRemove.length };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success(
         `Permissions updated: ${data.added} added, ${data.removed} removed`,
       );
-      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
+
+      invalidateWorkspacePermissions();
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+      ]);
+
       onOpenChange(false);
     },
     onError: (error: Error) => {

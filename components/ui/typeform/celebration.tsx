@@ -152,18 +152,18 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
           colors: colors.map((color) => {
             // Convert Tailwind color names to hex values
             const colorMap: Record<string, string> = {
-              blue: "#3b82f6",
-              purple: "#8b5cf6",
-              indigo: "#6366f1",
-              green: "#10b981",
-              emerald: "#059669",
-              teal: "#14b8a6",
-              pink: "#ec4899",
-              rose: "#f43f5e",
-              red: "#ef4444",
-              yellow: "#eab308",
-              orange: "#f97316",
-              amber: "#f59e0b",
+              blue: "#3641f5", // Brand.600
+              purple: "#6938ef", // Purple.600
+              indigo: "#444ce7", // Indigo.600
+              green: "#12b76a", // Success.500
+              emerald: "#039855", // Success.600
+              teal: "#14b8a6", // Teal standard
+              pink: "#dd2590", // Pink.600
+              rose: "#ee46bc", // Pink.500
+              red: "#f04438", // Error.500
+              yellow: "#f79009", // Warning.500
+              orange: "#dc6803", // Warning.600
+              amber: "#f59e0b", // Warning standard
             };
             return colorMap[color] || "#3b82f6";
           }),

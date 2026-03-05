@@ -55,6 +55,7 @@ interface PermissionStore {
   hasRole: (role: string) => boolean;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
+  invalidateWorkspacePermissions: (workspaceId?: string) => void;
 }
 
 function pruneOldestEntries<K, V>(map: Map<K, V>, maxSize: number): Map<K, V> {
@@ -194,6 +195,27 @@ export const usePermissionStore = create<PermissionStore>()((set, get) => ({
   isSuperAdmin: () => {
     return get().user?.role === ROLES.SUPER_ADMIN;
   },
+
+  invalidateWorkspacePermissions: (workspaceId) =>
+    set((state) => {
+      if (!workspaceId) {
+        return {
+          workspacePermissions: new Map(),
+          workspaceLoadingStates: new Map(),
+        };
+      }
+
+      const nextPermissions = new Map(state.workspacePermissions);
+      const nextLoading = new Map(state.workspaceLoadingStates);
+
+      nextPermissions.delete(workspaceId);
+      nextLoading.delete(workspaceId);
+
+      return {
+        workspacePermissions: nextPermissions,
+        workspaceLoadingStates: nextLoading,
+      };
+    }),
 }));
 
 // Register with global store registry for logout cleanup

@@ -93,7 +93,6 @@ export function IndustryQuestion({
           <SingleSelectCard
             key={`industry-${option.value}-${index}`}
             label={option.label}
-            value={option.value}
             selected={formData.industry === option.value}
             onSelect={() => handleSelect(option.value as Industry)}
             icon={getIcon(option.value)}
