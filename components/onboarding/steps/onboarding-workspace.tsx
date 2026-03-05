@@ -70,9 +70,25 @@ export function OnboardingWorkspace({
         ? websiteUrl
         : `https://${websiteUrl}`;
 
+      const trimmedTimezone = timezone.trim();
+      const fallbackTimezone = detectedTimezone.trim();
+      const candidateTimezone = trimmedTimezone || fallbackTimezone;
+
+      const supportedTimezones =
+        typeof Intl.supportedValuesOf === "function"
+          ? new Set(Intl.supportedValuesOf("timeZone"))
+          : null;
+
+      const safeTimezone =
+        candidateTimezone &&
+          (!supportedTimezones || supportedTimezones.has(candidateTimezone))
+          ? candidateTimezone
+          : undefined;
+
       const response = await apiClient.workspaces.create({
         name: workspaceTitle,
         url: normalizedUrl,
+        timezone: safeTimezone,
       });
       toast.success("Workspace created successfully!");
 
