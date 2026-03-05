@@ -22,6 +22,7 @@ import type {
 } from "@/types/subscription";
 import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
 import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
+import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
 
 const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
 let inFlightSubscriptionFetch: Promise<void> | null = null;
@@ -486,11 +487,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       openCheckout: (checkoutUrl: string) => {
-        // Open LemonSqueezy checkout overlay
-        if (typeof window !== "undefined" && window.LemonSqueezy) {
-          window.LemonSqueezy.Url.Open(checkoutUrl);
-        } else {
-          // Fallback to opening in new window if LemonSqueezy script not loaded
+        const client = getLemonSqueezyClient();
+
+        if (client) {
+          client.Url.Open(checkoutUrl);
+          return;
+        }
+
+        if (typeof window !== "undefined") {
           window.open(checkoutUrl, "_blank");
         }
       },

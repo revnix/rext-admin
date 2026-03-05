@@ -57,9 +57,6 @@ export interface Invoice {
 
 export interface PlanFeatures {
   items: string[];
-  advanced_ai: boolean;
-  priority_support: boolean;
-  advanced_analytics: boolean;
 }
 
 export interface SubscriptionPlan extends Record<string, unknown> {
