@@ -139,3 +139,5 @@ export function MultiSelectCard({
     </motion.div>
   );
 }
+
+MultiSelectCard.displayName = "MultiSelectCard";

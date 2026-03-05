@@ -64,3 +64,5 @@ export function SearchIntentCard({
     </>
   );
 }
+
+SearchIntentCard.displayName = "SearchIntentCard";

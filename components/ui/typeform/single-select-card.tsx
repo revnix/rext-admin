@@ -139,3 +139,5 @@ export function SingleSelectCard({
     </motion.div>
   );
 }
+
+SingleSelectCard.displayName = "SingleSelectCard";
