@@ -125,7 +125,7 @@ export function OutlineDisplay({
               </div>
             ) : (
               <div className="flex items-center gap-2 group/edit">
-                <p className="text-sm font-bold text-slate-700">
+                <p className="text-sm font-bold text-slate-700 dark:text-white">
                   {outline.tone}
                 </p>
                 {onUpdate && (
@@ -266,7 +266,7 @@ export function OutlineDisplay({
           onClick={onReject}
           disabled={isLoading}
           variant="outline"
-          className="h-12 px-8 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
+          className="h-12 px-8 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 dark:text-white"
         >
           <X className="w-4 h-4 mr-2" />
           Reject

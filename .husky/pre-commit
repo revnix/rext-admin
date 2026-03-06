@@ -4,6 +4,7 @@ npm run format
 
 # Then run linting 
 npm run lint
+npm run lint:ui-comments
 
 # Finally run type checking
 npx tsc --noEmit

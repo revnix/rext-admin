@@ -5,7 +5,7 @@ import { AlertCircle, Loader2, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { TopicsClientWrapper } from "@/app/topics/topics-client-wrapper";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -105,7 +105,7 @@ export default function WorkspaceTopicsPage() {
         workspace?.name || "this workspace"
       }. Generate new topics or explore your saved collection.`}
     >
-      <CanAccess
+      <PermissionGuard
         permission={TOPIC_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
@@ -153,7 +153,7 @@ export default function WorkspaceTopicsPage() {
             tableActions={tableActions}
           />
         )}
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

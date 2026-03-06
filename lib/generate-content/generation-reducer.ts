@@ -47,6 +47,8 @@ export function generationReducer(
       return { ...state, instructionType: action.payload };
     case "SET_USER_KEYWORD":
       return { ...state, userKeyword: action.payload };
+    case "SET_PRIMARY_KEYWORD":
+      return { ...state, primaryKeyword: action.payload };
     case "SET_COUNTRY":
       return { ...state, country: action.payload };
     case "SET_THREAD_ID":

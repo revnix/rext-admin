@@ -1,7 +1,5 @@
 "use client";
 
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -73,11 +71,8 @@ export function SignupForm({
         setIsLoading(false);
         return;
       }
-      // Determine which endpoint to use
-      const isInvitationSignup = hasValidInvitation && invitationToken;
-      const endpoint = isInvitationSignup
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register-with-invitation`
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`;
+      // Determine which endpoint/method to use
+      const isInvitationSignup = hasValidInvitation && !!invitationToken;
 
       // Build request payload
       const payload: Record<string, string> = {
@@ -91,20 +86,12 @@ export function SignupForm({
         payload.invitation_token = invitationToken;
       }
 
-      // Register user with backend
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await safeParseErrorBody(response);
-        const errorMessage = extractApiError(errorData, "Registration failed");
-        throw new Error(errorMessage);
+      // Register user with backend via apiClient
+      if (isInvitationSignup) {
+        await apiClient.users.registerWithInvitation(payload);
+      } else {
+        await apiClient.users.register(payload);
       }
-
-      const _responseData = await response.json();
 
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
@@ -207,7 +194,7 @@ export function SignupForm({
                 name="full_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">
+                    <FormLabel className="text-foreground!">
                       Full Name
                     </FormLabel>
                     <FormControl>
@@ -228,7 +215,7 @@ export function SignupForm({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">
+                    <FormLabel className="text-foreground!">
                       Email
                       {hasValidInvitation && (
                         <span className="ml-2 text-xs text-muted-foreground">
@@ -259,7 +246,7 @@ export function SignupForm({
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">Password</FormLabel>
+                    <FormLabel className="text-foreground!">Password</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Create a strong password"
@@ -278,7 +265,7 @@ export function SignupForm({
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">
+                    <FormLabel className="text-foreground!">
                       Confirm Password
                     </FormLabel>
                     <FormControl>
@@ -296,7 +283,7 @@ export function SignupForm({
 
               <Button
                 type="submit"
-                className="w-full h-11 !shadow-none"
+                className="w-full h-11 shadow-none!"
                 disabled={isLoading || isLoadingInvitation}
               >
                 {isLoading
@@ -307,7 +294,7 @@ export function SignupForm({
                     ? "Create Account & Join Workspace"
                     : "Create Account"}
               </Button>
-              <div className="!mt-0 text-center text-sm">
+              <div className="mt-0! text-center text-sm">
                 Already have an account?{" "}
                 <Link
                   href="/login"

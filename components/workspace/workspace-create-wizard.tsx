@@ -261,7 +261,7 @@ export function WorkspaceCreateWizard() {
 
       // Log selected persona for future API integration
       if (personaId) {
-        // TODO: Add API endpoint to associate persona with workspace
+        // TODO(TASK-047): Add endpoint to associate selected persona with workspace.
         // await apiClient.workspaces.setDefaultPersona(workspaceId, personaId);
       }
 

@@ -235,7 +235,9 @@ export function DescriptionPreview({ value }: { value: unknown }): ReactNode {
 
   return (
     <TruncatedTooltipText
-      trigger={<span className="cursor-help text-sm leading-tight">{preview}</span>}
+      trigger={
+        <span className="cursor-help text-sm leading-tight">{preview}</span>
+      }
       content={<p className="text-sm whitespace-pre-wrap">{description}</p>}
       side="bottom"
       className="max-w-sm"
@@ -596,9 +598,7 @@ export function EnhancedScoreDisplay({
         <div className="space-y-3">
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Relevance:
-              </span>
+              <span className="text-xs text-muted-foreground">Relevance:</span>
               <span className="text-sm">
                 {Math.round(scoreBreakdown.relevance * 100)}%
               </span>
@@ -620,9 +620,7 @@ export function EnhancedScoreDisplay({
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Uniqueness:
-              </span>
+              <span className="text-xs text-muted-foreground">Uniqueness:</span>
               <span className="text-sm">
                 {Math.round(scoreBreakdown.uniqueness * 100)}%
               </span>

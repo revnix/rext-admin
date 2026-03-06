@@ -1,7 +1,7 @@
 "use client";
 
 import { Shield } from "lucide-react";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -34,7 +34,7 @@ import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
  */
 export default function WorkspaceSettingsPage() {
   return (
-    <CanAccess
+    <PermissionGuard
       permission={WORKSPACE_PERMISSIONS.UPDATE}
       fallback={
         <Card className="border-destructive">
@@ -88,6 +88,6 @@ export default function WorkspaceSettingsPage() {
 
         <DangerZoneSection />
       </div>
-    </CanAccess>
+    </PermissionGuard>
   );
 }

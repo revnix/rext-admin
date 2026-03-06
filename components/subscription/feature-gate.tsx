@@ -94,15 +94,14 @@ export function FeatureGate({
   className = "",
 }: FeatureGateProps) {
   const router = useRouter();
-  const { subscription, fetchSubscription } = useSubscriptionStore();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const { subscription, fetchSubscription, isLoading } = useSubscriptionStore();
 
   useEffect(() => {
-    // Fetch subscription on mount if not loaded
-    if (!subscription) {
-      fetchSubscription();
+    if (!subscription && !isLoading) {
+      void fetchSubscription();
     }
-  }, [subscription, fetchSubscription]);
+  }, [subscription, isLoading, fetchSubscription]);
 
   useEffect(() => {
     // Check if user has access to this feature

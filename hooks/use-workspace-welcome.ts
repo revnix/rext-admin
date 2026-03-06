@@ -6,7 +6,7 @@ import {
   shouldShowWelcomeModal,
 } from "@/components/workspace";
 import type { Workspace } from "@/types/workspace";
-
+import { MODAL_DELAYS } from "@/lib/constants/motion";
 interface WelcomeModalState {
   workspace: Workspace;
   inviterName: string;
@@ -64,7 +64,7 @@ export function useWorkspaceWelcome(): UseWorkspaceWelcomeReturn {
     // Clear welcome data after a delay to allow animation to complete
     setTimeout(() => {
       setWelcomeData(null);
-    }, 500);
+    }, MODAL_DELAYS.ANIMATION_CLEANUP);
   };
 
   return {

@@ -6,10 +6,14 @@ export interface LoadingStep {
 export const INITIAL_ANALYSIS_STEPS: LoadingStep[] = [
   { id: "Creating session", label: "Creating session" },
   { id: "Starting analysis", label: "Starting analysis" },
-  { id: "Fetch Serp", label: "Fetching Search Results" },
-  { id: "Extract Competitor", label: "Extracting Competitors" },
-  { id: "Scrape Content", label: "Scraping Content" },
-  { id: "Compute Keyword Difficulty", label: "Computing Keyword Difficulty" },
+  { id: "Fetch Serp", label: "Fetching search results" },
+  { id: "Normalize Serp", label: "Normalizing search results" },
+  { id: "Extract Competitor", label: "Extracting competitors" },
+  { id: "Scrape Content", label: "Scraping page content" },
+  { id: "scrape_flow", label: "Processing scraping workflow" },
+  { id: "serp_engine", label: "Processing SERP engine data" },
+  { id: "seo_entry", label: "Processing SEO entry data" },
+  { id: "fetch_dataforseo_backlinksy", label: "Analyzing backlink metrics" },
 ];
 
 export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [

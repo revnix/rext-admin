@@ -392,9 +392,9 @@ export function WorkspaceInviteMembersDialog({
             </div>
 
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {results.map((result, index) => (
+              {results.map((result) => (
                 <div
-                  key={`${result.email}-${index}`}
+                  key={result.email}
                   className="flex items-start gap-2 p-3 rounded-md border"
                 >
                   {result.status === "pending" ? (
@@ -444,7 +444,7 @@ export function WorkspaceInviteMembersDialog({
                     {/* Email chips */}
                     {emailChips.map((chip, index) => (
                       <TruncatedTooltipText
-                        key={`${chip.email}-${index}`}
+                        key={chip.email}
                         trigger={
                           <Badge
                             variant={getChipBadgeVariant(chip.status)}

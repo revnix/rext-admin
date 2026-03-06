@@ -102,10 +102,11 @@ export function ChipInput({
     undefined,
   );
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const fallbackInputRef = useRef<HTMLInputElement>(null);
-  const liveRegionRef = useRef<HTMLOutputElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const chipRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const fallbackInputRef = React.useRef<HTMLInputElement>(null);
+  const liveRegionRef = React.useRef<HTMLOutputElement>(null);
+  const announcementTimeoutRef = React.useRef<number | null>(null);
 
   // Generate unique IDs for accessibility
   const inputId = useId();
@@ -116,8 +117,17 @@ export function ChipInput({
   // Announce to screen readers
   const announce = useCallback((message: string) => {
     setAnnouncementText(message);
+
+    // Clear any existing timeout before creating a new one
+    if (announcementTimeoutRef.current !== null) {
+      window.clearTimeout(announcementTimeoutRef.current);
+    }
+
     // Clear after a short delay to allow for multiple announcements
-    setTimeout(() => setAnnouncementText(""), 100);
+    announcementTimeoutRef.current = window.setTimeout(() => {
+      setAnnouncementText("");
+      announcementTimeoutRef.current = null;
+    }, 100);
   }, []);
 
   //  Automatically add one chip on mount
@@ -127,6 +137,16 @@ export function ChipInput({
       setInternalError(undefined);
     }
   }, [value.length, onChange]);
+
+  // Cleanup announcement timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (announcementTimeoutRef.current !== null) {
+        window.clearTimeout(announcementTimeoutRef.current);
+        announcementTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   //  Clear error when at least one chip exists
   useEffect(() => {

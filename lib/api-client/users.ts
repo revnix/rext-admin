@@ -73,6 +73,34 @@ export function createUsersNamespace(client: ApiClient) {
     },
 
     /**
+     * Register a new user
+     */
+    register: async (data: Record<string, unknown>) => {
+      return client.request<{
+        user: User;
+        message: string;
+      }>(ENDPOINTS.USERS.register, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Register a new user with an invitation token
+     */
+    registerWithInvitation: async (data: Record<string, unknown>) => {
+      return client.request<{
+        user: User;
+        message: string;
+      }>(ENDPOINTS.USERS.registerWithInvitation, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
      * Get all active sessions for current user
      */
     getSessions: async (): Promise<SessionListResponse> => {

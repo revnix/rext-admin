@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { BillingPeriod, SubscriptionPlan } from "@/types/subscription";
-import type { Route } from "next";
 
 export interface CheckoutButtonProps {
   /** The subscription plan to checkout */
@@ -88,6 +87,12 @@ export function CheckoutButton({
 
       toast.error("Checkout failed", {
         description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            void handleCheckout();
+          },
+        },
       });
 
       onCheckoutError?.(
@@ -109,49 +114,5 @@ export function CheckoutButton({
       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {children}
     </Button>
-  );
-}
-
-/**
- * Simple checkout link that uses LemonSqueezy's automatic button detection
- *
- * This component creates a link with the `lemonsqueezy-button` class
- * which is automatically detected by LemonSqueezy's Lemon.js script.
- */
-export interface CheckoutLinkProps {
-  /** The checkout URL from LemonSqueezy */
-  checkoutUrl: string;
-  /** Link text */
-  children?: React.ReactNode;
-  /** Additional CSS classes */
-  className?: string;
-}
-
-export function CheckoutLink({
-  checkoutUrl,
-  children = "Subscribe Now",
-  className,
-}: CheckoutLinkProps) {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    // Open LemonSqueezy checkout overlay
-    if (typeof window !== "undefined" && window.LemonSqueezy) {
-      window.LemonSqueezy.Url.Open(checkoutUrl);
-    } else {
-      // Fallback to opening in new window if script not loaded
-      window.open(checkoutUrl, "_blank");
-    }
-  };
-
-  return (
-    <a
-      href={checkoutUrl as Route}
-      className={cn("lemonsqueezy-button", className)}
-      onClick={handleClick}
-      data-checkout-url={checkoutUrl}
-    >
-      {children}
-    </a>
   );
 }

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorPage } from "@/components/ui/error-states";
 import {
   Table,
   TableBody,
@@ -36,11 +37,26 @@ import { apiClient } from "@/lib/api-client";
 export default function InvitationAnalyticsPage() {
   const [days, setDays] = useState(30);
 
-  const { data: analytics, isLoading } = useQuery({
+  const {
+    data: analytics,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["invitation-analytics", days],
     queryFn: () => apiClient.adminAnalytics.getInvitationAnalytics(days),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  if (error) {
+    return (
+      <ErrorPage
+        title="Failed to load invitation analytics"
+        message="Could not load invitation data. Please try again."
+        retry={() => void refetch()}
+      />
+    );
+  }
 
   if (isLoading) {
     return (

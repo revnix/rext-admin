@@ -91,9 +91,8 @@ export function IndustryQuestion({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {INDUSTRY_OPTIONS.map((option, index) => (
           <SingleSelectCard
-            key={`industry-${option.value}-${index}`}
+            key={`industry-${option.value}`}
             label={option.label}
-            value={option.value}
             selected={formData.industry === option.value}
             onSelect={() => handleSelect(option.value as Industry)}
             icon={getIcon(option.value)}

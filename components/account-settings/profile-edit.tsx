@@ -31,6 +31,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { profileQueries } from "@/lib/query-keys";
+import {
+  PROFILE_LANGUAGE_OPTIONS,
+  PROFILE_TIMEZONE_OPTIONS,
+} from "@/lib/constants/localization";
+import {
+  AVATAR_ACCEPT_ATTRIBUTE,
+  type ProfileFormData,
+  validateAvatarFile,
+} from "@/schemas/profile-schemas";
+import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { logger } from "@/lib/logger";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -57,6 +68,7 @@ export function ProfileEdit() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const log = logger.forComponent("ProfileEdit");
 
   // Fetch profile
   const {
@@ -91,13 +103,14 @@ export function ProfileEdit() {
 
   // Update profile mutation
   const updateMutation = useMutation({
-    mutationFn: (data: {
-      full_name: string | null;
-      display_name?: string | null;
-      bio?: string | null;
-      language?: string;
-      timezone?: string;
-    }) => apiClient.profile.update(data),
+    mutationFn: (data: ProfileFormData) =>
+      apiClient.profile.update({
+        full_name: data.full_name,
+        display_name: data.display_name,
+        bio: data.bio,
+        language: data.language,
+        timezone: data.timezone,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: profileQueries.detail().queryKey,
@@ -122,10 +135,9 @@ export function ProfileEdit() {
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-    onError: (error: Error) => {
-      toast.error("Failed to upload avatar", {
-        description: error.message,
-      });
+    onError: (error: unknown) => {
+      log.error("ProfileEdit avatar upload failed", error);
+      toast.error(getAvatarErrorMessage(error, "upload"));
     },
   });
 
@@ -140,42 +152,25 @@ export function ProfileEdit() {
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-    onError: (error: Error) => {
-      toast.error("Failed to remove avatar", {
-        description: error.message,
-      });
+    onError: (error: unknown) => {
+      log.error("ProfileEdit avatar delete failed", error);
+      toast.error(getAvatarErrorMessage(error, "delete"));
     },
   });
 
-  const onSubmit = (data: ProfileFormValues) => {
-    // Send null for empty display_name instead of undefined
-    // Backend requires the field to be present in the payload
-    const payload = {
-      full_name: data.full_name,
-      display_name: data.display_name?.trim() || null,
-      bio: data.bio?.trim() || null,
-      language: data.language,
-      timezone: data.timezone,
-    };
-    updateMutation.mutate(payload);
+  const onSubmit = (data: ProfileFormData) => {
+    updateMutation.mutate(data);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    const validation = validateAvatarFile(file);
+    if (!validation.valid) {
+      toast.error(validation.message);
       return;
     }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be smaller than 5MB");
-      return;
-    }
-
     setAvatarFile(file);
 
     // Create preview
@@ -260,7 +255,7 @@ export function ProfileEdit() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept={AVATAR_ACCEPT_ATTRIBUTE}
               onChange={handleFileChange}
               className="hidden"
             />
@@ -404,10 +399,11 @@ export function ProfileEdit() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
+                        {PROFILE_LANGUAGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -434,22 +430,11 @@ export function ProfileEdit() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="America/New_York">
-                          Eastern Time
-                        </SelectItem>
-                        <SelectItem value="America/Chicago">
-                          Central Time
-                        </SelectItem>
-                        <SelectItem value="America/Denver">
-                          Mountain Time
-                        </SelectItem>
-                        <SelectItem value="America/Los_Angeles">
-                          Pacific Time
-                        </SelectItem>
-                        <SelectItem value="Europe/London">London</SelectItem>
-                        <SelectItem value="Europe/Paris">Paris</SelectItem>
-                        <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                        {PROFILE_TIMEZONE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { getTooltipsForPage } from "@/config/feature-tooltips";
 
@@ -41,47 +41,60 @@ export function TooltipProvider({ children }: TooltipProviderProps) {
     }
   }, []);
 
-  const toggleTooltips = () => {
-    const newValue = !enabled;
-    setEnabled(newValue);
-    localStorage.setItem("show-feature-tooltips", String(newValue));
-  };
+  const toggleTooltips = useCallback(() => {
+    setEnabled((prev) => {
+      const newValue = !prev;
+      localStorage.setItem("show-feature-tooltips", String(newValue));
+      return newValue;
+    });
+  }, []);
 
-  const setTooltipsEnabled = (value: boolean) => {
+  const setTooltipsEnabled = useCallback((value: boolean) => {
     setEnabled(value);
     localStorage.setItem("show-feature-tooltips", String(value));
-  };
+  }, []);
 
   // Get tooltips for current page
-  const tooltips = getTooltipsForPage(pathname || "");
+  const tooltips = useMemo(
+    () => getTooltipsForPage(pathname || ""),
+    [pathname]
+  );
+
+  const contextValue = useMemo(
+    () => ({ enabled, toggleTooltips, setTooltipsEnabled }),
+    [enabled, toggleTooltips, setTooltipsEnabled]
+  );
+
+  const tooltipNodes = useMemo(() => {
+    if (!enabled) return null;
+
+    return tooltips.map((tooltip) => (
+      <Tooltip
+        key={tooltip.id}
+        id={tooltip.id}
+        place={tooltip.placement || "top"}
+        render={() => (
+          <div className="max-w-xs">
+            <div className="font-semibold mb-1">{tooltip.title}</div>
+            <div className="text-sm">{tooltip.content}</div>
+          </div>
+        )}
+        className="!bg-primary !text-primary-foreground !opacity-100 !rounded-lg !shadow-lg !z-50"
+        style={{
+          backgroundColor: "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))",
+          padding: "12px",
+          borderRadius: "8px",
+          maxWidth: "320px",
+        }}
+      />
+    ));
+  }, [enabled, tooltips]);
 
   return (
-    <TooltipContext.Provider
-      value={{ enabled, toggleTooltips, setTooltipsEnabled }}
-    >
+    <TooltipContext.Provider value={contextValue}>
       {children}
-      {enabled &&
-        tooltips.map((tooltip) => (
-          <Tooltip
-            key={tooltip.id}
-            id={tooltip.id}
-            place={tooltip.placement || "top"}
-            render={() => (
-              <div className="max-w-xs">
-                <div className="font-semibold mb-1">{tooltip.title}</div>
-                <div className="text-sm">{tooltip.content}</div>
-              </div>
-            )}
-            className="!bg-primary !text-primary-foreground !opacity-100 !rounded-lg !shadow-lg !z-50"
-            style={{
-              backgroundColor: "hsl(var(--primary))",
-              color: "hsl(var(--primary-foreground))",
-              padding: "12px",
-              borderRadius: "8px",
-              maxWidth: "320px",
-            }}
-          />
-        ))}
+      {tooltipNodes}
     </TooltipContext.Provider>
   );
 }

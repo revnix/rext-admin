@@ -8,6 +8,8 @@
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "biome check",
+    "lint:ui-comments": "node scripts/check-ui-warning-comments.mjs",
+    "lint:imports": "biome check && ! rg -n \"@/stores['\\\"]|@/stores/index['\\\"]\" .",
     "format": "biome format --write",
     "test": "jest",
     "test:watch": "jest --watch",

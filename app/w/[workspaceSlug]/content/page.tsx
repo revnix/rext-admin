@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ContentCard } from "@/components/content/content-card";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,7 +121,7 @@ export default function WorkspaceContentPage() {
           </AlertDescription>
         </Alert>
       ) : (
-        <CanAccess
+        <PermissionGuard
           permission={CONTENT_PERMISSIONS.READ}
           fallback={
             <Card className="border-destructive">
@@ -198,7 +198,7 @@ export default function WorkspaceContentPage() {
               </div>
             )}
           </div>
-        </CanAccess>
+        </PermissionGuard>
       )}
     </PageLayout>
   );

@@ -42,25 +42,20 @@ import type { Route } from "next";
 
 export default function SubscriptionSettingsPage() {
   const router = useRouter();
-  const { usage, fetchSubscription, fetchUsage, getPortalUrl } =
-    useSubscriptionStore();
+  const { usage, fetchSubscription, getPortalUrl } = useSubscriptionStore();
   const [portalLoading, setPortalLoading] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, _setDataLoading] = useState(true);
 
   useEffect(() => {
-    // Load subscription and usage data
     const loadData = async () => {
       try {
-        setDataLoading(true);
-        await Promise.all([fetchSubscription(), fetchUsage()]);
+        await fetchSubscription();
       } catch (_error) {
-        toast.error("Failed to load subscription data");
-      } finally {
-        setDataLoading(false);
+        toast.error("Failed to load subscription settings");
       }
     };
     loadData();
-  }, [fetchSubscription, fetchUsage]);
+  }, [fetchSubscription]);
 
   const handleOpenPortal = async () => {
     try {

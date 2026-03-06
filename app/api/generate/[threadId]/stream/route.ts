@@ -7,7 +7,9 @@ const ASSISTANT_ID = "agent";
 
 const getClient = () =>
   new Client({
-    apiUrl: resolveApiBaseUrl(process.env.LANGGRAPH_API_URL),
+    apiUrl: resolveApiBaseUrl({
+      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
+    }),
   });
 
 export async function POST(

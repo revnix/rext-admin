@@ -1,14 +1,4 @@
-/**
- * Permission and role checking utilities
- */
-
-export interface UserWithPermissions {
-  id: string;
-  email: string;
-  name: string;
-  role?: string;
-  permissions?: string[];
-}
+import type { UserWithPermissions } from "@/types/role";
 
 /**
  * Check if user has a specific permission
@@ -21,7 +11,7 @@ export function checkPermission(
   if (!user) return false;
 
   // Super admin bypass - has all permissions
-  if (user.role === "super_admin") return true;
+  if (user.role === ROLES.SUPER_ADMIN) return true;
 
   if (!user.permissions) return false;
 
@@ -39,7 +29,7 @@ export function checkAnyPermission(
   if (!user) return false;
 
   // Super admin bypass - has all permissions
-  if (user.role === "super_admin") return true;
+  if (user.role === ROLES.SUPER_ADMIN) return true;
 
   if (!user.permissions || user.permissions.length === 0) return false;
   if (permissions.length === 0) return false;
@@ -60,7 +50,7 @@ export function checkAllPermissions(
   if (!user) return false;
 
   // Super admin bypass - has all permissions
-  if (user.role === "super_admin") return true;
+  if (user.role === ROLES.SUPER_ADMIN) return true;
 
   if (!user.permissions || user.permissions.length === 0) return false;
   if (permissions.length === 0) return false;

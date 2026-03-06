@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
+import { usePermissionStore } from "@/stores/permission-store";
 
 const changeRoleFormSchema = z.object({
   role_id: z.string().min(1, "Please select a role"),
@@ -81,6 +82,9 @@ export function WorkspaceChangeRoleDialog({
   });
 
   const roles = rolesResponse?.roles || [];
+  const invalidateWorkspacePermissions = usePermissionStore(
+    (state) => state.invalidateWorkspacePermissions,
+  );
 
   const form = useForm<ChangeRoleFormValues>({
     resolver: zodResolver(changeRoleFormSchema),
@@ -99,11 +103,23 @@ export function WorkspaceChangeRoleDialog({
         data.role_id,
       );
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Role updated successfully");
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-members", member?.workspace_id],
-      });
+
+      const workspaceId = member?.workspace_id;
+      if (workspaceId) {
+        invalidateWorkspacePermissions(workspaceId);
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["workspace-members", workspaceId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["workspace-permissions", workspaceId],
+        }),
+      ]);
+
       form.reset();
       onOpenChange(false);
       onRoleChanged?.();

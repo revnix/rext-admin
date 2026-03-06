@@ -66,22 +66,7 @@ export default function PersonaDetailPage() {
   }
 
   return (
-    <PageLayout
-      title={persona.name}
-      description={persona.description}
-      fullWidth
-      actions={
-        <div className="flex gap-2">
-          <Link href={`/w/${workspaceSlug}/personas` as Route}>
-            <Button variant="default" size="sm">
-              <ArrowLeft size={16} className="mr-2" />
-              Back to Personas
-            </Button>
-          </Link>
-          {/* Add Edit/Delete actions here if needed in future */}
-        </div>
-      }
-    >
+    <PageLayout title={persona.name} description={persona.description}>
       <PersonaDetail persona={persona} />
     </PageLayout>
   );

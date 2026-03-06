@@ -458,8 +458,8 @@ export const TopicsTable = memo(function TopicsTable({
                   <div className="flex items-center justify-end gap-1">
                     {rowActions
                       // Removed this block of code because it was causing the button to flicker
-                      .map((action, actionIndex) => (
-                        <Tooltip key={`action-${action.label}-${actionIndex}`}>
+                      .map((action) => (
+                        <Tooltip key={`action-${action.label}`}>
                           <TooltipTrigger asChild>
                             <button
                               type="button"

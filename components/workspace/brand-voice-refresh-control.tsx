@@ -93,6 +93,9 @@ export function BrandVoiceRefreshControl({
           queryClient.invalidateQueries({
             queryKey: ["workspace"], // Broader invalidation to catch slug-based queries if ID was passed
           }),
+          queryClient.invalidateQueries({
+            queryKey: ["workspaces", "brand-voice", workspaceId],
+          }),
           queryClient.invalidateQueries({ queryKey: ["workspaces"] }),
         ]);
         closeDialog();

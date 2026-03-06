@@ -70,7 +70,7 @@ export class ApiClient {
   private readonly activeRequests = new Map<string, AbortController>();
 
   constructor() {
-    this.baseUrl = resolveApiBaseUrl();
+    this.baseUrl = resolveApiBaseUrl({ allowWindowOriginFallback: true });
   }
 
   /**
@@ -144,6 +144,41 @@ export class ApiClient {
       }
 
       log.error("Request failed", { error, endpoint });
+      throw error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  /**
+   * Raw request method for binary data or direct response access
+   * Returns the underlying Response object
+   */
+  async requestRaw(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<Response> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    try {
+      const response = await authenticatedFetch(url, options);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        const errorData = safeJsonParse(errorText, null, "API error body");
+        const errorMessage = extractApiError(
+          errorData,
+          `Request failed: ${response.statusText}`,
+        );
+
+        throw new ApiError(response.status, errorMessage, undefined, errorData);
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      log.error("Raw request failed", { error, endpoint });
       throw error instanceof Error ? error : new Error(String(error));
     }
   }

@@ -6,9 +6,10 @@ import {
   BookOpen,
   FileText,
   MessageCircle,
-  Sparkles,
   Users,
+  Sparkles,
 } from "lucide-react";
+import { detectRoleCategory } from "@/lib/role-categories";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -157,128 +158,126 @@ function getRoleFirstTasks(
   workspaceSlug: string,
   roleName: string,
 ): FirstTask[] {
-  const normalizedRole = roleName.toLowerCase();
+  const category = detectRoleCategory(roleName);
 
-  // Owner/Admin tasks
-  if (normalizedRole.includes("owner") || normalizedRole.includes("admin")) {
-    return [
-      {
-        icon: <Users className="h-6 w-6" />,
-        title: "Review Team Members",
-        description:
-          "See who's in your workspace and their roles. Get familiar with your team structure.",
-        action: "View team",
-        href: `/w/${workspaceSlug}/settings/members`,
-        priority: "high",
-      },
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Explore Existing Content",
-        description:
-          "Browse through current content to understand what's already been created.",
-        action: "Browse content",
-        href: `/w/${workspaceSlug}/content`,
-        priority: "high",
-      },
-      {
-        icon: <BookOpen className="h-6 w-6" />,
-        title: "Check Knowledge Base",
-        description:
-          "Review the workspace knowledge base and documentation library.",
-        action: "View knowledge",
-        href: `/w/${workspaceSlug}/knowledge`,
-        priority: "medium",
-      },
-      {
-        icon: <MessageCircle className="h-6 w-6" />,
-        title: "Connect with Owner",
-        description:
-          "Reach out to the workspace owner to align on priorities and goals.",
-        action: "Contact team",
-        href: `/w/${workspaceSlug}/settings/members`,
-        priority: "medium",
-      },
-    ];
+  switch (category) {
+    case "owner":
+    case "admin":
+      return [
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "Review Team Members",
+          description:
+            "See who's in your workspace and their roles. Get familiar with your team structure.",
+          action: "View team",
+          href: `/w/${workspaceSlug}/settings/members`,
+          priority: "high",
+        },
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Explore Existing Content",
+          description:
+            "Browse through current content to understand what's already been created.",
+          action: "Browse content",
+          href: `/w/${workspaceSlug}/content`,
+          priority: "high",
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Check Knowledge Base",
+          description:
+            "Review the workspace knowledge base and documentation library.",
+          action: "View knowledge",
+          href: `/w/${workspaceSlug}/knowledge`,
+          priority: "medium",
+        },
+        {
+          icon: <MessageCircle className="h-6 w-6" />,
+          title: "Connect with Owner",
+          description:
+            "Reach out to the workspace owner to align on priorities and goals.",
+          action: "Contact team",
+          href: `/w/${workspaceSlug}/settings/members`,
+          priority: "medium",
+        },
+      ];
+    case "editor":
+      return [
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Browse Existing Content",
+          description:
+            "Get familiar with the content that's already been created and the topics being covered.",
+          action: "Explore content",
+          href: `/w/${workspaceSlug}/content`,
+          priority: "high",
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Review Knowledge Base",
+          description:
+            "Check out the workspace knowledge base to understand available resources.",
+          action: "View knowledge",
+          href: `/w/${workspaceSlug}/knowledge`,
+          priority: "high",
+        },
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Create Your First Content",
+          description:
+            "Try creating a piece of content to get hands-on experience with the tools.",
+          action: "Create content",
+          href: `/w/${workspaceSlug}/content/create`,
+          priority: "medium",
+        },
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "Meet Your Teammates",
+          description:
+            "See who else is in the workspace and what they're working on.",
+          action: "View team",
+          href: `/w/${workspaceSlug}/settings/members`,
+          priority: "low",
+        },
+      ];
+    default:
+      return [
+        {
+          icon: <FileText className="h-6 w-6" />,
+          title: "Explore Content Library",
+          description:
+            "Browse through all the content in this workspace to get familiar with what's available.",
+          action: "Browse content",
+          href: `/w/${workspaceSlug}/content`,
+          priority: "high",
+        },
+        {
+          icon: <BookOpen className="h-6 w-6" />,
+          title: "Check Knowledge Base",
+          description:
+            "Discover the workspace knowledge base and documentation resources.",
+          action: "View knowledge",
+          href: `/w/${workspaceSlug}/knowledge`,
+          priority: "high",
+        },
+        {
+          icon: <Users className="h-6 w-6" />,
+          title: "Meet the Team",
+          description:
+            "See who's in your workspace and learn about their roles.",
+          action: "View team",
+          href: `/w/${workspaceSlug}/settings/members`,
+          priority: "medium",
+        },
+        {
+          icon: <MessageCircle className="h-6 w-6" />,
+          title: "Ask Questions",
+          description:
+            "Don't hesitate to reach out to team members if you need guidance.",
+          action: "Contact team",
+          href: `/w/${workspaceSlug}/settings/members`,
+          priority: "low",
+        },
+      ];
   }
-
-  // Editor/Manager tasks
-  if (normalizedRole.includes("editor") || normalizedRole.includes("manager")) {
-    return [
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Browse Existing Content",
-        description:
-          "Get familiar with the content that's already been created and the topics being covered.",
-        action: "Explore content",
-        href: `/w/${workspaceSlug}/content`,
-        priority: "high",
-      },
-      {
-        icon: <BookOpen className="h-6 w-6" />,
-        title: "Review Knowledge Base",
-        description:
-          "Check out the workspace knowledge base to understand available resources.",
-        action: "View knowledge",
-        href: `/w/${workspaceSlug}/knowledge`,
-        priority: "high",
-      },
-      {
-        icon: <FileText className="h-6 w-6" />,
-        title: "Create Your First Content",
-        description:
-          "Try creating a piece of content to get hands-on experience with the tools.",
-        action: "Create content",
-        href: `/w/${workspaceSlug}/content/create`,
-        priority: "medium",
-      },
-      {
-        icon: <Users className="h-6 w-6" />,
-        title: "Meet Your Teammates",
-        description:
-          "See who else is in the workspace and what they're working on.",
-        action: "View team",
-        href: `/w/${workspaceSlug}/settings/members`,
-        priority: "low",
-      },
-    ];
-  }
-
-  // Viewer/Member tasks (default)
-  return [
-    {
-      icon: <FileText className="h-6 w-6" />,
-      title: "Explore Content Library",
-      description:
-        "Browse through all the content in this workspace to get familiar with what's available.",
-      action: "Browse content",
-      href: `/w/${workspaceSlug}/content`,
-      priority: "high",
-    },
-    {
-      icon: <BookOpen className="h-6 w-6" />,
-      title: "Check Knowledge Base",
-      description:
-        "Discover the workspace knowledge base and documentation resources.",
-      action: "View knowledge",
-      href: `/w/${workspaceSlug}/knowledge`,
-      priority: "high",
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      title: "Meet the Team",
-      description: "See who's in your workspace and learn about their roles.",
-      action: "View team",
-      href: `/w/${workspaceSlug}/settings/members`,
-      priority: "medium",
-    },
-    {
-      icon: <MessageCircle className="h-6 w-6" />,
-      title: "Ask Questions",
-      description:
-        "Don't hesitate to reach out to team members if you need guidance.",
-      action: "Contact team",
-      href: `/w/${workspaceSlug}/settings/members`,
-      priority: "low",
-    },
-  ];
 }

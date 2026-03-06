@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
-import { safeJsonParse } from "@/lib/utils";
+import { local } from "@/lib/storage";
+import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
+import { safeJsonParse } from "@/lib/utils";
 
 interface InvitationContext {
   workspace: Workspace;
@@ -35,12 +37,18 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
   // Check if user was invited (via localStorage flag set during invitation acceptance)
-  const invitationToken =
-    typeof window !== "undefined"
-      ? localStorage.getItem("recent_invitation_acceptance")
-      : null;
+  const invitationToken = local.getString(
+    ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance,
+  );
 
-  // Fetch workspace invitations to get context
+  // Parse invitation context from localStorage.
+  // staleTime: Infinity — this data is set once during invitation acceptance and
+  // does not change server-side. It should never trigger a background refetch.
+  // gcTime: Infinity — prevent garbage collection if the user navigates away
+  // from onboarding components temporarily. The data should remain cached for
+  // the entire session since it's only cleared on explicit completion.
+  // Note: This is a localStorage parse, not a network request. The queryFn
+  // returns null if the token is missing or unparseable.
   const { data: invitationData, isLoading: isLoadingInvitation } = useQuery({
     queryKey: ["invitation-context", invitationToken],
     queryFn: async () => {
@@ -50,7 +58,8 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
       return safeJsonParse<InvitationContext>(invitationToken);
     },
     enabled: !!invitationToken && status === "authenticated",
-    staleTime: Infinity, // Context doesn't change
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 
   // Check if regular onboarding is already completed
@@ -74,9 +83,7 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
   const markAsCompleted = useCallback(() => {
     setHasCompletedOnboarding(true);
     // Clear the invitation flag from localStorage
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("recent_invitation_acceptance");
-    }
+    local.remove(ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance);
   }, []);
 
   // Auto-clear if user navigates away from the workspace they were invited to
@@ -103,12 +110,7 @@ export function useInvitedUserOnboarding(): UseInvitedUserOnboardingReturn {
  * Should be called after successful invitation acceptance
  */
 export function storeInvitationContext(context: InvitationContext): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(
-      "recent_invitation_acceptance",
-      JSON.stringify(context),
-    );
-  }
+  local.setJSON(ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance, context);
 }
 
 /**
@@ -116,8 +118,7 @@ export function storeInvitationContext(context: InvitationContext): void {
  * Can be used to determine onboarding flow
  */
 export function hasRecentInvitationAcceptance(): boolean {
-  if (typeof window !== "undefined") {
-    return !!localStorage.getItem("recent_invitation_acceptance");
-  }
-  return false;
+  return (
+    local.getString(ONBOARDING_STORAGE_KEYS.recentInvitationAcceptance) !== null
+  );
 }

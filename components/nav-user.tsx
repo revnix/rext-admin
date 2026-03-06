@@ -215,7 +215,8 @@ export function NavUser() {
                     content={
                       <>
                         This is your current role
-                        {currentWorkspace?.name && ` in ${currentWorkspace.name}`}
+                        {currentWorkspace?.name &&
+                          ` in ${currentWorkspace.name}`}
                         .
                       </>
                     }
@@ -299,7 +300,7 @@ export function NavUser() {
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push(settingsRoutes.billing)}
+                onClick={() => router.push(settingsRoutes.subscription)}
               >
                 <CreditCard />
                 Billing

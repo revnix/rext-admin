@@ -76,7 +76,14 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       const baseUrl =
         typeof window !== "undefined"
           ? window.location.origin
-          : "http://localhost:3000";
+          : process.env.NEXT_PUBLIC_APP_URL;
+
+      if (!baseUrl) {
+        throw new Error(
+          "Cannot determine application URL for checkout redirects. " +
+            "Set NEXT_PUBLIC_APP_URL environment variable.",
+        );
+      }
 
       return client.request<CheckoutSessionResponse>(
         ENDPOINTS.SUBSCRIPTIONS.checkout,

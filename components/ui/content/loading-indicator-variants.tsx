@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-
 import type { LoadingStep } from "@/constants/loading-steps";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 interface LoadingIndicatorVariantsProps {
   step: string;
@@ -24,9 +24,6 @@ const STEP_DATA: Record<string, { title: string }> = {
   default: { title: "Processing" },
 };
 
-import { Loader2, Check } from "lucide-react";
-import { Card } from "@/components/ui/card";
-
 export function LoadingIndicatorVariants({
   step,
   isLoading,
@@ -35,6 +32,8 @@ export function LoadingIndicatorVariants({
   completedSteps = [],
   steps = [],
 }: LoadingIndicatorVariantsProps) {
+  if (!isLoading) return null;
+
   const data = STEP_DATA[step] || STEP_DATA.default;
   const { title } = data;
 
@@ -73,8 +72,6 @@ export function LoadingIndicatorVariants({
       ? steps[activeStepIndex].label
       : normalizedStatus || title;
 
-  if (!isLoading) return null;
-
   const hasSteps = steps && steps.length > 0;
 
   return (
@@ -97,7 +94,7 @@ export function LoadingIndicatorVariants({
 
         {hasSteps && (
           <p className="text-sm text-muted-foreground">
-            Step {activeStepIndex !== -1 ? activeStepIndex + 1 : 1} of{" "}
+            Step {activeStepIndex !== -1 ? activeStepIndex + 2 : 1} of{" "}
             {steps.length}
           </p>
         )}
@@ -105,71 +102,12 @@ export function LoadingIndicatorVariants({
 
       {/* Steps List */}
       {hasSteps && (
-        <Card className="p-2 border-border/50 shadow-sm bg-card/50">
-          <div className="space-y-1">
-            {steps.map((s, index) => {
-              const isCompleted =
-                completedSteps.includes(s.id) ||
-                completedSteps.includes(s.label) ||
-                (activeStepIndex !== -1 && index < activeStepIndex);
-              const isActive =
-                s.id === normalizedStatus || s.label === normalizedStatus;
-              const isPending = !isActive && !isCompleted;
-
-              return (
-                <div
-                  key={s.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200",
-                    isActive
-                      ? "bg-primary/5 border-primary/20"
-                      : "bg-transparent border-transparent",
-                    isCompleted ? "opacity-70" : "",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "flex items-center justify-center w-6 h-6 rounded-full border transition-colors",
-                      isActive
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card border-border",
-                      isCompleted
-                        ? "bg-primary/20 text-primary border-primary/20"
-                        : "",
-                      isPending ? "text-muted-foreground border-border/50" : "",
-                    )}
-                  >
-                    {isCompleted ? (
-                      <Check className="w-3 h-3" />
-                    ) : isActive ? (
-                      <span className="text-[10px] font-bold">{index + 1}</span>
-                    ) : (
-                      <span className="text-[10px] font-medium text-muted-foreground">
-                        {index + 1}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        "text-sm font-medium truncate transition-colors",
-                        isActive ? "text-primary" : "text-muted-foreground",
-                        isCompleted ? "text-foreground" : "",
-                      )}
-                    >
-                      {s.label}
-                    </p>
-                  </div>
-
-                  {isActive && (
-                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+        <LoadingIndicator
+          variant="steps"
+          steps={steps}
+          activeStepIndex={activeStepIndex}
+          completedStepIds={completedSteps}
+        />
       )}
     </div>
   );

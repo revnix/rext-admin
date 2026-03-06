@@ -174,6 +174,19 @@ export function UsageMetrics({
     usage.api_calls_usage_percent,
   );
 
+  if (!usage) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle>Usage Statistics</CardTitle>
+          <CardDescription>
+            No usage data available. Subscribe to a plan to track your usage.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -242,7 +255,12 @@ export function UsageMetrics({
 
                 {!isUnlimited && (
                   <div className="relative">
-                    <Progress value={percentage} className="h-2" />
+                    <Progress
+                      value={percentage}
+                      className="h-2"
+                      aria-label={`${metric.label} usage`}
+                      aria-valuetext={`${percentage.toFixed(0)} percent used`}
+                    />
                     <div
                       className={cn(
                         "absolute inset-0 h-2 rounded-full transition-all",

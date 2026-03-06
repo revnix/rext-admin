@@ -9,6 +9,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { ApiError } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
@@ -75,6 +76,11 @@ export function WorkspaceProvider({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       workspaceId,
     );
+
+  // Load workspace permissions (Phase 1 integration)
+  // Triggers permission loading and Zustand store sync via internal hook effects.
+  // Permissions and role are consumed by WorkspacePermissionProvider and individual components.
+  useWorkspacePermissions(workspaceId);
 
   // Query workspace data using centralized query factory
   const {

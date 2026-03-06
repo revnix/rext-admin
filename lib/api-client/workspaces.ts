@@ -230,6 +230,23 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * Get brand voice for workspace
+     */
+    getBrandVoice: async (workspaceId: string) => {
+      const response = await client.request<{
+        brand_voice: BrandVoice;
+      }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
+        method: "GET",
+      });
+
+      return validateResponse(
+        updateBrandVoiceResponseSchema,
+        response,
+        "workspaces.getBrandVoice",
+      );
+    },
+
+    /**
      * Update brand voice for workspace
      */
     updateBrandVoice: async (

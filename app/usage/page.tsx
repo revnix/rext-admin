@@ -17,6 +17,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import type { Route } from "next";
 
 const USAGE_READ = "usage.read";
@@ -41,6 +43,11 @@ export default function UsagePage() {
   const { subscription, usage, fetchUsage, fetchSubscription, isLoading } =
     useSubscriptionStore();
   const [refreshing, setRefreshing] = useState(false);
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const workspaceId = currentWorkspace?.id;
+
+  // Ensure workspace-scoped permissions are loaded into the permission store
+  useWorkspacePermissions(workspaceId);
 
   useEffect(() => {
     // Fetch subscription and usage on mount
@@ -64,6 +71,7 @@ export default function UsagePage() {
   return (
     <PermissionGuard
       permission={USAGE_READ}
+      workspaceId={workspaceId}
       fallback={
         <PageLayout
           title="Access Denied"
@@ -232,7 +240,7 @@ export default function UsagePage() {
                       <p className="text-2xl font-bold">
                         {subscription.plan_limits.max_api_calls_per_month === -1
                           ? "∞"
-                          : subscription.plan_limits.max_api_calls_per_month.toLocaleString()}
+                          : subscription.plan_limits.max_api_calls_per_month?.toLocaleString()}
                       </p>
                     </div>
                   </div>

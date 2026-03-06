@@ -10,6 +10,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
+import { retryTransient } from "@/lib/retry/transient-retry";
 import type {
   BillingPeriod,
   CheckoutSessionResponse,
@@ -19,17 +20,25 @@ import type {
   UsageStats,
   UserSubscription,
 } from "@/types/subscription";
+import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
+import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
+import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
+
+const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
+let inFlightSubscriptionFetch: Promise<void> | null = null;
 
 // ============================================================================
 // STORE INTERFACE
 // ============================================================================
 
 interface SubscriptionStore {
+  subscription: UserSubscription | null;
+  usage: UsageStats | null;
+  subscriptionFetchedAt: number | null;
+
   // ========================================
   // SUBSCRIPTION STATE
   // ========================================
-  subscription: UserSubscription | null;
-  usage: UsageStats | null;
   plans: SubscriptionPlan[];
   isLoading: boolean;
   error: string | null;
@@ -56,7 +65,7 @@ interface SubscriptionStore {
   /**
    * Fetch current subscription and usage stats
    */
-  fetchSubscription: () => Promise<void>;
+  fetchSubscription: (options?: { force?: boolean }) => Promise<void>;
 
   /**
    * Fetch usage stats only
@@ -150,9 +159,11 @@ interface SubscriptionStore {
 // ============================================================================
 
 const initialState = {
-  // Subscription state
   subscription: null,
   usage: null,
+  subscriptionFetchedAt: null,
+
+  // Subscription state
   plans: [],
   isLoading: false,
   error: null,
@@ -182,35 +193,54 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       // SUBSCRIPTION ACTIONS
       // ========================================
 
-      fetchSubscription: async () => {
-        set({ isLoading: true, error: null });
+      fetchSubscription: async (options) => {
+        const force = options?.force ?? false;
+        const { subscription, subscriptionFetchedAt } = get();
+        const now = Date.now();
 
-        try {
-          // Fetch subscription and usage in parallel
-          const [subscription, usage] = await Promise.all([
-            apiClient.subscriptions.getCurrentPlan(),
-            apiClient.subscriptions.getUsageStats(),
-          ]);
-
-          set({
-            subscription,
-            usage,
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch subscription";
-
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
-          throw error;
+        if (
+          !force &&
+          subscription &&
+          subscriptionFetchedAt &&
+          now - subscriptionFetchedAt < SUBSCRIPTION_CACHE_TTL_MS
+        ) {
+          return;
         }
+
+        if (inFlightSubscriptionFetch) {
+          return inFlightSubscriptionFetch;
+        }
+
+        inFlightSubscriptionFetch = (async () => {
+          set({ isLoading: true, error: null });
+
+          try {
+            const [nextSubscription, nextUsage] = await Promise.all([
+              apiClient.subscriptions.getCurrentPlan(),
+              apiClient.subscriptions.getUsageStats(),
+            ]);
+
+            set({
+              subscription: nextSubscription,
+              usage: nextUsage,
+              subscriptionFetchedAt: Date.now(),
+              isLoading: false,
+              error: null,
+            });
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch subscription";
+
+            set({ isLoading: false, error: errorMessage });
+            throw error;
+          } finally {
+            inFlightSubscriptionFetch = null;
+          }
+        })();
+
+        return inFlightSubscriptionFetch;
       },
 
       fetchUsage: async () => {
@@ -233,9 +263,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getPlans();
+          const parsed = SubscriptionListResponseSchema.parse(response);
 
           set({
-            plans: response.plans,
+            plans: parsed.plans,
             isLoading: false,
             error: null,
           });
@@ -259,11 +290,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedSubscription =
-            await apiClient.subscriptions.upgradeSubscription(
-              planId,
-              billingPeriod,
-            );
+          const updatedSubscription = await retryTransient(
+            () =>
+              apiClient.subscriptions.upgradeSubscription(
+                planId,
+                billingPeriod,
+              ),
+            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
+          );
 
           set({
             subscription: updatedSubscription,
@@ -295,11 +329,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedSubscription =
-            await apiClient.subscriptions.downgradeSubscription(
-              planId,
-              billingPeriod,
-            );
+          const updatedSubscription = await retryTransient(
+            () =>
+              apiClient.subscriptions.downgradeSubscription(
+                planId,
+                billingPeriod,
+              ),
+            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
+          );
 
           set({
             subscription: updatedSubscription,
@@ -331,9 +368,13 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          await apiClient.subscriptions.cancelSubscription(
-            reason,
-            cancelImmediately,
+          await retryTransient(
+            () =>
+              apiClient.subscriptions.cancelSubscription(
+                reason,
+                cancelImmediately,
+              ),
+            { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
           );
 
           // Refresh subscription to get updated cancellation status
@@ -401,13 +442,17 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         });
 
         try {
-          const checkoutSession = await apiClient.subscriptions.createCheckout(
-            plan.id,
-            billingPeriod,
-            undefined,
-            undefined,
-            discountCode,
-            affiliateCode,
+          const checkoutSession = await retryTransient(
+            () =>
+              apiClient.subscriptions.createCheckout(
+                plan.id,
+                billingPeriod,
+                undefined,
+                undefined,
+                discountCode,
+                affiliateCode,
+              ),
+            { maxAttempts: 2, baseDelayMs: 500, maxDelayMs: 3000 },
           );
 
           set({
@@ -442,11 +487,14 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       openCheckout: (checkoutUrl: string) => {
-        // Open LemonSqueezy checkout overlay
-        if (typeof window !== "undefined" && window.LemonSqueezy) {
-          window.LemonSqueezy.Url.Open(checkoutUrl);
-        } else {
-          // Fallback to opening in new window if LemonSqueezy script not loaded
+        const client = getLemonSqueezyClient();
+
+        if (client) {
+          client.Url.Open(checkoutUrl);
+          return;
+        }
+
+        if (typeof window !== "undefined") {
           window.open(checkoutUrl, "_blank");
         }
       },
@@ -460,9 +508,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getInvoices();
+          const parsed = InvoiceListResponseSchema.parse(response);
 
           set({
-            invoices: response.invoices,
+            invoices: parsed.invoices,
             invoicesLoading: false,
             invoicesError: null,
           });

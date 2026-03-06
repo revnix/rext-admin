@@ -8,9 +8,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import { Clock, PartyPopper } from "lucide-react";
 import * as React from "react";
 import {
+  MOTION_DURATION,
   getMotionVariants,
   progressBarVariants,
   useReducedMotion,
@@ -43,6 +44,9 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
     // Previous progress for milestone detection
     const previousProgress = React.useRef(progress);
 
+    // Milestone timeout ref for cleanup
+    const milestoneTimeoutRef = React.useRef<number | null>(null);
+
     // Milestone celebration state
     const [celebrateMilestone, setCelebrateMilestone] = React.useState(false);
 
@@ -63,13 +67,31 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
           onMilestone(milestone);
           setCelebrateMilestone(true);
 
+          // Clear any existing timeout before creating a new one
+          if (milestoneTimeoutRef.current !== null) {
+            window.clearTimeout(milestoneTimeoutRef.current);
+          }
+
           // Reset celebration after animation
-          setTimeout(() => setCelebrateMilestone(false), 1000);
+          milestoneTimeoutRef.current = window.setTimeout(() => {
+            setCelebrateMilestone(false);
+            milestoneTimeoutRef.current = null;
+          }, 1000);
         }
       });
 
       previousProgress.current = clampedProgress;
     }, [clampedProgress, animated, onMilestone]);
+
+    // Cleanup milestone timeout on unmount
+    React.useEffect(() => {
+      return () => {
+        if (milestoneTimeoutRef.current !== null) {
+          window.clearTimeout(milestoneTimeoutRef.current);
+          milestoneTimeoutRef.current = null;
+        }
+      };
+    }, []);
 
     // Format time estimate
     const formatTimeEstimate = React.useCallback((seconds: number): string => {
@@ -166,7 +188,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
                   x: [`-32px`, `${(clampedProgress / 100) * 100 + 32}%`],
                 }}
                 transition={{
-                  duration: 2,
+                  duration: MOTION_DURATION.floating,
                   repeat: Infinity,
                   ease: "linear",
                 }}
@@ -185,7 +207,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
                 clampedProgress === 100 ? "text-primary" : "text-foreground",
               )}
               animate={celebrateMilestone ? { scale: [1, 1.1, 1] } : {}}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: MOTION_DURATION.veryFast }}
             >
               {Math.round(clampedProgress)}%
             </motion.span>
@@ -198,9 +220,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
             className="text-center text-sm font-medium text-primary"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            Complete! 🎉
+            transition={{ duration: MOTION_DURATION.veryFast, delay: 0.2 }}          >
+            <span className="inline-flex items-center gap-1">
+              Complete!
+              <PartyPopper className="h-4 w-4" aria-hidden="true" />
+            </span>
           </motion.div>
         )}
       </div>

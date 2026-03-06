@@ -109,7 +109,7 @@ describe("permission store", () => {
         result.current.setWorkspacePermissions("ws-1", wsPerms);
       });
 
-      expect(result.current.workspacePermissions.get("ws-1")).toEqual(wsPerms);
+      expect(result.current.workspacePermissions["ws-1"]).toEqual(wsPerms);
     });
 
     it("setWorkspacePermissions marks workspace as loaded", () => {

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { DataTable } from "@/components/data-table";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,6 @@ export function WorkspaceMembersPanel({
     queryFn: () => apiClient.members.list(workspace.id),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
-  // console.log("members", membersResponse);
 
   const members = membersResponse?.members || [];
 
@@ -270,11 +269,10 @@ export function WorkspaceMembersPanel({
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
-      <CanAccess
+      <PermissionGuard
         permission={MEMBER_PERMISSIONS.INVITE}
-        showLockedTooltip
+        showTooltip
         tooltipMessage="Only workspace admins can invite members"
-        showLockIcon
       >
         <Button
           size="sm"
@@ -284,7 +282,7 @@ export function WorkspaceMembersPanel({
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Members
         </Button>
-      </CanAccess>
+      </PermissionGuard>
     </>
   );
 
