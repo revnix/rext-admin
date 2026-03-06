@@ -4,12 +4,21 @@ import { cn } from "@/lib/utils";
 import type { LoadingStep } from "@/constants/loading-steps";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
+/**
+ * Props for the multi-step loading indicator variant used in content generation.
+ */
 interface LoadingIndicatorVariantsProps {
+  /** Backend step identifier (or UI fallback key). */
   step: string;
+  /** Whether loading UI should be rendered. */
   isLoading: boolean;
+  /** Optional container class override. */
   className?: string;
+  /** Raw status text returned by backend progress events. */
   loadingStatus?: string;
+  /** IDs/labels that have completed so far. */
   completedSteps?: string[];
+  /** Ordered loading steps shown in the card. */
   steps?: LoadingStep[];
 }
 
@@ -45,6 +54,9 @@ const STEP_DATA: Record<string, { title: string }> = {
   default: { title: "Processing" },
 };
 
+/**
+ * Renders a stable step-based loading card that tolerates transient/unknown backend status values.
+ */
 export function LoadingIndicatorVariants({
   step,
   isLoading,

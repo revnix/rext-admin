@@ -34,11 +34,19 @@ const INTENT_CONFIG = {
 
 type IntentType = keyof typeof INTENT_CONFIG;
 
+/**
+ * Props for rendering a compact search-intent visual card.
+ */
 interface SearchIntentCardProps {
+  /** Intent category key used to resolve icon/color/description. */
   intent?: IntentType;
+  /** Optional class override for container-level composition. */
   className?: string;
 }
 
+/**
+ * Renders icon + label + description for the selected search-intent category.
+ */
 export function SearchIntentCard({
   intent = "transactional",
 }: SearchIntentCardProps) {
