@@ -1,9 +1,15 @@
 /**
  * Onboarding components barrel export
  *
- * Note: Consumers currently import from individual file paths rather than
- * using this barrel. This file defines the public API for the onboarding
- * component set and can be used for future refactors.
+ * This file defines the public API of the onboarding module.
+ * Components listed here can be imported by code outside this folder.
+ *
+ * Internal-only components (not exported):
+ * - OnboardingStrategy  — step used only by OnboardingModal
+ * - OnboardingWorkspace — step used only by OnboardingModal
+ *
+ * These are imported via relative paths within the module and should not
+ * be used directly by code outside `components/onboarding/`.
  */
 
 // ---------------------------------------------------------------------------
@@ -15,21 +21,21 @@ export { InvitedUserOnboardingModal } from "./invited-user-onboarding-modal";
 // ---------------------------------------------------------------------------
 // Progress indicators
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Progress indicators
+// ---------------------------------------------------------------------------
 export { OnboardingProgress } from "./onboarding-progress";
 
-// ---------------------------------------------------------------------------
-// Regular onboarding steps
-// ---------------------------------------------------------------------------
-export { OnboardingComplete } from "./steps/onboarding-complete";
-export { OnboardingMarketingQuestions } from "./steps/onboarding-marketing-questions";
 
+// Invited user onboarding steps (used by InvitedUserOnboardingModal)
 // ---------------------------------------------------------------------------
-// Invited user onboarding steps
-// ---------------------------------------------------------------------------
-export { InvitedUserFirstTasks } from "./steps/invited-user-first-tasks";
 export {
-  getRolePermissions,
   InvitedUserPermissions,
+  getRolePermissions,
 } from "./steps/invited-user-permissions";
 export { InvitedUserQuickTour } from "./steps/invited-user-quick-tour";
+export { InvitedUserFirstTasks } from "./steps/invited-user-first-tasks";
+// Invited user onboarding steps
 export { InvitedUserWelcome } from "./steps/invited-user-welcome";
+export { OnboardingComplete } from "./steps/onboarding-complete";
+export { OnboardingMarketingQuestions } from "./steps/onboarding-marketing-questions";
