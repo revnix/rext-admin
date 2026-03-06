@@ -17,6 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { buildCancellationReason } from "@/lib/subscription/cancellation-feedback";
 
 /**
  * Cancel Subscription Modal Component
@@ -81,8 +82,11 @@ export function CancelSubscriptionModal({
     setError(null);
 
     try {
-      // Cancel the subscription
-      await cancelSubscription();
+      // Serialize UI feedback into a backend-safe reason string (≤500 chars)
+      const cancellationReason = buildCancellationReason(selectedReasons, feedback);
+
+      // Cancel the subscription, forwarding user-provided reason to the API
+      await cancelSubscription(cancellationReason);
 
       toast.success("Subscription cancelled", {
         description: currentPeriodEnd
