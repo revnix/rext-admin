@@ -8,7 +8,7 @@ import { InvitedUserOnboardingModal } from "@/components/onboarding/invited-user
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useInvitedUserOnboarding } from "@/hooks/use-invited-user-onboarding";
 import { MODAL_DELAYS } from "@/lib/constants/motion";
-interface InvitedUserOnboardingProviderProps {
+interface InvitedUserOnboardingGateProps {
   children: React.ReactNode;
 }
 
@@ -24,9 +24,9 @@ interface InvitedUserOnboardingProviderProps {
  * This provider is separate from the regular onboarding provider
  * and takes precedence when a user joins via invitation.
  */
-export function InvitedUserOnboardingProvider({
+export function InvitedUserOnboardingGate({
   children,
-}: InvitedUserOnboardingProviderProps) {
+}: InvitedUserOnboardingGateProps) {
   const { status } = useSession();
   const pathname = usePathname();
   const { shouldShow, isLoading, invitationContext, markAsCompleted } =
@@ -105,3 +105,6 @@ export function InvitedUserOnboardingProvider({
     </>
   );
 }
+
+/** @deprecated Use InvitedUserOnboardingGate */
+export const InvitedUserOnboardingProvider = InvitedUserOnboardingGate;
