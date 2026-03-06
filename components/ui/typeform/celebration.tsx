@@ -303,7 +303,9 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                 transition={{ delay: 0.3 }}
               >
                 <span>{subtitle}</span>
-                {type === "completion" ? <PartyPopper className="h-4 w-4" aria-hidden="true" /> : null}
+                {type === "completion" ? (
+                  <PartyPopper className="h-4 w-4" aria-hidden="true" />
+                ) : null}
               </motion.p>
 
               {/* Progress Bar for Milestone */}

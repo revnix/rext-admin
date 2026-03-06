@@ -81,23 +81,24 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       if (!baseUrl) {
         throw new Error(
           "Cannot determine application URL for checkout redirects. " +
-          "Set NEXT_PUBLIC_APP_URL environment variable."
+          "Set NEXT_PUBLIC_APP_URL environment variable.",
         );
       }
 
       return client.request<CheckoutSessionResponse>(
-        ENDPOINTS.SUBSCRIPTIONS.checkout, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan_id: planId,
-          billing_period: billingPeriod,
-          success_url: successUrl || `${baseUrl}/checkout/success`,
-          cancel_url: cancelUrl || `${baseUrl}/checkout/cancel`,
-          ...(discountCode && { discount_code: discountCode }),
-          ...(affiliateCode && { affiliate_code: affiliateCode }),
-        }),
-      },
+        ENDPOINTS.SUBSCRIPTIONS.checkout,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plan_id: planId,
+            billing_period: billingPeriod,
+            success_url: successUrl || `${baseUrl}/checkout/success`,
+            cancel_url: cancelUrl || `${baseUrl}/checkout/cancel`,
+            ...(discountCode && { discount_code: discountCode }),
+            ...(affiliateCode && { affiliate_code: affiliateCode }),
+          }),
+        },
       );
     },
 
