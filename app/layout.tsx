@@ -5,12 +5,12 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
-import { InvitedUserOnboardingProvider } from "@/providers/invited-user-onboarding-provider";
+import { InvitedUserOnboardingGate } from "@/providers/invited-user-onboarding-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
-import { WorkspaceWelcomeProvider } from "@/providers/workspace-welcome-provider";
+import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
 
 // Design Tokens - Typography
 const outfit = Outfit({
@@ -110,11 +110,11 @@ export default function RootLayout({
               <QueryProvider>
                 <TooltipProvider>
                   {/* Welcome modal shows first, then invited user onboarding */}
-                  <WorkspaceWelcomeProvider>
-                    <InvitedUserOnboardingProvider>
+                  <WorkspaceWelcomeGate>
+                    <InvitedUserOnboardingGate>
                       {children}
-                    </InvitedUserOnboardingProvider>
-                  </WorkspaceWelcomeProvider>
+                    </InvitedUserOnboardingGate>
+                  </WorkspaceWelcomeGate>
                 </TooltipProvider>
               </QueryProvider>
             </SSEProvider>
