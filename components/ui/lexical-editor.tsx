@@ -73,6 +73,15 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 // Utility for class matching
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -116,15 +125,6 @@ const NODES = [
   LinkNode,
   AutoLinkNode,
 ];
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const ToolbarButton = ({
   active,
@@ -538,8 +538,6 @@ interface LexicalEditorProps {
   readOnly?: boolean;
   showDebug?: boolean;
 }
-
-import { Textarea } from "@/components/ui/textarea";
 
 // Plugin to update editor when markdown input changes
 function MarkdownUpdatePlugin({
