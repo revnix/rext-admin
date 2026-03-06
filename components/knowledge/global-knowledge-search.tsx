@@ -62,7 +62,7 @@ const highlightSearchTerms = (text: string, searchQuery: string) => {
   );
   const parts = text.split(regex);
 
-  return parts.map((part, index) =>
+  return parts.map((part) =>
     regex.test(part) ? (
       <mark
         key={`highlight-${part}-${part.slice(0, 10)}`}

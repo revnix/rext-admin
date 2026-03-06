@@ -43,9 +43,7 @@ export default function CustomersPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "customers"],
     queryFn: async () => {
-      return apiClient.request<{
-        data: CustomerResponse[];
-      }>(`/api/v1/admin/customers`);
+      return apiClient.request<CustomerResponse[]>(`/api/v1/admin/customers`);
     },
   });
 
@@ -59,7 +57,7 @@ export default function CustomersPage() {
     );
   }
 
-  const customers = data?.data || [];
+  const customers = data || [];
 
   const handleCustomerClick = (customerId: string) => {
     setSelectedCustomerId(customerId);

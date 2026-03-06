@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { log } from "@/lib/logger";
-import { createPersistHydrationSlice, onPersistHydrated } from "@/lib/zustand-persist-hydration";
+import {
+  createPersistHydrationSlice,
+  onPersistHydrated,
+} from "@/lib/zustand-persist-hydration";
 import type {
   CurrentStep,
   GeneratedTopic,

@@ -9,11 +9,9 @@ export const INITIAL_ANALYSIS_STEPS: LoadingStep[] = [
   { id: "Fetch Serp", label: "Fetching search results" },
   { id: "Normalize Serp", label: "Normalizing search results" },
   { id: "Extract Competitor", label: "Extracting competitors" },
-  { id: "Scrape Content", label: "Scraping page content" },
-  { id: "scrape_flow", label: "Processing scraping workflow" },
-  { id: "serp_engine", label: "Processing SERP engine data" },
-  { id: "seo_entry", label: "Processing SEO entry data" },
-  { id: "fetch_dataforseo_backlinksy", label: "Analyzing backlink metrics" },
+  { id: "Serp Payload", label: "Serp Payload" },
+  { id: "Seo Entry", label: "Processing SEO entry data" },
+  { id: "Fetch Dataforseo Backlinks", label: "Analyzing backlink metrics" },
 ];
 
 export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [

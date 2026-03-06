@@ -21,32 +21,28 @@ export function createRolesNamespace(client: ApiClient) {
      * List all roles with optional permissions
      */
     list: async (includePermissions = false) => {
-      const response = await client.request<{
-        message: string;
-        data: {
-          roles: Array<{
+      return client.request<{
+        roles: Array<{
+          id: string;
+          name: string;
+          display_name: string;
+          description?: string;
+          is_system_role: boolean;
+          hierarchy_level: number;
+          created_at: string;
+          updated_at: string;
+          permissions?: Array<{
             id: string;
             name: string;
             display_name: string;
-            description?: string;
-            is_system_role: boolean;
-            hierarchy_level: number;
-            created_at: string;
-            updated_at: string;
-            permissions?: Array<{
-              id: string;
-              name: string;
-              display_name: string;
-              resource: string;
-              action: string;
-            }>;
+            resource: string;
+            action: string;
           }>;
-          count: number;
-        };
+        }>;
+        count: number;
       }>(`${ENDPOINTS.ROLES.list}?include_permissions=${includePermissions}`, {
         method: "GET",
       });
-      return response.data;
     },
 
     /**
@@ -177,30 +173,26 @@ export function createRolesNamespace(client: ApiClient) {
         include_roles: includeRoles ? "true" : undefined,
       });
 
-      const response = await client.request<{
-        message: string;
-        data: {
-          permissions: Array<{
+      return client.request<{
+        permissions: Array<{
+          id: string;
+          name: string;
+          display_name: string;
+          description?: string;
+          resource: string;
+          action: string;
+          created_at: string;
+          roles?: Array<{
             id: string;
             name: string;
             display_name: string;
-            description?: string;
-            resource: string;
-            action: string;
-            created_at: string;
-            roles?: Array<{
-              id: string;
-              name: string;
-              display_name: string;
-              hierarchy_level: number;
-            }>;
+            hierarchy_level: number;
           }>;
-          count: number;
-        };
+        }>;
+        count: number;
       }>(url, {
         method: "GET",
       });
-      return response.data;
     },
 
     /**
