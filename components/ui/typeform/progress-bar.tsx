@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { Clock, PartyPopper } from "lucide-react";
 import * as React from "react";
 import {
+  MOTION_DURATION,
   getMotionVariants,
   progressBarVariants,
   useReducedMotion,
@@ -187,7 +188,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
                   x: [`-32px`, `${(clampedProgress / 100) * 100 + 32}%`],
                 }}
                 transition={{
-                  duration: 2,
+                  duration: MOTION_DURATION.floating,
                   repeat: Infinity,
                   ease: "linear",
                 }}
@@ -206,7 +207,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
                 clampedProgress === 100 ? "text-primary" : "text-foreground",
               )}
               animate={celebrateMilestone ? { scale: [1, 1.1, 1] } : {}}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: MOTION_DURATION.veryFast }}
             >
               {Math.round(clampedProgress)}%
             </motion.span>
@@ -219,8 +220,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
             className="text-center text-sm font-medium text-primary"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
+            transition={{ duration: MOTION_DURATION.veryFast, delay: 0.2 }}          >
             <span className="inline-flex items-center gap-1">
               Complete!
               <PartyPopper className="h-4 w-4" aria-hidden="true" />

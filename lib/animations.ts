@@ -19,6 +19,22 @@ export const ANIMATION_TIMING: AnimationTiming = {
   celebration: 1.0,
 } as const;
 
+export const MOTION_DURATION = {
+  instant: 0,
+  veryFast: 0.1,
+  medium: 0.4,
+  long: 1,
+  shimmer: 1.5,
+  floating: 2,
+} as const;
+
+export const SPRING_PRESETS = {
+  snappy: { type: "spring", stiffness: 500, damping: 25 },
+  interactive: { type: "spring", stiffness: 300, damping: 25 },
+  gentle: { type: "spring", stiffness: 200, damping: 25 },
+  pop: { type: "spring", stiffness: 300, damping: 20 },
+} as const;
+
 export const EASING = {
   easeInOut: [0.4, 0.0, 0.2, 1],
   easeOut: [0.0, 0.0, 0.2, 1],
@@ -55,7 +71,7 @@ export const optionCardVariants: Variants = {
   tap: {
     scale: 0.98,
     transition: {
-      duration: 0.1,
+      duration: MOTION_DURATION.veryFast,
       ease: EASING.easeInOut,
     },
   },
@@ -96,9 +112,7 @@ export const selectionIndicatorVariants: Variants = {
     scale: 1,
     rotate: 0,
     transition: {
-      type: "spring",
-      stiffness: 500,
-      damping: 25,
+      ...SPRING_PRESETS.snappy,
       duration: ANIMATION_TIMING.normal,
     },
   },
@@ -166,11 +180,7 @@ export const questionItemVariants: Variants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 25,
-    },
+    transition: SPRING_PRESETS.interactive,
   },
 
   exit: {
@@ -198,7 +208,7 @@ export const progressBarVariants: Variants = {
     opacity: 1,
     transition: {
       width: {
-        duration: 0.4,
+        duration: MOTION_DURATION.medium,
         ease: EASING.easeOut,
       },
       opacity: {
@@ -215,7 +225,7 @@ export const progressBarVariants: Variants = {
     ],
     transition: {
       duration: ANIMATION_TIMING.celebration,
-      repeat: 2,
+      repeat: 1,
     },
   },
 };
@@ -236,9 +246,7 @@ export const celebrationVariants: Variants = {
     scale: 1,
     y: 0,
     transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 20,
+      ...SPRING_PRESETS.pop,
       duration: ANIMATION_TIMING.normal,
     },
   },
@@ -247,8 +255,8 @@ export const celebrationVariants: Variants = {
     scale: [1, 1.1, 1],
     rotate: [0, 10, -10, 0],
     transition: {
-      duration: ANIMATION_TIMING.celebration,
-      repeat: 1,
+      duration: MOTION_DURATION.long,
+      repeat: 0,
     },
   },
 
@@ -283,7 +291,7 @@ export const buttonVariants: Variants = {
   tap: {
     scale: 0.95,
     transition: {
-      duration: 0.1,
+      duration: MOTION_DURATION.veryFast,
     },
   },
 
