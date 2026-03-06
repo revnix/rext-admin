@@ -34,10 +34,10 @@ export interface OnboardingStepUpdate {
 }
 
 export interface OnboardingMarketingData {
-  user_industry?: string | null;
-  user_role?: string | null;
-  user_goal?: string | null;
-  heard_from?: string | null;
+  user_industry?: IndustryValue | null;
+  user_role?: RoleValue | null;
+  user_goal?: GoalValue | null;
+  heard_from?: HeardFromValue | null;
 }
 
 export interface OnboardingReset {
@@ -88,7 +88,10 @@ export const INDUSTRY_OPTIONS = [
   { value: "consulting", label: "Consulting & Services", icon: "💼" },
   { value: "nonprofit", label: "Non-profit & NGO", icon: "🤝" },
   { value: "other", label: "Other", icon: "🔧" },
-];
+] as const;
+
+/** Union of valid industry option values */
+export type IndustryValue = (typeof INDUSTRY_OPTIONS)[number]["value"];
 
 export const ROLE_OPTIONS = [
   { value: "founder", label: "Founder / CEO", icon: "🚀" },
@@ -100,7 +103,10 @@ export const ROLE_OPTIONS = [
   { value: "consultant", label: "Consultant", icon: "💡" },
   { value: "student", label: "Student / Learner", icon: "🎓" },
   { value: "other", label: "Other", icon: "👤" },
-];
+] as const;
+
+/** Union of valid role option values */
+export type RoleValue = (typeof ROLE_OPTIONS)[number]["value"];
 
 export const GOAL_OPTIONS = [
   {
@@ -139,7 +145,11 @@ export const GOAL_OPTIONS = [
     description: "Curious to see what REXT can do",
     icon: "🔍",
   },
-];
+] as const;
+
+
+/** Union of valid goal option values */
+export type GoalValue = (typeof GOAL_OPTIONS)[number]["value"];
 
 export const HEARD_FROM_OPTIONS = [
   { value: "search", label: "Search Engine (Google, Bing)", icon: "🔍" },
@@ -151,4 +161,8 @@ export const HEARD_FROM_OPTIONS = [
   { value: "ad", label: "Advertisement", icon: "📢" },
   { value: "review", label: "Review Site", icon: "⭐" },
   { value: "other", label: "Other", icon: "💬" },
-];
+] as const;
+
+/** Union of valid heard-from option values */
+export type HeardFromValue = (typeof HEARD_FROM_OPTIONS)[number]["value"];
+
