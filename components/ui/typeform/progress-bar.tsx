@@ -220,7 +220,8 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
             className="text-center text-sm font-medium text-primary"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: MOTION_DURATION.veryFast, delay: 0.2 }}          >
+            transition={{ duration: MOTION_DURATION.veryFast, delay: 0.2 }}
+          >
             <span className="inline-flex items-center gap-1">
               Complete!
               <PartyPopper className="h-4 w-4" aria-hidden="true" />

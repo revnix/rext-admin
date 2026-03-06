@@ -2,7 +2,10 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { Workspace, WorkspaceContextState } from "@/types/workspace";
 import { getStorage } from "@/lib/storage";
-import { createPersistHydrationSlice, onPersistHydrated } from "@/lib/zustand-persist-hydration";
+import {
+  createPersistHydrationSlice,
+  onPersistHydrated,
+} from "@/lib/zustand-persist-hydration";
 
 /**
  * Workspace Context Store

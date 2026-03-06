@@ -38,9 +38,7 @@ interface WelcomeData {
  * The welcome data is stored in sessionStorage by the invitation
  * acceptance flow and consumed here.
  */
-export function WorkspaceWelcomeGate({
-  children,
-}: WorkspaceWelcomeGateProps) {
+export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
   const { status } = useSession();
   const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);

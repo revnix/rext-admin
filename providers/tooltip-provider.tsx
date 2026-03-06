@@ -1,7 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Tooltip } from "react-tooltip";
 import { getTooltipsForPage } from "@/config/feature-tooltips";
 
@@ -57,12 +64,12 @@ export function TooltipProvider({ children }: TooltipProviderProps) {
   // Get tooltips for current page
   const tooltips = useMemo(
     () => getTooltipsForPage(pathname || ""),
-    [pathname]
+    [pathname],
   );
 
   const contextValue = useMemo(
     () => ({ enabled, toggleTooltips, setTooltipsEnabled }),
-    [enabled, toggleTooltips, setTooltipsEnabled]
+    [enabled, toggleTooltips, setTooltipsEnabled],
   );
 
   const tooltipNodes = useMemo(() => {
