@@ -11,12 +11,9 @@ import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { QuestionCard } from "@/components/ui/typeform/question-card";
-import {
-  getMotionVariants,
-  questionItemVariants,
-  useReducedMotion,
-} from "@/lib/animations";
+import { useReducedMotion } from "@/lib/animations";
+import { QuestionCard, useTypeformMotionVariants } from "@/components/ui/typeform";
+import { questionItemVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig, WizardProgress } from "@/types/wizard";
@@ -124,10 +121,7 @@ export function QuestionStep({
   onStepAdvance,
 }: QuestionStepProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   // Render the appropriate question component based on type
   const questionComponent = useMemo(() => {

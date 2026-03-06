@@ -11,11 +11,13 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import * as React from "react";
 import {
-  getMotionVariants,
-  optionCardVariants,
-  selectionIndicatorVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import {
+  optionCardVariants,
+  selectionIndicatorVariants,
+  useTypeformMotionVariants,
+} from "./motion";
 import { cn } from "@/lib/utils";
 import type { OptionCardProps } from "@/types/typeform";
 
@@ -60,14 +62,8 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
     ref,
   ) => {
     const prefersReducedMotion = useReducedMotion();
-    const motionVariants = getMotionVariants(
-      optionCardVariants,
-      prefersReducedMotion,
-    );
-    const indicatorVariants = getMotionVariants(
-      selectionIndicatorVariants,
-      prefersReducedMotion,
-    );
+    const motionVariants = useTypeformMotionVariants(optionCardVariants);
+    const indicatorVariants = useTypeformMotionVariants(selectionIndicatorVariants);
 
     const handleClick = React.useCallback(() => {
       if (!disabled && onClick) {

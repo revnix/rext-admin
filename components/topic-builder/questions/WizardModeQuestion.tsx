@@ -11,10 +11,9 @@ import { BookOpen, Building2 } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";
 import {
-  getMotionVariants,
-  questionItemVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import type { TopicBuilderFormData, WizardMode } from "@/types/topic-builder";
 import { WIZARD_MODE_OPTIONS } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -40,10 +39,7 @@ export function WizardModeQuestion({
   isLoading = false,
 }: WizardModeQuestionProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   const getIcon = (value: string) => {
     switch (value) {
@@ -98,11 +94,10 @@ export function WizardModeQuestion({
                   }}
                   icon={getIcon(option.value)}
                   disabled={isLoading}
-                  className={`transition-all duration-200 ${
-                    isRecommended
+                  className={`transition-all duration-200 ${isRecommended
                       ? "ring-2 ring-primary/20 bg-primary/5 border-primary/30"
                       : ""
-                  }`}
+                    }`}
                   delay={index * 0.1}
                 />
               );

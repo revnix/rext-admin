@@ -12,10 +12,9 @@ import { Clock, PartyPopper } from "lucide-react";
 import * as React from "react";
 import {
   MOTION_DURATION,
-  getMotionVariants,
-  progressBarVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { progressBarVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 import type { ProgressBarProps } from "@/types/typeform";
 
@@ -45,10 +44,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
     ref,
   ) => {
     const prefersReducedMotion = useReducedMotion();
-    const motionVariants = getMotionVariants(
-      progressBarVariants,
-      prefersReducedMotion,
-    );
+    const motionVariants = useTypeformMotionVariants(progressBarVariants);
 
     // Previous progress for milestone detection
     const previousProgress = React.useRef(progress);

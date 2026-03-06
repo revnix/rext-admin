@@ -14,9 +14,9 @@ import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   buttonVariants,
-  getMotionVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 
 export interface WizardNavigationProps {
@@ -88,10 +88,7 @@ export function WizardNavigation({
   onSaveAndReturn,
 }: WizardNavigationProps) {
   const prefersReducedMotion = useReducedMotion();
-  const motionVariants = getMotionVariants(
-    buttonVariants,
-    prefersReducedMotion,
-  );
+  const motionVariants = useTypeformMotionVariants(buttonVariants);
 
   const defaultNextLabel = isLastQuestion ? "Generate Topics" : "Next";
   const finalNextLabel = nextLabel || defaultNextLabel;
@@ -167,7 +164,7 @@ export function WizardNavigation({
           className={cn(
             "min-w-0 px-3",
             isLastQuestion &&
-              "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70",
+            "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70",
           )}
         >
           {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}

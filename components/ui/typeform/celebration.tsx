@@ -12,10 +12,9 @@ import { Check, Heart, PartyPopper, Sparkles, Trophy } from "lucide-react";
 import * as React from "react";
 import {
   MOTION_DURATION,
-  celebrationVariants,
-  getMotionVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { celebrationVariants, useTypeformMotionVariants } from "./motion";
 import { announceToScreenReader, triggerConfetti } from "@/lib/typeform-utils";
 import { cn } from "@/lib/utils";
 import type { CelebrationProps } from "@/types/typeform";
@@ -100,10 +99,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
     ref,
   ) => {
     const prefersReducedMotion = useReducedMotion();
-    const motionVariants = getMotionVariants(
-      celebrationVariants,
-      prefersReducedMotion,
-    );
+    const motionVariants = useTypeformMotionVariants(celebrationVariants);
     // Completion timeout ref for cleanup
     const completionTimeoutRef = React.useRef<number | null>(null);
 
