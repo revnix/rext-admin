@@ -70,14 +70,12 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
           description && description.length > 100 ? "lg:py-4" : "lg:py-3",
           className,
         )}
-        style={
-          {
-            // CSS custom properties for responsive spacing
-            "--question-spacing-base": "1rem",
-            "--question-spacing-md": "1.5rem",
-            "--question-spacing-lg": "2rem",
-          } as React.CSSProperties
-        }
+        style={{
+          // CSS custom properties for responsive spacing
+          "--question-spacing-base": "1rem",
+          "--question-spacing-md": "1.5rem",
+          "--question-spacing-lg": "2rem",
+        }}
         variants={contentVariants}
         initial="hidden"
         animate="visible"
