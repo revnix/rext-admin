@@ -93,7 +93,6 @@ export function FreshGenerationView({
 
       for await (const chunk of stream) {
         const updates = chunk.data as StreamUpdates;
-        // console.log("updates", updates);
 
         if (updates?.generate_content?.content?.final_content) {
           dispatch({

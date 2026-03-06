@@ -65,8 +65,7 @@ const highlightSearchTerms = (text: string, searchQuery: string) => {
   return parts.map((part, index) =>
     regex.test(part) ? (
       <mark
-        // biome-ignore lint/suspicious/noArrayIndexKey: split parts can be identical strings, index is needed here
-        key={`highlight-${index}-${part.slice(0, 10)}`}
+        key={`highlight-${part}-${part.slice(0, 10)}`}
         className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
       >
         {part}

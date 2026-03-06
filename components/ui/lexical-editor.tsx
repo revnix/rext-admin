@@ -38,6 +38,7 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { log } from "@/lib/logger";
 import {
   $getSelection,
   $isRangeSelection,
@@ -102,6 +103,8 @@ const theme = {
     underlineStrikethrough: "underline line-through",
   },
 };
+
+const lexicalLog = log.forComponent("LexicalEditor");
 
 // Nodes required for markdown support
 const NODES = [
@@ -580,8 +583,7 @@ export default function LexicalEditor({
       nodes: NODES,
       readOnly: readOnly,
       onError: (error: Error) => {
-        // biome-ignore lint/suspicious/noConsole: lexical editor error boundary requires console reporting
-        console.error(error);
+        lexicalLog.error("Lexical editor runtime error", error);
       },
       editorState: (editor: unknown) => {
         // Convert initial markdown to editor state
