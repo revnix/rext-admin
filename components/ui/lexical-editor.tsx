@@ -591,7 +591,7 @@ export default function LexicalEditor({
           if (initialValue) {
             try {
               $convertFromMarkdownString(initialValue, TRANSFORMERS);
-            } catch (_e) { }
+            } catch (_e) {}
           }
         });
       },

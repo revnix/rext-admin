@@ -81,7 +81,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       if (!baseUrl) {
         throw new Error(
           "Cannot determine application URL for checkout redirects. " +
-          "Set NEXT_PUBLIC_APP_URL environment variable.",
+            "Set NEXT_PUBLIC_APP_URL environment variable.",
         );
       }
 

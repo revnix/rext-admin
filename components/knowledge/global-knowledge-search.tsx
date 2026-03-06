@@ -65,7 +65,7 @@ const highlightSearchTerms = (text: string, searchQuery: string) => {
   return parts.map((part, index) =>
     regex.test(part) ? (
       <mark
-        key={`highlight-${index}-${part.slice(0, 10)}`}
+        key={`highlight-${part}-${part.slice(0, 10)}`}
         className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
       >
         {part}
