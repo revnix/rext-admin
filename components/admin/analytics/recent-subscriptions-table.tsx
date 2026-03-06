@@ -6,7 +6,7 @@ import type { Column } from "@/types/data-table";
 
 interface Subscription extends Record<string, unknown> {
   subscription_id: string;
-  user_email: string;
+  user_email_masked: string;
   user_name: string;
   plan_name: string;
   status: string;
@@ -17,7 +17,7 @@ interface Subscription extends Record<string, unknown> {
 interface RecentSubscriptionsTableProps {
   subscriptions: Array<{
     subscription_id: string;
-    user_email: string;
+    user_email_masked: string;
     user_name: string;
     plan_name: string;
     status: string;
@@ -72,7 +72,7 @@ export function RecentSubscriptionsTable({
       searchable: true,
     },
     {
-      key: "user_email",
+      key: "user_email_masked",
       header: "Email",
       width: "250px",
       searchable: true,

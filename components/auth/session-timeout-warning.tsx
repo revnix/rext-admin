@@ -39,8 +39,64 @@ export function SessionTimeoutWarning() {
     setIsExtending(true);
     try {
       log.info("[Auth] Extending session...");
-      // Force session update which will trigger token refresh
-      const updatedSession = await update();
+
+      const refreshToken = session?.user?.refreshToken;
+
+      if (!refreshToken) {
+        log.error("[Auth] No refresh token available in session");
+        // Force logout if we can't refresh
+        await performLogout("/login?error=SessionExpired");
+        return;
+      }
+
+      // 1. Call the official refresh endpoint directly as requested
+      // This is more reliable than automatic session update in some environments
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        },
+      );
+
+      if (!response.ok) {
+        log.error("[Auth] Token refresh API failed:", response.status);
+        await performLogout("/login?error=SessionExpired");
+        return;
+      }
+
+      const resData = await response.json();
+      // Backend pattern: data is wrapped in { data: ... } or returned directly
+      // biome-ignore lint/suspicious/noExplicitAny: dynamic backend response
+      const refreshedTokens = (resData.data || resData) as any;
+
+      if (!refreshedTokens.access_token) {
+        log.error("[Auth] No access token in refresh response");
+        await performLogout("/login?error=SessionExpired");
+        return;
+      }
+
+      // 2. Update the NextAuth session with the new tokens.
+      // We pass the data to update() which triggers the jwt callback in auth.config.ts
+      log.info("[Auth] Updating NextAuth session with refreshed tokens...");
+
+      // Calculate new expiry for the client-side timer
+      const expiresIn = refreshedTokens.expires_in;
+      const expiresAt = refreshedTokens.expires_at;
+      const accessTokenExpires = expiresIn
+        ? Date.now() + expiresIn * 1000
+        : expiresAt
+          ? new Date(expiresAt).getTime()
+          : session?.accessTokenExpires;
+
+      const updatedSession = await update({
+        accessToken: refreshedTokens.access_token,
+        refreshToken: refreshedTokens.refresh_token ?? refreshToken,
+        accessTokenExpires,
+      });
 
       if (updatedSession?.error === "RefreshAccessTokenError") {
         log.error("[Auth] Session extension failed: Token refresh error");
@@ -51,6 +107,12 @@ export function SessionTimeoutWarning() {
       log.info("[Auth] Session extended successfully");
     } catch (error) {
       log.error("[Auth] Failed to extend session:", error);
+      // Fallback: still try a simple update if fetch failed for some network reason
+      try {
+        await update();
+      } catch (e) {
+        log.error("[Auth] Fallback update also failed", e);
+      }
     } finally {
       setIsExtending(false);
     }
@@ -68,7 +130,7 @@ export function SessionTimeoutWarning() {
   return (
     <>
       {/* Warning Dialog */}
-      <Dialog open={showWarning} onOpenChange={() => {}}>
+      <Dialog open={showWarning} onOpenChange={() => { }}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
