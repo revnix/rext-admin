@@ -1,13 +1,29 @@
-"use client";
-
 import { Lock } from "lucide-react";
-import type { ReactElement, ReactNode } from "react";
+import type { MouseEvent, ReactElement, ReactNode } from "react";
 import { cloneElement } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+const NATIVE_DISABLEABLE_TAGS = new Set([
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "option",
+  "optgroup",
+  "fieldset",
+]);
+
+type DisableableChildProps = {
+  className?: string;
+  disabled?: boolean;
+  "aria-disabled"?: "true" | "false";
+  tabIndex?: number;
+  onClick?: (event: MouseEvent<HTMLElement>) => void;
+};
 
 interface LockedFeatureTooltipProps {
   /**
@@ -135,14 +151,36 @@ export function LockedFeatureTooltip({
   };
 
   // Clone the child element and ensure it's disabled
-  const disabledChild = cloneElement(children, {
-    // @ts-expect-error - disabled prop may not exist on all elements but we need it for buttons/inputs
-    disabled: true,
-    "aria-disabled": "true" as const,
-    className: `${
-      (children.props as { className?: string }).className || ""
-    } cursor-not-allowed opacity-60`,
-  });
+  function canUseNativeDisabled(
+    child: ReactElement,
+  ): child is ReactElement<DisableableChildProps> {
+    return (
+      typeof child.type === "string" && NATIVE_DISABLEABLE_TAGS.has(child.type)
+    );
+  }
+
+  // Clone the child element and apply disabled semantics safely
+  const child = children as ReactElement<DisableableChildProps>;
+  const mergedClassName = [
+    child.props.className,
+    "cursor-not-allowed opacity-60",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const sharedDisabledProps: DisableableChildProps = {
+    "aria-disabled": "true",
+    tabIndex: -1,
+    className: mergedClassName,
+    onClick: (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    },
+  };
+
+  const disabledChild = canUseNativeDisabled(child)
+    ? cloneElement(child, { ...sharedDisabledProps, disabled: true })
+    : cloneElement(child, sharedDisabledProps);
 
   return (
     <Tooltip>

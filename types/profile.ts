@@ -22,9 +22,9 @@ export interface UserProfile {
  * Profile update request
  */
 export interface UpdateProfileRequest {
-  full_name?: string | null;
-  display_name?: string | null;
-  bio?: string | null;
+  full_name?: string;
+  display_name?: string;
+  bio?: string;
   language?: string;
   timezone?: string;
 }

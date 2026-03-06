@@ -25,6 +25,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorAlert } from "@/components/ui/error-states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { ImpersonateButton } from "@/components/impersonation/impersonate-button";
@@ -95,7 +96,7 @@ export function CustomerDetailDrawer({
   const queryClient = useQueryClient();
 
   // Fetch customer details
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "customer", customerId],
     queryFn: async () => {
       return await apiClient
@@ -106,6 +107,26 @@ export function CustomerDetailDrawer({
     },
     enabled: open && !!customerId,
   });
+
+  if (error) {
+    return (
+      <Sheet open={open} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <div className="py-8">
+            <ErrorAlert
+              title="Failed to load customer details"
+              message={
+                error instanceof Error
+                  ? error.message
+                  : "An unexpected error occurred"
+              }
+              retry={() => void refetch()}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   const customerData = data;
   const user = customerData?.user;

@@ -1,6 +1,7 @@
 "use client";
 
-import { CanAccess } from "@/components/permissions/can-access";
+import { useQuery } from "@tanstack/react-query";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
   CardContent,
@@ -8,12 +9,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EditableBrandVoiceCard } from "@/components/workspace";
+import { workspaceQueries } from "@/lib/query-keys";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 export function BrandVoiceSection() {
   const { workspace } = useWorkspace();
+
+  const { data: brandVoiceData, isLoading } = useQuery({
+    ...workspaceQueries.brandVoice(workspace?.id || ""),
+    enabled: !!workspace?.id,
+  });
 
   if (!workspace) {
     return null;
@@ -28,7 +36,7 @@ export function BrandVoiceSection() {
         </p>
       </div>
 
-      <CanAccess
+      <PermissionGuard
         permission={WORKSPACE_PERMISSIONS.UPDATE}
         fallback={
           <Card>
@@ -46,8 +54,19 @@ export function BrandVoiceSection() {
           </Card>
         }
       >
-        <EditableBrandVoiceCard workspace={workspace} />
-      </CanAccess>
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-[400px] w-full" />
+          </div>
+        ) : (
+          <EditableBrandVoiceCard
+            workspace={{
+              ...workspace,
+              brand_voice: brandVoiceData?.brand_voice || workspace.brand_voice,
+            }}
+          />
+        )}
+      </PermissionGuard>
     </div>
   );
 }

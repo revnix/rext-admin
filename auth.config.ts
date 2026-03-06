@@ -11,8 +11,6 @@ import { getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
-const BACKEND_TOKEN_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
-
 /**
  * Refresh the access token using the refresh token
  */
@@ -73,11 +71,20 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       throw new Error("No access token in refresh response");
     }
 
+    // Derive expiry from backend response: prefer `expires_in` (seconds), fall back to `expires_at` (ISO/epoch)
+    const expiresIn = refreshedTokens.expires_in;
+    const expiresAt = refreshedTokens.expires_at;
+    const accessTokenExpires = expiresIn
+      ? Date.now() + expiresIn * 1000
+      : expiresAt
+        ? new Date(expiresAt).getTime()
+        : token.accessTokenExpires; // keep previous if backend doesn't provide one
+
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-      accessTokenExpires: Date.now() + BACKEND_TOKEN_EXPIRY_MS,
+      accessTokenExpires,
     };
   } catch (error) {
     log.error("[Auth] Error refreshing access token:", error);
@@ -165,6 +172,8 @@ export default {
             image: data.user.avatar_url || null,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
+            expiresIn: data.expires_in,
+            expiresAt: data.expires_at,
             role: primaryRole,
             permissions: data.user.permissions || [],
             rememberMe,
@@ -217,8 +226,12 @@ export default {
           token.role = user.role;
           token.permissions = user.permissions;
           token.rememberMe = user.rememberMe;
-          // Set access token expiry to 10 minutes to match backend
-          token.accessTokenExpires = Date.now() + BACKEND_TOKEN_EXPIRY_MS;
+          // Derive expiry from backend login response: prefer `expires_in` (seconds), fall back to `expires_at`
+          token.accessTokenExpires = user.expiresIn
+            ? Date.now() + (user.expiresIn as number) * 1000
+            : user.expiresAt
+              ? new Date(user.expiresAt as string).getTime()
+              : undefined;
         } else {
           // For OAuth providers, use dedicated OAuth login endpoint
           try {
@@ -294,8 +307,10 @@ export default {
             token.refreshToken = oauthData.refresh_token;
             token.role = getPrimaryRole(oauthData.user);
             token.permissions = oauthData.user.permissions || [];
-            // Set access token expiry for OAuth logins (10 minutes)
-            token.accessTokenExpires = Date.now() + BACKEND_TOKEN_EXPIRY_MS;
+            // Derive expiry from backend OAuth response: prefer `expires_in` (seconds), fall back to `expires_at`
+            token.accessTokenExpires = oauthData.expires_at
+              ? new Date(oauthData.expires_at).getTime()
+              : undefined;
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
@@ -341,11 +356,12 @@ export default {
         }
 
         if (token.accessTokenExpires) {
-          log.info("[Auth] Extending session expiry manually...");
-          return {
-            ...token,
-            accessTokenExpires: Date.now() + BACKEND_TOKEN_EXPIRY_MS,
-          };
+          // No refresh token available — cannot obtain a fresh expiry from the backend.
+          // Return the token as-is; the existing expiry will drive the next refresh check.
+          log.warn(
+            "[Auth] No refresh token for manual update — keeping existing token expiry.",
+          );
+          return token;
         }
 
         return token;
@@ -393,14 +409,19 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const isOnAuthPage = isAuthPage(nextUrl.pathname);
+      const pathname = nextUrl.pathname;
+      const isOnAuthPage = isAuthPage(pathname);
+      const isInvitationPage =
+        pathname.startsWith("/invitations/accept") ||
+        pathname.startsWith("/accept-invitation") ||
+        pathname.startsWith("/accept-admin-invitation");
 
       // CRITICAL: If there is a refresh error, the session is essentially invalid.
       // We must force the user to the login page and NOT allow them to be redirected
       // back to the dashboard even if NextAuth technically still considers them "logged in".
       if (hasRefreshError) {
-        if (isOnAuthPage) {
-          // Allow them to stay on the auth page to log in again
+        if (isOnAuthPage || isInvitationPage) {
+          // Allow them to stay on the auth/invitation page to log in again
           return true;
         }
         // Redirect to login from any protected page
@@ -409,14 +430,15 @@ export default {
         );
       }
 
-      // Redirect authenticated users away from auth pages
-      // Only do this if they DON'T have a refresh error
-      if (isLoggedIn && isOnAuthPage) {
+      // Redirect authenticated users away from auth pages (login, signup, etc.)
+      // but NOT from invitation routes which support auto-acceptance
+      if (isLoggedIn && isOnAuthPage && !isInvitationPage) {
         return Response.redirect(new URL("/", nextUrl));
       }
 
       // Require authentication for protected pages
-      if (!isLoggedIn && !isOnAuthPage) {
+      // Public paths are auth pages or invitation pages
+      if (!isLoggedIn && !isOnAuthPage && !isInvitationPage) {
         return false; // Will redirect to /login
       }
 

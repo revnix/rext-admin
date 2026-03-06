@@ -19,6 +19,22 @@ export const ANIMATION_TIMING: AnimationTiming = {
   celebration: 1.0,
 } as const;
 
+export const MOTION_DURATION = {
+  instant: 0,
+  veryFast: 0.1,
+  medium: 0.4,
+  long: 1,
+  shimmer: 1.5,
+  floating: 2,
+} as const;
+
+export const SPRING_PRESETS = {
+  snappy: { type: "spring", stiffness: 500, damping: 25 },
+  interactive: { type: "spring", stiffness: 300, damping: 25 },
+  gentle: { type: "spring", stiffness: 200, damping: 25 },
+  pop: { type: "spring", stiffness: 300, damping: 20 },
+} as const;
+
 export const EASING = {
   easeInOut: [0.4, 0.0, 0.2, 1],
   easeOut: [0.0, 0.0, 0.2, 1],
@@ -55,7 +71,7 @@ export const optionCardVariants: Variants = {
   tap: {
     scale: 0.98,
     transition: {
-      duration: 0.1,
+      duration: MOTION_DURATION.veryFast,
       ease: EASING.easeInOut,
     },
   },
@@ -96,9 +112,7 @@ export const selectionIndicatorVariants: Variants = {
     scale: 1,
     rotate: 0,
     transition: {
-      type: "spring",
-      stiffness: 500,
-      damping: 25,
+      ...SPRING_PRESETS.snappy,
       duration: ANIMATION_TIMING.normal,
     },
   },
@@ -166,11 +180,7 @@ export const questionItemVariants: Variants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 25,
-    },
+    transition: SPRING_PRESETS.interactive,
   },
 
   exit: {
@@ -198,7 +208,7 @@ export const progressBarVariants: Variants = {
     opacity: 1,
     transition: {
       width: {
-        duration: 0.4,
+        duration: MOTION_DURATION.medium,
         ease: EASING.easeOut,
       },
       opacity: {
@@ -215,7 +225,7 @@ export const progressBarVariants: Variants = {
     ],
     transition: {
       duration: ANIMATION_TIMING.celebration,
-      repeat: 2,
+      repeat: 1,
     },
   },
 };
@@ -236,9 +246,7 @@ export const celebrationVariants: Variants = {
     scale: 1,
     y: 0,
     transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 20,
+      ...SPRING_PRESETS.pop,
       duration: ANIMATION_TIMING.normal,
     },
   },
@@ -247,8 +255,8 @@ export const celebrationVariants: Variants = {
     scale: [1, 1.1, 1],
     rotate: [0, 10, -10, 0],
     transition: {
-      duration: ANIMATION_TIMING.celebration,
-      repeat: 1,
+      duration: MOTION_DURATION.long,
+      repeat: 0,
     },
   },
 
@@ -283,7 +291,7 @@ export const buttonVariants: Variants = {
   tap: {
     scale: 0.95,
     transition: {
-      duration: 0.1,
+      duration: MOTION_DURATION.veryFast,
     },
   },
 
@@ -295,81 +303,6 @@ export const buttonVariants: Variants = {
     },
   },
 };
-
-// ============================================================================
-// LOADING ANIMATIONS
-// ============================================================================
-
-export const loadingSpinnerVariants: Variants = {
-  spin: {
-    rotate: 360,
-    transition: {
-      duration: 1,
-      repeat: Infinity,
-      ease: "linear",
-    },
-  },
-};
-
-export const skeletonVariants: Variants = {
-  pulse: {
-    opacity: [0.4, 0.8, 0.4],
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: "easeInOut",
-    },
-  },
-};
-
-export const shimmerVariants: Variants = {
-  shimmer: {
-    backgroundPosition: ["200% 0", "-200% 0"],
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: "linear",
-    },
-  },
-};
-
-// ============================================================================
-// CHECKMARK ANIMATIONS
-// ============================================================================
-
-export const checkmarkVariants: Variants = {
-  hidden: {
-    pathLength: 0,
-    opacity: 0,
-  },
-
-  visible: {
-    pathLength: 1,
-    opacity: 1,
-    transition: {
-      pathLength: {
-        type: "spring",
-        duration: 0.6,
-        bounce: 0,
-      },
-      opacity: {
-        duration: ANIMATION_TIMING.fast,
-      },
-    },
-  },
-};
-
-// ============================================================================
-// COMBINED ANIMATION VARIANTS EXPORT
-// ============================================================================
-
-export const animationVariants = {
-  optionCard: optionCardVariants,
-  questionTransition: questionTransitionVariants,
-  progressBar: progressBarVariants,
-  celebration: celebrationVariants,
-  selectionIndicator: selectionIndicatorVariants,
-} as const;
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -423,64 +356,5 @@ export const useReducedMotion = (): boolean => {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 };
 
-/**
- * Stagger children animation helper
- */
-export const createStaggeredAnimation = (
-  _childVariants: Variants,
-  staggerDelay: number = 0.1,
-  delayChildren: number = 0.1,
-): Variants => ({
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: staggerDelay,
-      delayChildren: delayChildren,
-    },
-  },
-});
-
-/**
- * Creates a spring animation with custom parameters
- */
-export const createSpringAnimation = (
-  stiffness: number = 300,
-  damping: number = 25,
-): Transition => ({
-  type: "spring",
-  stiffness,
-  damping,
-});
-
-// ============================================================================
-// ANIMATION PRESETS
-// ============================================================================
-
-export const ANIMATION_PRESETS = {
-  // Fast interactions
-  quickHover: {
-    duration: ANIMATION_TIMING.fast,
-    ease: EASING.easeOut,
-  },
-
-  // Standard transitions
-  normalTransition: {
-    duration: ANIMATION_TIMING.normal,
-    ease: EASING.easeInOut,
-  },
-
-  // Bouncy interactions
-  springyInteraction: EASING.spring,
-
-  // Gentle movements
-  gentleMotion: EASING.gentleSpring,
-
-  // Dramatic effects
-  dramaticEntrance: {
-    duration: ANIMATION_TIMING.slow,
-    ease: EASING.anticipate,
-  },
-} as const;
-
-export default animationVariants;
+// Removed unused animationVariants aggregate, utilities (createStaggeredAnimation, createSpringAnimation),
+// and default export per TASK-267.

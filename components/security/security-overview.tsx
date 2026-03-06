@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Clock, Mail, Shield, ShieldCheck } from "lucide-react";
 import { OAuthAccounts } from "@/components/account-settings/oauth-accounts";
-import { PasswordChange } from "@/components/account-settings/password-change";
+import { ChangePasswordForm } from "@/components/profile/change-password-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
@@ -161,7 +161,7 @@ export function SecurityOverview() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PasswordChange />
+          <ChangePasswordForm />
         </CardContent>
       </Card>
 

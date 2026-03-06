@@ -2,16 +2,29 @@ import { Area, AreaChart } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import React from "react";
 
+const VOLUME_COLOR = "var(--chart-1)";
+
 const chartConfig = {
   volume: {
     label: "Volume",
-    color: "#3b82f6",
+    color: VOLUME_COLOR,
   },
 };
 
 export function MonthlyVolumeCard({ volume = "0" }) {
+  const numericVolume = React.useMemo(() => {
+    return parseFloat(String(volume).replace(/[^0-9.]/g, "")) || 0;
+  }, [volume]);
+
+  const formattedVolume = React.useMemo(() => {
+    return new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1,
+    }).format(numericVolume);
+  }, [numericVolume]);
+
   const sparkData = React.useMemo(() => {
-    const numericVolume = parseFloat(volume.replace(/[^0-9.]/g, "")) || 0;
     const base = numericVolume > 0 ? numericVolume : 1.2;
 
     // Generate a semi-random but deterministic trend
@@ -19,13 +32,15 @@ export function MonthlyVolumeCard({ volume = "0" }) {
       date: i,
       volume: base * (0.85 + Math.sin(i * 1.5) * 0.1 + (i / 10) * 0.1),
     }));
-  }, [volume]);
+  }, [numericVolume]);
 
   return (
     <>
       <div className="flex flex-col">
-        <h3 className="text-3xl font-bold text-gray-900">{volume}</h3>
-        <p className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
+        <h3 className="text-3xl font-bold text-foreground">
+          {formattedVolume}
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
           Avg. searches per month
         </p>
       </div>
@@ -35,15 +50,15 @@ export function MonthlyVolumeCard({ volume = "0" }) {
           <AreaChart data={sparkData}>
             <defs>
               <linearGradient id="fillVolume" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor={VOLUME_COLOR} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={VOLUME_COLOR} stopOpacity={0} />
               </linearGradient>
             </defs>
             <Area
               dataKey="volume"
               type="monotone"
               fill="url(#fillVolume)"
-              stroke="#3b82f6"
+              stroke={VOLUME_COLOR}
               strokeWidth={2}
               isAnimationActive={true}
               dot={false}

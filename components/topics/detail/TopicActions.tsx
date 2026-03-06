@@ -1,7 +1,7 @@
 "use client";
 
 import { PenTool, Save, Trash2 } from "lucide-react";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -36,11 +36,7 @@ export function TopicActions({
     <div className="flex items-center gap-2">
       {/* Approve - First and primary when not approved */}
       {!isApproved && (
-        <CanAccess
-          permission={TOPIC_PERMISSIONS.UPDATE}
-          showLockedTooltip
-          showLockIcon
-        >
+        <PermissionGuard permission={TOPIC_PERMISSIONS.UPDATE} showTooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -58,16 +54,12 @@ export function TopicActions({
             </TooltipTrigger>
             <TooltipContent>Approve topic for content creation</TooltipContent>
           </Tooltip>
-        </CanAccess>
+        </PermissionGuard>
       )}
 
       {/* Write Content - Only show when approved */}
       {isApproved && (
-        <CanAccess
-          permission={TOPIC_PERMISSIONS.READ}
-          showLockedTooltip
-          showLockIcon
-        >
+        <PermissionGuard permission={TOPIC_PERMISSIONS.READ} showTooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={onUse} className="gap-2">
@@ -79,15 +71,11 @@ export function TopicActions({
               Use this topic to create new content
             </TooltipContent>
           </Tooltip>
-        </CanAccess>
+        </PermissionGuard>
       )}
 
       {/* Remove Topic */}
-      <CanAccess
-        permission={TOPIC_PERMISSIONS.DELETE}
-        showLockedTooltip
-        showLockIcon
-      >
+      <PermissionGuard permission={TOPIC_PERMISSIONS.DELETE} showTooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -106,7 +94,7 @@ export function TopicActions({
           </TooltipTrigger>
           <TooltipContent>Remove this topic permanently</TooltipContent>
         </Tooltip>
-      </CanAccess>
+      </PermissionGuard>
     </div>
   );
 }

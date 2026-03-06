@@ -179,7 +179,7 @@ export function AccessDenied({
         {showUpgrade && (
           <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 p-4 rounded-lg">
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-4 w-4" aria-hidden="true" />
               Need Access?
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
@@ -187,7 +187,9 @@ export function AccessDenied({
               your role.
             </p>
             <Button size="sm" variant="outline" asChild className="w-full">
-              <Link href="/w">View My Workspaces</Link>
+              <Link href="/w" aria-label="View My Workspaces">
+                View My Workspaces
+              </Link>
             </Button>
           </div>
         )}
@@ -198,12 +200,15 @@ export function AccessDenied({
             variant="outline"
             onClick={() => router.back()}
             className="flex-1"
+            aria-label="Go Back"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Go Back
           </Button>
           <Button asChild className="flex-1">
-            <Link href={backUrl as Route}>Go to Dashboard</Link>
+            <Link href={backUrl as Route} aria-label="Go to Dashboard">
+              Go to Dashboard
+            </Link>
           </Button>
         </div>
 
@@ -211,6 +216,7 @@ export function AccessDenied({
         <div className="text-center pt-2">
           <Link
             href="/settings"
+            aria-label="Contact Support"
             className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
           >
             Contact Support

@@ -5,7 +5,9 @@ import { resolveApiBaseUrl } from "@/lib/api-base-url";
 
 const getClient = () =>
   new Client({
-    apiUrl: resolveApiBaseUrl(process.env.LANGGRAPH_API_URL),
+    apiUrl: resolveApiBaseUrl({
+      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
+    }),
   });
 
 export const POST = withApiMiddleware(

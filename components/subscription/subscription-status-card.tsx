@@ -82,12 +82,11 @@ export function SubscriptionStatusCard({
           </Badge>
         );
       case SubscriptionStatus.TRIAL:
-        return (
-          <Badge variant="secondary">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Trial
-          </Badge>
-        );
+        return <Badge variant="secondary">Trial</Badge>;
+      case SubscriptionStatus.PAST_DUE:
+        return <Badge variant="destructive">Past Due</Badge>;
+      case SubscriptionStatus.PAUSED:
+        return <Badge variant="outline">Paused</Badge>;
       case SubscriptionStatus.CANCELLED:
         return <Badge variant="destructive">Cancelled</Badge>;
       case SubscriptionStatus.EXPIRED:

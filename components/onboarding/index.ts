@@ -19,5 +19,3 @@ export { InvitedUserQuickTour } from "./steps/invited-user-quick-tour";
 export { InvitedUserWelcome } from "./steps/invited-user-welcome";
 export { OnboardingComplete } from "./steps/onboarding-complete";
 export { OnboardingMarketingQuestions } from "./steps/onboarding-marketing-questions";
-// Regular onboarding steps
-export { OnboardingWelcome } from "./steps/onboarding-welcome";

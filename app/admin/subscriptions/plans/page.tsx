@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subscription-plan-form";
 import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -167,7 +167,7 @@ export default function SubscriptionPlansPage() {
         </Button>
       }
     >
-      <CanAccess
+      <PermissionGuard
         permission={SUBSCRIPTION_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
@@ -286,7 +286,7 @@ export default function SubscriptionPlansPage() {
             )}
           </DialogContent>
         </Dialog>
-      </CanAccess>
+      </PermissionGuard>
     </PageLayout>
   );
 }

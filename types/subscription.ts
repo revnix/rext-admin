@@ -13,6 +13,8 @@ export enum SubscriptionStatus {
   EXPIRED = "expired",
   TRIAL = "trial",
   SUSPENDED = "suspended",
+  PAST_DUE = "past_due",
+  PAUSED = "paused",
 }
 
 export enum BillingPeriod {
@@ -21,23 +23,55 @@ export enum BillingPeriod {
   LIFETIME = "lifetime",
 }
 
+export const INVOICE_STATUSES = [
+  "pending",
+  "paid",
+  "void",
+  "refunded",
+  "partial_refunded",
+  "unknown",
+] as const;
+
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+export interface Invoice {
+  invoice_id: string;
+  invoice_number: string | null;
+  status: InvoiceStatus;
+  amount: number;
+  currency: string;
+  tax: number | null;
+  subtotal: number | null;
+  invoice_url: string | null;
+  invoice_date: string;
+  due_date: string | null;
+  paid_at: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  items: InvoiceItem[];
+}
+
 // ============================================================================
 // SUBSCRIPTION PLAN INTERFACES
 // ============================================================================
 
+export interface PlanFeatures {
+  items: string[];
+}
+
 export interface SubscriptionPlan extends Record<string, unknown> {
   id: string;
-  name: string; // Unique identifier (e.g., "pro", "enterprise")
-  display_name: string; // Human-readable name
+  name: string;
+  display_name: string;
   description: string | null;
   price_monthly: number;
   price_yearly: number;
-  features: Record<string, unknown>; // Flexible JSON features
-  max_workspaces: number; // -1 = unlimited
-  max_members_per_workspace: number; // -1 = unlimited
-  max_topics: number; // -1 = unlimited
-  max_knowledge_items: number; // -1 = unlimited
-  max_api_calls_per_month: number; // -1 = unlimited
+  features: PlanFeatures;
+  max_workspaces: number;
+  max_members_per_workspace: number;
+  max_topics: number;
+  max_knowledge_items: number;
+  max_api_calls_per_month: number;
   is_active: boolean;
   is_public: boolean;
   created_at: string;
@@ -57,8 +91,9 @@ export interface SubscriptionPlanCreate {
   max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
-  stripe_price_id_monthly?: string;
-  stripe_price_id_yearly?: string;
+  lemonsqueezy_product_id?: string;
+  lemonsqueezy_variant_id_monthly?: string;
+  lemonsqueezy_variant_id_yearly?: string;
 }
 
 export interface SubscriptionPlanUpdate {
@@ -74,8 +109,9 @@ export interface SubscriptionPlanUpdate {
   max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
-  stripe_price_id_monthly?: string;
-  stripe_price_id_yearly?: string;
+  lemonsqueezy_product_id?: string;
+  lemonsqueezy_variant_id_monthly?: string;
+  lemonsqueezy_variant_id_yearly?: string;
 }
 
 // ============================================================================
@@ -232,26 +268,6 @@ export interface InvoiceItem {
   quantity: number;
   unit_price: number;
   total: number;
-}
-
-/**
- * Invoice details
- */
-export interface Invoice {
-  invoice_id: string;
-  invoice_number: string | null;
-  status: string; // paid, unpaid, refunded, etc.
-  amount: number;
-  currency: string;
-  tax: number | null;
-  subtotal: number | null;
-  invoice_url: string | null;
-  invoice_date: string; // ISO format
-  due_date: string | null; // ISO format
-  paid_at: string | null; // ISO format
-  customer_email: string | null;
-  customer_name: string | null;
-  items: InvoiceItem[];
 }
 
 /**

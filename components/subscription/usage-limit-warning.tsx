@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Route } from "next";
+import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
 /**
  * Usage Limit Warning Component
@@ -69,6 +70,35 @@ interface UsageLimitWarningProps {
   showProgress?: boolean;
 }
 
+const WARNING_DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
+
+type UsageWarningDismissal = {
+  dismissedAt: number;
+  expiresAt: number;
+};
+
+function getUsageWarningDismissalKey(resource: string): string {
+  return `usage-warning-${resource}`;
+}
+
+function readUsageWarningDismissal(resource: string): boolean {
+  const key = getUsageWarningDismissalKey(resource);
+  const raw = localStorage.getItem(key);
+  if (!raw) return false;
+
+  try {
+    const parsed = JSON.parse(raw) as UsageWarningDismissal;
+    if (parsed.expiresAt > Date.now()) {
+      return true;
+    }
+    localStorage.removeItem(key);
+    return false;
+  } catch {
+    localStorage.removeItem(key);
+    return false;
+  }
+}
+
 export function UsageLimitWarning({
   resource,
   warningThreshold = 75,
@@ -93,6 +123,11 @@ export function UsageLimitWarning({
   }, [usage, fetchUsage]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || !dismissible) return;
+    setIsDismissed(readUsageWarningDismissal(resource));
+  }, [resource, dismissible]);
+
+  useEffect(() => {
     if (!usage || !subscription) return;
 
     // Calculate usage percentage based on resource type
@@ -102,19 +137,19 @@ export function UsageLimitWarning({
     switch (resource) {
       case "workspaces":
         current = usage.current_workspaces;
-        max = subscription.plan_limits?.max_workspaces || -1;
+        max = subscription.plan_limits?.max_workspaces ?? -1;
         break;
       case "topics":
         current = usage.current_topics;
-        max = subscription.plan_limits?.max_topics || -1;
+        max = subscription.plan_limits?.max_topics ?? -1;
         break;
       case "knowledge_items":
         current = usage.current_knowledge_items;
-        max = subscription.plan_limits?.max_knowledge_items || -1;
+        max = subscription.plan_limits?.max_knowledge_items ?? -1;
         break;
       case "ai_requests":
         current = usage.current_api_calls;
-        max = subscription.plan_limits?.max_api_calls_per_month || -1;
+        max = subscription.plan_limits?.max_api_calls_per_month ?? -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented
@@ -139,8 +174,17 @@ export function UsageLimitWarning({
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    // Store dismissal in localStorage (optional - could be session-based)
-    localStorage.setItem(`usage-warning-${resource}`, Date.now().toString());
+
+    const now = Date.now();
+    const payload: UsageWarningDismissal = {
+      dismissedAt: now,
+      expiresAt: now + WARNING_DISMISS_TTL_MS,
+    };
+
+    localStorage.setItem(
+      getUsageWarningDismissalKey(resource),
+      JSON.stringify(payload),
+    );
   };
 
   // Don't show if dismissed
@@ -213,8 +257,9 @@ export function UsageLimitWarning({
                 variant="ghost"
                 onClick={handleDismiss}
                 className="h-6 w-6 p-0"
+                aria-label={`Dismiss ${getResourceLabel().toLowerCase()} usage warning`}
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             )}
           </div>
@@ -278,13 +323,18 @@ export function UsageLimitWarning({
               </p>
 
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleUpgrade}>
+                <Button
+                  size="sm"
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+                  onClick={handleUpgrade}
+                >
                   <TrendingUp className="mr-2 h-4 w-4" />
                   Upgrade Plan
                 </Button>
+
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                   onClick={() =>
                     router.push("/dashboard/subscription" as Route)
                   }
@@ -298,9 +348,8 @@ export function UsageLimitWarning({
           {dismissible && (
             <Button
               size="sm"
-              variant="ghost"
+              variant={SUBSCRIPTION_ACTION_VARIANTS.dismissTertiary}
               onClick={handleDismiss}
-              className="ml-2"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -339,19 +388,19 @@ export function useResourceLimit(
     switch (resource) {
       case "workspaces":
         current = usage.current_workspaces;
-        max = subscription.plan_limits?.max_workspaces || -1;
+        max = subscription.plan_limits?.max_workspaces ?? -1;
         break;
       case "topics":
         current = usage.current_topics;
-        max = subscription.plan_limits?.max_topics || -1;
+        max = subscription.plan_limits?.max_topics ?? -1;
         break;
       case "knowledge_items":
         current = usage.current_knowledge_items;
-        max = subscription.plan_limits?.max_knowledge_items || -1;
+        max = subscription.plan_limits?.max_knowledge_items ?? -1;
         break;
       case "ai_requests":
         current = usage.current_api_calls;
-        max = subscription.plan_limits?.max_api_calls_per_month || -1;
+        max = subscription.plan_limits?.max_api_calls_per_month ?? -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented

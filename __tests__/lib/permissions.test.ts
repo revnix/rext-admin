@@ -11,8 +11,9 @@ import {
   isAdmin,
   isSuperAdmin,
   ROLES,
-  type UserWithPermissions,
 } from "@/lib/permissions";
+
+import type { UserWithPermissions } from "@/types/role";
 
 describe("permission utilities", () => {
   const baseUser: UserWithPermissions = {

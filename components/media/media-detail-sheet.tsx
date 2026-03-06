@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { isMediaKind } from "@/lib/media-type";
 import { toAbsoluteMediaUrl } from "@/lib/media-url";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -269,9 +269,9 @@ export function MediaDetailSheet({
             <div className="flex flex-wrap gap-2">
               {!isEditing ? (
                 <>
-                  <CanAccess
+                  <PermissionGuard
                     permission={MEDIA_PERMISSIONS.UPDATE}
-                    showLockedTooltip
+                    showTooltip
                   >
                     <Button
                       variant="outline"
@@ -281,7 +281,7 @@ export function MediaDetailSheet({
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
-                  </CanAccess>
+                  </PermissionGuard>
                   <Button
                     variant="outline"
                     size="sm"
@@ -300,10 +300,9 @@ export function MediaDetailSheet({
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
-                  <CanAccess
+                  <PermissionGuard
                     permission={MEDIA_PERMISSIONS.DELETE}
-                    showLockedTooltip
-                    showLockIcon
+                    showTooltip
                   >
                     <Button
                       variant="destructive"
@@ -314,13 +313,13 @@ export function MediaDetailSheet({
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
                     </Button>
-                  </CanAccess>
+                  </PermissionGuard>
                 </>
               ) : (
                 <>
-                  <CanAccess
+                  <PermissionGuard
                     permission={MEDIA_PERMISSIONS.UPDATE}
-                    showLockedTooltip
+                    showTooltip
                   >
                     <Button
                       variant="default"
@@ -331,7 +330,7 @@ export function MediaDetailSheet({
                       <Save className="h-4 w-4 mr-2" />
                       {isUpdating ? "Saving..." : "Save"}
                     </Button>
-                  </CanAccess>
+                  </PermissionGuard>
                   <Button
                     variant="outline"
                     size="sm"
@@ -637,7 +636,7 @@ export function MediaDetailSheet({
               <X className="h-6 w-6" />
             </button>
             {/* Image info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-linear-to-t from-black/80 to-transparent text-white">
               <p className="text-lg font-medium">
                 {media.title || media.filename}
               </p>

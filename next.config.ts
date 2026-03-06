@@ -96,6 +96,11 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "api.rext.ai",
+        pathname: "/media/**",
+      },
     ],
   },
 
@@ -117,6 +122,15 @@ const nextConfig: NextConfig = {
   // 5. DEVELOPMENT CONFIGURATION
   // ============================================================================
   reactStrictMode: true, // Enable React strict mode for better error detection
+  async redirects() {
+    return [
+      {
+        source: "/settings/billing",
+        destination: "/settings/subscription",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 // Export config wrapped with bundle analyzer

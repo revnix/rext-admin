@@ -95,7 +95,7 @@ export function ActionsCell<
       )}
     >
       <legend className="sr-only">Row actions</legend>
-      {availableActions.map((action, index) => {
+      {availableActions.map((action) => {
         const getHref = () => {
           if (!action.href) return undefined;
           return typeof action.href === "function"
@@ -163,7 +163,9 @@ export function ActionsCell<
         );
 
         return (
-          <TooltipProvider key={`action-${action.label}-${index}`}>
+          <TooltipProvider
+            key={`action-${typeof action.label === "function" ? "fn" : action.label}`}
+          >
             <Tooltip>
               <TooltipTrigger asChild>{button}</TooltipTrigger>
               <TooltipContent>

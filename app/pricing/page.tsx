@@ -13,6 +13,10 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { SubscriptionPlan } from "@/types/subscription";
+import {
+  PRICING_FAQ_ITEMS,
+  PRICING_SUPPORT_LINKS,
+} from "@/config/pricing-content";
 
 /**
  * Pricing Page
@@ -127,58 +131,12 @@ export default function PricingPage() {
             Frequently Asked Questions
           </h2>
           <div className="grid md:grid-cols-2 gap-6 text-left">
-            <div>
-              <h3 className="font-semibold mb-2">
-                Can I change plans anytime?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Yes! You can upgrade or downgrade your plan at any time from
-                your subscription dashboard. Upgrades take effect immediately,
-                while downgrades apply at the end of your billing period.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">
-                What payment methods do you accept?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                We accept all major credit cards (Visa, MasterCard, American
-                Express) and PayPal through our secure payment processor.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Is there a free trial?</h3>
-              <p className="text-sm text-muted-foreground">
-                Yes! All new accounts start with a free trial period. No credit
-                card required to get started.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
-              <p className="text-sm text-muted-foreground">
-                Absolutely. You can cancel your subscription at any time from
-                your billing dashboard. You'll continue to have access until the
-                end of your billing period.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">
-                What happens to my data if I cancel?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Your data is safely stored for 30 days after cancellation. You
-                can reactivate your subscription anytime during this period and
-                pick up right where you left off.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
-              <p className="text-sm text-muted-foreground">
-                We offer a 14-day money-back guarantee on all paid plans. If
-                you're not satisfied, contact our support team for a full
-                refund.
-              </p>
-            </div>
+            {PRICING_FAQ_ITEMS.map((item) => (
+              <div key={item.id}>
+                <h3 className="font-semibold mb-2">{item.question}</h3>
+                <p className="text-sm text-muted-foreground">{item.answer}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -191,26 +149,19 @@ export default function PricingPage() {
             Our team is here to help you find the perfect plan for your needs.
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <a
-              href="/dashboard/subscription"
-              className="text-primary hover:underline font-medium"
-            >
-              View Subscription Dashboard
-            </a>
-            <span className="text-muted-foreground">•</span>
-            <a
-              href="mailto:support@wrext.com"
-              className="text-primary hover:underline font-medium"
-            >
-              Contact Support
-            </a>
-            <span className="text-muted-foreground">•</span>
-            <a
-              href="/docs/pricing"
-              className="text-primary hover:underline font-medium"
-            >
-              View Documentation
-            </a>
+            {PRICING_SUPPORT_LINKS.map((link, index) => (
+              <div key={link.id} className="contents">
+                <a
+                  href={link.href}
+                  className="text-primary hover:underline font-medium"
+                >
+                  {link.label}
+                </a>
+                {index < PRICING_SUPPORT_LINKS.length - 1 && (
+                  <span className="text-muted-foreground">•</span>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* Security Indicators */}

@@ -175,7 +175,7 @@ export function getFieldCompletionStatus(
 /**
  * Create validation props for input components
  */
-export function createValidationProps(
+export function useValidationProps(
   field: WizardField,
   value: FormFieldValue,
   formData: PartialContentCreationFormData,

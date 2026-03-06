@@ -38,6 +38,7 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { log } from "@/lib/logger";
 import {
   $getSelection,
   $isRangeSelection,
@@ -72,6 +73,15 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 // Utility for class matching
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -103,6 +113,8 @@ const theme = {
   },
 };
 
+const lexicalLog = log.forComponent("LexicalEditor");
+
 // Nodes required for markdown support
 const NODES = [
   HeadingNode,
@@ -113,15 +125,6 @@ const NODES = [
   LinkNode,
   AutoLinkNode,
 ];
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const ToolbarButton = ({
   active,
@@ -536,8 +539,6 @@ interface LexicalEditorProps {
   showDebug?: boolean;
 }
 
-import { Textarea } from "@/components/ui/textarea";
-
 // Plugin to update editor when markdown input changes
 function MarkdownUpdatePlugin({
   markdown,
@@ -580,8 +581,7 @@ export default function LexicalEditor({
       nodes: NODES,
       readOnly: readOnly,
       onError: (error: Error) => {
-        // biome-ignore lint/suspicious/noConsole: Lexical editor error handler
-        console.error(error);
+        lexicalLog.error("Lexical editor runtime error", error);
       },
       editorState: (editor: unknown) => {
         // Convert initial markdown to editor state

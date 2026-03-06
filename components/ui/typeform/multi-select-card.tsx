@@ -24,9 +24,6 @@ export interface MultiSelectCardProps {
   /** Option description */
   description?: string;
 
-  /** Option value */
-  value: string;
-
   /** Whether this option is selected */
   selected: boolean;
 
@@ -49,7 +46,6 @@ export interface MultiSelectCardProps {
 export function MultiSelectCard({
   label,
   description,
-  value: _value,
   selected,
   onToggle,
   icon,
@@ -126,12 +122,11 @@ export function MultiSelectCard({
             {description && (
               <div
                 className={cn(
-                  "text-sm leading-relaxed break-words hyphens-auto word-wrap-anywhere",
+                  "text-sm leading-relaxed hyphens-auto wrap-break-word",
                   selected
                     ? "text-muted-foreground"
                     : "text-muted-foreground/80",
                 )}
-                style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
               >
                 {description}
               </div>
@@ -142,3 +137,5 @@ export function MultiSelectCard({
     </motion.div>
   );
 }
+
+MultiSelectCard.displayName = "MultiSelectCard";

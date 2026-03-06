@@ -22,9 +22,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useNotificationStore } from "@/stores/notification-store";
-import { NotificationApiService } from "@/services/notification-api";
 import { log } from "@/lib/logger";
 import type { OperationNotification } from "@/types/sse";
+import {
+  markAllNotificationsAsRead,
+  markNotificationsAsRead,
+} from "@/services/notification-api";
 
 interface NotificationsDrawerProps {
   open: boolean;
@@ -75,6 +78,9 @@ export function NotificationsDrawer({
 }: NotificationsDrawerProps) {
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const isLoading = useNotificationStore((state) => state.isLoading);
+  const fetchError = useNotificationStore((state) => state.fetchError);
+
   const setNotificationRead = useNotificationStore(
     (state) => state.setNotificationRead,
   );
@@ -87,7 +93,7 @@ export function NotificationsDrawer({
     setNotificationRead(id, true);
 
     try {
-      await NotificationApiService.markNotificationsAsRead([id]);
+      await markNotificationsAsRead([id]);
     } catch (error) {
       log.error("Failed to mark notification as read", error);
       // Revert
@@ -103,7 +109,7 @@ export function NotificationsDrawer({
     setAllNotificationsRead();
 
     try {
-      await NotificationApiService.markAllNotificationsAsRead();
+      await markAllNotificationsAsRead();
     } catch (error) {
       log.error("Failed to mark all notifications as read", error);
       // Revert
@@ -136,8 +142,19 @@ export function NotificationsDrawer({
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="h-[calc(100vh-180px)] px-6">
-          {notifications.length === 0 ? (
+        <ScrollArea
+          aria-busy={isLoading}
+          className="h-[calc(100vh-180px)] px-6"
+        >
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center py-8 text-sm text-muted-foreground">
+              Loading notifications...
+            </div>
+          ) : fetchError ? (
+            <div className="flex h-full items-center justify-center py-8 text-sm text-destructive">
+              Failed to load notifications. Please try again.
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center text-muted-foreground">
               <Bell className="h-10 w-10 text-muted-foreground/70" />
               <div>
@@ -156,8 +173,8 @@ export function NotificationsDrawer({
                   key={notification.id}
                   className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${
                     !notification.read
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-background border-border"
+                      ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
+                      : "bg-background border-border dark:bg-background dark:border-border"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -185,46 +202,21 @@ export function NotificationsDrawer({
                       <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
                         {notification.message}
                       </p>
-
-                      {notification.actions &&
-                        notification.actions.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {notification.actions.map((action, index) => (
-                              <Button
-                                key={`${action.label}-${index}`}
-                                variant={action.variant || "outline"}
-                                size="sm"
-                                onClick={action.onClick}
-                                className="h-7 text-xs px-3"
-                              >
-                                {action.label}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
                           {getRelativeTime(notification.createdAt)}
                         </span>
-                        <div className="flex items-center gap-2">
-                          {!notification.read ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleMarkAsRead(notification.id)}
-                              className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
-                            >
-                              <Check className="h-3 w-3 mr-1" />
-                              Mark as read
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                              <Check className="h-3 w-3" />
-                              Read
-                            </span>
-                          )}
-                        </div>
+                        {!notification.read && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMarkAsRead(notification.id)}
+                            className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Mark as read
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

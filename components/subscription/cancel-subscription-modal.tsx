@@ -94,6 +94,12 @@ export function CancelSubscriptionModal({
           : "Your subscription has been cancelled.",
       });
 
+      // TODO(TASK-130): Send cancellation feedback to backend analytics endpoint.
+      if (selectedReasons.length > 0 || feedback) {
+        // In a real implementation, you would send this to your backend:
+        // await sendCancellationFeedback({ reasons: selectedReasons, feedback });
+      }
+
       // Refresh subscription data
       await fetchSubscription();
 
@@ -110,6 +116,12 @@ export function CancelSubscriptionModal({
       setError(errorMessage);
       toast.error("Failed to cancel subscription", {
         description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            void handleCancel();
+          },
+        },
       });
     } finally {
       setIsLoading(false);

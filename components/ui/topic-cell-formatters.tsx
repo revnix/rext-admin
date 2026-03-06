@@ -10,12 +10,8 @@ import Link from "next/link";
 import { type ReactNode, useId } from "react";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge as SharedStatusBadge } from "@/components/ui/status-badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { OverflowCountTooltip } from "@/components/ui/overflow-count-tooltip";
+import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 import {
   formatRanking,
   formatScore,
@@ -75,20 +71,11 @@ export function TagsList({
           {tag}
         </span>
       ))}
-      {remainingCount > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200 cursor-help">
-                +{remainingCount}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <div className="text-xs">{tags.slice(2).join(", ")}</div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
+      <OverflowCountTooltip
+        count={remainingCount}
+        badgeClassName="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200 cursor-help"
+        content={<div className="text-xs">{tags.slice(2).join(", ")}</div>}
+      />
     </div>
   );
 }
@@ -247,16 +234,14 @@ export function DescriptionPreview({ value }: { value: unknown }): ReactNode {
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="cursor-help text-sm leading-tight">{preview}</span>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-sm">
-          <p className="text-sm whitespace-pre-wrap">{description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <TruncatedTooltipText
+      trigger={
+        <span className="cursor-help text-sm leading-tight">{preview}</span>
+      }
+      content={<p className="text-sm whitespace-pre-wrap">{description}</p>}
+      side="bottom"
+      className="max-w-sm"
+    />
   );
 }
 
@@ -332,43 +317,43 @@ export function TitleDisplay({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="cursor-help">
-            <TitleContent>{title}</TitleContent>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-md p-4">
-          <div className="space-y-3">
-            {displayAngle && (
-              <div>
-                <div className="font-medium text-xs text-muted-foreground mb-1">
-                  Angle:
-                </div>
-                <div className="text-sm italic">{displayAngle}</div>
+    <TruncatedTooltipText
+      trigger={
+        <span className="cursor-help">
+          <TitleContent>{title}</TitleContent>
+        </span>
+      }
+      content={
+        <div className="space-y-3">
+          {displayAngle && (
+            <div>
+              <div className="font-medium text-xs text-muted-foreground mb-1">
+                Angle:
               </div>
-            )}
-            {displayDescription && (
-              <div>
-                <div className="font-medium text-xs text-muted-foreground mb-1">
-                  Description:
-                </div>
-                <div className="text-sm">{displayDescription}</div>
+              <div className="text-sm italic">{displayAngle}</div>
+            </div>
+          )}
+          {displayDescription && (
+            <div>
+              <div className="font-medium text-xs text-muted-foreground mb-1">
+                Description:
               </div>
-            )}
-            {whyItWorks && (
-              <div>
-                <div className="font-medium text-xs text-muted-foreground mb-1">
-                  Why it works:
-                </div>
-                <div className="text-sm">{whyItWorks}</div>
+              <div className="text-sm">{displayDescription}</div>
+            </div>
+          )}
+          {whyItWorks && (
+            <div>
+              <div className="font-medium text-xs text-muted-foreground mb-1">
+                Why it works:
               </div>
-            )}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+              <div className="text-sm">{whyItWorks}</div>
+            </div>
+          )}
+        </div>
+      }
+      side="bottom"
+      className="max-w-md p-4"
+    />
   );
 }
 
@@ -413,29 +398,22 @@ export function CategoryDisplay({
           {category}
         </span>
       ))}
-      {remainingCount > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200 cursor-help">
-                +{remainingCount}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <div className="text-xs">
-                {filteredTags
-                  .slice(2)
-                  .map(
-                    (category) =>
-                      String(category).charAt(0).toUpperCase() +
-                      String(category).slice(1).toLowerCase(),
-                  )
-                  .join(", ")}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
+      <OverflowCountTooltip
+        count={remainingCount}
+        badgeClassName="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200 cursor-help"
+        content={
+          <div className="text-xs">
+            {filteredTags
+              .slice(2)
+              .map(
+                (category) =>
+                  String(category).charAt(0).toUpperCase() +
+                  String(category).slice(1).toLowerCase(),
+              )
+              .join(", ")}
+          </div>
+        }
+      />
     </div>
   );
 }
@@ -493,25 +471,18 @@ export function AudienceFitDisplay({ value }: { value: unknown }): ReactNode {
           {String(audience)}
         </span>
       ))}
-      {remainingCount > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-600 border border-green-200 cursor-help">
-                +{remainingCount}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <div className="text-xs">
-                {audiences
-                  .slice(2)
-                  .map((audience) => String(audience))
-                  .join(", ")}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
+      <OverflowCountTooltip
+        count={remainingCount}
+        badgeClassName="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-600 border border-green-200 cursor-help"
+        content={
+          <div className="text-xs">
+            {audiences
+              .slice(2)
+              .map((audience) => String(audience))
+              .join(", ")}
+          </div>
+        }
+      />
     </div>
   );
 }
@@ -581,120 +552,116 @@ export function EnhancedScoreDisplay({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 cursor-help">
-            {/* Circular Progress - Larger size */}
-            <div className="relative w-12 h-12">
-              <svg
-                className="w-12 h-12 transform -rotate-90"
-                viewBox="0 0 48 48"
-                role="img"
-                aria-labelledby={progressTitleId}
-              >
-                <title id={progressTitleId}>Score progress</title>
-                {/* Background circle */}
-                <circle
-                  cx="24"
-                  cy="24"
-                  r="18"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                  className="text-muted-foreground/20"
-                />
-                {/* Progress circle */}
-                <circle
-                  cx="24"
-                  cy="24"
-                  r="18"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                  strokeDasharray={`${2 * Math.PI * 18}`}
-                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - score / 100)}`}
-                  className={colorClass}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium">{Math.round(score)}</span>
-              </div>
+    <TruncatedTooltipText
+      trigger={
+        <div className="flex items-center gap-2 cursor-help">
+          {/* Circular Progress - Larger size */}
+          <div className="relative w-12 h-12">
+            <svg
+              className="w-12 h-12 transform -rotate-90"
+              viewBox="0 0 48 48"
+              role="img"
+              aria-labelledby={progressTitleId}
+            >
+              <title id={progressTitleId}>Score progress</title>
+              {/* Background circle */}
+              <circle
+                cx="24"
+                cy="24"
+                r="18"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+                className="text-muted-foreground/20"
+              />
+              {/* Progress circle */}
+              <circle
+                cx="24"
+                cy="24"
+                r="18"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+                strokeDasharray={`${2 * Math.PI * 18}`}
+                strokeDashoffset={`${2 * Math.PI * 18 * (1 - score / 100)}`}
+                className={colorClass}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm font-medium">{Math.round(score)}</span>
             </div>
           </div>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-md p-4">
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Relevance:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.relevance * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  SEO Potential:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.seo_potential * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Trend Level:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.trend_level * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Uniqueness:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.uniqueness * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Reader Interest:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.reader_interest * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Actionable Potential:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.actionable_potential * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Brand Alignment:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.brand_alignment * 100)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Controversy:
-                </span>
-                <span className="text-sm">
-                  {Math.round(scoreBreakdown.controversy * 100)}%
-                </span>
-              </div>
+        </div>
+      }
+      content={
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Relevance:</span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.relevance * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">
+                SEO Potential:
+              </span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.seo_potential * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">
+                Trend Level:
+              </span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.trend_level * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Uniqueness:</span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.uniqueness * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">
+                Reader Interest:
+              </span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.reader_interest * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">
+                Actionable Potential:
+              </span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.actionable_potential * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">
+                Brand Alignment:
+              </span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.brand_alignment * 100)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">
+                Controversy:
+              </span>
+              <span className="text-sm">
+                {Math.round(scoreBreakdown.controversy * 100)}%
+              </span>
             </div>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </div>
+      }
+      side="bottom"
+      className="max-w-md p-4"
+    />
   );
 }

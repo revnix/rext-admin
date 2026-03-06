@@ -17,9 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
-import { adminQueries } from "@/lib/query-keys";
 import type { Permission } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
+import { usePermissionStore } from "@/stores/permission-store";
 
 interface CreateRoleDialogProps {
   open: boolean;
@@ -42,7 +42,9 @@ export function CreateRoleDialog({
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
     [],
   );
-
+  const invalidateWorkspacePermissions = usePermissionStore(
+    (state) => state.invalidateWorkspacePermissions,
+  );
   const createMutation = useMutation({
     mutationFn: async () => {
       // Create role first
@@ -63,9 +65,14 @@ export function CreateRoleDialog({
 
       return roleResponse;
     },
-    onSuccess: () => {
-      toast.success("Role created successfully");
-      queryClient.invalidateQueries({ queryKey: adminQueries.roles.all() });
+    onSuccess: async () => {
+      toast.success("Role updated successfully");
+      invalidateWorkspacePermissions();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+      ]);
       handleClose();
     },
     onError: (error: Error) => {

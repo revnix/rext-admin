@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import type { SSEConnectionStatus, SSEEvent } from "@/types/sse";
+import { SSE_ERROR_CODES } from "@/types/sse";
 
 const subscribeMock = jest.fn<
   () => void,
@@ -11,6 +12,18 @@ jest.mock("@/providers/sse-provider", () => ({
   useSSE: () => ({
     subscribe: subscribeMock,
   }),
+}));
+
+jest.mock("@/services/notification-api", () => ({
+  fetchNotifications: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock("@/stores/notification-store", () => ({
+  useNotificationStore: {
+    getState: () => ({
+      mergeNotifications: jest.fn(),
+    }),
+  },
 }));
 
 const mockEvent = (overrides: Partial<SSEEvent> = {}): SSEEvent => ({
@@ -200,5 +213,145 @@ describe("useSSEChannel", () => {
     // Should trigger onComplete only for pipeline completion
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith({ workspace_id: "ws-123" });
+  });
+
+  describe("error classification and suppression", () => {
+    it("suppresses non-actionable errors with OPERATION_COMPLETED code", async () => {
+      let statusHandler: ((status: SSEConnectionStatus) => void) | undefined;
+      subscribeMock.mockImplementation((_operationId, _onEvent, onStatus) => {
+        statusHandler = onStatus;
+        return jest.fn();
+      });
+
+      const onError = jest.fn();
+      renderHook(() => useSSEChannel("op-test", { onError }));
+
+      await act(async () => {
+        statusHandler?.({
+          connected: false,
+          retryCount: 0,
+          code: SSE_ERROR_CODES.OPERATION_COMPLETED,
+          error: "Operation already completed",
+        });
+      });
+
+      // onError should NOT be called for non-actionable errors
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("suppresses retry-status messages with CONNECTION_LOST code", async () => {
+      let statusHandler: ((status: SSEConnectionStatus) => void) | undefined;
+      subscribeMock.mockImplementation((_operationId, _onEvent, onStatus) => {
+        statusHandler = onStatus;
+        return jest.fn();
+      });
+
+      const onError = jest.fn();
+      renderHook(() => useSSEChannel("op-test", { onError }));
+
+      await act(async () => {
+        statusHandler?.({
+          connected: false,
+          retryCount: 1,
+          code: SSE_ERROR_CODES.CONNECTION_LOST,
+          error: "Connection lost, retrying...",
+        });
+      });
+
+      // onError should NOT be called for retry messages
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("suppresses retry-status messages with RETRYING code", async () => {
+      let statusHandler: ((status: SSEConnectionStatus) => void) | undefined;
+      subscribeMock.mockImplementation((_operationId, _onEvent, onStatus) => {
+        statusHandler = onStatus;
+        return jest.fn();
+      });
+
+      const onError = jest.fn();
+      renderHook(() => useSSEChannel("op-test", { onError }));
+
+      await act(async () => {
+        statusHandler?.({
+          connected: false,
+          retryCount: 2,
+          code: SSE_ERROR_CODES.RETRYING,
+          error: "Retrying connection",
+        });
+      });
+
+      // onError should NOT be called for retry messages
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("does not route success states through error handler", async () => {
+      let statusHandler: ((status: SSEConnectionStatus) => void) | undefined;
+      subscribeMock.mockImplementation((_operationId, _onEvent, onStatus) => {
+        statusHandler = onStatus;
+        return jest.fn();
+      });
+
+      const onError = jest.fn();
+      renderHook(() => useSSEChannel("op-test", { onError }));
+
+      await act(async () => {
+        statusHandler?.({
+          connected: true,
+          retryCount: 0,
+          code: SSE_ERROR_CODES.CONNECTION_ESTABLISHED,
+        });
+      });
+
+      // onError should NOT be called for successful connection
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("forwards actionable errors to onError callback", async () => {
+      let statusHandler: ((status: SSEConnectionStatus) => void) | undefined;
+      subscribeMock.mockImplementation((_operationId, _onEvent, onStatus) => {
+        statusHandler = onStatus;
+        return jest.fn();
+      });
+
+      const onError = jest.fn();
+      renderHook(() => useSSEChannel("op-test", { onError }));
+
+      await act(async () => {
+        statusHandler?.({
+          connected: false,
+          retryCount: 0,
+          error: "SSE connection failed with status 500",
+        });
+      });
+
+      // onError should be called for actionable errors
+      expect(onError).toHaveBeenCalledWith(
+        "SSE connection failed with status 500",
+      );
+    });
+
+    it("forwards rate limit errors as actionable", async () => {
+      let statusHandler: ((status: SSEConnectionStatus) => void) | undefined;
+      subscribeMock.mockImplementation((_operationId, _onEvent, onStatus) => {
+        statusHandler = onStatus;
+        return jest.fn();
+      });
+
+      const onError = jest.fn();
+      renderHook(() => useSSEChannel("op-test", { onError }));
+
+      await act(async () => {
+        statusHandler?.({
+          connected: false,
+          retryCount: 0,
+          code: SSE_ERROR_CODES.RATE_LIMIT_EXCEEDED,
+          error: "Rate limit exceeded",
+        });
+      });
+
+      // onError should be called for rate limit errors
+      expect(onError).toHaveBeenCalledWith("Rate limit exceeded");
+    });
   });
 });

@@ -9,20 +9,18 @@
  */
 
 import { z } from "zod";
+import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 
+const InvoiceStatusSchema = z
+  .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])
+  .catch("unknown");
+const FeatureItemsSchema = z.array(z.string().trim().min(1));
+
+export const SubscriptionStatusSchema = z.enum(SubscriptionStatus);
+export const BillingPeriodSchema = z.enum(BillingPeriod);
 // ============================================================================
 // ENUMS
 // ============================================================================
-
-export const SubscriptionStatusSchema = z.enum([
-  "active",
-  "cancelled",
-  "expired",
-  "trial",
-  "suspended",
-]);
-
-export const BillingPeriodSchema = z.enum(["monthly", "yearly", "lifetime"]);
 
 // ============================================================================
 // CHECKOUT SCHEMAS
@@ -101,6 +99,19 @@ export const UserSubscriptionSchema = z.object({
 /**
  * Schema for subscription plan
  */
+
+export const PlanFeaturesSchema = z
+  .union([
+    z.object({ items: FeatureItemsSchema }),
+    z.object({ list: FeatureItemsSchema }),
+    z.record(z.string(), z.string()),
+  ])
+  .transform((raw): { items: string[] } => {
+    if ("items" in raw) return { items: raw.items as string[] };
+    if ("list" in raw) return { items: (raw as { list: string[] }).list };
+    return { items: Object.values(raw as Record<string, string>) };
+  });
+
 export const SubscriptionPlanSchema = z.object({
   id: z.string().uuid("Invalid plan ID"),
   name: z.string().min(1, "Plan name is required"),
@@ -108,7 +119,7 @@ export const SubscriptionPlanSchema = z.object({
   description: z.string().nullable(),
   price_monthly: z.number().nonnegative(),
   price_yearly: z.number().nonnegative(),
-  features: z.record(z.string(), z.unknown()),
+  features: PlanFeaturesSchema,
   max_workspaces: z.number().int(),
   max_members_per_workspace: z.number().int(),
   max_topics: z.number().int(),
@@ -118,7 +129,6 @@ export const SubscriptionPlanSchema = z.object({
   is_public: z.boolean(),
   created_at: z.string(),
 });
-
 /**
  * Schema for subscription list response
  */
@@ -186,13 +196,13 @@ export const InvoiceItemSchema = z.object({
 export const InvoiceSchema = z.object({
   invoice_id: z.string().min(1, "Invoice ID is required"),
   invoice_number: z.string().nullable(),
-  status: z.string(), // paid, unpaid, refunded, etc.
+  status: InvoiceStatusSchema,
   amount: z.number().nonnegative(),
   currency: z.string().default("USD"),
   tax: z.number().nullable(),
   subtotal: z.number().nullable(),
   invoice_url: z.string().url().nullable(),
-  invoice_date: z.string(), // ISO format
+  invoice_date: z.string(),
   due_date: z.string().nullable(),
   paid_at: z.string().nullable(),
   customer_email: z.string().email().nullable(),
@@ -267,6 +277,30 @@ export const SubscriptionCancelRequestSchema = z.object({
   reason: z.string().max(500).optional(),
   cancel_immediately: z.boolean().optional(),
 });
+
+export const SubscriptionPlanCreateSchema = z.object({
+  name: z.string().min(1),
+  display_name: z.string().min(1),
+  description: z.string().optional(),
+  price_monthly: z.number().nonnegative(),
+  price_yearly: z.number().nonnegative(),
+  features: z.record(z.string(), z.unknown()).optional(),
+  max_workspaces: z.number().int().optional(),
+  max_members_per_workspace: z.number().int().optional(),
+  max_topics: z.number().int().optional(),
+  max_knowledge_items: z.number().int().optional(),
+  max_api_calls_per_month: z.number().int().optional(),
+  is_active: z.boolean().optional(),
+  is_public: z.boolean().optional(),
+  lemonsqueezy_product_id: z.string().max(255).optional(),
+  lemonsqueezy_variant_id_monthly: z.string().max(255).optional(),
+  lemonsqueezy_variant_id_yearly: z.string().max(255).optional(),
+});
+
+export const SubscriptionPlanUpdateSchema =
+  SubscriptionPlanCreateSchema.partial().omit({
+    name: true,
+  });
 
 // ============================================================================
 // TYPE EXPORTS (inferred from schemas)

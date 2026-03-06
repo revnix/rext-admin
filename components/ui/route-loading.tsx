@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { PageLayout } from "../page-layout";
 
 /**
@@ -62,10 +62,7 @@ export function RouteLoading({
         <div
           className={`flex h-screen items-center justify-center ${className}`}
         >
-          <div className="space-y-4 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          </div>
+          <LoadingIndicator variant="spinner" size="lg" message="Loading..." />
         </div>
       </PageLayout>
     );
@@ -76,7 +73,13 @@ export function RouteLoading({
     return (
       <PageLayout title={title}>
         <div className={`container mx-auto p-6 ${className}`}>
-          <TableSkeleton rows={rows} columns={columns} />
+          <LoadingIndicator
+            variant="table"
+            rows={rows}
+            columns={columns}
+            showFilters={true}
+            showPagination={true}
+          />
         </div>
       </PageLayout>
     );

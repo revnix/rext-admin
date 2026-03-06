@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { InvitedUserOnboardingModal } from "@/components/onboarding/invited-user-onboarding-modal";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useInvitedUserOnboarding } from "@/hooks/use-invited-user-onboarding";
-
-interface InvitedUserOnboardingProviderProps {
+import { MODAL_DELAYS } from "@/lib/constants/motion";
+interface InvitedUserOnboardingGateProps {
   children: React.ReactNode;
 }
 
@@ -23,9 +24,9 @@ interface InvitedUserOnboardingProviderProps {
  * This provider is separate from the regular onboarding provider
  * and takes precedence when a user joins via invitation.
  */
-export function InvitedUserOnboardingProvider({
+export function InvitedUserOnboardingGate({
   children,
-}: InvitedUserOnboardingProviderProps) {
+}: InvitedUserOnboardingGateProps) {
   const { status } = useSession();
   const pathname = usePathname();
   const { shouldShow, isLoading, invitationContext, markAsCompleted } =
@@ -61,7 +62,7 @@ export function InvitedUserOnboardingProvider({
       // Add a small delay to avoid jarring experience on page load
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 1000); // Slightly longer delay for invited users to see the workspace first
+      }, MODAL_DELAYS.INVITED_USER); // Slightly longer delay for invited users to see the workspace first
 
       return () => clearTimeout(timer);
     }
@@ -84,15 +85,26 @@ export function InvitedUserOnboardingProvider({
     <>
       {children}
       {!isLoading && (
-        <InvitedUserOnboardingModal
-          open={isOpen}
-          onClose={handleClose}
-          workspace={invitationContext.workspace}
-          inviterName={invitationContext.inviterName}
-          roleName={invitationContext.roleName}
-          roleDescription={invitationContext.roleDescription}
-        />
+        <ErrorBoundary
+          resetKeys={[
+            isOpen ? "open" : "closed",
+            invitationContext.workspace.id,
+            invitationContext.roleName,
+          ]}
+        >
+          <InvitedUserOnboardingModal
+            open={isOpen}
+            onClose={handleClose}
+            workspace={invitationContext.workspace}
+            inviterName={invitationContext.inviterName}
+            roleName={invitationContext.roleName}
+            roleDescription={invitationContext.roleDescription}
+          />
+        </ErrorBoundary>
       )}
     </>
   );
 }
+
+/** @deprecated Use InvitedUserOnboardingGate */
+export const InvitedUserOnboardingProvider = InvitedUserOnboardingGate;

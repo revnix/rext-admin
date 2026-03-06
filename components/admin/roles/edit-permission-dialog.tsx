@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import type { Permission } from "@/types/role";
+import { usePermissionStore } from "@/stores/permission-store";
 
 interface EditPermissionDialogProps {
   open: boolean;
@@ -37,7 +38,9 @@ export function EditPermissionDialog({
     resource: "",
     action: "",
   });
-
+  const invalidateWorkspacePermissions = usePermissionStore(
+    (state) => state.invalidateWorkspacePermissions,
+  );
   useEffect(() => {
     if (permission) {
       setFormData({
@@ -60,9 +63,14 @@ export function EditPermissionDialog({
         action: formData.action.toLowerCase(),
       });
     },
-    onSuccess: () => {
-      toast.success("Permission updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["permissions"] });
+    onSuccess: async () => {
+      toast.success("Role updated successfully");
+      invalidateWorkspacePermissions();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+      ]);
       onOpenChange(false);
     },
     onError: (error: Error) => {

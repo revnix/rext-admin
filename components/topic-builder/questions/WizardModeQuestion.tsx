@@ -91,7 +91,6 @@ export function WizardModeQuestion({
                   key={option.value}
                   label={option.label}
                   description={getDescription(option.value)}
-                  value={option.value}
                   selected={field.value === option.value}
                   onSelect={() => {
                     field.onChange(option.value);

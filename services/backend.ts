@@ -727,7 +727,7 @@ export class BackendService {
       }));
     }
     // @ts-expect-error Type mismatch between backend API/Zod schema and strict frontend GeneratedTopic interface.
-    // TODO: Remove this suppression once schemas and interfaces are properly aligned project-wide.
+    // TODO(TASK-730): Remove this suppression once schemas and interfaces are properly aligned project-wide.
     return validatedResponse;
   }
 

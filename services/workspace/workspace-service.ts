@@ -368,7 +368,7 @@ export class WorkspaceService extends BaseWorkspaceService {
       if (!data.name || data.name.trim().length === 0) {
         throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          VALIDATION_MESSAGES.TITLE_REQUIRED,  // Now consistent with create
+          VALIDATION_MESSAGES.TITLE_REQUIRED, // Now consistent with create
         );
       }
       if (data.name.length > 200) {

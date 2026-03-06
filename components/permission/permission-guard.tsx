@@ -1,44 +1,36 @@
-"use client";
-
 import type React from "react";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import {
-  useAllPermissions,
-  useAllWorkspacePermissions,
-  useAnyPermission,
-  useAnyWorkspacePermission,
-  usePermission,
-  useWorkspacePermission,
+  useAnyRole,
+  usePermissionDecision,
+  useRole,
 } from "@/hooks/use-permission";
 import { useCurrentWorkspaceId } from "@/providers/workspace-permission-provider";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import { LockedFeatureTooltip } from "./locked-feature-tooltip";
 import { PermissionLoading } from "./permission-loading";
+import { isValidElement } from "react";
 
 /**
  * Permission guard component props
  */
 interface PermissionGuardProps {
-  /** Single permission or array of permissions to check */
-  permission: string | string[];
-  /** If true, requires ALL permissions. If false, requires ANY permission (default: false) */
+  permission?: string | string[];
+  anyPermission?: string[];
+  allPermissions?: string[];
+  role?: string;
+  anyRole?: string[];
   requireAll?: boolean;
-  /** Workspace ID for workspace-scoped permission checks */
   workspaceId?: string;
-  /** Fallback content to show when permission is denied */
   fallback?: React.ReactNode;
-  /** Children to render when permission is granted */
   children: React.ReactNode;
-  /** Show loading state while checking permissions */
+  invert?: boolean;
   showLoading?: boolean;
-  /** Loading variant */
   loadingVariant?: "skeleton" | "spinner" | "minimal";
   /** Custom loading message */
   loadingMessage?: string;
-  /** Show tooltip on fallback explaining permission requirement (default: false) */
   showTooltip?: boolean;
-  /** Custom tooltip message (if showTooltip is true) */
   tooltipMessage?: string;
-  /** Required role hint for tooltip (e.g., "Workspace Owner") */
   requiredRole?: string;
 }
 
@@ -114,73 +106,82 @@ interface PermissionGuardProps {
  */
 export function PermissionGuard({
   permission,
+  anyPermission,
+  allPermissions,
+  role,
+  anyRole,
   requireAll = false,
   workspaceId: propWorkspaceId,
   fallback = null,
   children,
-  showLoading = true, // Changed default to true for better UX
+  invert = false,
+  showLoading = true,
   loadingVariant = "skeleton",
   loadingMessage,
   showTooltip = false,
   tooltipMessage,
   requiredRole,
 }: PermissionGuardProps) {
-  const permissions = Array.isArray(permission) ? permission : [permission];
+  // 1. Determine Workspace ID (Try providers, then props)
+  const permissionWsId = useCurrentWorkspaceId();
+  const workspaceContext = useWorkspaceOptional();
+  const contextWorkspaceId =
+    permissionWsId ||
+    workspaceContext?.workspaceId ||
+    workspaceContext?.workspaceSlug;
 
-  // Get workspace ID from context (if in workspace route) or props
-  const contextWorkspaceId = useCurrentWorkspaceId();
   const effectiveWorkspaceId = propWorkspaceId || contextWorkspaceId;
 
-  // Choose workspace or global permission hooks based on workspace presence
-  const useWorkspaceHooks = !!effectiveWorkspaceId;
+  // 2. Normalize Permissions
+  const permissions = useMemo(() => {
+    if (permission) {
+      return Array.isArray(permission) ? permission : [permission];
+    }
+    if (anyPermission?.length) return anyPermission;
+    if (allPermissions?.length) return allPermissions;
+    return [];
+  }, [permission, anyPermission, allPermissions]);
 
-  // Check permissions based on workspace context and requireAll flag
-  const hasSingleGlobalPermission = usePermission(permissions[0]);
-  const hasAnyGlobalPermission = useAnyPermission(permissions);
-  const hasAllGlobalPermissions = useAllPermissions(permissions);
+  const mode = useMemo(() => {
+    if (permission) {
+      return Array.isArray(permission)
+        ? requireAll
+          ? ("all" as const)
+          : ("any" as const)
+        : ("single" as const);
+    }
+    if (anyPermission?.length) return "any" as const;
+    if (allPermissions?.length) return "all" as const;
+    return "any" as const;
+  }, [permission, anyPermission, allPermissions, requireAll]);
 
-  // Phase 2: Workspace permission hooks now return {hasPermission, isLoading}
-  const singleWorkspaceResult = useWorkspacePermission(
-    permissions[0],
-    effectiveWorkspaceId,
-  );
-  const anyWorkspaceResult = useAnyWorkspacePermission(
+  // 3. Hook calls (Must be top-level)
+  const { hasAccess: permissionAccess, isLoading } = usePermissionDecision({
+    mode,
     permissions,
-    effectiveWorkspaceId,
-  );
-  const allWorkspaceResult = useAllWorkspacePermissions(
-    permissions,
-    effectiveWorkspaceId,
-  );
+    workspaceId: effectiveWorkspaceId,
+  });
 
-  // Determine if user has required permissions and if still loading
+  const roleCheck = useRole(role || "");
+  const anyRoleCheck = useAnyRole(anyRole || []);
+
+  // 4. Access Logic
   let hasAccess = false;
-  let isLoading = false;
 
-  if (useWorkspaceHooks) {
-    // Use workspace-scoped permission checks (with loading state)
-    if (permissions.length === 1) {
-      hasAccess = singleWorkspaceResult.hasPermission;
-      isLoading = singleWorkspaceResult.isLoading;
-    } else if (requireAll) {
-      hasAccess = allWorkspaceResult.hasPermission;
-      isLoading = allWorkspaceResult.isLoading;
-    } else {
-      hasAccess = anyWorkspaceResult.hasPermission;
-      isLoading = anyWorkspaceResult.isLoading;
-    }
+  if (permission || anyPermission?.length || allPermissions?.length) {
+    hasAccess = permissionAccess;
+  } else if (role) {
+    hasAccess = roleCheck;
+  } else if (anyRole?.length) {
+    hasAccess = anyRoleCheck;
   } else {
-    // Use global permission checks (no loading state needed)
-    if (permissions.length === 1) {
-      hasAccess = hasSingleGlobalPermission;
-    } else if (requireAll) {
-      hasAccess = hasAllGlobalPermissions;
-    } else {
-      hasAccess = hasAnyGlobalPermission;
-    }
+    // If no permission/role specified, default to granted
+    hasAccess = true;
   }
 
-  // Show loading state while permissions are being fetched (prevents flash!)
+  if (invert) hasAccess = !hasAccess;
+
+  // Show loading state while permissions are being fetched
   if (isLoading && showLoading) {
     return (
       <PermissionLoading variant={loadingVariant} message={loadingMessage} />
@@ -189,21 +190,15 @@ export function PermissionGuard({
 
   // Permission check failed - show fallback
   if (!hasAccess) {
-    // If showTooltip is true and fallback is a React element, wrap it in LockedFeatureTooltip
-    if (
-      showTooltip &&
-      fallback &&
-      typeof fallback === "object" &&
-      "type" in fallback
-    ) {
-      const firstPermission = permissions[0]; // Use first permission for tooltip
+    if (showTooltip && isValidElement(fallback)) {
+      const firstPermission = permissions[0];
       return (
         <LockedFeatureTooltip
           permission={firstPermission}
           requiredRole={requiredRole}
           message={tooltipMessage}
         >
-          {fallback as React.ReactElement}
+          {fallback}
         </LockedFeatureTooltip>
       );
     }
@@ -212,8 +207,7 @@ export function PermissionGuard({
   }
 
   // Permission granted - show children
-  // Optionally wrap in Suspense for component-level loading
-  if (showLoading) {
+  if (showLoading && (permission || anyPermission || allPermissions)) {
     return (
       <Suspense
         fallback={

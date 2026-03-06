@@ -45,12 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 import { apiClient } from "@/lib/api-client";
 
 const inviteFormSchema = z.object({
@@ -397,9 +392,9 @@ export function WorkspaceInviteMembersDialog({
             </div>
 
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {results.map((result, index) => (
+              {results.map((result) => (
                 <div
-                  key={`${result.email}-${index}`}
+                  key={result.email}
                   className="flex items-start gap-2 p-3 rounded-md border"
                 >
                   {result.status === "pending" ? (
@@ -448,33 +443,28 @@ export function WorkspaceInviteMembersDialog({
                   <div className="flex flex-wrap gap-2">
                     {/* Email chips */}
                     {emailChips.map((chip, index) => (
-                      <TooltipProvider key={`${chip.email}-${index}`}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge
-                              variant={getChipBadgeVariant(chip.status)}
-                              className="px-2 py-1 text-sm flex items-center gap-1"
+                      <TruncatedTooltipText
+                        key={chip.email}
+                        trigger={
+                          <Badge
+                            variant={getChipBadgeVariant(chip.status)}
+                            className="px-2 py-1 text-sm flex items-center gap-1"
+                          >
+                            {getChipIcon(chip.status)}
+                            <span>{chip.email}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-0 ml-1 hover:bg-transparent"
+                              onClick={() => removeEmailChip(index)}
                             >
-                              {getChipIcon(chip.status)}
-                              <span>{chip.email}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 ml-1 hover:bg-transparent"
-                                onClick={() => removeEmailChip(index)}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </Badge>
-                          </TooltipTrigger>
-                          {chip.message && (
-                            <TooltipContent>
-                              <p>{chip.message}</p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </Badge>
+                        }
+                        content={chip.message ? <p>{chip.message}</p> : null}
+                      />
                     ))}
 
                     {/* Input field */}

@@ -38,6 +38,8 @@ import {
   SubscriptionStatus,
 } from "@/types/subscription";
 import type { Route } from "next";
+import { log } from "@/lib/logger";
+import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
 /**
  * Subscription Management Dashboard Page
@@ -57,8 +59,7 @@ import type { Route } from "next";
 
 export default function SubscriptionDashboardPage() {
   const router = useRouter();
-  const { subscription, usage, fetchSubscription, fetchUsage } =
-    useSubscriptionStore();
+  const { subscription, usage, fetchSubscription } = useSubscriptionStore();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [planChangeModalOpen, setPlanChangeModalOpen] = useState(false);
@@ -67,28 +68,56 @@ export default function SubscriptionDashboardPage() {
   const loadPlans = useCallback(async () => {
     try {
       const response = await apiClient.subscriptions.getPlans();
+      if (!response?.plans) {
+        log.warn("Plans response missing expected payload", {
+          component: "SubscriptionDashboardPage",
+          action: "loadPlans",
+          response,
+        });
+        setPlans([]);
+        return;
+      }
       if (response.plans) {
         const activePlans = response.plans.filter((plan) => plan.is_active);
         setPlans(activePlans);
       }
-    } catch (_error) {}
+    } catch (error) {
+      log.error("Failed to load subscription plans", error, {
+        component: "SubscriptionDashboardPage",
+        action: "loadPlans",
+      });
+
+      toast.error("Failed to load available plans", {
+        description: "You can still view your current subscription details.",
+      });
+    }
   }, []);
 
   useEffect(() => {
     const loadData = async () => {
-      try {
-        setLoading(true);
-        // Load subscription, usage, and available plans in parallel
-        await Promise.all([fetchSubscription(), fetchUsage(), loadPlans()]);
-      } catch (_error) {
+      setLoading(true);
+
+      const [subscriptionResult, plansResult] = await Promise.allSettled([
+        fetchSubscription(), // already fetches usage in store
+        loadPlans(),
+      ]);
+
+      const subscriptionFailed = subscriptionResult.status === "rejected";
+      const plansFailed = plansResult.status === "rejected";
+
+      if (subscriptionFailed && plansFailed) {
         toast.error("Failed to load subscription data");
-      } finally {
-        setLoading(false);
+      } else if (subscriptionFailed) {
+        toast.error("Subscription details could not be loaded");
+      } else if (plansFailed) {
+        toast.error("Available plans are temporarily unavailable");
       }
+
+      setLoading(false);
     };
 
     loadData();
-  }, [fetchSubscription, fetchUsage, loadPlans]);
+  }, [fetchSubscription, loadPlans]);
 
   if (loading) {
     return (
@@ -269,13 +298,16 @@ export default function SubscriptionDashboardPage() {
                 higher tier for more resources and advanced features.
               </p>
               <div className="flex gap-3">
-                <Button onClick={() => router.push("/pricing" as Route)}>
+                <Button
+                  onClick={() => router.push("/pricing")}
+                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+                >
                   View All Plans
                 </Button>
                 {canChangePlan && (
                   <Button
                     onClick={() => setPlanChangeModalOpen(true)}
-                    variant="outline"
+                    variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                   >
                     Upgrade Now
                   </Button>

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,11 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ErrorPage } from "@/components/ui/error-states";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { ADMIN_PERMISSIONS } from "@/lib/permissions";
-import { buildUrl } from "@/lib/url-utils";
-import { authenticatedFetch } from "@/lib/auth-utils";
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(0);
@@ -41,7 +40,7 @@ export default function AuditLogsPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch audit logs
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [
       "admin",
       "audit-logs",
@@ -62,26 +61,28 @@ export default function AuditLogsPage() {
     },
   });
 
+  if (error) {
+    return (
+      <ErrorPage
+        title="Failed to load audit logs"
+        message="Audit log data could not be loaded. Please check your connection and try again."
+        retry={() => void refetch()}
+      />
+    );
+  }
+
   const logs = data?.logs || [];
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / perPage);
 
   const handleExport = async (format: "csv" | "json") => {
     try {
-      const endpoint = buildUrl(`/api/v1/audit/logs/export/download`, {
+      const blob = await apiClient.auditLogs.downloadLogs({
         format,
         user_email: debouncedSearch || undefined,
         action: actionFilter || undefined,
         resource_type: resourceTypeFilter || undefined,
       });
-
-      const response = await authenticatedFetch(endpoint, {
-        method: "GET",
-      });
-
-      if (!response.ok) throw new Error("Export failed");
-
-      const blob = await response.blob();
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -91,6 +92,7 @@ export default function AuditLogsPage() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
       toast.success(`Audit logs exported as ${format.toUpperCase()}`);
     } catch (_error) {
@@ -103,7 +105,7 @@ export default function AuditLogsPage() {
       title="Audit Logs"
       description="View and export all admin actions and system events"
       actions={
-        <CanAccess permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+        <PermissionGuard permission={ADMIN_PERMISSIONS.AUDIT_READ}>
           <Button variant="outline" onClick={() => handleExport("csv")}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -112,7 +114,7 @@ export default function AuditLogsPage() {
             <FileText className="h-4 w-4 mr-2" />
             Export JSON
           </Button>
-        </CanAccess>
+        </PermissionGuard>
       }
     >
       <AdminGuard>

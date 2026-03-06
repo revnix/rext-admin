@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { NotificationPreferencesForm } from "@/components/notification-settings/notification-preferences";
+import { NotificationPreferencesLoadError } from "@/components/notification-settings/notification-preferences-load-error";
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { apiClient } from "@/lib/api-client";
+import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 
 /**
  * NotificationPreferencesSection Component
@@ -19,14 +19,7 @@ import { apiClient } from "@/lib/api-client";
  * in-app notifications, digest settings, and category-specific toggles.
  */
 export function NotificationPreferencesSection() {
-  const {
-    data: preferences,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["notification-preferences"],
-    queryFn: () => apiClient.notifications.getPreferences(),
-  });
+  const { data: preferences, isLoading, error } = useNotificationPreferences();
 
   if (isLoading) {
     return (
@@ -46,6 +39,28 @@ export function NotificationPreferencesSection() {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Preferences</CardTitle>
+          <CardDescription>
+            Manage how and when you receive notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotificationPreferencesLoadError
+            message={
+              error instanceof Error
+                ? error.message
+                : "Failed to load notification preferences. Please refresh the page and try again."
+            }
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -55,13 +70,6 @@ export function NotificationPreferencesSection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 mb-6">
-            <p className="text-sm text-yellow-800">
-              {error instanceof Error ? error.message : "An error occurred"}.
-            </p>
-          </div>
-        )}
         {preferences && (
           <NotificationPreferencesForm initialPreferences={preferences} />
         )}

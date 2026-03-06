@@ -1,6 +1,6 @@
 import type { SEORESULT } from "@/types/generate-content";
 import { Zap, Compass, TrendingUp, ArrowRight, Loader2 } from "lucide-react";
-import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
+import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { Button } from "../ui/button";
@@ -13,24 +13,18 @@ export function SuggestionsSection({
   suggestedKeywords,
   onSelect,
   seoResult,
-  keywordDifficulty,
 }: {
   instruction: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   onSelect: (kw: string) => void;
   seoResult: SEORESULT | null;
-  keywordDifficulty?: number | null;
 }) {
   const difficultyScore = useMemo(() => {
-    if (keywordDifficulty !== null && keywordDifficulty !== undefined) {
-      return Math.round(keywordDifficulty);
-    }
     const value = seoResult?.keyword_difficulty;
     const numberValue = typeof value === "number" ? value : Number(value);
-
     return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
-  }, [seoResult?.keyword_difficulty, keywordDifficulty]);
+  }, [seoResult?.keyword_difficulty]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -86,7 +80,7 @@ export function SuggestionsSection({
             <Zap className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <ChartRadialStacked difficultyScore={difficultyScore} />
+            <SafeChartRadialStacked difficultyScore={difficultyScore} />
           </div>
         </motion.div>
 

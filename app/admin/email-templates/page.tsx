@@ -14,7 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
-import { CanAccess } from "@/components/permissions/can-access";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -168,12 +168,12 @@ export default function AdminEmailTemplatesPage() {
       title="System Email Templates"
       description="Manage system-wide email templates used across all workspaces"
       actions={
-        <CanAccess permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+        <PermissionGuard permission={ADMIN_PERMISSIONS.AUDIT_READ}>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Template
           </Button>
-        </CanAccess>
+        </PermissionGuard>
       }
     >
       <AdminGuard>
