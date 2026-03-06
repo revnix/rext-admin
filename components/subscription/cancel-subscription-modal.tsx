@@ -90,7 +90,7 @@ export function CancelSubscriptionModal({
           : "Your subscription has been cancelled.",
       });
 
-      // TODO: Send cancellation feedback to analytics or backend
+      // TODO(TASK-130): Send cancellation feedback to backend analytics endpoint.
       if (selectedReasons.length > 0 || feedback) {
         // In a real implementation, you would send this to your backend:
         // await sendCancellationFeedback({ reasons: selectedReasons, feedback });
