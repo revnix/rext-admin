@@ -11,10 +11,9 @@ import { Check } from "lucide-react";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  getMotionVariants,
-  questionItemVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { questionItemVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 
 export interface MultiSelectCardProps {
@@ -54,10 +53,7 @@ export function MultiSelectCard({
   delay = 0,
 }: MultiSelectCardProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   return (
     <motion.div

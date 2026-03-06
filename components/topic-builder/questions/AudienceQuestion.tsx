@@ -11,11 +11,8 @@ import { Plus, Users } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { ChipInput } from "@/components/ui/typeform/chip-input";
 import { useAudienceSuggestions } from "@/hooks/use-contextual-suggestions";
-import {
-  getMotionVariants,
-  questionItemVariants,
-  useReducedMotion,
-} from "@/lib/animations";
+import { useReducedMotion } from "@/lib/animations";
+import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -43,10 +40,7 @@ export function AudienceQuestion({
   onStepAdvance,
 }: AudienceQuestionProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   const currentAudiences = _formData.audience || [];
 

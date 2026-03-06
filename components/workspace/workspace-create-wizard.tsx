@@ -13,8 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { ProgressBar } from "@/components/ui/typeform/progress-bar";
-import { QuestionCard } from "@/components/ui/typeform/question-card";
+import { ProgressBar, QuestionCard } from "@/components/ui/typeform";
 import {
   WorkspaceBrandVoiceForm,
   WorkspaceProgressTimeline,
@@ -58,25 +57,25 @@ const STEPS: Array<{
   description: string;
   progress: number;
 }> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-];
+    {
+      id: "details",
+      title: "Workspace Details",
+      description: "Tell us about your workspace",
+      progress: 25,
+    },
+    {
+      id: "progress",
+      title: "Analysis",
+      description: "We're analyzing your website",
+      progress: 50,
+    },
+    {
+      id: "review",
+      title: "Review & Save",
+      description: "Review and edit brand information",
+      progress: 75,
+    },
+  ];
 
 export function WorkspaceCreateWizard() {
   const router = useRouter();
