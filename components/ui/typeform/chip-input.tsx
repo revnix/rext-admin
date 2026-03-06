@@ -11,17 +11,17 @@
  * - WCAG 2.1 AA compliant keyboard navigation
  */
 
-"use client";
-
 import { AlertTriangle, Plus, X } from "lucide-react";
 import * as React from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useChipInputOperations } from "./use-chip-input-operations";
+import { useChipInputKeyboard } from "./use-chip-input-keyboard";
 
 export interface ChipInputProps {
   /** Current value array */
@@ -93,14 +93,12 @@ export function ChipInput({
   enableFallback = true,
   onFallbackTriggered,
 }: ChipInputProps) {
-  const [inputValue, setInputValue] = React.useState("");
-  const [lastEnterTime, setLastEnterTime] = React.useState<number | null>(null);
-  const [focusedChipIndex, setFocusedChipIndex] = React.useState<number>(-1);
-  const [isFallbackMode, setIsFallbackMode] = React.useState(false);
-  const [announcementText, setAnnouncementText] = React.useState("");
+  const [inputValue, setInputValue] = useState("");
+  const [focusedChipIndex, setFocusedChipIndex] = useState<number>(-1);
+  const [isFallbackMode, setIsFallbackMode] = useState(false);
+  const [announcementText, setAnnouncementText] = useState("");
 
-  //  internal error state for dynamic validation
-  const [internalError, setInternalError] = React.useState<string | undefined>(
+  const [internalError, setInternalError] = useState<string | undefined>(
     undefined,
   );
 
@@ -111,13 +109,13 @@ export function ChipInput({
   const announcementTimeoutRef = React.useRef<number | null>(null);
 
   // Generate unique IDs for accessibility
-  const inputId = React.useId();
-  const descriptionId = React.useId();
-  const errorId = React.useId();
-  const liveRegionId = React.useId();
+  const inputId = useId();
+  const descriptionId = useId();
+  const errorId = useId();
+  const liveRegionId = useId();
 
   // Announce to screen readers
-  const announce = React.useCallback((message: string) => {
+  const announce = useCallback((message: string) => {
     setAnnouncementText(message);
 
     // Clear any existing timeout before creating a new one
@@ -131,92 +129,6 @@ export function ChipInput({
       announcementTimeoutRef.current = null;
     }, 100);
   }, []);
-
-  // Error boundary for fallback functionality
-  const triggerFallback = React.useCallback(
-    (error: Error) => {
-      log.error("ChipInput error, falling back to text input:", error);
-      setIsFallbackMode(true);
-      announce("Switched to text input mode due to an error");
-      onFallbackTriggered?.(error);
-    },
-    [announce, onFallbackTriggered],
-  );
-
-  // Safe wrapper for operations that might fail
-  const safeOperation = React.useCallback(
-    (operation: () => void, context: string) => {
-      if (!enableFallback) {
-        operation();
-        return;
-      }
-
-      try {
-        operation();
-      } catch (error) {
-        log.error(`ChipInput operation failed (${context}):`, error);
-        triggerFallback(error as Error);
-      }
-    },
-    [enableFallback, triggerFallback],
-  );
-
-  const addChip = React.useCallback(
-    (chipValue: string) => {
-      return (
-        safeOperation(() => {
-          const trimmedValue = chipValue.trim();
-          if (
-            trimmedValue &&
-            !value.includes(trimmedValue) &&
-            (!maxItems || value.length < maxItems)
-          ) {
-            onChange([...value, trimmedValue]);
-            setInputValue("");
-            announce(
-              `Added "${trimmedValue}". ${value.length + 1} item${value.length === 0 ? "" : "s"} selected.`,
-            );
-            setInternalError(undefined); //  clear error once added
-            return true;
-          } else if (!trimmedValue) {
-            announce("Cannot add empty item");
-          } else if (value.includes(trimmedValue)) {
-            announce(`"${trimmedValue}" is already selected`);
-          } else if (maxItems && value.length >= maxItems) {
-            announce(`Maximum ${maxItems} items allowed`);
-          }
-          return false;
-        }, "addChip") ?? false
-      );
-    },
-    [value, onChange, maxItems, announce, safeOperation],
-  );
-
-  const removeChip = React.useCallback(
-    (index: number) => {
-      safeOperation(() => {
-        const removedChip = value[index];
-        const newValue = value.filter((_, i) => i !== index);
-        onChange(newValue);
-        announce(
-          `Removed "${removedChip}". ${newValue.length} item${newValue.length === 1 ? "" : "s"} remaining.`,
-        );
-
-        //  if all chips removed, show error
-        if (newValue.length === 0) {
-          setInternalError("At least one item is required");
-        }
-
-        if (focusedChipIndex === index) {
-          setFocusedChipIndex(-1);
-          inputRef.current?.focus();
-        } else if (focusedChipIndex > index) {
-          setFocusedChipIndex(focusedChipIndex - 1);
-        }
-      }, "removeChip");
-    },
-    [value, onChange, announce, safeOperation, focusedChipIndex],
-  );
 
   //  Automatically add one chip on mount
   useEffect(() => {
@@ -244,7 +156,7 @@ export function ChipInput({
   }, [value.length, internalError]);
 
   // Keyboard navigation helpers
-  const focusChip = React.useCallback(
+  const focusChip = useCallback(
     (index: number) => {
       if (index >= 0 && index < value.length && chipRefs.current[index]) {
         setFocusedChipIndex(index);
@@ -255,58 +167,38 @@ export function ChipInput({
     [value, announce],
   );
 
-  const focusInput = React.useCallback(() => {
+  const focusInput = useCallback(() => {
     setFocusedChipIndex(-1);
     inputRef.current?.focus();
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    safeOperation(() => {
-      if (e.key === "Enter") {
-        e.preventDefault();
+  const { addChip, removeChip, safeOperation } = useChipInputOperations({
+    value,
+    onChange,
+    maxItems,
+    enableFallback,
+    onFallbackTriggered,
+    announce,
+    setInputValue,
+    setInternalError,
+    setIsFallbackMode,
+    focusedChipIndex,
+    setFocusedChipIndex,
+    focusInput,
+  });
 
-        if (!enableDualEnter) {
-          addChip(inputValue);
-          return;
-        }
+  const { handleInputKeyDown } = useChipInputKeyboard({
+    valueLength: value.length,
+    inputValue,
+    enableDualEnter,
+    onStepAdvance,
+    addChip,
+    removeLastChip: () => removeChip(value.length - 1),
+    focusLastChip: () => focusChip(value.length - 1),
+    safeOperation,
+  });
 
-        const now = Date.now();
-        const hasContent = inputValue.trim().length > 0;
-
-        if (hasContent) {
-          const chipAdded = addChip(inputValue);
-          if (chipAdded) {
-            setLastEnterTime(now);
-          }
-        } else {
-          if (lastEnterTime && now - lastEnterTime <= 500) {
-            setLastEnterTime(null);
-            onStepAdvance?.();
-          } else {
-            onStepAdvance?.();
-          }
-        }
-      } else if (
-        e.key === "Backspace" &&
-        inputValue === "" &&
-        value.length > 0
-      ) {
-        removeChip(value.length - 1);
-        setLastEnterTime(null);
-      } else if (
-        e.key === "ArrowLeft" &&
-        inputValue === "" &&
-        value.length > 0
-      ) {
-        e.preventDefault();
-        focusChip(value.length - 1);
-      } else {
-        setLastEnterTime(null);
-      }
-    }, "handleKeyDown");
-  };
-
-  const handleChipKeyDown = React.useCallback(
+  const handleChipKeyDown = useCallback(
     (e: React.KeyboardEvent, index: number) => {
       safeOperation(() => {
         if (e.key === "Delete" || e.key === "Backspace") {
@@ -342,7 +234,7 @@ export function ChipInput({
   const fallbackValue = value.join(", ");
   const isAtMax = maxItems && value.length >= maxItems;
 
-  React.useEffect(() => {
+  useEffect(() => {
     chipRefs.current = chipRefs.current.slice(0, value.length);
   }, [value.length]);
 
@@ -433,7 +325,7 @@ export function ChipInput({
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
                 "bg-primary text-primary-foreground hover:bg-primary/90",
                 focusedChipIndex === index &&
-                  "ring-2 ring-primary ring-offset-1",
+                "ring-2 ring-primary ring-offset-1",
               )}
             >
               <span>{chip}</span>
@@ -463,7 +355,7 @@ export function ChipInput({
                 id={inputId}
                 value={inputValue}
                 onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleInputKeyDown}
                 placeholder={value.length === 0 ? placeholder : ""}
                 disabled={disabled}
                 autoFocus={autoFocus}
@@ -525,7 +417,7 @@ export function ControlledChipInput({
   field,
   ...props
 }: ControlledChipInputProps) {
-  const handleFallbackTriggered = React.useCallback(
+  const handleFallbackTriggered = useCallback(
     (error: Error) => {
       log.warn("ChipInput fallback triggered for field:", field.name, error);
       props.onFallbackTriggered?.(error);
