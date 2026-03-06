@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { log } from "@/lib/logger";
+import { createPersistHydrationSlice, onPersistHydrated } from "@/lib/zustand-persist-hydration";
 import type {
   CurrentStep,
   GeneratedTopic,
@@ -80,7 +81,7 @@ interface TopicBuilderState {
 
   // SSR hydration state
   _hasHydrated: boolean;
-  setHasHydrated: (state: boolean) => void;
+  setHasHydrated: (hydrated: boolean) => void;
 }
 
 /**
@@ -125,6 +126,7 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
   devtools(
     persist(
       (set, get) => ({
+        ...createPersistHydrationSlice<TopicBuilderState>(set),
         // TypeForm wizard initial state
         currentStep: "wizard-mode" as CurrentStep,
         stepHistory: initialStepHistory,
@@ -147,9 +149,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         contextualSuggestions: {
           audienceByIndustry: [],
         },
-
-        // SSR hydration state
-        _hasHydrated: false,
 
         // TypeForm wizard actions
         setCurrentStep: (step: CurrentStep) => {
@@ -349,11 +348,6 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
             },
           });
         },
-
-        // SSR hydration actions
-        setHasHydrated: (state: boolean) => {
-          set({ _hasHydrated: state });
-        },
       }),
       {
         name: "topic-builder-store",
@@ -367,15 +361,15 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
         storage: createJSONStorage(() => getStorage()),
         // Enhanced hydration control for SSR compatibility
         skipHydration: false,
-        onRehydrateStorage: (_state) => {
+        onRehydrateStorage: () => {
           log.info("Hydration starts for topic-builder-store");
           return (state, error) => {
             if (error) {
               log.error("An error happened during hydration:", error);
             } else {
               log.info("Hydration finished for topic-builder-store");
-              state?.setHasHydrated(true);
             }
+            onPersistHydrated(state, error);
           };
         },
       },
@@ -398,12 +392,7 @@ export const useTopicBuilderStore = create<TopicBuilderState>()(
 export const useHydratedTopicBuilderStore = <T>(
   selector: (state: TopicBuilderState) => T,
 ): T | undefined => {
-  const [hydrated, setHydrated] = useState(false);
-  const state = useTopicBuilderStore(selector);
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
-  return hydrated ? state : undefined;
+  const hasHydrated = useTopicBuilderStore((state) => state._hasHydrated);
+  const selected = useTopicBuilderStore(selector);
+  return hasHydrated ? selected : undefined;
 };
