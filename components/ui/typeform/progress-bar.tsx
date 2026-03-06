@@ -19,6 +19,15 @@ import {
 import { cn } from "@/lib/utils";
 import type { ProgressBarProps } from "@/types/typeform";
 
+function resolveProgressBarAnimate(
+  animated: boolean,
+  celebrateMilestone: boolean,
+): "milestone" | "animate" | undefined {
+  if (!animated) return undefined;
+  if (celebrateMilestone) return "milestone";
+  return "animate";
+}
+
 const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
   (
     {
@@ -152,13 +161,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               )}
               variants={animated ? motionVariants : undefined}
               initial={animated ? "initial" : undefined}
-              animate={
-                animated
-                  ? celebrateMilestone
-                    ? "milestone"
-                    : "animate"
-                  : undefined
-              }
+              animate={resolveProgressBarAnimate(animated, celebrateMilestone)}
               style={
                 {
                   "--progress-width": `${clampedProgress}%`,
@@ -167,11 +170,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               transition={
                 animated && !prefersReducedMotion
                   ? {
-                      width: {
-                        duration: 0.4,
-                        ease: "easeOut",
-                      },
-                    }
+                    width: {
+                      duration: 0.4,
+                      ease: "easeOut",
+                    },
+                  }
                   : { duration: 0 }
               }
             />

@@ -228,6 +228,17 @@ export interface ConfettiConfig {
   origin?: { x: number; y: number };
 }
 
+function resolveParticleCountForIntensity(
+  intensity: "subtle" | "normal" | "exciting",
+  subtle: number,
+  normal: number,
+  exciting: number,
+): number {
+  if (intensity === "subtle") return subtle;
+  if (intensity === "normal") return normal;
+  return exciting;
+}
+
 /**
  * Gets confetti configuration based on celebration type
  */
@@ -245,8 +256,7 @@ export const getConfettiConfigForMilestone = (
     case "progress":
       return {
         ...baseConfig,
-        particleCount:
-          intensity === "subtle" ? 15 : intensity === "normal" ? 30 : 60,
+        particleCount: resolveParticleCountForIntensity(intensity, 15, 30, 60),
         angle: 90,
         spread: 30,
         origin: { x: 0.5, y: 0.3 },
@@ -255,8 +265,7 @@ export const getConfettiConfigForMilestone = (
     case "completion":
       return {
         ...baseConfig,
-        particleCount:
-          intensity === "subtle" ? 30 : intensity === "normal" ? 60 : 120,
+        particleCount: resolveParticleCountForIntensity(intensity, 30, 60, 120),
         angle: 90,
         spread: 45,
         origin: { x: 0.5, y: 0.5 },
@@ -265,8 +274,12 @@ export const getConfettiConfigForMilestone = (
     case "perfect-score":
       return {
         ...baseConfig,
-        particleCount:
-          intensity === "subtle" ? 50 : intensity === "normal" ? 100 : 200,
+        particleCount: resolveParticleCountForIntensity(
+          intensity,
+          50,
+          100,
+          200,
+        ),
         angle: 90,
         spread: 70,
         startVelocity: 45,
