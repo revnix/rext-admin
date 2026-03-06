@@ -11,6 +11,9 @@ const chartConfig = {
   },
 };
 
+/**
+ * Displays monthly search volume text with a lightweight sparkline trend.
+ */
 export function MonthlyVolumeCard({ volume = "0" }) {
   const numericVolume = React.useMemo(() => {
     return parseFloat(String(volume).replace(/[^0-9.]/g, "")) || 0;

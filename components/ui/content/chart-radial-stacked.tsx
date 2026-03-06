@@ -36,11 +36,19 @@ const getDifficultyLabel = (score: number) => {
   return "Super Hard";
 };
 
+/**
+ * Props for keyword difficulty radial chart rendering.
+ */
 interface ChartRadialStackedProps {
+  /** Difficulty score expected in 0-100 range (clamped at runtime). */
   difficultyScore?: number;
+  /** Optional className for sizing/layout overrides. */
   className?: string;
 }
 
+/**
+ * Visualizes keyword difficulty as a radial stacked chart with difficulty labeling.
+ */
 export function ChartRadialStacked({
   difficultyScore,
   className,
