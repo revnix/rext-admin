@@ -138,6 +138,35 @@ export const questionTransitionVariants: Variants = {
   }),
 };
 
+// ============================================================================
+// STEP SLIDE ANIMATIONS (Directional)
+// ============================================================================
+
+/**
+ * Horizontal slide variants for multi-step wizard flows.
+ * Accepts a custom direction parameter ("forward" | "backward")
+ * to control slide direction via AnimatePresence.
+ */
+export const slideStepVariants: Variants = {
+  enter: (direction: "forward" | "backward") => ({
+    x: direction === "forward" ? 300 : -300,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: "forward" | "backward") => ({
+    x: direction === "forward" ? -300 : 300,
+    opacity: 0,
+  }),
+};
+
+export const slideStepTransition: Transition = {
+  x: EASING.spring,
+  opacity: { duration: 0.2 },
+};
+
 export const questionTransition: Transition = {
   opacity: {
     duration: ANIMATION_TIMING.normal,

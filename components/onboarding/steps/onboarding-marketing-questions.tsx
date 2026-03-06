@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { slideStepVariants, slideStepTransition } from "@/lib/animations";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import {
   GOAL_OPTIONS,
@@ -121,21 +122,6 @@ export function OnboardingMarketingQuestions({
     }
   };
 
-  const variants = {
-    enter: (direction: "forward" | "backward") => ({
-      x: direction === "forward" ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: "forward" | "backward") => ({
-      x: direction === "forward" ? -300 : 300,
-      opacity: 0,
-    }),
-  };
-
   return (
     <div className="space-y-6 py-4">
       {/* Header */}
@@ -152,14 +138,11 @@ export function OnboardingMarketingQuestions({
           <motion.div
             key={currentQuestionIndex}
             custom={direction}
-            variants={variants}
+            variants={slideStepVariants}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 },
-            }}
+            transition={slideStepTransition}
             className="grid grid-cols-2 gap-3"
           >
             {currentQuestion.options.map((option) => {
@@ -168,11 +151,10 @@ export function OnboardingMarketingQuestions({
               return (
                 <Card
                   key={option.value}
-                  className={`border-2 cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm ${
-                    isSelected
+                  className={`border-2 cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm ${isSelected
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border"
-                  }`}
+                    }`}
                   onClick={() => handleSelectOption(option.value)}
                 >
                   <CardContent className="flex flex-col items-center justify-center gap-2 p-4 min-h-[100px]">
