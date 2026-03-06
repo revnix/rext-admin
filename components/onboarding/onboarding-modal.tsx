@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { slideStepVariants, slideStepTransition } from "@/lib/animations";
 import {
   Dialog,
   DialogContent,
@@ -98,21 +99,6 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     }
   };
 
-  const variants = {
-    enter: (direction: "forward" | "backward") => ({
-      x: direction === "forward" ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: "forward" | "backward") => ({
-      x: direction === "forward" ? -300 : 300,
-      opacity: 0,
-    }),
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
@@ -148,14 +134,11 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
             <motion.div
               key={currentStep}
               custom={direction}
-              variants={variants}
+              variants={slideStepVariants}
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
+              transition={slideStepTransition}
               className="p-6"
             >
               {renderStepContent()}
