@@ -94,7 +94,7 @@ export function LoadingIndicatorVariants({
 
         {hasSteps && (
           <p className="text-sm text-muted-foreground">
-            Step {activeStepIndex !== -1 ? activeStepIndex + 2 : 1} of{" "}
+            Step {activeStepIndex + 1} of{" "}
             {steps.length}
           </p>
         )}
