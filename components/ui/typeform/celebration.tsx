@@ -20,6 +20,21 @@ import { announceToScreenReader, triggerConfetti } from "@/lib/typeform-utils";
 import { cn } from "@/lib/utils";
 import type { CelebrationProps } from "@/types/typeform";
 
+function resolveConfettiParticleCount(
+  type: "completion" | "milestone" | "selection",
+): number {
+  if (type === "completion") return 100;
+  if (type === "milestone") return 50;
+  return 30;
+}
+
+function resolveConfettiSpread(
+  type: "completion" | "milestone" | "selection",
+): number {
+  if (type === "completion") return 70;
+  return 45;
+}
+
 // Confetti particle component
 const ConfettiParticle: React.FC<{
   delay: number;
@@ -149,9 +164,8 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
       // Trigger confetti based on celebration type
       if (!prefersReducedMotion) {
         const confettiConfig = {
-          particleCount:
-            type === "completion" ? 100 : type === "milestone" ? 50 : 30,
-          spread: type === "completion" ? 70 : 45,
+          particleCount: resolveConfettiParticleCount(type),
+          spread: resolveConfettiSpread(type),
           origin: { x: 0.5, y: 0.6 },
           colors: colors.map((color) => {
             // Convert Tailwind color names to hex values

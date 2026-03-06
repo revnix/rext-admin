@@ -13,6 +13,27 @@ interface LoadingIndicatorVariantsProps {
   steps?: LoadingStep[];
 }
 
+function resolveActiveStepIndex(
+  matchIndex: number,
+  lastCompletedIndex: number,
+  stepCount: number,
+): number {
+  if (matchIndex !== -1) return matchIndex;
+  if (lastCompletedIndex !== -1) return lastCompletedIndex;
+  if (stepCount > 0) return 0;
+  return -1;
+}
+
+function resolveCurrentStepLabel(
+  activeStepIndex: number,
+  steps: LoadingStep[],
+  normalizedStatus: string,
+  fallbackTitle: string,
+): string {
+  if (activeStepIndex !== -1) return steps[activeStepIndex].label;
+  return normalizedStatus || fallbackTitle;
+}
+
 const STEP_DATA: Record<string, { title: string }> = {
   keyword: { title: "Analyzing Keyword" },
   "keyword Selection": { title: "Analyzing Keyword" },
@@ -58,19 +79,18 @@ export function LoadingIndicatorVariants({
   // 1. If we have a direct match (backend reported a known node), use it.
   // 2. If no direct match (e.g., between nodes or unknown node), stay on the last completed step.
   // 3. Fallback to 0 if nothing has completed yet.
-  const activeStepIndex =
-    matchIndex !== -1
-      ? matchIndex
-      : lastCompletedIndex !== -1
-        ? lastCompletedIndex
-        : steps.length > 0
-          ? 0
-          : -1;
+  const activeStepIndex = resolveActiveStepIndex(
+    matchIndex,
+    lastCompletedIndex,
+    steps.length,
+  );
 
-  const currentStepLabel =
-    activeStepIndex !== -1
-      ? steps[activeStepIndex].label
-      : normalizedStatus || title;
+  const currentStepLabel = resolveCurrentStepLabel(
+    activeStepIndex,
+    steps,
+    normalizedStatus,
+    title,
+  );
 
   const hasSteps = steps && steps.length > 0;
 
