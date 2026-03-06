@@ -81,7 +81,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       if (!baseUrl) {
         throw new Error(
           "Cannot determine application URL for checkout redirects. " +
-          "Set NEXT_PUBLIC_APP_URL environment variable.",
+            "Set NEXT_PUBLIC_APP_URL environment variable.",
         );
       }
 
@@ -242,9 +242,12 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @returns Current usage stats
      */
     getUsageStats: async (): Promise<UsageStats> => {
-      const result = await client.request<unknown>(ENDPOINTS.SUBSCRIPTIONS.usage, {
-        method: "GET",
-      });
+      const result = await client.request<unknown>(
+        ENDPOINTS.SUBSCRIPTIONS.usage,
+        {
+          method: "GET",
+        },
+      );
 
       // Normalize nested statistics (e.g., workspaces: {current, max}) to flat structure
       // that matches the UsageStats interface for backward compatibility.
