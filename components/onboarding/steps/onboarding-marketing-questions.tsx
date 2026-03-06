@@ -9,9 +9,13 @@ import { slideStepVariants, slideStepTransition } from "@/lib/animations";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import {
   GOAL_OPTIONS,
+  GoalValue,
   HEARD_FROM_OPTIONS,
+  HeardFromValue,
   INDUSTRY_OPTIONS,
+  IndustryValue,
   ROLE_OPTIONS,
+  RoleValue,
 } from "@/types/onboarding";
 
 interface OnboardingMarketingQuestionsProps {
@@ -24,11 +28,11 @@ type QuestionType = "industry" | "role" | "goal" | "heard_from";
 interface Question {
   id: QuestionType;
   title: string;
-  options: Array<{
-    value: string;
-    label: string;
-    description?: string;
-    icon: string;
+  options: ReadonlyArray<{
+    readonly value: string;
+    readonly label: string;
+    readonly description?: string;
+    readonly icon: string;
   }>;
 }
 
@@ -60,7 +64,12 @@ export function OnboardingMarketingQuestions({
   isLoading,
 }: OnboardingMarketingQuestionsProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<QuestionType, string>>({
+  const [answers, setAnswers] = useState<{
+    industry: IndustryValue | "";
+    role: RoleValue | "";
+    goal: GoalValue | "";
+    heard_from: HeardFromValue | "";
+  }>({
     industry: "",
     role: "",
     goal: "",
