@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { log } from "@/lib/logger";

@@ -81,7 +81,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       if (!baseUrl) {
         throw new Error(
           "Cannot determine application URL for checkout redirects. " +
-            "Set NEXT_PUBLIC_APP_URL environment variable.",
+          "Set NEXT_PUBLIC_APP_URL environment variable.",
         );
       }
 
@@ -242,9 +242,47 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @returns Current usage stats
      */
     getUsageStats: async (): Promise<UsageStats> => {
-      return client.request<UsageStats>(ENDPOINTS.SUBSCRIPTIONS.usage, {
+      const result = await client.request<unknown>(ENDPOINTS.SUBSCRIPTIONS.usage, {
         method: "GET",
       });
+
+      // Normalize nested statistics (e.g., workspaces: {current, max}) to flat structure
+      // that matches the UsageStats interface for backward compatibility.
+      if (
+        result &&
+        typeof result === "object" &&
+        !("current_workspaces" in result)
+      ) {
+        const resObj = result as Record<string, unknown>;
+        const flattened: Record<string, unknown> = { ...resObj };
+
+        for (const [key, value] of Object.entries(resObj)) {
+          if (
+            value &&
+            typeof value === "object" &&
+            "current" in value &&
+            "max" in value
+          ) {
+            const val = value as { current: number; max: number };
+            flattened[`current_${key}`] = val.current;
+
+            // Handle specific field name differences
+            const maxKey =
+              key === "api_calls" ? "max_api_calls_per_month" : `max_${key}`;
+            flattened[maxKey] = val.max;
+
+            // Calculate percentage if missing
+            const percentKey = `${key}_usage_percent`;
+            if (!(percentKey in flattened)) {
+              flattened[percentKey] =
+                val.max > 0 ? (val.current / val.max) * 100 : 0;
+            }
+          }
+        }
+        return flattened as unknown as UsageStats;
+      }
+
+      return result as UsageStats;
     },
 
     /**

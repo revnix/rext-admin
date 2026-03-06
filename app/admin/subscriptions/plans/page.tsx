@@ -28,12 +28,8 @@ import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
 import type { SubscriptionPlan } from "@/types/subscription";
 
 interface PlansResponse {
-  success: boolean;
-  data: {
-    plans: SubscriptionPlan[];
-    count: number;
-  };
-  message: string;
+  plans: SubscriptionPlan[];
+  count: number;
 }
 
 export default function SubscriptionPlansPage() {
@@ -70,7 +66,7 @@ export default function SubscriptionPlansPage() {
     },
   });
 
-  const plans = plansResponse?.data?.plans || [];
+  const plans = plansResponse?.plans || [];
 
   const columns = [
     {

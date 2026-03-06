@@ -118,7 +118,19 @@ export class ApiClient {
       }
 
       // Parse successful response
-      const result = await response.json();
+      let result = await response.json();
+
+      // Handle cases where the response might be a double-encoded JSON string
+      if (typeof result === "string") {
+        try {
+          const parsed = JSON.parse(result);
+          if (parsed && typeof parsed === "object") {
+            result = parsed;
+          }
+        } catch {
+          // Stay with original result if parsing fails
+        }
+      }
 
       // Handle new consistent format: { success: true, data: {...}, meta: {...} }
       if (result && typeof result === "object" && "success" in result) {
@@ -132,7 +144,53 @@ export class ApiClient {
         }
 
         if (result.success && "data" in result) {
+          // If data itself is an informative object with a message and null data, unwrap it further
+          const data = result.data;
+          if (
+            data &&
+            typeof data === "object" &&
+            "message" in data &&
+            "data" in data
+          ) {
+            return (data as unknown as { data: T }).data;
+          }
           return result.data as T;
+        }
+      }
+
+      // Handle message-wrapped responses (e.g., { message: '...', data: ... } or { message: '...', ...stats })
+      // This provides a centralized way to handle responses that include a message but might not use the strict 'success' format
+      if (result && typeof result === "object" && "message" in result) {
+        // If it has 'data' property (even if null), unwrap it
+        if ("data" in result) {
+          const data = (result as unknown as { data: T }).data;
+          // Deep unwrap if the inner data also contains a message-wrapped response
+          if (
+            data &&
+            typeof data === "object" &&
+            "message" in data &&
+            "data" in data
+          ) {
+            return (data as unknown as { data: T }).data;
+          }
+          return data as T;
+        }
+
+        // If it's a flat object with a message, return the rest of the properties
+        const { message, ...rest } = result;
+        if (Object.keys(rest).length > 0) {
+          return rest as T;
+        }
+
+        // If it only has a message and it's a "not found" style message, return null
+        if (
+          typeof (result as unknown as { message: string }).message ===
+            "string" &&
+          (result as unknown as { message: string }).message
+            .toLowerCase()
+            .includes("not found")
+        ) {
+          return null as T;
         }
       }
 

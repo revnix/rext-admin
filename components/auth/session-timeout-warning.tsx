@@ -130,7 +130,7 @@ export function SessionTimeoutWarning() {
   return (
     <>
       {/* Warning Dialog */}
-      <Dialog open={showWarning} onOpenChange={() => { }}>
+      <Dialog open={showWarning} onOpenChange={() => {}}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
