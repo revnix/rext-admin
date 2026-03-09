@@ -121,7 +121,11 @@ export function AddIntegrationModal({
                 <FormItem className="grid gap-2 space-y-0">
                   <FormLabel>WordPress Site URL *</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://yoursite.com" {...field} />
+                    <Input
+                      type="url"
+                      placeholder="https://yoursite.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -136,7 +140,6 @@ export function AddIntegrationModal({
                   <FormLabel>API Key *</FormLabel>
                   <FormControl>
                     <Input
-                      type="password"
                       placeholder="Enter API key from Rext plugin"
                       {...field}
                     />
