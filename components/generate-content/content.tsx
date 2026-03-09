@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState } from "react";
+import { useTypewriter } from "@/hooks/use-typewriter";
+import type { ComponentType } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
   Dialog,
@@ -34,6 +36,7 @@ import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
 import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
+import { marked } from "marked";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -127,19 +130,7 @@ const getSEOStatusText = (score: number) => {
   return "Poor SEO Score";
 };
 
-function ContentEditorInner({
-  contentId,
-  allContent,
-  readabilityScore,
-  trustScore,
-  generatedContent,
-  seoScore,
-  isEditing,
-  userKeyword,
-  outline,
-  onEditToggle,
-  onContentChange,
-}: {
+type ContentEditorProps = {
   contentId?: string;
   allContent: FinalContent | null;
   readabilityScore: ReadabilityMetrics | null;
@@ -151,10 +142,33 @@ function ContentEditorInner({
   outline: Outline | null;
   onEditToggle: () => void;
   onContentChange: (val: string) => void;
-}) {
+};
+
+function ContentEditorInner(props: ContentEditorProps) {
+  const {
+    contentId,
+    allContent,
+    readabilityScore,
+    trustScore,
+    generatedContent,
+    seoScore,
+    isEditing,
+    userKeyword,
+    outline,
+    onEditToggle,
+    onContentChange,
+  } = props;
+
+  const isFinal =
+    !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
   const displayTitle = allContent?.title || "";
   const body = generatedContent;
+  const previewHtml = body ? marked.parse(body) : "";
+  const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
+  const { displayed: typedIntro } = useTypewriter(allContent?.introduction || "", {
+    speed: 45,
+  });
   const score = readabilityScore?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
@@ -222,6 +236,7 @@ function ContentEditorInner({
   });
 
   const publishContent = async () => {
+    if (!isFinal) return;
     if (!workspaceId) return;
     try {
       setIsPublishing(true);
@@ -258,6 +273,7 @@ function ContentEditorInner({
   };
 
   const saveContent = async () => {
+    if (!isFinal) return;
     if (!workspaceId) return;
     try {
       setIsSaving(true);
@@ -311,17 +327,25 @@ function ContentEditorInner({
     setIntegrationModalOpen(false);
   };
 
+  {!body && (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-4 bg-muted rounded w-full" />
+      <div className="h-4 bg-muted rounded w-5/6" />
+      <div className="h-4 bg-muted rounded w-4/6" />
+    </div>
+  )}
+
   return (
     <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t">
       <div className="flex flex-1 overflow-hidden relative border-b border-border">
-        {/* Left Sidebar: Outline */}
-        <aside className="hidden lg:flex w-48 border-r border-border bg-sidebar/50 flex-col py-6 mt-1.5">
-          <div className="px-4 mb-6">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">
-              Structure
-            </h3>
-            {outline ? (
-              outline.sections.map((sec, i) => (
+        {/* Left Sidebar: Outline (never render inside editor body) */}
+        {outline && outline.sections.length > 0 && (
+          <aside className="hidden lg:flex w-48 border-r border-border bg-sidebar/50 flex-col py-6 mt-1.5">
+            <div className="px-4 mb-6">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">
+                Structure
+              </h3>
+              {outline.sections.map((sec, i) => (
                 <button
                   type="button"
                   key={sec.heading}
@@ -353,19 +377,10 @@ function ContentEditorInner({
                     {sec.heading}
                   </span>
                 </button>
-              ))
-            ) : (
-              <div className="space-y-4 animate-pulse">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="flex items-center gap-3 px-1">
-                    <div className="h-3 w-3 bg-muted rounded-sm shrink-0" />
-                    <div className="h-3 bg-muted rounded w-full" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </aside>
+              ))}
+            </div>
+          </aside>
+        )}
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto bg-background px-2 py-4 mt-2">
@@ -400,26 +415,59 @@ function ContentEditorInner({
                           ))}
                         </div>
                         <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
-                          {displayTitle}
+                          {typedTitle}
                         </h1>
 
                         {allContent?.introduction && (
                           <div className="text-xl text-muted-foreground leading-relaxed font-medium border-l-4 border-border pl-6 my-8 italic">
-                            {allContent?.introduction}
+                            {typedIntro}
                           </div>
                         )}
                       </div>
                       <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
-                        <SafeLexicalEditor
-                          key={`editor-preview-${contentId ?? "new"}`}
-                          initialValue={body}
-                          readOnly={true}
-                        />
+                        {isFinal ? (
+                          <SafeLexicalEditor
+                            key={`editor-preview-${contentId ?? "new"}`}
+                            initialValue={body}
+                            readOnly={true}
+                          />
+                        ) : (
+                          <div
+                            className="prose prose-slate dark:prose-invert prose-lg max-w-none"
+                            dangerouslySetInnerHTML={{ __html: previewHtml }}
+                          />
+                        )}
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-4 animate-pulse">
-                      <div className="h-8 bg-muted rounded w-3/4 mb-8" />
+                    <div className="space-y-4">
+                      {(displayTitle || tags.length > 0 || allContent?.introduction) ? (
+                        <div className="space-y-4 mb-8">
+                          <div className="flex flex-wrap gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            {tags.slice(0, 6).map((t) => (
+                              <span key={t} className="bg-muted px-2 py-1 rounded">
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                          {displayTitle ? (
+                            <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
+                              {typedTitle}
+                            </h1>
+                          ) : (
+                            <div className="h-8 bg-muted rounded w-3/4" />
+                          )}
+                          {allContent?.introduction ? (
+                            <div className="text-xl text-muted-foreground leading-relaxed font-medium border-l-4 border-border pl-6 my-8 italic">
+                              {typedIntro}
+                            </div>
+                          ) : (
+                            <div className="h-4 bg-muted rounded w-5/6" />
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-8 bg-muted rounded w-3/4 mb-8" />
+                      )}
                       <div className="space-y-3">
                         <div className="h-4 bg-muted rounded w-full" />
                         <div className="h-4 bg-muted rounded w-5/6" />
@@ -439,27 +487,28 @@ function ContentEditorInner({
             <Button
               variant="secondary"
               size="sm"
-              className={`h-8 !px-2 text-xs font-bold transition-all flex-1`}
+              className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
               onClick={onEditToggle}
+              disabled={!isFinal}
             >
               {isEditing ? <Eye size={14} /> : <Pencil size={14} />}{" "}
               {isEditing ? "Prev" : "Edit"}
             </Button>
             <Button
               onClick={saveContent}
-              disabled={isSaving || isPublishing}
+              disabled={!isFinal || isSaving || isPublishing}
               variant="secondary"
               size="sm"
-              className={`h-8 !px-2 text-xs font-bold transition-all flex-1`}
+              className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
             >
               <Save size={14} className={isSaving ? "animate-pulse" : ""} />{" "}
               {isSaving ? "Saving..." : "Save"}
             </Button>
             <Button
               onClick={publishContent}
-              disabled={isPublishing || isSaving}
+              disabled={!isFinal || isPublishing || isSaving}
               size="sm"
-              className="h-8 !px-2 text-xs font-bold flex-1"
+              className="h-8 px-2! text-xs font-bold flex-1"
             >
               <Send
                 size={14}
@@ -475,7 +524,7 @@ function ContentEditorInner({
               setStatusModal((prev) => ({ ...prev, isOpen: open }))
             }
           >
-            <DialogContent className="sm:max-w-md bg-card border border-border shadow-2xl rounded-[2rem] p-8">
+            <DialogContent className="sm:max-w-md bg-card border border-border shadow-2xl rounded-4xl p-8">
               <div className="flex flex-col items-center text-center space-y-6">
                 <div
                   className={cn(
@@ -720,5 +769,7 @@ function ContentEditorInner({
   );
 }
 
-export const ContentEditor = memo(ContentEditorInner);
+export const ContentEditor = memo(
+  ContentEditorInner,
+) as unknown as ComponentType<ContentEditorProps>;
 ContentEditor.displayName = "ContentEditor";

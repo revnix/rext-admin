@@ -32,8 +32,8 @@ export async function POST(
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     command: { resume: body.payload },
-    streamMode: "updates",
-    streamSubgraphs: true,
+    streamMode: ["updates", "messages"],
+        streamSubgraphs: true,
   });
 
   const encoder = new TextEncoder();

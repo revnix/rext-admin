@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner"; // Assuming sonner
 import { useWorkspace } from "@/providers/workspace-provider";
 import { log } from "@/lib/logger";
+import { useEffect } from "react";
 
 interface CustomIntegrationDetailsModalProps {
   isOpen: boolean;
@@ -54,24 +55,24 @@ export function CustomIntegrationDetailsModal({
       };
 
       await integrationsApiService.updateIntegration(
-        integration.id,
+        integration.site?.id || integration.id,
         workspace.id,
         apiPayload,
       );
 
       // 2. Handle specific Activation/Deactivation if status changed
-      const oldActive = integration.is_active;
+      const oldActive = integration.site?.is_active ?? integration.is_active;
       const newActive = updatedData.is_active;
 
       if (newActive !== oldActive) {
         if (newActive) {
           await integrationsApiService.activateIntegration(
-            integration.id,
+            integration.site?.id || integration.id,
             workspace.id,
           );
         } else {
           await integrationsApiService.deactivateIntegration(
-            integration.id,
+            integration.site?.id || integration.id,
             workspace.id,
           );
         }
@@ -96,7 +97,7 @@ export function CustomIntegrationDetailsModal({
     if (!confirm("Are you sure you want to delete this integration?")) return;
     try {
       await integrationsApiService.deleteIntegration(
-        integration.id,
+        integration.site?.id || integration.id,
         workspace.id,
       );
       toast.success("Integration deleted");
