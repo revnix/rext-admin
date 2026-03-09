@@ -69,23 +69,6 @@ export function FreshGenerationView({
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
 
-  const extractJsonStringField = (raw: string, field: string) => {
-    const re = new RegExp(
-      `\"${field}\"\\\\s*:\\\\s*\"([^\"\\\\\\\\]*(?:\\\\\\\\.[^\"\\\\\\\\]*)*)\"`,
-      "g",
-    );
-    let match: RegExpExecArray | null = null;
-    let last: string | null = null;
-    // eslint-disable-next-line no-cond-assign
-    while ((match = re.exec(raw))) last = match[1] ?? null;
-    if (!last) return "";
-    try {
-      return JSON.parse(`\"${last}\"`);
-    } catch {
-      return last.replace(/\\"/g, "\"");
-    }
-  };
-
   const extractJsonStringFieldPartial = (raw: string, field: string) => {
     // Streaming-friendly extraction for `"field":"..."` values.
     // Returns the latest seen value, even if the closing quote hasn't arrived yet.
@@ -209,10 +192,6 @@ export function FreshGenerationView({
     currentLoadingSteps,
   } = state;
 
-  // loadingStatus retypes on every new message (short, discrete lines)
-  const { displayed: displayedStatus } =
-    useTypewriter(loadingStatus ?? "", { speed: 80, retypeOnChange: true });
-
   // ── Typewriter for instruction hint text ─────────────────────────────────
   const { displayed: displayedInstruction } =
     useTypewriter(instruction, { speed: 60, retypeOnChange: true });
@@ -257,7 +236,6 @@ export function FreshGenerationView({
   const {
     displayed: displayedBodyMarkdown,
     isDone: bodyMarkdownDone,
-    skip: skipBodyMarkdown,
   } = useTypewriter(liveBodyMarkdown, {
     speed: 15,
     retypeOnChange: false
@@ -430,7 +408,6 @@ export function FreshGenerationView({
             if (tokenTargetRef.current === "outline") outline.appendToken(token);
             else if (tokenTargetRef.current === "content") {
               content.appendToken(token);
-              setEeatInjecting(true);
             };
           }
           continue;
@@ -449,19 +426,14 @@ export function FreshGenerationView({
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         }
 
+        if(updates?.generate_content){
+           setEeatInjecting(true);
+        }
+
         if (updates?.generate_content?.content?.final_content) {
-          dispatch({
-            type: "SET_ALL_CONTENT",
-            payload: updates.generate_content.content.final_content,
-          });
-          dispatch({
-            type: "SET_GENERATED_CONTENT",
-            payload: updates.generate_content.content.final_content.body_markdown,
-          });
           // Stop routing partial tokens once we have the final object.
           setTokenTarget("none");
           tokenTargetRef.current = "none";
-          setEeatInjecting(false);
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
         }
         if (updates?.calculate_on_page_seo?.content?.review?.on_page_metrics) {
@@ -496,7 +468,6 @@ export function FreshGenerationView({
           .filter(k => !k.startsWith("__"))
           .forEach(node => {
             dispatch({ type: "SET_LOADING_STATUS", payload: `${formatNodeName(node)}...` });
-            if (node === "calculate_eeat_trust") setEeatInjecting(true);
           });
       }
     } catch (_e) {
@@ -741,7 +712,7 @@ export function FreshGenerationView({
               }}
             />
 
-            {eeatInjecting && allContent && (
+            {eeatInjecting && (
               <div className="fixed inset-0 z-20 grid place-items-center bg-background/40 backdrop-blur-[3px]">
                 <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
                   <div className="text-sm font-semibold text-foreground">
