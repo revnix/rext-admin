@@ -117,6 +117,11 @@ export class ApiClient {
         );
       }
 
+      // 204 No Content and 205 Reset Content should not be parsed as JSON
+      if (response.status === 204 || response.status === 205) {
+        return null as T;
+      }
+
       // Parse successful response
       let result = await response.json();
 

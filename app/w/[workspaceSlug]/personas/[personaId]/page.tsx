@@ -8,9 +8,7 @@ import Link from "next/link";
 import { usePersona } from "@/hooks/use-personas";
 import { PersonaDetail } from "@/components/personas/persona-detail";
 import { useParams } from "next/navigation";
-import { useState } from "react";
 import type { Route } from "next";
-// import { DeletePersonaDialog } from "@/components/personas/delete-persona-dialog"; // Assume checking if this exists or needing to import
 
 export default function PersonaDetailPage() {
   const { workspace, workspaceSlug } = useWorkspace();
@@ -23,8 +21,6 @@ export default function PersonaDetailPage() {
     error,
   } = usePersona(workspace?.id || null, personaId);
   const persona = personaData?.persona;
-
-  const [_isDeleteDialogOpen, _setIsDeleteDialogOpen] = useState(false);
 
   // Wait for workspace to be loaded before considering it an error
   const isWorkspaceLoading = !workspace && !error;
