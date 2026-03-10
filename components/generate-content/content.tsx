@@ -436,26 +436,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                         }
                       }}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative",
-                        activeSection === i
-                          ? "text-primary font-bold"
-                          : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                       )}
                     >
-                      {activeSection === i && (
-                        <motion.div
-                          layoutId="active-outline"
-                          className="absolute inset-0 bg-primary/5 border border-primary/10 rounded-xl"
-                          initial={false}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <span className={cn(
-                        "relative text-[10px] font-mono transition-colors",
-                        activeSection === i ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary/60"
-                      )}>
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
                       <span className="relative truncate leading-none">
                         {sec.heading}
                       </span>

@@ -12,12 +12,14 @@ import { cn } from "@/lib/utils";
 import { Client } from "@langchain/langgraph-sdk";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { useCurrentWorkspace } from "@/stores/workspace/use-workspace-context-store";
 import { formatDistanceToNow } from "date-fns";
 import { log } from "@/lib/logger";
 import LibraryDetail from "./library-detail";
 import { LibraryItem, StoredKeyword, StoreItem } from "@/types/generate-content";
 import { getDifficultyLabel } from "../ui/content/chart-radial-stacked";
+import { useRouter } from "next/navigation";
+import { useWorkspace } from "@/providers/workspace-provider";
+import { Route } from "next";
 
 const libraryLogger = log.forComponent("library-view");
 
@@ -43,15 +45,15 @@ export function LibraryView() {
   const [keywords, setKeywords] = useState<LibraryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<"list" | "detail">("list");
-
   const { user } = useAuthSession();
-  const currentWorkspace = useCurrentWorkspace();
+  const router = useRouter();
+  const { workspace } = useWorkspace();
 
   const handleSearch = useCallback(
     async (query: string) => {
       // Ensure we have actual IDs from session and context
       const userId = user?.id;
-      const workspaceId = currentWorkspace?.id;
+      const workspaceId = workspace?.id;
 
       if (!userId || !workspaceId) {
         libraryLogger.warn("Missing userId or workspaceId for library search");
@@ -119,7 +121,7 @@ export function LibraryView() {
         setIsLoading(false);
       }
     },
-    [user?.id, currentWorkspace?.id],
+    [user?.id, workspace?.id],
   );
 
   useEffect(() => {
@@ -235,6 +237,7 @@ export function LibraryView() {
                         className="h-8 px-3 text-xs font-bold text-primary hover:bg-primary/10 hover:text-primary rounded-full group/btn"
                         onClick={(e) => {
                           e.stopPropagation();
+                          router.push(`/w/${workspace?.slug}/generate_content?library=${item.keyword}` as Route);
                         }}
                       >
                         Use Keyword

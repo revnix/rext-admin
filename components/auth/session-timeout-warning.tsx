@@ -18,39 +18,47 @@ import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { log } from "@/lib/logger";
 
 /**
- * Session Timeout Warning Component
- *
- * Displays a warning modal when the user's session is about to expire,
- * with options to extend the session or logout.
+ * Session Manager Component
+ * 
+ * Automatically refreshes the session when it's about to expire.
+ * Keeps the UI components for manual fallback if auto-refresh fails.
  */
 export function SessionTimeoutWarning() {
   const { showWarning, formattedTime, sessionExpired } = useSessionTimeout();
   const { data: session, update } = useSession();
   const [isExtending, setIsExtending] = useState(false);
+  const [refreshFailed, setRefreshFailed] = useState(false);
 
-  // Handle session expiry
+  // Handle session expiry - redirect to login
   useEffect(() => {
     if (sessionExpired && session) {
+      log.warn("[Auth] Session expired, performing logout");
       performLogout("/login?session=expired");
     }
   }, [sessionExpired, session]);
 
+  // Handle automatic refresh when session is about to expire
+  useEffect(() => {
+    if (showWarning && !isExtending && !refreshFailed && session?.user?.refreshToken) {
+      log.info("[Auth] Session expiring soon, triggering automatic refresh...");
+      handleExtendSession();
+    }
+  }, [showWarning, isExtending, refreshFailed, session]);
+
   const handleExtendSession = async () => {
+    if (isExtending) return;
+
     setIsExtending(true);
     try {
-      log.info("[Auth] Extending session...");
-
       const refreshToken = session?.user?.refreshToken;
 
       if (!refreshToken) {
-        log.error("[Auth] No refresh token available in session");
-        // Force logout if we can't refresh
-        await performLogout("/login?error=SessionExpired");
+        log.error("[Auth] No refresh token available for automatic refresh");
+        setRefreshFailed(true);
         return;
       }
 
-      // 1. Call the official refresh endpoint directly as requested
-      // This is more reliable than automatic session update in some environments
+      // 1. Call the official refresh endpoint
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
         {
@@ -63,27 +71,24 @@ export function SessionTimeoutWarning() {
       );
 
       if (!response.ok) {
-        log.error("[Auth] Token refresh API failed:", response.status);
-        await performLogout("/login?error=SessionExpired");
+        log.error("[Auth] Automatic token refresh API failed:", response.status);
+        setRefreshFailed(true);
         return;
       }
 
       const resData = await response.json();
-      // Backend pattern: data is wrapped in { data: ... } or returned directly
       // biome-ignore lint/suspicious/noExplicitAny: dynamic backend response
       const refreshedTokens = (resData.data || resData) as any;
 
       if (!refreshedTokens.access_token) {
         log.error("[Auth] No access token in refresh response");
-        await performLogout("/login?error=SessionExpired");
+        setRefreshFailed(true);
         return;
       }
 
-      // 2. Update the NextAuth session with the new tokens.
-      // We pass the data to update() which triggers the jwt callback in auth.config.ts
-      log.info("[Auth] Updating NextAuth session with refreshed tokens...");
+      // 2. Update the NextAuth session
+      log.info("[Auth] Updating session with refreshed tokens...");
 
-      // Calculate new expiry for the client-side timer
       const expiresIn = refreshedTokens.expires_in;
       const expiresAt = refreshedTokens.expires_at;
       const accessTokenExpires = expiresIn
@@ -99,20 +104,16 @@ export function SessionTimeoutWarning() {
       });
 
       if (updatedSession?.error === "RefreshAccessTokenError") {
-        log.error("[Auth] Session extension failed: Token refresh error");
-        await performLogout("/login?error=SessionExpired");
+        log.error("[Auth] Session update failed after refresh");
+        setRefreshFailed(true);
         return;
       }
 
-      log.info("[Auth] Session extended successfully");
+      log.info("[Auth] Session refreshed automatically");
+      setRefreshFailed(false);
     } catch (error) {
       log.error("[Auth] Failed to extend session:", error);
-      // Fallback: still try a simple update if fetch failed for some network reason
-      try {
-        await update();
-      } catch (e) {
-        log.error("[Auth] Fallback update also failed", e);
-      }
+      setRefreshFailed(true);
     } finally {
       setIsExtending(false);
     }
@@ -127,10 +128,11 @@ export function SessionTimeoutWarning() {
     return null;
   }
 
+  // Only show the dialog if refreshFailed is true and we are in the warning zone
+  // This fulfills "instead of showing dialog call api directly" while "not removing anything"
   return (
     <>
-      {/* Warning Dialog */}
-      <Dialog open={showWarning} onOpenChange={() => {}}>
+      <Dialog open={showWarning && refreshFailed} onOpenChange={() => { }}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -138,11 +140,11 @@ export function SessionTimeoutWarning() {
           <DialogHeader>
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
-              <DialogTitle>Session Expiring Soon</DialogTitle>
+              <DialogTitle>Session Expiration Warning</DialogTitle>
             </div>
             <DialogDescription>
-              Your session will expire in <strong>{formattedTime}</strong>. Do
-              you want to extend your session?
+              We tried to refresh your session automatically but failed.
+              Your session will expire in <strong>{formattedTime}</strong>.
             </DialogDescription>
           </DialogHeader>
 
@@ -168,7 +170,7 @@ export function SessionTimeoutWarning() {
               disabled={isExtending}
               className="w-full sm:w-auto"
             >
-              {isExtending ? "Extending..." : "Extend Session"}
+              {isExtending ? "Retrying..." : "Try Refresh Again"}
             </Button>
           </DialogFooter>
         </DialogContent>
