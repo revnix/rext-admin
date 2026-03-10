@@ -44,21 +44,111 @@ import {
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
 
-// ─── CSS: add to globals.css ──────────────────────────────────────────────────
-// @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-// .cursor-blink { animation: blink 0.85s step-end infinite; }
-// ─────────────────────────────────────────────────────────────────────────────
-
-function Cursor({ visible }: { visible: boolean }) {
-  if (!visible) return null;
-  return <span className="cursor-blink inline-block ml-px text-primary" aria-hidden>▋</span>;
-}
 
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
   initialStep?: PageState["step"];
 }
+
+
+const extractJsonStringFieldPartial = (raw: string, field: string) => {
+  // Streaming-friendly extraction for `"field":"..."` values.
+  // Returns the latest seen value, even if the closing quote hasn't arrived yet.
+  const needle = `"${field}":"`;
+  const idx = raw.lastIndexOf(needle);
+  if (idx === -1) return "";
+
+  const start = idx + needle.length;
+  let out = "";
+  let escape = false;
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escape) {
+      out += "\\" + ch;
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') break;
+    out += ch;
+  }
+
+  return out
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\");
+};
+
+const normalizeEscapedJsonish = (raw: string) => {
+  // Sometimes `messages/partial` streams a JSON string with quotes escaped:
+  // {\"title\":\"...\",\"body_markdown\":\"...\"}
+  // Normalize it so field extraction works.
+  return raw.includes('\\"') ? raw.replace(/\\"/g, '"') : raw;
+};
+
+const htmlToMarkdownLite = (html: string) => {
+  // Minimal HTML -> Markdown-ish conversion for streaming preview.
+  // Keeps it dependency-free and good enough for typewriter display.
+  return (
+    html
+      // Headings
+      .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, "# $1\n\n")
+      .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "## $1\n\n")
+      .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, "### $1\n\n")
+      .replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, "#### $1\n\n")
+      // Paragraphs / line breaks
+      .replace(/<p[^>]*>/gi, "")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      // Lists
+      .replace(/<ul[^>]*>/gi, "\n")
+      .replace(/<\/ul>/gi, "\n")
+      .replace(/<ol[^>]*>/gi, "\n")
+      .replace(/<\/ol>/gi, "\n")
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
+      // Inline formatting
+      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
+      .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
+      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
+      .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
+      .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
+      // Strip remaining tags
+      .replace(/<\/?[^>]+>/g, "")
+      // Decode a few entities
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .trim()
+  );
+};
+
+const extractJsonStringArrayField = (raw: string, field: string) => {
+  const re = new RegExp(`\"${field}\"\\\\s*:\\\\s*\\[([^\\]]*)`, "g");
+  let match: RegExpExecArray | null = null;
+  let last: string | null = null;
+  // eslint-disable-next-line no-cond-assign
+  while ((match = re.exec(raw))) last = match[1] ?? null;
+  if (!last) return [] as string[];
+
+  const items = last.match(/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/g) ?? [];
+  return items
+    .map((s) => s.slice(1, -1))
+    .map((s) => {
+      try {
+        return JSON.parse(`"${s}"`);
+      } catch {
+        return s.replace(/\\"/g, '"');
+      }
+    })
+    .filter((s): s is string => typeof s === "string" && s.trim().length > 0);
+};
 
 export function FreshGenerationView({
   onBack: _onBack,
@@ -69,104 +159,6 @@ export function FreshGenerationView({
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
 
-  const extractJsonStringFieldPartial = (raw: string, field: string) => {
-    // Streaming-friendly extraction for `"field":"..."` values.
-    // Returns the latest seen value, even if the closing quote hasn't arrived yet.
-    const needle = `"${field}":"`;
-    const idx = raw.lastIndexOf(needle);
-    if (idx === -1) return "";
-
-    const start = idx + needle.length;
-    let out = "";
-    let escape = false;
-    for (let i = start; i < raw.length; i++) {
-      const ch = raw[i];
-      if (escape) {
-        out += "\\" + ch;
-        escape = false;
-        continue;
-      }
-      if (ch === "\\") {
-        escape = true;
-        continue;
-      }
-      if (ch === '"') break;
-      out += ch;
-    }
-
-    return out
-      .replace(/\\n/g, "\n")
-      .replace(/\\r/g, "\r")
-      .replace(/\\t/g, "\t")
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, "\\");
-  };
-
-  const normalizeEscapedJsonish = (raw: string) => {
-    // Sometimes `messages/partial` streams a JSON string with quotes escaped:
-    // {\"title\":\"...\",\"body_markdown\":\"...\"}
-    // Normalize it so field extraction works.
-    return raw.includes('\\"') ? raw.replace(/\\"/g, '"') : raw;
-  };
-
-  const htmlToMarkdownLite = (html: string) => {
-    // Minimal HTML -> Markdown-ish conversion for streaming preview.
-    // Keeps it dependency-free and good enough for typewriter display.
-    return (
-      html
-        // Headings
-        .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, "# $1\n\n")
-        .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "## $1\n\n")
-        .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, "### $1\n\n")
-        .replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, "#### $1\n\n")
-        // Paragraphs / line breaks
-        .replace(/<p[^>]*>/gi, "")
-        .replace(/<\/p>/gi, "\n\n")
-        .replace(/<br\s*\/?>/gi, "\n")
-        // Lists
-        .replace(/<ul[^>]*>/gi, "\n")
-        .replace(/<\/ul>/gi, "\n")
-        .replace(/<ol[^>]*>/gi, "\n")
-        .replace(/<\/ol>/gi, "\n")
-        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
-        // Inline formatting
-        .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
-        .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
-        .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
-        .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
-        .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
-        // Strip remaining tags
-        .replace(/<\/?[^>]+>/g, "")
-        // Decode a few entities
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .trim()
-    );
-  };
-
-  const extractJsonStringArrayField = (raw: string, field: string) => {
-    const re = new RegExp(`\"${field}\"\\\\s*:\\\\s*\\[([^\\]]*)`, "g");
-    let match: RegExpExecArray | null = null;
-    let last: string | null = null;
-    // eslint-disable-next-line no-cond-assign
-    while ((match = re.exec(raw))) last = match[1] ?? null;
-    if (!last) return [] as string[];
-
-    const items = last.match(/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/g) ?? [];
-    return items
-      .map((s) => s.slice(1, -1))
-      .map((s) => {
-        try {
-          return JSON.parse(`"${s}"`);
-        } catch {
-          return s.replace(/\\"/g, '"');
-        }
-      })
-      .filter((s): s is string => typeof s === "string" && s.trim().length > 0);
-  };
-
   // ── Streaming text buffers — one per "phase" ──────────────────────────────
   // outlineStream  → accumulates tokens while LLM writes the outline JSON
   // contentStream  → accumulates tokens while LLM writes the final article
@@ -176,12 +168,6 @@ export function FreshGenerationView({
   // Which buffer should receive `messages/partial` tokens right now?
   const tokenTargetRef = useRef<"none" | "outline" | "content">("none");
   const [tokenTarget, setTokenTarget] = useState<"none" | "outline" | "content">("none");
-
-  // ── Typewriter — receives the growing string, continues from current index ─
-  // retypeOnChange: false → continues as tokens arrive (ChatGPT behaviour)
-  const { displayed: displayedOutline, isDone: outlineDone, skip: skipOutline } =
-    useTypewriter(outline.streamedText, { speed: 60 });
-
   const {
     userKeyword, country, primaryKeyword, suggestedKeywords,
     generatedContent, threadId, rejectedReason,
@@ -235,7 +221,6 @@ export function FreshGenerationView({
 
   const {
     displayed: displayedBodyMarkdown,
-    isDone: bodyMarkdownDone,
   } = useTypewriter(liveBodyMarkdown, {
     speed: 15,
     retypeOnChange: false
@@ -256,11 +241,14 @@ export function FreshGenerationView({
     } as any;
   })();
 
-  const [eeatInjecting, setEeatInjecting] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
+  const [enhancingDescription, setEnhancingDescription] = useState("")
 
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
   const contentParseTimerRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!showContentStream) return;
     if (allContent) return;
@@ -307,6 +295,7 @@ export function FreshGenerationView({
   // to the structured outline UI ASAP (even if the backend's outline interrupt
   // arrives later).
   const outlineParseTimerRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!outline.streamedText) return;
     if (tokenTargetRef.current !== "outline") return;
@@ -418,6 +407,7 @@ export function FreshGenerationView({
 
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
+        console.log("updates", updates)
 
         // Some graphs emit the outline in a "review_outline" envelope (not in __interrupt__)
         const reviewOutline = (updates as any)?.review_outline?.content?.outline;
@@ -426,39 +416,86 @@ export function FreshGenerationView({
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         }
 
-        if(updates?.generate_content){
-           setEeatInjecting(true);
+        if (updates?.review_outline) {
+          setIsEnhancing(true);
+          setEnhancingMsg("Generating Content...");
+          setEnhancingDescription("Creating the first draft based on the approved outline...");
         }
 
-        if (updates?.generate_content?.content?.final_content) {
-          // Stop routing partial tokens once we have the final object.
-          setTokenTarget("none");
-          tokenTargetRef.current = "none";
-          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+        if (updates?.generate_content) {
+          setEnhancingMsg("Injecting EEAT...");
+          setEnhancingDescription("Enhancing the content with experience, expertise, authority, and trust signals...");
         }
-        if (updates?.calculate_on_page_seo?.content?.review?.on_page_metrics) {
-          dispatch({ type: "SET_SEO_SCORE", payload: updates.calculate_on_page_seo.content.review.on_page_metrics });
+
+        if (updates?.inject_eeat) {
+          setEnhancingMsg("Humanizing Content...");
+          setEnhancingDescription("Refining the text to sound more natural, engaging, and human-like...");
         }
-        if (updates?.calculate_eeat_trust?.content?.review?.trust_score) {
-          dispatch({ type: "SET_TRUST_SCORE", payload: updates.calculate_eeat_trust.content.review.trust_score });
+
+        if (updates?.humanize_content) {
+          setEnhancingMsg("Calculating Readability...");
+          setEnhancingDescription("Analyzing the content to ensure it is clear and easy to read...");
         }
-        if (updates?.calculate_readability?.content?.review?.readability_metrics) {
-          dispatch({ type: "SET_READABILITY_SCORE", payload: updates.calculate_readability.content.review.readability_metrics });
+
+        if (updates?.calculate_readability) {
+          setEnhancingMsg("Calculating On-Page SEO...");
+          setEnhancingDescription("Evaluating SEO factors such as keywords, structure, and optimization...");
         }
-        if (updates?.content_engine?.content?.final_content) {
-          dispatch({
-            type: "SET_ALL_CONTENT",
-            payload: updates.content_engine.content.final_content,
-          });
-          dispatch({
-            type: "SET_GENERATED_CONTENT",
-            payload: updates.content_engine.content.final_content.body_markdown,
-          });
-          setTokenTarget("none");
-          tokenTargetRef.current = "none";
-          setEeatInjecting(false);
-          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+
+        if (updates?.calculate_on_page_seo) {
+          setEnhancingMsg("Reviewing Content...");
+          setEnhancingDescription("Performing a final review to improve clarity, quality, and consistency...");
         }
+
+        if (updates?.review_content) {
+          setEnhancingMsg("Generating Final Content...");
+          setEnhancingDescription("Preparing the finalized content for display in the editor...");
+        }
+
+        if (updates?.content_engine) {
+          setIsEnhancing(false);
+        }
+
+        // Centralized handling for nodes that emit content updates
+        const u = updates as any;
+        const nodeOutputs = [
+          u.content,
+          u.content_engine?.content,
+          u.generate_content?.content,
+          u.humanize_content?.content,
+          u.inject_eeat?.content,
+          u.review_content?.content,
+          u.calculate_readability?.content,
+          u.calculate_on_page_seo?.content,
+          u.calculate_eeat_trust?.content
+        ].filter(Boolean);
+
+        for (const output of nodeOutputs) {
+          const out = output as any;
+
+          if (out.final_content) {
+            dispatch({ type: "SET_ALL_CONTENT", payload: out.final_content });
+            if (out.final_content.body_markdown) {
+              dispatch({ type: "SET_GENERATED_CONTENT", payload: out.final_content.body_markdown });
+            }
+            setTokenTarget("none");
+            tokenTargetRef.current = "none";
+
+            dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+          }
+
+          if (out.outline) {
+            dispatch({ type: "SET_OUTLINE", payload: out.outline });
+          }
+
+          const review = out.review;
+          if (review) {
+            if (review.on_page_metrics) dispatch({ type: "SET_SEO_SCORE", payload: review.on_page_metrics });
+            if (review.trust_score) dispatch({ type: "SET_TRUST_SCORE", payload: review.trust_score });
+            if (review.readability_metrics) dispatch({ type: "SET_READABILITY_SCORE", payload: review.readability_metrics });
+          }
+        }
+
         if (updates.__interrupt__) {
           dispatch({ type: "SET_INTERRUPT", payload: updates.__interrupt__ });
         }
@@ -480,7 +517,6 @@ export function FreshGenerationView({
       dispatch({ type: "SET_LOADING_STEPS", payload: [] });
     }
   };
-
 
   // ─────────────────────────────────────────────────────────────────────────
   // Workflow handlers — UNCHANGED
@@ -643,7 +679,7 @@ export function FreshGenerationView({
   };
 
   return (
-    <>
+    <div className="relative">
       <div
         className={cn(
           "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
@@ -712,14 +748,14 @@ export function FreshGenerationView({
               }}
             />
 
-            {eeatInjecting && (
-              <div className="fixed inset-0 z-20 grid place-items-center bg-background/40 backdrop-blur-[3px]">
+            {isEnhancing && (
+              <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
                 <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
                   <div className="text-sm font-semibold text-foreground">
-                    Injecting EEAT…
+                    {enhancingMsg}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Enhancing credibility signals and trust scoring.
+                    {enhancingDescription}
                   </div>
                 </div>
               </div>
@@ -727,6 +763,6 @@ export function FreshGenerationView({
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }

@@ -36,6 +36,7 @@ export const integrationSchema = z.object({
   api_key: z.string().min(1, "API Key is required"),
   api_endpoint: endpointSchema,
   is_active: z.boolean(),
+  
 });
 
 export type IntegrationFormData = z.infer<typeof integrationSchema>;

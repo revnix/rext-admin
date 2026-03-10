@@ -25,6 +25,13 @@ export interface Integration {
   description?: string;
   api_key?: string; // Sometimes returned, sometimes hidden
   // Add other fields as per API response
+  site: {
+    id: string;
+    site_url: string;
+    api_key: string;
+    api_endpoint: string;
+    is_active: boolean;
+  }
 }
 
 export interface CreateIntegrationRequest {

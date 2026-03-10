@@ -21,7 +21,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
@@ -159,6 +160,11 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
   } = props;
 
+  const [activeSection, setActiveSection] = useState<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+
+
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
@@ -187,6 +193,53 @@ function ContentEditorInner(props: ContentEditorProps) {
     message: "",
   });
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
+  
+  // Derive sidebar headings from the actual body content
+  const sidebarSections = useMemo(() => {
+    if (!body) return outline?.sections || [];
+
+    // Extract ATX-style headings (# Heading)
+    const matches = Array.from(body.matchAll(/^#{1,6}\s+(.*)$/gm));
+
+    if (matches.length > 0) {
+      return matches.map(m => ({
+        heading: m[1].trim(),
+      }));
+    }
+
+    // Fallback to planned outline if no headings found in body yet
+    return outline?.sections || [];
+  }, [body, outline]);
+
+  // Sync active section on scroll
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const headings = Array.from(container.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+      let currentSectionIdx = -1;
+
+      for (let i = 0; i < headings.length; i++) {
+        const rect = headings[i].getBoundingClientRect();
+        // The container's top is roughly its position in viewport
+        // We use a 160px buffer for the sticky-like offset
+        if (rect.top <= 200) {
+          currentSectionIdx = i;
+        } else {
+          break;
+        }
+      }
+
+      if (currentSectionIdx !== -1) {
+        setActiveSection(currentSectionIdx);
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial check
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [sidebarSections, body]);
 
   const getContentPayload = () => ({
     title: displayTitle,
@@ -327,63 +380,88 @@ function ContentEditorInner(props: ContentEditorProps) {
     setIntegrationModalOpen(false);
   };
 
-  {!body && (
-    <div className="space-y-3 animate-pulse">
-      <div className="h-4 bg-muted rounded w-full" />
-      <div className="h-4 bg-muted rounded w-5/6" />
-      <div className="h-4 bg-muted rounded w-4/6" />
-    </div>
-  )}
+  {
+    !body && (
+      <div className="space-y-3 animate-pulse">
+        <div className="h-4 bg-muted rounded w-full" />
+        <div className="h-4 bg-muted rounded w-5/6" />
+        <div className="h-4 bg-muted rounded w-4/6" />
+      </div>
+    )
+  }
 
   return (
     <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t">
       <div className="flex flex-1 overflow-hidden relative border-b border-border">
         {/* Left Sidebar: Outline (never render inside editor body) */}
-        {outline && outline.sections.length > 0 && (
-          <aside className="hidden lg:flex w-48 border-r border-border bg-sidebar/50 flex-col py-6 mt-1.5">
-            <div className="px-4 mb-6">
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">
-                Structure
-              </h3>
-              {outline.sections.map((sec, i) => (
-                <button
-                  type="button"
-                  key={sec.heading}
-                  onClick={() => {
-                    const id = slugify(sec.heading);
-                    const element =
-                      document.getElementById(id) ||
-                      Array.from(
-                        document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
-                      ).find(
-                        (h) =>
-                          h.textContent?.trim().toLowerCase() ===
-                          sec.heading.trim().toLowerCase(),
-                      );
+        {sidebarSections.length > 0 && (
+          <aside className="hidden lg:flex w-56 border-r border-border bg-sidebar/50 flex-col py-8 mt-1.5 shrink-0 overflow-y-auto">
+            <div className="px-6 space-y-8">
+              <div>
+                <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+                  Structure
+                </h3>
+                <nav className="space-y-1">
+                  {sidebarSections.map((sec, i) => (
+                    <button
+                      type="button"
+                      key={`${sec.heading}-${i}`}
+                      onClick={() => {
+                        const id = slugify(sec.heading);
+                        const element =
+                          document.getElementById(id) ||
+                          Array.from(
+                            document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+                          ).find(
+                            (h) =>
+                              h.textContent?.trim().toLowerCase().includes(sec.heading.trim().toLowerCase()) ||
+                              sec.heading.trim().toLowerCase().includes(h.textContent?.trim().toLowerCase() || "")
+                          );
 
-                    if (element) {
-                      element.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      });
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 px-1 py-1 text-sm text-left cursor-pointer hover:bg-muted/50 rounded-sm"
-                >
-                  <span className="text-sm font-mono text-muted-foreground">
-                    {i + 1}
-                  </span>
-                  <span className="truncate text-foreground/80">
-                    {sec.heading}
-                  </span>
-                </button>
-              ))}
+                        if (element) {
+                          element.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          });
+                        }
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative",
+                        activeSection === i
+                          ? "text-primary font-bold"
+                          : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                      )}
+                    >
+                      {activeSection === i && (
+                        <motion.div
+                          layoutId="active-outline"
+                          className="absolute inset-0 bg-primary/5 border border-primary/10 rounded-xl"
+                          initial={false}
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <span className={cn(
+                        "relative text-[10px] font-mono transition-colors",
+                        activeSection === i ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary/60"
+                      )}>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span className="relative truncate leading-none">
+                        {sec.heading}
+                      </span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
             </div>
           </aside>
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-background px-2 py-4 mt-2">
+        <main
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto bg-background px-2 py-4 mt-2 scroll-smooth"
+        >
           <article className="max-w-3xl mx-5">
             <div>
               {isEditing ? (
@@ -565,30 +643,50 @@ function ContentEditorInner(props: ContentEditorProps) {
           </Dialog>
 
           <section className="space-y-4">
-            <div className="flex items-center gap-2 font-bold">
-              <Activity size={16} className="text-emerald-500" />
-              <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
-                Performance & SEO
-              </h4>
-            </div>
-
-            <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
-              <h4 className="text-lg font-bold text-foreground">Readability</h4>
-
-              <div className="space-y-2">
-                <div className={`text-xl font-bold ${color}`}>
-                  {label} ({score.toFixed(1)})
+            {score ?
+              <>
+                <div className="flex items-center gap-2 font-bold">
+                  <Activity size={16} className="text-emerald-500" />
+                  <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Performance & SEO
+                  </h4>
                 </div>
 
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${barColor} transition-all`}
-                    style={{ width: progressWidth }}
-                  />
+                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
+                  <h4 className="text-lg font-bold text-foreground">Readability</h4>
+
+                  <div className="space-y-2">
+                    <div className={`text-xl font-bold ${color}`}>
+                      {label} ({score.toFixed(1)})
+                    </div>
+
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${barColor} transition-all`}
+                        style={{ width: progressWidth }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+              :
+              <div className="space-y-4 animate-pulse">
+                <div className="flex items-center gap-2 font-bold">
+                  <Activity size={16} className="text-muted-foreground/30" />
+                  <div className="h-3 bg-muted rounded w-32" />
+                </div>
+
+                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
+                  <div className="h-5 bg-muted rounded w-28" />
+
+                  <div className="space-y-2">
+                    <div className="h-7 bg-muted rounded w-40" />
+
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden" />
+                  </div>
                 </div>
               </div>
-            </div>
-
+            }
             {seoScore ? (
               <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
                 <h4 className="text-lg font-bold text-foreground">
