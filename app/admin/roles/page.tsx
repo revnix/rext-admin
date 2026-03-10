@@ -333,7 +333,7 @@ export default function AdminRolesPage() {
   ];
 
   const systemRolesCount =
-    rolesData?.roles.filter((r) => r.is_system_role).length || 0;
+    rolesData?.roles?.filter((r) => r.is_system_role).length || 0;
   const customRolesCount = (rolesData?.count || 0) - systemRolesCount;
 
   return (

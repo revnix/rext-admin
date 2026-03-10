@@ -446,6 +446,11 @@ export type StreamUpdates = Partial<WREXT> & {
       final_content?: FinalContent;
     };
   };
+  content_engine?: {
+    content?: {
+      final_content?: FinalContent;
+    };
+  };
   calculate_on_page_seo?: {
     content?: {
       review?: {

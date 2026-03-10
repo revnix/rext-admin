@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  *
  * @example
  * ```tsx
- * {isComplete && <Celebration onComplete={() => console.log('Done!')} />}
+ * {isComplete && <Celebration onComplete={() => {}} />}
  * ```
  */
 
@@ -67,16 +67,17 @@ export function Celebration({ onComplete, duration = 3000 }: CelebrationProps) {
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => (
           <div
-            key={`particle-${i}-${Math.random()}`}
+            // biome-ignore lint/suspicious/noArrayIndexKey: decorative particles have no natural ID
+            key={`particle - ${i} `}
             className={cn(
               "absolute w-2 h-2 rounded-full bg-primary/40",
               "animate-float",
             )}
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${2 + Math.random() * 2}s`,
+              left: `${Math.random() * 100}% `,
+              top: `${Math.random() * 100}% `,
+              animationDelay: `${Math.random() * 2} s`,
+              animationDuration: `${2 + Math.random() * 2} s`,
             }}
           />
         ))}

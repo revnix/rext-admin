@@ -11,10 +11,9 @@ import { Lightbulb } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { TextInput } from "@/components/ui/typeform/text-input";
 import {
-  getMotionVariants,
-  questionItemVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -38,10 +37,7 @@ export function SubjectQuestion({
   isLoading = false,
 }: SubjectQuestionProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus the input when component mounts

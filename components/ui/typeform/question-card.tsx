@@ -10,11 +10,13 @@
 import { motion } from "framer-motion";
 import * as React from "react";
 import {
-  getMotionVariants,
-  questionContentVariants,
-  questionItemVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import {
+  questionContentVariants,
+  questionItemVariants,
+  useTypeformMotionVariants,
+} from "./motion";
 import { cn } from "@/lib/utils";
 import type { QuestionCardProps } from "@/types/typeform";
 
@@ -35,14 +37,8 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
     ref,
   ) => {
     const prefersReducedMotion = useReducedMotion();
-    const contentVariants = getMotionVariants(
-      questionContentVariants,
-      prefersReducedMotion,
-    );
-    const itemVariants = getMotionVariants(
-      questionItemVariants,
-      prefersReducedMotion,
-    );
+    const contentVariants = useTypeformMotionVariants(questionContentVariants);
+    const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
     const autoId = React.useId();
     const titleId = `${questionId ?? autoId}-title`;
@@ -70,14 +66,12 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
           description && description.length > 100 ? "lg:py-4" : "lg:py-3",
           className,
         )}
-        style={
-          {
-            // CSS custom properties for responsive spacing
-            "--question-spacing-base": "1rem",
-            "--question-spacing-md": "1.5rem",
-            "--question-spacing-lg": "2rem",
-          } as React.CSSProperties
-        }
+        style={{
+          // CSS custom properties for responsive spacing
+          "--question-spacing-base": "1rem",
+          "--question-spacing-md": "1.5rem",
+          "--question-spacing-lg": "2rem",
+        }}
         variants={contentVariants}
         initial="hidden"
         animate="visible"

@@ -39,18 +39,18 @@ export function CustomIntegrationConfiguration({
     resolver: zodResolver(integrationSchema),
     defaultValues: {
       site_url:
-        integration.site_url ||
+        integration.site?.site_url ||
         (integration.config?.url as string | undefined) ||
         "",
       api_key:
-        integration.api_key ||
+        integration.site?.api_key ||
         (integration.config?.apiKey as string | undefined) ||
         "",
       api_endpoint:
+        integration.site?.api_endpoint ||
         (integration.config?.api_endpoint as string | undefined) ||
-        integration.api_endpoint ||
         "",
-      is_active: integration.is_active ?? true,
+      is_active: integration.site?.is_active ?? true,
     },
   });
 

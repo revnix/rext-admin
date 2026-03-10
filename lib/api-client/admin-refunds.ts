@@ -113,12 +113,9 @@ export function createAdminRefundsNamespace(client: ApiClient) {
       const queryString = params.toString();
       const url = `${ENDPOINTS.ADMIN_REFUNDS.list}${queryString ? `?${queryString}` : ""}`;
 
-      const response = await client.request<
-        RefundApiResponse<RefundListResponse>
-      >(url, {
+      return client.request<RefundListResponse>(url, {
         method: "GET",
       });
-      return response.data;
     },
 
     /**
@@ -128,13 +125,9 @@ export function createAdminRefundsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     get: async (refundId: string): Promise<Refund> => {
-      const response = await client.request<RefundApiResponse<Refund>>(
-        ENDPOINTS.ADMIN_REFUNDS.get(refundId),
-        {
-          method: "GET",
-        },
-      );
-      return response.data;
+      return client.request<Refund>(ENDPOINTS.ADMIN_REFUNDS.get(refundId), {
+        method: "GET",
+      });
     },
 
     /**
@@ -146,14 +139,14 @@ export function createAdminRefundsNamespace(client: ApiClient) {
     create: async (
       data: RefundCreateRequest,
     ): Promise<RefundCreateResponse> => {
-      const response = await client.request<
-        RefundApiResponse<RefundCreateResponse>
-      >(ENDPOINTS.ADMIN_REFUNDS.create, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      return response.data;
+      return client.request<RefundCreateResponse>(
+        ENDPOINTS.ADMIN_REFUNDS.create,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
     },
   };
 }

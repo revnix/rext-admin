@@ -11,10 +11,9 @@ import { Check } from "lucide-react";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  getMotionVariants,
-  questionItemVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { questionItemVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 
 export interface MultiSelectCardProps {
@@ -23,9 +22,6 @@ export interface MultiSelectCardProps {
 
   /** Option description */
   description?: string;
-
-  /** Option value */
-  value: string;
 
   /** Whether this option is selected */
   selected: boolean;
@@ -49,7 +45,6 @@ export interface MultiSelectCardProps {
 export function MultiSelectCard({
   label,
   description,
-  value: _value,
   selected,
   onToggle,
   icon,
@@ -58,10 +53,7 @@ export function MultiSelectCard({
   delay = 0,
 }: MultiSelectCardProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   return (
     <motion.div
@@ -126,12 +118,11 @@ export function MultiSelectCard({
             {description && (
               <div
                 className={cn(
-                  "text-sm leading-relaxed break-words hyphens-auto word-wrap-anywhere",
+                  "text-sm leading-relaxed hyphens-auto wrap-break-word",
                   selected
                     ? "text-muted-foreground"
                     : "text-muted-foreground/80",
                 )}
-                style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
               >
                 {description}
               </div>
@@ -142,3 +133,5 @@ export function MultiSelectCard({
     </motion.div>
   );
 }
+
+MultiSelectCard.displayName = "MultiSelectCard";

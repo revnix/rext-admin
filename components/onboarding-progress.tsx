@@ -124,7 +124,7 @@ export function OnboardingProgress({
 
   // Get feature flags from stats (via the hook)
   // For now, we'll assume builders are always available
-  // TODO: Get from subscription via stats endpoint
+  // TODO(TASK-126): Get from subscription via stats endpoint
   const hasTopicBuilder = true;
   const hasContentBuilder = true;
 

@@ -334,6 +334,8 @@ export default {
       if (trigger === "update" && session) {
         if (session.accessToken) token.accessToken = session.accessToken;
         if (session.refreshToken) token.refreshToken = session.refreshToken;
+        if (session.accessTokenExpires)
+          token.accessTokenExpires = session.accessTokenExpires;
 
         // Update non-sensitive user details only
         // SECURITY: Do NOT accept role or permissions from client-side update()

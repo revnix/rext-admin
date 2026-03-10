@@ -8,16 +8,31 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Heart, Sparkles, Trophy } from "lucide-react";
+import { Check, Heart, PartyPopper, Sparkles, Trophy } from "lucide-react";
 import * as React from "react";
 import {
-  celebrationVariants,
-  getMotionVariants,
+  MOTION_DURATION,
   useReducedMotion,
 } from "@/lib/animations";
+import { celebrationVariants, useTypeformMotionVariants } from "./motion";
 import { announceToScreenReader, triggerConfetti } from "@/lib/typeform-utils";
 import { cn } from "@/lib/utils";
 import type { CelebrationProps } from "@/types/typeform";
+
+function resolveConfettiParticleCount(
+  type: "completion" | "milestone" | "selection",
+): number {
+  if (type === "completion") return 100;
+  if (type === "milestone") return 50;
+  return 30;
+}
+
+function resolveConfettiSpread(
+  type: "completion" | "milestone" | "selection",
+): number {
+  if (type === "completion") return 70;
+  return 45;
+}
 
 // Confetti particle component
 const ConfettiParticle: React.FC<{
@@ -84,10 +99,10 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
     ref,
   ) => {
     const prefersReducedMotion = useReducedMotion();
-    const motionVariants = getMotionVariants(
-      celebrationVariants,
-      prefersReducedMotion,
-    );
+    const motionVariants = useTypeformMotionVariants(celebrationVariants);
+    // Completion timeout ref for cleanup
+    const completionTimeoutRef = React.useRef<number | null>(null);
+
     const floatIds = React.useMemo(
       () =>
         Array.from(
@@ -113,7 +128,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
           return {
             icon: Check,
             title: "Completed!",
-            subtitle: "Well done! 🎉",
+            subtitle: "Well done!",
             colors: ["green", "emerald", "teal"],
           };
         case "selection":
@@ -145,25 +160,24 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
       // Trigger confetti based on celebration type
       if (!prefersReducedMotion) {
         const confettiConfig = {
-          particleCount:
-            type === "completion" ? 100 : type === "milestone" ? 50 : 30,
-          spread: type === "completion" ? 70 : 45,
+          particleCount: resolveConfettiParticleCount(type),
+          spread: resolveConfettiSpread(type),
           origin: { x: 0.5, y: 0.6 },
           colors: colors.map((color) => {
             // Convert Tailwind color names to hex values
             const colorMap: Record<string, string> = {
-              blue: "#3b82f6",
-              purple: "#8b5cf6",
-              indigo: "#6366f1",
-              green: "#10b981",
-              emerald: "#059669",
-              teal: "#14b8a6",
-              pink: "#ec4899",
-              rose: "#f43f5e",
-              red: "#ef4444",
-              yellow: "#eab308",
-              orange: "#f97316",
-              amber: "#f59e0b",
+              blue: "#3641f5", // Brand.600
+              purple: "#6938ef", // Purple.600
+              indigo: "#444ce7", // Indigo.600
+              green: "#12b76a", // Success.500
+              emerald: "#039855", // Success.600
+              teal: "#14b8a6", // Teal standard
+              pink: "#dd2590", // Pink.600
+              rose: "#ee46bc", // Pink.500
+              red: "#f04438", // Error.500
+              yellow: "#f79009", // Warning.500
+              orange: "#dc6803", // Warning.600
+              amber: "#f59e0b", // Warning standard
             };
             return colorMap[color] || "#3b82f6";
           }),
@@ -172,12 +186,23 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
         triggerConfetti(confettiConfig);
       }
 
+      // Clear any existing timeout before creating a new one
+      if (completionTimeoutRef.current !== null) {
+        window.clearTimeout(completionTimeoutRef.current);
+      }
+
       // Auto-complete after duration
-      const timer = setTimeout(() => {
+      completionTimeoutRef.current = window.setTimeout(() => {
         onComplete?.();
+        completionTimeoutRef.current = null;
       }, duration);
 
-      return () => clearTimeout(timer);
+      return () => {
+        if (completionTimeoutRef.current !== null) {
+          window.clearTimeout(completionTimeoutRef.current);
+          completionTimeoutRef.current = null;
+        }
+      };
     }, [
       active,
       duration,
@@ -197,7 +222,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
       return Array.from({ length: particleCount }, (_, i) => ({
         id: i,
         delay: Math.random() * 0.5,
-        duration: 1.5 + Math.random() * 0.5,
+        duration: MOTION_DURATION.shimmer + Math.random() * 0.5,
         x: 20 + Math.random() * 60,
         y: 30 + Math.random() * 40,
         color: colors[Math.floor(Math.random() * colors.length)],
@@ -264,7 +289,10 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                     : { scale: [1, 1.1, 1] }
                 }
                 transition={{
-                  duration: type === "completion" ? 0.6 : 0.3,
+                  duration:
+                    type === "completion"
+                      ? MOTION_DURATION.medium
+                      : MOTION_DURATION.veryFast,
                   delay: 0.1,
                 }}
               >
@@ -276,19 +304,22 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                 className="relative z-10 text-xl font-bold text-foreground"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ duration: MOTION_DURATION.veryFast, delay: 0.2 }}
               >
                 {title}
               </motion.h2>
 
               {/* Subtitle */}
               <motion.p
-                className="relative z-10 text-muted-foreground"
+                className="relative z-10 flex items-center gap-1 text-muted-foreground"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ duration: MOTION_DURATION.veryFast, delay: 0.3 }}
               >
-                {subtitle}
+                <span>{subtitle}</span>
+                {type === "completion" ? (
+                  <PartyPopper className="h-4 w-4" aria-hidden="true" />
+                ) : null}
               </motion.p>
 
               {/* Progress Bar for Milestone */}
@@ -297,7 +328,10 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                   className="relative z-10 w-full max-w-xs"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{
+                    duration: MOTION_DURATION.veryFast,
+                    delay: 0.4,
+                  }}
                 >
                   <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                     <motion.div
@@ -308,7 +342,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                       initial={{ width: "0%" }}
                       animate={{ width: `${Math.round(progress)}%` }}
                       transition={{
-                        duration: 1,
+                        duration: MOTION_DURATION.long,
                         delay: 0.5,
                         ease: "easeOut",
                       }}
@@ -355,7 +389,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                     scale: [1, 1.5, 1],
                   }}
                   transition={{
-                    duration: 2 + Math.random(),
+                    duration: MOTION_DURATION.floating + Math.random(),
                     repeat: Infinity,
                     delay: Math.random() * 2,
                   }}

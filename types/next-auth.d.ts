@@ -9,6 +9,7 @@ declare module "next-auth" {
       display_name?: string | null;
       image: string | null;
       accessToken: string;
+      refreshToken: string;
       role?: string; // User's primary role
       permissions?: string[]; // User's permissions array
     } & DefaultSession["user"];

@@ -2,6 +2,10 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { Workspace, WorkspaceContextState } from "@/types/workspace";
 import { getStorage } from "@/lib/storage";
+import {
+  createPersistHydrationSlice,
+  onPersistHydrated,
+} from "@/lib/zustand-persist-hydration";
 
 /**
  * Workspace Context Store
@@ -14,11 +18,11 @@ export const useWorkspaceContextStore = create<WorkspaceContextState>()(
     persist(
       (set) => ({
         // Initial state
+        ...createPersistHydrationSlice<WorkspaceContextState>(set),
         currentWorkspace: null,
         workspaceList: [],
         recentWorkspaces: [],
         lastWorkspacePath: null,
-        _hasHydrated: false,
 
         // ============================================================================
         // WORKSPACE CONTEXT ACTIONS
@@ -156,10 +160,6 @@ export const useWorkspaceContextStore = create<WorkspaceContextState>()(
         // ============================================================================
         // UTILITY ACTIONS
         // ============================================================================
-
-        setHasHydrated: (hydrated) => {
-          set({ _hasHydrated: hydrated });
-        },
       }),
       {
         name: "workspace-context-store",
@@ -171,8 +171,8 @@ export const useWorkspaceContextStore = create<WorkspaceContextState>()(
           lastWorkspacePath: state.lastWorkspacePath,
           _hasHydrated: state._hasHydrated,
         }),
-        onRehydrateStorage: () => (state) => {
-          state?.setHasHydrated(true);
+        onRehydrateStorage: () => (state, error) => {
+          onPersistHydrated(state, error);
         },
       },
     ),

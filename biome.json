@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
   "css": {
     "parser": {
       "cssModules": true,
@@ -33,6 +33,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "style": {
+        "noNestedTernary": "warn"
+      },
       "suspicious": {
         "noUnknownAtRules": "off",
         "noConsole": {

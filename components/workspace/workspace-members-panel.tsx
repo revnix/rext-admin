@@ -94,7 +94,6 @@ export function WorkspaceMembersPanel({
     queryFn: () => apiClient.members.list(workspace.id),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
-  // console.log("members", membersResponse);
 
   const members = membersResponse?.members || [];
 
@@ -272,9 +271,8 @@ export function WorkspaceMembersPanel({
       </Button>
       <PermissionGuard
         permission={MEMBER_PERMISSIONS.INVITE}
-        showLockedTooltip
+        showTooltip
         tooltipMessage="Only workspace admins can invite members"
-        showLockIcon
       >
         <Button
           size="sm"

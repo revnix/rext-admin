@@ -386,9 +386,9 @@ export function ResearchSettingsStep({
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
-              {getSmartRecommendations.map((recommendation, index) => (
+              {getSmartRecommendations.map((recommendation) => (
                 <p
-                  key={`recommendation-${index}-${recommendation.slice(0, 20)}`}
+                  key={`recommendation-${recommendation}-${recommendation.slice(0, 20)}`}
                   className="text-blue-800 dark:text-blue-200"
                 >
                   • {recommendation}

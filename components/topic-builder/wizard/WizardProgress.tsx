@@ -11,10 +11,9 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useCallback } from "react";
 import {
-  getMotionVariants,
-  progressBarVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { progressBarVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { QuestionConfig } from "@/types/wizard";
 
@@ -55,10 +54,7 @@ export function WizardProgress({
   compact = false,
 }: WizardProgressProps) {
   const prefersReducedMotion = useReducedMotion();
-  const motionVariants = getMotionVariants(
-    progressBarVariants,
-    prefersReducedMotion,
-  );
+  const motionVariants = useTypeformMotionVariants(progressBarVariants);
 
   const handleStepClick = useCallback(
     (stepIndex: number) => {

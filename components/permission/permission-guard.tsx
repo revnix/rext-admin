@@ -32,8 +32,6 @@ interface PermissionGuardProps {
   showTooltip?: boolean;
   tooltipMessage?: string;
   requiredRole?: string;
-  showLockedTooltip?: boolean;
-  showLockIcon?: boolean;
 }
 
 /**
@@ -120,11 +118,9 @@ export function PermissionGuard({
   showLoading = true,
   loadingVariant = "skeleton",
   loadingMessage,
-  showLockedTooltip = false,
   showTooltip = false,
   tooltipMessage,
   requiredRole,
-  showLockIcon = false,
 }: PermissionGuardProps) {
   // 1. Determine Workspace ID (Try providers, then props)
   const permissionWsId = useCurrentWorkspaceId();

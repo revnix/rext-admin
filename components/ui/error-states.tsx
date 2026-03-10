@@ -12,7 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Route } from "next";
+import { log } from "@/lib/logger";
+import type { Route } from "next";
 
 /**
  * Inline error alert for form/API errors
@@ -115,6 +116,8 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+const errorBoundaryLog = log.forComponent("ErrorBoundary");
+
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
@@ -131,8 +134,9 @@ export class ErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error in development
     if (process.env.NODE_ENV === "development") {
-      // biome-ignore lint/suspicious/noConsole: Error logging for development debugging
-      console.error("ErrorBoundary caught an error:", error, errorInfo);
+      errorBoundaryLog.error("ErrorBoundary caught an error", error, {
+        componentStack: errorInfo.componentStack,
+      });
     }
   }
 

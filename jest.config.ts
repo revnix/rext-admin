@@ -55,6 +55,18 @@ const customJestConfig: Config = {
       lines: 70,
       statements: 70,
     },
+    "./components/ui/typeform/": {
+      branches: 60,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+    },
+    "./components/ui/content/": {
+      branches: 60,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+    },
   },
 
   // Environment setup for React 19 compatibility

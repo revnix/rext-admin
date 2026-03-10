@@ -1,7 +1,5 @@
 "use client";
 
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -77,7 +75,7 @@ export function SignupForm({
       const isInvitationSignup = hasValidInvitation && !!invitationToken;
 
       // Build request payload
-      const payload: Record<string, any> = {
+      const payload: Record<string, string> = {
         full_name: data.full_name,
         email: data.email,
         password: data.password,
@@ -196,7 +194,7 @@ export function SignupForm({
                 name="full_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">
+                    <FormLabel className="text-foreground!">
                       Full Name
                     </FormLabel>
                     <FormControl>
@@ -217,7 +215,7 @@ export function SignupForm({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">
+                    <FormLabel className="text-foreground!">
                       Email
                       {hasValidInvitation && (
                         <span className="ml-2 text-xs text-muted-foreground">
@@ -233,7 +231,7 @@ export function SignupForm({
                         readOnly={hasValidInvitation}
                         className={cn(
                           hasValidInvitation &&
-                          "bg-muted cursor-not-allowed opacity-75",
+                            "bg-muted cursor-not-allowed opacity-75",
                         )}
                         {...field}
                       />
@@ -248,7 +246,7 @@ export function SignupForm({
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">Password</FormLabel>
+                    <FormLabel className="text-foreground!">Password</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Create a strong password"
@@ -267,7 +265,7 @@ export function SignupForm({
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-foreground">
+                    <FormLabel className="text-foreground!">
                       Confirm Password
                     </FormLabel>
                     <FormControl>
@@ -285,7 +283,7 @@ export function SignupForm({
 
               <Button
                 type="submit"
-                className="w-full h-11 !shadow-none"
+                className="w-full h-11 shadow-none!"
                 disabled={isLoading || isLoadingInvitation}
               >
                 {isLoading
@@ -296,7 +294,7 @@ export function SignupForm({
                     ? "Create Account & Join Workspace"
                     : "Create Account"}
               </Button>
-              <div className="!mt-0 text-center text-sm">
+              <div className="mt-0! text-center text-sm">
                 Already have an account?{" "}
                 <Link
                   href="/login"

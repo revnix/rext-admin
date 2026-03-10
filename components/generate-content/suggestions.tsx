@@ -1,6 +1,6 @@
 import type { SEORESULT } from "@/types/generate-content";
 import { Zap, Compass, TrendingUp, ArrowRight, Loader2 } from "lucide-react";
-import { ChartRadialStacked } from "../ui/content/chart-radial-stacked";
+import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { Button } from "../ui/button";
@@ -80,7 +80,7 @@ export function SuggestionsSection({
             <Zap className="w-4 h-4 text-primary" />
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <ChartRadialStacked difficultyScore={difficultyScore} />
+            <SafeChartRadialStacked difficultyScore={difficultyScore} />
           </div>
         </motion.div>
 

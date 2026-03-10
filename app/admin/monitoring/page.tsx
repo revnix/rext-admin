@@ -3,13 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BarChart3, Server } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorLogsTable } from "@/components/admin/monitoring/error-logs-table";
 import { SystemHealthCards } from "@/components/admin/monitoring/system-health-cards";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorPage } from "@/components/ui/error-states";
 
 // Lazy load UsageCharts component (uses recharts - heavy library ~400KB)
 const UsageCharts = dynamic(
@@ -89,7 +88,7 @@ interface ErrorLog {
 }
 
 interface ErrorLogData {
-  logs: ErrorLog[];
+  items: ErrorLog[];
   pagination: {
     total: number;
     page: number;
@@ -141,16 +140,12 @@ export default function MonitoringPage() {
   const {
     data: healthData,
     isLoading: healthLoading,
-    error: healthError,
-    refetch: refetchHealth,
   } = useQuery({
     queryKey: ["admin", "monitoring", "system-health"],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: SystemHealthData }>(
-          "/api/v1/admin/monitoring/system-health",
-        )
-        .then((res) => res.data);
+      return apiClient.request<SystemHealthData>(
+        "/api/v1/admin/monitoring/system-health",
+      );
     },
     refetchInterval: 60000, // Refresh every 60 seconds
   });
@@ -176,9 +171,7 @@ export default function MonitoringPage() {
         start_date: errorLogFilters.start_date || undefined,
         end_date: errorLogFilters.end_date || undefined,
       });
-      return apiClient
-        .request<{ data: ErrorLogData }>(url)
-        .then((res) => res.data);
+      return apiClient.request<ErrorLogData>(url);
     },
   });
 
@@ -186,11 +179,9 @@ export default function MonitoringPage() {
   const { data: usageStatsData, isLoading: usageStatsLoading } = useQuery({
     queryKey: ["admin", "monitoring", "usage-stats", usagePeriod],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: UsageStatsData }>(
-          `/api/v1/admin/monitoring/usage-stats?period=${usagePeriod}`,
-        )
-        .then((res) => res.data);
+      return apiClient.request<UsageStatsData>(
+        `/api/v1/admin/monitoring/usage-stats?period=${usagePeriod}`,
+      );
     },
   });
 
@@ -198,26 +189,24 @@ export default function MonitoringPage() {
   const { data: usageTrendsData, isLoading: usageTrendsLoading } = useQuery({
     queryKey: ["admin", "monitoring", "usage-trends"],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: UsageTrendsData }>(
-          "/api/v1/admin/monitoring/usage-stats/trends?days=7",
-        )
-        .then((res) => res.data);
+      return apiClient.request<UsageTrendsData>(
+        "/api/v1/admin/monitoring/usage-stats/trends?days=7",
+      );
     },
   });
 
-  if (healthError) {
-    return (
-      <ErrorPage
-        title="Failed to load system health"
-        message="System monitoring data is currently unavailable."
-        retry={() => void refetchHealth()}
-      />
-    );
-  }
+  // if (healthError) {
+  //   return (
+  //     <ErrorPage
+  //       title="Failed to load system health"
+  //       message="System monitoring data is currently unavailable."
+  //       retry={() => void refetchHealth()}
+  //     />
+  //   );
+  // }
 
   const health = healthData;
-  const errorLogs = (errorLogsData as ErrorLogData | undefined)?.logs || [];
+  const errorLogs = (errorLogsData as ErrorLogData | undefined)?.items || [];
   const errorLogsPagination = (errorLogsData as ErrorLogData | undefined)
     ?.pagination;
   const usageStats = usageStatsData;

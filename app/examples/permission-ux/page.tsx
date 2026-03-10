@@ -99,7 +99,7 @@ export default function PermissionUXExamplesPage() {
                 {/* These will be disabled with tooltips if user lacks permission */}
                 <PermissionGuard
                   permission={CONTENT_PERMISSIONS.UPDATE}
-                  showLockedTooltip
+                  showTooltip
                 >
                   <Button variant="outline">
                     <Edit className="h-4 w-4 mr-2" />
@@ -109,8 +109,7 @@ export default function PermissionUXExamplesPage() {
 
                 <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
-                  showLockedTooltip
-                  showLockIcon
+                  showTooltip
                 >
                   <Button variant="outline">
                     <Users className="h-4 w-4 mr-2" />
@@ -120,9 +119,8 @@ export default function PermissionUXExamplesPage() {
 
                 <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.UPDATE}
-                  showLockedTooltip
+                  showTooltip
                   tooltipMessage="Contact your workspace admin for access"
-                  showLockIcon
                 >
                   <Button variant="outline">
                     <Settings className="h-4 w-4 mr-2" />
@@ -191,7 +189,7 @@ export default function PermissionUXExamplesPage() {
 
                 <PermissionGuard
                   permission={CONTENT_PERMISSIONS.UPDATE}
-                  showLockedTooltip
+                  showTooltip
                 >
                   <Button variant="outline" size="sm">
                     <Edit className="h-3 w-3 mr-2" />
@@ -201,8 +199,7 @@ export default function PermissionUXExamplesPage() {
 
                 <PermissionGuard
                   permission={CONTENT_PERMISSIONS.DELETE}
-                  showLockedTooltip
-                  showLockIcon
+                  showTooltip
                 >
                   <Button variant="destructive" size="sm">
                     <Trash2 className="h-3 w-3 mr-2" />
@@ -220,7 +217,7 @@ export default function PermissionUXExamplesPage() {
               <div className="flex gap-2">
                 <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.UPDATE}
-                  showLockedTooltip
+                  showTooltip
                 >
                   <Button variant="outline" size="sm">
                     <Settings className="h-3 w-3 mr-2" />
@@ -230,8 +227,7 @@ export default function PermissionUXExamplesPage() {
 
                 <PermissionGuard
                   permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
-                  showLockedTooltip
-                  showLockIcon
+                  showTooltip
                 >
                   <Button variant="outline" size="sm">
                     <Users className="h-3 w-3 mr-2" />
@@ -241,9 +237,8 @@ export default function PermissionUXExamplesPage() {
 
                 <PermissionGuard
                   permission={SUBSCRIPTION_PERMISSIONS.READ}
-                  showLockedTooltip
+                  showTooltip
                   tooltipMessage="Only workspace owners can view subscription"
-                  showLockIcon
                 >
                   <Button variant="outline" size="sm">
                     <CreditCard className="h-3 w-3 mr-2" />

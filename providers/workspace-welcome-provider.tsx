@@ -10,7 +10,7 @@ import { MODAL_DELAYS } from "@/lib/constants/motion";
 import { session } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
 
-interface WorkspaceWelcomeProviderProps {
+interface WorkspaceWelcomeGateProps {
   children: React.ReactNode;
 }
 
@@ -38,9 +38,7 @@ interface WelcomeData {
  * The welcome data is stored in sessionStorage by the invitation
  * acceptance flow and consumed here.
  */
-export function WorkspaceWelcomeProvider({
-  children,
-}: WorkspaceWelcomeProviderProps) {
+export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
   const { status } = useSession();
   const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -137,3 +135,6 @@ export function storeWelcomeData(data: {
   const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(data.workspace.id);
   session.setJSON(welcomeKey, data);
 }
+
+/** @deprecated Use WorkspaceWelcomeGate */
+export const WorkspaceWelcomeProvider = WorkspaceWelcomeGate;

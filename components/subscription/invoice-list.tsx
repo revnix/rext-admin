@@ -130,96 +130,101 @@ export function InvoiceList({
 
       <CardContent>
         <div className="space-y-3">
-          {displayedInvoices.map((invoice) => (
-            <div
-              key={invoice.invoice_id}
-              className={cn(
-                "flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
-                compact && "p-3",
-              )}
-            >
-              {/* Invoice Info */}
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="shrink-0">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium truncate">
-                      {invoice.invoice_number ||
-                        `INV-${invoice.invoice_id.slice(0, 8)}`}
-                    </p>
-                    {getStatusBadge(invoice.status)}
+          {displayedInvoices.map((invoice) => {
+            const invoiceItems = invoice.items ?? [];
+            return (
+              <div
+                key={invoice.invoice_id}
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
+                  compact && "p-3",
+                )}
+              >
+                {/* Invoice Info */}
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div className="shrink-0">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>{formatDate(invoice.invoice_date)}</span>
-                    <span className="font-medium text-foreground">
-                      {formatCurrency(invoice.amount, invoice.currency)}
-                    </span>
-                    {invoice.paid_at && (
-                      <span className="text-green-600 dark:text-green-400 text-xs">
-                        Paid {formatDate(invoice.paid_at)}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium truncate">
+                        {invoice.invoice_number ||
+                          `INV-${invoice.invoice_id.slice(0, 8)}`}
+                      </p>
+                      {getStatusBadge(invoice.status)}
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{formatDate(invoice.invoice_date)}</span>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(invoice.amount, invoice.currency)}
                       </span>
+                      {invoice.paid_at && (
+                        <span className="text-green-600 dark:text-green-400 text-xs">
+                          Paid {formatDate(invoice.paid_at)}
+                        </span>
+                      )}
+                    </div>
+
+                    {!compact && invoiceItems.length > 0 && (
+                      <div className="text-xs text-muted-foreground pt-1">
+                        {invoiceItems.map((item, idx) => (
+                          <span
+                            key={`${invoice.invoice_id}-item-${item.description}`}
+                          >
+                            {item.description}
+                            {idx < invoiceItems.length - 1 && " • "}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
+                </div>
 
-                  {!compact && invoice.items && invoice.items.length > 0 && (
-                    <div className="text-xs text-muted-foreground pt-1">
-                      {invoice.items.map((item, idx) => (
-                        <span key={`${invoice.invoice_id}-item-${idx}`}>
-                          {item.description}
-                          {idx < invoice.items.length - 1 && " • "}
-                        </span>
-                      ))}
-                    </div>
+                {/* Actions */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {invoice.invoice_url && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="hidden sm:inline-flex"
+                      >
+                        <a
+                          href={invoice.invoice_url as Route}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View
+                        </a>
+                      </Button>
+
+                      <Button variant="ghost" size="sm" asChild>
+                        <a
+                          href={invoice.invoice_url as Route}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                        >
+                          <Download className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Download</span>
+                        </a>
+                      </Button>
+                    </>
+                  )}
+
+                  {!invoice.invoice_url && (
+                    <span className="text-xs text-muted-foreground">
+                      No download available
+                    </span>
                   )}
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0">
-                {invoice.invoice_url && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                      className="hidden sm:inline-flex"
-                    >
-                      <a
-                        href={invoice.invoice_url as Route}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View
-                      </a>
-                    </Button>
-
-                    <Button variant="ghost" size="sm" asChild>
-                      <a
-                        href={invoice.invoice_url as Route}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                      >
-                        <Download className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Download</span>
-                      </a>
-                    </Button>
-                  </>
-                )}
-
-                {!invoice.invoice_url && (
-                  <span className="text-xs text-muted-foreground">
-                    No download available
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Load More */}

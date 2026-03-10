@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { BillingPeriod, SubscriptionPlan } from "@/types/subscription";
-import type { Route } from "next";
 
 export interface CheckoutButtonProps {
   /** The subscription plan to checkout */
@@ -117,4 +116,3 @@ export function CheckoutButton({
     </Button>
   );
 }
-

@@ -137,12 +137,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getOverview: async (): Promise<AnalyticsOverview> => {
-      const response = await client.request<
-        AnalyticsApiResponse<AnalyticsOverview>
-      >(ENDPOINTS.ADMIN_ANALYTICS.subscriptions.overview, {
-        method: "GET",
-      });
-      return response.data;
+      return client.request<AnalyticsOverview>(
+        ENDPOINTS.ADMIN_ANALYTICS.subscriptions.overview,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -152,12 +152,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getRevenueMetrics: async (): Promise<RevenueMetrics> => {
-      const response = await client.request<
-        AnalyticsApiResponse<RevenueMetrics>
-      >(ENDPOINTS.ADMIN_ANALYTICS.subscriptions.revenue, {
-        method: "GET",
-      });
-      return response.data;
+      return client.request<RevenueMetrics>(
+        ENDPOINTS.ADMIN_ANALYTICS.subscriptions.revenue,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -167,15 +167,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getChurnAnalysis: async (periodDays = 30): Promise<ChurnAnalysis> => {
-      const response = await client.request<
-        AnalyticsApiResponse<ChurnAnalysis>
-      >(
+      return client.request<ChurnAnalysis>(
         `${ENDPOINTS.ADMIN_ANALYTICS.subscriptions.churn}?period_days=${periodDays}`,
         {
           method: "GET",
         },
       );
-      return response.data;
     },
 
     /**
@@ -185,12 +182,12 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getTrialConversion: async (): Promise<TrialConversionMetrics> => {
-      const response = await client.request<
-        AnalyticsApiResponse<TrialConversionMetrics>
-      >(ENDPOINTS.ADMIN_ANALYTICS.subscriptions.trialConversion, {
-        method: "GET",
-      });
-      return response.data;
+      return client.request<TrialConversionMetrics>(
+        ENDPOINTS.ADMIN_ANALYTICS.subscriptions.trialConversion,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -205,9 +202,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
       days = 30,
       workspaceId?: string,
     ): Promise<InvitationAnalyticsData> => {
-      const response = await client.request<
-        AnalyticsApiResponse<InvitationAnalyticsData>
-      >(
+      return client.request<InvitationAnalyticsData>(
         buildUrl(ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics, {
           days,
           workspace_id: workspaceId,
@@ -216,7 +211,6 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
           method: "GET",
         },
       );
-      return response.data;
     },
   };
 }

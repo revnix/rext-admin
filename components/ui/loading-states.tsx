@@ -1,8 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 /**
  * Full page loading state
@@ -17,10 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PageLoader({ message = "Loading..." }: { message?: string }) {
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center space-y-3">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-        <p className="text-sm text-muted-foreground">{message}</p>
-      </div>
+      <LoadingIndicator variant="spinner" size="lg" message={message} />
     </div>
   );
 }
@@ -45,27 +40,12 @@ export function TableSkeleton({
   columns?: number;
 }) {
   return (
-    <output className="space-y-3" aria-label="Loading table data">
-      {/* Header row */}
-      <div className="flex gap-4">
-        {Array.from({ length: columns }, (_, j) => `header-col-${j}`).map(
-          (key) => (
-            <Skeleton key={key} className="h-10 flex-1" />
-          ),
-        )}
-      </div>
-
-      {/* Data rows */}
-      {Array.from({ length: rows }, (_, i) => `row-${i}`).map((rowKey) => (
-        <div key={rowKey} className="flex gap-4">
-          {Array.from({ length: columns }, (_, j) => `${rowKey}-col-${j}`).map(
-            (cellKey) => (
-              <Skeleton key={cellKey} className="h-12 flex-1" />
-            ),
-          )}
-        </div>
-      ))}
-    </output>
+    <LoadingIndicator
+      variant="table"
+      rows={rows}
+      columns={columns}
+      showHeader={true}
+    />
   );
 }
 
@@ -82,19 +62,7 @@ export function TableSkeleton({
  * ```
  */
 export function CardSkeleton() {
-  return (
-    <output aria-label="Loading card content" className="block">
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-4 w-2/3 mt-2" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-32 w-full" />
-        </CardContent>
-      </Card>
-    </output>
-  );
+  return <LoadingIndicator variant="card" />;
 }
 
 /**
@@ -110,22 +78,7 @@ export function CardSkeleton() {
  * ```
  */
 export function FormSkeleton({ fields = 3 }: { fields?: number }) {
-  return (
-    <output className="space-y-6" aria-label="Loading form">
-      {Array.from({ length: fields }, (_, i) => `form-field-${i}`).map(
-        (key) => (
-          <div key={key} className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ),
-      )}
-      <div className="flex gap-3 mt-8">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-24" />
-      </div>
-    </output>
-  );
+  return <LoadingIndicator variant="form" fields={fields} />;
 }
 
 /**
@@ -144,15 +97,5 @@ export function LoadingSpinner({
 }: {
   size?: "sm" | "default" | "lg";
 }) {
-  const sizeClasses = {
-    sm: "h-3 w-3",
-    default: "h-4 w-4",
-    lg: "h-6 w-6",
-  };
-
-  return (
-    <output aria-label="Loading" className="inline-block">
-      <Loader2 className={`${sizeClasses[size]} animate-spin`} />
-    </output>
-  );
+  return <LoadingIndicator variant="spinner" size={size} />;
 }

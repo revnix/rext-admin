@@ -5,6 +5,18 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 
 export const description = "A keyword difficulty gauge chart";
 
+const DIFFICULTY_STOPS = [
+  { offset: "0%", color: "var(--color-success-500)" },
+  { offset: "15%", color: "var(--color-success-400)" },
+  { offset: "30%", color: "var(--color-success-300)" },
+  { offset: "50%", color: "var(--color-warning-500)" },
+  { offset: "70%", color: "var(--color-warning-600)" },
+  { offset: "85%", color: "var(--color-error-500)" },
+  { offset: "100%", color: "var(--color-error-600)" },
+] as const;
+
+const REMAINING_COLOR = "var(--color-gray-200)";
+
 // Chart configuration
 const chartConfig = {
   score: {
@@ -12,7 +24,7 @@ const chartConfig = {
   },
   remaining: {
     label: "Remaining",
-    color: "#e5e7eb",
+    color: REMAINING_COLOR,
   },
 } satisfies ChartConfig;
 
@@ -24,11 +36,19 @@ const getDifficultyLabel = (score: number) => {
   return "Super Hard";
 };
 
+/**
+ * Props for keyword difficulty radial chart rendering.
+ */
 interface ChartRadialStackedProps {
+  /** Difficulty score expected in 0-100 range (clamped at runtime). */
   difficultyScore?: number;
+  /** Optional className for sizing/layout overrides. */
   className?: string;
 }
 
+/**
+ * Visualizes keyword difficulty as a radial stacked chart with difficulty labeling.
+ */
 export function ChartRadialStacked({
   difficultyScore,
   className,
@@ -65,13 +85,13 @@ export function ChartRadialStacked({
             x2="200"
             y2="100"
           >
-            <stop offset="0%" stopColor="#22c55e" />
-            <stop offset="15%" stopColor="#4ade80" />
-            <stop offset="30%" stopColor="#84cc16" />
-            <stop offset="50%" stopColor="#eab308" />
-            <stop offset="70%" stopColor="#f97316" />
-            <stop offset="85%" stopColor="#ef4444" />
-            <stop offset="100%" stopColor="#dc2626" />
+            {DIFFICULTY_STOPS.map((stop) => (
+              <stop
+                key={stop.offset}
+                offset={stop.offset}
+                stopColor={stop.color}
+              />
+            ))}
           </linearGradient>
         </defs>
 
@@ -119,7 +139,7 @@ export function ChartRadialStacked({
           dataKey="remaining"
           stackId="a"
           cornerRadius={0}
-          fill="#e5e7eb"
+          fill={REMAINING_COLOR}
           stroke="none"
         />
       </RadialBarChart>

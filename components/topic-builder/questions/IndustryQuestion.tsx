@@ -18,10 +18,9 @@ import {
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";
 import { TextInput } from "@/components/ui/typeform/text-input";
 import {
-  getMotionVariants,
-  questionItemVariants,
   useReducedMotion,
 } from "@/lib/animations";
+import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import type { Industry, TopicBuilderFormData } from "@/types/topic-builder";
 import { INDUSTRY_OPTIONS } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -45,10 +44,7 @@ export function IndustryQuestion({
   isLoading = false,
 }: IndustryQuestionProps) {
   const prefersReducedMotion = useReducedMotion();
-  const itemVariants = getMotionVariants(
-    questionItemVariants,
-    prefersReducedMotion,
-  );
+  const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   const handleSelect = (value: Industry) => {
     updateFormData("industry", value);
@@ -91,9 +87,8 @@ export function IndustryQuestion({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {INDUSTRY_OPTIONS.map((option, index) => (
           <SingleSelectCard
-            key={`industry-${option.value}-${index}`}
+            key={`industry-${option.value}`}
             label={option.label}
-            value={option.value}
             selected={formData.industry === option.value}
             onSelect={() => handleSelect(option.value as Industry)}
             icon={getIcon(option.value)}

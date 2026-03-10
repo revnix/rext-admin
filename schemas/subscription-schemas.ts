@@ -14,6 +14,7 @@ import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 const InvoiceStatusSchema = z
   .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])
   .catch("unknown");
+const FeatureItemsSchema = z.array(z.string().trim().min(1));
 
 export const SubscriptionStatusSchema = z.enum(SubscriptionStatus);
 export const BillingPeriodSchema = z.enum(BillingPeriod);
@@ -98,6 +99,19 @@ export const UserSubscriptionSchema = z.object({
 /**
  * Schema for subscription plan
  */
+
+export const PlanFeaturesSchema = z
+  .union([
+    z.object({ items: FeatureItemsSchema }),
+    z.object({ list: FeatureItemsSchema }),
+    z.record(z.string(), z.string()),
+  ])
+  .transform((raw): { items: string[] } => {
+    if ("items" in raw) return { items: raw.items as string[] };
+    if ("list" in raw) return { items: (raw as { list: string[] }).list };
+    return { items: Object.values(raw as Record<string, string>) };
+  });
+
 export const SubscriptionPlanSchema = z.object({
   id: z.string().uuid("Invalid plan ID"),
   name: z.string().min(1, "Plan name is required"),
@@ -105,7 +119,7 @@ export const SubscriptionPlanSchema = z.object({
   description: z.string().nullable(),
   price_monthly: z.number().nonnegative(),
   price_yearly: z.number().nonnegative(),
-  features: z.record(z.string(), z.unknown()),
+  features: PlanFeaturesSchema,
   max_workspaces: z.number().int(),
   max_members_per_workspace: z.number().int(),
   max_topics: z.number().int(),
@@ -115,7 +129,6 @@ export const SubscriptionPlanSchema = z.object({
   is_public: z.boolean(),
   created_at: z.string(),
 });
-
 /**
  * Schema for subscription list response
  */
@@ -284,9 +297,10 @@ export const SubscriptionPlanCreateSchema = z.object({
   lemonsqueezy_variant_id_yearly: z.string().max(255).optional(),
 });
 
-export const SubscriptionPlanUpdateSchema = SubscriptionPlanCreateSchema.partial().omit({
-  name: true,
-});
+export const SubscriptionPlanUpdateSchema =
+  SubscriptionPlanCreateSchema.partial().omit({
+    name: true,
+  });
 
 // ============================================================================
 // TYPE EXPORTS (inferred from schemas)

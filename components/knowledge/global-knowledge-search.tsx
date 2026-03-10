@@ -62,10 +62,10 @@ const highlightSearchTerms = (text: string, searchQuery: string) => {
   );
   const parts = text.split(regex);
 
-  return parts.map((part, index) =>
+  return parts.map((part) =>
     regex.test(part) ? (
       <mark
-        key={`highlight-${index}-${part.slice(0, 10)}`}
+        key={`highlight-${part}-${part.slice(0, 10)}`}
         className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
       >
         {part}
@@ -338,9 +338,9 @@ export function GlobalKnowledgeSearch({
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {searchHistory.slice(0, 5).map((query, index) => (
+                  {searchHistory.slice(0, 5).map((query) => (
                     <button
-                      key={`history-${index}-${query}`}
+                      key={`history-${query}`}
                       type="button"
                       onClick={() => handleHistorySelect(query)}
                       className="text-xs px-2 py-1 bg-muted rounded-md hover:bg-muted/80 transition-colors"

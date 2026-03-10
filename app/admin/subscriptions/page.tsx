@@ -19,7 +19,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorPage } from "@/components/ui/error-states";
 
 // Lazy load chart components (use recharts - heavy library ~400KB)
 const RevenueChart = dynamic(
@@ -67,62 +66,55 @@ import { apiClient } from "@/lib/api-client";
 import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
 
 interface AnalyticsOverview {
-  data: {
-    stats: {
-      total_subscriptions: number;
-      active_subscriptions: number;
-      trial_subscriptions: number;
-      mrr: number;
-      arr: number;
-      churn_rate_monthly: number;
-      trial_conversion_rate: number;
-    };
-    revenue_by_plan: unknown[];
-    growth_metrics: {
-      new_revenue_30d: number;
-      growth_rate: number;
-    };
-    recent_subscriptions: Array<{
-      subscription_id: string;
-      user_email: string;
-      user_name: string;
-      plan_name: string;
-      status: string;
-      start_date: string | null;
-    }>;
-  };
-}
-
-interface RevenueHistory {
-  data: Array<{
-    month: string;
+  stats: {
+    total_subscriptions: number;
+    active_subscriptions: number;
+    trial_subscriptions: number;
     mrr: number;
-    new_revenue: number;
-    churned_revenue: number;
-    net_revenue: number;
+    arr: number;
+    churn_rate_monthly: number;
+    trial_conversion_rate: number;
+  };
+  revenue_by_plan: unknown[];
+  growth_metrics: {
+    new_revenue_30d: number;
+    growth_rate: number;
+  };
+  recent_subscriptions: Array<{
+    subscription_id: string;
+    user_email_masked: string;
+    user_name: string;
+    plan_name: string;
+    status: string;
+    start_date: string | null;
   }>;
 }
 
-interface PlanDistribution {
-  data: Array<{
-    plan_name: string;
-    plan_display_name: string;
-    subscription_count: number;
-    revenue_monthly: number;
-    revenue_yearly: number;
-    percentage: number;
-  }>;
-}
+type RevenueHistory = Array<{
+  month: string;
+  mrr: number;
+  new_revenue: number;
+  churned_revenue: number;
+  net_revenue: number;
+}>;
+
+type PlanDistribution = Array<{
+  plan_id: string;
+  plan_name: string;
+  plan_display_name: string;
+  subscription_count: number;
+  revenue_monthly: number;
+  revenue_yearly: number;
+  percentage: number;
+}>;
 
 interface CohortRetention {
-  data: {
-    cohorts: Array<{
-      cohort: string;
-      size: number;
-      month_0: number;
-      [key: string]: number | string;
-    }>;
-  };
+  cohorts: Array<{
+    cohort: string;
+    size: number;
+    month_0: number;
+    [key: string]: number | string;
+  }>;
 }
 
 export default function SubscriptionAnalyticsPage() {
@@ -131,19 +123,12 @@ export default function SubscriptionAnalyticsPage() {
   >("12_months");
 
   // Fetch analytics overview
-  const {
-    data: overview,
-    isLoading: overviewLoading,
-    error: overviewError,
-    refetch: refetchOverview,
-  } = useQuery({
+  const { data: overview, isLoading: overviewLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: AnalyticsOverview }>(
-          "/api/v1/subscriptions/admin/analytics/overview",
-        )
-        .then((res) => res.data);
+      return apiClient.request<AnalyticsOverview>(
+        "/api/v1/admin/subscriptions/analytics/overview",
+      );
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -158,11 +143,9 @@ export default function SubscriptionAnalyticsPage() {
       revenuePeriod,
     ],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: RevenueHistory }>(
-          `/api/v1/subscriptions/admin/analytics/revenue-history?period=${revenuePeriod}`,
-        )
-        .then((res) => res.data);
+      return apiClient.request<RevenueHistory>(
+        `/api/v1/admin/subscriptions/analytics/revenue-history?period=${revenuePeriod}`,
+      );
     },
   });
 
@@ -170,11 +153,9 @@ export default function SubscriptionAnalyticsPage() {
   const { data: planDistribution, isLoading: distributionLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "plan-distribution"],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: PlanDistribution }>(
-          "/api/v1/subscriptions/admin/analytics/plan-distribution",
-        )
-        .then((res) => res.data);
+      return apiClient.request<PlanDistribution>(
+        `/api/v1/admin/subscriptions/analytics/plan-distribution`,
+      );
     },
   });
 
@@ -182,23 +163,21 @@ export default function SubscriptionAnalyticsPage() {
   const { data: cohortRetention, isLoading: cohortLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "cohort-retention"],
     queryFn: async () => {
-      return apiClient
-        .request<{ data: CohortRetention }>(
-          "/api/v1/subscriptions/admin/analytics/cohort-retention",
-        )
-        .then((res) => res.data);
+      return apiClient.request<CohortRetention>(
+        `/api/v1/admin/subscriptions/analytics/cohort-retention`,
+      );
     },
   });
 
-  if (overviewError) {
-    return (
-      <ErrorPage
-        title="Failed to load subscription analytics"
-        message="Overview data could not be loaded. Please try again."
-        retry={() => void refetchOverview()}
-      />
-    );
-  }
+  // if (overviewError) {
+  //   return (
+  //     <ErrorPage
+  //       title="Failed to load subscription analytics"
+  //       message="Overview data could not be loaded. Please try again."
+  //       retry={() => void refetchOverview()}
+  //     />
+  //   );
+  // }
 
   if (overviewLoading) {
     return (
@@ -210,10 +189,10 @@ export default function SubscriptionAnalyticsPage() {
     );
   }
 
-  const stats = overview?.data?.stats;
-  const _revenueByPlan = overview?.data?.revenue_by_plan;
-  const growthMetrics = overview?.data?.growth_metrics;
-  const recentSubscriptions = overview?.data?.recent_subscriptions;
+  const stats = overview?.stats;
+  const _revenueByPlan = overview?.revenue_by_plan;
+  const growthMetrics = overview?.growth_metrics;
+  const recentSubscriptions = overview?.recent_subscriptions;
 
   return (
     <PageLayout
@@ -281,7 +260,7 @@ export default function SubscriptionAnalyticsPage() {
                     </div>
                   ) : (
                     <RevenueChart
-                      data={revenueHistory?.data || []}
+                      data={revenueHistory || []}
                       period={revenuePeriod}
                       onPeriodChange={(p) =>
                         setRevenuePeriod(p as typeof revenuePeriod)
@@ -306,9 +285,7 @@ export default function SubscriptionAnalyticsPage() {
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
                   ) : (
-                    <PlanDistributionChart
-                      data={planDistribution?.data || []}
-                    />
+                    <PlanDistributionChart data={planDistribution || []} />
                   )}
                 </CardContent>
               </Card>
@@ -329,7 +306,7 @@ export default function SubscriptionAnalyticsPage() {
                     </div>
                   ) : (
                     <CohortRetentionMatrix
-                      cohorts={cohortRetention?.data?.cohorts || []}
+                      cohorts={cohortRetention?.cohorts || []}
                     />
                   )}
                 </CardContent>

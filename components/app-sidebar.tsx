@@ -72,8 +72,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasWorkspaces = workspaceList.length > 0;
   const { workspacePermissions } = usePermissionStore();
   const storeRole = currentWorkspace
-    ? (workspacePermissions.get(currentWorkspace.id)?.role ??
-      workspacePermissions.get(currentWorkspace.slug)?.role)
+    ? (workspacePermissions[currentWorkspace.id]?.role ??
+      workspacePermissions[currentWorkspace.slug]?.role)
     : undefined;
   const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const activeRole = fetchedRole || storeRole;
@@ -256,7 +256,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar
       collapsible="icon"
       {...props}
-      style={{ "--sidebar-width-icon": "5rem" } as React.CSSProperties}
+      style={{ "--sidebar-width-icon": "5rem" }}
     >
       <SidebarHeader className="hidden md:block">
         <WorkspaceSwitcher />

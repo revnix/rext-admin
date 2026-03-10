@@ -101,12 +101,9 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
         end_date: filters?.end_date,
       });
 
-      const response = await client.request<
-        WebhookApiResponse<WebhookEventsResponse>
-      >(url, {
+      return client.request<WebhookEventsResponse>(url, {
         method: "GET",
       });
-      return response.data;
     },
 
     /**
@@ -122,15 +119,12 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
       perPage = 50,
       hours = 24,
     ): Promise<WebhookEventsResponse> => {
-      const response = await client.request<
-        WebhookApiResponse<WebhookEventsResponse>
-      >(
+      return client.request<WebhookEventsResponse>(
         `${ENDPOINTS.ADMIN_WEBHOOKS.failed}?page=${page}&per_page=${perPage}&hours=${hours}`,
         {
           method: "GET",
         },
       );
-      return response.data;
     },
 
     /**
@@ -142,12 +136,12 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
     retryWebhook: async (
       eventId: string,
     ): Promise<{ success: boolean; message: string }> => {
-      const response = await client.request<
-        WebhookApiResponse<{ success: boolean; message: string }>
-      >(ENDPOINTS.ADMIN_WEBHOOKS.retry(eventId), {
-        method: "POST",
-      });
-      return response.data;
+      return client.request<{ success: boolean; message: string }>(
+        ENDPOINTS.ADMIN_WEBHOOKS.retry(eventId),
+        {
+          method: "POST",
+        },
+      );
     },
 
     /**
@@ -156,13 +150,9 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getStats: async (): Promise<WebhookStats> => {
-      const response = await client.request<WebhookApiResponse<WebhookStats>>(
-        ENDPOINTS.ADMIN_WEBHOOKS.stats,
-        {
-          method: "GET",
-        },
-      );
-      return response.data;
+      return client.request<WebhookStats>(ENDPOINTS.ADMIN_WEBHOOKS.stats, {
+        method: "GET",
+      });
     },
   };
 }

@@ -255,7 +255,12 @@ export function UsageMetrics({
 
                 {!isUnlimited && (
                   <div className="relative">
-                    <Progress value={percentage} className="h-2" />
+                    <Progress
+                      value={percentage}
+                      className="h-2"
+                      aria-label={`${metric.label} usage`}
+                      aria-valuetext={`${percentage.toFixed(0)} percent used`}
+                    />
                     <div
                       className={cn(
                         "absolute inset-0 h-2 rounded-full transition-all",
