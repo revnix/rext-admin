@@ -162,7 +162,7 @@ export function EditableBrandVoiceCard({
 
   return (
     <DetailCard variant="highlight">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <SectionHeader
           title="Brand Voice Profile"
           icon={<Brain className="w-5 h-5" />}
@@ -170,7 +170,7 @@ export function EditableBrandVoiceCard({
           description="AI-extracted brand characteristics and positioning"
           className="mb-0"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {isEditing ? (
             <>
               <Button
@@ -178,6 +178,7 @@ export function EditableBrandVoiceCard({
                 size="sm"
                 onClick={handleCancel}
                 disabled={updateMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel
@@ -186,6 +187,7 @@ export function EditableBrandVoiceCard({
                 size="sm"
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 {updateMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -201,6 +203,7 @@ export function EditableBrandVoiceCard({
                 workspaceId={workspace.id}
                 buttonVariant="outline"
                 buttonSize="sm"
+                buttonClassName="w-full sm:w-auto"
               >
                 <span className="flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
@@ -211,6 +214,7 @@ export function EditableBrandVoiceCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditing(true)}
+                className="w-full sm:w-auto"
               >
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit

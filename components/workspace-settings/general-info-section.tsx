@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -25,8 +26,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { useWorkspaceStore } from "@/stores/workspace";
 import * as React from "react";
 
 const generalInfoSchema = z.object({
@@ -39,15 +42,12 @@ const generalInfoSchema = z.object({
 type GeneralInfoForm = z.infer<typeof generalInfoSchema>;
 
 export function GeneralInfoSection() {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const router = useRouter();
-  // const queryClient = useQueryClient();
-  // const updateWorkspaceInList = useWorkspaceStore(
-  //   (state) => state.updateWorkspaceInList,
-  // );
-  // const setCurrentWorkspace = useWorkspaceStore(
-  //   (state) => state.setCurrentWorkspace,
-  // );
+  const queryClient = useQueryClient();
+  const setCurrentWorkspace = useWorkspaceStore(
+    (state) => state.setCurrentWorkspace,
+  );
 
   const form = useForm<GeneralInfoForm>({
     resolver: zodResolver(generalInfoSchema),
@@ -71,10 +71,26 @@ export function GeneralInfoSection() {
 
   const onSubmit = async (data: GeneralInfoForm) => {
     try {
-      await apiClient.workspaces.update(workspace?.id || "", {
+      if (!workspace?.id) {
+        throw new Error("Workspace data is not loaded yet. Please try again.");
+      }
+
+      const response = await apiClient.workspaces.update(workspace.id, {
         name: data.name,
         url: data.url,
       });
+
+      // Update local store immediately so UI reflects changes without waiting for refetch
+      if (response?.workspace) {
+        setCurrentWorkspace(response.workspace);
+      }
+
+      // Ensure the workspace query is refreshed (avoid stale cache)
+      if (workspaceId) {
+        queryClient.invalidateQueries({
+          queryKey: workspaceQueries.detail(workspaceId).queryKey,
+        });
+      }
 
       router.refresh();
       toast.success("Workspace settings have been saved successfully.");
