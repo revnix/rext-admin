@@ -115,11 +115,6 @@ export function LoadingIndicatorVariants({
           hasSteps ? "mb-8" : "mb-0",
         )}
       >
-        <div className="relative mb-6">
-          <div className="w-16 h-16 rounded-full border-border/30 bg-card border flex items-center justify-center relative">
-            <div className="absolute inset-0 border-[3px] border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        </div>
         <h3 className="text-xl font-bold tracking-tight text-foreground mb-1">
           {currentStepLabel}...
         </h3>

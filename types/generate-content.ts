@@ -179,14 +179,14 @@ export type CONTENT = {
   review?: ContentReview;
   final_content?: FinalContent;
   status:
-    | "planning"
-    | "drafting"
-    | "reviewing"
-    | "optimizing"
-    | "completed"
-    | "failed"
-    | "approved"
-    | "rejected";
+  | "planning"
+  | "drafting"
+  | "reviewing"
+  | "optimizing"
+  | "completed"
+  | "failed"
+  | "approved"
+  | "rejected";
   outline_retries: number;
   draft_retries: number;
   review_retries: number;
@@ -271,10 +271,10 @@ export type WREXT = {
 
 export type SearchIntentState = {
   primary_intent:
-    | "informational"
-    | "commercial"
-    | "transactional"
-    | "navigational";
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
   secondary_intents: string[];
   confidence: number;
   intent_signals: Record<string, number>;
@@ -315,11 +315,11 @@ export type KeywordDifficultyState2 = {
 
 export type ContentPatternState = {
   content_type:
-    | "blog"
-    | "listicle"
-    | "landing_page"
-    | "documentation"
-    | "comparison";
+  | "blog"
+  | "listicle"
+  | "landing_page"
+  | "documentation"
+  | "comparison";
   avg_word_count: number;
   common_headings: string[];
   heading_depth: number;
@@ -577,3 +577,37 @@ export type WorkflowStep =
   | "OUTLINE_APPROVE"
   | "OUTLINE_REJECT"
   | "OUTLINE_REJECT_REASON";
+
+export interface StoredKeyword {
+  original_query: string;
+  recommendations: string[];
+  questions?: string[];
+  related_topics?: string[];
+  top_organic_results?: NormalizedOrganicResult[];
+  seo_state: {
+    keyword_difficulty: number | null;
+    intent: string;
+    volume: number | string;
+    backlinks: number | null;
+    referring_domains: number | null;
+  };
+  timestamp: string;
+}
+
+export interface LibraryItem {
+  id: string;
+  keyword: string;
+  difficulty: string;
+  difficultyScore: number | null;
+  volume: string | number;
+  intent: string;
+  lastUpdated: string;
+  rawData: StoredKeyword;
+  namespace: string[];
+}
+
+export interface StoreItem {
+  value: StoredKeyword;
+  key: string;
+  namespace: string[];
+}

@@ -148,7 +148,8 @@ export const ENDPOINTS = {
     base: "/api/v1/content/",
     detail: (id: string) => `/api/v1/content/${id}` as const,
     save: "/api/v1/content/save",
-    publish: "/api/v1/content/publish",
+    save_publish: "/api/v1/content/publish",
+    publish: (id: string) => `/api/v1/content/${id}/publish` as const,
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
   },
 
