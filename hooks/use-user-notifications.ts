@@ -57,6 +57,38 @@ export function useUserNotifications() {
         });
       });
 
+    // ── Fallback Polling ──────────────────────────────────────────────
+    // Fetch notifications every 30 seconds to catch missed SSE events
+    const pollInterval = setInterval(() => {
+      fetchNotifications()
+        .then((incoming) => {
+          useNotificationStore.getState().mergeNotifications(incoming);
+        })
+        .catch((error) => {
+          userNotificationsLogger.warn("Background notification poll failed", {
+            userId,
+            error,
+          });
+        });
+    }, 30_000);
+
+    // ── Focus Refetch ─────────────────────────────────────────────────
+    // Fetch notifications when the window regains focus
+    const handleFocus = () => {
+      fetchNotifications()
+        .then((incoming) => {
+          useNotificationStore.getState().mergeNotifications(incoming);
+        })
+        .catch((error) => {
+          userNotificationsLogger.warn("Focus notification refetch failed", {
+            userId,
+            error,
+          });
+        });
+    };
+
+    window.addEventListener("focus", handleFocus);
+
     // Subscribe to user notification events
     unsubscribeUserNotificationsRef.current = subscribe(
       userNotificationsChannelId,
@@ -96,6 +128,9 @@ export function useUserNotifications() {
 
     // Cleanup on unmount or when user changes
     return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener("focus", handleFocus);
+
       if (unsubscribeUserNotificationsRef.current) {
         userNotificationsLogger.info("Unsubscribing from user notifications", {
           userId,
