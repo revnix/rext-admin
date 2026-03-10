@@ -134,9 +134,20 @@ export function createContentNamespace(client: ApiClient) {
     /**
      * Publish content
      */
-    publish: async (workspaceId: string, data: Record<string, unknown>) => {
+    save_publish: async (workspaceId: string, data: Record<string, unknown>) => {
       return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.publish}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.save_publish}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+    },
+
+    publish: async (workspaceId: string, data: Record<string, unknown>, contentId: string) => {
+      return client.request<ContentResponse>(
+        `${ENDPOINTS.CONTENT.publish(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
