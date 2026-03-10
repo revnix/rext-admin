@@ -6,7 +6,6 @@ export interface LoadingStep {
 export const INITIAL_ANALYSIS_STEPS: LoadingStep[] = [
   { id: "Creating session", label: "Creating session" },
   { id: "Starting analysis", label: "Starting analysis" },
-  { id: "Fetch Serp", label: "Fetching search results" },
   { id: "Normalize Serp", label: "Normalizing search results" },
   { id: "Extract Competitor", label: "Extracting competitors" },
   { id: "Serp Payload", label: "Serp Payload" },

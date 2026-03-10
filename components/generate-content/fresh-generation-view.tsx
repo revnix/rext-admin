@@ -48,7 +48,7 @@ import {
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
-  initialStep?: PageState["step"];
+  isLibrary?: boolean;
 }
 
 
@@ -153,7 +153,7 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
 export function FreshGenerationView({
   onBack: _onBack,
   initialKeyword: _initialKeyword = "",
-  initialStep: _initialStep = "keyword",
+  isLibrary = false,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
   const { user } = useAuthSession();
@@ -177,6 +177,12 @@ export function FreshGenerationView({
     isLoading, readabilityScore, seoScore, trustScore, allContent,
     currentLoadingSteps,
   } = state;
+
+  useEffect(() => {
+    if (_initialKeyword) {
+      handleKeywordSubmit();
+    }
+  }, [_initialKeyword]);
 
   // ── Typewriter for instruction hint text ─────────────────────────────────
   const { displayed: displayedInstruction } =
@@ -248,6 +254,7 @@ export function FreshGenerationView({
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
   const contentParseTimerRef = useRef<number | null>(null);
+  const outlineParseTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!showContentStream) return;
@@ -291,10 +298,6 @@ export function FreshGenerationView({
     };
   }, [allContent, content.streamedText, showContentStream]);
 
-  // Parse streamed outline JSON as soon as it becomes valid, so we can switch
-  // to the structured outline UI ASAP (even if the backend's outline interrupt
-  // arrives later).
-  const outlineParseTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!outline.streamedText) return;
@@ -407,7 +410,6 @@ export function FreshGenerationView({
 
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
-        console.log("updates", updates)
 
         // Some graphs emit the outline in a "review_outline" envelope (not in __interrupt__)
         const reviewOutline = (updates as any)?.review_outline?.content?.outline;
@@ -537,12 +539,15 @@ export function FreshGenerationView({
     dispatch({ type: "SET_THREAD_ID", payload: newThreadId });
     dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
+    const keyword = _initialKeyword || userKeyword;
+
     const stream = streamFromSSE(`/api/generate/${newThreadId}/stream`, {
       input: {
         serp_payload: {
-          query: userKeyword, country,
+          query: keyword, country,
           user_id: user?.id,
           workspace_id: workspaceId ?? undefined,
+          is_library: isLibrary,
         },
       },
       streamMode: ["updates", "messages"],

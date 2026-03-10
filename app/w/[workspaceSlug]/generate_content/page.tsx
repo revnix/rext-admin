@@ -1,20 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { SelectionView } from "@/components/generate-content/selection-view";
-import { LibraryView } from "@/components/generate-content/library-view";
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Route } from "next";
 
 type PageView = "selection" | "fresh" | "library";
 
 export default function Page() {
   const { workspace } = useWorkspace();
+  const router = useRouter();
   const [view, setView] = useState<PageView>("selection");
   const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
     string | undefined
   >(undefined);
+  const urlParams = useSearchParams();
+  const libraryKeyword = urlParams.get("library");
+  const isLibrary = libraryKeyword !== null;
+
+  useEffect(() => {
+    if (libraryKeyword) {
+      setSelectedLibraryKeyword(libraryKeyword);
+      setView("fresh");
+    }
+  }, [libraryKeyword]);
 
   const handleStartFresh = () => {
     setSelectedLibraryKeyword(undefined);
@@ -23,11 +35,7 @@ export default function Page() {
 
   const handlePickFromLibrary = () => {
     setView("library");
-  };
-
-  const handleLibraryKeywordSelect = (keyword: string) => {
-    setSelectedLibraryKeyword(keyword);
-    setView("fresh");
+    router.push(`/w/${workspace?.slug}/generate_content/library` as Route);
   };
 
   const handleBackToSelection = () => {
@@ -49,18 +57,11 @@ export default function Page() {
             onPickFromLibrary={handlePickFromLibrary}
           />
         )}
-
-        {view === "library" && (
-          <LibraryView
-            onSelectKeyword={handleLibraryKeywordSelect}
-            onBack={handleBackToSelection}
-          />
-        )}
-
         {view === "fresh" && (
           <FreshGenerationView
             onBack={handleBackToSelection}
             initialKeyword={selectedLibraryKeyword}
+            isLibrary={isLibrary}
           />
         )}
       </div>
