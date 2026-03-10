@@ -200,12 +200,31 @@ export function createPreferencesNamespace(client: ApiClient) {
      * Get user preferences
      */
     get: async () => {
-      return client.request<UserPreferences>(
+      const response = await client.request<any>(
         ENDPOINTS.SETTINGS.preferences.get,
         {
           method: "GET",
         },
       );
+
+      // Handle the consistent format: { success, data: { message, preferences } }
+      // client.request already unwraps result.data if success: true.
+      // So response is typically { message, preferences }
+
+      let data = response;
+
+      // Defensively check for nested data
+      if (data && typeof data === "object" && "data" in data && data.data) {
+        data = data.data;
+      }
+
+      // Look for preferences property
+      if (data && typeof data === "object" && "preferences" in data) {
+        return data.preferences as UserPreferences;
+      }
+
+      // If none of the above, assume data is the preferences object itself
+      return data as UserPreferences;
     },
 
     /**

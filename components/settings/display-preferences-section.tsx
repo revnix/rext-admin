@@ -3,11 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { UserPreferences } from "@/lib/api-client/settings";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,14 +48,11 @@ const preferencesSchema = z.object({
 type PreferencesFormValues = z.infer<typeof preferencesSchema>;
 
 /**
- * DisplayPreferencesSection Component
+ * DisplayPreferencesSection Component (Container)
  *
- * Manages user display preferences including theme, date format,
- * time format, and items per page settings.
+ * Handles data fetching and loading states for display preferences.
  */
 export function DisplayPreferencesSection() {
-  const queryClient = useQueryClient();
-
   // Fetch preferences
   const {
     data: preferences,
@@ -62,51 +61,26 @@ export function DisplayPreferencesSection() {
   } = useQuery({
     ...preferencesQueries.detail(),
     throwOnError: true,
-  });
+    select: (data: UserPreferences) => {
+      // API client already returns a clean preferences object.
+      const raw = data || {};
 
-  // Initialize form with default values
-  const form = useForm<PreferencesFormValues>({
-    resolver: zodResolver(preferencesSchema),
-    defaultValues: {
-      date_format: "iso",
-      time_format: "24h",
-      items_per_page: 25,
-    },
-    values: preferences
-      ? {
-          date_format: preferences.date_format as
-            | "iso"
-            | "us"
-            | "eu"
-            | "relative",
-          time_format: preferences.time_format as "24h" | "12h",
-          items_per_page: preferences.items_per_page,
-        }
-      : undefined,
-  });
-
-  // Update preferences mutation
-  const updateMutation = useMutation({
-    mutationFn: (data: PreferencesFormValues) =>
-      apiClient.preferences.update(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: preferencesQueries.detail().queryKey,
-      });
-      toast.success("Preferences saved successfully");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to save preferences", {
-        description: error.message,
-      });
+      // Strict mapping to form values with defaults
+      return {
+        date_format: (raw.date_format === "us" || raw.date_format === "eu" || raw.date_format === "iso" || raw.date_format === "relative")
+          ? (raw.date_format as PreferencesFormValues["date_format"])
+          : "iso",
+        time_format: (raw.time_format === "24h" || raw.time_format === "12h")
+          ? (raw.time_format as PreferencesFormValues["time_format"])
+          : "24h",
+        items_per_page: (typeof raw.items_per_page === "number" && raw.items_per_page > 0)
+          ? raw.items_per_page
+          : 25,
+      };
     },
   });
 
-  const onSubmit = (data: PreferencesFormValues) => {
-    updateMutation.mutate(data);
-  };
-
-  if (isLoading) {
+  if (isLoading || !preferences) {
     return (
       <Card>
         <CardHeader>
@@ -146,6 +120,49 @@ export function DisplayPreferencesSection() {
     );
   }
 
+  // Pass loaded preferences to the form component.
+  // This ensures the form is initialized with actual data on its very first mount.
+  return <DisplayPreferencesForm initialPreferences={preferences} />;
+}
+
+/**
+ * DisplayPreferencesForm Component (Presenter)
+ *
+ * Handles form state and submission for display preferences.
+ */
+function DisplayPreferencesForm({ initialPreferences }: { initialPreferences: PreferencesFormValues }) {
+  const queryClient = useQueryClient();
+
+  // Initialize form with API data as defaultValues. 
+  // Since this component only mounts when data is ready, the form is perfectly initialized.
+  const form = useForm<PreferencesFormValues>({
+    resolver: zodResolver(preferencesSchema),
+    defaultValues: initialPreferences,
+    // Keep values sync in case of background refetches
+    values: initialPreferences,
+  });
+
+  // Update preferences mutation
+  const updateMutation = useMutation({
+    mutationFn: (data: PreferencesFormValues) =>
+      apiClient.preferences.update(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: preferencesQueries.detail().queryKey,
+      });
+      toast.success("Preferences saved successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to save preferences", {
+        description: error.message,
+      });
+    },
+  });
+
+  const onSubmit = (data: PreferencesFormValues) => {
+    updateMutation.mutate(data);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -173,7 +190,7 @@ export function DisplayPreferencesSection() {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="col-span-2">
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select date format" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -205,7 +222,7 @@ export function DisplayPreferencesSection() {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="col-span-2">
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select time format" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -232,7 +249,7 @@ export function DisplayPreferencesSection() {
                     >
                       <FormControl className="col-span-2 justify-self-end">
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select item count" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
