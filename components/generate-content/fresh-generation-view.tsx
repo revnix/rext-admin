@@ -178,6 +178,11 @@ export function FreshGenerationView({
     currentLoadingSteps,
   } = state;
 
+  const isEditingRef = useRef(isEditing);
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
+
   useEffect(() => {
     if (_initialKeyword) {
       handleKeywordSubmit();
@@ -411,6 +416,8 @@ export function FreshGenerationView({
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
 
+        console.log("updates", updates)
+
         // Some graphs emit the outline in a "review_outline" envelope (not in __interrupt__)
         const reviewOutline = (updates as any)?.review_outline?.content?.outline;
         if (reviewOutline) {
@@ -475,7 +482,7 @@ export function FreshGenerationView({
         for (const output of nodeOutputs) {
           const out = output as any;
 
-          if (out.final_content) {
+          if (out.final_content && !isEditingRef.current) {
             dispatch({ type: "SET_ALL_CONTENT", payload: out.final_content });
             if (out.final_content.body_markdown) {
               dispatch({ type: "SET_GENERATED_CONTENT", payload: out.final_content.body_markdown });
@@ -750,6 +757,13 @@ export function FreshGenerationView({
               }
               onContentChange={(val) => {
                 dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+                // Also sync allContent.body_markdown so other parts of the UI stay updated
+                if (allContent) {
+                  dispatch({
+                    type: "SET_ALL_CONTENT",
+                    payload: { ...allContent, body_markdown: val },
+                  });
+                }
               }}
             />
 
