@@ -7,8 +7,11 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -337,13 +340,20 @@ export function AccountDeactivation() {
                   />
                 )}
 
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  disabled={deactivateMutation.isPending}
-                >
-                  Deactivate Account
-                </Button>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deactivateMutation.isPending}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction asChild>
+                    <Button
+                      type="submit"
+                      variant="destructive"
+                      disabled={deactivateMutation.isPending}
+                    >
+                      Deactivate Account
+                    </Button>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
               </form>
             </AlertDialogContent>
           </AlertDialog>
