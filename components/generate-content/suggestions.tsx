@@ -107,10 +107,10 @@ export function SuggestionsSection({
                     <SearchIntentCard
                       intent={
                         seoResult?.intent as
-                          | "informational"
-                          | "commercial"
-                          | "transactional"
-                          | "navigational"
+                        | "informational"
+                        | "commercial"
+                        | "transactional"
+                        | "navigational"
                       }
                     />
                   </motion.div>
@@ -179,39 +179,43 @@ export function SuggestionsSection({
         )}
       </AnimatePresence>
 
-      <div className="flex flex-wrap gap-2">
-        <AnimatePresence mode="popLayout">
-          {suggestedKeywords.length > 0 ? (
-            suggestedKeywords.map((kw, idx) => (
-              <motion.div
-                key={kw}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <Button
-                  variant="outline"
-                  onClick={() => onSelect(kw)}
-                  className="bg-muted hover:bg-accent rounded-full text-sm transition-all ease-in-out duration-300"
+      <div className="overflow-x-auto bg-white/60 rounded-lg dark:bg-gray-800">
+        <table className="min-w-full text-left border-collapse">
+          <tbody className="divide-y divide-gray-200">
+            <AnimatePresence>
+              {suggestedKeywords.length > 0 ? (
+                suggestedKeywords.map((kw, idx) => (
+                  <motion.tr
+                    key={kw}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                    onClick={() => onSelect(kw)}
+                  >
+                    <td className="px-4 py-3 font-medium text-sm text-gray-800 group-hover:text-primary transition-all duration-200 dark:text-gray-200 flex justify-between items-center">
+                      {kw}
+                      <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-all duration-200 group-hover:translate-x-1" />
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <motion.tr
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <strong>{kw}</strong>
-                </Button>
-              </motion.div>
-            ))
-          ) : (
-            <motion.div
-              key="suggestions-loader"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2 text-sm text-muted-foreground italic py-2"
-            >
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Generating suggestions...
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  <td colSpan={1} className="px-6 py-4 italic text-gray-400 text-sm flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating suggestions...
+                  </td>
+                </motion.tr>
+              )}
+            </AnimatePresence>
+          </tbody>
+        </table>
       </div>
+
     </motion.div>
   );
 }
