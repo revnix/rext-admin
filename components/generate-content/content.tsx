@@ -162,9 +162,6 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-
-
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
@@ -193,7 +190,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     message: "",
   });
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
-  
+  const [contentSavedId, setContentSavedId] = useState<string | undefined>(contentId);
+
   // Derive sidebar headings from the actual body content
   const sidebarSections = useMemo(() => {
     if (!body) return outline?.sections || [];
@@ -293,16 +291,26 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!workspaceId) return;
     try {
       setIsPublishing(true);
-      const response = await apiClient.content.publish(
-        workspaceId,
-        getContentPayload(),
-      );
+      let response: { message?: string } | undefined;
+      if (contentSavedId) {
+        response = await apiClient.content.publish(
+          workspaceId,
+          getContentPayload(),
+          contentSavedId
+        );
+      }
+      else {
+        response = await apiClient.content.save_publish(
+          workspaceId,
+          getContentPayload(),
+        );
+      }
       setStatusModal({
         isOpen: true,
         type: "success",
         action: "publish",
         message:
-          response.message ||
+          response?.message ||
           "Your content has been published as a draft and is ready for review.",
       });
     } catch (error) {
@@ -330,11 +338,11 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!workspaceId) return;
     try {
       setIsSaving(true);
-      let response: { message?: string } | undefined;
-      if (contentId) {
+      let response: { message?: string, id?: string } | undefined;
+      if (contentSavedId) {
         response = await apiClient.content.update(
           workspaceId,
-          contentId,
+          contentSavedId,
           getContentPayload(),
         );
       } else {
@@ -342,6 +350,8 @@ function ContentEditorInner(props: ContentEditorProps) {
           workspaceId,
           getContentPayload(),
         );
+
+        setContentSavedId(response.id);
       }
       setStatusModal({
         isOpen: true,
@@ -426,26 +436,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                         }
                       }}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative",
-                        activeSection === i
-                          ? "text-primary font-bold"
-                          : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                       )}
                     >
-                      {activeSection === i && (
-                        <motion.div
-                          layoutId="active-outline"
-                          className="absolute inset-0 bg-primary/5 border border-primary/10 rounded-xl"
-                          initial={false}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <span className={cn(
-                        "relative text-[10px] font-mono transition-colors",
-                        activeSection === i ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary/60"
-                      )}>
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
                       <span className="relative truncate leading-none">
                         {sec.heading}
                       </span>

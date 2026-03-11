@@ -10,6 +10,7 @@ import {
   Activity,
   Edit2,
   Save,
+  Trash2,
   X,
   Loader2,
   Link as LinkIcon,
@@ -17,19 +18,26 @@ import {
 import type { Persona } from "@/types/workspace";
 import type { Route } from "next";
 import { useState, useEffect } from "react";
-import { useUpdatePersona, usePersona } from "@/hooks/use-personas";
+import {
+  useUpdatePersona,
+  usePersona,
+  useDeletePersona,
+} from "@/hooks/use-personas";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useRouter } from "next/navigation";
 
 interface PersonaDetailProps {
   persona: Persona;
 }
 
 export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
+  const router = useRouter();
   const personaId = initialPersona.id || "";
 
   // Fetch the latest persona data directly to ensure synchronization
@@ -40,6 +48,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const [formData, setFormData] = useState<Persona>(persona);
 
   const updatePersona = useUpdatePersona(workspace?.id || "");
+  const deletePersona = useDeletePersona(workspace?.id || "");
 
   useEffect(() => {
     if (persona) {
@@ -61,6 +70,16 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
         },
       },
     );
+  };
+
+  const handleDelete = () => {
+    if (!workspace?.id || !persona.id) return;
+
+    deletePersona.mutate(persona.id, {
+      onSuccess: () => {
+        router.push(`/w/${workspaceSlug}/personas`);
+      },
+    });
   };
 
   const handleCancel = () => {
@@ -104,15 +123,38 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </Button>
           </div>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            className="border-primary/20 text-primary hover:bg-primary/5"
-          >
-            <Edit2 size={16} className="mr-2" />
-            Edit Persona
-          </Button>
+          <div className="flex gap-2">
+            <ConfirmationDialog
+              title="Delete Persona"
+              description={`Are you sure you want to delete "${persona.name}"? This action cannot be undone.`}
+              confirmText="Delete"
+              variant="destructive"
+              onConfirm={handleDelete}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/20 hover:bg-destructive/5"
+                disabled={deletePersona.isPending}
+              >
+                {deletePersona.isPending ? (
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                ) : (
+                  <Trash2 size={16} className="mr-2" />
+                )}
+                Delete Persona
+              </Button>
+            </ConfirmationDialog>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="border-primary/20 text-primary hover:bg-primary/5"
+            >
+              <Edit2 size={16} className="mr-2" />
+              Edit Persona
+            </Button>
+          </div>
         )}
       </div>
 

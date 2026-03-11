@@ -1,104 +1,156 @@
-"use client";
-
-import { useState } from "react";
-import { Search, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Search,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Client } from "@langchain/langgraph-sdk";
+import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { formatDistanceToNow } from "date-fns";
+import { log } from "@/lib/logger";
+import LibraryDetail from "./library-detail";
+import { LibraryItem, StoredKeyword, StoreItem } from "@/types/generate-content";
+import { getDifficultyLabel } from "../ui/content/chart-radial-stacked";
+import { useRouter } from "next/navigation";
+import { useWorkspace } from "@/providers/workspace-provider";
+import { Route } from "next";
 
-// Mock Data
-const MOCK_KEYWORDS = [
-  {
-    id: "1",
-    keyword: "SaaS Marketing Strategy",
-    difficulty: "High",
-    volume: "12.5k",
-    lastUpdated: "2 days ago",
-  },
-  {
-    id: "2",
-    keyword: "Best AI Writing Tools 2024",
-    difficulty: "Medium",
-    volume: "8.2k",
-    lastUpdated: "5 hours ago",
-  },
-  {
-    id: "3",
-    keyword: "How to Scale Content Production",
-    difficulty: "Low",
-    volume: "1.5k",
-    lastUpdated: "1 week ago",
-  },
-  {
-    id: "4",
-    keyword: "Email Marketing Automation",
-    difficulty: "High",
-    volume: "45k",
-    lastUpdated: "3 days ago",
-  },
-  {
-    id: "5",
-    keyword: "Lead Generation Tactics",
-    difficulty: "Medium",
-    volume: "5.6k",
-    lastUpdated: "1 day ago",
-  },
-  {
-    id: "6",
-    keyword: "Content Distribution Channels",
-    difficulty: "Low",
-    volume: "2.1k",
-    lastUpdated: "4 days ago",
-  },
-  {
-    id: "7",
-    keyword: "SEO Best Practices",
-    difficulty: "Hard",
-    volume: "90k",
-    lastUpdated: "2 weeks ago",
-  },
-  {
-    id: "8",
-    keyword: "Social Media Trends",
-    difficulty: "Medium",
-    volume: "33k",
-    lastUpdated: "1 month ago",
-  },
-];
+const libraryLogger = log.forComponent("library-view");
 
-interface LibraryViewProps {
-  onSelectKeyword: (keyword: string) => void;
-  onBack: () => void;
-}
+const getDifficultyBg = (kd: number | null) => {
+  if (kd === null || kd === undefined) return "bg-gray-500/10";
+  if (kd >= 70) return "bg-red-500/10 border-red-200";
+  if (kd >= 50) return "bg-orange-500/10 border-orange-200";
+  if (kd >= 30) return "bg-amber-500/10 border-amber-200";
+  return "bg-emerald-500/10 border-emerald-200";
+};
 
-export function LibraryView({
-  onSelectKeyword,
-  onBack: _onBack,
-}: LibraryViewProps) {
+const formatVolume = (vol: number | null) => {
+  if (vol === null || vol === undefined) return "0";
+  if (vol >= 1000000) return `${(vol / 1000000).toFixed(1)}M`;
+  if (vol >= 1000) return `${(vol / 1000).toFixed(1)}k`;
+  return vol.toString();
+};
+
+export function LibraryView() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
+  const [keywords, setKeywords] = useState<LibraryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [view, setView] = useState<"list" | "detail">("list");
+  const { user } = useAuthSession();
+  const router = useRouter();
+  const { workspace } = useWorkspace();
 
-  const filteredKeywords = MOCK_KEYWORDS.filter((k) =>
-    k.keyword.toLowerCase().includes(search.toLowerCase()),
+  const handleSearch = useCallback(
+    async (query: string) => {
+      // Ensure we have actual IDs from session and context
+      const userId = user?.id;
+      const workspaceId = workspace?.id;
+
+      if (!userId || !workspaceId) {
+        libraryLogger.warn("Missing userId or workspaceId for library search");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const client = new Client({
+          apiUrl: resolveApiBaseUrl({
+            explicitBaseUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL,
+          }),
+        });
+
+        const specificPrefix = ["library", userId, workspaceId];
+
+        const searchResults = await client.store.searchItems(specificPrefix, {
+          query: query,
+          limit: 50,
+        });
+
+        const items =
+          (searchResults as unknown as { items: StoreItem[] }).items || [];
+
+
+        const uniqueItems: Record<string, StoreItem> = {};
+        items.forEach((item) => {
+          const value = item.value as StoredKeyword;
+          const query = value.original_query || "Untitled Search";
+          if (
+            !uniqueItems[query] ||
+            new Date(value.timestamp || 0) >
+            new Date(uniqueItems[query].value.timestamp || 0)
+          ) {
+            uniqueItems[query] = item;
+          }
+        });
+
+        const deduplicatedItems = Object.values(uniqueItems);
+
+        const mapped: LibraryItem[] = deduplicatedItems.map((res) => {
+          const value = res.value;
+          const kd = value.seo_state?.keyword_difficulty;
+          return {
+            id: res.key,
+            keyword: value.original_query || "Untitled Search",
+            difficulty: getDifficultyLabel(kd),
+            difficultyScore: kd,
+            volume: value.seo_state?.volume,
+            intent: value.seo_state?.intent || "informational",
+            lastUpdated: value.timestamp
+              ? formatDistanceToNow(new Date(value.timestamp), {
+                addSuffix: true,
+              })
+              : "Recent",
+            rawData: value,
+            namespace: res.namespace,
+          };
+        });
+
+        setKeywords(mapped);
+      } catch (error) {
+        libraryLogger.error("Failed to search library", { error });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id, workspace?.id],
   );
 
-  const handleContinue = () => {
-    const selected = MOCK_KEYWORDS.find((k) => k.id === selectedId);
-    if (selected) {
-      onSelectKeyword(selected.keyword);
-    }
+  useEffect(() => {
+    handleSearch("");
+  }, [handleSearch]);
+
+  const handleSelectKeyword = (item: LibraryItem) => {
+    setSelectedId(item.id);
+    setSelectedItem(item);
+    setView("detail");
   };
 
+
+
+  if (view === "detail" && selectedItem) {
+    const data = selectedItem.rawData as StoredKeyword;
+    const kd = data.seo_state?.keyword_difficulty ?? 0;
+
+    return <LibraryDetail data={data} kd={kd} setView={setView} selectedItem={selectedItem} />
+  }
+
   return (
-    <div className="w-full h-full animate-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full h-full animate-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Keyword Library
         </h1>
         <p className="text-muted-foreground">
-          Select a keyword to generate content topics.
+          Select a keyword to view deep SEO insights and generate content.
         </p>
       </div>
 
@@ -107,87 +159,112 @@ export function LibraryView({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
           <Input
             placeholder="Search saved keywords..."
-            className="pl-10 bg-white text-foreground shadow-none"
+            className="pl-10 bg-white text-foreground shadow-none h-11 border-border/50 focus-visible:ring-primary/20"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch(search);
+              }
+            }}
           />
         </div>
+        <Button
+          className="h-11 px-6 font-semibold"
+          onClick={() => handleSearch(search)}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Search className="h-4 w-4 mr-2" />
+          )}
+          Search Library
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredKeywords.map((item) => (
-          <Card
-            key={item.id}
-            onClick={() => setSelectedId(item.id)}
-            className={cn(
-              "cursor-pointer transition-all duration-200 border-2 hover:border-primary/50",
-              selectedId === item.id
-                ? "border-primary bg-primary/5"
-                : "border-border/50 bg-card",
-            )}
-          >
-            <div className="p-5 space-y-3">
-              <div className="flex justify-between items-start">
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "font-medium",
-                    item.difficulty === "High"
-                      ? "bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-200"
-                      : item.difficulty === "Medium"
-                        ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-200"
-                        : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200",
-                  )}
-                >
-                  {item.difficulty}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {item.lastUpdated}
-                </span>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {!isLoading &&
+          keywords.map((item) => (
+            <Card
+              key={item.id}
+              onClick={() => handleSelectKeyword(item)}
+              className={cn(
+                "group cursor-pointer transition-all duration-300 border-border/50 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 bg-card overflow-hidden",
+                selectedId === item.id
+                  ? "ring-2 ring-primary border-primary bg-primary/2"
+                  : "",
+              )}
+            >
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "font-bold text-[10px] uppercase tracking-wider px-2 py-0.5",
+                      getDifficultyBg(item.difficultyScore),
+                    )}
+                  >
+                    {item.difficulty}
+                  </Badge>
+                  <div className="text-right">
+                    <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
+                      Updated
+                    </div>
+                    <div className="text-xs font-semibold text-foreground/80">
+                      {item.lastUpdated}
+                    </div>
+                  </div>
+                </div>
 
-              <div>
-                <h3
-                  className={cn(
-                    "font-bold text-lg leading-tight mb-1 transition-colors",
-                    selectedId === item.id
-                      ? "text-primary"
-                      : "text-card-foreground",
-                  )}
-                >
-                  {item.keyword}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Vol: {item.volume}
-                </p>
+                <div>
+                  <h3 className="font-bold text-xl leading-snug group-hover:text-primary transition-colors line-clamp-2 min-h-14">
+                    {item.keyword}
+                  </h3>
+                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+                        Est. Volume
+                      </span>
+                      <span className="text-lg font-bold text-foreground">
+                        {formatVolume(Number(item.volume))}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-3 text-xs font-bold text-primary hover:bg-primary/10 hover:text-primary rounded-full group/btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/w/${workspace?.slug}/generate_content?library=${item.keyword}` as Route);
+                        }}
+                      >
+                        Use Keyword
+                        <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
       </div>
 
-      {filteredKeywords.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed border-muted rounded-xl bg-muted/30">
-          <p className="text-muted-foreground font-medium">
-            No keywords found.
-          </p>
-          <p className="text-sm text-muted-foreground/80 mt-1">
-            Try searching for something else.
+      {!isLoading && keywords.length === 0 && (
+        <div className="text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-muted/20">
+          <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+            <Search className="h-8 w-8 text-muted-foreground/50" />
+          </div>
+          <h3 className="text-xl font-bold text-foreground">
+            No keyword results found
+          </h3>
+          <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
+            Try a different search term or run a new keyword analysis to build
+            your library.
           </p>
         </div>
       )}
-
-      <div className="flex justify-start sticky bottom-6 mt-8">
-        <Button
-          size="lg"
-          disabled={!selectedId}
-          onClick={handleContinue}
-          className="transition-transform hover:scale-[1.02] active:scale-[0.98]"
-        >
-          Continue to Topics
-          <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }

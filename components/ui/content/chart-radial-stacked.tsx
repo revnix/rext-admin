@@ -29,7 +29,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 // Helper function to get difficulty label based on score
-const getDifficultyLabel = (score: number) => {
+export const getDifficultyLabel = (score: number | null) => {
+  if (score === null || score === undefined) return "Unknown";
   if (score <= 10) return "Easy";
   if (score <= 30) return "Medium";
   if (score <= 70) return "Hard";
