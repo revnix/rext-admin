@@ -179,41 +179,38 @@ export function SuggestionsSection({
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto bg-white/60 rounded-lg dark:bg-gray-800">
-        <table className="min-w-full text-left border-collapse">
-          <tbody className="divide-y divide-gray-200">
-            <AnimatePresence>
-              {suggestedKeywords.length > 0 ? (
-                suggestedKeywords.map((kw, idx) => (
-                  <motion.tr
-                    key={kw}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
-                    onClick={() => onSelect(kw)}
-                  >
-                    <td className="px-4 py-3 font-medium text-sm text-gray-800 group-hover:text-primary transition-all duration-200 dark:text-gray-200 flex justify-between items-center">
-                      {kw}
-                      <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-all duration-200 group-hover:translate-x-1" />
-                    </td>
-                  </motion.tr>
-                ))
-              ) : (
-                <motion.tr
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+      <div className="overflow-x-auto dark:bg-gray-800">
+        <div className="flex flex-wrap gap-2 justify-between">
+          <AnimatePresence>
+            {suggestedKeywords.length > 0 ? (
+              suggestedKeywords.map((kw, idx) => (
+                <motion.div
+                  key={kw}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="cursor-pointer w-[49%] bg-white group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                  onClick={() => onSelect(kw)}
                 >
-                  <td colSpan={1} className="px-6 py-4 italic text-gray-400 text-sm flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating suggestions...
-                  </td>
-                </motion.tr>
-              )}
-            </AnimatePresence>
-          </tbody>
-        </table>
+                  <div className="px-4 py-4 font-medium text-sm text-gray-800 dark:text-gray-200 flex justify-between items-center group-hover:text-primary transition-all duration-200">
+                    {kw}
+                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-all duration-200 group-hover:translate-x-1" />
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="px-4 py-3 italic text-gray-400 text-sm flex items-center gap-2"
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating suggestions...
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
     </motion.div>
