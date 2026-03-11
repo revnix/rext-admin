@@ -47,6 +47,7 @@ export const signupFormSchema = z
       .string()
       .min(1, "First name is required")
       .max(50, "First name must be 50 characters or less")
+      .regex(/^[^0-9]*$/, "Name should not contain numbers")
       .trim(),
     email: z.string().email("Invalid email address").trim().toLowerCase(),
     password: passwordSchema,
@@ -86,6 +87,7 @@ export const signupWithInvitationSchema = z
       .string()
       .min(1, "First name is required")
       .max(50, "First name must be 50 characters or less")
+      .regex(/^[^0-9]*$/, "Name should not contain numbers")
       .trim(),
     email: z.string().email("Invalid email address").trim().toLowerCase(),
     password: passwordSchema,
