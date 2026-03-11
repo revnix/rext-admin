@@ -154,6 +154,8 @@ export type FinalContent = {
   slug?: string;
   content?: string; // Kept for backward compatibility if needed, though backend uses body_markdown
   body_markdown: string;
+  html_content?: string;
+  body_html?: string;
   meta_title: string;
   meta_description: string;
   tags: string[];

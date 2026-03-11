@@ -248,7 +248,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
-    body_html: "",
+    body_html: allContent?.body_html || allContent?.html_content || "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
