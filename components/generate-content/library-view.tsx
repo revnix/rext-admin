@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Search,
-  ChevronRight,
-  Loader2,
-} from "lucide-react";
+import { Search, ChevronRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +11,15 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { formatDistanceToNow } from "date-fns";
 import { log } from "@/lib/logger";
 import LibraryDetail from "./library-detail";
-import { LibraryItem, StoredKeyword, StoreItem } from "@/types/generate-content";
+import type {
+  LibraryItem,
+  StoredKeyword,
+  StoreItem,
+} from "@/types/generate-content";
 import { getDifficultyLabel } from "../ui/content/chart-radial-stacked";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/providers/workspace-provider";
-import { Route } from "next";
+import type { Route } from "next";
 
 const libraryLogger = log.forComponent("library-view");
 
@@ -78,7 +78,6 @@ export function LibraryView() {
         const items =
           (searchResults as unknown as { items: StoreItem[] }).items || [];
 
-
         const uniqueItems: Record<string, StoreItem> = {};
         items.forEach((item) => {
           const value = item.value as StoredKeyword;
@@ -86,7 +85,7 @@ export function LibraryView() {
           if (
             !uniqueItems[query] ||
             new Date(value.timestamp || 0) >
-            new Date(uniqueItems[query].value.timestamp || 0)
+              new Date(uniqueItems[query].value.timestamp || 0)
           ) {
             uniqueItems[query] = item;
           }
@@ -106,8 +105,8 @@ export function LibraryView() {
             intent: value.seo_state?.intent || "informational",
             lastUpdated: value.timestamp
               ? formatDistanceToNow(new Date(value.timestamp), {
-                addSuffix: true,
-              })
+                  addSuffix: true,
+                })
               : "Recent",
             rawData: value,
             namespace: res.namespace,
@@ -134,13 +133,18 @@ export function LibraryView() {
     setView("detail");
   };
 
-
-
   if (view === "detail" && selectedItem) {
     const data = selectedItem.rawData as StoredKeyword;
     const kd = data.seo_state?.keyword_difficulty ?? 0;
 
-    return <LibraryDetail data={data} kd={kd} setView={setView} selectedItem={selectedItem} />
+    return (
+      <LibraryDetail
+        data={data}
+        kd={kd}
+        setView={setView}
+        selectedItem={selectedItem}
+      />
+    );
   }
 
   return (
@@ -237,7 +241,9 @@ export function LibraryView() {
                         className="h-8 px-3 text-xs font-bold text-primary hover:bg-primary/10 hover:text-primary rounded-full group/btn"
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/w/${workspace?.slug}/generate_content?library=${item.keyword}` as Route);
+                          router.push(
+                            `/w/${workspace?.slug}/generate_content?library=${item.keyword}` as Route,
+                          );
                         }}
                       >
                         Use Keyword

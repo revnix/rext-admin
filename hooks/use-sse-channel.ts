@@ -14,7 +14,7 @@ import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
 
 const sseChannelLogger = log.forComponent("useSSEChannel");
 
-async function refreshNotificationsWithState(): Promise<void> {
+async function _refreshNotificationsWithState(): Promise<void> {
   const store = useNotificationStore.getState();
   store.setFetchState({ isLoading: true, fetchError: null });
 

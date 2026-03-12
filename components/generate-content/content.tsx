@@ -159,7 +159,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
   } = props;
 
-  const [activeSection, setActiveSection] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
@@ -168,9 +167,12 @@ function ContentEditorInner(props: ContentEditorProps) {
   const body = generatedContent;
   const previewHtml = body ? marked.parse(body) : "";
   const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
-  const { displayed: typedIntro } = useTypewriter(allContent?.introduction || "", {
-    speed: 45,
-  });
+  const { displayed: typedIntro } = useTypewriter(
+    allContent?.introduction || "",
+    {
+      speed: 45,
+    },
+  );
   const score = readabilityScore?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
@@ -189,7 +191,9 @@ function ContentEditorInner(props: ContentEditorProps) {
     message: "",
   });
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
-  const [contentSavedId, setContentSavedId] = useState<string | undefined>(contentId);
+  const [contentSavedId, setContentSavedId] = useState<string | undefined>(
+    contentId,
+  );
 
   // Derive sidebar headings from the actual body content
   const sidebarSections = useMemo(() => {
@@ -199,7 +203,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     const matches = Array.from(body.matchAll(/^#{1,6}\s+(.*)$/gm));
 
     if (matches.length > 0) {
-      return matches.map(m => ({
+      return matches.map((m) => ({
         heading: m[1].trim(),
       }));
     }
@@ -214,29 +218,27 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!container) return;
 
     const handleScroll = () => {
-      const headings = Array.from(container.querySelectorAll("h1, h2, h3, h4, h5, h6"));
-      let currentSectionIdx = -1;
+      const headings = Array.from(
+        container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+      );
+      let _currentSectionIdx = -1;
 
       for (let i = 0; i < headings.length; i++) {
         const rect = headings[i].getBoundingClientRect();
         // The container's top is roughly its position in viewport
         // We use a 160px buffer for the sticky-like offset
         if (rect.top <= 200) {
-          currentSectionIdx = i;
+          _currentSectionIdx = i;
         } else {
           break;
         }
-      }
-
-      if (currentSectionIdx !== -1) {
-        setActiveSection(currentSectionIdx);
       }
     };
 
     container.addEventListener("scroll", handleScroll);
     handleScroll(); // Initial check
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [sidebarSections, body]);
+  }, []);
 
   const getContentPayload = () => ({
     title: displayTitle,
@@ -295,10 +297,9 @@ function ContentEditorInner(props: ContentEditorProps) {
         response = await apiClient.content.publish(
           workspaceId,
           getContentPayload(),
-          contentSavedId
+          contentSavedId,
         );
-      }
-      else {
+      } else {
         response = await apiClient.content.save_publish(
           workspaceId,
           getContentPayload(),
@@ -337,7 +338,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!workspaceId) return;
     try {
       setIsSaving(true);
-      let response: { message?: string, id?: string } | undefined;
+      let response: { message?: string; id?: string } | undefined;
       if (contentSavedId) {
         response = await apiClient.content.update(
           workspaceId,
@@ -389,15 +390,13 @@ function ContentEditorInner(props: ContentEditorProps) {
     setIntegrationModalOpen(false);
   };
 
-  {
-    !body && (
-      <div className="space-y-3 animate-pulse">
-        <div className="h-4 bg-muted rounded w-full" />
-        <div className="h-4 bg-muted rounded w-5/6" />
-        <div className="h-4 bg-muted rounded w-4/6" />
-      </div>
-    )
-  }
+  !body && (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-4 bg-muted rounded w-full" />
+      <div className="h-4 bg-muted rounded w-5/6" />
+      <div className="h-4 bg-muted rounded w-4/6" />
+    </div>
+  );
 
   return (
     <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t">
@@ -423,8 +422,16 @@ function ContentEditorInner(props: ContentEditorProps) {
                             document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
                           ).find(
                             (h) =>
-                              h.textContent?.trim().toLowerCase().includes(sec.heading.trim().toLowerCase()) ||
-                              sec.heading.trim().toLowerCase().includes(h.textContent?.trim().toLowerCase() || "")
+                              h.textContent
+                                ?.trim()
+                                .toLowerCase()
+                                .includes(sec.heading.trim().toLowerCase()) ||
+                              sec.heading
+                                .trim()
+                                .toLowerCase()
+                                .includes(
+                                  h.textContent?.trim().toLowerCase() || "",
+                                ),
                           );
 
                         if (element) {
@@ -435,7 +442,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         }
                       }}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground",
                       )}
                     >
                       <span className="relative truncate leading-none">
@@ -511,11 +518,16 @@ function ContentEditorInner(props: ContentEditorProps) {
                     </>
                   ) : (
                     <div className="space-y-4">
-                      {(displayTitle || tags.length > 0 || allContent?.introduction) ? (
+                      {displayTitle ||
+                        tags.length > 0 ||
+                        allContent?.introduction ? (
                         <div className="space-y-4 mb-8">
                           <div className="flex flex-wrap gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             {tags.slice(0, 6).map((t) => (
-                              <span key={t} className="bg-muted px-2 py-1 rounded">
+                              <span
+                                key={t}
+                                className="bg-muted px-2 py-1 rounded"
+                              >
                                 #{t}
                               </span>
                             ))}
@@ -635,7 +647,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           </Dialog>
 
           <section className="space-y-4">
-            {score ?
+            {score ? (
               <>
                 <div className="flex items-center gap-2 font-bold">
                   <Activity size={16} className="text-emerald-500" />
@@ -645,7 +657,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
 
                 <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
-                  <h4 className="text-lg font-bold text-foreground">Readability</h4>
+                  <h4 className="text-lg font-bold text-foreground">
+                    Readability
+                  </h4>
 
                   <div className="space-y-2">
                     <div className={`text-xl font-bold ${color}`}>
@@ -661,7 +675,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 </div>
               </>
-              :
+            ) : (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 font-bold">
                   <Activity size={16} className="text-muted-foreground/30" />
@@ -678,7 +692,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 </div>
               </div>
-            }
+            )}
             {seoScore ? (
               <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
                 <h4 className="text-lg font-bold text-foreground">

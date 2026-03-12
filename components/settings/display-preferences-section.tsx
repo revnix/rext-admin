@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save } from "lucide-react";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -67,15 +66,21 @@ export function DisplayPreferencesSection() {
 
       // Strict mapping to form values with defaults
       return {
-        date_format: (raw.date_format === "us" || raw.date_format === "eu" || raw.date_format === "iso" || raw.date_format === "relative")
-          ? (raw.date_format as PreferencesFormValues["date_format"])
-          : "iso",
-        time_format: (raw.time_format === "24h" || raw.time_format === "12h")
-          ? (raw.time_format as PreferencesFormValues["time_format"])
-          : "24h",
-        items_per_page: (typeof raw.items_per_page === "number" && raw.items_per_page > 0)
-          ? raw.items_per_page
-          : 25,
+        date_format:
+          raw.date_format === "us" ||
+          raw.date_format === "eu" ||
+          raw.date_format === "iso" ||
+          raw.date_format === "relative"
+            ? (raw.date_format as PreferencesFormValues["date_format"])
+            : "iso",
+        time_format:
+          raw.time_format === "24h" || raw.time_format === "12h"
+            ? (raw.time_format as PreferencesFormValues["time_format"])
+            : "24h",
+        items_per_page:
+          typeof raw.items_per_page === "number" && raw.items_per_page > 0
+            ? raw.items_per_page
+            : 25,
       };
     },
   });
@@ -130,10 +135,14 @@ export function DisplayPreferencesSection() {
  *
  * Handles form state and submission for display preferences.
  */
-function DisplayPreferencesForm({ initialPreferences }: { initialPreferences: PreferencesFormValues }) {
+function DisplayPreferencesForm({
+  initialPreferences,
+}: {
+  initialPreferences: PreferencesFormValues;
+}) {
   const queryClient = useQueryClient();
 
-  // Initialize form with API data as defaultValues. 
+  // Initialize form with API data as defaultValues.
   // Since this component only mounts when data is ready, the form is perfectly initialized.
   const form = useForm<PreferencesFormValues>({
     resolver: zodResolver(preferencesSchema),

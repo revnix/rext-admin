@@ -364,7 +364,9 @@ export function DataTable<
           {(actions || showSearch) && (
             <div className="flex flex-wrap items-center gap-2">
               {showSearch && (
-                <div className={`relative flex-1 min-w-0 md:flex-none ${searchWidth}`}>
+                <div
+                  className={`relative flex-1 min-w-0 md:flex-none ${searchWidth}`}
+                >
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={searchPlaceholder}

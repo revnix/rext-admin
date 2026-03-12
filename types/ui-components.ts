@@ -243,12 +243,12 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 export interface ToasterProps {
   theme?: "light" | "dark" | "system";
   position?:
-  | "top-left"
-  | "top-center"
-  | "top-right"
-  | "bottom-left"
-  | "bottom-center"
-  | "bottom-right";
+    | "top-left"
+    | "top-center"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-center"
+    | "bottom-right";
   hotkey?: string[];
   richColors?: boolean;
   expand?: boolean;
@@ -311,7 +311,10 @@ export interface TextAreaInputProps {
   className?: string;
 }
 
-export type { ChipInputProps, ControlledChipInputProps } from "@/components/ui/typeform/chip-input";
+export type {
+  ChipInputProps,
+  ControlledChipInputProps,
+} from "@/components/ui/typeform/chip-input";
 
 export interface MultiSelectCardProps {
   options: Array<{

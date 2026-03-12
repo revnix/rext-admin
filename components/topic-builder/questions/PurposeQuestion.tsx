@@ -18,10 +18,11 @@ import {
 } from "lucide-react";
 import { MultiSelectCard } from "@/components/ui/typeform/multi-select-card";
 import { TextInput } from "@/components/ui/typeform/text-input";
+import { useReducedMotion } from "@/lib/animations";
 import {
-  useReducedMotion,
-} from "@/lib/animations";
-import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
+  questionItemVariants,
+  useTypeformMotionVariants,
+} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { PurposeType, TopicBuilderFormData } from "@/types/topic-builder";
 import { PURPOSE_OPTIONS } from "@/types/topic-builder";
@@ -45,7 +46,7 @@ export function PurposeQuestion({
   error: _error,
   isLoading = false,
 }: PurposeQuestionProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   const handleToggle = (value: PurposeType) => {
@@ -142,8 +143,8 @@ export function PurposeQuestion({
                 "transition-all duration-150 h-auto",
                 isSelected && "shadow-lg",
                 isRecommended &&
-                !isSelected &&
-                "ring-1 ring-primary/30 bg-primary/5 border-primary/20",
+                  !isSelected &&
+                  "ring-1 ring-primary/30 bg-primary/5 border-primary/20",
               )}
               delay={index * 0.1}
             />

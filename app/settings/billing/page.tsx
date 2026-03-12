@@ -346,8 +346,8 @@ function BillingDashboardContent() {
                     Your subscription will end on{" "}
                     {subscription.current_period_end
                       ? new Date(
-                        subscription.current_period_end,
-                      ).toLocaleDateString()
+                          subscription.current_period_end,
+                        ).toLocaleDateString()
                       : "N/A"}
                     . You can reactivate it anytime before this date.
                   </AlertDescription>
@@ -454,7 +454,10 @@ function BillingDashboardContent() {
                 </div>
                 <span className="text-sm text-muted-foreground">
                   {usage.members?.used ?? 0} /{" "}
-                  {formatLimit(usage.members?.limit, usage.members?.unlimited ?? false)}
+                  {formatLimit(
+                    usage.members?.limit,
+                    usage.members?.unlimited ?? false,
+                  )}
                 </span>
               </div>
               <Progress value={usage.members?.percentage ?? 0} />
@@ -469,7 +472,10 @@ function BillingDashboardContent() {
                 </div>
                 <span className="text-sm text-muted-foreground">
                   {usage.topics?.used ?? 0} /{" "}
-                  {formatLimit(usage.topics?.limit, usage.topics?.unlimited ?? false)}
+                  {formatLimit(
+                    usage.topics?.limit,
+                    usage.topics?.unlimited ?? false,
+                  )}
                 </span>
               </div>
               <Progress value={usage.topics?.percentage ?? 0} />

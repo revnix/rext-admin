@@ -18,12 +18,12 @@ const urlSchema = z
         const parsed = new URL(url);
         // Protocol must be https://
         if (parsed.protocol !== "https:") return false;
-        
+
         const hostname = parsed.hostname;
-        
+
         // Specifically only allow .com
         if (!hostname.endsWith(".com")) return false;
-        
+
         return true;
       } catch {
         return false;

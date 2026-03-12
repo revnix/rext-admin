@@ -13,7 +13,7 @@
 
 import { AlertTriangle, Plus, X } from "lucide-react";
 import * as React from "react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,10 +109,10 @@ export function ChipInput({
   const announcementTimeoutRef = React.useRef<number | null>(null);
 
   // Generate unique IDs for accessibility
-  const inputId = useId();
-  const descriptionId = useId();
-  const errorId = useId();
-  const liveRegionId = useId();
+  const inputId = React.useId();
+  const descriptionId = React.useId();
+  const errorId = React.useId();
+  const liveRegionId = React.useId();
 
   // Announce to screen readers
   const announce = useCallback((message: string) => {
@@ -242,7 +242,7 @@ export function ChipInput({
     return (
       <div className="space-y-2" data-chip-input data-fallback-mode>
         <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md">
-          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span className="text-sm text-amber-800 dark:text-amber-200">
             Using fallback text input mode. Enter comma-separated values.
           </span>
@@ -325,7 +325,7 @@ export function ChipInput({
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
                 "bg-primary text-primary-foreground hover:bg-primary/90",
                 focusedChipIndex === index &&
-                "ring-2 ring-primary ring-offset-1",
+                  "ring-2 ring-primary ring-offset-1",
               )}
             >
               <span>{chip}</span>
@@ -380,7 +380,7 @@ export function ChipInput({
         )}
       </div>
 
-      <div className="flex justify-between items-center min-h-[20px]">
+      <div className="flex justify-between items-center min-h-5">
         <div>
           {(error || internalError) && (
             <p

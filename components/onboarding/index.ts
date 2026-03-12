@@ -26,7 +26,6 @@ export { InvitedUserOnboardingModal } from "./invited-user-onboarding-modal";
 // ---------------------------------------------------------------------------
 export { OnboardingProgress } from "./onboarding-progress";
 
-
 // Invited user onboarding steps (used by InvitedUserOnboardingModal)
 // ---------------------------------------------------------------------------
 export {
