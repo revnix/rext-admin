@@ -147,7 +147,7 @@ export function useSSEChannel(
   //     });
   // }, []);
 
-  void refreshNotificationsWithState();
+  // void refreshNotificationsWithState();
 
   const handleError = useCallback((errorMessage?: string, code?: string) => {
     if (!errorMessage && !code) {
