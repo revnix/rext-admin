@@ -92,7 +92,7 @@ export function WorkspaceWelcomeModal({
 
   const handleStartExploring = () => {
     handleClose();
-    router.push(`/w/${workspace.slug}` as Route);
+    router.push(`/w/${workspace.slug}/generate_content` as Route);
   };
 
   const handleTakeTour = () => {
