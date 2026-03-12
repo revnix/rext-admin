@@ -242,7 +242,6 @@ export function FreshGenerationView({
       focus_keyphrase: extractJsonStringFieldPartial(buf, "focus_keyphrase"),
       introduction: extractJsonStringFieldPartial(buf, "introduction"),
       body_markdown: liveBodyMarkdown,
-      html_content: extractJsonStringFieldPartial(buf, "html_content"),
       word_count: 0,
       status: "generated",
     } as any;
@@ -284,8 +283,7 @@ export function FreshGenerationView({
 
         if (!body) return;
 
-        const finalContent = parsed?.final_content || parsed;
-        dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
+        dispatch({ type: "SET_ALL_CONTENT", payload: parsed });
         dispatch({ type: "SET_GENERATED_CONTENT", payload: body });
         setTokenTarget("none");
         tokenTargetRef.current = "none";
@@ -462,16 +460,17 @@ export function FreshGenerationView({
 
         // Centralized handling for nodes that emit content updates
         const u = updates as any;
-        const potentialNodes = [
-          'content', 'content_engine', 'generate_content', 'humanize_content',
-          'inject_eeat', 'review_content', 'calculate_readability',
-          'calculate_on_page_seo', 'calculate_eeat_trust'
-        ];
-
-        const nodeOutputs = potentialNodes
-          .map(node => u[node])
-          .filter(Boolean)
-          .map(val => (val.content || val)); // normalize: use .content if present, else use as-is
+        const nodeOutputs = [
+          u.content,
+          u.content_engine?.content,
+          u.generate_content?.content,
+          u.humanize_content?.content,
+          u.inject_eeat?.content,
+          u.review_content?.content,
+          u.calculate_readability?.content,
+          u.calculate_on_page_seo?.content,
+          u.calculate_eeat_trust?.content
+        ].filter(Boolean);
 
         for (const output of nodeOutputs) {
           const out = output as any;
@@ -480,8 +479,6 @@ export function FreshGenerationView({
             dispatch({ type: "SET_ALL_CONTENT", payload: out.final_content });
             if (out.final_content.body_markdown) {
               dispatch({ type: "SET_GENERATED_CONTENT", payload: out.final_content.body_markdown });
-            } else if (out.final_content.html_content) {
-              dispatch({ type: "SET_GENERATED_CONTENT", payload: htmlToMarkdownLite(out.final_content.html_content) });
             }
             setTokenTarget("none");
             tokenTargetRef.current = "none";
