@@ -68,31 +68,7 @@ export default function UsagePage() {
     }
   };
 
-  if (!subscription || !usage) {
-    return (
-      <PageLayout
-        title="Usage Dashboard"
-        description="Monitor your usage and plan limits"
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Usage Statistics</CardTitle>
-            <CardDescription>
-              You don't have an active subscription yet.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Choose a plan to get started with all the features of REXT.
-            </p>
-            <Button onClick={() => router.push("/pricing" as Route)}>
-              View Pricing Plans
-            </Button>
-          </CardContent>
-        </Card>
-      </PageLayout>
-    );
-  }
+  // Removed strict subscription/usage check to allow rendering whatever data is available
 
   return (
     <PermissionGuard

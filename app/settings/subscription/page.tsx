@@ -52,6 +52,8 @@ export default function SubscriptionSettingsPage() {
         await fetchSubscription();
       } catch (_error) {
         toast.error("Failed to load subscription settings");
+      } finally {
+        _setDataLoading(false);
       }
     };
     loadData();

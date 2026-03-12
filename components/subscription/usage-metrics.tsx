@@ -144,6 +144,13 @@ export function UsageMetrics({
       description: "Number of workspaces you can create",
     },
     {
+      label: "Members",
+      current: (usage as any).current_members ?? 0,
+      max: (usage as any).max_members ?? 0,
+      percentage: (usage as any).members_usage_percent ?? 0,
+      description: "Total team members across all workspaces",
+    },
+    {
       label: "Topics",
       current: usage.current_topics,
       max: usage.max_topics,
@@ -169,23 +176,11 @@ export function UsageMetrics({
   // Get overall status (highest usage percentage)
   const overallPercentage = Math.max(
     usage.workspaces_usage_percent,
+    (usage as any).members_usage_percent ?? 0,
     usage.topics_usage_percent,
     usage.knowledge_items_usage_percent,
     usage.api_calls_usage_percent,
   );
-
-  if (!usage) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>Usage Statistics</CardTitle>
-          <CardDescription>
-            No usage data available. Subscribe to a plan to track your usage.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
 
   return (
     <Card className={className}>
@@ -203,15 +198,17 @@ export function UsageMetrics({
 
       <CardContent className="space-y-6">
         {/* Usage Reset Date */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-          <Calendar className="h-4 w-4" />
-          <span>
-            Usage resets on{" "}
-            <span className="font-medium text-foreground">
-              {formatDate(usage.usage_reset_date)}
+        {usage.usage_reset_date && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+            <Calendar className="h-4 w-4" />
+            <span>
+              Usage resets on{" "}
+              <span className="font-medium text-foreground">
+                {formatDate(usage.usage_reset_date)}
+              </span>
             </span>
-          </span>
-        </div>
+          </div>
+        )}
 
         {/* Usage Metrics */}
         <div className="space-y-5">

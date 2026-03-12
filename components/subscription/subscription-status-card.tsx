@@ -127,6 +127,35 @@ export function SubscriptionStatusCard({
   }
 
   if (!subscription) {
+    const usagePlanName = useSubscriptionStore.getState().usage?.plan_name;
+
+    if (usagePlanName) {
+      return (
+        <Card className={className}>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-2xl">{usagePlanName}</CardTitle>
+                <CardDescription className="mt-1">
+                  Your current usage plan
+                </CardDescription>
+              </div>
+              <Badge variant="outline">Free / Default</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              You are currently on the {usagePlanName} plan. Upgrade to a premium
+              plan to get higher limits and advanced features.
+            </p>
+            <Button asChild className="w-full">
+              <a href="/pricing">View Upgrade Options</a>
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className={className}>
         <CardHeader>
@@ -137,7 +166,7 @@ export function SubscriptionStatusCard({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button asChild>
+          <Button asChild className="w-full">
             <a href="/pricing">View Plans</a>
           </Button>
         </CardContent>
