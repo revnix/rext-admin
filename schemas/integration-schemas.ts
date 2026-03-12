@@ -9,17 +9,23 @@ const urlSchema = z
   .min(1, "Site URL is required")
   .url("Please enter a valid URL")
   .refine(
+    (url) => url.startsWith("https://"),
+    {
+      message: "URL must start with https://",
+    }
+  )
+  .refine(
     (url) => {
       try {
-        const parsed = new URL(url);
-        return parsed.protocol === "http:" || parsed.protocol === "https:";
+        const hostname = new URL(url).hostname;
+        return hostname.endsWith(".com");
       } catch {
         return false;
       }
     },
     {
-      message: "URL must start with http:// or https://",
-    },
+      message: "URL must be a .com domain",
+    }
   );
 
 const endpointSchema = z
@@ -36,7 +42,7 @@ export const integrationSchema = z.object({
   api_key: z.string().min(1, "API Key is required"),
   api_endpoint: endpointSchema,
   is_active: z.boolean(),
-  
+
 });
 
 export type IntegrationFormData = z.infer<typeof integrationSchema>;

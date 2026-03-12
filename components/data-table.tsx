@@ -58,6 +58,7 @@ interface DataTableProps<
   searchFields?: (keyof T)[];
   isLoading?: boolean;
   tableId?: string; // For localStorage persistence
+  searchWidth?: string;
 }
 
 export function DataTable<
@@ -79,6 +80,7 @@ export function DataTable<
   searchFields = [],
   isLoading = false,
   tableId,
+  searchWidth = "md:w-80",
 }: DataTableProps<T>) {
   // Helper function to get localStorage key for page size
   const getPageSizeKey = () => `data-table-page-size-${tableId || "default"}`;
@@ -362,7 +364,7 @@ export function DataTable<
           {(actions || showSearch) && (
             <div className="flex flex-wrap items-center gap-2">
               {showSearch && (
-                <div className="relative flex-1 min-w-0 md:flex-none md:w-80">
+                <div className={`relative flex-1 min-w-0 md:flex-none ${searchWidth}`}>
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={searchPlaceholder}

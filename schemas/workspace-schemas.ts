@@ -16,13 +16,21 @@ const urlSchema = z
     (url) => {
       try {
         const parsed = new URL(url);
-        return parsed.protocol === "http:" || parsed.protocol === "https:";
+        // Protocol must be https://
+        if (parsed.protocol !== "https:") return false;
+        
+        const hostname = parsed.hostname;
+        
+        // Specifically only allow .com
+        if (!hostname.endsWith(".com")) return false;
+        
+        return true;
       } catch {
         return false;
       }
     },
     {
-      message: "URL must start with http:// or https://",
+      message: "URL must start with https:// and end with .com",
     },
   );
 

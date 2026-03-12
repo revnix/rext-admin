@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
@@ -248,7 +247,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
-    body_html: allContent?.body_html || allContent?.html_content || "",
+    body_html: "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
@@ -663,7 +662,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               </>
               :
-              <div className="space-y-4 animate-pulse">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 font-bold">
                   <Activity size={16} className="text-muted-foreground/30" />
                   <div className="h-3 bg-muted rounded w-32" />
@@ -773,7 +772,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               </div>
             ) : (
-              <div className="bg-card p-6 rounded-3xl border border-border space-y-6 animate-pulse">
+              <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
                 <div className="h-4 bg-muted rounded w-1/2" />
                 <div className="flex items-center gap-6">
                   <div className="w-20 h-20 rounded-full bg-muted" />
@@ -836,9 +835,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                 <hr />
                 <div className="flex items-center gap-2 font-bold">
                   <Sparkles size={16} className="text-muted-foreground/50" />
-                  <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
                 </div>
-                <div className="bg-card p-6 rounded-3xl border border-border space-y-4 animate-pulse">
+                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
                   <div className="h-4 bg-muted rounded w-1/2" />
                   <div className="h-8 bg-muted rounded w-1/3" />
                   <div className="h-3 bg-muted rounded w-3/4" />

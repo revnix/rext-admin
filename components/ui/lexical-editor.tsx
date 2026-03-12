@@ -37,7 +37,7 @@ import {
   $isLinkNode,
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { log } from "@/lib/logger";
 import {
   $getSelection,
@@ -571,6 +571,16 @@ export default function LexicalEditor({
 }: LexicalEditorProps) {
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
+  const lastEmittedValueRef = useRef(initialValue);
+
+  // Sync initialValue prop to internal state if it changes from outside
+  useEffect(() => {
+    if (initialValue !== lastEmittedValueRef.current) {
+      setMarkdownOutput(initialValue);
+      setShouldUpdateEditor(true);
+      lastEmittedValueRef.current = initialValue;
+    }
+  }, [initialValue]);
 
   // We use useMemo to ensure the initialConfig is stable.
   // biome-ignore lint/correctness/useExhaustiveDependencies: initialValue excluded to prevent re-creating editor state
@@ -589,7 +599,7 @@ export default function LexicalEditor({
           if (initialValue) {
             try {
               $convertFromMarkdownString(initialValue, TRANSFORMERS);
-            } catch (_e) {}
+            } catch (_e) { }
           }
         });
       },
@@ -609,6 +619,7 @@ export default function LexicalEditor({
       }
 
       if (onChange) {
+        lastEmittedValueRef.current = markdown;
         onChange(markdown);
       }
     });
@@ -639,7 +650,7 @@ export default function LexicalEditor({
           )}
         >
           {!readOnly && <ToolbarPlugin />}
-          <div className="relative flex-grow">
+          <div className="relative grow">
             <RichTextPlugin
               contentEditable={
                 <ContentEditable

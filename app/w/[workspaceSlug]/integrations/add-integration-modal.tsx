@@ -127,6 +127,9 @@ export function AddIntegrationModal({
                       {...field}
                     />
                   </FormControl>
+                  <p className="text-[0.8rem] text-muted-foreground">
+                    Must start with https:// and use a .com domain
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

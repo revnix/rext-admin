@@ -266,6 +266,7 @@ export default function WorkspacePage() {
         pageSize={10}
         searchFields={["title", "url", "timezone", "owner"]}
         isLoading={isLoading}
+        searchWidth="md:w-[450px]"
         tableId="workspaces"
       />
 

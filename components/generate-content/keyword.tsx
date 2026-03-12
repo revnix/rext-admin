@@ -56,7 +56,7 @@ export function KeywordForm({
             onChange={(c) => onCountryChange(c.alpha2)}
           />
           <Button type="submit" className="h-12 px-4 text-lg">
-            Generate
+            Analyze
           </Button>
         </div>
       </form>
