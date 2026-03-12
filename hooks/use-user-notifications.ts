@@ -45,18 +45,6 @@ export function useUserNotifications() {
     const userNotificationsChannelId = `user-notifications-${userId}`;
     void refreshNotificationsWithState();
 
-    // ── Initial fetch on mount ──────────────────────────────────────────
-    fetchNotifications()
-      .then((incoming) => {
-        useNotificationStore.getState().mergeNotifications(incoming);
-      })
-      .catch((error) => {
-        userNotificationsLogger.error("Failed to load initial notifications", {
-          userId,
-          error,
-        });
-      });
-
     // Subscribe to user notification events
     unsubscribeUserNotificationsRef.current = subscribe(
       userNotificationsChannelId,
