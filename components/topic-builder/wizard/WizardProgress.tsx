@@ -10,10 +10,11 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useCallback } from "react";
+import { useReducedMotion } from "@/lib/animations";
 import {
-  useReducedMotion,
-} from "@/lib/animations";
-import { progressBarVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
+  progressBarVariants,
+  useTypeformMotionVariants,
+} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { QuestionConfig } from "@/types/wizard";
 

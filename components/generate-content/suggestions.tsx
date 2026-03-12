@@ -3,7 +3,6 @@ import { Zap, Compass, TrendingUp, ArrowRight, Loader2 } from "lucide-react";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
-import { Button } from "../ui/button";
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -107,10 +106,10 @@ export function SuggestionsSection({
                     <SearchIntentCard
                       intent={
                         seoResult?.intent as
-                        | "informational"
-                        | "commercial"
-                        | "transactional"
-                        | "navigational"
+                          | "informational"
+                          | "commercial"
+                          | "transactional"
+                          | "navigational"
                       }
                     />
                   </motion.div>
@@ -212,7 +211,6 @@ export function SuggestionsSection({
           </AnimatePresence>
         </div>
       </div>
-
     </motion.div>
   );
 }

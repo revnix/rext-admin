@@ -83,7 +83,10 @@ export function CancelSubscriptionModal({
 
     try {
       // Serialize UI feedback into a backend-safe reason string (≤500 chars)
-      const cancellationReason = buildCancellationReason(selectedReasons, feedback);
+      const cancellationReason = buildCancellationReason(
+        selectedReasons,
+        feedback,
+      );
 
       // Cancel the subscription, forwarding user-provided reason to the API
       await cancelSubscription(cancellationReason);

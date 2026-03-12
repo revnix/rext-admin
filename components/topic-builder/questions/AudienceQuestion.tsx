@@ -12,7 +12,10 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import { ChipInput } from "@/components/ui/typeform/chip-input";
 import { useAudienceSuggestions } from "@/hooks/use-contextual-suggestions";
 import { useReducedMotion } from "@/lib/animations";
-import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
+import {
+  questionItemVariants,
+  useTypeformMotionVariants,
+} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -39,7 +42,7 @@ export function AudienceQuestion({
   isLoading = false,
   onStepAdvance,
 }: AudienceQuestionProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   const currentAudiences = _formData.audience || [];

@@ -9,13 +9,13 @@ import { slideStepVariants, slideStepTransition } from "@/lib/animations";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import {
   GOAL_OPTIONS,
-  GoalValue,
+  type GoalValue,
   HEARD_FROM_OPTIONS,
-  HeardFromValue,
+  type HeardFromValue,
   INDUSTRY_OPTIONS,
-  IndustryValue,
+  type IndustryValue,
   ROLE_OPTIONS,
-  RoleValue,
+  type RoleValue,
 } from "@/types/onboarding";
 
 interface OnboardingMarketingQuestionsProps {
@@ -160,10 +160,11 @@ export function OnboardingMarketingQuestions({
               return (
                 <Card
                   key={option.value}
-                  className={`border-2 cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm ${isSelected
+                  className={`border-2 cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm ${
+                    isSelected
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border"
-                    }`}
+                  }`}
                   onClick={() => handleSelectOption(option.value)}
                 >
                   <CardContent className="flex flex-col items-center justify-center gap-2 p-4 min-h-[100px]">

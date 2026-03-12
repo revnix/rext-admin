@@ -32,7 +32,7 @@ export async function POST(
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     input: body.input,
-    streamMode: ["updates", "messages"],    
+    streamMode: ["updates", "messages"],
     streamSubgraphs: true,
   });
 

@@ -117,7 +117,7 @@ export default function AcceptAdminInvitationPage() {
   // Loading state
   if (!token || isValidating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center py-8">
@@ -135,7 +135,7 @@ export default function AcceptAdminInvitationPage() {
   // Invalid token
   if (validationError || !validationData?.valid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-red-50 to-orange-100">
         <Card className="w-full max-w-md border-destructive">
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
@@ -162,7 +162,7 @@ export default function AcceptAdminInvitationPage() {
   // Acceptance complete
   if (acceptanceComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-50 to-emerald-100">
         <Card className="w-full max-w-md border-green-500">
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
@@ -192,7 +192,7 @@ export default function AcceptAdminInvitationPage() {
 
   // Main invitation view
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
       <Card className="w-full max-w-2xl shadow-lg">
         <CardHeader className="text-center space-y-4">
           <div className="flex items-center justify-center">
@@ -291,19 +291,19 @@ export default function AcceptAdminInvitationPage() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
               <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                 <span>Full platform access</span>
               </div>
               <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                 <span>Manage all workspaces</span>
               </div>
               <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                 <span>View system analytics</span>
               </div>
               <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                 <span>Invite other admins</span>
               </div>
             </div>
@@ -312,7 +312,7 @@ export default function AcceptAdminInvitationPage() {
           {/* Warning if not logged in */}
           {!session && (
             <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-medium text-yellow-900">Account Required</p>
                 <p className="text-yellow-700 mt-1">

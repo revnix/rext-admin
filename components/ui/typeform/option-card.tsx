@@ -10,9 +10,7 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import * as React from "react";
-import {
-  useReducedMotion,
-} from "@/lib/animations";
+import { useReducedMotion } from "@/lib/animations";
 import {
   optionCardVariants,
   selectionIndicatorVariants,
@@ -61,9 +59,11 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
     },
     ref,
   ) => {
-    const prefersReducedMotion = useReducedMotion();
+    const _prefersReducedMotion = useReducedMotion();
     const motionVariants = useTypeformMotionVariants(optionCardVariants);
-    const indicatorVariants = useTypeformMotionVariants(selectionIndicatorVariants);
+    const indicatorVariants = useTypeformMotionVariants(
+      selectionIndicatorVariants,
+    );
 
     const handleClick = React.useCallback(() => {
       if (!disabled && onClick) {
@@ -159,7 +159,12 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
             className={cn(
               "font-medium",
               selected ? "text-foreground" : "text-foreground",
-              resolveIconDimensionClass(size, "text-base", "text-base", "text-lg"),
+              resolveIconDimensionClass(
+                size,
+                "text-base",
+                "text-base",
+                "text-lg",
+              ),
             )}
           >
             {label}
@@ -169,7 +174,12 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
             <div
               className={cn(
                 "text-muted-foreground mt-1 break-words",
-                resolveIconDimensionClass(size, "text-sm", "text-sm", "text-base"),
+                resolveIconDimensionClass(
+                  size,
+                  "text-sm",
+                  "text-sm",
+                  "text-base",
+                ),
               )}
             >
               {description}
@@ -187,13 +197,23 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
                 animate="visible"
                 className={cn(
                   "rounded-full bg-primary text-primary-foreground flex items-center justify-center",
-                  resolveIconDimensionClass(size, "w-4 h-4", "w-5 h-5", "w-6 h-6"),
+                  resolveIconDimensionClass(
+                    size,
+                    "w-4 h-4",
+                    "w-5 h-5",
+                    "w-6 h-6",
+                  ),
                 )}
                 aria-hidden="true"
               >
                 <Check
                   className={cn(
-                    resolveIconDimensionClass(size, "w-2.5 h-2.5", "w-3 h-3", "w-4 h-4"),
+                    resolveIconDimensionClass(
+                      size,
+                      "w-2.5 h-2.5",
+                      "w-3 h-3",
+                      "w-4 h-4",
+                    ),
                   )}
                 />
               </motion.div>
@@ -201,7 +221,12 @@ const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(
               <div
                 className={cn(
                   "rounded-full border-2 border-muted-foreground/30",
-                  resolveIconDimensionClass(size, "w-4 h-4", "w-5 h-5", "w-6 h-6"),
+                  resolveIconDimensionClass(
+                    size,
+                    "w-4 h-4",
+                    "w-5 h-5",
+                    "w-6 h-6",
+                  ),
                 )}
                 aria-hidden="true"
               />

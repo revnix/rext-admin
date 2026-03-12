@@ -9,9 +9,7 @@
 
 import { motion } from "framer-motion";
 import * as React from "react";
-import {
-  useReducedMotion,
-} from "@/lib/animations";
+import { useReducedMotion } from "@/lib/animations";
 import {
   questionContentVariants,
   questionItemVariants,
@@ -36,7 +34,7 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
     },
     ref,
   ) => {
-    const prefersReducedMotion = useReducedMotion();
+    const _prefersReducedMotion = useReducedMotion();
     const contentVariants = useTypeformMotionVariants(questionContentVariants);
     const itemVariants = useTypeformMotionVariants(questionItemVariants);
 

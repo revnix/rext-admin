@@ -134,7 +134,10 @@ export function createContentNamespace(client: ApiClient) {
     /**
      * Publish content
      */
-    save_publish: async (workspaceId: string, data: Record<string, unknown>) => {
+    save_publish: async (
+      workspaceId: string,
+      data: Record<string, unknown>,
+    ) => {
       return client.request<ContentResponse>(
         `${ENDPOINTS.CONTENT.save_publish}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
@@ -145,7 +148,11 @@ export function createContentNamespace(client: ApiClient) {
       );
     },
 
-    publish: async (workspaceId: string, data: Record<string, unknown>, contentId: string) => {
+    publish: async (
+      workspaceId: string,
+      data: Record<string, unknown>,
+      contentId: string,
+    ) => {
       return client.request<ContentResponse>(
         `${ENDPOINTS.CONTENT.publish(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {

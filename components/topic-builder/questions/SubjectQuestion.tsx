@@ -10,10 +10,11 @@ import { motion } from "framer-motion";
 import { Lightbulb } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { TextInput } from "@/components/ui/typeform/text-input";
+import { useReducedMotion } from "@/lib/animations";
 import {
-  useReducedMotion,
-} from "@/lib/animations";
-import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
+  questionItemVariants,
+  useTypeformMotionVariants,
+} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -36,7 +37,7 @@ export function SubjectQuestion({
   error,
   isLoading = false,
 }: SubjectQuestionProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const itemVariants = useTypeformMotionVariants(questionItemVariants);
   const inputRef = useRef<HTMLInputElement>(null);
 

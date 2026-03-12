@@ -12,10 +12,7 @@ import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  buttonVariants,
-  useReducedMotion,
-} from "@/lib/animations";
+import { buttonVariants, useReducedMotion } from "@/lib/animations";
 import { useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 
@@ -87,7 +84,7 @@ export function WizardNavigation({
   isInEditMode = false,
   onSaveAndReturn,
 }: WizardNavigationProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const motionVariants = useTypeformMotionVariants(buttonVariants);
 
   const defaultNextLabel = isLastQuestion ? "Generate Topics" : "Next";
@@ -164,7 +161,7 @@ export function WizardNavigation({
           className={cn(
             "min-w-0 px-3",
             isLastQuestion &&
-            "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70",
+              "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70",
           )}
         >
           {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}

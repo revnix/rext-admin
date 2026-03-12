@@ -31,7 +31,7 @@ export interface Integration {
     api_key: string;
     api_endpoint: string;
     is_active: boolean;
-  }
+  };
 }
 
 export interface CreateIntegrationRequest {

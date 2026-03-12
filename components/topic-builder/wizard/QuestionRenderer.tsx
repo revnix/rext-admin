@@ -39,7 +39,7 @@ export const QuestionRenderer = memo(function QuestionRenderer({
   isInEditMode = false,
   saveAndReturnToReview,
 }: QuestionRendererProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const motionVariants = useTypeformMotionVariants(questionTransitionVariants);
 
   // Handle auto-advance for single-select questions

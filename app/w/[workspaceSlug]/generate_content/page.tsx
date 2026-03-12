@@ -6,7 +6,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { SelectionView } from "@/components/generate-content/selection-view";
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Route } from "next";
+import type { Route } from "next";
 
 type PageView = "selection" | "fresh" | "library";
 
