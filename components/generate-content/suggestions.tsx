@@ -179,7 +179,7 @@ export function SuggestionsSection({
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto dark:bg-gray-800">
+      <div className="overflow-x-auto">
         <div className="flex flex-wrap gap-2 justify-between">
           <AnimatePresence>
             {suggestedKeywords.length > 0 ? (
@@ -189,7 +189,7 @@ export function SuggestionsSection({
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="cursor-pointer w-[49%] bg-white group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                  className="cursor-pointer w-[49%] bg-white group hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors rounded-lg"
                   onClick={() => onSelect(kw)}
                 >
                   <div className="px-4 py-4 font-medium text-sm text-gray-800 dark:text-gray-200 flex justify-between items-center group-hover:text-primary transition-all duration-200">
