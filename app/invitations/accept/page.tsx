@@ -96,7 +96,7 @@ export default function AcceptInvitationPage() {
 
       toast.success(`Welcome to ${result.workspace_name}!`);
       // Redirect to workspace
-      router.push(`/w/${result.workspace_slug}` as Route);
+      router.push(`/w/${result.workspace_slug}/generate_content` as Route);
     } catch (error) {
       const err = error as Error;
       toast.error(`Failed to accept invitation: ${err.message}`);
@@ -114,7 +114,7 @@ export default function AcceptInvitationPage() {
     ) {
       handleAcceptInvitation();
     }
-  }, [session, invitation, handleAcceptInvitation, isAccepting]);
+  }, [session, invitation, isAccepting, handleAcceptInvitation]);
 
   // Handle login redirect
   const handleLogin = () => {
