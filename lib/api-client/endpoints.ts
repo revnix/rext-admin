@@ -258,6 +258,8 @@ export const ENDPOINTS = {
    */
   DASHBOARD: {
     stats: (workspaceId: string) => `/api/v1/dashboard/${workspaceId}` as const,
+    recentActivities: (workspaceId: string) =>
+      `/api/v1/recent-activities/${workspaceId}` as const,
   },
   /**
    * Admin Endpoints
