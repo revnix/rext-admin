@@ -141,7 +141,7 @@ export function SessionTimeoutWarning() {
   // Only show the dialog if refreshFailed is true and we are in the warning zone
   // This fulfills "instead of showing dialog call api directly" while "not removing anything"
   return (
-    <Dialog open={showWarning && refreshFailed} onOpenChange={() => { }}>
+    <Dialog open={showWarning && refreshFailed} onOpenChange={() => {}}>
       <DialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => e.preventDefault()}
