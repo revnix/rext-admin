@@ -104,8 +104,10 @@ export function RolePermissionAuditLog({
       }
       searchParams.append("limit", "50"); // Fetch the last 50 entries
 
-      const queryString = searchParams.toString() ? `?${searchParams.toString()}` : "";
-      
+      const queryString = searchParams.toString()
+        ? `?${searchParams.toString()}`
+        : "";
+
       const response = await apiClient.request<{
         items: AuditLog[];
         total: number;
@@ -122,14 +124,18 @@ export function RolePermissionAuditLog({
 
   const getActionIcon = (action: string) => {
     // Backend returns e.g. "role.create", we want "create"
-    const parsedAction = action.includes(".") ? action.split(".").pop() || action : action;
+    const parsedAction = action.includes(".")
+      ? action.split(".").pop() || action
+      : action;
     const Icon = ACTION_ICONS[parsedAction.toLowerCase()] || History;
     return Icon;
   };
 
   const getActionColors = (action: string) => {
     // Backend returns e.g. "role.create", we want "create"
-    const parsedAction = action.includes(".") ? action.split(".").pop() || action : action;
+    const parsedAction = action.includes(".")
+      ? action.split(".").pop() || action
+      : action;
     return (
       ACTION_COLORS[parsedAction.toLowerCase()] || {
         bg: "bg-gray-100",
@@ -212,13 +218,15 @@ export function RolePermissionAuditLog({
               auditData.items.map((log) => {
                 const Icon = getActionIcon(log.action);
                 const colors = getActionColors(log.action);
-                
-                // The basic AuditLog doesn't have changes. It may have details from the generic getMyLogs 
+
+                // The basic AuditLog doesn't have changes. It may have details from the generic getMyLogs
                 // but the /api/v1/audit-logs/ endpoint doesn't strictly define it in basic list.
                 // We'll safely access it by typecasting to AuditLogDetail if we want to show changes.
                 const detailedLog = log as AuditLogDetail;
-                
-                const hasChanges = detailedLog.new_values && Object.keys(detailedLog.new_values).length > 0;
+
+                const hasChanges =
+                  detailedLog.new_values &&
+                  Object.keys(detailedLog.new_values).length > 0;
 
                 return (
                   <Card key={log.id} className={`${colors.border} border-2`}>
@@ -244,31 +252,42 @@ export function RolePermissionAuditLog({
                     <CardContent className="pt-4">
                       {hasChanges ? (
                         <div className="space-y-3">
-                           {detailedLog.old_values && Object.keys(detailedLog.old_values).length > 0 && (
-                            <div>
-                               <p className="text-xs font-medium mb-1 text-muted-foreground">Previous Values:</p>
-                               {renderChanges(detailedLog.old_values)}
-                            </div>
-                           )}
-                           {detailedLog.new_values && Object.keys(detailedLog.new_values).length > 0 && (
-                            <div>
-                               <p className="text-xs font-medium mb-1 text-muted-foreground">New Values:</p>
-                               {renderChanges(detailedLog.new_values)}
-                            </div>
-                           )}
+                          {detailedLog.old_values &&
+                            Object.keys(detailedLog.old_values).length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium mb-1 text-muted-foreground">
+                                  Previous Values:
+                                </p>
+                                {renderChanges(detailedLog.old_values)}
+                              </div>
+                            )}
+                          {detailedLog.new_values &&
+                            Object.keys(detailedLog.new_values).length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium mb-1 text-muted-foreground">
+                                  New Values:
+                                </p>
+                                {renderChanges(detailedLog.new_values)}
+                              </div>
+                            )}
                         </div>
                       ) : (
-                         <span className="text-sm text-muted-foreground">No detailed changes available for this action</span>
+                        <span className="text-sm text-muted-foreground">
+                          No detailed changes available for this action
+                        </span>
                       )}
-                      
-                      {detailedLog.metadata && Object.keys(detailedLog.metadata).length > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <p className="text-xs font-medium mb-1">Metadata:</p>
-                          <div className="text-xs text-muted-foreground">
-                            {renderChanges(detailedLog.metadata)}
+
+                      {detailedLog.metadata &&
+                        Object.keys(detailedLog.metadata).length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-medium mb-1">
+                              Metadata:
+                            </p>
+                            <div className="text-xs text-muted-foreground">
+                              {renderChanges(detailedLog.metadata)}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </CardContent>
                   </Card>
                 );

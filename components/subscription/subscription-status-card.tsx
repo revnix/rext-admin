@@ -145,8 +145,8 @@ export function SubscriptionStatusCard({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              You are currently on the {usagePlanName} plan. Upgrade to a premium
-              plan to get higher limits and advanced features.
+              You are currently on the {usagePlanName} plan. Upgrade to a
+              premium plan to get higher limits and advanced features.
             </p>
             <Button asChild className="w-full">
               <a href="/pricing">View Upgrade Options</a>

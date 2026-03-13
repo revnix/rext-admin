@@ -2,7 +2,6 @@
 
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import {
-  ArrowLeftRight,
   BadgeCheck,
   Bell,
   Book,
@@ -17,7 +16,6 @@ import {
   Sparkles,
   Sun,
   Users,
-  Plus,
 } from "lucide-react";
 import { useTheme } from "@/providers/theme-provider";
 
@@ -100,9 +98,6 @@ export function PageLayout({
   // const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
   //   currentWorkspace?.id,
   // );
-
-  const hasWorkspaces = workspaceList.length > 0;
-
   const hasUnread = unreadNotifications > 0;
 
   // Fetch API user once
@@ -474,9 +469,8 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
-            fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
-          } ${className}`}
+          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
+            } ${className}`}
         >
           {/* Page Header */}
           {!hideTitle && (

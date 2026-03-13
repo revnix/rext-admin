@@ -278,7 +278,10 @@ export default function SecuritySettingsPage() {
                                 className="flex items-center justify-between text-xs"
                               >
                                 <span className="font-mono">{item.ip}</span>
-                                <Badge variant="destructive" className="text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
                                   {item.count} attempts
                                 </Badge>
                               </div>
@@ -289,7 +292,8 @@ export default function SecuritySettingsPage() {
                     )}
 
                     {/* Top Users */}
-                    {(securityStats.top_failed_login_users?.length ?? 0) > 0 && (
+                    {(securityStats.top_failed_login_users?.length ?? 0) >
+                      0 && (
                       <div className="space-y-2">
                         <p className="text-sm font-medium">
                           Top Failed Login Users
@@ -302,7 +306,10 @@ export default function SecuritySettingsPage() {
                                 className="flex items-center justify-between text-xs"
                               >
                                 <span className="truncate">{item.email}</span>
-                                <Badge variant="destructive" className="text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
                                   {item.count} attempts
                                 </Badge>
                               </div>
