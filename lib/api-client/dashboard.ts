@@ -35,6 +35,39 @@ export interface DashboardStats {
   personas: number;
 }
 
+export interface RecentActivity {
+  id?: string | number;
+
+  // New API fields
+  content_title?: string;
+  content_status?: string;
+
+  // Multi-type author
+  author?:
+    | string
+    | {
+        name?: string;
+        image?: string;
+        initials?: string;
+      };
+
+  // Fallback fields handled in the UI mapping
+  name?: string;
+  title?: string;
+  category?: string;
+  status?: string;
+  views?: string | number;
+  user?: {
+    name?: string;
+    image?: string;
+    initials?: string;
+  };
+  image?: string;
+  author_name?: string;
+  creator?: string;
+  user_name?: string;
+}
+
 export function createDashboardNamespace(client: ApiClient) {
   return {
     /**
@@ -50,6 +83,18 @@ export function createDashboardNamespace(client: ApiClient) {
     getStats: async (workspaceId: string) => {
       return client.request<DashboardStats>(
         ENDPOINTS.DASHBOARD.stats(workspaceId),
+        {
+          method: "GET",
+        },
+      );
+    },
+
+    /**
+     * Get recent activities for a workspace
+     */
+    getRecentActivities: async (workspaceId: string) => {
+      return client.request<RecentActivity[]>(
+        ENDPOINTS.DASHBOARD.recentActivities(workspaceId),
         {
           method: "GET",
         },

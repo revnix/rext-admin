@@ -273,6 +273,7 @@ export function FreshGenerationView({
       focus_keyphrase: extractJsonStringFieldPartial(buf, "focus_keyphrase"),
       introduction: extractJsonStringFieldPartial(buf, "introduction"),
       body_markdown: liveBodyMarkdown,
+      html_content: extractJsonStringFieldPartial(buf, "html_content"),
       word_count: 0,
       status: "generated",
     } as unknown as FinalContent;
@@ -304,12 +305,12 @@ export function FreshGenerationView({
 
       const candidate = raw.slice(start, end + 1);
       try {
-        const parsed = JSON.parse(candidate) as Partial<FinalContent>;
+        const parsed = JSON.parse(candidate) as FinalContent;
         const body = parsed.body_markdown || "";
 
         if (!body) return;
-
-        dispatch({ type: "SET_ALL_CONTENT", payload: parsed as FinalContent });
+        const finalContent = parsed?.final_content || parsed;
+        dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
         dispatch({ type: "SET_GENERATED_CONTENT", payload: body });
         setTokenTarget("none");
         tokenTargetRef.current = "none";
@@ -426,18 +427,13 @@ export function FreshGenerationView({
         // ── messages/partial — raw LLM tokens ─────────────────────────────────
         // Your SSE sends these token-by-token as the LLM writes text/JSON.
         if (chunk.event === "messages/partial") {
-          const rawOutput = (
-            chunk.data as {
-              messages?: Array<{ content?: string | Array<unknown> }>;
-            }
-          )?.messages?.[0]?.content;
+          // biome-ignore lint/suspicious/noExplicitAny: SSE chunk structure is dynamic
+          const raw = (chunk.data as any)?.[0]?.content;
           const token =
-            typeof rawOutput === "string"
-              ? rawOutput
-              : Array.isArray(rawOutput)
-                ? rawOutput
-                    .filter((p: unknown) => typeof p === "string")
-                    .join("")
+            typeof raw === "string"
+              ? raw
+              : Array.isArray(raw)
+                ? raw.filter((p: unknown) => typeof p === "string").join("")
                 : "";
 
           if (token) {
@@ -567,6 +563,11 @@ export function FreshGenerationView({
               dispatch({
                 type: "SET_GENERATED_CONTENT",
                 payload: out.final_content.body_markdown,
+              });
+            } else if (out.final_content.html_content) {
+              dispatch({
+                type: "SET_GENERATED_CONTENT",
+                payload: htmlToMarkdownLite(out.final_content.html_content),
               });
             }
             setTokenTarget("none");
