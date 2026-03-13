@@ -195,13 +195,6 @@ export default function IntegrationsPage() {
                       <Settings className="h-4 w-4" />
                       <span className="sr-only">Settings</span>
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleIntegrationClick(integration)}
-                    >
-                      Details
-                    </Button>
                   </div>
                   <Switch
                     checked={integration.is_active}
