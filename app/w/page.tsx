@@ -138,35 +138,6 @@ export default function WorkspacePage() {
       },
     },
     {
-      key: "brand_voice",
-      header: "Brand Voice",
-      width: "100px",
-      cell: (_value: unknown, row: WorkspaceData) =>
-        row.brand_voice ? (
-          <Badge variant="secondary" className="text-xs">
-            Active
-          </Badge>
-        ) : (
-          <span className="text-muted-foreground text-sm">—</span>
-        ),
-    },
-    {
-      key: "owner",
-      header: "Owner",
-      width: "150px",
-      cell: (_value: unknown, row: WorkspaceData) => {
-        const owner = row.owner;
-        return owner ? (
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{owner.name}</span>
-            <span className="text-xs text-muted-foreground">{owner.email}</span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground text-sm">—</span>
-        );
-      },
-    },
-    {
       key: "status",
       header: "Status",
       width: "100px",
