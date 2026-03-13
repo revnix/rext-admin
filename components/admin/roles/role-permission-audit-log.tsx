@@ -30,24 +30,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorAlert } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
+import type { AuditLog, AuditLogDetail } from "@/types/audit-log";
 
 interface RolePermissionAuditLogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   resourceType?: "role" | "permission";
   resourceId?: string;
-}
-
-interface AuditLog {
-  id: string;
-  action: string;
-  resource_type: string;
-  resource_id: string;
-  user_id: string;
-  user_email: string;
-  timestamp: string;
-  changes: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
 }
 
 const ACTION_ICONS: Record<string, typeof Plus> = {
@@ -105,14 +94,26 @@ export function RolePermissionAuditLog({
   } = useQuery({
     queryKey: ["audit-logs", resourceType, resourceId],
     queryFn: async () => {
-      // This would be your actual audit log API endpoint
-      // For now, we'll use a placeholder
+      // Create query params
+      const searchParams = new URLSearchParams();
+      if (resourceType) {
+        searchParams.append("resource_type", resourceType);
+      }
+      if (resourceId) {
+        searchParams.append("resource_id", resourceId);
+      }
+      searchParams.append("limit", "50"); // Fetch the last 50 entries
+
+      const queryString = searchParams.toString() ? `?${searchParams.toString()}` : "";
+      
       const response = await apiClient.request<{
-        logs: AuditLog[];
-        count: number;
-      }>("/api/v1/audit/logs", {
+        items: AuditLog[];
+        total: number;
+        has_more: boolean;
+        limit: number;
+        offset: number;
+      }>(`/api/v1/audit-logs/${queryString}`, {
         method: "GET",
-        // You'd add query params here to filter by resource_type and resource_id
       });
       return response;
     },
@@ -203,10 +204,17 @@ export function RolePermissionAuditLog({
                 }
                 retry={() => void refetch()}
               />
-            ) : auditData?.logs && auditData.logs.length > 0 ? (
-              auditData.logs.map((log) => {
+            ) : auditData?.items && auditData.items.length > 0 ? (
+              auditData.items.map((log) => {
                 const Icon = getActionIcon(log.action);
                 const colors = getActionColors(log.action);
+                
+                // The basic AuditLog doesn't have changes. It may have details from the generic getMyLogs 
+                // but the /api/v1/audit-logs/ endpoint doesn't strictly define it in basic list.
+                // We'll safely access it by typecasting to AuditLogDetail if we want to show changes.
+                const detailedLog = log as AuditLogDetail;
+                
+                const hasChanges = detailedLog.new_values && Object.keys(detailedLog.new_values).length > 0;
 
                 return (
                   <Card key={log.id} className={`${colors.border} border-2`}>
@@ -222,20 +230,38 @@ export function RolePermissionAuditLog({
                           </Badge>
                         </CardTitle>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(log.timestamp), "PPp")}
+                          {format(new Date(log.created_at), "PPp")}
                         </span>
                       </div>
                       <CardDescription>
-                        by <strong>{log.user_email}</strong>
+                        by <strong>{log.user_email || "System"}</strong>
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-4">
-                      {renderChanges(log.changes)}
-                      {log.metadata && Object.keys(log.metadata).length > 0 && (
+                      {hasChanges ? (
+                        <div className="space-y-3">
+                           {detailedLog.old_values && Object.keys(detailedLog.old_values).length > 0 && (
+                            <div>
+                               <p className="text-xs font-medium mb-1 text-muted-foreground">Previous Values:</p>
+                               {renderChanges(detailedLog.old_values)}
+                            </div>
+                           )}
+                           {detailedLog.new_values && Object.keys(detailedLog.new_values).length > 0 && (
+                            <div>
+                               <p className="text-xs font-medium mb-1 text-muted-foreground">New Values:</p>
+                               {renderChanges(detailedLog.new_values)}
+                            </div>
+                           )}
+                        </div>
+                      ) : (
+                         <span className="text-sm text-muted-foreground">No detailed changes available for this action</span>
+                      )}
+                      
+                      {detailedLog.metadata && Object.keys(detailedLog.metadata).length > 0 && (
                         <div className="mt-3 pt-3 border-t">
                           <p className="text-xs font-medium mb-1">Metadata:</p>
                           <div className="text-xs text-muted-foreground">
-                            {renderChanges(log.metadata)}
+                            {renderChanges(detailedLog.metadata)}
                           </div>
                         </div>
                       )}

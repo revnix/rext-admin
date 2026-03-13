@@ -210,7 +210,7 @@ export const ENDPOINTS = {
       revokeAll: "/api/v1/user/sessions",
     },
     security: {
-      stats: "/api/v1/user/security/stats",
+      stats: "/api/v1/security/stats",
       loginHistory: "/api/v1/user/security/login-history",
       activeSessionsCount: "/api/v1/user/security/active-sessions-count",
     },
@@ -279,7 +279,7 @@ export const ENDPOINTS = {
     // Audit Logs
     audit: {
       myLogs: "/api/v1/audit/user/my-logs",
-      allLogs: "/api/v1/audit",
+      allLogs: "api/v1/audit-logs/",
       detail: (id: string) => `/api/v1/audit/${id}` as const,
     },
 

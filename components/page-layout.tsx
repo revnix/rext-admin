@@ -280,24 +280,6 @@ export function PageLayout({
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuSeparator />
-                  {hasWorkspaces ? (
-                    <DropdownMenuItem
-                      className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
-                      onClick={() => router.push("/" as Route)}
-                    >
-                      <ArrowLeftRight className="mr-2 h-4 w-4" />
-                      <span>Switch Workspace</span>
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
-                      onClick={() => router.push("/w/create" as Route)}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      <span>Create Workspace</span>
-                    </DropdownMenuItem>
-                  )}
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
