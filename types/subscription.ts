@@ -179,18 +179,21 @@ export interface UsageStats {
   current_topics: number;
   current_knowledge_items: number;
   current_api_calls: number;
+  current_members?: number;
 
   // Limits
   max_workspaces: number;
   max_topics: number;
   max_knowledge_items: number;
   max_api_calls_per_month: number;
+  max_members?: number;
 
   // Usage percentages
   workspaces_usage_percent: number;
   topics_usage_percent: number;
   knowledge_items_usage_percent: number;
   api_calls_usage_percent: number;
+  members_usage_percent?: number;
 
   // Reset date
   usage_reset_date: string;

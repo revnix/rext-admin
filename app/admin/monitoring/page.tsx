@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BarChart3, Server } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ErrorLogsTable } from "@/components/admin/monitoring/error-logs-table";
 import { SystemHealthCards } from "@/components/admin/monitoring/system-health-cards";
 import { PageLayout } from "@/components/page-layout";
@@ -137,10 +137,7 @@ export default function MonitoringPage() {
   >("24_hours");
 
   // Fetch system health
-  const {
-    data: healthData,
-    isLoading: healthLoading,
-  } = useQuery({
+  const { data: healthData, isLoading: healthLoading } = useQuery({
     queryKey: ["admin", "monitoring", "system-health"],
     queryFn: async () => {
       return apiClient.request<SystemHealthData>(

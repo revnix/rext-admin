@@ -259,51 +259,62 @@ export default function SecuritySettingsPage() {
               </div>
 
               {/* Top Offenders */}
-              {(securityStats.top_failed_login_ips.length > 0 ||
-                securityStats.top_failed_login_users.length > 0) && (
+              {((securityStats.top_failed_login_ips?.length ?? 0) > 0 ||
+                (securityStats.top_failed_login_users?.length ?? 0) > 0) && (
                 <>
                   <Separator className="my-4" />
                   <div className="grid gap-4 md:grid-cols-2">
                     {/* Top IPs */}
-                    {securityStats.top_failed_login_ips.length > 0 && (
+                    {(securityStats.top_failed_login_ips?.length ?? 0) > 0 && (
                       <div className="space-y-2">
                         <p className="text-sm font-medium">
                           Top Failed Login IPs
                         </p>
                         <div className="space-y-1">
-                          {securityStats.top_failed_login_ips.map((item) => (
-                            <div
-                              key={item.ip}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="font-mono">{item.ip}</span>
-                              <Badge variant="destructive" className="text-xs">
-                                {item.count} attempts
-                              </Badge>
-                            </div>
-                          ))}
+                          {(securityStats.top_failed_login_ips || []).map(
+                            (item) => (
+                              <div
+                                key={item.ip}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="font-mono">{item.ip}</span>
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  {item.count} attempts
+                                </Badge>
+                              </div>
+                            ),
+                          )}
                         </div>
                       </div>
                     )}
 
                     {/* Top Users */}
-                    {securityStats.top_failed_login_users.length > 0 && (
+                    {(securityStats.top_failed_login_users?.length ?? 0) >
+                      0 && (
                       <div className="space-y-2">
                         <p className="text-sm font-medium">
                           Top Failed Login Users
                         </p>
                         <div className="space-y-1">
-                          {securityStats.top_failed_login_users.map((item) => (
-                            <div
-                              key={item.email}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="truncate">{item.email}</span>
-                              <Badge variant="destructive" className="text-xs">
-                                {item.count} attempts
-                              </Badge>
-                            </div>
-                          ))}
+                          {(securityStats.top_failed_login_users || []).map(
+                            (item) => (
+                              <div
+                                key={item.email}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="truncate">{item.email}</span>
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  {item.count} attempts
+                                </Badge>
+                              </div>
+                            ),
+                          )}
                         </div>
                       </div>
                     )}

@@ -10,9 +10,7 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  useReducedMotion,
-} from "@/lib/animations";
+import { useReducedMotion } from "@/lib/animations";
 import { questionItemVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +50,7 @@ export function MultiSelectCard({
   className,
   delay = 0,
 }: MultiSelectCardProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   return (

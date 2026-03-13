@@ -200,12 +200,14 @@ export function createPreferencesNamespace(client: ApiClient) {
      * Get user preferences
      */
     get: async () => {
-      const response = await client.request<any>(
-        ENDPOINTS.SETTINGS.preferences.get,
-        {
-          method: "GET",
-        },
-      );
+      const response = await client.request<
+        Partial<UserPreferences> & {
+          data?: { preferences?: Partial<UserPreferences> };
+          preferences?: Partial<UserPreferences>;
+        }
+      >(ENDPOINTS.SETTINGS.preferences.get, {
+        method: "GET",
+      });
 
       // Handle the consistent format: { success, data: { message, preferences } }
       // client.request already unwraps result.data if success: true.

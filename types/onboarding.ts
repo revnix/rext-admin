@@ -147,7 +147,6 @@ export const GOAL_OPTIONS = [
   },
 ] as const;
 
-
 /** Union of valid goal option values */
 export type GoalValue = (typeof GOAL_OPTIONS)[number]["value"];
 
@@ -165,4 +164,3 @@ export const HEARD_FROM_OPTIONS = [
 
 /** Union of valid heard-from option values */
 export type HeardFromValue = (typeof HEARD_FROM_OPTIONS)[number]["value"];
-

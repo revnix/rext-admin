@@ -6,8 +6,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const CHUNK_THRESHOLDS = [
   { minLength: 5000, chunkSize: 120 },
   { minLength: 2000, chunkSize: 60 },
-  { minLength: 500,  chunkSize: 20 },
-  { minLength: 0,    chunkSize: 1 },
+  { minLength: 500, chunkSize: 20 },
+  { minLength: 0, chunkSize: 1 },
 ] as const;
 
 function getChunkSize(textLength: number): number {
@@ -31,18 +31,18 @@ export function useTypewriter(
 ) {
   const [displayed, setDisplayed] = useState("");
   const [isDone, setIsDone] = useState(false);
-  const indexRef    = useRef(0);
-  const rafRef      = useRef<number | null>(null);
+  const indexRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
-  const skippedRef  = useRef(false);
-  const intervalMs  = Math.round(1000 / speed);
+  const skippedRef = useRef(false);
+  const intervalMs = Math.round(1000 / speed);
 
-  const cancelRaf = () => {
+  const cancelRaf = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!text) {
@@ -98,7 +98,7 @@ export function useTypewriter(
     rafRef.current = requestAnimationFrame(step);
     return cancelRaf;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, intervalMs, retypeOnChange, chunkSizeOverride]);
+  }, [text, intervalMs, retypeOnChange, chunkSizeOverride, cancelRaf]);
 
   const skip = useCallback(() => {
     skippedRef.current = true;
@@ -107,7 +107,7 @@ export function useTypewriter(
     setDisplayed(text);
     setIsDone(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [text, cancelRaf]);
 
   return { displayed, isDone, skip };
 }

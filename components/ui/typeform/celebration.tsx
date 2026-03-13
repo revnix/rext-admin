@@ -10,10 +10,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Heart, PartyPopper, Sparkles, Trophy } from "lucide-react";
 import * as React from "react";
-import {
-  MOTION_DURATION,
-  useReducedMotion,
-} from "@/lib/animations";
+import { MOTION_DURATION, useReducedMotion } from "@/lib/animations";
 import { celebrationVariants, useTypeformMotionVariants } from "./motion";
 import { announceToScreenReader, triggerConfetti } from "@/lib/typeform-utils";
 import { cn } from "@/lib/utils";

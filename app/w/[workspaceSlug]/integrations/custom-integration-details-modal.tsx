@@ -13,7 +13,6 @@ import {
 import { toast } from "sonner"; // Assuming sonner
 import { useWorkspace } from "@/providers/workspace-provider";
 import { log } from "@/lib/logger";
-import { useEffect } from "react";
 
 interface CustomIntegrationDetailsModalProps {
   isOpen: boolean;

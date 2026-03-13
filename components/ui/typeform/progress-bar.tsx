@@ -10,10 +10,7 @@
 import { motion } from "framer-motion";
 import { Clock, PartyPopper } from "lucide-react";
 import * as React from "react";
-import {
-  MOTION_DURATION,
-  useReducedMotion,
-} from "@/lib/animations";
+import { MOTION_DURATION, useReducedMotion } from "@/lib/animations";
 import { progressBarVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 import type { ProgressBarProps } from "@/types/typeform";
@@ -166,11 +163,11 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               transition={
                 animated && !prefersReducedMotion
                   ? {
-                    width: {
-                      duration: 0.4,
-                      ease: "easeOut",
-                    },
-                  }
+                      width: {
+                        duration: 0.4,
+                        ease: "easeOut",
+                      },
+                    }
                   : { duration: 0 }
               }
             />

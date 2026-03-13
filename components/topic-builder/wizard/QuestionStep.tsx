@@ -12,7 +12,10 @@ import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useReducedMotion } from "@/lib/animations";
-import { QuestionCard, useTypeformMotionVariants } from "@/components/ui/typeform";
+import {
+  QuestionCard,
+  useTypeformMotionVariants,
+} from "@/components/ui/typeform";
 import { questionItemVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
@@ -120,7 +123,7 @@ export function QuestionStep({
   questions,
   onStepAdvance,
 }: QuestionStepProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   // Render the appropriate question component based on type

@@ -133,6 +133,7 @@ export default function WorkspaceContentDetailPage({
         focus_keyphrase: content?.seo_data?.focus_keyphrase || "",
         word_count: wordCount,
         status: "generated",
+        html_content: content?.body_html || "",
       },
       review: {
         seo_score: content?.seo_data?.content_seo_score || 0,
@@ -170,9 +171,9 @@ export default function WorkspaceContentDetailPage({
     [
       content?.title,
       content?.introduction,
+      content?.body_html,
       content?.tags,
       content?.seo_data,
-      // content?.body_markdown,
       contentMarkdown,
       outline,
       wordCount,

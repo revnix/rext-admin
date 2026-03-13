@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";
 import { TextInput } from "@/components/ui/typeform/text-input";
+import { useReducedMotion } from "@/lib/animations";
 import {
-  useReducedMotion,
-} from "@/lib/animations";
-import { questionItemVariants, useTypeformMotionVariants } from "@/components/ui/typeform/motion";
+  questionItemVariants,
+  useTypeformMotionVariants,
+} from "@/components/ui/typeform/motion";
 import type { Industry, TopicBuilderFormData } from "@/types/topic-builder";
 import { INDUSTRY_OPTIONS } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -43,7 +44,7 @@ export function IndustryQuestion({
   error: _error,
   isLoading = false,
 }: IndustryQuestionProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const _prefersReducedMotion = useReducedMotion();
   const itemVariants = useTypeformMotionVariants(questionItemVariants);
 
   const handleSelect = (value: Industry) => {

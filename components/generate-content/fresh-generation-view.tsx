@@ -5,14 +5,18 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
-import { useTypewriter } from "@/hooks/use-typewriter";      // ← NEW
-import { useStreamingText } from "@/hooks/use-streaming-text";  // ← NEW
+import { useTypewriter } from "@/hooks/use-typewriter";
+import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
   ContentOutline,
-  PageState,
+  ContentSection,
+  FinalContent,
+  ReadabilityMetrics,
   ResumeOptions,
   RunStreamEvent,
+  SEORESULT,
   StreamUpdates,
+  TrustScore,
   WorkflowStep,
 } from "@/types/generate-content";
 import {
@@ -44,13 +48,11 @@ import {
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
 
-
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
   isLibrary?: boolean;
 }
-
 
 const extractJsonStringFieldPartial = (raw: string, field: string) => {
   // Streaming-friendly extraction for `"field":"..."` values.
@@ -61,16 +63,16 @@ const extractJsonStringFieldPartial = (raw: string, field: string) => {
 
   const start = idx + needle.length;
   let out = "";
-  let escape = false;
+  let escape1 = false;
   for (let i = start; i < raw.length; i++) {
     const ch = raw[i];
-    if (escape) {
-      out += "\\" + ch;
-      escape = false;
+    if (escape1) {
+      out += `\\${ch}`;
+      escape1 = false;
       continue;
     }
     if (ch === "\\") {
-      escape = true;
+      escape1 = true;
       continue;
     }
     if (ch === '"') break;
@@ -130,14 +132,19 @@ const htmlToMarkdownLite = (html: string) => {
 };
 
 const extractJsonStringArrayField = (raw: string, field: string) => {
-  const re = new RegExp(`\"${field}\"\\\\s*:\\\\s*\\[([^\\]]*)`, "g");
+  const re = new RegExp(`"${field}"\\s*:\\s*\\[([^\\]]*)`, "g");
   let match: RegExpExecArray | null = null;
   let last: string | null = null;
-  // eslint-disable-next-line no-cond-assign
-  while ((match = re.exec(raw))) last = match[1] ?? null;
+
+  while (true) {
+    match = re.exec(raw);
+    if (!match) break;
+    last = match[1] ?? null;
+  }
+
   if (!last) return [] as string[];
 
-  const items = last.match(/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/g) ?? [];
+  const items = last.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g) ?? [];
   return items
     .map((s) => s.slice(1, -1))
     .map((s) => {
@@ -162,19 +169,37 @@ export function FreshGenerationView({
   // ── Streaming text buffers — one per "phase" ──────────────────────────────
   // outlineStream  → accumulates tokens while LLM writes the outline JSON
   // contentStream  → accumulates tokens while LLM writes the final article
-  const outline = useStreamingText();   // { streamedText, appendToken, resetStream }
+  const outline = useStreamingText(); // { streamedText, appendToken, resetStream }
   const content = useStreamingText();
 
   // Which buffer should receive `messages/partial` tokens right now?
   const tokenTargetRef = useRef<"none" | "outline" | "content">("none");
-  const [tokenTarget, setTokenTarget] = useState<"none" | "outline" | "content">("none");
+  const [tokenTarget, setTokenTarget] = useState<
+    "none" | "outline" | "content"
+  >("none");
   const {
-    userKeyword, country, primaryKeyword, suggestedKeywords,
-    generatedContent, threadId, rejectedReason,
-    outline: parsedOutline,   // ← the fully-parsed outline object from reducer
-    topics, instruction, instructionType, isEditing, seoResult,
-    contentTypes, loadingStatus, isManualLoading, completedNodes,
-    isLoading, readabilityScore, seoScore, trustScore, allContent,
+    userKeyword,
+    country,
+    primaryKeyword,
+    suggestedKeywords,
+    generatedContent,
+    threadId,
+    rejectedReason,
+    outline: parsedOutline, // ← the fully-parsed outline object from reducer
+    topics,
+    instruction,
+    instructionType,
+    isEditing,
+    seoResult,
+    contentTypes,
+    loadingStatus,
+    isManualLoading,
+    completedNodes,
+    isLoading,
+    readabilityScore,
+    seoScore,
+    trustScore,
+    allContent,
     currentLoadingSteps,
   } = state;
 
@@ -183,6 +208,7 @@ export function FreshGenerationView({
     isEditingRef.current = isEditing;
   }, [isEditing]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
     if (_initialKeyword) {
       handleKeywordSubmit();
@@ -190,8 +216,10 @@ export function FreshGenerationView({
   }, [_initialKeyword]);
 
   // ── Typewriter for instruction hint text ─────────────────────────────────
-  const { displayed: displayedInstruction } =
-    useTypewriter(instruction, { speed: 60, retypeOnChange: true });
+  const { displayed: displayedInstruction } = useTypewriter(instruction, {
+    speed: 60,
+    retypeOnChange: true,
+  });
 
   const showOutlineReview =
     instructionType !== "outline_reject" &&
@@ -230,11 +258,9 @@ export function FreshGenerationView({
     return buf;
   })();
 
-  const {
-    displayed: displayedBodyMarkdown,
-  } = useTypewriter(liveBodyMarkdown, {
+  const { displayed: displayedBodyMarkdown } = useTypewriter(liveBodyMarkdown, {
     speed: 15,
-    retypeOnChange: false
+    retypeOnChange: false,
   });
 
   const streamedAllContent = (() => {
@@ -247,14 +273,15 @@ export function FreshGenerationView({
       focus_keyphrase: extractJsonStringFieldPartial(buf, "focus_keyphrase"),
       introduction: extractJsonStringFieldPartial(buf, "introduction"),
       body_markdown: liveBodyMarkdown,
+      html_content: extractJsonStringFieldPartial(buf, "html_content"),
       word_count: 0,
       status: "generated",
-    } as any;
+    } as unknown as FinalContent;
   })();
 
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
-  const [enhancingDescription, setEnhancingDescription] = useState("")
+  const [enhancingDescription, setEnhancingDescription] = useState("");
 
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
@@ -278,17 +305,12 @@ export function FreshGenerationView({
 
       const candidate = raw.slice(start, end + 1);
       try {
-        const parsed = JSON.parse(candidate) as any;
-        const body =
-          typeof parsed?.body_markdown === "string"
-            ? parsed.body_markdown
-            : typeof parsed?.final_content?.body_markdown === "string"
-              ? parsed.final_content.body_markdown
-              : "";
+        const parsed = JSON.parse(candidate) as FinalContent;
+        const body = parsed.body_markdown || "";
 
         if (!body) return;
-
-        dispatch({ type: "SET_ALL_CONTENT", payload: parsed });
+        const finalContent = parsed?.final_content || parsed;
+        dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
         dispatch({ type: "SET_GENERATED_CONTENT", payload: body });
         setTokenTarget("none");
         tokenTargetRef.current = "none";
@@ -303,13 +325,13 @@ export function FreshGenerationView({
     };
   }, [allContent, content.streamedText, showContentStream]);
 
-
   useEffect(() => {
     if (!outline.streamedText) return;
     if (tokenTargetRef.current !== "outline") return;
     if (parsedOutline) return;
 
-    if (outlineParseTimerRef.current) window.clearTimeout(outlineParseTimerRef.current);
+    if (outlineParseTimerRef.current)
+      window.clearTimeout(outlineParseTimerRef.current);
     outlineParseTimerRef.current = window.setTimeout(() => {
       const raw = outline.streamedText;
       const start = raw.indexOf("{");
@@ -322,25 +344,32 @@ export function FreshGenerationView({
         if (!parsed || typeof parsed !== "object") return;
 
         const normalizedSections = Array.isArray(parsed.sections)
-          ? parsed.sections.map((s) => {
-            const section = (s ?? {}) as any;
-            const keyPoints = Array.isArray(section.key_points)
-              ? section.key_points.filter((p: unknown) => typeof p === "string")
-              : [];
-            const suggested =
-              typeof section.suggested_word_count === "number"
-                ? section.suggested_word_count
-                : undefined;
-            return {
-              heading: typeof section.heading === "string" ? section.heading : "",
-              description:
-                typeof section.description === "string" ? section.description : "",
-              key_points: keyPoints,
-              ...(suggested !== undefined
-                ? { suggested_word_count: suggested }
-                : {}),
-            };
-          })
+          ? (parsed.sections as Array<Partial<ContentSection> | null>).map(
+              (s) => {
+                const section = s ?? {};
+                const keyPoints = Array.isArray(section.key_points)
+                  ? section.key_points.filter(
+                      (p: unknown) => typeof p === "string",
+                    )
+                  : [];
+                const suggested =
+                  typeof section.suggested_word_count === "number"
+                    ? section.suggested_word_count
+                    : undefined;
+                return {
+                  heading:
+                    typeof section.heading === "string" ? section.heading : "",
+                  description:
+                    typeof section.description === "string"
+                      ? section.description
+                      : "",
+                  key_points: keyPoints,
+                  ...(suggested !== undefined
+                    ? { suggested_word_count: suggested }
+                    : {}),
+                };
+              },
+            )
           : [];
 
         const normalized = {
@@ -360,12 +389,17 @@ export function FreshGenerationView({
               ? parsed.rejected_reason
               : undefined,
           outline_retries:
-            typeof parsed.outline_retries === "number" ? parsed.outline_retries : 0,
+            typeof parsed.outline_retries === "number"
+              ? parsed.outline_retries
+              : 0,
           draft_retries:
             typeof parsed.draft_retries === "number" ? parsed.draft_retries : 0,
           review_retries:
-            typeof parsed.review_retries === "number" ? parsed.review_retries : 0,
-          max_retries: typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+            typeof parsed.review_retries === "number"
+              ? parsed.review_retries
+              : 0,
+          max_retries:
+            typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
         } satisfies ContentOutline;
 
         dispatch({ type: "SET_OUTLINE", payload: normalized });
@@ -375,7 +409,8 @@ export function FreshGenerationView({
     }, 200);
 
     return () => {
-      if (outlineParseTimerRef.current) window.clearTimeout(outlineParseTimerRef.current);
+      if (outlineParseTimerRef.current)
+        window.clearTimeout(outlineParseTimerRef.current);
     };
   }, [outline.streamedText, parsedOutline]);
 
@@ -389,10 +424,10 @@ export function FreshGenerationView({
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
 
       for await (const chunk of stream) {
-
         // ── messages/partial — raw LLM tokens ─────────────────────────────────
         // Your SSE sends these token-by-token as the LLM writes text/JSON.
         if (chunk.event === "messages/partial") {
+          // biome-ignore lint/suspicious/noExplicitAny: SSE chunk structure is dynamic
           const raw = (chunk.data as any)?.[0]?.content;
           const token =
             typeof raw === "string"
@@ -402,10 +437,11 @@ export function FreshGenerationView({
                 : "";
 
           if (token) {
-            if (tokenTargetRef.current === "outline") outline.appendToken(token);
+            if (tokenTargetRef.current === "outline")
+              outline.appendToken(token);
             else if (tokenTargetRef.current === "content") {
               content.appendToken(token);
-            };
+            }
           }
           continue;
         }
@@ -416,10 +452,12 @@ export function FreshGenerationView({
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
 
-        console.log("updates", updates)
-
         // Some graphs emit the outline in a "review_outline" envelope (not in __interrupt__)
-        const reviewOutline = (updates as any)?.review_outline?.content?.outline;
+        const reviewOutline = (
+          updates as {
+            review_outline?: { content?: { outline?: ContentOutline } };
+          }
+        )?.review_outline?.content?.outline;
         if (reviewOutline) {
           dispatch({ type: "SET_OUTLINE", payload: reviewOutline });
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
@@ -428,37 +466,51 @@ export function FreshGenerationView({
         if (updates?.review_outline) {
           setIsEnhancing(true);
           setEnhancingMsg("Generating Content...");
-          setEnhancingDescription("Creating the first draft based on the approved outline...");
+          setEnhancingDescription(
+            "Creating the first draft based on the approved outline...",
+          );
         }
 
         if (updates?.generate_content) {
           setEnhancingMsg("Injecting EEAT...");
-          setEnhancingDescription("Enhancing the content with experience, expertise, authority, and trust signals...");
+          setEnhancingDescription(
+            "Enhancing the content with experience, expertise, authority, and trust signals...",
+          );
         }
 
         if (updates?.inject_eeat) {
           setEnhancingMsg("Humanizing Content...");
-          setEnhancingDescription("Refining the text to sound more natural, engaging, and human-like...");
+          setEnhancingDescription(
+            "Refining the text to sound more natural, engaging, and human-like...",
+          );
         }
 
         if (updates?.humanize_content) {
           setEnhancingMsg("Calculating Readability...");
-          setEnhancingDescription("Analyzing the content to ensure it is clear and easy to read...");
+          setEnhancingDescription(
+            "Analyzing the content to ensure it is clear and easy to read...",
+          );
         }
 
         if (updates?.calculate_readability) {
           setEnhancingMsg("Calculating On-Page SEO...");
-          setEnhancingDescription("Evaluating SEO factors such as keywords, structure, and optimization...");
+          setEnhancingDescription(
+            "Evaluating SEO factors such as keywords, structure, and optimization...",
+          );
         }
 
         if (updates?.calculate_on_page_seo) {
           setEnhancingMsg("Reviewing Content...");
-          setEnhancingDescription("Performing a final review to improve clarity, quality, and consistency...");
+          setEnhancingDescription(
+            "Performing a final review to improve clarity, quality, and consistency...",
+          );
         }
 
         if (updates?.review_content) {
           setEnhancingMsg("Generating Final Content...");
-          setEnhancingDescription("Preparing the finalized content for display in the editor...");
+          setEnhancingDescription(
+            "Preparing the finalized content for display in the editor...",
+          );
         }
 
         if (updates?.content_engine) {
@@ -466,7 +518,32 @@ export function FreshGenerationView({
         }
 
         // Centralized handling for nodes that emit content updates
-        const u = updates as any;
+        interface CommonOutput {
+          final_content?: FinalContent;
+          outline?: ContentOutline;
+          review?: {
+            on_page_metrics?: SEORESULT;
+            trust_score?: TrustScore;
+            readability_metrics?: ReadabilityMetrics;
+          };
+        }
+        interface NodeOutput {
+          content?: CommonOutput;
+          review_outline?: {
+            content?: {
+              outline?: ContentOutline;
+            };
+          };
+          generate_content?: { content?: CommonOutput };
+          humanize_content?: { content?: CommonOutput };
+          inject_eeat?: { content?: CommonOutput };
+          review_content?: { content?: CommonOutput };
+          calculate_readability?: { content?: CommonOutput };
+          calculate_on_page_seo?: { content?: CommonOutput };
+          calculate_eeat_trust?: { content?: CommonOutput };
+          content_engine?: { content?: CommonOutput };
+        }
+        const u = updates as unknown as NodeOutput;
         const nodeOutputs = [
           u.content,
           u.content_engine?.content,
@@ -476,16 +553,22 @@ export function FreshGenerationView({
           u.review_content?.content,
           u.calculate_readability?.content,
           u.calculate_on_page_seo?.content,
-          u.calculate_eeat_trust?.content
-        ].filter(Boolean);
+          u.calculate_eeat_trust?.content,
+        ].filter((o): o is CommonOutput => !!o);
 
-        for (const output of nodeOutputs) {
-          const out = output as any;
-
+        for (const out of nodeOutputs) {
           if (out.final_content && !isEditingRef.current) {
             dispatch({ type: "SET_ALL_CONTENT", payload: out.final_content });
             if (out.final_content.body_markdown) {
-              dispatch({ type: "SET_GENERATED_CONTENT", payload: out.final_content.body_markdown });
+              dispatch({
+                type: "SET_GENERATED_CONTENT",
+                payload: out.final_content.body_markdown,
+              });
+            } else if (out.final_content.html_content) {
+              dispatch({
+                type: "SET_GENERATED_CONTENT",
+                payload: htmlToMarkdownLite(out.final_content.html_content),
+              });
             }
             setTokenTarget("none");
             tokenTargetRef.current = "none";
@@ -499,9 +582,21 @@ export function FreshGenerationView({
 
           const review = out.review;
           if (review) {
-            if (review.on_page_metrics) dispatch({ type: "SET_SEO_SCORE", payload: review.on_page_metrics });
-            if (review.trust_score) dispatch({ type: "SET_TRUST_SCORE", payload: review.trust_score });
-            if (review.readability_metrics) dispatch({ type: "SET_READABILITY_SCORE", payload: review.readability_metrics });
+            if (review.on_page_metrics)
+              dispatch({
+                type: "SET_SEO_SCORE",
+                payload: review.on_page_metrics,
+              });
+            if (review.trust_score)
+              dispatch({
+                type: "SET_TRUST_SCORE",
+                payload: review.trust_score,
+              });
+            if (review.readability_metrics)
+              dispatch({
+                type: "SET_READABILITY_SCORE",
+                payload: review.readability_metrics,
+              });
           }
         }
 
@@ -511,16 +606,22 @@ export function FreshGenerationView({
 
         dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
         Object.keys(updates)
-          .filter(k => !k.startsWith("__"))
-          .forEach(node => {
-            dispatch({ type: "SET_LOADING_STATUS", payload: `${formatNodeName(node)}...` });
+          .filter((k) => !k.startsWith("__"))
+          .forEach((node) => {
+            dispatch({
+              type: "SET_LOADING_STATUS",
+              payload: `${formatNodeName(node)}...`,
+            });
           });
       }
     } catch (_e) {
     } finally {
       if (loadingStatus?.endsWith("..."))
-        dispatch({ type: "ADD_COMPLETED_NODE", payload: loadingStatus.slice(0, -3) });
-      await new Promise(r => setTimeout(r, 1500));
+        dispatch({
+          type: "ADD_COMPLETED_NODE",
+          payload: loadingStatus.slice(0, -3),
+        });
+      await new Promise((r) => setTimeout(r, 1500));
       dispatch({ type: "SET_MANUAL_LOADING", payload: false });
       dispatch({ type: "SET_LOADING_STATUS", payload: "" });
       dispatch({ type: "SET_LOADING_STEPS", payload: [] });
@@ -551,7 +652,8 @@ export function FreshGenerationView({
     const stream = streamFromSSE(`/api/generate/${newThreadId}/stream`, {
       input: {
         serp_payload: {
-          query: keyword, country,
+          query: keyword,
+          country,
           user_id: user?.id,
           workspace_id: workspaceId ?? undefined,
           is_library: isLibrary,
@@ -564,13 +666,18 @@ export function FreshGenerationView({
     await processStream(stream);
   };
 
-  const resumeWorkflow = async ({ payload, status: statusMsg }: ResumeOptions) => {
+  const resumeWorkflow = async ({
+    payload,
+    status: statusMsg,
+  }: ResumeOptions) => {
     if (!threadId) return;
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     if (statusMsg) dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
 
-    const stream = streamFromSSE(`/api/generate/${threadId}/resume`, { payload });
+    const stream = streamFromSSE(`/api/generate/${threadId}/resume`, {
+      payload,
+    });
     await processStream(stream);
   };
 
@@ -579,15 +686,27 @@ export function FreshGenerationView({
       case "KEYWORD_SELECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
-        dispatch({ type: "SET_LOADING_STEPS", payload: KEYWORD_SELECTION_STEPS });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: KEYWORD_SELECTION_STEPS,
+        });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
-        return resumeWorkflow({ payload: { "Primary Keyword": value }, status: "Keyword Recommendation..." });
+        return resumeWorkflow({
+          payload: { "Primary Keyword": value },
+          status: "Keyword Recommendation...",
+        });
       case "TOPIC_SELECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
-        dispatch({ type: "SET_LOADING_STEPS", payload: TOPIC_GENERATION_STEPS });
-        return resumeWorkflow({ payload: { "Selected Topic": value }, status: "Content Type Generation..." });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: TOPIC_GENERATION_STEPS,
+        });
+        return resumeWorkflow({
+          payload: { "Selected Topic": value },
+          status: "Content Type Generation...",
+        });
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
         tokenTargetRef.current = "outline";
@@ -595,15 +714,24 @@ export function FreshGenerationView({
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         dispatch({ type: "SUBMIT_REJECT_REASON" });
         dispatch({ type: "SET_LOADING_STEPS", payload: CONTENT_TYPE_STEPS });
-        return resumeWorkflow({ payload: { "Selected Content Type": value }, status: "Topic Type..." });
+        return resumeWorkflow({
+          payload: { "Selected Content Type": value },
+          status: "Topic Type...",
+        });
       case "OUTLINE_APPROVE":
         setTokenTarget("content");
         tokenTargetRef.current = "content";
         content.resetStream();
         dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-        dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
-        return resumeWorkflow({ payload: { action: "approve" }, status: "Approving and generating content..." });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: FINAL_GENERATION_STEPS,
+        });
+        return resumeWorkflow({
+          payload: { action: "approve" },
+          status: "Approving and generating content...",
+        });
       case "OUTLINE_REJECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
@@ -634,7 +762,9 @@ export function FreshGenerationView({
       <div
         className={cn(
           "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-          instructionType === "keyword" ? "min-h-[70vh] justify-center" : "min-h-0 pt-2",
+          instructionType === "keyword"
+            ? "min-h-[70vh] justify-center"
+            : "min-h-0 pt-2",
         )}
       >
         <LoadingIndicatorVariants
@@ -684,7 +814,9 @@ export function FreshGenerationView({
       <OutlineRejectSection
         instruction={displayedInstruction}
         rejectedReason={rejectedReason}
-        onChange={(val) => dispatch({ type: "SET_REJECTED_REASON", payload: val })}
+        onChange={(val) =>
+          dispatch({ type: "SET_REJECTED_REASON", payload: val })
+        }
         onSubmit={() => handleWorkflow("OUTLINE_REJECT_REASON", rejectedReason)}
       />
     ),
@@ -695,7 +827,9 @@ export function FreshGenerationView({
       <div
         className={cn(
           "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-          instructionType === "keyword" ? "min-h-[70vh] justify-center" : "min-h-0 pt-2",
+          instructionType === "keyword"
+            ? "min-h-[70vh] justify-center"
+            : "min-h-0 pt-2",
         )}
       >
         <AnimatePresence mode="wait">
@@ -712,8 +846,12 @@ export function FreshGenerationView({
               userKeyword={userKeyword}
               country={country}
               onSubmit={handleKeywordSubmit}
-              onKeywordChange={(val) => dispatch({ type: "SET_USER_KEYWORD", payload: val })}
-              onCountryChange={(val) => dispatch({ type: "SET_COUNTRY", payload: val })}
+              onKeywordChange={(val) =>
+                dispatch({ type: "SET_USER_KEYWORD", payload: val })
+              }
+              onCountryChange={(val) =>
+                dispatch({ type: "SET_COUNTRY", payload: val })
+              }
             />
           )}
         </motion.div>
@@ -730,7 +868,6 @@ export function FreshGenerationView({
                 dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
               }
             />
-
           </div>
         ) : (
           instructionViewMap[instructionType]
@@ -739,48 +876,48 @@ export function FreshGenerationView({
 
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {showContentStream && (
-        <>
-          <div className={!isContentFinal ? "relative" : undefined}>
-            <ContentEditor
-              allContent={isContentFinal ? allContent : (allContent ?? streamedAllContent)}
-              readabilityScore={readabilityScore}
-              seoScore={seoScore}
-              trustScore={trustScore}
-              generatedContent={
-                isContentFinal ? generatedContent : displayedBodyMarkdown
+        <div className={!isContentFinal ? "relative" : undefined}>
+          <ContentEditor
+            allContent={
+              isContentFinal ? allContent : (allContent ?? streamedAllContent)
+            }
+            readabilityScore={readabilityScore}
+            seoScore={seoScore}
+            trustScore={trustScore}
+            generatedContent={
+              isContentFinal ? generatedContent : displayedBodyMarkdown
+            }
+            isEditing={isEditing}
+            userKeyword={userKeyword}
+            outline={parsedOutline}
+            onEditToggle={() =>
+              dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
+            }
+            onContentChange={(val) => {
+              dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+              // Also sync allContent.body_markdown so other parts of the UI stay updated
+              if (allContent) {
+                dispatch({
+                  type: "SET_ALL_CONTENT",
+                  payload: { ...allContent, body_markdown: val },
+                });
               }
-              isEditing={isEditing}
-              userKeyword={userKeyword}
-              outline={parsedOutline}
-              onEditToggle={() =>
-                dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
-              }
-              onContentChange={(val) => {
-                dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-                // Also sync allContent.body_markdown so other parts of the UI stay updated
-                if (allContent) {
-                  dispatch({
-                    type: "SET_ALL_CONTENT",
-                    payload: { ...allContent, body_markdown: val },
-                  });
-                }
-              }}
-            />
+            }}
+          />
 
-            {isEnhancing && (
-              <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
-                <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
-                  <div className="text-sm font-semibold text-foreground">
-                    {enhancingMsg}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {enhancingDescription}
-                  </div>
+          {isEnhancing && (
+            <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
+              <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
+                <div className="text-sm font-semibold text-foreground">
+                  {enhancingMsg}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {enhancingDescription}
                 </div>
               </div>
-            )}
-          </div>
-        </>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

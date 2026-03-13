@@ -34,28 +34,28 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
  * // => undefined
  */
 export function buildCancellationReason(
-    reasons: string[],
-    feedback: string,
+  reasons: string[],
+  feedback: string,
 ): string | undefined {
-    const normalizedReasons = reasons
-        .map((reason) => reason.trim())
-        .filter((reason) => reason.length > 0);
+  const normalizedReasons = reasons
+    .map((reason) => reason.trim())
+    .filter((reason) => reason.length > 0);
 
-    const normalizedFeedback = feedback.trim();
+  const normalizedFeedback = feedback.trim();
 
-    if (normalizedReasons.length === 0 && normalizedFeedback.length === 0) {
-        return undefined;
-    }
+  if (normalizedReasons.length === 0 && normalizedFeedback.length === 0) {
+    return undefined;
+  }
 
-    const parts: string[] = [];
+  const parts: string[] = [];
 
-    if (normalizedReasons.length > 0) {
-        parts.push(`Reasons: ${normalizedReasons.join(", ")}`);
-    }
+  if (normalizedReasons.length > 0) {
+    parts.push(`Reasons: ${normalizedReasons.join(", ")}`);
+  }
 
-    if (normalizedFeedback.length > 0) {
-        parts.push(`Feedback: ${normalizedFeedback}`);
-    }
+  if (normalizedFeedback.length > 0) {
+    parts.push(`Feedback: ${normalizedFeedback}`);
+  }
 
-    return parts.join(" | ").slice(0, MAX_CANCELLATION_REASON_LENGTH);
+  return parts.join(" | ").slice(0, MAX_CANCELLATION_REASON_LENGTH);
 }
